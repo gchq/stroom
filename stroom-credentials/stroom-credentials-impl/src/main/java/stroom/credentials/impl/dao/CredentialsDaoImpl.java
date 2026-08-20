@@ -169,7 +169,10 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                                 .map(permissionDecorator)
                                 .filter(Objects::nonNull))
                 .toList();
-        return withFilterError(ResultPage.createPageLimitedList(list, request.getPageRequest()), filterError);
+        return ResultPage.<CredentialWithPerms>createPageLimitedList(list, request.getPageRequest())
+                .copy()
+                .filterError(filterError.get())
+                .build();
     }
 
     @Override
@@ -187,20 +190,13 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                                 .map(this::mapToCredential)
                                 .filter(permissionFilter))
                 .toList();
-        return withFilterError(ResultPage.createPageLimitedList(list, request.getPageRequest()), filterError);
+        return ResultPage.<Credential>createPageLimitedList(list, request.getPageRequest())
+                .copy()
+                .filterError(filterError.get())
+                .build();
     }
 
-    /**
-     * Unlike the other DAOs this one matches no rows rather than returning early, so the
-     * diagnostic has to be attached to the page after it is built.
-     */
-    private static <T> ResultPage<T> withFilterError(final ResultPage<T> resultPage,
-                                                     final AtomicReference<TokenError> filterError) {
-        final TokenError tokenError = filterError.get();
-        return tokenError == null
-                ? resultPage
-                : new ResultPage<>(resultPage.getValues(), resultPage.getPageResponse(), tokenError);
-    }
+
 
     private Credential mapToCredential(final Record record) {
         return new Credential(

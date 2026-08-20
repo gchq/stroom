@@ -53,6 +53,9 @@ public class TaskManagerPresenter
         this.listPresenter = listPresenter;
         view.setUiHandlers(this);
         view.setList(listPresenter.getWidget());
+        // A rejected filter comes back as an empty list like any other, so surface the reason on
+        // the filter box. See ResultPage.filterError.
+        listPresenter.setFilterErrorConsumer(view::setFilterError);
 
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
@@ -149,6 +152,12 @@ public class TaskManagerPresenter
 
 
     public interface TaskManagerView extends View, HasUiHandlers<TaskManagerUiHandlers> {
+
+        /**
+         * Show why the server rejected the filter, or clear it when passed null.
+         * See {@code ResultPage.filterError}.
+         */
+        void setFilterError(String filterError);
 
         void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 

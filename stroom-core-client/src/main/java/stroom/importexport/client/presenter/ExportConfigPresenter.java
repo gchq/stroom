@@ -98,6 +98,7 @@ public class ExportConfigPresenter
         buttons.add(filter);
 
         view.setTreeView(treePresenter.getView());
+        treePresenter.setFilterErrorConsumer(view::setFilterError);
         view.setUiHandlers(this);
 
         // Only show the System node at the root for export
@@ -215,6 +216,12 @@ public class ExportConfigPresenter
     public interface ExportConfigView extends View, Focus, HasUiHandlers<ExportConfigUiHandlers> {
 
         void setTreeView(View view);
+
+        /**
+         * Show why the server rejected the filter, or clear it when passed null.
+         * See {@code FetchExplorerNodeResult.filterError}.
+         */
+        void setFilterError(String filterError);
 
         FlowPanel getButtonContainer();
     }

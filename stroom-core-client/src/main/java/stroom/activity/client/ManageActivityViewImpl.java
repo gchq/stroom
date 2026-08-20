@@ -78,6 +78,11 @@ public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiH
         this.tooltipContentSupplier = tooltipContentSupplier;
     }
 
+    @Override
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
     private SafeHtml getTooltipContent() {
         return tooltipContentSupplier.get();
     }

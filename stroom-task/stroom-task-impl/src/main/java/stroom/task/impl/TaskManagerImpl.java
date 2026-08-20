@@ -18,6 +18,8 @@ package stroom.task.impl;
 
 import stroom.node.api.NodeInfo;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldProviderImpl;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
@@ -52,6 +54,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -227,11 +230,20 @@ class TaskManagerImpl implements TaskManager {
         final String nameFilter = NullSafe.get(findTaskProgressCriteria, FindTaskProgressCriteria::getNameFilter);
         if (!NullSafe.isBlankString(nameFilter)) {
             LOGGER.debug("Using nameFilter: '{}'", nameFilter);
+            // ExpressionPredicateFactory swallows a bad filter and matches nothing, which is the
+            // right result on a debounced filter - but the reason has to come back with the empty
+            // page or it is indistinguishable from "nothing matched". See ResultPage.filterError.
+            final AtomicReference<TokenException> filterError = new AtomicReference<>();
             fuzzyMatchPredicate = expressionPredicateFactory.create(
                     nameFilter,
                     FIELD_PROVIDER,
                     VALUE_FUNCTION_FACTORIES,
-                    DateTimeSettings.builder().build());
+                    DateTimeSettings.builder().build(),
+                    filterError::set);
+            if (filterError.get() != null) {
+                return ResultPage.emptyWithFilterError(
+                        TokenErrorUtil.toTokenError(filterError.get()));
+            }
         } else {
             LOGGER.debug("No nameFilter, match all");
             fuzzyMatchPredicate = taskProgress -> true;

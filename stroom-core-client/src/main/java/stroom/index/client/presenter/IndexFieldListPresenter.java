@@ -37,7 +37,9 @@ import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.IndexFieldFields;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -357,7 +359,13 @@ public class IndexFieldListPresenter
                     restFactory
                             .create(INDEX_RESOURCE)
                             .method(res -> res.findFields(criteria))
-                            .onSuccess(dataConsumer)
+                            .onSuccess(resultPage -> {
+                                // A rejected filter comes back as an empty page like any other, so
+                                // surface the reason on the filter box. See ResultPage.filterError.
+                                getView().setFilterError(
+                                        NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                                dataConsumer.accept(resultPage);
+                            })
                             .onFailure(errorHandler)
                             .taskMonitorFactory(pagerView)
                             .exec();

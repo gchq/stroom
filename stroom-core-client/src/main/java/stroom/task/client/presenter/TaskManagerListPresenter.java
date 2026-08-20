@@ -141,6 +141,7 @@ public class TaskManagerListPresenter
 
     private Range range;
     private Consumer<TaskProgressResponse> dataConsumer;
+    private Consumer<String> filterErrorConsumer;
     private boolean autoRefresh = true;
 
     @Inject
@@ -573,11 +574,20 @@ public class TaskManagerListPresenter
                                     final Set<String> enabledNodeNames) {
         responseMap.clear();
         errorMap.clear();
+        if (filterErrorConsumer != null) {
+            // Cleared up front; any node that rejects the filter sets it again below.
+            filterErrorConsumer.accept(null);
+        }
         for (final String nodeName : allNodeNames) {
             restFactory
                     .create(TASK_RESOURCE)
                     .method(res -> res.find(nodeName, request))
                     .onSuccess(response -> {
+                        // The filter is applied per node, so any node can report it was rejected.
+                        // They all get the same filter, so the first reason is representative.
+                        if (filterErrorConsumer != null && response.getFilterError() != null) {
+                            filterErrorConsumer.accept(response.getFilterError().getText());
+                        }
                         responseMap.put(nodeName, response.getValues());
                         // No point in seeing errors for disabled nodes as they are likely down
                         // but do show results for disabled nodes in case they are still doing
@@ -636,6 +646,10 @@ public class TaskManagerListPresenter
         timer.setName(name);
         timer.cancel();
         timer.schedule(300);
+    }
+
+    public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
+        this.filterErrorConsumer = filterErrorConsumer;
     }
 
     private void endSelectedTask() {

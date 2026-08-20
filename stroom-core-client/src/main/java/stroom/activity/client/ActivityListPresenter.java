@@ -26,7 +26,9 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.Preset;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -48,6 +50,8 @@ public class ActivityListPresenter
         implements Refreshable {
 
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
+
+    private Consumer<String> filterErrorConsumer;
 
     private final MyDataGrid<Activity> dataGrid;
     private final MultiSelectionModelImpl<Activity> selectionModel;
@@ -106,7 +110,15 @@ public class ActivityListPresenter
                 restFactory
                         .create(ACTIVITY_RESOURCE)
                         .method(res -> res.list(name))
-                        .onSuccess(dataConsumer)
+                        .onSuccess(resultPage -> {
+                            // A rejected filter comes back as an empty page like any other, so
+                            // surface the reason on the filter box. See ResultPage.filterError.
+                            if (filterErrorConsumer != null) {
+                                filterErrorConsumer.accept(
+                                        NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                            }
+                            dataConsumer.accept(resultPage);
+                        })
                         .onFailure(errorHandler)
                         .taskMonitorFactory(view)
                         .exec();
@@ -135,4 +147,8 @@ public class ActivityListPresenter
     String getCriteria() {
         return name;
     }
+    public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
+        this.filterErrorConsumer = filterErrorConsumer;
+    }
+
 }

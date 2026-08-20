@@ -51,6 +51,9 @@ public class DependenciesTabPresenter
         this.dependenciesPresenter = dependenciesPresenter;
         view.setUiHandlers(this);
         setInSlot(LIST, dependenciesPresenter);
+        // A rejected filter comes back as an empty grid like any other, so surface the reason on
+        // the filter box. See ResultPage.filterError.
+        dependenciesPresenter.setFilterErrorConsumer(view::setFilterError);
 
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
@@ -124,6 +127,8 @@ public class DependenciesTabPresenter
         void setHelpTooltipText(final SafeHtml helpTooltipText);
 
         void setQuickFilterText(final String text);
+
+        void setFilterError(final String filterError);
 
         void focusFilter();
     }

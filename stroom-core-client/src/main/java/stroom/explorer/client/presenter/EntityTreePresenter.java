@@ -58,6 +58,7 @@ public class EntityTreePresenter
 
         // Add views.
         view.setCellTree(explorerTree);
+        explorerTree.setFilterErrorConsumer(view::setFilterError);
 
         // Same field defs as the Explorer Tree
         uiConfigCache.get(uiConfig -> {
@@ -121,6 +122,12 @@ public class EntityTreePresenter
 
 
     public interface EntityTreeView extends View, Focus, HasUiHandlers<EntityTreeUiHandlers> {
+
+        /**
+         * Show why the server rejected the filter, or clear it when passed null.
+         * See {@code FetchExplorerNodeResult.filterError}.
+         */
+        void setFilterError(String filterError);
 
         void setCellTree(Widget cellTree);
 

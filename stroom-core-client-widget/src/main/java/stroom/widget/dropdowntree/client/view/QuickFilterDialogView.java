@@ -30,4 +30,10 @@ public interface QuickFilterDialogView extends View, Focus, HasUiHandlers<QuickF
     void setDataView(View view);
 
     void setText(String text, boolean fireEvents);
+
+    /**
+     * Show why the server rejected the filter, or clear it when passed null.
+     * See {@code ResultPage.filterError}.
+     */
+    void setFilterError(String filterError);
 }

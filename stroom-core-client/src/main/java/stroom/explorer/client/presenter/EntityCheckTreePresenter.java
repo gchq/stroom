@@ -45,7 +45,6 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
         super(new SimpleEventBus(), view);
 
         explorerTree = new ExplorerTickBoxTree(restFactory, this);
-
         view.setCellTree(explorerTree);
     }
 
@@ -108,6 +107,14 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
 
     // --------------------------------------------------------------------------------
 
+
+    /**
+     * Receives the reason the server rejected the current filter, or null when it was applied.
+     * See {@code FetchExplorerNodeResult.filterError}.
+     */
+    public void setFilterErrorConsumer(final java.util.function.Consumer<String> filterErrorConsumer) {
+        explorerTree.setFilterErrorConsumer(filterErrorConsumer);
+    }
 
     public interface EntityCheckTreeView extends View {
 

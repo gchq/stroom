@@ -87,6 +87,11 @@ public class DependenciesTabViewImpl
     }
 
     @Override
+    public void setFilterError(final String filterError) {
+        quickFilter.setFilterError(filterError);
+    }
+
+    @Override
     public void focusFilter() {
         quickFilter.focus();
     }

@@ -84,6 +84,11 @@ public class QuickFilterPageViewImpl extends ViewWithUiHandlers<QuickFilterUiHan
         }
     }
 
+    @Override
+    public void setFilterError(final String filterError) {
+        quickFilter.setFilterError(filterError);
+    }
+
     @UiHandler("quickFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
         getUiHandlers().onFilterChange(quickFilter.getText());

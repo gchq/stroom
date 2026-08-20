@@ -32,6 +32,7 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.exception.DataChangedException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 import stroom.util.shared.UserRef;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -145,6 +146,60 @@ class TestActivityServiceImpl {
                 .build();
         final ActivityValidationResult activityValidationResult2 = activityService.validate(activity2);
         assertThat(activityValidationResult2.isValid()).isFalse();
+    }
+
+    /**
+     * The activities quick filter queries on a debounce as the user types, so "foo and" exists as
+     * a transient state on the way to "foo and bar". Until this was fixed the parse failure
+     * propagated as an HTTP error and put a popup in front of the user mid-keystroke.
+     */
+    @Test
+    void testFind_rejectedFilterReturnsEmptyAndExplainsItself() {
+        givenOneActivityWithProp("foo", "bar");
+
+        final ResultPage<Activity> result = activityService.find("foo and");
+
+        assertThat(result.getValues()).isEmpty();
+        assertThat(result.getFilterError()).isNotNull();
+        assertThat(result.getFilterError().getText()).isNotBlank();
+        assertThat(result.getFilterError().getSeverity()).isEqualTo(Severity.ERROR);
+        // Positional, so the offending token can be pointed at rather than described.
+        assertThat(result.getFilterError().getFrom()).isNotNull();
+        assertThat(result.getFilterError().getTo()).isNotNull();
+    }
+
+    /**
+     * A filter that legitimately matches nothing must NOT carry a diagnostic, or the widget would
+     * cry wolf on every ordinary empty result.
+     */
+    @Test
+    void testFind_emptyResultCarriesNoDiagnostic() {
+        givenOneActivityWithProp("foo", "bar");
+
+        final ResultPage<Activity> result = activityService.find("NoSuchValueExists");
+
+        assertThat(result.getValues()).isEmpty();
+        assertThat(result.getFilterError()).isNull();
+    }
+
+    /**
+     * And a filter that matches must be unaffected by any of the above.
+     */
+    @Test
+    void testFind_matchingFilterStillWorks() {
+        givenOneActivityWithProp("foo", "bar");
+
+        final ResultPage<Activity> result = activityService.find("bar");
+
+        assertThat(result.getValues()).hasSize(1);
+        assertThat(result.getFilterError()).isNull();
+    }
+
+    private void givenOneActivityWithProp(final String name, final String value) {
+        activityService.find(null).forEach(a -> activityService.deleteAllByOwner(a.getId()));
+        final Activity activity = activityService.create();
+        activity.getDetails().add(createProp(name, value));
+        activityService.update(activity);
     }
 
     private Prop createProp(final String name,

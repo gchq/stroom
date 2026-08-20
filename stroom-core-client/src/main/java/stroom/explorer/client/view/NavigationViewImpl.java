@@ -126,6 +126,11 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     }
 
     @Override
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
+    @Override
     public TaskMonitorFactory getTaskListener() {
         return spinner;
     }

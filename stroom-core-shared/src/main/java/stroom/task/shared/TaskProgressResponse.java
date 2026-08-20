@@ -18,6 +18,7 @@ package stroom.task.shared;
 
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -38,11 +39,18 @@ public class TaskProgressResponse extends ResultPage<TaskProgress> {
         this.errors = null;
     }
 
+    public TaskProgressResponse(final List<TaskProgress> values,
+                                final List<String> errors,
+                                final PageResponse pageResponse) {
+        this(values, errors, pageResponse, null);
+    }
+
     @JsonCreator
     public TaskProgressResponse(@JsonProperty("values") final List<TaskProgress> values,
                                 @JsonProperty("errors") final List<String> errors,
-                                @JsonProperty("pageResponse") final PageResponse pageResponse) {
-        super(values, pageResponse);
+                                @JsonProperty("pageResponse") final PageResponse pageResponse,
+                                @JsonProperty("filterError") final TokenError filterError) {
+        super(values, pageResponse, filterError);
         this.errors = errors;
     }
 

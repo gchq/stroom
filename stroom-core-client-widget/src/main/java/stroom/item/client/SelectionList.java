@@ -18,7 +18,9 @@ package stroom.item.client;
 
 import stroom.data.grid.client.PagerViewImpl;
 import stroom.data.table.client.MyCellTable;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.TokenError;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.tab.client.event.CloseEvent;
 import stroom.widget.tab.client.event.CloseEvent.CloseHandler;
@@ -237,6 +239,12 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         if (model != null) {
             final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
             model.onRangeChange(parent, lastFilter, filterChange, pageRequest, pageResponse -> {
+                // A model that filters server-side can come back with a reason the filter was not
+                // applied. Models that filter client-side never set one, so this is a no-op for
+                // them. See ResultPage.filterError.
+                quickFilter.setFilterError(
+                        NullSafe.get(pageResponse.getFilterError(), TokenError::getText));
+
                 selectionModel.clear(false);
 
                 cellTable.setRowData(pageResponse.getPageStart(), pageResponse.getValues());

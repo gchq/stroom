@@ -56,6 +56,7 @@ public class AiChatHistoryPresenter
         // Ensure list has a border in the popup view.
         findResultListPresenter.getView().asWidget().addStyleName("form-control-border form-control-background");
         view.setResultView(findResultListPresenter.getView());
+        findResultListPresenter.setFilterErrorConsumer(view::setFilterError);
         view.setUiHandlers(this);
         findResultListPresenter.setFindResultListHandler(this);
     }
@@ -224,6 +225,12 @@ public class AiChatHistoryPresenter
 //        void setSelected(AiChat chat);
 
         void setResultView(View view);
+
+        /**
+         * Show why the server rejected the filter, or clear it when passed null.
+         * See {@code ResultPage.filterError}.
+         */
+        void setFilterError(String filterError);
     }
 //
 //

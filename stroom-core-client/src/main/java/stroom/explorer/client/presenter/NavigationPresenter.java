@@ -472,6 +472,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     protected void revealInParent() {
         explorerTree.getTreeModel().refresh();
         getView().setNavigationWidget(explorerTree);
+        explorerTree.setFilterErrorConsumer(getView()::setFilterError);
         RevealContentEvent.fire(this, MainPresenter.EXPLORER, this);
     }
 
@@ -505,6 +506,12 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         void setActivityWidget(Widget widget);
 
         void focusQuickFilter();
+
+        /**
+         * Show why the server rejected the filter, or clear it when passed null.
+         * See {@code FetchExplorerNodeResult.filterError}.
+         */
+        void setFilterError(String filterError);
 
         TaskMonitorFactory getTaskListener();
     }

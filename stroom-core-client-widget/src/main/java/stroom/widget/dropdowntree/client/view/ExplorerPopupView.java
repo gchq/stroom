@@ -26,6 +26,12 @@ import java.util.function.Supplier;
 
 public interface ExplorerPopupView extends View, Focus, HasUiHandlers<ExplorerPopupUiHandlers> {
 
+    /**
+     * Show why the server rejected the filter, or clear it when passed null.
+     * See {@code FetchExplorerNodeResult.filterError}.
+     */
+    void setFilterError(String filterError);
+
     void setCellTree(Widget widget);
 
     void setQuickFilterTooltipSupplier(final Supplier<SafeHtml> tooltipSupplier);

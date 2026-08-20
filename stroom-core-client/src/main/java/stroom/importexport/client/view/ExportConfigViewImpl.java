@@ -66,6 +66,11 @@ public class ExportConfigViewImpl
     }
 
     @Override
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
+    @Override
     public FlowPanel getButtonContainer() {
         return buttonContainer;
     }

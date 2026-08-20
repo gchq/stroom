@@ -55,6 +55,7 @@ public class FindAnnotationPresenter
         view.setResultView(findResultListPresenter.getView());
         view.setUiHandlers(this);
         findResultListPresenter.setFindResultListHandler(this);
+        findResultListPresenter.setFilterErrorConsumer(view::setFilterError);
     }
 
     @Override

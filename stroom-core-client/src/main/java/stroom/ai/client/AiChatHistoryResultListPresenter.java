@@ -25,8 +25,10 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.client.presenter.SelectionEventManager;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -48,6 +50,7 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
     private final MultiSelectionModelImpl<AiChat> selectionModel;
     private String filter;
     private String lastFilter;
+    private Consumer<String> filterErrorConsumer;
     private boolean initialised;
     private boolean focusText;
     private FindDocResultListHandler<AiChat> findResultListHandler = new FindDocResultListHandler<AiChat>() {
@@ -105,6 +108,12 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
 
                 askStroomAiClient
                         .listChats(criteria, resultPage -> {
+                            // A rejected filter comes back as an empty page like any other, so
+                            // surface the reason on the filter box. See ResultPage.filterError.
+                            if (filterErrorConsumer != null) {
+                                filterErrorConsumer.accept(
+                                        NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                            }
                             if (resultPage.getPageStart() != cellTable.getPageStart()) {
                                 cellTable.setPageStart(resultPage.getPageStart());
                             }
@@ -150,6 +159,10 @@ public class AiChatHistoryResultListPresenter extends MyPresenterWidget<PagerVie
 
     public void setFindResultListHandler(final FindDocResultListHandler<AiChat> findResultListHandler) {
         this.findResultListHandler = findResultListHandler;
+    }
+
+    public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
+        this.filterErrorConsumer = filterErrorConsumer;
     }
 
     public boolean setFilter(final String filter) {

@@ -91,6 +91,9 @@ public class ManageActivityPresenter
         getView().setUiHandlers(this);
 
         setInSlot(LIST, listPresenter);
+        // A rejected filter comes back as an empty page like any other, so surface the reason on
+        // the filter box. See ResultPage.filterError.
+        listPresenter.setFilterErrorConsumer(view::setFilterError);
 
         newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
         openButton = listPresenter.addButton(SvgPresets.EDIT);
@@ -323,6 +326,12 @@ public class ManageActivityPresenter
     public interface ManageActivityView extends View, Focus, HasUiHandlers<ManageActivityUiHandlers> {
 
         void setTooltipContentSupplier(final Supplier<SafeHtml> tooltipSupplier);
+
+        /**
+         * Show why the server rejected the filter, or clear it when passed null.
+         * See {@code ResultPage.filterError}.
+         */
+        void setFilterError(String filterError);
     }
 
     private class NameFilterTimer extends Timer {

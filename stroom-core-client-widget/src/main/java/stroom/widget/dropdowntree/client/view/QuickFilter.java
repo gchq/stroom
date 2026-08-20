@@ -61,6 +61,7 @@ public class QuickFilter extends FlowPanel
     private String lastInput = "";
     private boolean updateOnValueChange = true;
     private HelpPopup helpPopup = null;
+    private String filterError = null;
 
     private final Timer filterRefreshTimer = new Timer() {
         @Override
@@ -102,12 +103,12 @@ public class QuickFilter extends FlowPanel
             helpPopup.hide();
             helpPopup = null;
         } else {
-            final SafeHtml popupText = Optional.ofNullable(popupTextSupplier)
+            final SafeHtml syntaxHelp = Optional.ofNullable(popupTextSupplier)
                     .map(Supplier::get)
                     .filter(safeHtml -> !safeHtml.asString().isEmpty())
                     .orElse(DEFAULT_POPUP_TEXT);
 
-            final HelpPopup popup = new HelpPopup(popupText);
+            final HelpPopup popup = new HelpPopup(withFilterError(syntaxHelp));
             popup.setStyleName("quickFilter-tooltip");
             popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
 
@@ -118,6 +119,56 @@ public class QuickFilter extends FlowPanel
             });
             this.helpPopup = popup;
         }
+    }
+
+    /**
+     * Show why the server rejected this filter, or clear it when passed null.
+     * <p>
+     * A rejected filter and a filter that matched nothing both come back as an empty grid, so
+     * without this the user has no way to tell "your syntax is not supported here" from "there is
+     * nothing to find". The message travels back on the response - see
+     * {@code ResultPage.filterError} - and this is what puts it in front of the user.
+     * <p>
+     * Deliberately not positional. The diagnostic carries the offending token's location, but a
+     * TextBox cannot underline a substring, so the location is unused for now; see
+     * docs/query-filter-surface-syntax-spec.md §10.5 for the options if that becomes worth doing.
+     */
+    public void setFilterError(final String filterError) {
+        if (Objects.equals(this.filterError, filterError)) {
+            return;
+        }
+        this.filterError = filterError;
+
+        // Reuse the app-wide invalid styling rather than inventing one - it is already themed for
+        // light and dark, and already handles the focused state.
+        if (filterError == null) {
+            textBox.removeStyleName("invalid");
+            textBox.getElement().removeAttribute("title");
+        } else {
+            textBox.addStyleName("invalid");
+            // Native title so it is discoverable on hover without opening the help popup.
+            textBox.getElement().setAttribute("title", filterError);
+        }
+        // If the popup is already open, reopen it so it picks up the change.
+        if (helpPopup != null) {
+            helpPopup.hide();
+            helpPopup = null;
+            showHelpPopup();
+        }
+    }
+
+    private SafeHtml withFilterError(final SafeHtml syntaxHelp) {
+        if (filterError == null) {
+            return syntaxHelp;
+        }
+        return new HtmlBuilder()
+                .bold("This filter was not applied")
+                .br()
+                .append(filterError)
+                .br()
+                .br()
+                .append(syntaxHelp)
+                .toSafeHtml();
     }
 
     private void onValueChange() {
@@ -171,6 +222,7 @@ public class QuickFilter extends FlowPanel
     @Override
     public void clear() {
         textBox.setText("");
+        setFilterError(null);
         onChange(true);
     }
 

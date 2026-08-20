@@ -76,6 +76,7 @@ public class ExplorerPopupPresenter
         getView().setUiHandlers(this);
 
         explorerTree = new ExtendedExplorerTree(this, restFactory, this);
+        explorerTree.setFilterErrorConsumer(getView()::setFilterError);
         setIncludeNullSelection(true);
 
         // Add views.

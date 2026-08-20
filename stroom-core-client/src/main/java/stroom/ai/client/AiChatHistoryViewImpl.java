@@ -61,6 +61,11 @@ public class AiChatHistoryViewImpl
     }
 
     @Override
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
+    @Override
     public void focus() {
         nameFilter.forceFocus();
     }

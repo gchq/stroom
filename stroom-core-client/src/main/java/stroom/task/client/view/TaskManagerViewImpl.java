@@ -69,6 +69,11 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
     }
 
     @Override
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
+    @Override
     public void focusFilter() {
         nameFilter.focus();
     }

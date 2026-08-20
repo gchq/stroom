@@ -62,6 +62,9 @@ public class GlobalPropertyTabPresenter
         this.editProvider = editProvider;
         view.setUiHandlers(this);
         setInSlot(LIST, listPresenter);
+        // A rejected filter comes back as an empty page like any other, so surface the reason on
+        // the filter box. See ResultPage.filterError.
+        listPresenter.setFilterErrorConsumer(view::setFilterError);
         openButton = listPresenter.addButton(SvgPresets.EDIT);
 
         warningsButton = listPresenter.addButton(SvgPresets.ALERT.title("Show Warnings"));
@@ -178,5 +181,11 @@ public class GlobalPropertyTabPresenter
         void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
         void focusFilter();
+
+        /**
+         * Show why the server rejected the filter, or clear it when passed null.
+         * See {@code ResultPage.filterError}.
+         */
+        void setFilterError(String filterError);
     }
 }

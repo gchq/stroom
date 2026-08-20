@@ -58,6 +58,7 @@ import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.ExpressionUtil;
+import stroom.query.api.token.TokenErrorUtil;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
@@ -240,6 +241,21 @@ class ExplorerServiceImpl
         // A transient holder for the filter, predicate
         final NodeInclusionChecker nodeInclusionChecker =
                 new NodeInclusionChecker(securityContext, filter, expressionPredicateFactory);
+
+        // Build the predicate up front rather than lazily during the traversal, so a bad filter is
+        // known before any work is done. ExpressionPredicateFactory matches nothing on a bad
+        // filter, which is the right result on a debounced filter - but the reason has to come
+        // back with the empty tree or it is indistinguishable from "nothing matched".
+        // See FetchExplorerNodeResult.filterError.
+        nodeInclusionChecker.getFuzzyMatchPredicate();
+        if (nodeInclusionChecker.getFilterError() != null) {
+            return new FetchExplorerNodeResult(
+                    Collections.emptyList(),
+                    Collections.emptyList(),
+                    Collections.emptySet(),
+                    filter.getNameFilter(),
+                    TokenErrorUtil.toTokenError(nodeInclusionChecker.getFilterError()));
+        }
 
         // Recurse down the tree adding items that should be included
         final NodeStates nodeStates = addDescendants(

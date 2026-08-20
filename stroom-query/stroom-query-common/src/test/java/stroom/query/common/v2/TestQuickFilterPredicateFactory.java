@@ -644,6 +644,49 @@ class TestQuickFilterPredicateFactory {
         }
     }
 
+    // --------------------------------------------------------------------------------
+    // The contract every quick filter surface's catch block depends on. GlobalConfigService,
+    // TaskManagerImpl, ExplorerServiceImpl, ActivityServiceImpl and the five DAOs all catch
+    // TokenException specifically; if the parser threw something else for realistic mid-keystroke
+    // input, those catches would miss and the user would get an error instead of an empty result.
+
+    @Test
+    void testMidKeystrokeInput_throwsTokenExceptionNotSomethingElse() {
+        // A trailing operator is the ordinary transient state of typing "foo and bar" - the
+        // debounce fires on "foo and" long before the user finishes.
+        for (final String input : List.of("foo and", "foo or", "foo AND", "not", "and", "or")) {
+            Assertions.assertThatThrownBy(() ->
+                            SimpleStringExpressionParser.create(FIELD_PROVIDER_2, input))
+                    .describedAs("input [%s]", input)
+                    .isInstanceOf(TokenException.class);
+        }
+    }
+
+    @Test
+    void testMidKeystrokeInput_unclosedQuotesAndBracketsDoNotThrow() {
+        // Documenting the boundary rather than asserting a wish: these parse cleanly and simply
+        // match little or nothing. Worth pinning because it is the opposite of what the name
+        // "unparseable filter" suggests, and because a future tokeniser change that made them
+        // throw would silently widen what the catch blocks have to handle.
+        for (final String input : List.of("\"unbalanced", "(unclosed", ")", "\\", "foo or or bar")) {
+            Assertions.assertThatCode(() ->
+                            SimpleStringExpressionParser.create(FIELD_PROVIDER_2, input))
+                    .describedAs("input [%s]", input)
+                    .doesNotThrowAnyException();
+        }
+    }
+
+    @Test
+    void testMidKeystrokeInput_tokenExceptionIsPositional() {
+        // The diagnostic is only useful if it can point at something, so the exception must carry
+        // a token. TokenErrorUtil turns this into the from/to on ResultPage.filterError.
+        final TokenException e = Assertions.catchThrowableOfType(
+                () -> SimpleStringExpressionParser.create(FIELD_PROVIDER_2, "foo and"),
+                TokenException.class);
+        Assertions.assertThat(e.getToken()).isNotNull();
+        Assertions.assertThat(e.getMessage()).isNotBlank();
+    }
+
     private void doQualifyInputTest(final String input,
                                     final String expectedQualifiedInput,
                                     final FieldProvider fieldProvider) {

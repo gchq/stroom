@@ -17,6 +17,7 @@
 package stroom.explorer.shared;
 
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -38,17 +39,32 @@ public class FetchExplorerNodeResult {
     private Set<ExplorerNodeKey> temporaryOpenedItems;
     @JsonProperty
     private final String qualifiedFilterInput;
+    /**
+     * Why the filter was not applied, or null. See {@code ResultPage#getFilterError()}.
+     */
+    @JsonProperty
+    private final TokenError filterError;
+
+    public FetchExplorerNodeResult(
+            final List<ExplorerNode> rootNodes,
+            final List<ExplorerNodeKey> openedItems,
+            final Set<ExplorerNodeKey> temporaryOpenedItems,
+            final String qualifiedFilterInput) {
+        this(rootNodes, openedItems, temporaryOpenedItems, qualifiedFilterInput, null);
+    }
 
     @JsonCreator
     public FetchExplorerNodeResult(
             @JsonProperty("rootNodes") final List<ExplorerNode> rootNodes,
             @JsonProperty("openedItems") final List<ExplorerNodeKey> openedItems,
             @JsonProperty("temporaryOpenedItems")final Set<ExplorerNodeKey> temporaryOpenedItems,
-            @JsonProperty("qualifiedFilterInput") final String qualifiedFilterInput) {
+            @JsonProperty("qualifiedFilterInput") final String qualifiedFilterInput,
+            @JsonProperty("filterError") final TokenError filterError) {
         this.rootNodes = rootNodes;
         this.openedItems = openedItems;
         this.temporaryOpenedItems = temporaryOpenedItems;
         this.qualifiedFilterInput = qualifiedFilterInput;
+        this.filterError = filterError;
     }
 
     public List<ExplorerNode> getRootNodes() {
@@ -65,6 +81,10 @@ public class FetchExplorerNodeResult {
 
     public String getQualifiedFilterInput() {
         return qualifiedFilterInput;
+    }
+
+    public TokenError getFilterError() {
+        return filterError;
     }
 
     public void setTemporaryOpenedItems(final Set<ExplorerNodeKey> temporaryOpenedItems) {

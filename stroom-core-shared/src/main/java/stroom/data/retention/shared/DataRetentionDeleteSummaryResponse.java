@@ -18,6 +18,7 @@ package stroom.data.retention.shared;
 
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -38,12 +39,19 @@ public class DataRetentionDeleteSummaryResponse extends ResultPage<DataRetention
         this.queryId = queryId;
     }
 
+    public DataRetentionDeleteSummaryResponse(final List<DataRetentionDeleteSummary> values,
+                                              final PageResponse pageResponse,
+                                              final String queryId) {
+        this(values, pageResponse, queryId, null);
+    }
+
     @JsonCreator
     public DataRetentionDeleteSummaryResponse(
             @JsonProperty("values") final List<DataRetentionDeleteSummary> values,
             @JsonProperty("pageResponse") final PageResponse pageResponse,
-            @JsonProperty("queryId") final String queryId) {
-        super(values, pageResponse);
+            @JsonProperty("queryId") final String queryId,
+            @JsonProperty("filterError") final TokenError filterError) {
+        super(values, pageResponse, filterError);
         this.queryId = queryId;
     }
 

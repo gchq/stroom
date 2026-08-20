@@ -52,6 +52,11 @@ public class FindViewImpl
     }
 
     @Override
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
+    @Override
     public Widget asWidget() {
         return widget;
     }

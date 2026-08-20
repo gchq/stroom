@@ -25,6 +25,7 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -44,6 +45,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -107,8 +109,24 @@ public class ExpressionPredicateFactory {
                                              final ValueFunctionFactories<T> valueFunctionFactories,
                                              final DateTimeSettings dateTimeSettings,
                                              final Optional<Comparator<T>> optionalSecondComparator) {
-        final Optional<ScoringPredicate<T>> optionalScoringPredicate =
-                createOptionalScoringPredicate(filter, fieldProvider, valueFunctionFactories, dateTimeSettings);
+        return filterAndSortStream(stream, filter, fieldProvider, valueFunctionFactories, dateTimeSettings,
+                optionalSecondComparator, null);
+    }
+
+    /**
+     * @param errorConsumer see
+     *                      {@link #createOptionalScoringPredicate(String, FieldProvider,
+     *                      ValueFunctionFactories, DateTimeSettings, Consumer)}
+     */
+    public <T> Stream<T> filterAndSortStream(final Stream<T> stream,
+                                             final String filter,
+                                             final FieldProvider fieldProvider,
+                                             final ValueFunctionFactories<T> valueFunctionFactories,
+                                             final DateTimeSettings dateTimeSettings,
+                                             final Optional<Comparator<T>> optionalSecondComparator,
+                                             final Consumer<TokenException> errorConsumer) {
+        final Optional<ScoringPredicate<T>> optionalScoringPredicate = createOptionalScoringPredicate(
+                filter, fieldProvider, valueFunctionFactories, dateTimeSettings, errorConsumer);
 
         // If we have no predicate then just sort and return.
         if (optionalScoringPredicate.isEmpty()) {
@@ -169,11 +187,25 @@ public class ExpressionPredicateFactory {
                                    final FieldProvider fieldProvider,
                                    final ValueFunctionFactories<T> valueFunctionFactories,
                                    final DateTimeSettings dateTimeSettings) {
+        return create(filter, fieldProvider, valueFunctionFactories, dateTimeSettings, null);
+    }
+
+    /**
+     * @param errorConsumer see
+     *                      {@link #createOptionalScoringPredicate(String, FieldProvider,
+     *                      ValueFunctionFactories, DateTimeSettings, Consumer)}
+     */
+    public <T> Predicate<T> create(final String filter,
+                                   final FieldProvider fieldProvider,
+                                   final ValueFunctionFactories<T> valueFunctionFactories,
+                                   final DateTimeSettings dateTimeSettings,
+                                   final Consumer<TokenException> errorConsumer) {
         return createOptionalScoringPredicate(
                 filter,
                 fieldProvider,
                 valueFunctionFactories,
-                dateTimeSettings).orElse(matchAll());
+                dateTimeSettings,
+                errorConsumer).orElse(matchAll());
     }
 
     @SuppressWarnings("checkstyle:linelength")
@@ -182,6 +214,26 @@ public class ExpressionPredicateFactory {
             final FieldProvider fieldProvider,
             final ValueFunctionFactories<T> valueFunctionFactories,
             final DateTimeSettings dateTimeSettings) {
+        return createOptionalScoringPredicate(
+                filter, fieldProvider, valueFunctionFactories, dateTimeSettings, null);
+    }
+
+    /**
+     * @param errorConsumer notified when the filter could not be parsed or names a condition the
+     *                      field cannot honour. Optional: pass null to keep the historic behaviour
+     *                      of matching nothing and saying nothing.
+     *                      <p>
+     *                      Matching nothing is the right result either way - these filters query
+     *                      on a debounce as the user types, so a half-typed term must not become
+     *                      an error - but a caller that can show the reason should be able to get
+     *                      at it, rather than the reason being swallowed here.
+     */
+    private <T> Optional<ScoringPredicate<T>> createOptionalScoringPredicate(
+            final String filter,
+            final FieldProvider fieldProvider,
+            final ValueFunctionFactories<T> valueFunctionFactories,
+            final DateTimeSettings dateTimeSettings,
+            final Consumer<TokenException> errorConsumer) {
 
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
@@ -193,6 +245,9 @@ public class ExpressionPredicateFactory {
             });
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
+            if (errorConsumer != null && e instanceof final TokenException tokenException) {
+                errorConsumer.accept(tokenException);
+            }
             return Optional.of(matchNone());
         }
     }

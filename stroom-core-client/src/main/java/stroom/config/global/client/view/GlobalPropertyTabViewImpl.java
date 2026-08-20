@@ -76,6 +76,11 @@ public class GlobalPropertyTabViewImpl
     }
 
     @Override
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
+    @Override
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
         nameFilter.registerPopupTextProvider(popupTextSupplier);
     }

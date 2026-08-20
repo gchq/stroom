@@ -20,10 +20,13 @@ import stroom.activity.api.ActivityService;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityValidationResult;
+import stroom.query.api.DateTimeSettings;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.api.datasource.QuickFilterFields;
-import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.FieldProviderImpl;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.common.v2.ValueFunctionFactoriesImpl;
@@ -46,6 +49,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -148,11 +152,22 @@ public class ActivityServiceImpl implements ActivityService {
                 final FieldProvider fieldProvider = new FieldProviderImpl(queryFields, queryFields);
                 final ValueFunctionFactories<Activity> valueFunctionFactories =
                         buildValueFunctionFactories(fieldDefinitions);
+                // ExpressionPredicateFactory swallows a bad filter and matches nothing, which is
+                // the right result on a debounced filter - but the reason has to come back with
+                // the empty page or it is indistinguishable from "nothing matched".
+                // See ResultPage.filterError.
+                final AtomicReference<TokenException> filterError = new AtomicReference<>();
                 filteredActivities = expressionPredicateFactory.filterAndSortStream(
                                 allActivities.stream(),
                                 filter, fieldProvider, valueFunctionFactories,
-                                Optional.of(Comparator.comparingInt(Activity::getId)))
+                                DateTimeSettings.builder().build(),
+                                Optional.of(Comparator.comparingInt(Activity::getId)),
+                                filterError::set)
                         .toList();
+                if (filterError.get() != null) {
+                    return ResultPage.emptyWithFilterError(
+                            TokenErrorUtil.toTokenError(filterError.get()));
+                }
             } else {
                 filteredActivities = allActivities;
             }

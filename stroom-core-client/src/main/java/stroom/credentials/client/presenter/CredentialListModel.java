@@ -98,7 +98,9 @@ public class CredentialListModel
                                     ? null
                                     : pageResponse.getTotal() + 1,
                             pageResponse.isExact());
-                    resultPage = new ResultPage<>(newList, newPageResponse);
+                    // Carry any filter diagnostic through the re-wrap, or SelectionList has no
+                    // way to tell the user why their filter was not applied.
+                    resultPage = new ResultPage<>(newList, newPageResponse, response.getFilterError());
                     consumer.accept(resultPage);
                 }
             }, null, taskMonitorFactory);

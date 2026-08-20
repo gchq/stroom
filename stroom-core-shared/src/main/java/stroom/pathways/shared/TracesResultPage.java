@@ -19,6 +19,7 @@ package stroom.pathways.shared;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,9 +31,15 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class TracesResultPage extends ResultPage<TraceRoot> {
 
+    public TracesResultPage(final List<TraceRoot> values,
+                            final PageResponse pageResponse) {
+        this(values, pageResponse, null);
+    }
+
     @JsonCreator
     public TracesResultPage(@JsonProperty("values") final List<TraceRoot> values,
-                            @JsonProperty("pageResponse") final PageResponse pageResponse) {
-        super(values, pageResponse);
+                            @JsonProperty("pageResponse") final PageResponse pageResponse,
+                            @JsonProperty("filterError") final TokenError filterError) {
+        super(values, pageResponse, filterError);
     }
 }

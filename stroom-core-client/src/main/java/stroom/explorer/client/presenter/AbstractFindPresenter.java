@@ -98,6 +98,12 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
 
     public interface FindView extends View, Focus, HasUiHandlers<FindUiHandlers> {
 
+        /**
+         * Show why the server rejected the filter, or clear it when passed null.
+         * See {@code ResultPage.filterError}.
+         */
+        void setFilterError(String filterError);
+
         void setResultView(View view);
 
         void setDialogMode(boolean dialog);

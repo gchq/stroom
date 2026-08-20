@@ -34,4 +34,10 @@ public interface QuickFilterPageView extends View, Focus, HasUiHandlers<QuickFil
     void setDataView(View view);
 
     void setQuickFilterText(String quickFilterText);
+
+    /**
+     * Show why the server rejected the filter, or clear it when passed null.
+     * See {@code ResultPage.filterError}.
+     */
+    void setFilterError(String filterError);
 }

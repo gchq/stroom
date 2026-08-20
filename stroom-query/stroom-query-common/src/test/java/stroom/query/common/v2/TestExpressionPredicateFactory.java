@@ -23,7 +23,9 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.UserTimeZone;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
+import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.DynamicTest;
@@ -38,11 +40,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 class TestExpressionPredicateFactory {
 
@@ -53,6 +57,73 @@ class TestExpressionPredicateFactory {
 
     private static final ValueFunctionFactories<String> DATE_VALUE_FUNCTION_FACTORIES = fieldName ->
             new StringValueFunctionFactory(QueryField.builder().fldName("test").fldType(FieldType.DATE).build());
+
+
+    // --------------------------------------------------------------------------------
+    // ExpressionPredicateFactory swallows a bad filter and matches nothing. That is the right
+    // result on a debounced filter, but it means the four in-memory quick filter surfaces -
+    // global properties, tasks, the explorer tree and activities - cannot see the reason unless
+    // they ask for it. These cover the opt-in that lets them.
+
+    private static final QueryField TEST_FIELD = QueryField.createUiText("name");
+    private static final FieldProvider TEST_PROVIDER =
+            new FieldProviderImpl(List.of(TEST_FIELD), List.of(TEST_FIELD));
+    private static final ValueFunctionFactories<String> TEST_VFF =
+            StringValueFunctionFactory.create(TEST_FIELD);
+
+    @Test
+    void testErrorConsumer_isNotifiedAndStillMatchesNothing() {
+        final AtomicReference<TokenException> captured = new AtomicReference<>();
+
+        final List<String> result = new ExpressionPredicateFactory().filterAndSortStream(
+                        Stream.of("alpha", "beta"),
+                        // A trailing operator - the transient state of typing "alpha and beta".
+                        "alpha and",
+                        TEST_PROVIDER,
+                        TEST_VFF,
+                        DateTimeSettings.builder().build(),
+                        Optional.empty(),
+                        captured::set)
+                .toList();
+
+        assertThat(result).isEmpty();
+        assertThat(captured.get()).isNotNull();
+        assertThat(captured.get().getToken()).isNotNull();
+    }
+
+    @Test
+    void testErrorConsumer_notNotifiedWhenTheFilterIsFine() {
+        final AtomicReference<TokenException> captured = new AtomicReference<>();
+
+        final List<String> result = new ExpressionPredicateFactory().filterAndSortStream(
+                        Stream.of("alpha", "beta"),
+                        "alpha",
+                        TEST_PROVIDER,
+                        TEST_VFF,
+                        DateTimeSettings.builder().build(),
+                        Optional.empty(),
+                        captured::set)
+                .toList();
+
+        assertThat(result).containsExactly("alpha");
+        assertThat(captured.get()).isNull();
+    }
+
+    @Test
+    void testErrorConsumer_omittingItKeepsTheHistoricBehaviour() {
+        // Every other caller passes no consumer and must keep matching nothing without throwing.
+        assertThatCode(() -> {
+            final List<String> result = new ExpressionPredicateFactory().filterAndSortStream(
+                            Stream.of("alpha", "beta"),
+                            "alpha and",
+                            TEST_PROVIDER,
+                            TEST_VFF,
+                            DateTimeSettings.builder().build(),
+                            Optional.empty())
+                    .toList();
+            assertThat(result).isEmpty();
+        }).doesNotThrowAnyException();
+    }
 
     @TestFactory
     List<DynamicTest> textMatcherTestFactory() {

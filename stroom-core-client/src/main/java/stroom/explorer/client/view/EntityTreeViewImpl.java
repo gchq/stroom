@@ -71,6 +71,11 @@ public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
         explorerTreeContainer.setWidget(cellTree);
     }
 
+    @Override
+    public void setFilterError(final String filterError) {
+        nameFilter.setFilterError(filterError);
+    }
+
     public interface Binder extends UiBinder<Widget, EntityTreeViewImpl> {
 
     }
