@@ -24,6 +24,8 @@ import stroom.docstore.impl.db.DocStoreDbConnProvider;
 import stroom.docstore.impl.db.jooq.tables.Doc;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.FieldProviderImpl;
 import stroom.query.common.v2.SimpleStringExpressionParser;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
@@ -326,6 +328,11 @@ public class DocDependencyDao {
                     .create(FIELD_PROVIDER, filterInput)
                     .ifPresent(expression ->
                             conditions.add(createExpressionMapper(pseudoRefUuids).apply(expression)));
+        } catch (final TokenException e) {
+            // A rejected filter must not look like a filter that matched nothing, so send the
+            // reason back with the (empty) results. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
             return ResultPage.empty();

@@ -225,6 +225,10 @@ public enum ConditionSet {
      * </ul>
      * {@code BETWEEN}, {@code IS_NULL} and {@code IS_NOT_NULL} are omitted as meaningless on a
      * text column rather than because SQL cannot express them.
+     * <p>
+     * The four ordering conditions are included: {@code TermHandler:149-160} implements them, and
+     * the quick filter can spell all four ({@code >}, {@code >=}, {@code <}, {@code <=}). Note the
+     * comparison is lexicographic on a text column, so {@code >10} does not order numerically.
      */
     SQL_TEXT(
             Condition.CONTAINS,
@@ -233,6 +237,10 @@ public enum ConditionSet {
             Condition.STARTS_WITH,
             Condition.ENDS_WITH,
             Condition.MATCHES_REGEX,
+            Condition.GREATER_THAN,
+            Condition.GREATER_THAN_OR_EQUAL_TO,
+            Condition.LESS_THAN,
+            Condition.LESS_THAN_OR_EQUAL_TO,
             Condition.IN,
             Condition.IN_DICTIONARY),
 
@@ -260,8 +268,16 @@ public enum ConditionSet {
      * to {@code MATCHES_REGEX} at parse time, so no term ever carries it. That changes when spec
      * §5.2 makes it a real condition, at which point it must be added here.
      * <p>
+     * The four ordering conditions are included: {@code createTextTermPredicate} implements them
+     * with {@code StringGreaterThan} and friends, and the quick filter can spell all four
+     * ({@code >}, {@code >=}, {@code <}, {@code <=}). Note the comparison is lexicographic, so
+     * {@code >10} does not order numerically - a numeric field should declare
+     * {@link #ALL_UI_NUMERIC}.
+     * <p>
      * Contrast {@link #SQL_TEXT}, which omits {@code WORD_BOUNDARY} because {@code TermHandler}
-     * has no case for it and would throw.
+     * has no case for it and would throw, and omits the case-sensitive variants by the decision
+     * in the syntax spec §8.2 - the columns use a case-insensitive collation, so declaring them
+     * would promise case sensitivity that is not delivered.
      */
     ALL_UI_TEXT(
             Condition.CONTAINS,
@@ -277,6 +293,10 @@ public enum ConditionSet {
             Condition.MATCHES_REGEX,
             Condition.MATCHES_REGEX_CASE_SENSITIVE,
             Condition.WORD_BOUNDARY,
+            Condition.GREATER_THAN,
+            Condition.GREATER_THAN_OR_EQUAL_TO,
+            Condition.LESS_THAN,
+            Condition.LESS_THAN_OR_EQUAL_TO,
             Condition.IN,
             Condition.IN_DICTIONARY),
     UI_TEXT(

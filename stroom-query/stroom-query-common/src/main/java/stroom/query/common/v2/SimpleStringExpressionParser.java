@@ -358,13 +358,13 @@ public class SimpleStringExpressionParser {
                 // from the field it resolved against, which addTerms does per field.
                 if (not) {
                     final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.NOT);
-                    addTerms(fields, condition, fieldValue, builder);
+                    addTerms(fields, condition, fieldValue, token, builder);
                     final ExpressionOperator notOperator = builder.build();
                     if (notOperator.hasChildren()) {
                         parent.addOperator(notOperator);
                     }
                 } else {
-                    addTerms(fields, condition, fieldValue, parent);
+                    addTerms(fields, condition, fieldValue, token, parent);
                 }
             }
         }
@@ -373,13 +373,14 @@ public class SimpleStringExpressionParser {
     private static void addTerms(final List<QueryField> fields,
                                  final Condition condition,
                                  final String fieldValue,
+                                 final AbstractToken token,
                                  final ExpressionOperator.Builder parent) {
         if (fields.size() == 1) {
-            parent.addTerm(createTerm(fields.getFirst(), condition, fieldValue));
+            parent.addTerm(createTerm(fields.getFirst(), condition, fieldValue, token));
         } else {
             final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
             for (final QueryField field : fields) {
-                builder.addTerm(createTerm(field, condition, fieldValue));
+                builder.addTerm(createTerm(field, condition, fieldValue, token));
             }
             parent.addOperator(builder.build());
         }
@@ -387,13 +388,35 @@ public class SimpleStringExpressionParser {
 
     private static ExpressionTerm createTerm(final QueryField field,
                                              final Condition condition,
-                                             final String fieldValue) {
+                                             final String fieldValue,
+                                             final AbstractToken token) {
+        final Condition resolved = condition == null
+                ? defaultCondition(field)
+                : condition;
+
+        // Reject here rather than letting the term reach an evaluator that cannot honour it.
+        // The evaluators fail in three different and equally unhelpful ways: TermHandler throws
+        // from its default case, ExpressionPredicateFactory throws MatchException, and a
+        // converter-backed SQL field quietly matches nothing. All three surface to the user as
+        // an empty grid indistinguishable from "no matches".
+        //
+        // Checked for the resolved condition, not just an explicitly written one, so that a
+        // field declaring neither CONTAINS nor EQUALS says so rather than silently getting the
+        // EQUALS fallback from defaultCondition.
+        if (!field.supportsCondition(resolved)) {
+            throw new TokenException(token, "Field '" +
+                                            field.getFldName() +
+                                            "' does not support '" +
+                                            resolved.getDisplayValue() +
+                                            "' here. Supported: " +
+                                            field.getConditionSet() +
+                                            ".");
+        }
+
         return ExpressionTerm
                 .builder()
                 .field(field.getFldName())
-                .condition(condition == null
-                        ? defaultCondition(field)
-                        : condition)
+                .condition(resolved)
                 .value(fieldValue)
                 .build();
     }

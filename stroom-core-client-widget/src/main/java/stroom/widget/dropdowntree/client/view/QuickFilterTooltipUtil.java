@@ -16,6 +16,8 @@
 
 package stroom.widget.dropdowntree.client.view;
 
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.ConditionSet;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.widget.util.client.HtmlBuilder;
@@ -49,6 +51,18 @@ public class QuickFilterTooltipUtil {
                                          final Consumer<TableBuilder> preambleBuilder,
                                          final List<FilterFieldDefinition> fieldDefinitions,
                                          final String quickFilterHelpUrl) {
+        return createTooltip(header, preambleBuilder, fieldDefinitions, null, quickFilterHelpUrl);
+    }
+
+    /**
+     * @param supportedConditions the conditions this surface's fields declare, used to hide the
+     *                            match types it would reject. Null shows every match type.
+     */
+    public static SafeHtml createTooltip(final String header,
+                                         final Consumer<TableBuilder> preambleBuilder,
+                                         final List<FilterFieldDefinition> fieldDefinitions,
+                                         final ConditionSet supportedConditions,
+                                         final String quickFilterHelpUrl) {
 
         final String defaultFieldNames = getDefaultFieldNamesInfo(fieldDefinitions);
 
@@ -60,10 +74,12 @@ public class QuickFilterTooltipUtil {
         // All this help content needs to match what the server actually does. The authority is
         // SimpleStringExpressionParser for the sigils below (QuickFilterPredicateFactory, which
         // this used to name, no longer exists), and the surface's ConditionSet for whether the
-        // resulting condition is honoured. The two can disagree: a DB-backed surface declares
-        // SQL_TEXT, which has no WORD_BOUNDARY, so the "?ABC" row below over-promises there.
-        // Making these rows ConditionSet-aware needs FieldProvider to yield QueryFields - see
-        // docs/quick-filter-conformance-plan.md steps 3 and 4.
+        // resulting condition is honoured.
+        //
+        // The two can disagree, and since the capability check was armed a disagreement is a
+        // rejection rather than an empty grid - so a row shown here for a condition the surface
+        // does not declare is actively misleading. Callers that know their surface's conditions
+        // pass them in; callers that pass null get every row, which is the old behaviour.
         final TableBuilder tb = new TableBuilder();
         tb.row(TableCell.header(header, 2));
         tb.row(TableCell.data(description, 2));
@@ -77,23 +93,26 @@ public class QuickFilterTooltipUtil {
         // Adds a break at the end if there are fields
         addFieldInfo(fieldDefinitions, tb);
 
-        tb
-                .row(TableCell.header("Example input"), TableCell.header("Match type"))
-                .row("abc", "Default contains matching. (matches 'xxabcxx').")
-                .row("~abc",
-                        "Characters anywhere (in order) matching (matches 'xxaxxbxxcxx').")
-                .row("/ab.c",
-                        "Regular expression matching (matches 'xxabxcxx').")
-                .row("?ABC",
-                        "Word boundary matching (matches 'AlphaBravoCharlie').")
-                .row("=abc",
-                        "Exact match (matches 'abc').")
-                .row("$abc",
-                        "Suffix match (matches 'xxxabc')")
-                .row("^abc",
-                        "Prefix match (matches abcxxx').")
-                .row("!abc",
-                        "Negated match (does not match values containing 'abc'). " +
+        tb.row(TableCell.header("Example input"), TableCell.header("Match type"));
+        addMatchTypeRow(tb, supportedConditions, Condition.CONTAINS,
+                "abc", "Default contains matching. (matches 'xxabcxx').");
+        // '~' is rewritten to a regex at parse time, so it is offered wherever regex is.
+        addMatchTypeRow(tb, supportedConditions, Condition.MATCHES_REGEX,
+                "~abc", "Characters anywhere (in order) matching (matches 'xxaxxbxxcxx').");
+        addMatchTypeRow(tb, supportedConditions, Condition.MATCHES_REGEX,
+                "/ab.c", "Regular expression matching (matches 'xxabxcxx').");
+        addMatchTypeRow(tb, supportedConditions, Condition.WORD_BOUNDARY,
+                "?ABC", "Word boundary matching (matches 'AlphaBravoCharlie').");
+        addMatchTypeRow(tb, supportedConditions, Condition.EQUALS,
+                "=abc", "Exact match (matches 'abc').");
+        addMatchTypeRow(tb, supportedConditions, Condition.ENDS_WITH,
+                "$abc", "Suffix match (matches 'xxxabc')");
+        addMatchTypeRow(tb, supportedConditions, Condition.STARTS_WITH,
+                "^abc", "Prefix match (matches abcxxx').");
+        // Negation wraps the term in a NOT operator rather than being a condition of its own, so
+        // it is available wherever the condition it negates is.
+        addMatchTypeRow(tb, supportedConditions, Condition.CONTAINS,
+                "!abc", "Negated match (does not match values containing 'abc'). " +
                         "Can be used with other match types, e.g. '!=abc'.");
 
         if (NullSafe.hasItems(fieldDefinitions)) {
@@ -134,6 +153,16 @@ public class QuickFilterTooltipUtil {
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tb::write, Attribute.className("infoTable"));
         return htmlBuilder.toSafeHtml();
+    }
+
+    private static void addMatchTypeRow(final TableBuilder tb,
+                                       final ConditionSet supportedConditions,
+                                       final Condition condition,
+                                       final String example,
+                                       final String description) {
+        if (supportedConditions == null || supportedConditions.supportsCondition(condition)) {
+            tb.row(example, description);
+        }
     }
 
     private static String getDefaultFieldNamesInfo(final List<FilterFieldDefinition> fieldDefinitions) {

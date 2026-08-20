@@ -18,18 +18,19 @@ package stroom.docstore.impl.dao;
 
 import stroom.collection.api.CollectionService;
 import stroom.db.util.JooqUtil;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreDBPersistenceDbModule;
 import stroom.docstore.impl.db.DocStoreDbConnProvider;
 import stroom.docstore.mock.MockDocFinderModule;
-import stroom.dictionary.api.WordListProvider;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.shared.CriteriaFieldSort;
-import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -615,6 +616,42 @@ class TestDocDependencyDao {
         assertThat(filter("\"Dashboard").getValues()).isEmpty();
         // WORD_BOUNDARY is not in ConditionSet.SQL_TEXT and TermHandler would throw on it.
         assertThat(filter("fromname:?Dashboard").getValues()).isEmpty();
+    }
+
+    /**
+     * Empty is the right result for a rejected filter, but on its own it is indistinguishable
+     * from a filter that matched nothing - which is what made arming the capability check a
+     * change from one silent wrong answer to another. The reason has to come back with the page.
+     */
+    @Test
+    void testFetchDependencies_rejectedFilterExplainsItself() {
+        new Fixture();
+
+        final ResultPage<Dependency> page = filter("fromname:?Dashboard");
+
+        assertThat(page.getValues()).isEmpty();
+        assertThat(page.getFilterError()).isNotNull();
+        assertThat(page.getFilterError().getText())
+                .contains("does not support")
+                .contains("word boundary");
+        // Positional, so the offending token can be underlined rather than described.
+        assertThat(page.getFilterError().getFrom()).isNotNull();
+        assertThat(page.getFilterError().getTo()).isNotNull();
+        assertThat(page.getFilterError().getSeverity()).isEqualTo(Severity.ERROR);
+    }
+
+    /**
+     * A filter that legitimately matches nothing must NOT carry a diagnostic, or the widget would
+     * cry wolf on every ordinary empty result.
+     */
+    @Test
+    void testFetchDependencies_emptyResultCarriesNoDiagnostic() {
+        new Fixture();
+
+        final ResultPage<Dependency> page = filter("fromname:NoSuchThingExists");
+
+        assertThat(page.getValues()).isEmpty();
+        assertThat(page.getFilterError()).isNull();
     }
 
     @Test

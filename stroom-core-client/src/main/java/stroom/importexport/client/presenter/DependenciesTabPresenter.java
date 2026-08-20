@@ -19,6 +19,7 @@ package stroom.importexport.client.presenter;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.importexport.client.presenter.DependenciesTabPresenter.DependenciesTabView;
 import stroom.importexport.shared.DependencyCriteria;
+import stroom.query.api.datasource.ConditionSet;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
@@ -55,7 +56,12 @@ public class DependenciesTabPresenter
             if (uiConfig != null) {
                 view.setHelpTooltipText(QuickFilterTooltipUtil.createTooltip(
                         "Dependencies Quick Filter Syntax",
+                        null,
                         DependencyCriteria.FIELD_DEFINITIONS,
+                        // The only DB-backed surface with a quick filter tooltip. SQL_TEXT has no
+                        // WORD_BOUNDARY, so without this the tooltip would advertise "?ABC" on a
+                        // screen that now rejects it.
+                        ConditionSet.SQL_TEXT,
                         uiConfig.getHelpUrlQuickFilter()));
             }
         }, this);

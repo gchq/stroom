@@ -24,6 +24,7 @@ import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.api.datasource.QuickFilterFields;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.ConsoleColour;
 import stroom.util.shared.NullSafe;
@@ -583,11 +584,31 @@ class TestQuickFilterPredicateFactory {
 
     @Test
     void testDefaultCondition_explicitSigilStillWins() {
-        // The fallback only applies when the user wrote no sigil. An explicit operator is still
-        // honoured verbatim, so step 4 can reject it on its own merits rather than silently
-        // rewriting what the user asked for.
-        doQualifyInputTest("^OK", "AND {status starts with OK}", NARROW_FIELD_PROVIDER);
+        // The fallback only applies when the user wrote no sigil. An explicit operator is
+        // honoured verbatim rather than silently rewritten to something the field does support.
         doQualifyInputTest("=OK", "AND {status = OK}", NARROW_FIELD_PROVIDER);
+    }
+
+    @Test
+    void testCapabilityCheck_explicitUnsupportedConditionIsRejected() {
+        // '^' is honoured verbatim, so it reaches the capability check and is rejected there with
+        // a positional message naming what the field does support - rather than reaching
+        // TermHandler's default case and being swallowed into an empty grid by the DAO.
+        Assertions.assertThatThrownBy(() ->
+                        SimpleStringExpressionParser.create(NARROW_FIELD_PROVIDER, "^OK"))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("does not support 'starts with'")
+                .hasMessageContaining("'='");
+    }
+
+    @Test
+    void testCapabilityCheck_orderingConditionsAreSupportedOnTextFields() {
+        // Both evaluators compare text lexicographically for these, so both text sets declare
+        // them. Arming the check without them would have broken '>foo' everywhere it works.
+        doQualifyInputTest(">m", "AND {name > m}", FIELD_PROVIDER_2);
+        doQualifyInputTest(">=m", "AND {name >= m}", FIELD_PROVIDER_2);
+        doQualifyInputTest("<m", "AND {name < m}", FIELD_PROVIDER_2);
+        doQualifyInputTest("<=m", "AND {name <= m}", FIELD_PROVIDER_2);
     }
 
     @Test

@@ -33,7 +33,11 @@ public interface AnnotationTagFields {
 
     QueryField ID_FIELD = QueryField.createId(ID);
     QueryField UUID_FIELD = QueryField.createId(UUID);
-    QueryField NAME_FIELD = QueryField.createDate(NAME);
+    // Was createDate, which declared DEFAULT_DATE on what is ANNOTATION_TAG.NAME - a text column
+    // reached through an identity converter. The wrong FieldType also made the expression editor
+    // offer a date picker for a tag name. Found by arming the capability check: the annotation tag
+    // screens filter this field with CONTAINS, which DEFAULT_DATE does not declare.
+    QueryField NAME_FIELD = QueryField.createSqlText(NAME);
     QueryField TYPE_ID_FIELD = QueryField.createText(TYPE_ID);
 
     List<QueryField> FIELDS = Arrays.asList(

@@ -24,9 +24,6 @@ import stroom.annotation.impl.AnnotationValues;
 import stroom.annotation.impl.AnnotationValues.FieldValueEntry;
 import stroom.annotation.impl.dao.AnnotationEventLinkCache.AnnotationEventLink;
 import stroom.annotation.impl.db.AnnotationDbConnProvider;
-import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
-import stroom.annotation.impl.db.jooq.tables.AnnotationLink;
-import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationLinkRecord;
@@ -76,6 +73,8 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.FieldProviderImpl;
 import stroom.query.common.v2.SimpleStringExpressionParser;
@@ -532,6 +531,11 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             optionalExpressionOperator.ifPresent(expressionOperator ->
                     conditions.add(expressionMapper.apply(expressionOperator)));
             conditions.add(ANNOTATION.DELETED.isFalse());
+        } catch (final TokenException e) {
+            // A rejected filter must not look like a filter that matched nothing, so send the
+            // reason back with the (empty) results. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
             return ResultPage.empty();

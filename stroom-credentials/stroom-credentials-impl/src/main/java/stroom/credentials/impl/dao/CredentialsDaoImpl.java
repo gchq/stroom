@@ -29,6 +29,8 @@ import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.FieldProviderImpl;
 import stroom.query.common.v2.SimpleStringExpressionParser;
@@ -39,6 +41,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
@@ -50,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -108,7 +112,8 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
         return expressionMapper;
     }
 
-    private List<Condition> createConditions(final FindCredentialRequest request) {
+    private List<Condition> createConditions(final FindCredentialRequest request,
+                                             final AtomicReference<TokenError> filterError) {
         final List<Condition> conditions = new ArrayList<>();
         final FieldProvider fieldProvider = new FieldProviderImpl(
                 List.of(stroom.credentials.shared.CredentialFields.CREDENTIAL_NAME_FIELD),
@@ -127,6 +132,11 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
             // as AnnotationDaoImpl, IndexFieldDaoImpl and AiDaoImpl all do.
             LOGGER.debug(e::getMessage, e);
             conditions.add(DSL.falseCondition());
+            if (e instanceof final TokenException tokenException) {
+                // Carried out through createConditions' caller rather than returned here, because
+                // this method builds conditions rather than the page. See ResultPage.filterError.
+                filterError.set(TokenErrorUtil.toTokenError(tokenException));
+            }
         }
 
         if (!NullSafe.isEmptyCollection(request.getCredentialTypes())) {
@@ -146,7 +156,8 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     @Override
     public ResultPage<CredentialWithPerms> findCredentialsWithPermissions(final FindCredentialRequest request,
                                                                           final Function<Credential, CredentialWithPerms> permissionDecorator) {
-        final List<Condition> conditions = createConditions(request);
+        final AtomicReference<TokenError> filterError = new AtomicReference<>();
+        final List<Condition> conditions = createConditions(request, filterError);
         final List<CredentialWithPerms> list = JooqUtil.contextResult(credentialsDbConnProvider, context ->
                         context
                                 .select()
@@ -158,13 +169,14 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                                 .map(permissionDecorator)
                                 .filter(Objects::nonNull))
                 .toList();
-        return ResultPage.createPageLimitedList(list, request.getPageRequest());
+        return withFilterError(ResultPage.createPageLimitedList(list, request.getPageRequest()), filterError);
     }
 
     @Override
     public ResultPage<Credential> findCredentials(final FindCredentialRequest request,
                                                   final Predicate<Credential> permissionFilter) {
-        final List<Condition> conditions = createConditions(request);
+        final AtomicReference<TokenError> filterError = new AtomicReference<>();
+        final List<Condition> conditions = createConditions(request, filterError);
         final List<Credential> list = JooqUtil.contextResult(credentialsDbConnProvider, context ->
                         context
                                 .select()
@@ -175,7 +187,19 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                                 .map(this::mapToCredential)
                                 .filter(permissionFilter))
                 .toList();
-        return ResultPage.createPageLimitedList(list, request.getPageRequest());
+        return withFilterError(ResultPage.createPageLimitedList(list, request.getPageRequest()), filterError);
+    }
+
+    /**
+     * Unlike the other DAOs this one matches no rows rather than returning early, so the
+     * diagnostic has to be attached to the page after it is built.
+     */
+    private static <T> ResultPage<T> withFilterError(final ResultPage<T> resultPage,
+                                                     final AtomicReference<TokenError> filterError) {
+        final TokenError tokenError = filterError.get();
+        return tokenError == null
+                ? resultPage
+                : new ResultPage<>(resultPage.getValues(), resultPage.getPageResponse(), tokenError);
     }
 
     private Credential mapToCredential(final Record record) {
