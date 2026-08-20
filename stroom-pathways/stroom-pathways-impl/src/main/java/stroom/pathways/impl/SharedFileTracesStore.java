@@ -68,7 +68,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 
 /**
- * Query implementation for a shared-filesystem trace store ({@code SharedFileStoreShard}).
+ * Query implementation for a trace store held on a shared filesystem.
  *
  * <p><b>Reads archive buckets only.</b> The holding-area shards are never queried: they hold each trace's
  * root purely as an accumulator for late spans, while the bucket — labelled by the root's start time —

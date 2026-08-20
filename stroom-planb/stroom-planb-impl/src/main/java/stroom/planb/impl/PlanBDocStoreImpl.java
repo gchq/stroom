@@ -230,7 +230,7 @@ public class PlanBDocStoreImpl
             try {
                 final Path sharedRoot = Path.of(sharedPathStr);
                 if (Files.exists(sharedRoot.resolve(PlanBConstants.PROCESSING_DIR_NAME).resolve(doc.getUuid())) ||
-                    Files.exists(sharedRoot.resolve(PlanBConstants.SHARDS_DIR_NAME).resolve(doc.getUuid()))) {
+                    Files.exists(sharedRoot.resolve(PlanBConstants.HOLDING_DIR_NAME).resolve(doc.getUuid()))) {
                     return true;
                 }
             } catch (final Exception e) {

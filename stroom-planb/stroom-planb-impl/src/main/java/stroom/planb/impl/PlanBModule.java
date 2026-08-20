@@ -26,12 +26,10 @@ import stroom.planb.impl.data.query.PlanBShardInfoServiceImpl;
 import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.impl.db.BatchDestination;
 import stroom.planb.impl.db.DefaultBatchDestination;
-import stroom.planb.impl.fs.ArchiveOperation;
-import stroom.planb.impl.fs.RetentionOperation;
+import stroom.planb.impl.fs.MergeStrategy;
 import stroom.planb.impl.fs.SharedFileStoreCleaner;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
 import stroom.planb.impl.fs.SharedFileStoreMergeProcessor;
-import stroom.planb.impl.fs.SharedFileStoreOperation;
 import stroom.planb.impl.fs.SharedFileStorePublisher;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
@@ -43,6 +41,7 @@ import stroom.planb.impl.rest.FileTransferResourceImpl;
 import stroom.planb.impl.rest.FileTransferService;
 import stroom.planb.impl.rest.FileTransferServiceImpl;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.StateType;
 import stroom.query.api.QueryNodeResolver;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
@@ -94,9 +93,9 @@ public class PlanBModule extends AbstractModule {
         bind(FileTransferService.class).to(FileTransferServiceImpl.class);
         bind(SharedFileStoreMergeProcessor.class);
         bind(SharedFileStorePublisher.class);
-        GuiceUtil.buildMultiBinder(binder(), SharedFileStoreOperation.class)
-                .addBindings(RetentionOperation.class,
-                        ArchiveOperation.class);
+        // Declared empty here so the map exists even in a build that contributes no strategies;
+        // each store type that lives on the shared file store adds its own binding.
+        GuiceUtil.buildMapBinder(binder(), StateType.class, MergeStrategy.class);
 
         bind(QueryNodeResolver.class).to(QueryNodeResolverImpl.class);
 

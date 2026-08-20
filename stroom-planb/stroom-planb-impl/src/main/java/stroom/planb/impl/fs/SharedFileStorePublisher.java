@@ -55,8 +55,9 @@ import java.util.stream.Stream;
  * <p>{@link #recoverOrphaned} undoes the partial state left by an interrupted
  * push and must be called at the start of each lock cycle, before the shard is
  * opened, so that {@code syncFromSharedStoreIfRequired} sees a consistent
- * directory. Note it only scans the {@code shards/} tree, which is why
- * {@link #pushArchive} uses a different, recovery-free protocol for the {@code archive/} tree.
+ * directory. Note it only ever scans the directory it is handed, which is the tree a store type
+ * publishes whole shards to — never {@code archive/}, which is why {@link #pushArchive} uses a
+ * different, recovery-free protocol.
  *
  * <p>Two invariants hold for everything here: no LMDB env is ever opened on the shared mount (data is
  * only copied to and from it, with all LMDB work done locally), and an archive bucket dir is never
@@ -93,17 +94,16 @@ public class SharedFileStorePublisher {
     }
 
     /**
-     * Copies the local shard into the shared store using an atomic rename-swap,
-     * carrying forward any operational (non-system) files from the existing
-     * shared shard directory.
+     * Copies the local shard into {@code sharedDocDir/<shardIndex>} using an atomic rename-swap,
+     * carrying forward any operational (non-system) files from the existing shared shard directory.
+     *
+     * <p>Takes the destination rather than deriving it, as {@link #recoverOrphaned} does, so which
+     * tree a store type publishes a whole shard to stays that store type's business.
      */
-    public void push(final PlanBDocument doc,
-              final int shardIndex,
-              final SharedFileStoreShard shard) throws IOException {
-        final Path sharedShardDir = Path.of(doc.getSharedPath())
-                .resolve(PlanBConstants.SHARDS_DIR_NAME)
-                .resolve(doc.getUuid())
-                .resolve(PlanBConstants.formatShardIndex(shardIndex));
+    public void push(final Path localShardDir,
+              final Path sharedDocDir,
+              final int shardIndex) throws IOException {
+        final Path sharedShardDir = sharedDocDir.resolve(PlanBConstants.formatShardIndex(shardIndex));
 
         // Named from the canonical dir's own file name, not from shardIndex — recoverOrphaned matches on
         // the same derivation, and formatting the index independently at each site is how the two came to
@@ -130,25 +130,20 @@ public class SharedFileStorePublisher {
             }
         }
 
-        // Copy the LMDB data and lock files from the local shard.
-        final Path localShardDir = shard.getShardDir();
+        // Copy the LMDB data file from the local shard.
         copyIfExists(localShardDir.resolve(PlanBConstants.DATA_FILE_NAME),
                 sharedTempDir.resolve(PlanBConstants.DATA_FILE_NAME));
 
         // Write the version marker INTO the temp dir so it swaps into the live shard atomically with
         // data.mdb (as pushArchive does). Its presence then already implies a fully written shard, so
         // there is no post-swap window in which the live shard exists without a .version for a lock-free
-        // reader to trip over, and no separate .complete sentinel is needed here (nothing reads it in
-        // the shards/ tree).
+        // reader to trip over, and no separate .complete sentinel is needed here (nothing reads one
+        // in the tree whole shards are published to).
         final String newVersion = Instant.now().toEpochMilli() + "_" + nodeInfo.getThisNodeName();
         Files.writeString(sharedTempDir.resolve(PlanBConstants.VERSION_FILE_NAME), newVersion);
 
         // Atomic rename-swap: live -> old, temp -> live, delete old.
         pushDir(sharedTempDir, sharedShardDir);
-
-        // Stamp the writer node's own local copy with the same version so it does not needlessly
-        // sync itself back down from the shared store on its next read.
-        Files.writeString(localShardDir.resolve(PlanBConstants.VERSION_FILE_NAME), newVersion);
     }
 
     /**
@@ -170,9 +165,9 @@ public class SharedFileStorePublisher {
      * unique {@link PlanBConstants#DATA_TMP_FILE_NAME}-prefixed name and renames it to {@code data.mdb}
      * <em>within</em> the live bucket dir. Unlike {@link #pushDir}'s live→{@code .old_}→temp→live swap
      * there is no instant
-     * at which the bucket is absent — which matters because {@link #recoverOrphaned} only ever scans
-     * the {@code shards/} tree, so an interrupted swap in the {@code archive/} tree would leave the
-     * bucket's {@code .old_} copy orphaned and the whole date bucket permanently invisible to queries.
+     * at which the bucket is absent — which matters because {@link #recoverOrphaned} is never called
+     * for the {@code archive/} tree, so an interrupted swap here would leave the bucket's
+     * {@code .old_} copy orphaned and the whole date bucket permanently invisible to queries.
      * The worst case here is instead a new {@code data.mdb} with an older {@code .version}, which
      * readers already tolerate: they re-sync when the version later changes.
      */
@@ -192,12 +187,12 @@ public class SharedFileStorePublisher {
         Files.createDirectories(localDir);
 
         try {
-            // Throw rather than return: the staged spans have already been deleted from the local shard, so
-            // reporting this bucket as pushed would lose them. Failing here makes mergeShard skip the
+            // Throw rather than return: the staged records have already been deleted from the local shard,
+            // so reporting this bucket as pushed would lose them. Failing here makes mergeShard skip the
             // publish and discard that shard, leaving the shared store's copy to be retried next cycle.
             if (!Files.exists(archiveShard.localDir().resolve(PlanBConstants.DATA_FILE_NAME))) {
                 throw new IOException("Staged archive " + archiveShard.localDir()
-                                      + " has no data file, so its spans cannot be pushed");
+                                      + " has no data file, so its records cannot be pushed");
             }
 
             final Path existingData = archiveShardDir.resolve(PlanBConstants.DATA_FILE_NAME);
@@ -211,13 +206,13 @@ public class SharedFileStorePublisher {
             }
 
             // Always merge, even into an empty local env for a brand-new bucket, rather than copying the
-            // staged batch up verbatim. The batch holds spans only — its roots and sort indexes are
-            // derived, not carried — so publishing it as-is would leave a bucket with spans that no query
-            // could find, and without the index DBIs a read-only query open needs.
+            // staged batch up verbatim. The batch carries raw records only — anything the store derives
+            // from them, including its sort indexes, is not carried — so publishing it as-is would leave a
+            // bucket no query could search, and without the index DBIs a read-only query open needs.
             try (final Db<?, ?> db = PlanBDb.open(
                     doc, localDir, byteBuffers, byteBufferFactory, false, true)) {
                 db.merge(archiveShard.localDir());
-                // Lets the bucket rebuild its own derived state from the span set it now holds, rather
+                // Lets the bucket rebuild its own derived state from the records it now holds, rather
                 // than inheriting whatever the batch happened to carry. merge() maintains the per-record
                 // stats this needs and queues every record it touched.
                 db.mergeComplete();
@@ -271,8 +266,9 @@ public class SharedFileStorePublisher {
     }
 
     // A JVM kill between the copy up and the rename orphans a bucket-sized temp file here, and nothing
-    // else would ever clean it: recoverOrphaned scans only the shards/ tree, and SharedFileStoreCleaner
-    // only shards/ and processing/. Sweeping on the next push keeps that self-healing.
+    // else would ever clean it: recoverOrphaned is never called for the archive/ tree, and
+    // SharedFileStoreCleaner sweeps only holding/ and processing/. Sweeping on the next push keeps
+    // that self-healing.
     private static void deleteOrphanedTempData(final Path archiveShardDir) throws IOException {
         try (final Stream<Path> files = Files.list(archiveShardDir)) {
             files.filter(p -> p.getFileName().toString().startsWith(PlanBConstants.DATA_TMP_FILE_NAME))
@@ -321,16 +317,16 @@ public class SharedFileStorePublisher {
      *
      * Must be called inside the shard cluster lock, before the shard is opened.
      */
-    public void recoverOrphaned(final Path sharedShardsDocDir, final int shardIndex) {
-        if (!Files.exists(sharedShardsDocDir)) {
+    public void recoverOrphaned(final Path sharedHoldingDocDir, final int shardIndex) {
+        if (!Files.exists(sharedHoldingDocDir)) {
             return;
         }
-        final Path canonicalShardDir = sharedShardsDocDir.resolve(
+        final Path canonicalShardDir = sharedHoldingDocDir.resolve(
                 PlanBConstants.formatShardIndex(shardIndex));
         final String tmpPrefix = PlanBConstants.TMP_DIR_PREFIX + canonicalShardDir.getFileName() + "_";
         final String oldPrefix = PlanBConstants.OLD_DIR_PREFIX + canonicalShardDir.getFileName() + "_";
 
-        try (final Stream<Path> siblings = Files.list(sharedShardsDocDir)) {
+        try (final Stream<Path> siblings = Files.list(sharedHoldingDocDir)) {
             siblings.forEach(sibling -> {
                 final String name = sibling.getFileName().toString();
                 if (name.startsWith(tmpPrefix)) {
@@ -352,7 +348,7 @@ public class SharedFileStorePublisher {
                 }
             });
         } catch (final IOException e) {
-            LOGGER.error("Error scanning for orphaned push dirs in {}", sharedShardsDocDir, e);
+            LOGGER.error("Error scanning for orphaned push dirs in {}", sharedHoldingDocDir, e);
         }
     }
 

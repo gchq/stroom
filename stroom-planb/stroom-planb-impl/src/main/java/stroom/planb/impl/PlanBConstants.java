@@ -24,6 +24,7 @@ public final class PlanBConstants {
     public static final String UNZIP_DIR_NAME = "unzip";
     public static final String MERGING_DIR_NAME = "merging";
     public static final String SHARDS_DIR_NAME = "shards";
+    public static final String HOLDING_DIR_NAME = "holding";
     public static final String SNAPSHOTS_DIR_NAME = "snapshots";
     public static final String ARCHIVE_CACHE_DIR_NAME = "archive_cache";
     public static final String ARCHIVE_LOCAL_DIR_NAME = "archive_local";

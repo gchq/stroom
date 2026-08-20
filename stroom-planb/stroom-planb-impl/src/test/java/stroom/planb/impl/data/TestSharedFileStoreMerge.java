@@ -26,19 +26,23 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.impl.data.value.State;
 import stroom.planb.impl.db.BatchDestination;
+import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.DefaultBatchDestination;
+import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.PlanBStreamWriter;
 import stroom.planb.impl.db.PlanBStreamWriterFactory;
+import stroom.planb.impl.db.ShardKeyRouter;
 import stroom.planb.impl.db.state.StateDb;
 import stroom.planb.impl.db.state.StateRequest;
-import stroom.planb.impl.fs.ArchiveOperation;
+import stroom.planb.impl.fs.HoldingAreaMergeStrategy;
 import stroom.planb.impl.fs.LocalArchive;
-import stroom.planb.impl.fs.RetentionOperation;
+import stroom.planb.impl.fs.MergeStrategy;
 import stroom.planb.impl.fs.SharedFileStoreMergeProcessor;
 import stroom.planb.impl.fs.SharedFileStorePartDestination;
 import stroom.planb.impl.fs.SharedFileStorePublisher;
@@ -239,18 +243,22 @@ class TestSharedFileStoreMerge {
 
         final SharedFileStorePublisher publisher =
                 new SharedFileStorePublisher(nodeInfo, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, planBPaths);
-        final SharedFileStoreMergeProcessor mergeProcessor = new SharedFileStoreMergeProcessor(
-                clusterLockService,
+        // This doc is a STATE store given a shared file store, so map the holding strategy onto
+        // STATE rather than TRACE.
+        final MergeStrategy holdingStrategy = new HoldingAreaMergeStrategy(
                 BYTE_BUFFERS,
                 BYTE_BUFFER_FACTORY,
                 () -> planBConfig,
                 planBPaths,
                 publisher,
+                new LocalArchive(publisher, planBPaths));
+        final SharedFileStoreMergeProcessor mergeProcessor = new SharedFileStoreMergeProcessor(
+                clusterLockService,
+                () -> planBConfig,
                 securityContext,
                 taskContextFactory,
                 planBDocCache,
-                Set.of(new RetentionOperation(),
-                        new ArchiveOperation(new LocalArchive(publisher, planBPaths)))
+                Map.of(StateType.STATE, holdingStrategy)
         );
 
         // Run the merge
@@ -268,9 +276,14 @@ class TestSharedFileStoreMerge {
             assertThat(hasVersion).isFalse();
         }
 
-        // The shards folder should now contain the main merged shards
-        final Path sharedShardDir = sharedRootDir.resolve("shards").resolve(doc.getUuid());
+        // The holding folder should now contain the main merged shards
+        final Path sharedShardDir = sharedRootDir
+                .resolve(PlanBConstants.HOLDING_DIR_NAME).resolve(doc.getUuid());
         assertThat(sharedShardDir).exists();
+
+        // Nothing writes to the shared shards/ tree. A call site left pointing at it would fail
+        // silently — an empty holding shard and lost in-flight data — so assert it is never created.
+        assertThat(sharedRootDir.resolve(PlanBConstants.SHARDS_DIR_NAME)).doesNotExist();
 
         // Both shard 0 and shard 1 should exist, with data.mdb and a .version marker
         for (int i = 0; i < 2; i++) {
@@ -279,21 +292,25 @@ class TestSharedFileStoreMerge {
             assertThat(shardIndexDir.resolve(".version")).exists();
         }
 
-        // Verify query capability on the merged database
-        final String val1 = realShardManager.get(doc.getName(), "key1", reader -> {
-            if (reader instanceof final StateDb stateDb) {
-                return stateDb.getState(new StateRequest(KeyPrefix.create("key1"))).val().toString();
-            }
-            return null;
-        });
-        final String val2 = realShardManager.get(doc.getName(), "key2", reader -> {
-            if (reader instanceof final StateDb stateDb) {
-                return stateDb.getState(new StateRequest(KeyPrefix.create("key2"))).val().toString();
-            }
-            return null;
-        });
+        // Both keys survived the merge, in whichever shard they hashed to. Read the published shards
+        // directly: a store on the shared file store has no local copy to read through ShardManager.
+        assertThat(readPublished(sharedShardDir, "key1")).isEqualTo("value1");
+        assertThat(readPublished(sharedShardDir, "key2")).isEqualTo("value2");
+    }
 
-        assertThat(val1).isEqualTo("value1");
-        assertThat(val2).isEqualTo("value2");
+    /**
+     * Reads a key from whichever published shard holds it, by copying that shard's {@code data.mdb} to a
+     * local directory and opening it read-only — no LMDB env is ever opened on the shared store.
+     */
+    private String readPublished(final Path sharedShardDir, final String key) throws IOException {
+        final int shardIndex = ShardKeyRouter.computeShardIndex(key, doc.getShardCount());
+        final Path localDir = Files.createTempDirectory(tempDir, "read_" + key + "_");
+        Files.copy(sharedShardDir.resolve(PlanBConstants.formatShardIndex(shardIndex))
+                        .resolve(PlanBConstants.DATA_FILE_NAME),
+                localDir.resolve(PlanBConstants.DATA_FILE_NAME));
+        try (final Db<?, ?> db = PlanBDb.open(
+                doc, localDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, true, true)) {
+            return ((StateDb) db).getState(new StateRequest(KeyPrefix.create(key))).val().toString();
+        }
     }
 }

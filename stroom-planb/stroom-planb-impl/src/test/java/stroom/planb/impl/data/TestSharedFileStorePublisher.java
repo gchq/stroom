@@ -23,7 +23,6 @@ import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.fs.SharedFileStorePublisher;
-import stroom.planb.impl.fs.SharedFileStoreShard;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.planb.shared.StateType;
@@ -91,9 +90,8 @@ class TestSharedFileStorePublisher {
     @Test
     void push_copiesDataMdbToSharedStore() throws IOException {
         final Path localDir = createLocalShardDir(true, false);
-        final SharedFileStoreShard shard = shardWithDir(localDir);
 
-        publisher.push(doc, SHARD_INDEX, shard);
+        publisher.push(localDir, sharedHoldingDocDir(), SHARD_INDEX);
 
         assertThat(canonicalShardDir().resolve(PlanBConstants.DATA_FILE_NAME)).exists();
     }
@@ -114,7 +112,7 @@ class TestSharedFileStorePublisher {
         // Given a local shard dir that has both data.mdb AND lock.mdb
         final Path localDir = createLocalShardDir(true, true);
 
-        publisher.push(doc, SHARD_INDEX, shardWithDir(localDir));
+        publisher.push(localDir, sharedHoldingDocDir(), SHARD_INDEX);
 
         // lock.mdb must NOT appear in the shared shard directory
         assertThat(canonicalShardDir().resolve(PlanBConstants.LOCK_FILE_NAME))
@@ -125,18 +123,17 @@ class TestSharedFileStorePublisher {
     }
 
     @Test
-    void push_writesVersionMarkerToSharedAndLocal() throws IOException {
+    void push_writesVersionMarkerToShared() throws IOException {
         final Path localDir = createLocalShardDir(true, false);
-        publisher.push(doc, SHARD_INDEX, shardWithDir(localDir));
+        publisher.push(localDir, sharedHoldingDocDir(), SHARD_INDEX);
 
         assertThat(canonicalShardDir().resolve(PlanBConstants.VERSION_FILE_NAME)).exists();
-        assertThat(localDir.resolve(PlanBConstants.VERSION_FILE_NAME)).exists();
     }
 
     @Test
     void push_versionContainsNodeName() throws IOException {
         final Path localDir = createLocalShardDir(true, false);
-        publisher.push(doc, SHARD_INDEX, shardWithDir(localDir));
+        publisher.push(localDir, sharedHoldingDocDir(), SHARD_INDEX);
 
         final String version = Files.readString(
                 canonicalShardDir().resolve(PlanBConstants.VERSION_FILE_NAME));
@@ -156,7 +153,7 @@ class TestSharedFileStorePublisher {
                 "2026-01-01T00:00:00Z");
 
         final Path localDir = createLocalShardDir(true, false);
-        publisher.push(doc, SHARD_INDEX, shardWithDir(localDir));
+        publisher.push(localDir, sharedHoldingDocDir(), SHARD_INDEX);
 
         assertThat(canonicalShardDir().resolve(PlanBConstants.RETENTION_LAST_FILE_NAME)).exists();
     }
@@ -170,7 +167,7 @@ class TestSharedFileStorePublisher {
         Files.writeString(existingSharedDir.resolve(PlanBConstants.VERSION_FILE_NAME), "stale-version");
 
         final Path localDir = createLocalShardDir(true, false);
-        publisher.push(doc, SHARD_INDEX, shardWithDir(localDir));
+        publisher.push(localDir, sharedHoldingDocDir(), SHARD_INDEX);
 
         // The version file must be freshly written (contains node name), not the stale value.
         final String newVersion = Files.readString(
@@ -186,7 +183,7 @@ class TestSharedFileStorePublisher {
     void push_noLocalDataMdb_stillWritesVersion() throws IOException {
         // Local dir exists but has no data.mdb — push should still complete and stamp a version.
         final Path localDir = createLocalShardDir(false, false);
-        publisher.push(doc, SHARD_INDEX, shardWithDir(localDir));
+        publisher.push(localDir, sharedHoldingDocDir(), SHARD_INDEX);
 
         assertThat(canonicalShardDir().resolve(PlanBConstants.VERSION_FILE_NAME)).exists();
     }
@@ -200,7 +197,7 @@ class TestSharedFileStorePublisher {
         // Canonical shard dir does not exist yet.
         assertThat(canonicalShardDir()).doesNotExist();
         final Path localDir = createLocalShardDir(true, false);
-        publisher.push(doc, SHARD_INDEX, shardWithDir(localDir));
+        publisher.push(localDir, sharedHoldingDocDir(), SHARD_INDEX);
         assertThat(canonicalShardDir()).isDirectory();
     }
 
@@ -210,13 +207,13 @@ class TestSharedFileStorePublisher {
 
     @Test
     void recoverOrphaned_deletesTmpDir() throws IOException {
-        final Path shardsDocDir = sharedShardsDocDir();
-        Files.createDirectories(shardsDocDir);
+        final Path holdingDocDir = sharedHoldingDocDir();
+        Files.createDirectories(holdingDocDir);
         final Path tmpDir = marker(PlanBConstants.TMP_DIR_PREFIX, SHARD_INDEX);
         Files.createDirectories(tmpDir);
         Files.writeString(tmpDir.resolve("data.mdb"), "partial");
 
-        publisher.recoverOrphaned(shardsDocDir, SHARD_INDEX);
+        publisher.recoverOrphaned(holdingDocDir, SHARD_INDEX);
 
         assertThat(tmpDir).doesNotExist();
     }
@@ -227,14 +224,14 @@ class TestSharedFileStorePublisher {
 
     @Test
     void recoverOrphaned_deletesOldDirWhenCanonicalExists() throws IOException {
-        final Path shardsDocDir = sharedShardsDocDir();
+        final Path holdingDocDir = sharedHoldingDocDir();
         Files.createDirectories(canonicalShardDir());   // canonical is present
 
         final Path oldDir = marker(PlanBConstants.OLD_DIR_PREFIX, SHARD_INDEX);
         Files.createDirectories(oldDir);
         Files.writeString(oldDir.resolve("data.mdb"), "old-data");
 
-        publisher.recoverOrphaned(shardsDocDir, SHARD_INDEX);
+        publisher.recoverOrphaned(holdingDocDir, SHARD_INDEX);
 
         assertThat(oldDir).doesNotExist();
         assertThat(canonicalShardDir()).exists();
@@ -246,8 +243,8 @@ class TestSharedFileStorePublisher {
 
     @Test
     void recoverOrphaned_restoresOldDirWhenCanonicalMissing() throws IOException {
-        final Path shardsDocDir = sharedShardsDocDir();
-        Files.createDirectories(shardsDocDir);
+        final Path holdingDocDir = sharedHoldingDocDir();
+        Files.createDirectories(holdingDocDir);
         // canonical shard dir does NOT exist
         assertThat(canonicalShardDir()).doesNotExist();
 
@@ -255,7 +252,7 @@ class TestSharedFileStorePublisher {
         Files.createDirectories(oldDir);
         Files.writeString(oldDir.resolve("data.mdb"), "rescued-data");
 
-        publisher.recoverOrphaned(shardsDocDir, SHARD_INDEX);
+        publisher.recoverOrphaned(holdingDocDir, SHARD_INDEX);
 
         assertThat(oldDir).doesNotExist();
         assertThat(canonicalShardDir()).isDirectory();
@@ -279,12 +276,12 @@ class TestSharedFileStorePublisher {
 
     @Test
     void recoverOrphaned_ignoresUnrelatedDirs() throws IOException {
-        final Path shardsDocDir = sharedShardsDocDir();
-        Files.createDirectories(shardsDocDir);
-        final Path unrelated = shardsDocDir.resolve("some_other_dir");
+        final Path holdingDocDir = sharedHoldingDocDir();
+        Files.createDirectories(holdingDocDir);
+        final Path unrelated = holdingDocDir.resolve("some_other_dir");
         Files.createDirectories(unrelated);
 
-        publisher.recoverOrphaned(shardsDocDir, SHARD_INDEX);
+        publisher.recoverOrphaned(holdingDocDir, SHARD_INDEX);
 
         assertThat(unrelated).exists();
     }
@@ -295,14 +292,14 @@ class TestSharedFileStorePublisher {
 
     @Test
     void recoverOrphaned_ignoresDirsForDifferentShardIndex() throws IOException {
-        final Path shardsDocDir = sharedShardsDocDir();
-        Files.createDirectories(shardsDocDir);
+        final Path holdingDocDir = sharedHoldingDocDir();
+        Files.createDirectories(holdingDocDir);
 
         // Temp dir for shard 1, not shard 0.
         final Path otherShardTmp = marker(PlanBConstants.TMP_DIR_PREFIX, 1);
         Files.createDirectories(otherShardTmp);
 
-        publisher.recoverOrphaned(shardsDocDir, SHARD_INDEX);
+        publisher.recoverOrphaned(holdingDocDir, SHARD_INDEX);
 
         // Should be left alone — belongs to shard 1.
         assertThat(otherShardTmp).exists();
@@ -314,7 +311,7 @@ class TestSharedFileStorePublisher {
 
     /** Returns the canonical shared shard directory for shard 0 of the test doc. */
     private Path canonicalShardDir() {
-        return sharedShardsDocDir().resolve(PlanBConstants.formatShardIndex(SHARD_INDEX));
+        return sharedHoldingDocDir().resolve(PlanBConstants.formatShardIndex(SHARD_INDEX));
     }
 
     // A push-marker dir named the way a push names one: the prefix, then the canonical shard dir's own
@@ -322,12 +319,12 @@ class TestSharedFileStorePublisher {
     // to the dirs pushDir was creating.
     private Path marker(final String prefix, final int shardIndex) {
         final String canonicalName = PlanBConstants.formatShardIndex(shardIndex);
-        return sharedShardsDocDir().resolve(prefix + canonicalName + "_12345");
+        return sharedHoldingDocDir().resolve(prefix + canonicalName + "_12345");
     }
 
-    private Path sharedShardsDocDir() {
+    private Path sharedHoldingDocDir() {
         return sharedRoot
-                .resolve(PlanBConstants.SHARDS_DIR_NAME)
+                .resolve(PlanBConstants.HOLDING_DIR_NAME)
                 .resolve(doc.getUuid());
     }
 
@@ -347,12 +344,5 @@ class TestSharedFileStorePublisher {
             Files.writeString(dir.resolve(PlanBConstants.LOCK_FILE_NAME), "lock");
         }
         return dir;
-    }
-
-    /** Returns a mock SharedFileStoreShard whose getShardDir() returns the given directory. */
-    private static SharedFileStoreShard shardWithDir(final Path dir) {
-        final SharedFileStoreShard shard = mock(SharedFileStoreShard.class);
-        when(shard.getShardDir()).thenReturn(dir);
-        return shard;
     }
 }

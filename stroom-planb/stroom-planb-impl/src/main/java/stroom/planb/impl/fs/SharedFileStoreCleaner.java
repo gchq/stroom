@@ -46,7 +46,7 @@ import java.util.stream.Stream;
  *
  * <p>On each execution:</p>
  * <ol>
- *   <li><b>Orphan detection</b> — scans {@code sharedPath/shards/} and
+ *   <li><b>Orphan detection</b> — scans {@code sharedPath/holding/} and
  *       {@code sharedPath/processing/} for UUID directories with no
  *       corresponding live document, and renames them into
  *       {@code sharedPath/trash/} (atomic, fast). A grace period prevents
@@ -86,7 +86,7 @@ public class SharedFileStoreCleaner {
     static final Duration ORPHANED_TMP_AGE = Duration.ofMinutes(5);
 
     private static final List<String> SHARD_SUBDIRS =
-            List.of(PlanBConstants.SHARDS_DIR_NAME, PlanBConstants.PROCESSING_DIR_NAME);
+            List.of(PlanBConstants.HOLDING_DIR_NAME, PlanBConstants.PROCESSING_DIR_NAME);
 
     private final Set<SharedFileStoreDocStore> dataSources;
     private final AtomicBoolean running = new AtomicBoolean(false);

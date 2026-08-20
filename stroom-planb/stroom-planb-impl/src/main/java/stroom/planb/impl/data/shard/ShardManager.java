@@ -32,9 +32,7 @@ import stroom.planb.impl.data.archive.ArchiveShardRef;
 import stroom.planb.impl.data.shard.SnapshotShard.DbFactory;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBDb;
-import stroom.planb.impl.db.ShardKeyRouter;
 import stroom.planb.impl.fs.ArchiveStoreShard;
-import stroom.planb.impl.fs.SharedFileStoreShard;
 import stroom.planb.impl.rest.FileTransferClient;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.PlanBDocument;
@@ -51,6 +49,7 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -257,7 +256,7 @@ public class ShardManager {
                         map.remove(key);
                     }
                 } else if (shard.isIdle()) {
-                    // Idle eviction (SnapshotShard, SharedFileStoreShard, ArchiveStoreShard). Remove THIS
+                    // Idle eviction (SnapshotShard, ArchiveStoreShard). Remove THIS
                     // exact instance first so the next get() creates a fresh one — for a shard using a
                     // generation dir that means a new dir, so the closing and new envs never share a
                     // lock.mdb (no robust-mutex SIGSEGV). evict() waits for in-flight readers then closes
@@ -383,36 +382,6 @@ public class ShardManager {
         }
     }
 
-    public <R> R get(final String mapName, final String key, final Function<Db<?, ?>, R> function) {
-        final PlanBDocument doc = planBDocCache.get(mapName);
-        if (doc == null) {
-            LOGGER.warn(() -> "No PlanB doc found for '" + mapName + "'");
-            throw new RuntimeException("No PlanB doc found for '" + mapName + "'");
-        }
-        if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
-            final int shardIndex = ShardKeyRouter.computeShardIndex(key, doc.getShardCount());
-            return get(mapName, shardIndex, function);
-        } else {
-            return get(mapName, function);
-        }
-    }
-
-    public <R> R get(final String mapName, final int shardIndex, final Function<Db<?, ?>, R> function) {
-        try {
-            final Shard shard = getShardForMapNameAndShard(mapName, shardIndex);
-            return shard.get(function);
-        } catch (final ShardClosedException e) {
-            LOGGER.debug(() -> "Shard was evicted, retrying with fresh shard for: " + mapName + "_" + shardIndex);
-            final Shard shard = getShardForMapNameAndShard(mapName, shardIndex);
-            return shard.get(function);
-        } catch (final RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("Error getting shard for map: {} shard: {} {}",
-                    mapName, shardIndex, e.getMessage()), e);
-            throw e;
-        }
-    }
-
-
     /**
      * Read from a cached, read-only local copy of an archive bucket (copied down + version-checked +
      * idle-evicted), instead of copying the bucket to a temp dir per call. Keyed by
@@ -441,10 +410,6 @@ public class ShardManager {
                         doc, shardIndex, ref));
     }
 
-    public Shard getShardForMapName(final String mapName) {
-        return getShardForMapNameAndShard(mapName, -1);
-    }
-
     /**
      * Returns the {@link PlanBDocument} for the given map name from the doc
      * cache, or {@code null} if no document with that name is registered.
@@ -458,25 +423,18 @@ public class ShardManager {
         }
     }
 
-    public Shard getShardForMapNameAndShard(final String mapName, final int shardIndex) {
+    public Shard getShardForMapName(final String mapName) {
         final PlanBDocument doc = planBDocCache.get(mapName);
         if (doc == null) {
             LOGGER.warn(() -> "No PlanB doc found for '" + mapName + "'");
             throw new RuntimeException("No PlanB doc found for '" + mapName + "'");
         }
-        final String cacheKey = shardIndex >= 0 ? doc.getUuid() + "_" + shardIndex : doc.getUuid();
-        return shardMap.computeIfAbsent(cacheKey, k -> createShard(doc, shardIndex));
+        return shardMap.computeIfAbsent(doc.getUuid(), k -> createShard(doc));
     }
 
 
     public Shard getShardForDocUuid(final String docUuid) throws DocumentNotFoundException {
-        return getShardForDocUuidAndShard(docUuid, -1);
-    }
-
-    public Shard getShardForDocUuidAndShard(final String docUuid,
-                                            final int shardIndex) throws DocumentNotFoundException {
-        final String cacheKey = shardIndex >= 0 ? docUuid + "_" + shardIndex : docUuid;
-        return shardMap.computeIfAbsent(cacheKey, k -> {
+        return shardMap.computeIfAbsent(docUuid, k -> {
             final PlanBDocument doc = readPlanBDoc(docUuid);
             if (doc == null) {
                 LOGGER.warn(() -> "No PlanB doc found for UUID '" + docUuid + "'");
@@ -487,11 +445,11 @@ public class ShardManager {
                         .uuid(docUuid)
                         .build());
             }
-            return createShard(doc, shardIndex);
+            return createShard(doc);
         });
     }
 
-    private Shard createShard(final PlanBDocument doc, final int shardIndex) {
+    private Shard createShard(final PlanBDocument doc) {
         if (isSnapshotNode() && (doc.getSharedPath() == null || doc.getShardCount() == 0)) {
             return new SnapshotShard(
                     byteBuffers,
@@ -503,22 +461,17 @@ public class ShardManager {
                     DB_FACTORY,
                     executor);
         }
+
         if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
-            return new SharedFileStoreShard(
-                    byteBuffers,
-                    byteBufferFactory,
-                    configProvider,
-                    planBPaths,
-                    doc,
-                    shardIndex);
+            throw new NotImplementedException("Not yet implemented");
         }
+
         return new RestStoreShard(
                 byteBuffers,
                 byteBufferFactory,
                 configProvider,
                 planBPaths,
-                doc,
-                shardIndex);
+                doc);
     }
 
     private PlanBDocument readPlanBDoc(final DocRef docRef) {

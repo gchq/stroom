@@ -31,7 +31,6 @@ import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.trace.PathwaysDb;
 import stroom.planb.impl.db.trace.TraceDb;
-import stroom.planb.shared.PlanBDocument;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -173,28 +172,28 @@ public class PathwaysProcessor {
      * different shards concurrently without blocking each other.
      */
     private void processCompletedTraces(final PathwaysDoc doc, final long cutoffMs) {
-        if (shardManager.isSnapshotNode()) {
-            // Trace completion runs only on merge (shard-owning) nodes.
-            return;
-        }
-
-        final PlanBDocument tracesDoc = shardManager.getDoc(doc.getTracesDocRef().getName());
-        if (tracesDoc == null) {
-            LOGGER.warn("No PlanB doc found for traces doc ref '{}' — skipping for pathways doc {}",
-                    doc.getTracesDocRef().getName(), doc.getName());
-            return;
-        }
-
-        final PathwaysDb pathwaysDb = getPathwaysDb(doc.asDocRef());
-        final DocRef infoFeed = doc.getInfoFeed();
-        for (int i = 0; i < tracesDoc.getShardCount(); i++) {
-            final int shardIdx = i;
-            // Per-shard lock: nodes in a cluster can process different shards in parallel.
-            final String lockName = "pathways-write-" + doc.getUuid() + "-" + shardIdx;
-            clusterLockService.tryLock(lockName, () ->
-                    shardManager.get(doc.getTracesDocRef().getName(), shardIdx, db ->
-                            processShardTraces(db, pathwaysDb, infoFeed, doc, cutoffMs)));
-        }
+//        if (shardManager.isSnapshotNode()) {
+//            // Trace completion runs only on merge (shard-owning) nodes.
+//            return;
+//        }
+//
+//        final PlanBDocument tracesDoc = shardManager.getDoc(doc.getTracesDocRef().getName());
+//        if (tracesDoc == null) {
+//            LOGGER.warn("No PlanB doc found for traces doc ref '{}' — skipping for pathways doc {}",
+//                    doc.getTracesDocRef().getName(), doc.getName());
+//            return;
+//        }
+//
+//        final PathwaysDb pathwaysDb = getPathwaysDb(doc.asDocRef());
+//        final DocRef infoFeed = doc.getInfoFeed();
+//        for (int i = 0; i < tracesDoc.getShardCount(); i++) {
+//            final int shardIdx = i;
+//            // Per-shard lock: nodes in a cluster can process different shards in parallel.
+//            final String lockName = "pathways-write-" + doc.getUuid() + "-" + shardIdx;
+//            clusterLockService.tryLock(lockName, () ->
+//                    shardManager.get(doc.getTracesDocRef().getName(), shardIdx, db ->
+//                            processShardTraces(db, pathwaysDb, infoFeed, doc, cutoffMs)));
+//        }
     }
 
     /**

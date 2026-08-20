@@ -32,11 +32,11 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 /**
- * The local working area for a {@link SharedFileStoreOperation} that archives: lends out a local directory to
- * build dated archive deltas in, then publishes each of them to its bucket on the shared store.
+ * The local working area for building dated archive deltas: lends out a local directory to build them
+ * in, then publishes each of them to its bucket on the shared store.
  *
- * <p>Shared by every archiving operation, so the location, cleanup and push-failure semantics are
- * defined once.
+ * <p>Knows nothing about what a delta holds. It owns two things a caller should not have to restate:
+ * where the local directory lives and when it is removed, and what a failed push means for the shard.
  */
 @Singleton
 public class LocalArchive {
@@ -60,7 +60,7 @@ public class LocalArchive {
      * holding a run's archived data, and system temp is often small or tmpfs (i.e. RAM). Cleanup failures
      * are logged rather than thrown, so they cannot mask a failure from the work itself.
      */
-    public boolean withLocalDir(final SharedFileStoreOperationContext ctx,
+    public boolean withLocalDir(final MergeContext ctx,
                                   final LocalDirWork work) throws IOException {
         final Path localArchiveBase = Files.createDirectories(
                 archiveLocalDir.resolve("delta_" + UUID.randomUUID()));
@@ -80,8 +80,8 @@ public class LocalArchive {
      * Pushes every dated delta dir staged under {@code localArchiveBase} to its bucket.
      *
      * <p>The staged entries have already been deleted, but only from the LOCAL merge shard — rethrowing
-     * makes {@code SharedFileStoreMergeProcessor.mergeShard} skip {@code publisher.push} and discard that
-     * local shard, so the shared store keeps its data and the next cycle retries. A partial success
+     * makes the merge skip {@code publisher.push} and discard that local shard, so the shared store keeps
+     * its data and the next cycle retries. A partial success
      * (bucket A pushed, bucket B failed) re-pushes A next cycle, which is safe because
      * {@link SharedFileStorePublisher#pushArchive} merges rather than overwrites and each store type
      * recomputes its own derived state from what the bucket ends up holding.
@@ -89,7 +89,7 @@ public class LocalArchive {
      * @return the number of buckets published, which is what callers must gate on — a record can stage a
      *         delta without any row having been removed from the live store.
      */
-    public int pushAll(final SharedFileStoreOperationContext ctx,
+    public int pushAll(final MergeContext ctx,
                        final Path localArchiveBase) throws IOException {
         final List<StagedArchive> archiveShards;
         try (final Stream<Path> stream = Files.list(localArchiveBase)) {

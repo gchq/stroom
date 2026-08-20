@@ -46,11 +46,11 @@ import java.util.function.Function;
 
 /**
  * A read-only, idle-evictable local cache of ONE archive bucket on the shared store
- * (<sharedPath>/archive/<uuid>/<idx>/<dateLabel>/). Mirrors {@link SharedFileStoreShard}: it copies the
+ * (<sharedPath>/archive/<uuid>/<idx>/<dateLabel>/). It copies the
  * bucket's {@code data.mdb} down into a per-instance generation dir
  * ({@code archive_cache/<uuid>_<idx>_<dateLabel>/<generation>}) and mmaps the LOCAL copy read-only, so
  * repeat archive reads reuse it instead of re-copying the (large) bucket every query. Version-checks the
- * bucket's {@code .version} on access and re-syncs when it changes (a growing trace keeps merging into
+ * bucket's {@code .version} on access and re-syncs when it changes (later records keep merging into
  * the same date bucket). Bucket deletion (retention) needs no handling here — the locator stops
  * returning a deleted bucket, so this copy is simply never served again and idle-evicts.
  *

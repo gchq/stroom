@@ -60,29 +60,8 @@ public class RestStoreShard extends AbstractStoreShard implements SnapshotCapabl
                           final Provider<PlanBConfig> configProvider,
                           final PlanBPaths planBPaths,
                           final PlanBDocument doc) {
-        this(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, -1);
-    }
-
-    public RestStoreShard(final ByteBuffers byteBuffers,
-                          final ByteBufferFactory byteBufferFactory,
-                          final Provider<PlanBConfig> configProvider,
-                          final PlanBPaths planBPaths,
-                          final PlanBDocument doc,
-                          final int shardIndex) {
-        this(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, shardIndex,
-                planBPaths.getShardDir());
-    }
-
-    RestStoreShard(final ByteBuffers byteBuffers,
-                   final ByteBufferFactory byteBufferFactory,
-                   final Provider<PlanBConfig> configProvider,
-                   final PlanBPaths planBPaths,
-                   final PlanBDocument doc,
-                   final int shardIndex,
-                   final Path shardBaseDir) {
-        super(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, shardIndex, shardBaseDir);
-        final String dirSuffix = shardIndex >= 0 ? doc.getUuid() + "_" + shardIndex : doc.getUuid();
-        this.snapshotDir = planBPaths.getSnapshotDir().resolve(dirSuffix);
+        super(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc);
+        this.snapshotDir = planBPaths.getSnapshotDir().resolve(doc.getUuid());
     }
 
     @Override

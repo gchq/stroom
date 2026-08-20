@@ -16,18 +16,22 @@
 
 package stroom.planb.impl.fs;
 
-import stroom.planb.shared.PlanBDocument;
-
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Carries all context needed by a {@link SharedFileStoreOperation} during execution
- * inside the per-shard cluster lock.
+ * Outcome of merging one cycle's batches into a shard. {@code mergedBatchDirs} lists only the
+ * batches safe to mark as merged; {@code failures} carries the rest with the error that stopped
+ * each one, so the processor can count the attempt against the batch and retry it later.
  */
-public record SharedFileStoreOperationContext(
-        PlanBDocument doc,
-        int shardIndex,
-        SharedFileStoreShard shard,
-        Path sharedShardsDocDir,
-        String lockName) {
+public record MergeResult(List<Path> mergedBatchDirs, Map<Path, Exception> failures) {
+
+    public static MergeResult none() {
+        return new MergeResult(List.of(), Map.of());
+    }
+
+    public Exception firstFailure() {
+        return failures.values().stream().findFirst().orElse(null);
+    }
 }

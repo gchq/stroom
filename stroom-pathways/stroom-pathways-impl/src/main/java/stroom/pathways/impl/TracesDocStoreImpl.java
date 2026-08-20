@@ -130,13 +130,13 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
     }
 
     private static final List<String> SHARD_SUBDIRS =
-            List.of(PlanBConstants.SHARDS_DIR_NAME, PlanBConstants.PROCESSING_DIR_NAME,
+            List.of(PlanBConstants.HOLDING_DIR_NAME, PlanBConstants.PROCESSING_DIR_NAME,
                     PlanBConstants.ARCHIVE_DIR_NAME);
 
     /**
-     * Atomically renames shard and processing directories for the given doc into
+     * Atomically renames the holding, processing and archive directories for the given doc into
      * a {@code trash/} staging area under the same shared path root. The
-     * housekeeping job ({@link stroom.planb.impl.SharedFileStoreCleaner}) drains the
+     * housekeeping job ({@link stroom.planb.impl.fs.SharedFileStoreCleaner}) drains the
      * trash on its next run.
      */
     private void trashSharedData(final TracesDoc doc) {
@@ -272,7 +272,7 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
         try {
             final Path sharedRoot = Path.of(sharedPathStr);
             return Files.exists(sharedRoot.resolve(PlanBConstants.PROCESSING_DIR_NAME).resolve(doc.getUuid()))
-                    || Files.exists(sharedRoot.resolve(PlanBConstants.SHARDS_DIR_NAME).resolve(doc.getUuid()));
+                    || Files.exists(sharedRoot.resolve(PlanBConstants.HOLDING_DIR_NAME).resolve(doc.getUuid()));
         } catch (final Exception e) {
             return false;
         }

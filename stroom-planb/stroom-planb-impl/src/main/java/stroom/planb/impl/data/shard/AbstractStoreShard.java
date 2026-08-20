@@ -74,88 +74,31 @@ public abstract class AbstractStoreShard implements Shard {
     protected volatile Instant lastWriteTime;
     protected volatile Instant lastAccessTime;
 
+    /**
+     * Places the shard in {@code <shardDir>/<uuid>} and opens it. Used by subclasses whose local
+     * directory is the doc's own, one per node.
+     */
     protected AbstractStoreShard(final ByteBuffers byteBuffers,
                        final ByteBufferFactory byteBufferFactory,
                        final Provider<PlanBConfig> configProvider,
                        final PlanBPaths planBPaths,
                        final PlanBDocument doc) {
-        this(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, -1);
-    }
-
-    protected AbstractStoreShard(final ByteBuffers byteBuffers,
-                       final ByteBufferFactory byteBufferFactory,
-                       final Provider<PlanBConfig> configProvider,
-                       final PlanBPaths planBPaths,
-                       final PlanBDocument doc,
-                       final int shardIndex) {
-        this(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, shardIndex,
-                planBPaths.getShardDir());
+        this(byteBuffers, byteBufferFactory, configProvider, doc, -1,
+                planBPaths.getShardDir().resolve(doc.getUuid()), true);
     }
 
     /**
-     * Package-private constructor used by subclasses to run merge
-     * operations in an isolated directory ({@code mergingDir}) that is completely separate from the
-     * long-lived query shard directory ({@code shardDir}).
+     * Constructor taking a fully-resolved local {@code shardDir}, optionally deferring the open so the
+     * caller can copy {@code data.mdb} in first — a read-only LMDB env cannot open an absent one.
      *
-     * <p>Isolation is required because LMDB's {@code lock.mdb} contains
-     * {@code PTHREAD_MUTEX_ROBUST | PTHREAD_PROCESS_SHARED} mutexes. glibc records the mmap'd
-     * address of these mutexes in the owning thread's {@code robust_list}. If two
-     * {@code mdb_env_open} calls share the same {@code lock.mdb} (same directory), the second
-     * open remaps the file at a <em>different</em> virtual address while the first env's address
-     * is still recorded in the thread's {@code robust_list}. The next
-     * {@code pthread_mutex_lock} then tries to update the stale (now-unmapped) list entry
-     * and crashes with {@code SIGSEGV / SEGV_MAPERR}.
-     */
-    protected AbstractStoreShard(final ByteBuffers byteBuffers,
-                       final ByteBufferFactory byteBufferFactory,
-                       final Provider<PlanBConfig> configProvider,
-                       final PlanBPaths planBPaths,
-                       final PlanBDocument doc,
-                       final int shardIndex,
-                       final Path shardBaseDir) {
-        this(byteBuffers, byteBufferFactory, configProvider, planBPaths, doc, shardIndex, shardBaseDir, null);
-    }
-
-    /**
-     * As above, but places the shard in a per-instance {@code generation} subdir
-     * ({@code <base>/<uuid>_<idx>/<generation>}) when {@code generation != null}. Used by
-     * {@link stroom.planb.impl.fs.SharedFileStoreShard} read instances so that an idle-evicted
-     * (closing) instance and its replacement never share a {@code lock.mdb} directory — avoiding the
-     * robust-mutex SIGSEGV hazard above without any create/evict serialisation.
-     */
-    protected AbstractStoreShard(final ByteBuffers byteBuffers,
-                       final ByteBufferFactory byteBufferFactory,
-                       final Provider<PlanBConfig> configProvider,
-                       final PlanBPaths planBPaths,
-                       final PlanBDocument doc,
-                       final int shardIndex,
-                       final Path shardBaseDir,
-                       final String generation) {
-        this.byteBuffers = byteBuffers;
-        this.byteBufferFactory = byteBufferFactory;
-        this.configProvider = configProvider;
-        this.doc = doc;
-        this.shardIndex = shardIndex;
-        lastWriteTime = Instant.now();
-        lastAccessTime = Instant.now();
-        final String dirSuffix = shardIndex >= 0 ? doc.getUuid() + "_" + shardIndex : doc.getUuid();
-        final Path identityDir = shardBaseDir.resolve(dirSuffix);
-        this.shardDir = generation != null ? identityDir.resolve(generation) : identityDir;
-
-        // Just open the DB.
-        try {
-            Files.createDirectories(shardDir);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        open();
-    }
-
-    /**
-     * Constructor taking a fully-resolved local {@code shardDir} that optionally defers opening. Used by
-     * read-only subclasses (e.g. {@link stroom.planb.impl.fs.ArchiveStoreShard}) whose dir identity is
-     * not the {@code uuid_idx} form and which must copy {@code data.mdb} in before opening (a read-only
-     * LMDB env cannot open an absent {@code data.mdb}). When {@code openNow} is false the caller opens.
+     * <p>Callers must give each concurrently-open shard its own directory. LMDB's {@code lock.mdb}
+     * holds {@code PTHREAD_MUTEX_ROBUST | PTHREAD_PROCESS_SHARED} mutexes, and glibc records their
+     * mmap'd address in the owning thread's {@code robust_list}. If two {@code mdb_env_open} calls
+     * share one {@code lock.mdb}, the second remaps the file at a different address while the first
+     * env's address is still on the list, and the next {@code pthread_mutex_lock} updates a stale,
+     * now-unmapped entry and crashes with {@code SIGSEGV / SEGV_MAPERR}. Hence {@code MergeShard}
+     * works under {@code mergingDir}, and {@code ArchiveStoreShard} adds a per-instance generation
+     * subdir so an idle-evicted instance and its replacement never overlap.
      */
     protected AbstractStoreShard(final ByteBuffers byteBuffers,
                        final ByteBufferFactory byteBufferFactory,

@@ -176,7 +176,7 @@ public class PlanBQueryService {
     public PlanBValue getLocalValue(final String mapName,
                                     final String keyName,
                                     final Instant eventTime) {
-        return shardManager.get(mapName, keyName, reader -> switch (reader) {
+        return shardManager.get(mapName, reader -> switch (reader) {
             case final StateDb db -> db.getState(new StateRequest(KeyPrefix.create(keyName)));
             case final TemporalStateDb db -> db.getState(new TemporalStateRequest(
                     new TemporalKey(KeyPrefix.create(keyName), eventTime)));
