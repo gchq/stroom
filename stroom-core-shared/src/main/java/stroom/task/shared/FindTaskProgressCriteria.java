@@ -16,6 +16,8 @@
 
 package stroom.task.shared;
 
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QuickFilterFields;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
@@ -55,6 +57,13 @@ public class FindTaskProgressCriteria extends BaseCriteria {
             FIELD_DEF_USER,
             FIELD_DEF_SUBMIT_TIME,
             FIELD_DEF_INFO);
+
+    // What TaskManagerImpl's quick filter declares it can honour. Filtered in memory by
+    // ExpressionPredicateFactory, hence ALL_UI_TEXT - including "Submit Time", which
+    // TaskManagerImpl extracts as an ISO string rather than as a date.
+    public static final List<QueryField> QUERY_FIELDS = QuickFilterFields.uiText(FIELD_DEFINITIONS);
+    public static final List<QueryField> DEFAULT_QUERY_FIELDS =
+            QuickFilterFields.uiTextDefaults(FIELD_DEFINITIONS);
 
     @JsonProperty
     private Set<TaskProgress> expandedTasks;

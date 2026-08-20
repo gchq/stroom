@@ -16,6 +16,8 @@
 
 package stroom.config.global.shared;
 
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QuickFilterFields;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -68,6 +70,12 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             FIELD_DEF_VALUE,
             FIELD_DEF_SOURCE,
             FIELD_DEF_DESCRIPTION);
+
+    // What GlobalConfigService's quick filter declares it can honour. Filtered in memory by
+    // ExpressionPredicateFactory, hence ALL_UI_TEXT. Derived rather than hand-written so the
+    // qualifiers cannot drift from FIELD_DEFINITIONS.
+    List<QueryField> QUERY_FIELDS = QuickFilterFields.uiText(FIELD_DEFINITIONS);
+    List<QueryField> DEFAULT_QUERY_FIELDS = QuickFilterFields.uiTextDefaults(FIELD_DEFINITIONS);
 
     @POST
     @Path(PROPERTIES_SUB_PATH)

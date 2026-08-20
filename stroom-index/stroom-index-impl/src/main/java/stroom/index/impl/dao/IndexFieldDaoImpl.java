@@ -259,14 +259,14 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
         conditions.add(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(optional.get()));
 
         final FieldProvider fieldProvider = new FieldProviderImpl(
-                List.of(IndexFieldFields.NAME),
-                List.of(IndexFieldFields.NAME,
-                        IndexFieldFields.TYPE,
-                        IndexFieldFields.STORE,
-                        IndexFieldFields.INDEX,
-                        IndexFieldFields.POSITIONS,
-                        IndexFieldFields.ANALYSER,
-                        IndexFieldFields.CASE_SENSITIVE));
+                List.of(IndexFieldFields.NAME_FIELD),
+                List.of(IndexFieldFields.NAME_FIELD,
+                        IndexFieldFields.TYPE_FIELD,
+                        IndexFieldFields.STORE_FIELD,
+                        IndexFieldFields.INDEX_FIELD,
+                        IndexFieldFields.POSITIONS_FIELD,
+                        IndexFieldFields.ANALYSER_FIELD,
+                        IndexFieldFields.CASE_SENSITIVE_FIELD));
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
                     .create(fieldProvider, criteria.getFilter());

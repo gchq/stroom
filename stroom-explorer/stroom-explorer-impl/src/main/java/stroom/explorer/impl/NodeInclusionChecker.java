@@ -63,7 +63,9 @@ class NodeInclusionChecker {
                     .put(ExplorerTreeFilter.FIELD_DEF_UUID, ExplorerNode::getUuid)
                     .put(ExplorerTreeFilter.FIELD_DEF_TAG, NodeInclusionChecker::nodeToTagsString);
 
-    private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(ExplorerTreeFilter.FIELD_DEFINITIONS);
+    private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(
+            ExplorerTreeFilter.DEFAULT_QUERY_FIELDS,
+            ExplorerTreeFilter.QUERY_FIELDS);
 
     private final SecurityContext securityContext;
     private final ExplorerTreeFilter filter;

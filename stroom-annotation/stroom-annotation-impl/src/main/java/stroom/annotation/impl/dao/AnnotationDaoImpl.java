@@ -518,14 +518,14 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                                                   final Predicate<Annotation> viewPredicate) {
         final List<Condition> conditions = new ArrayList<>();
         final FieldProvider fieldProvider = new FieldProviderImpl(
-                List.of(AnnotationFields.TITLE),
-                List.of(AnnotationFields.ID,
-                        AnnotationFields.UUID,
-                        AnnotationFields.SUBJECT,
-                        AnnotationFields.STATUS,
-                        AnnotationFields.ASSIGNED_TO,
-                        AnnotationFields.LABEL,
-                        AnnotationFields.COLLECTION));
+                List.of(AnnotationFields.TITLE_FIELD),
+                List.of(AnnotationFields.ID_FIELD,
+                        AnnotationFields.UUID_FIELD,
+                        AnnotationFields.SUBJECT_FIELD,
+                        AnnotationFields.STATUS_FIELD,
+                        AnnotationFields.ASSIGNED_TO_FIELD,
+                        AnnotationFields.LABEL_FIELD,
+                        AnnotationFields.COLLECTION_FIELD));
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
                     .create(fieldProvider, request.getFilter());

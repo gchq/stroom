@@ -16,27 +16,35 @@
 
 package stroom.query.common.v2;
 
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * A surface with exactly one field, which every term matches against.
+ * <p>
+ * {@link #getQualifiedField(String)} always returns empty, which is what makes ':' an ordinary
+ * value character here: with no qualifier to resolve, "12:30" is a literal rather than a term
+ * against a field named "12".
+ */
 public class SingleFieldProvider implements FieldProvider {
 
-    private final List<String> defaultFields;
+    private final List<QueryField> defaultFields;
 
-    public SingleFieldProvider(final String defaultField) {
+    public SingleFieldProvider(final QueryField defaultField) {
         this.defaultFields = Collections.singletonList(defaultField);
     }
 
     @Override
-    public List<String> getDefaultFields() {
+    public List<QueryField> getDefaultFields() {
         return defaultFields;
     }
 
     @Override
-    public Optional<String> getQualifiedField(final String string) {
+    public Optional<QueryField> getQualifiedField(final String string) {
         return Optional.empty();
     }
 }

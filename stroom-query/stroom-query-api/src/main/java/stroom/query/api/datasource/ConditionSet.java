@@ -246,6 +246,23 @@ public enum ConditionSet {
             Condition.NOT_EQUALS),
 
     // UI Defaults.
+    /**
+     * Text fields evaluated in memory by {@code ExpressionPredicateFactory}.
+     * <p>
+     * {@code WORD_BOUNDARY} is included because the evaluator implements it
+     * ({@code ExpressionPredicateFactory:470}, via {@code StringWordBoundary}), the quick filter
+     * can spell it with {@code ?}, and the quick filter help tooltip documents it. Omitting it
+     * would mean this set under-declares the evaluator, and arming the
+     * {@code CommonExpressionMapper} capability check would start rejecting {@code ?foo} on
+     * surfaces where it works today.
+     * <p>
+     * {@code CHARS_ANYWHERE} is deliberately absent: the parser currently rewrites {@code ~foo}
+     * to {@code MATCHES_REGEX} at parse time, so no term ever carries it. That changes when spec
+     * §5.2 makes it a real condition, at which point it must be added here.
+     * <p>
+     * Contrast {@link #SQL_TEXT}, which omits {@code WORD_BOUNDARY} because {@code TermHandler}
+     * has no case for it and would throw.
+     */
     ALL_UI_TEXT(
             Condition.CONTAINS,
             Condition.CONTAINS_CASE_SENSITIVE,
@@ -259,6 +276,7 @@ public enum ConditionSet {
             Condition.ENDS_WITH_CASE_SENSITIVE,
             Condition.MATCHES_REGEX,
             Condition.MATCHES_REGEX_CASE_SENSITIVE,
+            Condition.WORD_BOUNDARY,
             Condition.IN,
             Condition.IN_DICTIONARY),
     UI_TEXT(

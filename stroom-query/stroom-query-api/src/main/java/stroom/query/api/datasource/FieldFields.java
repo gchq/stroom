@@ -20,6 +20,11 @@ public class FieldFields {
     public static final String NAME = "Name";
     public static final String TYPE = "Type";
 
-    public static final QueryField NAME_FIELD = QueryField.createText(NAME);
+    // INDEX_FIELD.NAME via an identity converter in IndexFieldDaoImpl.
+    // See QueryField.createSqlText.
+    public static final QueryField NAME_FIELD = QueryField.createSqlText(NAME);
+    // Deliberately NOT SQL_TEXT. IndexFieldDaoImpl converts the typed display value to
+    // FieldType's primitive value before it reaches SQL, so CONTAINS would match nothing and
+    // MATCHES_REGEX would skip the converter and pattern-match the numeric column.
     public static final QueryField TYPE_FIELD = QueryField.createText(TYPE);
 }

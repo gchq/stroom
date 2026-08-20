@@ -20,8 +20,10 @@ import stroom.activity.api.ActivityService;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityValidationResult;
-import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QuickFilterFields;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldProviderImpl;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.common.v2.ValueFunctionFactoriesImpl;
@@ -139,7 +141,11 @@ public class ActivityServiceImpl implements ActivityService {
             final List<Activity> filteredActivities;
             if (!Strings.isNullOrEmpty(filter)) {
                 final List<FilterFieldDefinition> fieldDefinitions = buildFieldDefinitions(allActivities);
-                final FieldProvider fieldProvider = new FieldProviderImpl(fieldDefinitions);
+                // Every activity property is a default field, so the two lists are the same.
+                // Built here rather than as a constant because the fields are data driven - they
+                // come from the activities themselves, not from a static declaration.
+                final List<QueryField> queryFields = QuickFilterFields.uiText(fieldDefinitions);
+                final FieldProvider fieldProvider = new FieldProviderImpl(queryFields, queryFields);
                 final ValueFunctionFactories<Activity> valueFunctionFactories =
                         buildValueFunctionFactories(fieldDefinitions);
                 filteredActivities = expressionPredicateFactory.filterAndSortStream(

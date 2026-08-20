@@ -95,6 +95,21 @@ public class DependencyCriteria extends BaseCriteria {
      */
     public static final QueryField QF_STATUS = queryField(FIELD_DEF_STATUS, ConditionSet.SQL_ENUM_TEXT);
 
+    // What DocDependencyDao's quick filter declares it can honour. Until these were wired into
+    // the FieldProvider, the DAO built its provider from FIELD_DEFINITIONS and so could not reach
+    // its own declarations.
+    public static final List<QueryField> DEFAULT_QUERY_FIELDS = Arrays.asList(
+            QF_FROM_NAME,
+            QF_TO_NAME);
+    public static final List<QueryField> QUERY_FIELDS = Arrays.asList(
+            QF_FROM_TYPE,
+            QF_FROM_NAME,
+            QF_FROM_UUID,
+            QF_TO_TYPE,
+            QF_TO_NAME,
+            QF_TO_UUID,
+            QF_STATUS);
+
     /**
      * Not {@link QueryField#createText(String)} - that defaults to
      * {@link ConditionSet#DEFAULT_TEXT}, which omits CONTAINS, the condition a quick filter

@@ -99,8 +99,9 @@ public class DocDependencyDao {
                 DependencyCriteria.FIELD_STATUS, statusField);
     }
 
-    private static final FieldProvider FIELD_PROVIDER =
-            new FieldProviderImpl(DependencyCriteria.FIELD_DEFINITIONS);
+    private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(
+            DependencyCriteria.DEFAULT_QUERY_FIELDS,
+            DependencyCriteria.QUERY_FIELDS);
 
     /**
      * A dependency is OK if its target still exists as a non deleted doc, or if it is a known

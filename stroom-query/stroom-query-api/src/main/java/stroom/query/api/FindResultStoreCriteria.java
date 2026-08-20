@@ -19,7 +19,6 @@ package stroom.query.api;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,28 +33,12 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class FindResultStoreCriteria extends BaseCriteria {
 
-    public static final String FIELD_NAME = "Name";
-    public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
-
-    @JsonProperty
-    private String quickFilterInput;
-
     public FindResultStoreCriteria() {
     }
 
     @JsonCreator
     public FindResultStoreCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                   @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                   @JsonProperty("quickFilterInput") final String quickFilterInput) {
+                                   @JsonProperty("sortList") final List<CriteriaFieldSort> sortList) {
         super(pageRequest, sortList);
-        this.quickFilterInput = quickFilterInput;
-    }
-
-    public String getQuickFilterInput() {
-        return quickFilterInput;
-    }
-
-    public void setQuickFilterInput(final String quickFilterInput) {
-        this.quickFilterInput = quickFilterInput;
     }
 }

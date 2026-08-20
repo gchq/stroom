@@ -607,7 +607,7 @@ class TestExpressionPredicateFactory {
         return new ExpressionPredicateFactory().filterAndSortStream(
                 stream,
                 userInput,
-                new SingleFieldProvider("test"),
+                new SingleFieldProvider(QueryField.createUiText("test")),
                 DATE_VALUE_FUNCTION_FACTORIES,
                 dateTimeSettings,
                 Optional.of(Comparator.naturalOrder()));

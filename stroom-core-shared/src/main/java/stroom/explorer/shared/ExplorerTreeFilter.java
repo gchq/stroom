@@ -17,6 +17,8 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QuickFilterFields;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.filter.FilterFieldDefinition;
@@ -43,6 +45,13 @@ public class ExplorerTreeFilter {
 
     public static List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
             FIELD_DEF_NAME, FIELD_DEF_TYPE, FIELD_DEF_UUID, FIELD_DEF_TAG);
+
+    // What NodeInclusionChecker's quick filter declares it can honour. Filtered in memory by
+    // ExpressionPredicateFactory, hence ALL_UI_TEXT. Derived rather than hand-written so the
+    // qualifiers cannot drift from FIELD_DEFINITIONS.
+    public static List<QueryField> QUERY_FIELDS = QuickFilterFields.uiText(FIELD_DEFINITIONS);
+    public static List<QueryField> DEFAULT_QUERY_FIELDS =
+            QuickFilterFields.uiTextDefaults(FIELD_DEFINITIONS);
 
     @JsonProperty
     private final Set<String> includedTypes;

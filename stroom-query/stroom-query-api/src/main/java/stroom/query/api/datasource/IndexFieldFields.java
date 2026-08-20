@@ -27,6 +27,8 @@ public class IndexFieldFields extends FieldFields {
     public static final QueryField STORE_FIELD = QueryField.createBoolean(STORE);
     public static final QueryField INDEX_FIELD = QueryField.createBoolean(INDEX);
     public static final QueryField POSITIONS_FIELD = QueryField.createBoolean(POSITIONS);
-    public static final QueryField ANALYSER_FIELD = QueryField.createText(ANALYSER);
+    // INDEX_FIELD.ANALYZER via an identity converter in IndexFieldDaoImpl.
+    // See QueryField.createSqlText.
+    public static final QueryField ANALYSER_FIELD = QueryField.createSqlText(ANALYSER);
     public static final QueryField CASE_SENSITIVE_FIELD = QueryField.createBoolean(CASE_SENSITIVE);
 }

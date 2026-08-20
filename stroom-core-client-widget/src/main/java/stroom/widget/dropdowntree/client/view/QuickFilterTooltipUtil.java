@@ -57,7 +57,13 @@ public class QuickFilterTooltipUtil {
                                            ? defaultFieldNames + " "
                                            : "") +
                                    "where the values contain the text input.";
-        // All this help content needs to match what happens in QuickFilterPredicateFactory
+        // All this help content needs to match what the server actually does. The authority is
+        // SimpleStringExpressionParser for the sigils below (QuickFilterPredicateFactory, which
+        // this used to name, no longer exists), and the surface's ConditionSet for whether the
+        // resulting condition is honoured. The two can disagree: a DB-backed surface declares
+        // SQL_TEXT, which has no WORD_BOUNDARY, so the "?ABC" row below over-promises there.
+        // Making these rows ConditionSet-aware needs FieldProvider to yield QueryFields - see
+        // docs/quick-filter-conformance-plan.md steps 3 and 4.
         final TableBuilder tb = new TableBuilder();
         tb.row(TableCell.header(header, 2));
         tb.row(TableCell.data(description, 2));

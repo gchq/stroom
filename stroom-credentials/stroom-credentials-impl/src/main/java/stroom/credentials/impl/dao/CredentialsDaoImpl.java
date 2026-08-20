@@ -111,10 +111,10 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     private List<Condition> createConditions(final FindCredentialRequest request) {
         final List<Condition> conditions = new ArrayList<>();
         final FieldProvider fieldProvider = new FieldProviderImpl(
-                List.of(stroom.credentials.shared.CredentialFields.CREDENTIAL_NAME),
-                List.of(stroom.credentials.shared.CredentialFields.CREDENTIAL_NAME,
-                        stroom.credentials.shared.CredentialFields.CREDENTIAL_UUID,
-                        stroom.credentials.shared.CredentialFields.CREDENTIAL_TYPE));
+                List.of(stroom.credentials.shared.CredentialFields.CREDENTIAL_NAME_FIELD),
+                List.of(stroom.credentials.shared.CredentialFields.CREDENTIAL_NAME_FIELD,
+                        stroom.credentials.shared.CredentialFields.CREDENTIAL_UUID_FIELD,
+                        stroom.credentials.shared.CredentialFields.CREDENTIAL_TYPE_FIELD));
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
                     .create(fieldProvider, request.getFilter());

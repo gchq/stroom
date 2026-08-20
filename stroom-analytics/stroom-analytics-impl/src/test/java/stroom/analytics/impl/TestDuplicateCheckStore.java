@@ -146,7 +146,6 @@ class TestDuplicateCheckStore {
                 final DuplicateCheckRows rows = duplicateCheckStore.fetchData(new FindDuplicateCheckCriteria(
                         PageRequest.unlimited(),
                         null,
-                        null,
                         null));
 
                 final List<DuplicateCheckRow> values = rows.getResultPage().getValues();
@@ -197,7 +196,6 @@ class TestDuplicateCheckStore {
 
                 final DuplicateCheckRows rows = duplicateCheckStore.fetchData(new FindDuplicateCheckCriteria(
                         PageRequest.unlimited(),
-                        null,
                         null,
                         null));
 
@@ -311,7 +309,6 @@ class TestDuplicateCheckStore {
 
                 final DuplicateCheckRows rows = duplicateCheckStore.fetchData(new FindDuplicateCheckCriteria(
                         PageRequest.unlimited(),
-                        null,
                         null,
                         null));
 
@@ -447,7 +444,6 @@ class TestDuplicateCheckStore {
 
                 final DuplicateCheckRows rows = duplicateCheckStore.fetchData(new FindDuplicateCheckCriteria(
                         PageRequest.unlimited(),
-                        null,
                         null,
                         null));
 

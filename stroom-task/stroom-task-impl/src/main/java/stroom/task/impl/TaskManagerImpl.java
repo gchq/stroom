@@ -70,8 +70,9 @@ class TaskManagerImpl implements TaskManager {
                     .put(FindTaskProgressCriteria.FIELD_DEF_SUBMIT_TIME, (TaskProgress taskProgress) ->
                             Instant.ofEpochMilli(taskProgress.getSubmitTimeMs()).toString())
                     .put(FindTaskProgressCriteria.FIELD_DEF_INFO, TaskProgress::getTaskInfo);
-    private static final FieldProvider FIELD_PROVIDER =
-            new FieldProviderImpl(FindTaskProgressCriteria.FIELD_DEFINITIONS);
+    private static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(
+            FindTaskProgressCriteria.DEFAULT_QUERY_FIELDS,
+            FindTaskProgressCriteria.QUERY_FIELDS);
 
 
     private final SessionIdProvider sessionIdProvider;

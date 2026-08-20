@@ -21,6 +21,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.api.token.AbstractToken;
 import stroom.query.api.token.KeywordGroup;
 import stroom.query.api.token.Token;
@@ -271,7 +272,7 @@ public class SimpleStringExpressionParser {
             boolean charsAnywhere = false;
             boolean not = false;
             String fieldValue = "";
-            List<String> fields = fieldProvider.getDefaultFields();
+            List<QueryField> fields = fieldProvider.getDefaultFields();
 
             // See if this is a qualifier to get a field name,
             if (TokenType.STRING.equals(token.getTokenType())) {
@@ -287,7 +288,7 @@ public class SimpleStringExpressionParser {
                 if (!fieldPrefix.isEmpty()) {
                     // Drop the trailing field prefix delimiter.
                     final String candidateField = fieldPrefix.substring(0, fieldPrefix.length() - 1);
-                    final Optional<String> qualifiedField = candidateField.isEmpty()
+                    final Optional<QueryField> qualifiedField = candidateField.isEmpty()
                             ? Optional.empty()
                             : fieldProvider.getQualifiedField(candidateField);
                     if (qualifiedField.isPresent()) {
@@ -353,10 +354,8 @@ public class SimpleStringExpressionParser {
             }
 
             if (!fields.isEmpty()) {
-                if (condition == null) {
-                    condition = Condition.CONTAINS;
-                }
-
+                // condition may still be null here - a term with no sigil takes its condition
+                // from the field it resolved against, which addTerms does per field.
                 if (not) {
                     final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.NOT);
                     addTerms(fields, condition, fieldValue, builder);
@@ -371,29 +370,57 @@ public class SimpleStringExpressionParser {
         }
     }
 
-    private static void addTerms(final List<String> fields,
+    private static void addTerms(final List<QueryField> fields,
                                  final Condition condition,
                                  final String fieldValue,
                                  final ExpressionOperator.Builder parent) {
         if (fields.size() == 1) {
-            parent.addTerm(ExpressionTerm
-                    .builder()
-                    .field(fields.getFirst())
-                    .condition(condition)
-                    .value(fieldValue)
-                    .build());
+            parent.addTerm(createTerm(fields.getFirst(), condition, fieldValue));
         } else {
             final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
-            for (final String field : fields) {
-                builder.addTerm(ExpressionTerm
-                        .builder()
-                        .field(field)
-                        .condition(condition)
-                        .value(fieldValue)
-                        .build());
+            for (final QueryField field : fields) {
+                builder.addTerm(createTerm(field, condition, fieldValue));
             }
             parent.addOperator(builder.build());
         }
+    }
+
+    private static ExpressionTerm createTerm(final QueryField field,
+                                             final Condition condition,
+                                             final String fieldValue) {
+        return ExpressionTerm
+                .builder()
+                .field(field.getFldName())
+                .condition(condition == null
+                        ? defaultCondition(field)
+                        : condition)
+                .value(fieldValue)
+                .build();
+    }
+
+    /**
+     * The condition for a term the user wrote with no sigil, e.g. {@code abc} or
+     * {@code status:OK}.
+     * <p>
+     * {@code CONTAINS} is what a quick filter user means by default, but not every field can
+     * honour it - a field whose values are a small fixed vocabulary declares
+     * {@link stroom.query.api.datasource.ConditionSet#SQL_ENUM_TEXT}, and one whose typed value is
+     * converted before it reaches the evaluator declares
+     * {@link stroom.query.api.datasource.ConditionSet#DEFAULT_TEXT}. Neither includes
+     * {@code CONTAINS}.
+     * <p>
+     * Hardcoding {@code CONTAINS} therefore produced terms that the field's own declaration says
+     * are unsupported, for the plainest thing a user can type. That is invisible today because
+     * {@code CommonExpressionMapper} only debug-logs the mismatch, but arming that check would
+     * turn every such filter into a rejection - including {@code status:OK} on the Dependencies
+     * screen, which {@code TestDocDependencyDao} asserts works.
+     * <p>
+     * So fall back to {@code EQUALS}, which every text {@code ConditionSet} declares.
+     */
+    private static Condition defaultCondition(final QueryField field) {
+        return field.supportsCondition(Condition.CONTAINS)
+                ? Condition.CONTAINS
+                : Condition.EQUALS;
     }
 
     private static String getFieldPrefix(final String string) {
@@ -424,8 +451,16 @@ public class SimpleStringExpressionParser {
 
     public interface FieldProvider {
 
-        List<String> getDefaultFields();
+        /**
+         * The fields a bare, unqualified term matches against, ORed together.
+         */
+        List<QueryField> getDefaultFields();
 
-        Optional<String> getQualifiedField(String string);
+        /**
+         * Resolve a qualifier the user typed ("fromtype") to the field it names, or empty if it
+         * names no field - in which case the text is an ordinary value and the ':' is not a
+         * qualifier delimiter.
+         */
+        Optional<QueryField> getQualifiedField(String string);
     }
 }

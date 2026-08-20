@@ -115,8 +115,8 @@ public class AiDaoImpl implements AiDao {
         conditions.add(AI_CHAT.USER_UUID.eq(userRef.getUuid()));
 
         final FieldProvider fieldProvider = new FieldProviderImpl(
-                List.of(AiChatHistoryFields.NAME),
-                List.of(AiChatHistoryFields.NAME));
+                List.of(AiChatHistoryFields.NAME_FIELD),
+                List.of(AiChatHistoryFields.NAME_FIELD));
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
                     .create(fieldProvider, criteria.getFilter());

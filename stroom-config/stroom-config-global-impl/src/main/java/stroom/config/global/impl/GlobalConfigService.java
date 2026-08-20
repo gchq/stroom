@@ -72,7 +72,9 @@ public class GlobalConfigService implements GlobalConfig {
                     .put(GlobalConfigResource.FIELD_DEF_SOURCE, configProperty ->
                             configProperty.getSource().getName())
                     .put(GlobalConfigResource.FIELD_DEF_DESCRIPTION, ConfigProperty::getDescription);
-    public static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(GlobalConfigResource.FIELD_DEFINITIONS);
+    public static final FieldProvider FIELD_PROVIDER = new FieldProviderImpl(
+            GlobalConfigResource.DEFAULT_QUERY_FIELDS,
+            GlobalConfigResource.QUERY_FIELDS);
 
     private static final FieldComparators<ConfigProperty> FIELD_COMPARATORS = FieldComparators.builder(
                     ConfigProperty.class)

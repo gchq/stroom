@@ -74,10 +74,10 @@ public class ExpressionPredicateFactory {
     public Stream<String> filterAndSortStream(final Stream<String> stream,
                                               final String filter,
                                               final Optional<Comparator<String>> optionalSecondComparator) {
-        final String fieldName = "name";
-        final FieldProvider fieldProvider = new SingleFieldProvider(fieldName);
+        final QueryField field = QueryField.createUiText("name");
+        final FieldProvider fieldProvider = new SingleFieldProvider(field);
         final ValueFunctionFactories<String> valueFunctionFactory =
-                StringValueFunctionFactory.create(QueryField.createText(fieldName));
+                StringValueFunctionFactory.create(field);
         return filterAndSortStream(
                 stream,
                 filter,
@@ -145,13 +145,13 @@ public class ExpressionPredicateFactory {
     public <T> Optional<Predicate<T>> createOptional(final String filter,
                                                      final Function<T, String> function) {
         try {
-            final String fieldName = "name";
-            final FieldProvider fieldProvider = new SingleFieldProvider(fieldName);
+            final QueryField field = QueryField.createUiText("name");
+            final FieldProvider fieldProvider = new SingleFieldProvider(field);
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
                     .create(fieldProvider, filter);
             if (optionalExpressionOperator.isPresent()) {
                 final ValueFunctionFactories<String> valueFunctionFactory =
-                        StringValueFunctionFactory.create(QueryField.createText(fieldName));
+                        StringValueFunctionFactory.create(field);
                 final Optional<Predicate<String>> predicateOptional = createOptional(
                         optionalExpressionOperator.get(),
                         valueFunctionFactory);

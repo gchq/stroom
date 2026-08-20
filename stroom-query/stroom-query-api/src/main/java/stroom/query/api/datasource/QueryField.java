@@ -254,6 +254,59 @@ public class QueryField implements Field, HasDisplayValue {
                 .build();
     }
 
+    /**
+     * A text field evaluated in memory by {@code ExpressionPredicateFactory}. Declares
+     * {@link ConditionSet#ALL_UI_TEXT}.
+     * <p>
+     * Prefer this to {@link #createText(String)} for any such field, for the same reason given on
+     * {@link #createSqlText(String)}: {@code createText} declares {@link ConditionSet#DEFAULT_TEXT},
+     * which omits {@code CONTAINS}, the condition every sigil-less term parses to.
+     */
+    public static QueryField createUiText(final String name) {
+        return createUiText(name, true);
+    }
+
+    public static QueryField createUiText(final String name,
+                                          final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.TEXT)
+                .conditionSet(ConditionSet.ALL_UI_TEXT)
+                .queryable(queryable)
+                .build();
+    }
+
+    /**
+     * A text field backed by a jOOQ DAO, i.e. one whose terms {@code ExpressionMapper} turns into
+     * SQL via {@code TermHandler}. Declares {@link ConditionSet#SQL_TEXT}.
+     * <p>
+     * Prefer this to {@link #createText(String)} for any such field. {@code createText} declares
+     * {@link ConditionSet#DEFAULT_TEXT}, which omits {@code CONTAINS} - and {@code CONTAINS} is
+     * the condition {@code SimpleStringExpressionParser} gives every term that carries no sigil,
+     * qualified or not. A quick filter field declaring {@code DEFAULT_TEXT} is therefore promising
+     * strictly less than the plainest thing a user can type.
+     * <p>
+     * Only for fields whose {@code ExpressionMapper} entry is an identity converter over a real
+     * text column. Where the converter turns the typed value into something else - a tag id, a
+     * user uuid, a {@code Long} - the substring and regex conditions in {@code SQL_TEXT} cannot be
+     * honoured: {@code CONTAINS} feeds the partial value to the converter and matches nothing,
+     * while {@code MATCHES_REGEX} bypasses the converter altogether and applies the pattern to the
+     * underlying non-text column. Those fields want {@link #createText(String)}.
+     */
+    public static QueryField createSqlText(final String name) {
+        return createSqlText(name, true);
+    }
+
+    public static QueryField createSqlText(final String name,
+                                           final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.TEXT)
+                .conditionSet(ConditionSet.SQL_TEXT)
+                .queryable(queryable)
+                .build();
+    }
+
 
     /**
      * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are unique, allowing
