@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.query.common.v2;
+package stroom.query.language.filter;
 
 import stroom.query.api.datasource.QueryField;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 
 import java.util.Collections;
 import java.util.List;

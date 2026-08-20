@@ -23,6 +23,8 @@ import stroom.query.api.ExpressionUtil;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
+import stroom.query.language.filter.SimpleStringExpressionParser;
+import stroom.query.language.filter.SingleFieldProvider;
 import stroom.query.language.functions.Val;
 
 import jakarta.inject.Inject;

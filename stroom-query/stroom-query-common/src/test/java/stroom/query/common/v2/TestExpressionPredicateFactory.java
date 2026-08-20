@@ -25,7 +25,9 @@ import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.language.filter.SingleFieldProvider;
 import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.DynamicTest;

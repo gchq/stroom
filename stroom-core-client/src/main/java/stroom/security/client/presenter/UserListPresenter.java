@@ -30,7 +30,6 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
@@ -408,8 +407,9 @@ public class UserListPresenter
             protected void exec(final Range range,
                                 final Consumer<ResultPage<User>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
-                ExpressionOperator expression = QuickFilterExpressionParser
-                        .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
+                // The filter text goes to the server verbatim; only the structural terms this
+                // screen adds on the user's behalf are composed here. See FindUserCriteria.
+                ExpressionOperator expression = ExpressionOperator.builder().build();
 
                 if (additionalTerm != null) {
                     expression = expression.copy()
@@ -422,6 +422,7 @@ public class UserListPresenter
                             .build();
                 }
                 criteriaBuilder.expression(expression);
+                criteriaBuilder.quickFilter(filter);
                 criteriaBuilder.pageRequest(CriteriaUtil.createPageRequest(range));
                 criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
                 restFactory

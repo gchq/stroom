@@ -32,6 +32,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-query:stroom-query-impl')
     implementation project(':stroom-resource:stroom-resource-api')

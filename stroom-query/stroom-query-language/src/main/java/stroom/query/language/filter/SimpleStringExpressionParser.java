@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.query.common.v2;
+package stroom.query.language.filter;
 
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
@@ -40,6 +40,16 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+/**
+ * Parses the quick filter surface syntax - {@code abc}, {@code field:^abc}, {@code !~xyz} - into an
+ * {@link ExpressionOperator}.
+ * <p>
+ * Lives in {@code stroom-query-language} rather than {@code stroom-query-common} because it needs
+ * only the tokeniser and {@code stroom-query-api}. {@code stroom-query-common} additionally drags
+ * in LMDB, the dictionary, the docstore and the task API, which is why
+ * {@code stroom.security.impl.UserAccessService} declined to depend on it and hand-rolled a
+ * substring match instead.
+ */
 public class SimpleStringExpressionParser {
 
     // Add all supported conditions and sort them by longest operator string first, so we can match longest prefixes

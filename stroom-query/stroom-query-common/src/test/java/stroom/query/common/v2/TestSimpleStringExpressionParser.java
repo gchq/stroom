@@ -18,7 +18,9 @@ package stroom.query.common.v2;
 
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
-import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.query.language.filter.FieldProviderImpl;
+import stroom.query.language.filter.SimpleStringExpressionParser;
+import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.language.token.AbstractQueryTest;
 
 import java.nio.file.Files;

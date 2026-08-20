@@ -37,25 +37,50 @@ public class FindUserCriteria extends ExpressionCriteria {
 
     @JsonProperty
     private final FindUserContext context;
+    /**
+     * What the user typed into the quick filter, verbatim.
+     * <p>
+     * Carried as text rather than as a parsed {@link ExpressionOperator} so that the server owns
+     * the grammar - see the syntax spec §9 and §11. It sits alongside {@code expression} rather
+     * than replacing it because that field also carries structural terms the client composes
+     * itself, such as {@code ChildrenOf} and {@code isgroup}, which are not things a user types.
+     * The DAO parses this and ANDs the result with the expression.
+     */
+    @JsonProperty
+    private final String quickFilter;
 
     public FindUserCriteria() {
         this(PageRequest.unlimited(),
                 Collections.emptyList(),
                 ExpressionOperator.builder().build(),
-                FindUserContext.PERMISSIONS);
+                FindUserContext.PERMISSIONS,
+                null);
+    }
+
+    public FindUserCriteria(final PageRequest pageRequest,
+                            final List<CriteriaFieldSort> sortList,
+                            final ExpressionOperator expression,
+                            final FindUserContext context) {
+        this(pageRequest, sortList, expression, context, null);
     }
 
     @JsonCreator
     public FindUserCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                             @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                             @JsonProperty("expression") final ExpressionOperator expression,
-                            @JsonProperty("context") final FindUserContext context) {
+                            @JsonProperty("context") final FindUserContext context,
+                            @JsonProperty("quickFilter") final String quickFilter) {
         super(pageRequest, sortList, expression);
         this.context = context;
+        this.quickFilter = quickFilter;
     }
 
     public FindUserContext getContext() {
         return context;
+    }
+
+    public String getQuickFilter() {
+        return quickFilter;
     }
 
     // --------------------------------------------------------------------------------
@@ -64,6 +89,7 @@ public class FindUserCriteria extends ExpressionCriteria {
     public static class Builder extends ExpressionCriteriaBuilder<FindUserCriteria, Builder> {
 
         private FindUserContext context;
+        private String quickFilter;
 
         public Builder() {
         }
@@ -71,10 +97,19 @@ public class FindUserCriteria extends ExpressionCriteria {
         public Builder(final FindUserCriteria criteria) {
             super(criteria);
             this.context = criteria.context;
+            this.quickFilter = criteria.quickFilter;
         }
 
         public Builder context(final FindUserContext context) {
             this.context = context;
+            return self();
+        }
+
+        /**
+         * @see FindUserCriteria#getQuickFilter()
+         */
+        public Builder quickFilter(final String quickFilter) {
+            this.quickFilter = quickFilter;
             return self();
         }
 
@@ -89,7 +124,8 @@ public class FindUserCriteria extends ExpressionCriteria {
                     pageRequest,
                     sortList,
                     expression,
-                    context);
+                    context,
+                    quickFilter);
         }
     }
 }
