@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.JsonTokenId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -35,6 +36,7 @@ import org.xml.sax.helpers.LocatorImpl;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 public class JSONParser extends AbstractParser {
 
@@ -53,6 +55,7 @@ public class JSONParser extends AbstractParser {
 
     private static final Attributes EMPTY_ATTS = new AttributesImpl();
     private static final Map<JSONFactoryConfig, JsonFactory> JSON_FACTORY_MAP = new ConcurrentHashMap<>();
+    private static final Pattern SOURCE_PATTERN = Pattern.compile("\\[Source: [^\\[\\]]*; (?=line: )");
     private final JSONFactoryConfig config;
     private final boolean addRoot;
     private Attributes atts;
@@ -134,15 +137,36 @@ public class JSONParser extends AbstractParser {
             final LocatorImpl locator = new LocatorImpl();
             locator.setLineNumber(e.getLocation().getLineNr());
             locator.setColumnNumber(e.getLocation().getColumnNr());
-            getErrorHandler().fatalError(new SAXParseException(e.getMessage(), locator));
-//            throw e;
+            // Use the original message as the location is reported separately via the locator.
+            fatalError(new SAXParseException(tidyMessage(e.getOriginalMessage()), locator));
         } catch (final RuntimeException e) {
-            getErrorHandler().fatalError(new SAXParseException(e.getMessage(), null));
-//            throw e;
+            fatalError(new SAXParseException(e.getMessage(), null));
         } finally {
             reader.close();
             endDocument();
         }
+    }
+
+    /**
+     * Jackson embeds a description of the source in its messages, e.g.
+     * <pre>[Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 1]</pre>
+     * which means nothing to a user, so strip it out leaving just the location.
+     */
+    static String tidyMessage(final String message) {
+        if (message == null) {
+            return null;
+        }
+        return SOURCE_PATTERN.matcher(message).replaceAll("[");
+    }
+
+    private void fatalError(final SAXParseException e) throws SAXException {
+        final ErrorHandler errorHandler = getErrorHandler();
+        if (errorHandler == null) {
+            // Nothing to report the error to so throw it, else the caller would just get an NPE
+            // and no indication of what was wrong with the JSON.
+            throw e;
+        }
+        errorHandler.fatalError(e);
     }
 
     private void startDocument() throws SAXException {
