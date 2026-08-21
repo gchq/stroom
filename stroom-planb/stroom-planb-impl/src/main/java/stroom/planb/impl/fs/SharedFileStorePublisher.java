@@ -236,11 +236,10 @@ public class SharedFileStorePublisher {
     // Copies up under a temp name, renames within the live bucket dir, then bumps .version — so the dir
     // is never renamed away and the bucket cannot transiently vanish.
     //
-    // The ordering matters in both directions. .version goes last because ArchiveShardLocator treats its
-    // presence as "bucket complete", so a brand-new bucket stays invisible until its data is in place.
-    // And it goes after the data rename rather than before, so a crash in between leaves new data under
-    // an old version — which readers re-sync past on the next version change — rather than an advertised
-    // version whose data never arrived.
+    // .version goes last because ArchiveShardLocator treats its presence as "bucket complete", so a bucket
+    // stays invisible until its data is in place; writing it first would advertise data that never arrived.
+    // Not covered: a crash between the two on a bucket's first push leaves data.mdb unversioned, so it is
+    // invisible and the next run overwrites it rather than merging into it.
     private static void publishBucketData(final Path localData,
                                           final Path archiveShardDir,
                                           final String version) throws IOException {
