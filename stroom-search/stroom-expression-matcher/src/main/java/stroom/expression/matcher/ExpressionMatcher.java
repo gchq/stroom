@@ -29,6 +29,7 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.shared.NullSafe;
 
+import java.util.Locale;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -279,8 +280,10 @@ public class ExpressionMatcher {
             }
         } else {
             switch (condition) {
-                case EQUALS, CONTAINS:
+                case EQUALS:
                     return isStringMatch(termValue, attribute);
+                case CONTAINS:
+                    return isStringContains(termValue, attribute);
                 case NOT_EQUALS:
                     return !isStringMatch(termValue, attribute);
                 case IN:
@@ -340,6 +343,39 @@ public class ExpressionMatcher {
             }
         }
         return false;
+    }
+
+    /**
+     * A genuine substring match, unlike {@link #isStringMatch} which anchors.
+     * <p>
+     * These shared a branch until 2026-08-21, which made {@code CONTAINS} mean the same as
+     * {@code EQUALS} here. That was invisible while no field reaching this matcher declared
+     * {@code CONTAINS} - the expression editor could not offer it - but it silently narrowed the
+     * explorer's document permission quick filters to exact matching when they moved from a
+     * client-side parser that wrapped values in wildcards to the shared server-side grammar.
+     * <p>
+     * Matches what {@code TermHandler} does for {@code CONTAINS} in SQL: a plain substring, no
+     * wildcard interpretation.
+     */
+    private boolean isStringContains(final String termValue, final Object attribute) {
+        if (attribute instanceof final DocRef docRef) {
+            return containsIgnoreCase(docRef.getUuid(), termValue)
+                   || containsIgnoreCase(docRef.getName(), termValue);
+        } else if (attribute instanceof final Collection<?> collection) {
+            for (final Object o : collection) {
+                if (isStringContains(termValue, o)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return containsIgnoreCase(attribute.toString(), termValue);
+    }
+
+    private static boolean containsIgnoreCase(final String haystack, final String needle) {
+        return haystack != null
+               && needle != null
+               && haystack.toLowerCase(Locale.ROOT).contains(needle.toLowerCase(Locale.ROOT));
     }
 
     private boolean isStringMatch(final String termValue, final Object attribute) {

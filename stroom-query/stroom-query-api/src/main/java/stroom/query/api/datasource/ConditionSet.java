@@ -253,6 +253,27 @@ public enum ConditionSet {
             Condition.EQUALS,
             Condition.NOT_EQUALS),
 
+    /**
+     * Text fields evaluated in memory by {@code ExpressionMatcher} - the explorer's document
+     * permission screens.
+     * <p>
+     * A third evaluator alongside {@code TermHandler} and {@code ExpressionPredicateFactory}, and
+     * the most limited: its string branch handles only these five conditions and throws on
+     * anything else. In particular it has no {@code STARTS_WITH}, {@code ENDS_WITH} or
+     * {@code MATCHES_REGEX}, so those must not be declared here.
+     * <p>
+     * {@code CONTAINS} matters: without it a bare quick filter term falls back to {@code EQUALS}
+     * and matches exactly, which is not what a quick filter means. Note {@code ExpressionMatcher}
+     * currently routes {@code EQUALS} and {@code CONTAINS} to the same wildcard match, so the two
+     * are indistinguishable there - a separate wart, tracked in the conformance plan.
+     */
+    MATCHER_TEXT(
+            Condition.CONTAINS,
+            Condition.EQUALS,
+            Condition.NOT_EQUALS,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
+
     // UI Defaults.
     /**
      * Text fields evaluated in memory by {@code ExpressionPredicateFactory}.
