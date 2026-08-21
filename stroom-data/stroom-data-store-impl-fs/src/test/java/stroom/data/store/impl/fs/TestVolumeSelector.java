@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs;
 
 
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.capacity.HasCapacitySelector;
@@ -45,16 +46,24 @@ class TestVolumeSelector extends StroomUnitTest {
     private static final String PATH_5 = "path5";
 
     private List<FsVolume> createVolumeList() {
+        final FsVolumeGroup volumeGroup = FsVolumeGroup.builder()
+                .name("my group")
+                .build();
         // 4k free, 80% free
-        final FsVolume v1 = FsVolume.create(PATH_1, FsVolumeState.create(1_000, 5_000));
+        final FsVolume v1 = FsVolume.create(
+                volumeGroup, PATH_1, FsVolumeState.create(1_000, 5_000));
         // 4k free, 40% free
-        final FsVolume v2 = FsVolume.create(PATH_2, FsVolumeState.create(6_000, 10_000));
+        final FsVolume v2 = FsVolume.create(
+                volumeGroup, PATH_2, FsVolumeState.create(6_000, 10_000));
         // 2k free, 20% free
-        final FsVolume v3 = FsVolume.create(PATH_3, FsVolumeState.create(8_000, 10_000));
+        final FsVolume v3 = FsVolume.create(
+                volumeGroup, PATH_3, FsVolumeState.create(8_000, 10_000));
         // 0k free, 0% free
-        final FsVolume v4 = FsVolume.create(PATH_4, FsVolumeState.create(10_000, 10_000));
+        final FsVolume v4 = FsVolume.create(
+                volumeGroup, PATH_4, FsVolumeState.create(10_000, 10_000));
         // 1k free, 10% free
         final FsVolume v5 = FsVolume.create(
+                volumeGroup,
                 PATH_5,
                 FsVolumeState.create(9_000, 100_000),
                 10_000L);

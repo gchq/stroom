@@ -251,29 +251,6 @@ public class S3EventNotificationService {
         }
     }
 
-    private void handleEvent(final S3CreateEvent s3CreateEvent,
-                             final AttributeMapFilter attributeMapFilter) {
-
-        try {
-            final boolean isAllowed;
-            try {
-                isAllowed = attributeMapFilter.filter(s3CreateEvent.attributeMap());
-                LOGGER.debug("handleEvent() - s3CreateEvent: {}, isAllowed: {}", s3CreateEvent, isAllowed);
-                if (isAllowed) {
-                    s3EventConsumer.accept(s3CreateEvent);
-                } else {
-                    // TODO log the drop
-                }
-            } catch (final StroomStreamException e) {
-                // TODO log the rejection
-                LOGGER.debug("handleEvent() - s3CreateEvent: {}, stroomStreamException: {}",
-                        s3CreateEvent, LogUtil.exceptionMessage(e));
-            }
-        } catch (final Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private static void addSqsMessageId(final AttributeMap attributeMap, final Message message) {
         final String sqsMessageId = message.messageId();
         if (NullSafe.isNonBlankString(sqsMessageId)) {

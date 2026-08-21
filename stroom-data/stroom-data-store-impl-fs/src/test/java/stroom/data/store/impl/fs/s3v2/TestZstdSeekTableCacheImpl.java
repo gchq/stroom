@@ -19,7 +19,7 @@ package stroom.data.store.impl.fs.s3v2;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.util.logging.LambdaLogger;

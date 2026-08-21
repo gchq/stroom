@@ -23,7 +23,7 @@ import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -108,6 +108,7 @@ final class S3ZstdSource implements Source {
                 tempDir, s3Location, meta, dataVolume);
         this.s3ZstdStreamStore = s3ZstdStreamStore;
         this.tempDir = tempDir;
+        // TODO change to holding a S3Location obj
         this.s3Location = s3Location;
         this.s3Manager = s3Manager;
         this.meta = meta;
@@ -133,8 +134,8 @@ final class S3ZstdSource implements Source {
     }
 
     private Set<String> getChildTypes() {
-        // TODO this could come from the fs_meta_s3_location table if we store all keys
-
+        // TODO this could come from the fs_meta_s3_location table if we store all keys and
+        //  and encode the segmentation type in the key or have a nullable col for type
         if (childTypes == null) {
             childTypes = new HashSet<>(getAttributes().getAsList(MetaFields.CHILD_TYPES.getFldName()));
             LOGGER.debug(() -> LogUtil.message("getChildTypes() - childTypes: {}", NullSafe.sort(childTypes)));
@@ -144,7 +145,7 @@ final class S3ZstdSource implements Source {
 
     private ZstdSegmentationType getSegmentationType() {
         // TODO this could come from the fs_meta_s3_location table if we store all keys
-        //  and encode the segmentation type in the key
+        //  and encode the segmentation type in the key or have a nullable col for type
         if (zstdSegmentationType == null) {
             final String segmentationType = getAttributes().get(MetaFields.SEGMENTATION_TYPE.getFldName());
             LOGGER.debug("getSegmentationType() - segmentationType: {}", segmentationType);
@@ -163,6 +164,8 @@ final class S3ZstdSource implements Source {
         attributeMap.putAll(manifest);
 
         attributeMap.put("S3 Location", s3Location);
+        // TODO change s3Location to be S3Location obj
+//        AttributeMapUtil.addS3Location(attributeMap, s3Location);
 
         try {
             try (final Stream<Path> stream = Files.list(tempDir)) {

@@ -17,8 +17,8 @@
 package stroom.data.store.impl.fs;
 
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.s3v2.ZstdDictionaryTaskDao;
+import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.PhysicalDelete;

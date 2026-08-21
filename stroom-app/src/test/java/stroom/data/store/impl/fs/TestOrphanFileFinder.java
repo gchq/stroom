@@ -20,6 +20,8 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
+import stroom.data.store.impl.DataVolumeService;
+import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.standard.FileSystemUtil;

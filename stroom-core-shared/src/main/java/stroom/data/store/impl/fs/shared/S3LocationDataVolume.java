@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.shared;
 
 
 import stroom.aws.s3.shared.S3Location;
-import stroom.data.store.impl.fs.shared.DataVolume;
-import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.util.shared.NullSafe;
 
 import java.util.Objects;

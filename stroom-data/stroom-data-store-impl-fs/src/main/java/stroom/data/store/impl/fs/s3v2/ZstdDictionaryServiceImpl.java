@@ -20,7 +20,7 @@ package stroom.data.store.impl.fs.s3v2;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.cache.api.StroomCache;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.security.api.SecurityContext;
 import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;

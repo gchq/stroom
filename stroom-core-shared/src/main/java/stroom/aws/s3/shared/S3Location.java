@@ -32,6 +32,11 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class S3Location implements HasDisplayValue {
 
+    public static final String REGION_NAME_META_KEY = "S3 Region";
+    public static final String BUCKET_NAME_META_KEY = "S3 Bucket";
+    public static final String KEY_META_KEY = "S3 Key";
+    public static final String LOCATION_META_KEY = "S3 Location";
+
     public static final String TEMPLATE_VARIABLE_PREFIX = "${";
 
     @JsonProperty
@@ -74,6 +79,22 @@ public final class S3Location implements HasDisplayValue {
 
     public String getKey() {
         return key;
+    }
+
+    /// @param suffix The key part to append to the existing key
+    /// @return A new {@link S3Location} that appends suffix onto the end of the existing key, placing a
+    /// '/' between the existing key and the new key if necessary
+    public S3Location appendKey(final String suffix) {
+        Objects.requireNonNull(suffix);
+        final String effectiveSuffix;
+        if (this.key.endsWith("/") && suffix.endsWith("/")) {
+            effectiveSuffix = suffix.substring(1);
+        } else if (!this.key.endsWith("/") && !suffix.endsWith("/")) {
+            effectiveSuffix = "/" + suffix;
+        } else {
+            effectiveSuffix = suffix;
+        }
+        return new S3Location(regionName, bucketName, this.key + effectiveSuffix);
     }
 
     @Override

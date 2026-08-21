@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs;
 
 
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.meta.shared.SimpleMeta;
 
 public class NoOpPhysicalDeleteOutcome implements PhysicalDeleteOutcome {

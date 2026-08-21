@@ -25,7 +25,7 @@ import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Target;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.standard.FileSystemUtil;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;

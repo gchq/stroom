@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs.s3v2;
 
 
 import stroom.aws.s3.impl.S3Manager;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.meta.shared.Meta;
 
 import java.util.Optional;

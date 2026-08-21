@@ -16,7 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.DataVolumeService;
+import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;

@@ -66,7 +66,7 @@ public class SelectionSummary {
                             @JsonProperty("statusCount") final long statusCount,
                             @JsonProperty("distinctStatuses") final Set<String> distinctStatuses,
                             @JsonProperty("ageRange") final Range<Long> ageRange,
-                            @JsonProperty("readOnlyCount") final long readOnlyCount) {
+                            @JsonProperty("readOnlyCount") final Long readOnlyCount) {
         this.itemCount = itemCount;
         this.feedCount = feedCount;
         this.distinctFeeds = distinctFeeds;
@@ -158,10 +158,9 @@ public class SelectionSummary {
         return ageRange;
     }
 
-    // Not used at the mo
-//    public long getReadOnlyCount() {
-//        return readOnlyCount;
-//    }
+    public Long getReadOnlyCount() {
+        return readOnlyCount;
+    }
 
     @Override
     public String toString() {

@@ -20,7 +20,7 @@ package stroom.data.store.impl.fs.s3v2;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.impl.S3ManagerFactory;
 import stroom.aws.s3.shared.S3ClientConfig;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

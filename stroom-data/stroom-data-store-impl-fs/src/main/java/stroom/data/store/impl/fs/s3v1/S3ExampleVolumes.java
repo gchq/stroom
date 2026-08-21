@@ -66,7 +66,7 @@ public class S3ExampleVolumes {
                     .build();
 
             final FsVolume volume = FsVolume.builder()
-                    .volumeGroupId(s3VolumeGroup.getId())
+                    .volumeGroup(s3VolumeGroup)
                     .volumeType(FsVolumeType.S3_V1)
                     .s3ClientConfig(s3ClientConfig)
                     .s3ClientConfigData(JsonUtil.writeValueAsString(s3ClientConfig))

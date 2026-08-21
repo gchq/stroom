@@ -98,7 +98,7 @@ final class S3Source implements Source {
     private void readManifest(final AttributeMap attributeMap) {
         final Path manifestFile = tempDir.resolve(S3FileExtensions.MANIFEST_FILE_NAME);
 
-        attributeMap.put("S3 Location", s3Location.getDisplayValue());
+        AttributeMapUtil.addS3Location(attributeMap, s3Location);
 
         try {
             if (Files.isRegularFile(manifestFile)) {

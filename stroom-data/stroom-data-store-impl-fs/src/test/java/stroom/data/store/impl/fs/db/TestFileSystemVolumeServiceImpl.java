@@ -34,6 +34,7 @@ import stroom.data.store.impl.fs.dao.FsVolumeGroupDaoImpl;
 import stroom.data.store.impl.fs.dao.FsVolumeStateDaoImpl;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.shared.ValidationResult;
@@ -160,7 +161,11 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
                 .isZero();
 
         // Create
+        final FsVolumeGroup volumeGroup = FsVolumeGroup.builder()
+                .name("My volume")
+                .build();
         final FsVolume public1a = FsVolume.create(
+                volumeGroup,
                 FileUtil.getCanonicalPath(tempDir.resolve("PUBLIC_1A")),
                 FsVolumeState.create(0, 1000));
         FsVolume fileVolume = volumeService.create(public1a)

@@ -192,6 +192,8 @@ public class FsVolumeEditPresenter
                 .build();
     }
 
+    // --------------------------------------------------------------------------------
+
     public interface FsVolumeEditView extends View, Focus {
 
         SelectionBox<FsVolumeType> getVolumeType();

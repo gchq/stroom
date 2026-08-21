@@ -33,15 +33,21 @@ import java.util.stream.Collectors;
  */
 public enum Status implements HasDisplayValue, HasPrimitiveValue {
 
+    /**
+     * Available for reading.
+     */
     UNLOCKED(0, "Unlocked"),
+
     /**
      * Open exclusive lock.
      */
     LOCKED(1, "Locked"),
+
     /**
      * Logical Delete
      */
-    DELETED(99, "Deleted");
+    DELETED(99, "Deleted"),
+    ;
 
     public static final PrimitiveValueConverter<Status> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(Status.class, Status.values());

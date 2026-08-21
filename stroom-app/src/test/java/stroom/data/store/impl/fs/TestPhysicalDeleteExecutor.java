@@ -18,7 +18,9 @@ package stroom.data.store.impl.fs;
 
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.impl.DataVolumeService;
 import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
+import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
 import stroom.db.util.JooqUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.impl.db.MetaDbConnProvider;

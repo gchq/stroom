@@ -23,6 +23,7 @@ import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeRecord;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.db.util.JooqUtil;
@@ -32,12 +33,15 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.TableField;
+import org.jspecify.annotations.NonNull;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -114,8 +118,10 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         final FsVolumeRecord record = FS_VOLUME.newRecord();
         volumeToRecord(fileVolume, record);
         final FsVolumeRecord persistedRecord = JooqUtil.updateWithOptimisticLocking(fsDataStoreDbConnProvider, record);
-        final FsVolume result = recordToVolume(persistedRecord, fileVolume.getVolumeState());
-        return result.copy().volumeState(fileVolume.getVolumeState()).build();
+        return recordToVolume(
+                persistedRecord,
+                fileVolume.getVolumeState(),
+                fileVolume.getVolumeGroup());
     }
 
     @Override
@@ -146,8 +152,8 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                         .select()
                         .from(FS_VOLUME)
-                        .join(FS_VOLUME_STATE)
-                        .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                        .join(FS_VOLUME_STATE).on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                        .join(FS_VOLUME_GROUP).on(FS_VOLUME_GROUP.ID.eq(FS_VOLUME.FK_FS_VOLUME_GROUP_ID))
                         .where(FS_VOLUME.ID.eq(id))
                         .fetchOptional())
                 .map(this::recordToVolume)
@@ -166,59 +172,65 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         final Result<Record> result = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                 .select()
                 .from(FS_VOLUME)
-                .join(FS_VOLUME_STATE)
-                .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                .join(FS_VOLUME_STATE).on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                .join(FS_VOLUME_GROUP).on(FS_VOLUME_GROUP.ID.eq(FS_VOLUME.FK_FS_VOLUME_GROUP_ID))
                 .where(conditions)
                 .limit(offset, limit)
                 .fetch());
 
-        final List<FsVolume> list = result.map(this::recordToVolume);
+        final Caches caches = new Caches();
+        final List<FsVolume> list = result.map(record -> recordToVolume(record, caches));
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override
     public Set<FsVolume> get(final String path) {
+        final Caches caches = new Caches();
         return new HashSet<>(JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                         .select()
                         .from(FS_VOLUME)
+                        .join(FS_VOLUME_GROUP).on(FS_VOLUME_GROUP.ID.eq(FS_VOLUME.FK_FS_VOLUME_GROUP_ID))
                         .where(FS_VOLUME.PATH.eq(path))
                         .fetch())
-                .map(this::recordToVolume));
+                .map(record -> recordToVolume(record, caches)));
     }
 
     @Override
     public List<FsVolume> getAll() {
+        final Caches caches = new Caches();
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                         .select()
                         .from(FS_VOLUME)
-                        .leftOuterJoin(FS_VOLUME_STATE).on(FS_VOLUME.FK_FS_VOLUME_STATE_ID.eq(FS_VOLUME_STATE.ID))
+                        .join(FS_VOLUME_STATE).on(FS_VOLUME.FK_FS_VOLUME_STATE_ID.eq(FS_VOLUME_STATE.ID))
+                        .join(FS_VOLUME_GROUP).on(FS_VOLUME_GROUP.ID.eq(FS_VOLUME.FK_FS_VOLUME_GROUP_ID))
                         .fetch())
-                .map(this::recordToVolume);
+                .map(record -> recordToVolume(record, caches));
     }
 
     @Override
     public List<FsVolume> getVolumesInGroup(final String groupName) {
+        final Caches caches = new Caches();
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                         .select()
                         .from(FS_VOLUME)
-                        .join(FS_VOLUME_STATE)
-                        .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                        .join(FS_VOLUME_STATE).on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
                         .join(FS_VOLUME_GROUP).on(FS_VOLUME_GROUP.ID.eq(FS_VOLUME.FK_FS_VOLUME_GROUP_ID))
                         .where(FS_VOLUME_GROUP.NAME.eq(groupName))
                         .fetch())
-                .map(this::recordToVolume);
+                .map(record -> recordToVolume(record, caches));
     }
 
     @Override
     public List<FsVolume> getVolumesInGroup(final int groupId) {
+        final Caches caches = new Caches();
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                         .select()
                         .from(FS_VOLUME)
-                        .join(FS_VOLUME_STATE)
-                        .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                        .join(FS_VOLUME_STATE).on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                        .join(FS_VOLUME_GROUP).on(FS_VOLUME_GROUP.ID.eq(FS_VOLUME.FK_FS_VOLUME_GROUP_ID))
                         .where(FS_VOLUME.FK_FS_VOLUME_GROUP_ID.eq(groupId))
                         .fetch())
-                .map(this::recordToVolume);
+                .map(record -> recordToVolume(record, caches));
     }
 
     private void volumeToRecord(final FsVolume fileVolume, final FsVolumeRecord record) {
@@ -247,17 +259,56 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
     }
 
     private FsVolume recordToVolume(final Record record) {
-        final FsVolumeState fileSystemVolumeState = new FsVolumeState(
+        final FsVolumeState fileSystemVolumeState = recordToVolumeState(record);
+        final FsVolumeGroup fsVolumeGroup = recordToVolumeGroup(record);
+        return recordToVolume(record, fileSystemVolumeState, fsVolumeGroup);
+    }
+
+    private FsVolume recordToVolume(final Record record,
+                                    final Caches caches) {
+        // No need to cache vol state as it is 1:1 with volume
+        final FsVolumeState fileSystemVolumeState = recordToVolumeState(record);
+        final FsVolumeGroup fsVolumeGroup = recordToVolumeGroup(record, caches);
+        return recordToVolume(record, fileSystemVolumeState, fsVolumeGroup);
+    }
+
+    private static @NonNull FsVolumeState recordToVolumeState(final Record record) {
+        return new FsVolumeState(
                 record.get(FS_VOLUME_STATE.ID),
                 record.get(FS_VOLUME_STATE.VERSION),
                 record.get(FS_VOLUME_STATE.BYTES_USED),
                 record.get(FS_VOLUME_STATE.BYTES_FREE),
                 record.get(FS_VOLUME_STATE.BYTES_TOTAL),
                 record.get(FS_VOLUME_STATE.UPDATE_TIME_MS));
-        return recordToVolume(record, fileSystemVolumeState);
     }
 
-    private FsVolume recordToVolume(final Record record, final FsVolumeState fileSystemVolumeState) {
+    private FsVolumeGroup recordToVolumeGroup(final Record record,
+                                              final Caches caches) {
+        if (caches.volGrpCache != null) {
+            return caches.volGrpCache.computeIfAbsent(
+                    record.get(FS_VOLUME_GROUP.ID),
+                    ignored ->
+                            recordToVolumeGroup(record));
+        } else {
+            return recordToVolumeGroup(record);
+        }
+    }
+
+    private FsVolumeGroup recordToVolumeGroup(final Record record) {
+        return FsVolumeGroup.builder()
+                .id(record.get(FS_VOLUME_GROUP.ID))
+                .version(record.get(FS_VOLUME_GROUP.VERSION))
+                .name(record.get(FS_VOLUME_GROUP.NAME))
+                .createTimeMs(record.get(FS_VOLUME_GROUP.CREATE_TIME_MS))
+                .createUser(record.get(FS_VOLUME_GROUP.CREATE_USER))
+                .updateTimeMs(record.get(FS_VOLUME_GROUP.UPDATE_TIME_MS))
+                .updateUser(record.get(FS_VOLUME_GROUP.UPDATE_USER))
+                .build();
+    }
+
+    private FsVolume recordToVolume(final Record record,
+                                    final FsVolumeState fileSystemVolumeState,
+                                    final FsVolumeGroup fsVolumeGroup) {
         final FsVolume.Builder builder = FsVolume
                 .builder()
                 .id(record.get(FS_VOLUME.ID))
@@ -271,7 +322,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
                 .byteLimit(record.get(FS_VOLUME.BYTE_LIMIT))
                 .volumeState(fileSystemVolumeState)
                 .volumeType(FsVolumeType.fromId(record.get(FS_VOLUME.VOLUME_TYPE)))
-                .volumeGroupId(record.get(FS_VOLUME.FK_FS_VOLUME_GROUP_ID));
+                .volumeGroup(fsVolumeGroup);
 
         final byte[] data = record.get(FS_VOLUME.DATA);
         if (data != null) {
@@ -294,5 +345,17 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         set.setMatchAll(selection.isMatchAll());
         set.setSet(selection.getSet().stream().map(VolumeUseStatus::getPrimitiveValue).collect(Collectors.toSet()));
         return JooqUtil.getSetCondition(field, set);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Temporary local cache of the parent table objects
+    private record Caches(Int2ObjectMap<FsVolumeGroup> volGrpCache) {
+
+        private Caches() {
+            this(new Int2ObjectOpenHashMap<>());
+        }
     }
 }

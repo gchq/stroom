@@ -70,7 +70,7 @@ public class MockFsVolumeGroupService implements FsVolumeGroupService {
     }
 
     @Override
-    public Optional<String> getDefaultVolumeGroup() {
+    public Optional<String> getDefaultVolumeGroupName() {
         return Optional.empty();
     }
 }

@@ -17,8 +17,8 @@
 package stroom.data.store.impl.fs.s3v2;
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.FsVolumeConfig;
+import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.standard.InternalStreamTypeNames;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.StringUtil;

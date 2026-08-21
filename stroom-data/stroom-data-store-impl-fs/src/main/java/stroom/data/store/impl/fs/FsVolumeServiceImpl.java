@@ -177,14 +177,6 @@ public class FsVolumeServiceImpl implements FsVolumeService {
                 final FsVolumeState fileVolumeState = fileSystemVolumeStateDao.create(FsVolumeState.builder().build());
                 builder.volumeState(fileVolumeState);
 
-                if (fsVolume.getVolumeGroupId() == null) {
-                    final FsVolumeGroup fsVolumeGroup = fsVolumeGroupService
-                            .getOrCreate(volumeConfigProvider.get().getDefaultStreamVolumeGroupName());
-                    if (fsVolumeGroup != null) {
-                        builder.volumeGroupId(fsVolumeGroup.getId());
-                    }
-                }
-
                 builder.stampAudit(securityContext);
                 builder = fsVolumeDao.create(builder.build()).copy();
                 builder.volumeState(fileVolumeState);
@@ -267,6 +259,12 @@ public class FsVolumeServiceImpl implements FsVolumeService {
     public FsVolume update(final FsVolume fileVolume) {
         return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
             validateVolume(fileVolume);
+            final FsVolume existingFsVolume = fsVolumeDao.fetch(fileVolume.getId());
+            Objects.requireNonNull(existingFsVolume, "Volume does not exist with id " + fileVolume.getId());
+
+            if (!Objects.equals(existingFsVolume.getVolumeGroupId(), fileVolume.getVolumeGroupId())) {
+                throw new IllegalStateException("Volume group id cannot be changed");
+            }
 
             final FsVolume result = fsVolumeDao.update(fileVolume.copy()
                     .stampAudit(securityContext)
@@ -778,24 +776,43 @@ public class FsVolumeServiceImpl implements FsVolumeService {
                         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, false, false);
                         final List<FsVolume> existingVolumes = doFind(findVolumeCriteria).getValues();
                         if (existingVolumes.isEmpty()) {
-                            if (volumeConfig.getDefaultStreamVolumePaths() != null) {
-                                final List<String> paths = volumeConfig.getDefaultStreamVolumePaths();
-                                for (final String path : paths) {
-                                    final Path resolvedPath = pathCreator.toAppPath(path);
-                                    LOGGER.info("Creating default data volume with path {}",
-                                            resolvedPath.toAbsolutePath().normalize());
+                            final Optional<FsVolumeGroup> optVolGroup =
+                                    fsVolumeGroupService.getOrCreateDefaultVolumeGroup();
 
-                                    createVolume(resolvedPath);
+                            if (optVolGroup.isPresent()) {
+                                final FsVolumeGroup fsVolumeGroup = optVolGroup.get();
+                                final long count = NullSafe.stream(volumeConfig.getDefaultStreamVolumePaths())
+                                        .filter(NullSafe::isNonBlankString)
+                                        .mapToInt(path -> {
+                                            final Path resolvedPath = pathCreator.toAppPath(path);
+                                            LOGGER.info("Creating default data volume with path {} " +
+                                                        "in volume group {}",
+                                                    resolvedPath.toAbsolutePath().normalize(),
+                                                    fsVolumeGroup.getName());
+                                            createVolume(fsVolumeGroup, resolvedPath);
+                                            return 1;
+                                        })
+                                        .sum();
+
+                                if (count == 0) {
+                                    LOGGER.error("Property createDefaultStreamVolumesOnStart is set to true but no " +
+                                                 "volume paths were configured in property defaultStreamVolumePaths. " +
+                                                 "No volumes were created.");
+                                } else {
+                                    LOGGER.info("Created {} volumes in volume group {}",
+                                            count, fsVolumeGroup.getName());
                                 }
-
                             } else {
-                                LOGGER.warn(() -> "No suitable directory to create default volumes in");
+                                LOGGER.error(
+                                        "Property createDefaultStreamVolumesOnStart is set to true but no " +
+                                        "volume group name is configured in property defaultStreamVolumeGroupName");
                             }
                         } else {
-                            LOGGER.info(() -> "Existing volumes exist, won't create default volumes");
+                            LOGGER.info("Existing volumes exist, won't create default volumes");
                         }
                     } else {
-                        LOGGER.info(() -> "Creation of default volumes is currently disabled");
+                        LOGGER.info("Creation of default volumes is currently disabled by property " +
+                                    "createDefaultStreamVolumesOnStart");
                     }
                 });
             } catch (final RuntimeException e) {
@@ -809,9 +826,10 @@ public class FsVolumeServiceImpl implements FsVolumeService {
         }
     }
 
-    private void createVolume(final Path path) {
+    private void createVolume(final FsVolumeGroup fsVolumeGroup, final Path path) {
         final FsVolume fileVolume = FsVolume
                 .builder()
+                .volumeGroup(fsVolumeGroup)
                 .volumeType(FsVolumeType.STANDARD)
                 .path(FileUtil.getCanonicalPath(path))
                 .build();

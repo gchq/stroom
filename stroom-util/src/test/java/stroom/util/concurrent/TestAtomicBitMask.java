@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestAtomicBitMask {
 
@@ -191,6 +192,11 @@ class TestAtomicBitMask {
 
             assertThat(mask.asLong()).isEqualTo(7L);
             assertThat(mask.countSetBits()).isEqualTo(3);
+            assertThat(mask.isSet(0)).isTrue();
+            assertThat(mask.isSet(1)).isTrue();
+            assertThat(mask.isSet(2)).isTrue();
+            assertThatThrownBy(() -> mask.isSet(3))
+                    .isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test

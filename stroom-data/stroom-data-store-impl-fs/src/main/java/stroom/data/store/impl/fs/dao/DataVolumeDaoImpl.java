@@ -17,9 +17,10 @@
 package stroom.data.store.impl.fs.dao;
 
 import stroom.data.store.impl.fs.DataVolumeDao;
-import stroom.data.store.impl.fs.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.FsVolumeCache;
 import stroom.data.store.impl.fs.db.FsDataStoreDbConnProvider;
+import stroom.data.store.impl.fs.shared.DataVolume;
+import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LambdaLogger;
@@ -49,7 +50,7 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
 
     @Inject
     public DataVolumeDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider,
-                      final FsVolumeCache fsVolumeCache) {
+                             final FsVolumeCache fsVolumeCache) {
         this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
         this.fsVolumeCache = fsVolumeCache;
     }

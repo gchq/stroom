@@ -35,6 +35,7 @@ public interface FsVolumeGroupService {
 
     FsVolumeGroup getOrCreate(String name);
 
+
     FsVolumeGroup update(FsVolumeGroup indexVolumeGroup);
 
     FsVolumeGroup get(String name);
@@ -45,5 +46,10 @@ public interface FsVolumeGroupService {
 
     void ensureDefaultVolumes();
 
-    Optional<String> getDefaultVolumeGroup();
+    default Optional<FsVolumeGroup> getOrCreateDefaultVolumeGroup() {
+        return getDefaultVolumeGroupName()
+                .map(this::getOrCreate);
+    }
+
+    Optional<String> getDefaultVolumeGroupName();
 }

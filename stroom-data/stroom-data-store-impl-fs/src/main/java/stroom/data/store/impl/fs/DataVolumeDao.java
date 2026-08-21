@@ -16,9 +16,9 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.impl.fs.shared.DataVolume;
+import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.data.store.impl.fs.shared.FsVolumeType;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import java.util.Collection;
@@ -36,22 +36,4 @@ public interface DataVolumeDao {
 
     int delete(Collection<Long> metaIdList);
 
-
-    // --------------------------------------------------------------------------------
-
-
-    interface DataVolume {
-
-        long metaId();
-
-        FsVolume volume();
-
-        default Integer getVolumeId() {
-            return NullSafe.get(volume(), FsVolume::getId);
-        }
-
-        default FsVolumeType getVolumeType() {
-            return NullSafe.get(volume(), FsVolume::getVolumeType);
-        }
-    }
 }

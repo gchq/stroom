@@ -27,6 +27,7 @@ import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -149,8 +150,15 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     }
 
     @Override
-    public Optional<String> getDefaultVolumeGroup() {
-        return Optional.ofNullable(volumeConfigProvider.get().getDefaultStreamVolumeGroupName());
+    public Optional<FsVolumeGroup> getOrCreateDefaultVolumeGroup() {
+        return getDefaultVolumeGroupName()
+                .map(this::getOrCreate);
+    }
+
+    @Override
+    public Optional<String> getDefaultVolumeGroupName() {
+        return Optional.ofNullable(volumeConfigProvider.get().getDefaultStreamVolumeGroupName())
+                .filter(NullSafe::isNonBlankString);
     }
 
     private synchronized void createDefaultVolumes() {

@@ -16,7 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.DataVolume;
+import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.meta.api.MetaService;
@@ -53,14 +54,14 @@ class FsOrphanMetaFinder {
 
     private final FsPathHelper fsPathHelper;
     private final MetaService metaService;
-    private final DataVolumeService dataVolumeService;
+    private final DataVolumeServiceImpl dataVolumeService;
     private final Provider<FsVolumeConfig> fsVolumeConfigProvider;
     private final PathCreator pathCreator;
 
     @Inject
     public FsOrphanMetaFinder(final FsPathHelper fsPathHelper,
                               final MetaService metaService,
-                              final DataVolumeService dataVolumeService,
+                              final DataVolumeServiceImpl dataVolumeService,
                               final Provider<FsVolumeConfig> fsVolumeConfigProvider,
                               final PathCreator pathCreator) {
         this.fsPathHelper = fsPathHelper;

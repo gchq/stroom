@@ -149,8 +149,15 @@ public class AtomicBitMask {
         if (size == MAX_SIZE) {
             bitMask.set(-1L);
         } else {
-            for (int i = 0; i < size; i++) {
-                setAndGetAsLong(i);
+            while (true) {
+                final long initialVal = bitMask.get();
+                long currVal = initialVal;
+                for (int idx = 0; idx < size; idx++) {
+                    currVal = currVal | (1L << idx);
+                }
+                if (bitMask.compareAndSet(initialVal, currVal)) {
+                    break;
+                }
             }
         }
     }

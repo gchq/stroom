@@ -18,12 +18,12 @@ package stroom.data.store.impl.fs.dao;
 
 
 import stroom.aws.s3.shared.S3Location;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.FsMetaS3LocationDao;
-import stroom.data.store.impl.fs.S3LocationDataVolume;
 import stroom.data.store.impl.fs.db.FsDataStoreDbConnProvider;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaS3Location;
+import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.S3LocationDataVolume;
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

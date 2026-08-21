@@ -25,6 +25,7 @@ import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -68,7 +69,7 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
     @JsonProperty
     private final String s3ClientConfigData;
     @JsonProperty
-    private final Integer volumeGroupId;
+    private final FsVolumeGroup volumeGroup;
 
     @JsonIgnore
     private final HasCapacityInfo capacityInfo = new CapacityInfo();
@@ -87,7 +88,7 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
                     @JsonProperty("volumeType") final FsVolumeType volumeType,
                     @JsonProperty("s3ClientConfig") final S3ClientConfig s3ClientConfig,
                     @JsonProperty("s3ClientConfigData") final String s3ClientConfigData,
-                    @JsonProperty("volumeGroupId") final Integer volumeGroupId) {
+                    @JsonProperty("volumeGroup") final FsVolumeGroup volumeGroup) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -101,11 +102,38 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
         this.volumeType = Objects.requireNonNullElse(volumeType, FsVolumeType.STANDARD);
         this.s3ClientConfig = s3ClientConfig;
         this.s3ClientConfigData = s3ClientConfigData;
-        this.volumeGroupId = volumeGroupId;
+        this.volumeGroup = Objects.requireNonNull(volumeGroup);
     }
 
-    public static FsVolume create(final String path) {
-        return create(path, null);
+    /// Test use only
+    @SerialisationTestConstructor
+    FsVolume() {
+        this.id = null;
+        this.version = null;
+        this.createTimeMs = null;
+        this.createUser = null;
+        this.updateTimeMs = null;
+        this.updateUser = null;
+        this.path = null;
+        this.status = null;
+        this.byteLimit = null;
+        this.volumeState = null;
+        this.volumeType = FsVolumeType.STANDARD;
+        this.s3ClientConfig = null;
+        this.s3ClientConfigData = null;
+        this.volumeGroup = new FsVolumeGroup(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static FsVolume create(final FsVolumeGroup volumeGroup,
+                                  final String path) {
+        return create(volumeGroup, path, null);
     }
 
     /**
@@ -114,8 +142,10 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
      * @param path to use
      * @return volume
      */
-    public static FsVolume create(final String path, final FsVolumeState volumeState) {
-        return create(path, volumeState, null);
+    public static FsVolume create(final FsVolumeGroup volumeGroup,
+                                  final String path,
+                                  final FsVolumeState volumeState) {
+        return create(volumeGroup, path, volumeState, null);
     }
 
     /**
@@ -124,7 +154,8 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
      * @param path to use
      * @return volume
      */
-    public static FsVolume create(final String path,
+    public static FsVolume create(final FsVolumeGroup volumeGroup,
+                                  final String path,
                                   final FsVolumeState volumeState,
                                   final Long byteLimit) {
         FsVolumeState vs = volumeState;
@@ -133,6 +164,7 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
         }
         return FsVolume
                 .builder()
+                .volumeGroup(volumeGroup)
                 .path(path)
                 .volumeState(vs)
                 .byteLimit(byteLimit)
@@ -192,8 +224,13 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
         return volumeType;
     }
 
+    @JsonIgnore
     public Integer getVolumeGroupId() {
-        return volumeGroupId;
+        return volumeGroup.getId();
+    }
+
+    public FsVolumeGroup getVolumeGroup() {
+        return volumeGroup;
     }
 
     public S3ClientConfig getS3ClientConfig() {
@@ -237,7 +274,7 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
                volumeType == volume.volumeType &&
                Objects.equals(s3ClientConfig, volume.s3ClientConfig) &&
                Objects.equals(s3ClientConfigData, volume.s3ClientConfigData) &&
-               Objects.equals(volumeGroupId, volume.volumeGroupId);
+               Objects.equals(volumeGroup, volume.volumeGroup);
     }
 
     @Override
@@ -255,7 +292,7 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
                 volumeType,
                 s3ClientConfig,
                 s3ClientConfigData,
-                volumeGroupId);
+                volumeGroup);
     }
 
 
@@ -269,7 +306,7 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
                 .volumeType(volumeType)
                 .s3ClientConfig(s3ClientConfig)
                 .s3ClientConfigData(s3ClientConfigData)
-                .volumeGroupId(volumeGroupId)
+                .volumeGroup(volumeGroup)
                 .build();
     }
 
@@ -296,7 +333,7 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
         private FsVolumeType volumeType = FsVolumeType.STANDARD;
         private S3ClientConfig s3ClientConfig;
         private String s3ClientConfigData;
-        private Integer volumeGroupId;
+        private FsVolumeGroup volumeGroup;
 
         private Builder() {
         }
@@ -315,7 +352,7 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
             this.volumeType = fsVolume.volumeType;
             this.s3ClientConfig = fsVolume.s3ClientConfig;
             this.s3ClientConfigData = fsVolume.s3ClientConfigData;
-            this.volumeGroupId = fsVolume.volumeGroupId;
+            this.volumeGroup = fsVolume.volumeGroup;
         }
 
         public Builder id(final Integer id) {
@@ -363,8 +400,8 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
             return self();
         }
 
-        public Builder volumeGroupId(final Integer volumeGroupId) {
-            this.volumeGroupId = volumeGroupId;
+        public Builder volumeGroup(final FsVolumeGroup volumeGroup) {
+            this.volumeGroup = volumeGroup;
             return self();
         }
 
@@ -389,7 +426,7 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
                     volumeType,
                     s3ClientConfig,
                     s3ClientConfigData,
-                    volumeGroupId);
+                    volumeGroup);
         }
     }
 
@@ -399,7 +436,8 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
                "id=" + id +
                ", path='" + path + '\'' +
                ", volumeType=" + volumeType +
-               ", volumeGroupId=" + volumeGroupId +
+               ", volumeGroupId=" + volumeGroup.getId() +
+               ", volumeGroupName=" + volumeGroup.getName() +
                '}';
     }
 

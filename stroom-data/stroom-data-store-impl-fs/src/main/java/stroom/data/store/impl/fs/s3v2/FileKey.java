@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs.s3v2;
 
 
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.meta.shared.Meta;
 
 import org.jspecify.annotations.NonNull;
