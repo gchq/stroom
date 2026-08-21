@@ -24,15 +24,13 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.FindUserDependenciesCriteria;
-import stroom.security.shared.QuickFilterExpressionParser;
-import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
@@ -137,15 +135,16 @@ public class UserDependenciesListPresenter
                                 final RestErrorHandler errorHandler) {
 
                 if (userRef != null) {
-                    // TODO fix fields
-                    final ExpressionOperator expression = QuickFilterExpressionParser
-                            .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
+                    // The filter text goes to the server verbatim - see FindUserCriteria.
+                    criteriaBuilder.quickFilter(filter);
                     criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
 
                     restFactory
                             .create(USER_RESOURCE)
                             .method(res -> res.findDependencies(criteriaBuilder.build()))
                             .onSuccess(userResultPage -> {
+                                getView().setFilterError(NullSafe.get(
+                                        userResultPage.getFilterError(), TokenError::getText));
 //                            GWT.log(name + " - onSuccess, size: " + userResultPage.size()
 //                                    + ", expr: " + criteriaBuilder.getExpression());
                                 dataConsumer.accept(userResultPage);

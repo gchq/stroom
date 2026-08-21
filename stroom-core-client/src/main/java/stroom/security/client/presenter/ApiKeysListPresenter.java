@@ -26,13 +26,11 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.svg.client.Preset;
 import stroom.task.client.TaskMonitorFactory;
@@ -41,6 +39,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
+import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
@@ -400,10 +399,8 @@ public class ApiKeysListPresenter
                            final Consumer<ResultPage<HashedApiKey>> dataConsumer,
                            final RestErrorHandler errorHandler,
                            final TaskMonitorFactory taskMonitorFactory) {
-        final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(filter, FindApiKeyCriteria.DEFAULT_FIELDS, FindApiKeyCriteria.ALL_FIELDs_MAP);
-
-        criteriaBuilder.expression(expression);
+        // The filter text goes to the server verbatim - see FindApiKeyCriteria.
+        criteriaBuilder.quickFilter(filter);
         criteriaBuilder.pageRequest(CriteriaUtil.createPageRequest(range));
         criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
 
@@ -411,6 +408,10 @@ public class ApiKeysListPresenter
                 .create(API_KEY_RESOURCE)
                 .method(res -> res.find(criteriaBuilder.build()))
                 .onSuccess(response -> {
+                    // A rejected filter comes back as an empty page like any other, so surface
+                    // the reason on the filter box. See ResultPage.filterError.
+                    getView().setFilterError(
+                            NullSafe.get(response.getFilterError(), TokenError::getText));
                     apiKeys.clear();
                     response.stream()
                             .forEach(apiKey -> apiKeys.put(apiKey.getId(), apiKey));

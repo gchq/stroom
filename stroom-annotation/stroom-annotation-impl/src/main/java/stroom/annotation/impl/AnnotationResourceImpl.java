@@ -28,10 +28,10 @@ import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FetchAnnotationEntryRequest;
 import stroom.annotation.shared.FindAnnotationRequest;
+import stroom.annotation.shared.FindAnnotationTagCriteria;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
@@ -260,7 +260,7 @@ class AnnotationResourceImpl implements AnnotationResource {
 //    }
 
     @Override
-    public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
+    public ResultPage<AnnotationTag> findAnnotationTags(final FindAnnotationTagCriteria request) {
         return annotationServiceProvider.get().findAnnotationTags(request);
     }
 

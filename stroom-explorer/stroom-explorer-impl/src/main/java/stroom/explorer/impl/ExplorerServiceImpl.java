@@ -59,7 +59,9 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.language.filter.QuickFilter;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.security.api.DocumentPermissionService;
@@ -1861,6 +1863,11 @@ class ExplorerServiceImpl
 
             return ResultPage.createPageLimitedList(results, request.getPageRequest());
 
+        } catch (final TokenException e) {
+            // Debounced filter - match nothing and say why rather than erroring at the user
+            // mid-keystroke. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
         } catch (final Exception e) {
             LOGGER.error("Error finding nodes with request {}", request, e);
             throw e;
@@ -1876,7 +1883,15 @@ class ExplorerServiceImpl
                                        final TreeConsumer consumer) {
         final LocalMetrics metrics = SimpleMetrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
-            if (!ExpressionUtil.hasTerms(request.getExpression())) {
+            // The user's text is parsed here rather than on the client, so the document permission
+            // screens speak the same filter language as every other one. See spec §9 and §11.
+            final ExpressionOperator expression = QuickFilter.and(
+                    request.getExpression(),
+                    request.getQuickFilter(),
+                    DocumentPermissionFields.QUICK_FILTER_DEFAULT_FIELDS,
+                    DocumentPermissionFields.QUICK_FILTER_FIELDS);
+
+            if (!ExpressionUtil.hasTerms(expression)) {
                 return;
             }
 
@@ -1898,7 +1913,6 @@ class ExplorerServiceImpl
                     metrics,
                     false);
 
-            final ExpressionOperator expression = request.getExpression();
             final ExpressionMatcher expressionMatcher =
                     new ExpressionMatcher(DocumentPermissionFields.getAllFieldMap());
 
@@ -1919,6 +1933,18 @@ class ExplorerServiceImpl
             final AdvancedDocumentFindWithPermissionsRequest request) {
         // First find the results then decorate them with user permissions.
         final List<FindResultWithPermissions> results = new ArrayList<>();
+        try {
+            return advancedFindWithPermissions(request, results);
+        } catch (final TokenException e) {
+            // Debounced filter - match nothing and say why. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
+        }
+    }
+
+    private ResultPage<FindResultWithPermissions> advancedFindWithPermissions(
+            final AdvancedDocumentFindWithPermissionsRequest request,
+            final List<FindResultWithPermissions> results) {
         applyExpressionFilter(request, (path, node) -> {
             final FetchDocumentUserPermissionsRequest fetchDocumentUserPermissionsRequest =
                     new FetchDocumentUserPermissionsRequest.Builder()

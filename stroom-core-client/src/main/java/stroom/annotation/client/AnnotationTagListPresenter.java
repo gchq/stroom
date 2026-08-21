@@ -17,19 +17,15 @@
 package stroom.annotation.client;
 
 import stroom.annotation.shared.AnnotationTag;
-import stroom.annotation.shared.AnnotationTagFields;
 import stroom.annotation.shared.AnnotationTagType;
+import stroom.annotation.shared.FindAnnotationTagCriteria;
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.ConditionalFormattingType;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionTerm;
-import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -82,15 +78,10 @@ public class AnnotationTagListPresenter extends MyPresenterWidget<PagerView> {
                 protected void exec(final Range range,
                                     final Consumer<ResultPage<AnnotationTag>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
-                    final ExpressionOperator expression = ExpressionOperator
-                            .builder()
-                            .addTerm(ExpressionTerm.builder()
-                                    .field(AnnotationTagFields.TYPE_ID)
-                                    .condition(Condition.EQUALS)
-                                    .value(annotationTagType.getDisplayValue())
-                                    .build())
-                            .build();
-                    final ExpressionCriteria criteria = new ExpressionCriteria(expression);
+                    // The type is what this screen lists, so it is a field of the criteria
+                    // rather than a term. See FindAnnotationTagCriteria.
+                    final FindAnnotationTagCriteria criteria =
+                            new FindAnnotationTagCriteria(annotationTagType);
                     CriteriaUtil.setRange(criteria, range);
                     annotationResourceClient.findAnnotationTags(criteria, dataConsumer, errorHandler, getView());
                 }

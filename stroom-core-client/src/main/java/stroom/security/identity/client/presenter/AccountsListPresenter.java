@@ -28,19 +28,18 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.ExpressionOperator;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountFields;
 import stroom.security.identity.shared.AccountResource;
 import stroom.security.identity.shared.FindAccountRequest;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserResource;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
@@ -358,7 +357,11 @@ public class AccountsListPresenter
                     restFactory
                             .create(ACCOUNT_RESOURCE)
                             .method(res -> res.find(requestBuilder.build()))
-                            .onSuccess(dataConsumer)
+                            .onSuccess(resultPage -> {
+                                getView().setFilterError(NullSafe.get(
+                                        resultPage.getFilterError(), TokenError::getText));
+                                dataConsumer.accept(resultPage);
+                            })
                             .onFailure(throwable ->
                                     AlertEvent.fireError(
                                             this,
@@ -383,9 +386,8 @@ public class AccountsListPresenter
             }
         }
 
-        final ExpressionOperator expression = QuickFilterExpressionParser
-                .parse(text, AccountFields.DEFAULT_FIELDS, AccountFields.ALL_FIELDS_MAP);
-        requestBuilder.expression(expression);
+        // The filter text goes to the server verbatim - see FindAccountRequest.
+        requestBuilder.quickFilter(text);
         refresh();
     }
 

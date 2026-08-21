@@ -31,21 +31,27 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class FindAccountRequest extends ExpressionCriteria {
 
+    @JsonProperty
+    private final String quickFilter;
 
-//    @JsonProperty
-//    private final String quickFilter;
+    public FindAccountRequest(final PageRequest pageRequest,
+                              final List<CriteriaFieldSort> sortList,
+                              final ExpressionOperator expression) {
+        this(pageRequest, sortList, expression, null);
+    }
 
     @JsonCreator
     public FindAccountRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                              @JsonProperty("expression") final ExpressionOperator expression) {
+                              @JsonProperty("expression") final ExpressionOperator expression,
+                              @JsonProperty("quickFilter") final String quickFilter) {
         super(pageRequest, sortList, expression);
-//        this.quickFilter = quickFilter;
+        this.quickFilter = quickFilter;
     }
 
-//    public String getQuickFilter() {
-//        return quickFilter;
-//    }
+    public String getQuickFilter() {
+        return quickFilter;
+    }
 
 
     // --------------------------------------------------------------------------------
@@ -53,14 +59,25 @@ public class FindAccountRequest extends ExpressionCriteria {
 
     public static class Builder extends ExpressionCriteriaBuilder<FindAccountRequest, Builder> {
 
+        private String quickFilter;
+
+        /**
+         * @see FindAccountRequest#getQuickFilter()
+         */
+        public Builder quickFilter(final String quickFilter) {
+            this.quickFilter = quickFilter;
+            return self();
+        }
+
         @Override
         protected Builder self() {
-            return null;
+            // Was returning null, which made every inherited setter throw when chained.
+            return this;
         }
 
         @Override
         public FindAccountRequest build() {
-            return new FindAccountRequest(pageRequest, sortList, expression);
+            return new FindAccountRequest(pageRequest, sortList, expression, quickFilter);
         }
     }
 }

@@ -35,6 +35,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -58,6 +59,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
     private final MultiSelectionModelImpl<FindResultWithPermissions> selectionModel;
     private RestDataProvider<FindResultWithPermissions, ResultPage<FindResultWithPermissions>> dataProvider;
     private final Builder criteriaBuilder = new Builder();
+    private Consumer<String> filterErrorConsumer;
 
     private ExpressionOperator lastFilter;
     private boolean focusText;
@@ -248,6 +250,12 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
                             .create(EXPLORER_RESOURCE)
                             .method(res -> res.advancedFindWithPermissions(request))
                             .onSuccess(resultPage -> {
+                                // A rejected filter comes back as an empty page like any other, so surface
+                                // the reason on whichever quick filter drives this list.
+                                if (filterErrorConsumer != null) {
+                                    filterErrorConsumer.accept(
+                                            NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                                }
                                 if (currentResultHandler != null) {
                                     currentResultHandler.accept(resultPage);
                                 }
@@ -288,5 +296,12 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 
     public void resetRange() {
         dataGrid.setVisibleRange(new Range(0, PageRequest.DEFAULT_PAGE_LENGTH));
+    }
+
+    /**
+     * Receives the reason the server rejected the current filter, or null when it was applied.
+     */
+    public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
+        this.filterErrorConsumer = filterErrorConsumer;
     }
 }

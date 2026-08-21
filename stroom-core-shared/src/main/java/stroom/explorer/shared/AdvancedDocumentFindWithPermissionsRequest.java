@@ -39,6 +39,18 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
     private final UserRef userRef;
     @JsonProperty
     private final PermissionShowLevel showLevel;
+    @JsonProperty
+    private final String quickFilter;
+
+    public AdvancedDocumentFindWithPermissionsRequest(final PageRequest pageRequest,
+                                                      final List<CriteriaFieldSort> sortList,
+                                                      final ExpressionOperator expression,
+                                                      final Set<DocumentPermission>
+                                                              requiredPermissions,
+                                                      final UserRef userRef,
+                                                      final PermissionShowLevel showLevel) {
+        this(pageRequest, sortList, expression, requiredPermissions, userRef, showLevel, null);
+    }
 
     @JsonCreator
     public AdvancedDocumentFindWithPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
@@ -47,10 +59,12 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
                                                       @JsonProperty("requiredPermissions") final Set<DocumentPermission>
                                                               requiredPermissions,
                                                       @JsonProperty("userRef") final UserRef userRef,
-                                                      @JsonProperty("showLevel") final PermissionShowLevel showLevel) {
+                                                      @JsonProperty("showLevel") final PermissionShowLevel showLevel,
+                                                      @JsonProperty("quickFilter") final String quickFilter) {
         super(pageRequest, sortList, expression, requiredPermissions);
         this.userRef = userRef;
         this.showLevel = showLevel;
+        this.quickFilter = quickFilter;
     }
 
     public UserRef getUserRef() {
@@ -84,7 +98,22 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
     // --------------------------------------------------------------------------------
 
 
+    public String getQuickFilter() {
+        return quickFilter;
+    }
+
     public static class Builder extends ExpressionCriteriaBuilder<AdvancedDocumentFindWithPermissionsRequest, Builder> {
+
+        private String quickFilter;
+
+        /**
+         * @see AdvancedDocumentFindWithPermissionsRequest#getQuickFilter()
+         */
+        public Builder quickFilter(final String quickFilter) {
+            this.quickFilter = quickFilter;
+            return self();
+        }
+
 
         private Set<DocumentPermission> requiredPermissions;
         private UserRef userRef;
@@ -129,7 +158,8 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
                     expression,
                     requiredPermissions,
                     userRef,
-                    showLevel);
+                    showLevel,
+                    quickFilter);
         }
     }
 }

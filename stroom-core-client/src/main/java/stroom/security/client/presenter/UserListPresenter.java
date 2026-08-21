@@ -38,6 +38,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
@@ -429,6 +430,10 @@ public class UserListPresenter
                         .create(USER_RESOURCE)
                         .method(res -> res.find(criteriaBuilder.build()))
                         .onSuccess(userResultPage -> {
+                            // A rejected filter comes back as an empty page like any other, so
+                            // surface the reason on the filter box. See ResultPage.filterError.
+                            getView().setFilterError(
+                                    NullSafe.get(userResultPage.getFilterError(), TokenError::getText));
 //                            GWT.log(name + " - onSuccess, size: " + userResultPage.size()
 //                                    + ", expr: " + criteriaBuilder.getExpression());
                             dataConsumer.accept(userResultPage);

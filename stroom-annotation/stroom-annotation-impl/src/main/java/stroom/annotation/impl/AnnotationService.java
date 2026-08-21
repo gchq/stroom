@@ -42,6 +42,7 @@ import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FetchAnnotationEntryRequest;
 import stroom.annotation.shared.FindAnnotationRequest;
+import stroom.annotation.shared.FindAnnotationTagCriteria;
 import stroom.annotation.shared.LinkAnnotations;
 import stroom.annotation.shared.LinkEvents;
 import stroom.annotation.shared.RemoveTag;
@@ -530,7 +531,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         };
     }
 
-    public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
+    public ResultPage<AnnotationTag> findAnnotationTags(final FindAnnotationTagCriteria request) {
         checkAppPermission();
         final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();
         return annotationTagDao.findAnnotationTags(request, viewPermissionPredicate);

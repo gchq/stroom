@@ -19,6 +19,7 @@ package stroom.security.identity.shared;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,16 +37,19 @@ public class AccountFields {
     public static final String FIELD_NAME_FAILURE_COUNT = "failureCount";
     public static final String FIELD_NAME_COMMENTS = "comments";
 
-    public static final QueryField FIELD_USER_ID = QueryField.createText(FIELD_NAME_USER_ID);
-    public static final QueryField FIELD_EMAIL = QueryField.createText(FIELD_NAME_EMAIL);
-    public static final QueryField FIELD_FIRST_NAME = QueryField.createText(FIELD_NAME_FIRST_NAME);
-    public static final QueryField FIELD_LAST_NAME = QueryField.createText(FIELD_NAME_LAST_NAME);
+    // Identity-mapped onto text columns in AccountDaoImpl, so these can honour SQL_TEXT - which
+    // matters now the quick filter is parsed server-side, because a bare term is CONTAINS. The
+    // boolean fields below are converted by Boolean::valueOf and keep DEFAULT_BOOLEAN.
+    public static final QueryField FIELD_USER_ID = QueryField.createSqlText(FIELD_NAME_USER_ID);
+    public static final QueryField FIELD_EMAIL = QueryField.createSqlText(FIELD_NAME_EMAIL);
+    public static final QueryField FIELD_FIRST_NAME = QueryField.createSqlText(FIELD_NAME_FIRST_NAME);
+    public static final QueryField FIELD_LAST_NAME = QueryField.createSqlText(FIELD_NAME_LAST_NAME);
     // Boolean rather than text on purpose: the quick filter appends a wildcard to a text value,
     // and "true*" converts to false, which would silently filter to the opposite of what was asked.
     public static final QueryField FIELD_ENABLED = QueryField.createBoolean(FIELD_NAME_ENABLED);
     public static final QueryField FIELD_LOCKED = QueryField.createBoolean(FIELD_NAME_LOCKED);
     public static final QueryField FIELD_INACTIVE = QueryField.createBoolean(FIELD_NAME_INACTIVE);
-    public static final QueryField FIELD_COMMENTS = QueryField.createText(FIELD_NAME_COMMENTS);
+    public static final QueryField FIELD_COMMENTS = QueryField.createSqlText(FIELD_NAME_COMMENTS);
 
     public static final FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField(
             FIELD_NAME_USER_ID);
@@ -89,4 +93,22 @@ public class AccountFields {
 
     private AccountFields() {
     }
+
+    /**
+     * The fields the quick filter resolves against, server side.
+     */
+    public static final List<QueryField> QUICK_FILTER_DEFAULT_FIELDS = Arrays.asList(
+            FIELD_USER_ID,
+            FIELD_EMAIL);
+
+    public static final List<QueryField> QUICK_FILTER_FIELDS = Arrays.asList(
+            FIELD_USER_ID,
+            FIELD_EMAIL,
+            FIELD_FIRST_NAME,
+            FIELD_LAST_NAME,
+            FIELD_COMMENTS,
+            FIELD_ENABLED,
+            FIELD_INACTIVE,
+            FIELD_LOCKED);
+
 }

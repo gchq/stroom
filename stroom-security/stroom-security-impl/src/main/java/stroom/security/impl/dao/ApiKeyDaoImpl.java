@@ -21,14 +21,15 @@ import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
+import stroom.query.language.filter.QuickFilter;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.UserCache;
 import stroom.security.impl.apikey.ApiKeyDao;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
 import stroom.security.impl.db.SecurityDbConnProvider;
-import stroom.security.impl.db.jooq.tables.ApiKey;
-import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
@@ -145,7 +146,21 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 owner -> API_KEY.FK_OWNER_UUID.eq(owner.getUuid()),
                 DSL::trueCondition);
 
-        final ExpressionOperator expressionOperator = criteria.getExpression();
+        final ExpressionOperator expressionOperator;
+        try {
+            // The user's text is parsed here rather than on the client, so this screen speaks the
+            // same filter language as every other one. See the syntax spec §9 and §11.
+            expressionOperator = QuickFilter.and(
+                    criteria.getExpression(),
+                    criteria.getQuickFilter(),
+                    FindApiKeyCriteria.QUICK_FILTER_DEFAULT_FIELDS,
+                    FindApiKeyCriteria.QUICK_FILTER_FIELDS);
+        } catch (final TokenException e) {
+            // Debounced filter - match nothing and say why rather than erroring at the user
+            // mid-keystroke. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
+        }
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(
                 FIELD_MAP,

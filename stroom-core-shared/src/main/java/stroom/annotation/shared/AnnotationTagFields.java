@@ -40,6 +40,18 @@ public interface AnnotationTagFields {
     QueryField NAME_FIELD = QueryField.createSqlText(NAME);
     QueryField TYPE_ID_FIELD = QueryField.createText(TYPE_ID);
 
+    /**
+     * What the annotation tag quick filter resolves against.
+     * <p>
+     * TYPE_ID is deliberately absent. The type is carried on
+     * {@link FindAnnotationTagCriteria#getType()} as a structural constraint, so offering it as a
+     * qualifier here would let a user type {@code typeid:label} and change what the chooser is
+     * showing rather than narrowing it.
+     */
+    List<QueryField> QUICK_FILTER_DEFAULT_FIELDS = Arrays.asList(NAME_FIELD);
+
+    List<QueryField> QUICK_FILTER_FIELDS = Arrays.asList(NAME_FIELD, UUID_FIELD);
+
     List<QueryField> FIELDS = Arrays.asList(
             ID_FIELD,
             UUID_FIELD,

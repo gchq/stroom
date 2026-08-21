@@ -18,17 +18,20 @@ package stroom.annotation.impl.dao;
 
 import stroom.annotation.impl.AnnotationTagDao;
 import stroom.annotation.impl.db.AnnotationDbConnProvider;
-import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagFields;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
+import stroom.annotation.shared.FindAnnotationTagCriteria;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.db.util.JooqUtil.BooleanOperator;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.ConditionalFormattingStyle;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
+import stroom.query.language.filter.QuickFilter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
@@ -41,6 +44,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Record;
+import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -180,25 +184,47 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                 .execute()) > 0;
     }
 
-    public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
+    public ResultPage<AnnotationTag> findAnnotationTags(final FindAnnotationTagCriteria request) {
         return findAnnotationTags(request, uuid -> true);
     }
 
     @Override
-    public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request,
+    public ResultPage<AnnotationTag> findAnnotationTags(final FindAnnotationTagCriteria request,
                                                         final Predicate<String> uuidPredicate) {
         final long offset = NullSafe.getOrElse(
                 request,
-                ExpressionCriteria::getPageRequest,
+                FindAnnotationTagCriteria::getPageRequest,
                 PageRequest::getOffset,
                 0);
         final int length = NullSafe.getOrElse(
                 request,
-                ExpressionCriteria::getPageRequest,
+                FindAnnotationTagCriteria::getPageRequest,
                 PageRequest::getLength,
                 Integer.MAX_VALUE);
         final long maxPos = offset + length;
-        final Condition condition = expressionMapper.apply(request.getExpression());
+
+        final Condition condition;
+        try {
+            // The type is a structural constraint applied here, not something the filter can
+            // reach - see FindAnnotationTagCriteria. The user's text can only narrow within it.
+            final Condition typeCondition = NullSafe.getOrElseGet(
+                    request.getType(),
+                    type -> ANNOTATION_TAG.TYPE_ID.eq(type.getPrimitiveValue()),
+                    DSL::trueCondition);
+            final ExpressionOperator quickFilter = QuickFilter.and(
+                    null,
+                    request.getQuickFilter(),
+                    AnnotationTagFields.QUICK_FILTER_DEFAULT_FIELDS,
+                    AnnotationTagFields.QUICK_FILTER_FIELDS);
+            condition = quickFilter == null
+                    ? typeCondition
+                    : typeCondition.and(expressionMapper.apply(quickFilter));
+        } catch (final TokenException e) {
+            // Debounced filter - match nothing and say why rather than erroring at the user
+            // mid-keystroke. See ResultPage.filterError.
+            LOGGER.debug(e::getMessage, e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
+        }
         final List<AnnotationTag> list = new ArrayList<>();
         final AtomicLong count = new AtomicLong();
         JooqUtil.context(connectionProvider, context -> context

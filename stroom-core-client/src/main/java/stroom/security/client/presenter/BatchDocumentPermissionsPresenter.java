@@ -30,7 +30,6 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
-import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
@@ -65,7 +64,6 @@ public class BatchDocumentPermissionsPresenter
     private final ButtonView docEdit;
     private final ButtonView batchEdit;
     private ExpressionOperator filterExpression;
-    private ExpressionOperator quickFilterExpression;
     private ExpressionOperator combinedExpression;
     private ResultPage<FindResult> docs;
 
@@ -78,6 +76,9 @@ public class BatchDocumentPermissionsPresenter
                                                      batchDocumentPermissionsEditPresenterProvider) {
         super(eventBus, view);
         this.documentListPresenter = documentListPresenter;
+        // A rejected filter comes back as an empty page like any other, so surface the reason on
+        // the filter box. See ResultPage.filterError.
+        documentListPresenter.setFilterErrorConsumer(view::setFilterError);
         this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;
         this.docFilterPresenterProvider = docFilterPresenterProvider;
 
@@ -85,7 +86,6 @@ public class BatchDocumentPermissionsPresenter
         getView().setUiHandlers(this);
 
         filterExpression = ExpressionOperator.builder().op(Op.AND).build();
-        quickFilterExpression = ExpressionOperator.builder().op(Op.AND).build();
 
         // Filter
         docFilter = documentListPresenter.getView().addButton(new Preset(
@@ -194,9 +194,6 @@ public class BatchDocumentPermissionsPresenter
         if (filterExpression != null) {
             builder.addOperator(filterExpression);
         }
-        if (quickFilterExpression != null) {
-            builder.addOperator(quickFilterExpression);
-        }
 
         combinedExpression = builder.build();
         documentListPresenter.setExpression(combinedExpression);
@@ -205,10 +202,8 @@ public class BatchDocumentPermissionsPresenter
 
     @Override
     public void onFilterChange(final String text) {
-        quickFilterExpression = QuickFilterExpressionParser.parse(text,
-                Set.of(DocumentPermissionFields.DOCUMENT_NAME,
-                        DocumentPermissionFields.DOCUMENT_UUID),
-                DocumentPermissionFields.getAllFieldMap());
+        // The filter text goes to the server verbatim - see AdvancedDocumentFindRequest.
+        documentListPresenter.setQuickFilter(text);
         refresh();
     }
 

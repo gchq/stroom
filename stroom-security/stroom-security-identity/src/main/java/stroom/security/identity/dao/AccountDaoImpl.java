@@ -19,6 +19,10 @@ package stroom.security.identity.dao;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.token.TokenErrorUtil;
+import stroom.query.api.token.TokenException;
+import stroom.query.language.filter.QuickFilter;
 import stroom.security.identity.account.AccountDao;
 import stroom.security.identity.account.ResetToken;
 import stroom.security.identity.authenticate.CredentialValidationResult;
@@ -201,9 +205,25 @@ public class AccountDaoImpl implements AccountDao {
 
     @Override
     public ResultPage<Account> search(final FindAccountRequest request) {
+        final ExpressionOperator expression;
+        try {
+            // The user's text is parsed here rather than on the client, so this screen speaks the
+            // same filter language as every other one. See the syntax spec §9 and §11.
+            expression = QuickFilter.and(
+                    request.getExpression(),
+                    request.getQuickFilter(),
+                    AccountFields.QUICK_FILTER_DEFAULT_FIELDS,
+                    AccountFields.QUICK_FILTER_FIELDS);
+        } catch (final TokenException e) {
+            // Debounced filter - match nothing and say why rather than erroring at the user
+            // mid-keystroke. See ResultPage.filterError.
+            LOGGER.debug(e.getMessage(), e);
+            return ResultPage.emptyWithFilterError(TokenErrorUtil.toTokenError(e));
+        }
+
         final Condition filterConditions = NullSafe.getOrElseGet(
                 expressionMapper(System.currentTimeMillis()),
-                mapper -> mapper.apply(request.getExpression()),
+                mapper -> mapper.apply(expression),
                 DSL::trueCondition);
         // Sort on user_id if no sort supplied
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request, ACCOUNT.USER_ID);

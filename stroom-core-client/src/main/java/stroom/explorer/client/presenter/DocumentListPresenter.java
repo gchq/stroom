@@ -27,8 +27,10 @@ import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FindResult;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -53,6 +55,7 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
     private final RestDataProvider<FindResult, ResultPage<FindResult>> dataProvider;
     private final MultiSelectionModelImpl<FindResult> selectionModel;
     private final AdvancedDocumentFindRequest.Builder criteriaBuilder = new AdvancedDocumentFindRequest.Builder();
+    private Consumer<String> filterErrorConsumer;
     private ExpressionCriteria currentQuery = criteriaBuilder.build();
     private ExpressionOperator lastFilter;
     private boolean initialised;
@@ -114,6 +117,12 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
                         .create(EXPLORER_RESOURCE)
                         .method(res -> res.advancedFind(request))
                         .onSuccess(resultPage -> {
+                            // A rejected filter comes back as an empty page like any other, so surface
+                            // the reason on whichever quick filter drives this list.
+                            if (filterErrorConsumer != null) {
+                                filterErrorConsumer.accept(
+                                        NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                            }
                             if (currentResulthandler != null) {
                                 currentResulthandler.accept(resultPage);
                             }
@@ -168,6 +177,10 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
         this.findResultListHandler = findResultListHandler;
     }
 
+    public void setQuickFilter(final String quickFilter) {
+        criteriaBuilder.quickFilter(quickFilter);
+    }
+
     public void setExpression(final ExpressionOperator expression) {
         criteriaBuilder.expression(expression);
     }
@@ -194,5 +207,12 @@ public class DocumentListPresenter extends MyPresenterWidget<PagerView> {
 
     public void setCurrentResulthandler(final Consumer<ResultPage<FindResult>> currentResulthandler) {
         this.currentResulthandler = currentResulthandler;
+    }
+
+    /**
+     * Receives the reason the server rejected the current filter, or null when it was applied.
+     */
+    public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
+        this.filterErrorConsumer = filterErrorConsumer;
     }
 }

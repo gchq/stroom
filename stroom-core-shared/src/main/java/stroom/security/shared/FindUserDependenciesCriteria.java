@@ -69,14 +69,25 @@ public class FindUserDependenciesCriteria extends ExpressionCriteria {
 
     @JsonProperty
     private UserRef userRef;
+    @JsonProperty
+    private String quickFilter;
+
+    public FindUserDependenciesCriteria(final PageRequest pageRequest,
+                                        final List<CriteriaFieldSort> sortList,
+                                        final ExpressionOperator expression,
+                                        final UserRef userRef) {
+        this(pageRequest, sortList, expression, userRef, null);
+    }
 
     @JsonCreator
     public FindUserDependenciesCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                         @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                         @JsonProperty("expression") final ExpressionOperator expression,
-                                        @JsonProperty("userRef") final UserRef userRef) {
+                                        @JsonProperty("userRef") final UserRef userRef,
+                                        @JsonProperty("quickFilter") final String quickFilter) {
         super(pageRequest, sortList, expression);
         this.userRef = userRef;
+        this.quickFilter = quickFilter;
     }
 
     public UserRef getUserRef() {
@@ -98,8 +109,13 @@ public class FindUserDependenciesCriteria extends ExpressionCriteria {
     // --------------------------------------------------------------------------------
 
 
+    public String getQuickFilter() {
+        return quickFilter;
+    }
+
     public static class Builder extends ExpressionCriteriaBuilder<FindUserDependenciesCriteria, Builder> {
 
+        private String quickFilter;
         private UserRef userRef = null;
 
         public Builder() {
@@ -107,6 +123,11 @@ public class FindUserDependenciesCriteria extends ExpressionCriteria {
 
         public Builder(final FindUserDependenciesCriteria expressionCriteria) {
             super(expressionCriteria);
+        }
+
+        public Builder quickFilter(final String quickFilter) {
+            this.quickFilter = quickFilter;
+            return self();
         }
 
         public Builder userRef(final UserRef userRef) {
@@ -126,7 +147,8 @@ public class FindUserDependenciesCriteria extends ExpressionCriteria {
                     pageRequest,
                     sortList,
                     expression,
-                    userRef);
+                    userRef,
+                    quickFilter);
         }
     }
 }

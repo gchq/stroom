@@ -47,15 +47,29 @@ public class FindApiKeyCriteria extends ExpressionCriteria {
     public static final String FIELD_EXPIRE_TIME = "expiretime";
     public static final String FIELD_HASH_ALGORITHM = "hashalgo";
 
-    public static final QueryField NAME = QueryField.createText(FIELD_NAME);
-    public static final QueryField PREFIX = QueryField.createText(FIELD_PREFIX);
-    public static final QueryField OWNER = QueryField.createText(FIELD_OWNER);
-    public static final QueryField COMMENTS = QueryField.createText(FIELD_COMMENTS);
+    // Identity-mapped onto text columns in ApiKeyDaoImpl, so these can honour SQL_TEXT - which
+    // matters now the quick filter is parsed server-side, because a bare term is CONTAINS.
+    public static final QueryField NAME = QueryField.createSqlText(FIELD_NAME);
+    public static final QueryField PREFIX = QueryField.createSqlText(FIELD_PREFIX);
+    public static final QueryField OWNER = QueryField.createSqlText(FIELD_OWNER);
+    public static final QueryField COMMENTS = QueryField.createSqlText(FIELD_COMMENTS);
+    public static final QueryField HASH_ALGORITHM = QueryField.createSqlText(FIELD_HASH_ALGORITHM);
+    // Converted by StringUtil::asBoolean before it reaches SQL.
     public static final QueryField STATE = QueryField.createBoolean(FIELD_STATE);
+    // Not mapped by ApiKeyDaoImpl at all, so it is not offered to the quick filter.
     public static final QueryField EXPIRE_TIME = QueryField.createText(FIELD_EXPIRE_TIME);
-    public static final QueryField HASH_ALGORITHM = QueryField.createText(FIELD_HASH_ALGORITHM);
 
     public static final Set<QueryField> DEFAULT_FIELDS = Set.of(NAME, PREFIX);
+
+    public static final List<QueryField> QUICK_FILTER_DEFAULT_FIELDS = Arrays.asList(NAME, PREFIX);
+
+    public static final List<QueryField> QUICK_FILTER_FIELDS = Arrays.asList(
+            NAME,
+            PREFIX,
+            OWNER,
+            COMMENTS,
+            STATE,
+            HASH_ALGORITHM);
 
     public static final Map<String, QueryField> ALL_FIELDs_MAP = QueryField.buildFieldMap(
             NAME,
@@ -88,17 +102,39 @@ public class FindApiKeyCriteria extends ExpressionCriteria {
 
     @JsonProperty
     private UserRef owner;
+    @JsonProperty
+    private String quickFilter;
 
     public FindApiKeyCriteria() {
+    }
+
+    public FindApiKeyCriteria(final PageRequest pageRequest,
+                              final List<CriteriaFieldSort> sortList,
+                              final ExpressionOperator expression,
+                              final UserRef owner) {
+        this(pageRequest, sortList, expression, owner, null);
     }
 
     @JsonCreator
     public FindApiKeyCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                               @JsonProperty("expression") final ExpressionOperator expression,
-                              @JsonProperty("owner") final UserRef owner) {
+                              @JsonProperty("owner") final UserRef owner,
+                              @JsonProperty("quickFilter") final String quickFilter) {
         super(pageRequest, sortList, expression);
         this.owner = owner;
+        this.quickFilter = quickFilter;
+    }
+
+    /**
+     * @see stroom.security.shared.FindUserCriteria#getQuickFilter()
+     */
+    public String getQuickFilter() {
+        return quickFilter;
+    }
+
+    public void setQuickFilter(final String quickFilter) {
+        this.quickFilter = quickFilter;
     }
 
     //    public static FindApiKeyCriteria create(final String quickFilterInput) {
@@ -146,16 +182,24 @@ public class FindApiKeyCriteria extends ExpressionCriteria {
     public static class Builder extends ExpressionCriteriaBuilder<FindApiKeyCriteria, Builder> {
 
         private UserRef owner = null;
+        private String quickFilter;
 
         public Builder() {
         }
 
         public Builder(final FindApiKeyCriteria expressionCriteria) {
             super(expressionCriteria);
+            this.owner = expressionCriteria.owner;
+            this.quickFilter = expressionCriteria.quickFilter;
         }
 
         public Builder owner(final UserRef owner) {
             this.owner = owner;
+            return this;
+        }
+
+        public Builder quickFilter(final String quickFilter) {
+            this.quickFilter = quickFilter;
             return this;
         }
 
@@ -170,7 +214,8 @@ public class FindApiKeyCriteria extends ExpressionCriteria {
                     pageRequest,
                     sortList,
                     expression,
-                    owner);
+                    owner,
+                    quickFilter);
         }
     }
 }

@@ -22,6 +22,7 @@ import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -125,4 +126,20 @@ public class DocumentPermissionFields {
     public static Map<String, QueryField> getAllFieldMap() {
         return ALL_FIELD_MAP;
     }
+
+    /**
+     * The fields the document permission quick filters resolve against, server side.
+     * UserPermissionReportPresenter defaults to the name alone; BatchDocumentPermissionsPresenter
+     * also matches the uuid, so the wider set is the default here.
+     */
+    public static final List<QueryField> QUICK_FILTER_DEFAULT_FIELDS = Arrays.asList(
+            DOCUMENT_NAME,
+            DOCUMENT_UUID);
+
+    public static final List<QueryField> QUICK_FILTER_FIELDS = Arrays.asList(
+            DOCUMENT_NAME,
+            DOCUMENT_UUID,
+            DOCUMENT_TYPE,
+            DOCUMENT_TAG);
+
 }

@@ -39,6 +39,17 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
     private final UserRef userRef;
     @JsonProperty
     private final PermissionShowLevel showLevel;
+    @JsonProperty
+    private String quickFilter;
+
+    public FetchDocumentUserPermissionsRequest(final PageRequest pageRequest,
+                                               final List<CriteriaFieldSort> sortList,
+                                               final ExpressionOperator expression,
+                                               final DocRef docRef,
+                                               final UserRef userRef,
+                                               final PermissionShowLevel showLevel) {
+        this(pageRequest, sortList, expression, docRef, userRef, showLevel, null);
+    }
 
     @JsonCreator
     public FetchDocumentUserPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
@@ -46,11 +57,13 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
                                                @JsonProperty("expression") final ExpressionOperator expression,
                                                @JsonProperty("docRef") final DocRef docRef,
                                                @JsonProperty("userRef") final UserRef userRef,
-                                               @JsonProperty("showLevel") final PermissionShowLevel showLevel) {
+                                               @JsonProperty("showLevel") final PermissionShowLevel showLevel,
+                                               @JsonProperty("quickFilter") final String quickFilter) {
         super(pageRequest, sortList, expression);
         this.docRef = docRef;
         this.userRef = userRef;
         this.showLevel = showLevel;
+        this.quickFilter = quickFilter;
     }
 
     public DocRef getDocRef() {
@@ -65,9 +78,14 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
         return showLevel;
     }
 
+    public String getQuickFilter() {
+        return quickFilter;
+    }
+
     public static class Builder
             extends ExpressionCriteriaBuilder<FetchDocumentUserPermissionsRequest, Builder> {
 
+        private String quickFilter;
         private DocRef docRef;
         private UserRef userRef;
         private PermissionShowLevel showLevel;
@@ -81,6 +99,11 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
             this.docRef = request.docRef;
             this.userRef = request.userRef;
             this.showLevel = request.showLevel;
+        }
+
+        public Builder quickFilter(final String quickFilter) {
+            this.quickFilter = quickFilter;
+            return self();
         }
 
         public Builder docRef(final DocRef docRef) {
@@ -115,7 +138,8 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
                     expression,
                     docRef,
                     userRef,
-                    showLevel);
+                    showLevel,
+                    quickFilter);
         }
     }
 }

@@ -37,15 +37,6 @@ public class FindUserCriteria extends ExpressionCriteria {
 
     @JsonProperty
     private final FindUserContext context;
-    /**
-     * What the user typed into the quick filter, verbatim.
-     * <p>
-     * Carried as text rather than as a parsed {@link ExpressionOperator} so that the server owns
-     * the grammar - see the syntax spec §9 and §11. It sits alongside {@code expression} rather
-     * than replacing it because that field also carries structural terms the client composes
-     * itself, such as {@code ChildrenOf} and {@code isgroup}, which are not things a user types.
-     * The DAO parses this and ANDs the result with the expression.
-     */
     @JsonProperty
     private final String quickFilter;
 
