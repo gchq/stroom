@@ -145,7 +145,7 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
             LOGGER.warn(() -> LogUtil.message(
                     "Skipping {} batches because Plan B store '{}' shard {} is {}% full ({} of a max " +
                     "store size of {}). Raise the max store size for this doc, or reduce the data it " +
-                    "holds via retention or archival.",
+                    "holds via retention or publishing.",
                     batchDirs.size(),
                     shard.getDoc().getName(),
                     shard.getShardIndex(),

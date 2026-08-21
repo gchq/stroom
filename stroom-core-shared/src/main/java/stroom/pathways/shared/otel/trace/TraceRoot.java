@@ -47,7 +47,7 @@ public class TraceRoot {
     private final int totalSpans;
     /**
      * Wall-clock epoch millis of the most recent merge cycle that touched this trace.
-     * Drives the retention/archival "is this trace still active?" decision so a
+     * Drives the retention and publishing "is this trace still active?" decision so a
      * long-running trace's root is retained (kept live and current) rather than aged
      * out by its (fixed) start time. Zero when unknown.
      */
@@ -65,7 +65,7 @@ public class TraceRoot {
     private final NanoTime rootEndTime;
     /**
      * True when this row represents an "orphan-only" trace: a traceId with spans but no root span
-     * (the root aged out under retention/archival, or never arrived). Such a row is synthesized
+     * (the root aged out under retention or publishing, or never arrived). Such a row is synthesized
      * from per-trace stats rather than from a root span; the UI flags it and its detail view
      * renders a rootless span forest.
      */

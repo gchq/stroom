@@ -22,9 +22,9 @@ package stroom.planb.shared;
  * <p>This enum is GWT-compiled (used in the shared module) so it must not
  * reference {@code java.time.*}. The time-bucketing logic
  * ({@code label}, {@code bucketEnd}, {@code detect}) lives in the
- * server-side {@code ArchivalGranularityUtil} in {@code stroom-planb-impl}.
+ * server-side {@code BucketGranularityUtil} in {@code stroom-planb-impl}.
  */
-public enum ArchivalGranularity {
+public enum BucketGranularity {
     HOUR,
     DAY,
     WEEK

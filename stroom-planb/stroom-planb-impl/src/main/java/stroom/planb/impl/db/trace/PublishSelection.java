@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * What one archival pass will act on, decided once by {@code TraceDb.selectRoots} and then read by the
+ * What one publish pass will act on, decided once by {@code TraceDb.selectRoots} and then read by the
  * staging and purge phases so the two cannot disagree about which traces are in play.
  *
  * <p>The two maps are independent: a trace past the cut-off that was staged in an earlier pass retires in
@@ -35,7 +35,7 @@ import java.util.Map;
  *                 because a root's index entries are value-addressed, so deleting them has to be computed
  *                 from the old value.
  */
-record ArchivalSelection(Map<String, String> labels, Map<String, TraceRoot> retiring) {
+record PublishSelection(Map<String, String> labels, Map<String, TraceRoot> retiring) {
 
     boolean isEmpty() {
         return labels.isEmpty() && retiring.isEmpty();

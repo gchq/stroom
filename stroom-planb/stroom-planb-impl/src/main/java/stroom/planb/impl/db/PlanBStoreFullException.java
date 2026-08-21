@@ -42,7 +42,7 @@ public class PlanBStoreFullException extends RuntimeException {
     private static String buildMessage(final Path path, final Usage usage) {
         return LogUtil.message(
                 "Plan B store {} is full, using {} of a max store size of {} ({}%). Raise the max " +
-                "store size for this doc, or reduce the data it holds via retention or archival.",
+                "store size for this doc, or reduce the data it holds via retention or publishing.",
                 path,
                 ModelStringUtil.formatIECByteSizeString(usage.usedBytes()),
                 ModelStringUtil.formatIECByteSizeString(usage.mapSize()),

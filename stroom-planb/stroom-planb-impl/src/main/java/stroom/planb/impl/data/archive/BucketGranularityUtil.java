@@ -16,7 +16,7 @@
 
 package stroom.planb.impl.data.archive;
 
-import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.BucketGranularity;
 
 import java.time.DayOfWeek;
 import java.time.Instant;
@@ -27,28 +27,28 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 /**
- * Server-side time-bucketing logic for {@link ArchivalGranularity}.
+ * Server-side time-bucketing logic for {@link BucketGranularity}.
  *
- * <p>{@link ArchivalGranularity} itself lives in the {@code stroom-core-shared}
+ * <p>{@link BucketGranularity} itself lives in the {@code stroom-core-shared}
  * module which is GWT-compiled, so it cannot reference {@code java.time.*}.
  * This utility holds all the time-dependent methods and is only used on the
  * server side (impl module).
  */
-public final class ArchivalGranularityUtil {
+public final class BucketGranularityUtil {
 
     private static final DateTimeFormatter HOUR_FMT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd_HH");
     private static final DateTimeFormatter DAY_FMT =
             DateTimeFormatter.ISO_LOCAL_DATE; // yyyy-MM-dd
 
-    private ArchivalGranularityUtil() {
+    private BucketGranularityUtil() {
     }
 
     /**
      * Returns the directory-label for the archive shard that covers
      * the given instant.
      */
-    public static String label(final ArchivalGranularity granularity,
+    public static String label(final BucketGranularity granularity,
                                final Instant instant) {
         final ZonedDateTime zdt = instant.atZone(ZoneOffset.UTC);
         return switch (granularity) {
@@ -67,7 +67,7 @@ public final class ArchivalGranularityUtil {
      * i.e. the first instant NOT covered by this archive shard.
      * Returns {@code null} if {@code label} cannot be parsed.
      */
-    public static Instant bucketEnd(final ArchivalGranularity granularity,
+    public static Instant bucketEnd(final BucketGranularity granularity,
                                     final String label) {
         try {
             return switch (granularity) {
@@ -107,7 +107,7 @@ public final class ArchivalGranularityUtil {
      * i.e. the first instant covered by this archive shard.
      * Returns {@code null} if {@code label} cannot be parsed.
      */
-    public static Instant bucketStart(final ArchivalGranularity granularity,
+    public static Instant bucketStart(final BucketGranularity granularity,
                                        final String label) {
         final Instant end = bucketEnd(granularity, label);
         if (end == null) {
@@ -133,25 +133,24 @@ public final class ArchivalGranularityUtil {
     }
 
     /**
-     * Detects the granularity from a label string without knowing the
-     * original {@link ArchivalGranularity} setting. Used by
-     * {@code RetentionOperation} to clean up archive shards after archival
-     * has been disabled.
+     * Detects the granularity from a bucket's directory name, which is the only record of how that
+     * bucket was written — a doc whose configured granularity has since changed still has buckets in
+     * the old layout. Used by both readers and bucket expiry for that reason.
      *
      * @return the matching granularity, or {@code null} if unrecognised
      */
-    public static ArchivalGranularity detect(final String label) {
+    public static BucketGranularity detect(final String label) {
         if (label == null) {
             return null;
         }
         if (label.startsWith("week-")) {
-            return ArchivalGranularity.WEEK;
+            return BucketGranularity.WEEK;
         }
         if (label.matches("\\d{4}-\\d{2}-\\d{2}_\\d{2}")) {
-            return ArchivalGranularity.HOUR;
+            return BucketGranularity.HOUR;
         }
         if (label.matches("\\d{4}-\\d{2}-\\d{2}")) {
-            return ArchivalGranularity.DAY;
+            return BucketGranularity.DAY;
         }
         return null;
     }

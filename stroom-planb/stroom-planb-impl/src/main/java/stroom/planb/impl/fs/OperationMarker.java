@@ -27,12 +27,12 @@ import java.nio.file.Path;
 import java.time.Instant;
 
 /**
- * Records when a {@link SharedFileStoreOperation} last ran for one shard, as an ISO-8601
+ * Records when a periodic maintenance operation last ran for one shard, as an ISO-8601
  * instant in a marker file inside the canonical shared shard directory.
  *
- * <p>Each operation has its own marker and its own configured check interval, so
- * retention and archival schedules are independent — they share only the per-minute merge
- * tick that polls them, and will usually fall due on different cycles.
+ * <p>Each operation has its own marker and its own configured check interval, so the retention
+ * and compaction schedules are independent — they share only the per-minute merge tick that
+ * polls them, and will usually fall due on different cycles.
  *
  * <p>Reads are safe outside the shard cluster lock. A missing or unreadable marker reports
  * {@code null}, which callers treat as due: a shard that has never run does so on its

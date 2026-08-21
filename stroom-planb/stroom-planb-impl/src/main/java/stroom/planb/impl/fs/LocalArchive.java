@@ -112,7 +112,7 @@ public class LocalArchive {
                         archiveShard.dateLabel(), ctx.lockName());
             } catch (final IOException e) {
                 LOGGER.error("Failed to push archive shard {} for {} — the merged shard will not be " +
-                             "published, so the shared store keeps this data and archival will be " +
+                             "published, so the shared store keeps this data and publishing will be " +
                              "retried on the next cycle.",
                         archiveShard.dateLabel(), ctx.lockName(), e);
                 if (firstFailure == null) {

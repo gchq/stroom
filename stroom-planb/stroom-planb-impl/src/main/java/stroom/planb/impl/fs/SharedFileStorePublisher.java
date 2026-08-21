@@ -150,7 +150,7 @@ public class SharedFileStorePublisher {
      * Pushes a locally-produced archive shard to the shared file store. Unlike {@link #push} this does
      * <em>not</em> use the {@link #pushDir} rename-swap; see below for why.
      *
-     * <p>If an archive shard already exists for this date (repeated archival runs,
+     * <p>If an archive shard already exists for this date (repeated publish runs,
      * or late-arriving data), the new batch is <em>merged</em> into the existing
      * bucket at the LMDB level. A raw file copy cannot merge two LMDB files — it
      * would overwrite the existing bucket and silently drop everything archived by

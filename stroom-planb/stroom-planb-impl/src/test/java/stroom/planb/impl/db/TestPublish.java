@@ -128,7 +128,7 @@ class TestPublish {
     // -----------------------------------------------------------------------
 
     /**
-     * Archival takes every span it stages, the root span included. The stored root entry stays behind, still
+     * Publishing takes every span it stages, the root span included. The stored root entry stays behind, still
      * flagged as a real root and with the same start time, so a late span attaches to a rooted trace and
      * buckets by the same day rather than re-deriving an orphan.
      */
@@ -518,11 +518,11 @@ class TestPublish {
     }
 
     // -----------------------------------------------------------------------
-    // Repeated archival of the same day must MERGE, not overwrite
+    // Repeated publishing of the same day must MERGE, not overwrite
     // -----------------------------------------------------------------------
 
     /**
-     * Regression guard for silent data loss on repeated archival: when a bucket for a
+     * Regression guard for silent data loss on repeated publishing: when a bucket for a
      * date already exists on the shared store, a second archive batch for that same date
      * must be <em>merged</em> into it, not overwrite it. Previously {@code pushArchive}
      * raw-copied the new batch's {@code data.mdb} over the existing one, discarding every

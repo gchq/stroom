@@ -18,7 +18,7 @@ package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.BucketGranularity;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -29,9 +29,9 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
  */
 public interface PublishingSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<ChangeUiHandlers> {
 
-    ArchivalGranularity getGranularity();
+    BucketGranularity getGranularity();
 
-    void setGranularity(ArchivalGranularity granularity);
+    void setGranularity(BucketGranularity granularity);
 
     SimpleDuration getCompletionGrace();
 

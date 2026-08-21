@@ -17,7 +17,7 @@
 package stroom.planb.client.view;
 
 import stroom.item.client.SelectionBox;
-import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.BucketGranularity;
 import stroom.planb.shared.HoldingAreaSettings;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
@@ -45,7 +45,7 @@ public class PublishingSettingsWidget
     private final Widget widget;
 
     @UiField
-    SelectionBox<ArchivalGranularity> granularity;
+    SelectionBox<BucketGranularity> granularity;
     @UiField
     ValueSpinner completionGrace;
     @UiField
@@ -55,10 +55,10 @@ public class PublishingSettingsWidget
     public PublishingSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        granularity.addItem(ArchivalGranularity.HOUR);
-        granularity.addItem(ArchivalGranularity.DAY);
-        granularity.addItem(ArchivalGranularity.WEEK);
-        granularity.setValue(ArchivalGranularity.DAY);
+        granularity.addItem(BucketGranularity.HOUR);
+        granularity.addItem(BucketGranularity.DAY);
+        granularity.addItem(BucketGranularity.WEEK);
+        granularity.setValue(BucketGranularity.DAY);
 
         completionGrace.setMin(1);
         completionGrace.setMax(9999);
@@ -78,14 +78,14 @@ public class PublishingSettingsWidget
     }
 
     @Override
-    public ArchivalGranularity getGranularity() {
+    public BucketGranularity getGranularity() {
         return granularity.getValue();
     }
 
     @Override
-    public void setGranularity(final ArchivalGranularity granularity) {
+    public void setGranularity(final BucketGranularity granularity) {
         this.granularity.setValue(granularity == null
-                ? ArchivalGranularity.DAY
+                ? BucketGranularity.DAY
                 : granularity);
     }
 
@@ -115,7 +115,7 @@ public class PublishingSettingsWidget
     }
 
     @UiHandler("granularity")
-    public void onGranularity(final ValueChangeEvent<ArchivalGranularity> event) {
+    public void onGranularity(final ValueChangeEvent<BucketGranularity> event) {
         getUiHandlers().onChange();
     }
 

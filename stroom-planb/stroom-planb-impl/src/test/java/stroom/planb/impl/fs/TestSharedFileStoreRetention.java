@@ -20,9 +20,9 @@ import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBPaths;
-import stroom.planb.impl.data.archive.ArchivalGranularityUtil;
+import stroom.planb.impl.data.archive.BucketGranularityUtil;
 import stroom.planb.impl.data.shard.ShardManager;
-import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.BucketGranularity;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.SharedFileStoreSettings;
@@ -191,9 +191,9 @@ class TestSharedFileStoreRetention {
     @Test
     void deletesDayBucket_afterGranularityChangedToHour() throws IOException {
         final Path dayBucket = archiveBucket(
-                ArchivalGranularity.DAY, Instant.now().minusSeconds(7L * 24 * 3600));
+                BucketGranularity.DAY, Instant.now().minusSeconds(7L * 24 * 3600));
         SharedFileStoreMergeProcessor.deleteExpiredArchiveShards(
-                ctx(sharedDoc(ArchivalGranularity.HOUR)));
+                ctx(sharedDoc(BucketGranularity.HOUR)));
         assertThat(dayBucket).doesNotExist();
     }
 
@@ -201,9 +201,9 @@ class TestSharedFileStoreRetention {
     @Test
     void deletesWeekBucket_afterGranularityChangedToDay() throws IOException {
         final Path weekBucket = archiveBucket(
-                ArchivalGranularity.WEEK, Instant.now().minusSeconds(30L * 24 * 3600));
+                BucketGranularity.WEEK, Instant.now().minusSeconds(30L * 24 * 3600));
         SharedFileStoreMergeProcessor.deleteExpiredArchiveShards(
-                ctx(sharedDoc(ArchivalGranularity.DAY)));
+                ctx(sharedDoc(BucketGranularity.DAY)));
         assertThat(weekBucket).doesNotExist();
     }
 
@@ -224,22 +224,22 @@ class TestSharedFileStoreRetention {
     }
 
     private Path archiveBucket(final Instant bucketTime) throws IOException {
-        return archiveBucket(ArchivalGranularity.DAY, bucketTime);
+        return archiveBucket(BucketGranularity.DAY, bucketTime);
     }
 
-    private Path archiveBucket(final ArchivalGranularity granularity,
+    private Path archiveBucket(final BucketGranularity granularity,
                                final Instant bucketTime) throws IOException {
         final Path bucket = archiveShardDir
-                .resolve(ArchivalGranularityUtil.label(granularity, bucketTime));
+                .resolve(BucketGranularityUtil.label(granularity, bucketTime));
         Files.createDirectories(bucket);
         return bucket;
     }
 
     private PlanBDoc sharedDoc() {
-        return sharedDoc(ArchivalGranularity.DAY);
+        return sharedDoc(BucketGranularity.DAY);
     }
 
-    private PlanBDoc sharedDoc(final ArchivalGranularity granularity) {
+    private PlanBDoc sharedDoc(final BucketGranularity granularity) {
         return PlanBDoc.builder()
                 .uuid(docUuid)
                 .name("test")
@@ -267,7 +267,7 @@ class TestSharedFileStoreRetention {
                         .sharedFileStore(new SharedFileStoreSettings(
                                 1,
                                 sharedRoot().toAbsolutePath().toString()))
-                        .granularity(ArchivalGranularity.DAY)
+                        .granularity(BucketGranularity.DAY)
                         .retention(new RetentionSettings.Builder()
                                 .enabled(enabled)
                                 .duration(duration)

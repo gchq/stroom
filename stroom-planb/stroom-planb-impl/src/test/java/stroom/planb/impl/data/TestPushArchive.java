@@ -182,7 +182,7 @@ class TestPushArchive {
     }
 
     /**
-     * A staged dir with no data.mdb is a failure, not a no-op: archival deletes the spans it stages, so
+     * A staged dir with no data.mdb is a failure, not a no-op: publishing deletes the spans it stages, so
      * reporting the bucket as pushed would lose them. Failing leaves the shared store's copy for the next
      * cycle to retry, and still creates no bucket.
      */

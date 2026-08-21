@@ -45,7 +45,7 @@ public class PlanBPaths {
     private final Path snapshotDir;
     // Local read-only cached copies of shared-store archive buckets.
     private final Path archiveCacheDir;
-    // Local working area for archival writes, so no LMDB env is ever opened on the shared mount.
+    // Local working area for publish writes, so no LMDB env is ever opened on the shared mount.
     private final Path archiveLocalDir;
 
     @Inject

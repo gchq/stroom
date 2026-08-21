@@ -17,7 +17,7 @@
 package stroom.planb.impl.data.archive;
 
 import stroom.planb.impl.PlanBConstants;
-import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.BucketGranularity;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -102,16 +102,16 @@ public class ArchiveShardLocator {
         if (label.startsWith(PlanBConstants.TMP_DIR_PREFIX)) {
             return Stream.empty();
         }
-        final ArchivalGranularity granularity = ArchivalGranularityUtil.detect(label);
+        final BucketGranularity granularity = BucketGranularityUtil.detect(label);
         if (granularity == null) {
             return Stream.empty();
         }
-        final Instant end   = ArchivalGranularityUtil.bucketEnd(granularity, label);
-        final Instant start = ArchivalGranularityUtil.bucketStart(granularity, label);
+        final Instant end   = BucketGranularityUtil.bucketEnd(granularity, label);
+        final Instant start = BucketGranularityUtil.bucketStart(granularity, label);
         if (end == null || start == null) {
             return Stream.empty();
         }
-        if (!ArchivalGranularityUtil.overlaps(start, end, filterFromMs, filterToMs)) {
+        if (!BucketGranularityUtil.overlaps(start, end, filterFromMs, filterToMs)) {
             return Stream.empty();
         }
         return Stream.of(new ArchiveShardRef(label, dir, granularity));

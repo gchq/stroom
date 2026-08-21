@@ -21,7 +21,7 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBPaths;
-import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.BucketGranularity;
 import stroom.planb.shared.HoldingAreaSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SharedFileStoreSettings;
@@ -220,7 +220,7 @@ class TestHoldingAreaMergeStrategy {
                         .sharedFileStore(new SharedFileStoreSettings(
                                 1,
                                 sharedRoot().toAbsolutePath().toString()))
-                        .granularity(ArchivalGranularity.DAY)
+                        .granularity(BucketGranularity.DAY)
                         .holdingArea(new HoldingAreaSettings.Builder()
                                 .completionGrace(SEVEN_DAYS)
                                 .compactionFrequency(CHECK_INTERVAL)

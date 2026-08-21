@@ -34,7 +34,7 @@ import stroom.pathways.shared.otel.trace.SpanStatus;
 import stroom.pathways.shared.otel.trace.StatusCode;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
-import stroom.planb.impl.data.archive.ArchivalGranularityUtil;
+import stroom.planb.impl.data.archive.BucketGranularityUtil;
 import stroom.planb.impl.data.value.SpanKV;
 import stroom.planb.impl.db.AbstractDb;
 import stroom.planb.impl.db.Count;
@@ -57,7 +57,7 @@ import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanKeySerde;
 import stroom.planb.impl.serde.trace.SpanValue;
 import stroom.planb.impl.serde.trace.SpanValueSerde;
-import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.BucketGranularity;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.StateKeySchema;
 import stroom.planb.shared.StateValueSchema;
@@ -210,7 +210,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * <p>Stamped with the receiving node's clock rather than the span's claimed end time, so the
      * grace period {@code PathwaysProcessor} waits out is measured from arrival and is unaffected by
      * out-of-order delivery. Written by {@link #insert} and {@link #merge}; cleared by
-     * {@link #runRetention} past the cut-off and when archival retires the trace.
+     * {@link #runRetention} past the cut-off and when publishing retires the trace.
      */
     private final Dbi<ByteBuffer> traceRootsMergeTimeDbi;
 
@@ -259,7 +259,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * to {@link #publish}, because how a store type buckets its data is its own business — the
      * caller only supplies the directory to build the buckets under.
      */
-    private final ArchivalGranularity granularity;
+    private final BucketGranularity granularity;
 
     private TraceDb(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
@@ -300,7 +300,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
         // One DBI per secondary sort index, keyed by the index definition — but only for a store that is
         // actually queried. They exist solely to serve sorted/filtered findTraces, so in a store that is
-        // only ever written and merged (a holding-area shard, a stream writer env, an archival delta)
+        // only ever written and merged (a holding-area shard, a stream writer env, a publish delta)
         // maintaining them is pure write amplification. Left empty there, which makes the write helpers
         // no-ops; see hasSecondaryIndexes on TraceDb.create for why this must be consistent per env.
         final Map<TraceSecondaryIndex, Dbi<ByteBuffer>> indexDbis =
@@ -831,7 +831,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     // Bounded, streaming recompute over the fully-merged span set — exact
                     // totalSpans/services and (safety-valve aside) exact depth, plus the
                     // latest insert time as lastActivityMs (informational only — shown in the UI
-                    // "Last Activity" column; retention/archival now age by the root's own end
+                    // "Last Activity" column; retention and publishing age by the root's own end
                     // time, not activity), without materialising the whole trace. Empty ⇒ the
                     // trace has no live span at all ⇒ nothing to describe, so skip. A trace with
                     // spans but no ROOT span is not empty: it gets a flagged orphan root, which is
@@ -986,7 +986,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     @Override
     public long publish(final Instant publishBefore,
                         final Path bucketBaseDir) {
-        final ArchivalSelection selection = selectRoots(NanoTimeUtil.fromInstant(publishBefore));
+        final PublishSelection selection = selectRoots(NanoTimeUtil.fromInstant(publishBefore));
         if (selection.isEmpty()) {
             return 0L;
         }
@@ -997,11 +997,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     // Buckets are labelled by the root's START time: the axis queries filter on, so the bucket a trace lands
     // in is the bucket ArchiveShardLocator opens for a query covering it.
     //
-    // A trace is staged when it holds spans, because archival takes every span it stages — so a span still
+    // A trace is staged when it holds spans, because publishing takes every span it stages — so a span still
     // here is a span the archive has not got. That covers a single-span trace, whose root span is the one
     // span it has. A trace with none left is settled: it keeps its stored root until the cut-off retires it,
     // and staging it again would rewrite its bucket to carry nothing.
-    private ArchivalSelection selectRoots(final NanoTime cutOff) {
+    private PublishSelection selectRoots(final NanoTime cutOff) {
         final Map<String, String> labels = new HashMap<>();
         final Map<String, TraceRoot> retiring = new HashMap<>();
 
@@ -1033,7 +1033,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 }
 
                 if (tracesWithSpans.contains(hex)) {
-                    labels.put(hex, ArchivalGranularityUtil.label(
+                    labels.put(hex, BucketGranularityUtil.label(
                             granularity, NanoTimeUtil.toInstant(startTime)));
                 }
                 // Independent of staging: a settled trace has nothing to stage but still has to retire.
@@ -1044,7 +1044,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             return null;
         });
 
-        return new ArchivalSelection(labels, retiring);
+        return new PublishSelection(labels, retiring);
     }
 
     // The traces the span DBI still holds a span for. Span keys are trace-id prefixed so one sequential scan
@@ -1070,7 +1070,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     // from the root's start time while retirement goes on its end, so a long-running trace, backfill, or a
     // batch of timed-out orphans can put many labels in play at once. Spans stream straight from the source
     // index, so peak memory is O(1) either way.
-    private void stageSpans(final ArchivalSelection selection, final Path archiveBaseDir) {
+    private void stageSpans(final PublishSelection selection, final Path archiveBaseDir) {
         for (final Map.Entry<String, List<String>> group : selection.tracesByLabel().entrySet()) {
             final String label = group.getKey();
             final List<String> traceIdHexes = group.getValue();
@@ -1124,7 +1124,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     // Returns the number of rows removed.
     //
     // Iteration reads from readTxn while mutations go through writer.
-    private long purgeStaged(final ArchivalSelection selection) {
+    private long purgeStaged(final PublishSelection selection) {
         return env.write(writer -> {
             final Count count = new Count();
             env.read(readTxn -> {
@@ -1145,7 +1145,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         });
     }
 
-    private void deleteStagedSpans(final ArchivalSelection selection,
+    private void deleteStagedSpans(final PublishSelection selection,
                                    final Txn<ByteBuffer> readTxn,
                                    final LmdbWriter writer,
                                    final Count count) {
@@ -1167,7 +1167,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         });
     }
 
-    private void retireRoots(final ArchivalSelection selection,
+    private void retireRoots(final PublishSelection selection,
                              final Txn<ByteBuffer> readTxn,
                              final LmdbWriter writer,
                              final Count count) {
@@ -1201,7 +1201,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     // Fail loudly rather than with an NPE if a sorted/indexed read is ever attempted against a store
-    // opened without the secondary indexes (a holding-area shard, writer env or archival delta).
+    // opened without the secondary indexes (a holding-area shard, writer env or publish delta).
     private void requireSecondaryIndexes(final String operation) {
         if (secondaryIndexDbis.isEmpty()) {
             throw new IllegalStateException("Cannot " + operation
@@ -1258,7 +1258,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     // Removes a synthesized orphan root entirely: trace-roots entry, secondary indexes and per-trace
-    // stats (an orphan has no root span and no merge-time entry). Called by retention and archival
+    // stats (an orphan has no root span and no merge-time entry). Called by retention and publishing
     // once an orphan trace's last live span has gone, so the root can't outlive its spans.
     private void deleteOrphanRoot(final Txn<ByteBuffer> readTxn,
                                   final LmdbWriter writer,

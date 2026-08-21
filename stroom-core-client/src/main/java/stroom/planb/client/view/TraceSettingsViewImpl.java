@@ -18,7 +18,7 @@ package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.client.presenter.TraceSettingsPresenter.TraceSettingsView;
-import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.BucketGranularity;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.util.shared.time.SimpleDuration;
@@ -119,12 +119,12 @@ public class TraceSettingsViewImpl
     }
 
     @Override
-    public ArchivalGranularity getGranularity() {
+    public BucketGranularity getGranularity() {
         return publishingSettingsWidget.getGranularity();
     }
 
     @Override
-    public void setGranularity(final ArchivalGranularity granularity) {
+    public void setGranularity(final BucketGranularity granularity) {
         publishingSettingsWidget.setGranularity(granularity);
     }
 

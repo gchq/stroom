@@ -112,7 +112,7 @@ class SharedFileTracesStore extends AbstractTracesStore {
 
     // Reads the trace from its archive bucket(s). The holding-area shard is never consulted: it holds
     // each trace's root purely as an accumulator for late spans, and the bucket is the queryable copy.
-    // A trace that arrived since the last archival run therefore has no bucket yet and is not found.
+    // A trace that arrived since the last publish run therefore has no bucket yet and is not found.
     private Trace doGetTrace(final GetTraceRequest request) {
         final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
         final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());

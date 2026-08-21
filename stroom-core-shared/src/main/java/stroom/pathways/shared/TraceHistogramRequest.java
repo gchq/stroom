@@ -30,7 +30,7 @@ import java.util.Objects;
 /**
  * Requests a time histogram of trace counts over {@code timeRange}, split into {@code bucketCount}
  * equal buckets and narrowed by the same quick {@code filter} the list uses. The server only serves
- * a window no wider than one archival-granularity bucket (see {@link TraceHistogram#isAvailable()}).
+ * a window no wider than a single bucket (see {@link TraceHistogram#isAvailable()}).
  */
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)

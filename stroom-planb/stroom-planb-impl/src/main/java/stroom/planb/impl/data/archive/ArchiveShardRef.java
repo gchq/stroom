@@ -16,7 +16,7 @@
 
 package stroom.planb.impl.data.archive;
 
-import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.BucketGranularity;
 
 import java.nio.file.Path;
 
@@ -29,6 +29,6 @@ import java.nio.file.Path;
  * @param dir         absolute path to the archive shard directory on the shared store
  * @param granularity the time bucket granularity detected from the date label
  */
-public record ArchiveShardRef(String dateLabel, Path dir, ArchivalGranularity granularity) {
+public record ArchiveShardRef(String dateLabel, Path dir, BucketGranularity granularity) {
 
 }

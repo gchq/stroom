@@ -60,13 +60,13 @@ public final class TraceSettings extends AbstractPlanBSettings
      */
     public static final long DEFAULT_MAX_SPANS_PER_TRACE = 100_000L;
 
-    public static final ArchivalGranularity DEFAULT_GRANULARITY = ArchivalGranularity.DAY;
+    public static final BucketGranularity DEFAULT_GRANULARITY = BucketGranularity.DAY;
 
     @JsonProperty
     private final SharedFileStoreSettings sharedFileStore;
 
     @JsonProperty
-    private final ArchivalGranularity granularity;
+    private final BucketGranularity granularity;
 
     @JsonProperty
     private final HoldingAreaSettings holdingArea;
@@ -81,7 +81,7 @@ public final class TraceSettings extends AbstractPlanBSettings
     public TraceSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
                          @JsonProperty("retention") final RetentionSettings retention,
                          @JsonProperty("sharedFileStore") final SharedFileStoreSettings sharedFileStore,
-                         @JsonProperty("granularity") final ArchivalGranularity granularity,
+                         @JsonProperty("granularity") final BucketGranularity granularity,
                          @JsonProperty("holdingArea") final HoldingAreaSettings holdingArea,
                          @JsonProperty("maxQueryTimeRange") final SimpleDuration maxQueryTimeRange,
                          @JsonProperty("maxSpansPerTrace") final Long maxSpansPerTrace) {
@@ -103,7 +103,7 @@ public final class TraceSettings extends AbstractPlanBSettings
     }
 
     /** How the buckets that queries read are partitioned by time. Never null. */
-    public ArchivalGranularity getGranularity() {
+    public BucketGranularity getGranularity() {
         return granularity;
     }
 
@@ -178,7 +178,7 @@ public final class TraceSettings extends AbstractPlanBSettings
     public static class Builder extends AbstractBuilder<TraceSettings, Builder> {
 
         private SharedFileStoreSettings sharedFileStore;
-        private ArchivalGranularity granularity;
+        private BucketGranularity granularity;
         private HoldingAreaSettings holdingArea;
         private SimpleDuration maxQueryTimeRange;
         private Long maxSpansPerTrace;
@@ -202,7 +202,7 @@ public final class TraceSettings extends AbstractPlanBSettings
             return self();
         }
 
-        public Builder granularity(final ArchivalGranularity granularity) {
+        public Builder granularity(final BucketGranularity granularity) {
             this.granularity = granularity;
             return self();
         }

@@ -141,7 +141,7 @@ public class Trace {
                 throw new RuntimeException("No spans found");
             }
             // A trace may legitimately have no root span — an "orphan-only" trace whose root has
-            // aged out (age-based retention/archival) or never arrived. Build it regardless so the
+            // aged out (age-based retention or publishing) or never arrived. Build it regardless so the
             // UI can render the available spans (a rootless forest) with a warning, rather than
             // failing the whole detail view. Consumers use the null-safe root().
             return new Trace(traceId, parentSpanIdMap);

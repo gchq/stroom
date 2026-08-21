@@ -130,7 +130,7 @@ abstract class AbstractTracesStore implements TracesStore {
     /**
      * Pages a trace wholly from its archive bucket(s) — the queryable copy — with no contribution from
      * the holding-area shard. Returns an empty page when the trace has no bucket yet, i.e. it arrived
-     * since the last archival run.
+     * since the last publish run.
      *
      * <p>Normally there is exactly one bucket, because a trace's spans are all archived to its root's
      * start-time bucket. Several are still merged when they occur, which covers data left split by the

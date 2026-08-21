@@ -20,9 +20,9 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBDocCache;
-import stroom.planb.impl.data.archive.ArchivalGranularityUtil;
+import stroom.planb.impl.data.archive.BucketGranularityUtil;
 import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.ArchivalGranularity;
+import stroom.planb.shared.BucketGranularity;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.StateType;
@@ -297,14 +297,14 @@ public class SharedFileStoreMergeProcessor {
                 // The directory name records how the bucket was written, so it is the only thing that
                 // can decode it: a doc whose granularity has since changed still has buckets in the
                 // old layout.
-                final ArchivalGranularity granularity = ArchivalGranularityUtil.detect(dateLabel);
+                final BucketGranularity granularity = BucketGranularityUtil.detect(dateLabel);
 
                 if (granularity == null) {
                     LOGGER.warn("Cannot determine granularity for archive dir {}, skipping", dateDir);
                     continue;
                 }
 
-                final Instant bucketEnd = ArchivalGranularityUtil.bucketEnd(granularity, dateLabel);
+                final Instant bucketEnd = BucketGranularityUtil.bucketEnd(granularity, dateLabel);
                 if (bucketEnd == null) {
                     LOGGER.warn("Cannot parse bucket end for archive dir {}, skipping", dateDir);
                     continue;
