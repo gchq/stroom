@@ -18,8 +18,11 @@ package stroom.data.store.impl.fs;
 
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.aws.s3.shared.S3Location;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.DataVolumeService;
+import stroom.data.store.impl.fs.shared.DataVolume;
+import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.S3LocationDataVolume;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -34,9 +37,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-public class DataVolumeService {
+public class DataVolumeServiceImpl implements DataVolumeService {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataVolumeService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataVolumeServiceImpl.class);
 
     private final DataVolumeDao dataVolumeDao;
     private final SecurityContext securityContext;
@@ -44,16 +47,17 @@ public class DataVolumeService {
     private final FsMetaS3LocationDao fsMetaS3LocationDao;
 
     @Inject
-    DataVolumeService(final DataVolumeDao dataVolumeDao,
-                      final SecurityContext securityContext,
-                      final FsOrphanedMetaDao fsOrphanedMetaDao,
-                      final FsMetaS3LocationDao fsMetaS3LocationDao) {
+    DataVolumeServiceImpl(final DataVolumeDao dataVolumeDao,
+                          final SecurityContext securityContext,
+                          final FsOrphanedMetaDao fsOrphanedMetaDao,
+                          final FsMetaS3LocationDao fsMetaS3LocationDao) {
         this.dataVolumeDao = dataVolumeDao;
         this.securityContext = securityContext;
         this.fsOrphanedMetaDao = fsOrphanedMetaDao;
         this.fsMetaS3LocationDao = fsMetaS3LocationDao;
     }
 
+    @Override
     public ResultPage<DataVolume> find(final FindDataVolumeCriteria criteria) {
         if (!criteria.isValidCriteria()) {
             throw new IllegalArgumentException("Not enough criteria to run");
@@ -66,6 +70,7 @@ public class DataVolumeService {
     /**
      * Return the meta data volumes for a stream id.
      */
+    @Override
     public DataVolume findDataVolume(final long metaId) {
         return securityContext.secureResult(() ->
                 dataVolumeDao.findDataVolume(metaId));
@@ -74,6 +79,7 @@ public class DataVolumeService {
     /**
      * Return the S3 location information for metaId
      */
+    @Override
     public S3LocationDataVolume findS3Locations(final long metaId) {
         return securityContext.secureResult(() ->
                 fsMetaS3LocationDao.getS3LocationDataVolume(metaId));
@@ -82,16 +88,19 @@ public class DataVolumeService {
     /**
      * Return the S3 location information for metaId
      */
+    @Override
     public Set<S3Location> findS3Locations(final DataVolume dataVolume) {
         return securityContext.secureResult(() ->
                 fsMetaS3LocationDao.getS3LocationDataVolume(dataVolume));
     }
 
+    @Override
     public List<DataVolume> findDataVolumes(final Collection<Long> metaIds) {
         return securityContext.secureResult(() ->
                 dataVolumeDao.findDataVolumes(metaIds));
     }
 
+    @Override
     public DataVolume createDataVolume(final long metaId, final FsVolume volume) {
         return securityContext.secureResult(() -> {
             return dataVolumeDao.createDataVolume(metaId, volume);
@@ -109,6 +118,7 @@ public class DataVolumeService {
      *
      * @param validateLocationsAgainstVolume If true, it will check that the values in s3Locations match the volume.
      */
+    @Override
     public S3LocationDataVolume createS3LocationDataVolume(final long metaId,
                                                            final FsVolume volume,
                                                            final Set<S3Location> s3Locations,
@@ -144,6 +154,7 @@ public class DataVolumeService {
         }
     }
 
+    @Override
     public long getOrphanedMetaTrackerValue() {
         return securityContext.secureResult(fsOrphanedMetaDao::getMetaIdTrackerValue);
     }
@@ -152,5 +163,4 @@ public class DataVolumeService {
         securityContext.secure(() ->
                 fsOrphanedMetaDao.updateMetaIdTracker(metaId));
     }
-
 }
