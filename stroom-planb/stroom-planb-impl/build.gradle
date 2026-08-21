@@ -50,6 +50,10 @@ dependencies {
     implementation libs.swagger.annotations
     implementation libs.zero.allocation.hashing
 
+    // Constructing the real document store in a test needs the docstore implementation
+    // (StoreFactoryImpl, Serialiser2FactoryImpl) and an in-memory persistence.
+    testImplementation project(':stroom-docstore:stroom-docstore-impl')
+    testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 

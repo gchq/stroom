@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.DataResource;
@@ -62,6 +61,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -155,11 +155,15 @@ public abstract class AbstractMetaListPresenter
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
                     final ColumnSortList columnSortList = dataGrid.getColumnSortList();
-                    // Add the meta id to the sort list otherwise we are never guaranteed rows returned in same order
+                    final List<CriteriaFieldSort> sortList = CriteriaUtil.createSortList(columnSortList);
+                    // Add the meta id to the sort list otherwise we are never guaranteed rows returned
+                    // in same order. It has to be appended to the list actually sent, AFTER the user's
+                    // own sorts, so that it only ever breaks ties: two rows with an equal Create Time
+                    // would otherwise be free to swap between pages.
                     if (!CriteriaUtil.hasSortColumn(columnSortList, MetaFields.FIELD_ID)) {
-                        criteria.addSort(MetaFields.FIELD_ID);
+                        sortList.add(new CriteriaFieldSort(MetaFields.FIELD_ID, false, false));
                     }
-                    CriteriaUtil.setSortList(criteria, columnSortList);
+                    criteria.setSortList(sortList);
                     restFactory
                             .create(META_RESOURCE)
                             .method(res -> res.findMetaRow(criteria))
@@ -522,8 +526,21 @@ public abstract class AbstractMetaListPresenter
                 size);
     }
 
-    void addEndColumn() {
-        dataGrid.addEndColumn(new EndColumn<>());
+    /**
+     * Set an expression this client built itself, with no validation round-trip.
+     * <p>
+     * {@link #setExpression} validates because a user-edited filter can be wrong, and the server's
+     * message is the feedback. A seed expression built from a {@link stroom.docref.DocRef} by
+     * {@code MetaExpressionUtil} cannot be wrong, so validating one spends a
+     * {@code POST /expression/v1/validate} on this client's own output before the {@code meta/find}
+     * it was always going to run. {@code ExpressionValidator} already makes exactly this exemption
+     * for {@code ALL_UNLOCKED_EXPRESSION}; this extends it to the rest of the seeds.
+     *
+     * @param onSetExpression Called after the expression has been set on the criteria. Can be null.
+     */
+    public void setSeedExpression(final ExpressionOperator expression, final Runnable onSetExpression) {
+        this.criteria.setExpression(expression);
+        NullSafe.run(onSetExpression);
     }
 
     /**

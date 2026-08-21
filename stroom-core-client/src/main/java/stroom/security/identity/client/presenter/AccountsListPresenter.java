@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -315,8 +315,6 @@ public class AccountsListPresenter
                 .withSorting(AccountFields.FIELD_NAME_COMMENTS)
                 .build();
         dataGrid.addAutoResizableColumn(commentsColumn, "Comments", ColumnSizeConstants.BIG_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private Function<Account, CommandLink> buildOpenUserCommandLink() {

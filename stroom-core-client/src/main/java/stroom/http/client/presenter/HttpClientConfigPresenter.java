@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.http.client.presenter;
 
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpClientConfigPresenter.HttpClientConfigView;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.http.HttpTlsConfig;
@@ -40,6 +41,7 @@ public class HttpClientConfigPresenter
 
     private final Provider<HttpTlsConfigPresenter> httpTlsConfigPresenterProvider;
     private HttpTlsConfig httpTlsConfig;
+    private boolean readOnly;
 
     @Inject
     public HttpClientConfigPresenter(
@@ -52,8 +54,11 @@ public class HttpClientConfigPresenter
     }
 
     public void show(final HttpClientConfig httpClientConfig,
+                     final boolean readOnly,
                      final Consumer<HttpClientConfig> consumer) {
+        this.readOnly = readOnly;
         read(httpClientConfig);
+        getView().onReadOnly(readOnly);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption("Edit HTTP Client Configuration")
@@ -72,7 +77,7 @@ public class HttpClientConfigPresenter
     @Override
     public void onSetHttpTlsConfig() {
         final HttpTlsConfigPresenter httpTlsConfigPresenter = httpTlsConfigPresenterProvider.get();
-        httpTlsConfigPresenter.show(httpTlsConfig, updated -> {
+        httpTlsConfigPresenter.show(httpTlsConfig, readOnly, updated -> {
             if (!Objects.equals(httpTlsConfig, updated)) {
                 httpTlsConfig = updated;
             }
@@ -113,7 +118,7 @@ public class HttpClientConfigPresenter
     }
 
     public interface HttpClientConfigView
-            extends View, Focus, HasUiHandlers<HttpClientConfigUiHandlers> {
+            extends View, Focus, ReadOnlyChangeHandler, HasUiHandlers<HttpClientConfigUiHandlers> {
 
         void setTimeout(SimpleDuration timeout);
 

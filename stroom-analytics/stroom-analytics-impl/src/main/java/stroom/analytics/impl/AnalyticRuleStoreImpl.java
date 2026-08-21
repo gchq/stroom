@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,6 @@ class AnalyticRuleStoreImpl
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticRuleStoreImpl.class);
 
-    private final SecurityContext securityContext;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestFactory searchRequestFactory;
@@ -65,19 +64,19 @@ class AnalyticRuleStoreImpl
 
     @Inject
     AnalyticRuleStoreImpl(final StoreFactory storeFactory,
-                          final AnalyticRuleSerialiser serialiser,
                           final SecurityContext securityContext,
+                          final AnalyticRuleSerialiser serialiser,
                           final Provider<ProcessorFilterService> processorFilterServiceProvider,
                           final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                           final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
                           final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                           final SearchRequestFactory searchRequestFactory) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 AnalyticRuleDoc.TYPE,
                 AnalyticRuleDoc::builder,
                 AnalyticRuleDoc::copy);
-        this.securityContext = securityContext;
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
@@ -86,25 +85,12 @@ class AnalyticRuleStoreImpl
     }
 
     @Override
-    public DocRef createDocument(final String name) {
-        final DocRef docRef = getStore().createDocument(name);
-
-        // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
-        // them until after they are created in the store.
-        securityContext.asProcessingUser(() -> {
-            final AnalyticRuleDoc analyticRuleDoc = getStore().readDocument(docRef);
-            getStore().writeDocument(analyticRuleDoc);
-        });
-        return docRef;
-    }
-
-    @Override
     public DocRef copyDocument(final DocRef docRef,
                                final String name,
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        final AnalyticRuleDoc document = getStore().readDocument(docRef);
+        final AnalyticRuleDoc document = super.readDocument(docRef);
         return getStore().createDocument(newName,
                 (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
                     final Builder builder = document

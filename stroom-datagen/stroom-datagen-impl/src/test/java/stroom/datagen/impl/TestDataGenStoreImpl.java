@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -69,7 +70,13 @@ class TestDataGenStoreImpl {
         // createStore is generic in D and infers AbstractDoc from the any() matchers, so the
         // untyped doReturn form is needed here.
         doReturn(store).when(storeFactory).createStore(any(), eq(DataGenDoc.TYPE), any(), any(), any());
-        dataGenStore = new DataGenStoreImpl(storeFactory, serialiser, securityContext);
+        // writeDocument() is authorised by AbstractDocumentStore with EDIT, against a DocRef it builds
+        // from the store's type. These tests are about the feed validation that happens on top of that,
+        // not about the check itself, so give it a type and grant the permission - lenient because the
+        // bad-feed test throws before ever reaching either.
+        lenient().when(store.getType()).thenReturn(DataGenDoc.TYPE);
+        lenient().when(securityContext.hasDocumentPermission(any(), any())).thenReturn(true);
+        dataGenStore = new DataGenStoreImpl(storeFactory, securityContext, serialiser);
     }
 
 

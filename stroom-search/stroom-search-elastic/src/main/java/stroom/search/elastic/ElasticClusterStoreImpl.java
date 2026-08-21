@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.search.elastic;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.search.elastic.shared.ElasticClusterDoc;
+import stroom.security.api.SecurityContext;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -31,8 +32,10 @@ public class ElasticClusterStoreImpl
     @Inject
     public ElasticClusterStoreImpl(
             final StoreFactory storeFactory,
+            final SecurityContext securityContext,
             final ElasticClusterSerialiser serialiser) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 ElasticClusterDoc.TYPE,
                 ElasticClusterDoc::builder,

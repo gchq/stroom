@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,16 @@ public class ResetPasswordPresenter extends MyPresenter<ResetPasswordView, Reset
 
     private static final AuthenticationResource RESOURCE = GWT.create(AuthenticationResource.class);
 
-    private static final String SIGN_IN_PATH = "/signIn";
+    /**
+     * Where every exit from this page goes: success, cancel and the invalid-link alert.
+     * <p>
+     * The {@code error=login_required} parameter is required, not decoration. {@code App.onModuleLoad}
+     * reveals the sign in form for this path only when it sees that value, and reveals the
+     * Authentication Error page for anything else — <b>including no parameter at all</b>. The server
+     * adds it on the redirects it drives ({@code AuthenticationServiceImpl.createSignInUri}), so a
+     * navigation from the client has to add it itself.
+     */
+    private static final String SIGN_IN_URL = "/signIn?error=login_required";
     private static final String INVALID_LINK_MESSAGE =
             "This password reset link is invalid or has expired. Please request a new one.";
 
@@ -127,7 +136,7 @@ public class ResetPasswordPresenter extends MyPresenter<ResetPasswordView, Reset
     }
 
     private void gotoSignIn() {
-        Window.Location.replace(SIGN_IN_PATH);
+        Window.Location.replace(SIGN_IN_URL);
     }
 
 

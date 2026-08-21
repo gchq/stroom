@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
@@ -265,7 +264,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 //        addEventsColumn();
         addReprocessColumn();
         addRunAsUserColumn();
-        addEndColumn();
     }
 
     private void addInfoColumn() {
@@ -571,10 +569,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                         .withToolTip("The processor will run with the same permissions as the Run As User.")
                         .build(),
                 ColumnSizeConstants.USER_DISPLAY_NAME_COL);
-    }
-
-    private void addEndColumn() {
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public MultiSelectionModel<ProcessorListRow> getSelectionModel() {

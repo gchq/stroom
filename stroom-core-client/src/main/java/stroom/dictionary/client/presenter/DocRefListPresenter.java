@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.dictionary.client.presenter;
 
 import stroom.cell.info.client.CommandLink;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
@@ -70,7 +69,6 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
                     DataGridUtil.headingBuilder(columnName).build(),
                     500);
         }
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private Function<DocRef, CommandLink> buildOpenDocCommandLink() {

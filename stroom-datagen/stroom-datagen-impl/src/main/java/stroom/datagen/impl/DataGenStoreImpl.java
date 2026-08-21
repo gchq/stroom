@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,34 +43,16 @@ class DataGenStoreImpl
         extends AbstractDocumentStore<DataGenDoc>
         implements DataGenStore {
 
-    private final SecurityContext securityContext;
-
     @Inject
     DataGenStoreImpl(final StoreFactory storeFactory,
-                     final DataGenSerialiser serialiser,
-                     final SecurityContext securityContext) {
+                     final SecurityContext securityContext,
+                     final DataGenSerialiser serialiser) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 DataGenDoc.TYPE,
                 DataGenDoc::builder,
                 DataGenDoc::copy);
-        this.securityContext = securityContext;
-    }
-
-    /**
-     * Creates the doc, then immediately reads and rewrites it so that the stored JSON is complete.
-     */
-    @Override
-    public DocRef createDocument(final String name) {
-        final DocRef docRef = getStore().createDocument(name);
-
-        // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
-        // them until after they are created in the store.
-        securityContext.asProcessingUser(() -> {
-            final DataGenDoc dataGenDoc = getStore().readDocument(docRef);
-            getStore().writeDocument(dataGenDoc);
-        });
-        return docRef;
     }
 
     @Override
@@ -79,7 +61,7 @@ class DataGenStoreImpl
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        final DataGenDoc document = getStore().readDocument(docRef);
+        final DataGenDoc document = super.readDocument(docRef);
         return getStore().createDocument(newName,
                 (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
                     final Builder builder = document

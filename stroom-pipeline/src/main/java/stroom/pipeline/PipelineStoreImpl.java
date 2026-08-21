@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorFilterUtil;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
 import stroom.util.shared.NullSafe;
@@ -64,12 +66,14 @@ public class PipelineStoreImpl
 
     @Inject
     public PipelineStoreImpl(final StoreFactory storeFactory,
+                             final SecurityContext securityContext,
                              final PipelineSerialiser serialiser,
                              final Provider<ProcessorFilterService> processorFilterServiceProvider,
                              final Provider<ProcessorService> processorServiceProvider,
                              final PipelineDataMigration pipelineDataMigration,
                              final Provider<DocumentStoreRegistry> documentStoreRegistryProvider) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 PipelineDoc.TYPE,
                 PipelineDoc::builder,
@@ -87,6 +91,10 @@ public class PipelineStoreImpl
                                final Set<String> existingNames) {
         final DocumentStoreRegistry documentStoreRegistry = documentStoreRegistryProvider.get();
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
+        // Copy reads the source document, so it needs VIEW on it. This override reaches
+        // getStore() directly, which is the unchecked handle, so the check the base applies is
+        // applied here.
+        checkDocumentPermission(docRef, DocumentPermission.VIEW);
         final DocRef newPipelineDocRef = getStore().copyDocument(docRef.getUuid(), newName);
 
         final PipelineDoc newPipelineDoc = readDocument(newPipelineDocRef);
