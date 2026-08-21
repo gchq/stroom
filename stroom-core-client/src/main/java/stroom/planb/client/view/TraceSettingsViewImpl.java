@@ -77,10 +77,19 @@ public class TraceSettingsViewImpl
         storageContent.add(traceGeneralSettingsWidget.asWidget());
         storagePanel.add(storageContent);
 
+        // A trace store has one environment per bucket, so the limit is per part rather than the
+        // size of the whole store, and neither write option reaches the shared file store.
+        generalSettingsWidget.setMaxStoreSizeHelpText(
+                "The maximum size of each part of the store, e.g. 10G — not its total size on disk.");
+        generalSettingsWidget.setWriteOptionsVisible(false);
+
         retentionPanel.add(retentionSettingsWidget.asWidget());
 
         // Trace retention deletes by insert time whatever this says, so there is nothing to offer.
         retentionSettingsWidget.setUseStateTimeVisible(false);
+
+        // The shared file store merge processor is the only thing that acts on the check frequency.
+        retentionSettingsWidget.setCheckIntervalVisible(true);
     }
 
     @Override

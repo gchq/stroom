@@ -84,9 +84,15 @@ public abstract sealed class AbstractPlanBSettings permits
         if (settings == null) {
             return null;
         }
-        final String checkIntervalError = RetentionSettings.checkIntervalError(settings.getRetention());
-        if (checkIntervalError != null) {
-            return checkIntervalError;
+        if (settings instanceof HasSharedFileStore) {
+            // Only the shared file store merge processor schedules retention from the check
+            // interval. Any other store runs retention on its own schedule and never reads it, so
+            // there is nothing to hold it to and no field for the user to correct.
+            final String checkIntervalError =
+                    RetentionSettings.checkIntervalError(settings.getRetention());
+            if (checkIntervalError != null) {
+                return checkIntervalError;
+            }
         }
         return completionGraceError(settings);
     }

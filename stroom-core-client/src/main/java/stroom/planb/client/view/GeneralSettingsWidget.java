@@ -19,6 +19,8 @@ package stroom.planb.client.view;
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.util.shared.ModelStringUtil;
+import stroom.widget.form.client.FormGroup;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,13 +35,25 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
     private final Widget widget;
 
     @UiField
+    FormGroup maxStoreSizePanel;
+    @UiField
     TextBox maxStoreSize;
+    @UiField
+    FormGroup synchroniseMergePanel;
+    @UiField
+    CustomCheckBox synchroniseMerge;
+    @UiField
+    FormGroup overwritePanel;
+    @UiField
+    CustomCheckBox overwrite;
 
     private boolean readOnly;
+    private boolean writeOptionsVisible = true;
 
     @Inject
     public GeneralSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        setOverwrite(true);
     }
 
     @Override
@@ -77,8 +91,49 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
                 ModelStringUtil.DEFAULT_SIGNIFICANT_FIGURES));
     }
 
+    /**
+     * Describe the max store size differently for a store that holds many parts, where the limit is
+     * per part rather than the size of the whole store on disk.
+     */
+    public void setMaxStoreSizeHelpText(final String helpText) {
+        maxStoreSizePanel.setHelpText(helpText);
+    }
+
+    public Boolean getSynchroniseMerge() {
+        return synchroniseMerge.getValue()
+                ? Boolean.TRUE
+                : null;
+    }
+
+    public void setSynchroniseMerge(final Boolean synchroniseMerge) {
+        this.synchroniseMerge.setValue(synchroniseMerge != null && synchroniseMerge);
+    }
+
+    public Boolean getOverwrite() {
+        return overwrite.getValue()
+                ? null
+                : overwrite.getValue();
+    }
+
+    public void setOverwrite(final Boolean overwrite) {
+        this.overwrite.setValue(overwrite == null || overwrite);
+    }
+
+    /**
+     * Hide the write options for a store that cannot express them, i.e. one whose parts are not
+     * transferred over HTTP and whose writes never overwrite an existing key.
+     */
+    public void setWriteOptionsVisible(final boolean visible) {
+        this.writeOptionsVisible = visible;
+        synchroniseMergePanel.setVisible(visible);
+        overwritePanel.setVisible(visible);
+    }
+
     private void updateStates() {
-        maxStoreSize.setEnabled(!readOnly);
+        final boolean enabled = !readOnly;
+        maxStoreSize.setEnabled(enabled);
+        synchroniseMerge.setEnabled(enabled && writeOptionsVisible);
+        overwrite.setEnabled(enabled && writeOptionsVisible);
     }
 
     @Override
@@ -89,6 +144,16 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
 
     @UiHandler("maxStoreSize")
     public void onMaxStoreSize(final ValueChangeEvent<String> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("synchroniseMerge")
+    public void onSynchroniseMerge(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("overwrite")
+    public void onOverwrite(final ValueChangeEvent<Boolean> event) {
         getUiHandlers().onChange();
     }
 

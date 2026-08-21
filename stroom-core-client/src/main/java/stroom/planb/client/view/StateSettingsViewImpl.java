@@ -35,7 +35,7 @@ public class StateSettingsViewImpl
 
     private final Widget widget;
     private final GeneralSettingsWidget generalSettingsWidget;
-    private final HttpStoreSettingsWidget httpStoreSettingsWidget;
+    private final SnapshotSettingsWidget snapshotSettingsWidget;
     private final RetentionSettingsWidget retentionSettingsWidget;
     private final StateKeySchemaSettingsWidget stateKeySchemaSettingsWidget;
     private final StateValueSchemaSettingsWidget stateValueSchemaSettingsWidget;
@@ -43,7 +43,7 @@ public class StateSettingsViewImpl
     @UiField
     SettingsGroup generalPanel;
     @UiField
-    SettingsGroup httpStorePanel;
+    SettingsGroup snapshotPanel;
     @UiField
     SettingsGroup retentionPanel;
     @UiField
@@ -54,18 +54,18 @@ public class StateSettingsViewImpl
     @Inject
     public StateSettingsViewImpl(final Binder binder,
                                  final GeneralSettingsWidget generalSettingsWidget,
-                                 final HttpStoreSettingsWidget httpStoreSettingsWidget,
+                                 final SnapshotSettingsWidget snapshotSettingsWidget,
                                  final RetentionSettingsWidget retentionSettingsWidget,
                                  final StateKeySchemaSettingsWidget stateKeySchemaSettingsWidget,
                                  final StateValueSchemaSettingsWidget stateValueSchemaSettingsWidget) {
         widget = binder.createAndBindUi(this);
         this.generalSettingsWidget = generalSettingsWidget;
-        this.httpStoreSettingsWidget = httpStoreSettingsWidget;
+        this.snapshotSettingsWidget = snapshotSettingsWidget;
         this.retentionSettingsWidget = retentionSettingsWidget;
         this.stateKeySchemaSettingsWidget = stateKeySchemaSettingsWidget;
         this.stateValueSchemaSettingsWidget = stateValueSchemaSettingsWidget;
         generalPanel.add(generalSettingsWidget.asWidget());
-        httpStorePanel.add(httpStoreSettingsWidget.asWidget());
+        snapshotPanel.add(snapshotSettingsWidget.asWidget());
         retentionPanel.add(retentionSettingsWidget.asWidget());
         keySchemaPanel.add(stateKeySchemaSettingsWidget.asWidget());
         valueSchemaPanel.add(stateValueSchemaSettingsWidget.asWidget());
@@ -75,7 +75,7 @@ public class StateSettingsViewImpl
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
-        httpStoreSettingsWidget.setUiHandlers(uiHandlers);
+        snapshotSettingsWidget.setUiHandlers(uiHandlers);
         retentionSettingsWidget.setUiHandlers(uiHandlers);
         stateKeySchemaSettingsWidget.setUiHandlers(uiHandlers);
         stateValueSchemaSettingsWidget.setUiHandlers(uiHandlers);
@@ -98,22 +98,22 @@ public class StateSettingsViewImpl
 
     @Override
     public Boolean getSynchroniseMerge() {
-        return httpStoreSettingsWidget.getSynchroniseMerge();
+        return generalSettingsWidget.getSynchroniseMerge();
     }
 
     @Override
     public void setSynchroniseMerge(final Boolean synchroniseMerge) {
-        httpStoreSettingsWidget.setSynchroniseMerge(synchroniseMerge);
+        generalSettingsWidget.setSynchroniseMerge(synchroniseMerge);
     }
 
     @Override
     public Boolean getOverwrite() {
-        return httpStoreSettingsWidget.getOverwrite();
+        return generalSettingsWidget.getOverwrite();
     }
 
     @Override
     public void setOverwrite(final Boolean overwrite) {
-        httpStoreSettingsWidget.setOverwrite(overwrite);
+        generalSettingsWidget.setOverwrite(overwrite);
     }
 
     @Override
@@ -128,12 +128,12 @@ public class StateSettingsViewImpl
 
     @Override
     public SnapshotSettings getSnapshotSettings() {
-        return httpStoreSettingsWidget.getSnapshotSettings();
+        return snapshotSettingsWidget.getSnapshotSettings();
     }
 
     @Override
     public void setSnapshotSettings(final SnapshotSettings snapshotSettings) {
-        httpStoreSettingsWidget.setSnapshotSettings(snapshotSettings);
+        snapshotSettingsWidget.setSnapshotSettings(snapshotSettings);
     }
 
     @Override
@@ -159,7 +159,7 @@ public class StateSettingsViewImpl
     @Override
     public void onReadOnly(final boolean readOnly) {
         generalSettingsWidget.onReadOnly(readOnly);
-        httpStoreSettingsWidget.onReadOnly(readOnly);
+        snapshotSettingsWidget.onReadOnly(readOnly);
         retentionSettingsWidget.onReadOnly(readOnly);
         stateKeySchemaSettingsWidget.onReadOnly(readOnly);
         stateValueSchemaSettingsWidget.onReadOnly(readOnly);

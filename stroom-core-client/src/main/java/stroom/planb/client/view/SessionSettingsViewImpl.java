@@ -35,7 +35,7 @@ public class SessionSettingsViewImpl
 
     private final Widget widget;
     private final GeneralSettingsWidget generalSettingsWidget;
-    private final HttpStoreSettingsWidget httpStoreSettingsWidget;
+    private final SnapshotSettingsWidget snapshotSettingsWidget;
     private final CondenseSettingsWidget condenseSettingsWidget;
     private final RetentionSettingsWidget retentionSettingsWidget;
     private final SessionKeySchemaSettingsWidget sessionKeySchemaSettingsWidget;
@@ -43,7 +43,7 @@ public class SessionSettingsViewImpl
     @UiField
     SettingsGroup generalPanel;
     @UiField
-    SettingsGroup httpStorePanel;
+    SettingsGroup snapshotPanel;
     @UiField
     SettingsGroup condensePanel;
     @UiField
@@ -54,18 +54,18 @@ public class SessionSettingsViewImpl
     @Inject
     public SessionSettingsViewImpl(final Binder binder,
                                    final GeneralSettingsWidget generalSettingsWidget,
-                                   final HttpStoreSettingsWidget httpStoreSettingsWidget,
+                                   final SnapshotSettingsWidget snapshotSettingsWidget,
                                    final CondenseSettingsWidget condenseSettingsWidget,
                                    final RetentionSettingsWidget retentionSettingsWidget,
                                    final SessionKeySchemaSettingsWidget sessionKeySchemaSettingsWidget) {
         widget = binder.createAndBindUi(this);
         this.generalSettingsWidget = generalSettingsWidget;
-        this.httpStoreSettingsWidget = httpStoreSettingsWidget;
+        this.snapshotSettingsWidget = snapshotSettingsWidget;
         this.condenseSettingsWidget = condenseSettingsWidget;
         this.retentionSettingsWidget = retentionSettingsWidget;
         this.sessionKeySchemaSettingsWidget = sessionKeySchemaSettingsWidget;
         generalPanel.add(generalSettingsWidget.asWidget());
-        httpStorePanel.add(httpStoreSettingsWidget.asWidget());
+        snapshotPanel.add(snapshotSettingsWidget.asWidget());
         condensePanel.add(condenseSettingsWidget.asWidget());
         retentionPanel.add(retentionSettingsWidget.asWidget());
         keySchemaPanel.add(sessionKeySchemaSettingsWidget.asWidget());
@@ -75,7 +75,7 @@ public class SessionSettingsViewImpl
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
-        httpStoreSettingsWidget.setUiHandlers(uiHandlers);
+        snapshotSettingsWidget.setUiHandlers(uiHandlers);
         condenseSettingsWidget.setUiHandlers(uiHandlers);
         retentionSettingsWidget.setUiHandlers(uiHandlers);
         sessionKeySchemaSettingsWidget.setUiHandlers(uiHandlers);
@@ -98,22 +98,22 @@ public class SessionSettingsViewImpl
 
     @Override
     public Boolean getSynchroniseMerge() {
-        return httpStoreSettingsWidget.getSynchroniseMerge();
+        return generalSettingsWidget.getSynchroniseMerge();
     }
 
     @Override
     public void setSynchroniseMerge(final Boolean synchroniseMerge) {
-        httpStoreSettingsWidget.setSynchroniseMerge(synchroniseMerge);
+        generalSettingsWidget.setSynchroniseMerge(synchroniseMerge);
     }
 
     @Override
     public Boolean getOverwrite() {
-        return httpStoreSettingsWidget.getOverwrite();
+        return generalSettingsWidget.getOverwrite();
     }
 
     @Override
     public void setOverwrite(final Boolean overwrite) {
-        httpStoreSettingsWidget.setOverwrite(overwrite);
+        generalSettingsWidget.setOverwrite(overwrite);
     }
 
     @Override
@@ -138,12 +138,12 @@ public class SessionSettingsViewImpl
 
     @Override
     public SnapshotSettings getSnapshotSettings() {
-        return httpStoreSettingsWidget.getSnapshotSettings();
+        return snapshotSettingsWidget.getSnapshotSettings();
     }
 
     @Override
     public void setSnapshotSettings(final SnapshotSettings snapshotSettings) {
-        httpStoreSettingsWidget.setSnapshotSettings(snapshotSettings);
+        snapshotSettingsWidget.setSnapshotSettings(snapshotSettings);
     }
 
     @Override
@@ -159,7 +159,7 @@ public class SessionSettingsViewImpl
     @Override
     public void onReadOnly(final boolean readOnly) {
         generalSettingsWidget.onReadOnly(readOnly);
-        httpStoreSettingsWidget.onReadOnly(readOnly);
+        snapshotSettingsWidget.onReadOnly(readOnly);
         condenseSettingsWidget.onReadOnly(readOnly);
         retentionSettingsWidget.onReadOnly(readOnly);
         sessionKeySchemaSettingsWidget.onReadOnly(readOnly);

@@ -35,7 +35,7 @@ public class HistogramSettingsViewImpl
 
     private final Widget widget;
     private final GeneralSettingsWidget generalSettingsWidget;
-    private final HttpStoreSettingsWidget httpStoreSettingsWidget;
+    private final SnapshotSettingsWidget snapshotSettingsWidget;
     private final RetentionSettingsWidget retentionSettingsWidget;
     private final HistogramKeySchemaSettingsWidget histogramKeySchemaSettingsWidget;
     private final HistogramValueSchemaSettingsWidget stateValueSchemaSettingsWidget;
@@ -43,7 +43,7 @@ public class HistogramSettingsViewImpl
     @UiField
     SettingsGroup generalPanel;
     @UiField
-    SettingsGroup httpStorePanel;
+    SettingsGroup snapshotPanel;
     @UiField
     SettingsGroup retentionPanel;
     @UiField
@@ -54,19 +54,19 @@ public class HistogramSettingsViewImpl
     @Inject
     public HistogramSettingsViewImpl(final Binder binder,
                                      final GeneralSettingsWidget generalSettingsWidget,
-                                     final HttpStoreSettingsWidget httpStoreSettingsWidget,
+                                     final SnapshotSettingsWidget snapshotSettingsWidget,
                                      final RetentionSettingsWidget retentionSettingsWidget,
                                      final HistogramKeySchemaSettingsWidget
                                              histogramKeySchemaSettingsWidget,
                                      final HistogramValueSchemaSettingsWidget stateValueSchemaSettingsWidget) {
         widget = binder.createAndBindUi(this);
         this.generalSettingsWidget = generalSettingsWidget;
-        this.httpStoreSettingsWidget = httpStoreSettingsWidget;
+        this.snapshotSettingsWidget = snapshotSettingsWidget;
         this.retentionSettingsWidget = retentionSettingsWidget;
         this.histogramKeySchemaSettingsWidget = histogramKeySchemaSettingsWidget;
         this.stateValueSchemaSettingsWidget = stateValueSchemaSettingsWidget;
         generalPanel.add(generalSettingsWidget.asWidget());
-        httpStorePanel.add(httpStoreSettingsWidget.asWidget());
+        snapshotPanel.add(snapshotSettingsWidget.asWidget());
         retentionPanel.add(retentionSettingsWidget.asWidget());
         keySchemaPanel.add(histogramKeySchemaSettingsWidget.asWidget());
         valueSchemaPanel.add(stateValueSchemaSettingsWidget.asWidget());
@@ -76,7 +76,7 @@ public class HistogramSettingsViewImpl
     public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
-        httpStoreSettingsWidget.setUiHandlers(uiHandlers);
+        snapshotSettingsWidget.setUiHandlers(uiHandlers);
         retentionSettingsWidget.setUiHandlers(uiHandlers);
         histogramKeySchemaSettingsWidget.setUiHandlers(uiHandlers);
         stateValueSchemaSettingsWidget.setUiHandlers(uiHandlers);
@@ -99,22 +99,22 @@ public class HistogramSettingsViewImpl
 
     @Override
     public Boolean getSynchroniseMerge() {
-        return httpStoreSettingsWidget.getSynchroniseMerge();
+        return generalSettingsWidget.getSynchroniseMerge();
     }
 
     @Override
     public void setSynchroniseMerge(final Boolean synchroniseMerge) {
-        httpStoreSettingsWidget.setSynchroniseMerge(synchroniseMerge);
+        generalSettingsWidget.setSynchroniseMerge(synchroniseMerge);
     }
 
     @Override
     public Boolean getOverwrite() {
-        return httpStoreSettingsWidget.getOverwrite();
+        return generalSettingsWidget.getOverwrite();
     }
 
     @Override
     public void setOverwrite(final Boolean overwrite) {
-        httpStoreSettingsWidget.setOverwrite(overwrite);
+        generalSettingsWidget.setOverwrite(overwrite);
     }
 
     @Override
@@ -129,12 +129,12 @@ public class HistogramSettingsViewImpl
 
     @Override
     public SnapshotSettings getSnapshotSettings() {
-        return httpStoreSettingsWidget.getSnapshotSettings();
+        return snapshotSettingsWidget.getSnapshotSettings();
     }
 
     @Override
     public void setSnapshotSettings(final SnapshotSettings snapshotSettings) {
-        httpStoreSettingsWidget.setSnapshotSettings(snapshotSettings);
+        snapshotSettingsWidget.setSnapshotSettings(snapshotSettings);
     }
 
     @Override
@@ -160,7 +160,7 @@ public class HistogramSettingsViewImpl
     @Override
     public void onReadOnly(final boolean readOnly) {
         generalSettingsWidget.onReadOnly(readOnly);
-        httpStoreSettingsWidget.onReadOnly(readOnly);
+        snapshotSettingsWidget.onReadOnly(readOnly);
         retentionSettingsWidget.onReadOnly(readOnly);
         histogramKeySchemaSettingsWidget.onReadOnly(readOnly);
         stateValueSchemaSettingsWidget.onReadOnly(readOnly);

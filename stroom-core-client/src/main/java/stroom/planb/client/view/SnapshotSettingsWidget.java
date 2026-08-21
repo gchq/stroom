@@ -27,20 +27,14 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 /**
- * The settings of a store served over HTTP: whether reads come from snapshots pushed to other nodes,
- * and whether a write waits for the receiving node to merge the transferred part.
- *
- * <p>None of this applies to a store backed by a shared file store, which has no part transfer and no
- * snapshots — see {@link stroom.planb.shared.AbstractHttpStoreSettings}.
+ * Whether reads come from snapshots pushed to other nodes. Only a store served over HTTP has
+ * snapshots, so this has no place in a trace store — see
+ * {@link stroom.planb.shared.AbstractHttpStoreSettings}.
  */
-public class HttpStoreSettingsWidget extends AbstractSettingsWidget implements HttpStoreSettingsView {
+public class SnapshotSettingsWidget extends AbstractSettingsWidget {
 
     private final Widget widget;
 
-    @UiField
-    CustomCheckBox synchroniseMerge;
-    @UiField
-    CustomCheckBox overwrite;
     @UiField
     CustomCheckBox useSnapshotsForLookup;
     @UiField
@@ -51,9 +45,8 @@ public class HttpStoreSettingsWidget extends AbstractSettingsWidget implements H
     private boolean readOnly;
 
     @Inject
-    public HttpStoreSettingsWidget(final Binder binder) {
+    public SnapshotSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        setOverwrite(true);
     }
 
     @Override
@@ -61,7 +54,6 @@ public class HttpStoreSettingsWidget extends AbstractSettingsWidget implements H
         return widget;
     }
 
-    @Override
     public SnapshotSettings getSnapshotSettings() {
         return new SnapshotSettings(
                 useSnapshotsForLookup.getValue(),
@@ -69,7 +61,6 @@ public class HttpStoreSettingsWidget extends AbstractSettingsWidget implements H
                 useSnapshotsForQuery.getValue());
     }
 
-    @Override
     public void setSnapshotSettings(final SnapshotSettings snapshotSettings) {
         if (snapshotSettings != null) {
             useSnapshotsForLookup.setValue(snapshotSettings.isUseSnapshotsForLookup());
@@ -78,53 +69,16 @@ public class HttpStoreSettingsWidget extends AbstractSettingsWidget implements H
         }
     }
 
-    @Override
-    public Boolean getSynchroniseMerge() {
-        return synchroniseMerge.getValue()
-                ? Boolean.TRUE
-                : null;
-    }
-
-    @Override
-    public void setSynchroniseMerge(final Boolean synchroniseMerge) {
-        this.synchroniseMerge.setValue(synchroniseMerge != null && synchroniseMerge);
-    }
-
-    @Override
-    public Boolean getOverwrite() {
-        return overwrite.getValue()
-                ? null
-                : overwrite.getValue();
-    }
-
-    @Override
-    public void setOverwrite(final Boolean overwrite) {
-        this.overwrite.setValue(overwrite == null || overwrite);
-    }
-
     private void updateStates() {
         final boolean enabled = !readOnly;
-        synchroniseMerge.setEnabled(enabled);
-        overwrite.setEnabled(enabled);
         useSnapshotsForLookup.setEnabled(enabled);
         useSnapshotsForGet.setEnabled(enabled);
         useSnapshotsForQuery.setEnabled(enabled);
     }
 
-    @Override
     public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         updateStates();
-    }
-
-    @UiHandler("synchroniseMerge")
-    public void onSynchroniseMerge(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
-    }
-
-    @UiHandler("overwrite")
-    public void onOverwrite(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
     }
 
     @UiHandler("useSnapshotsForLookup")
@@ -142,7 +96,7 @@ public class HttpStoreSettingsWidget extends AbstractSettingsWidget implements H
         getUiHandlers().onChange();
     }
 
-    public interface Binder extends UiBinder<Widget, HttpStoreSettingsWidget> {
+    public interface Binder extends UiBinder<Widget, SnapshotSettingsWidget> {
 
     }
 }

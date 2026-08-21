@@ -5,8 +5,8 @@
     <g:FlowPanel styleName="max form">
         <sg:SettingsGroup label="General"
                           ui:field="generalPanel"/>
-        <sg:SettingsGroup label="HTTP Store"
-                          ui:field="httpStorePanel"/>
+        <sg:SettingsGroup label="Snapshot"
+                          ui:field="snapshotPanel"/>
         <sg:SettingsGroup label="Condense Data"
                           ui:field="condensePanel"/>
         <sg:SettingsGroup label="Data Retention"

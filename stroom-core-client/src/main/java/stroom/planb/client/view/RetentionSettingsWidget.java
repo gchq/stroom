@@ -56,10 +56,13 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
 
     private boolean readOnly;
     private boolean useStateTimeVisible = true;
+    private boolean checkIntervalVisible;
 
     @Inject
     public RetentionSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
+
+        retentionCheckIntervalPanel.setVisible(checkIntervalVisible);
 
         retentionAge.setMin(1);
         retentionAge.setMax(9999);
@@ -126,6 +129,17 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
     }
 
     /**
+     * Show the check frequency for a store that acts on it. Only the shared file store merge
+     * processor reads it; a store whose retention runs on its own schedule has nothing to set here,
+     * so the field stays hidden and keeps whatever value the document already holds.
+     */
+    public void setCheckIntervalVisible(final boolean visible) {
+        this.checkIntervalVisible = visible;
+        retentionCheckIntervalPanel.setVisible(visible);
+        updateStates();
+    }
+
+    /**
      * Hide the Use State Time option for a store whose retention ignores it.
      */
     public void setUseStateTimeVisible(final boolean visible) {
@@ -148,14 +162,14 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
                 retentionAgePanel.getElement().getStyle().setOpacity(0.5);
             }
         }
-        if (editable) {
+        if (editable && checkIntervalVisible) {
             retentionCheckIntervalPanel.getElement().getStyle()
                     .setOpacity(retentionOn ? 1 : 0.5);
         }
         retentionAge.setEnabled(editable && retentionOn);
         retentionTimeUnit.setEnabled(editable && retentionOn);
-        retentionCheckInterval.setEnabled(editable && retentionOn);
-        retentionCheckIntervalTimeUnit.setEnabled(editable && retentionOn);
+        retentionCheckInterval.setEnabled(editable && retentionOn && checkIntervalVisible);
+        retentionCheckIntervalTimeUnit.setEnabled(editable && retentionOn && checkIntervalVisible);
         useStateTime.setEnabled(editable && retentionOn);
     }
 
