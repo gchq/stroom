@@ -79,7 +79,7 @@ public class LocalArchive {
     /**
      * Pushes every dated delta dir staged under {@code localArchiveBase} to its bucket.
      *
-     * <p>The staged entries have already been deleted, but only from the LOCAL merge shard — rethrowing
+     * <p>The staged entries have already been deleted, but only from the LOCAL holding shard — rethrowing
      * makes the merge skip {@code publisher.push} and discard that local shard, so the shared store keeps
      * its data and the next cycle retries. A partial success
      * (bucket A pushed, bucket B failed) re-pushes A next cycle, which is safe because

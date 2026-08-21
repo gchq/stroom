@@ -36,11 +36,11 @@ import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 
 /**
- * A throwaway local copy of one shared shard, used to merge a cycle's batches into it and publish the
- * result. Created inside the per-shard cluster lock, disposed at the end of the cycle, and its directory
+ * A throwaway local copy of one shard of the holding area, used to merge a cycle's batches into it and
+ * publish the result. Created inside the per-shard cluster lock, disposed at the end of the cycle, and its directory
  * deleted with it.
  *
- * <p>It copies the shared {@code data.mdb} once, at construction, and never looks at it again. There is no
+ * <p>It copies the holding shard's {@code data.mdb} once, at construction, and never looks at it again. There is no
  * version check because the directory is created fresh each cycle, so there is never a local copy that
  * could already be current, and no protection against a concurrent republish because the cluster lock
  * makes this instance the only writer. Contrast {@link ArchiveStoreShard}, which is read by query
@@ -49,9 +49,9 @@ import java.time.Instant;
  * <p>Opening is deferred until the copy is in place, so the environment is opened once rather than being
  * created empty and immediately replaced.
  */
-public class MergeShard extends AbstractStoreShard {
+public class HoldingShard extends AbstractStoreShard {
 
-    public MergeShard(final ByteBuffers byteBuffers,
+    public HoldingShard(final ByteBuffers byteBuffers,
                       final ByteBufferFactory byteBufferFactory,
                       final Provider<PlanBConfig> configProvider,
                       final PlanBDocument doc,

@@ -96,7 +96,7 @@ public abstract class AbstractStoreShard implements Shard {
      * mmap'd address in the owning thread's {@code robust_list}. If two {@code mdb_env_open} calls
      * share one {@code lock.mdb}, the second remaps the file at a different address while the first
      * env's address is still on the list, and the next {@code pthread_mutex_lock} updates a stale,
-     * now-unmapped entry and crashes with {@code SIGSEGV / SEGV_MAPERR}. Hence {@code MergeShard}
+     * now-unmapped entry and crashes with {@code SIGSEGV / SEGV_MAPERR}. Hence {@code HoldingShard}
      * works under {@code mergingDir}, and {@code ArchiveStoreShard} adds a per-instance generation
      * subdir so an idle-evicted instance and its replacement never overlap.
      */

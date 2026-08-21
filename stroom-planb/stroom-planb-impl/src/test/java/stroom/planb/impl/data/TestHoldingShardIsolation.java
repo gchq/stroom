@@ -44,11 +44,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <h2>Fix</h2>
  * {@link ShardManager#createStoreShard} now uses {@code planBPaths.getMergingDir()}
- * as the base for the merge shard's working directory rather than
+ * as the base for the holding shard's working directory rather than
  * {@code planBPaths.getShardDir()}. The two environments therefore never
  * share a directory and consequently never share {@code lock.mdb}.
  */
-class TestMergeShardIsolation {
+class TestHoldingShardIsolation {
 
     /**
      * The core invariant: the merge base directory ({@code mergingDir}) must
@@ -85,15 +85,15 @@ class TestMergeShardIsolation {
         final Path queryShardPath = planBPaths.getShardDir().resolve(suffix);
 
         assertThat(mergeShardPath)
-                .as("merge shard path must differ from query shard path for the same doc/index")
+                .as("holding shard path must differ from query shard path for the same doc/index")
                 .isNotEqualTo(queryShardPath);
 
         assertThat(mergeShardPath.toAbsolutePath().toString())
-                .as("merge shard path must be under mergingDir")
+                .as("holding shard path must be under mergingDir")
                 .startsWith(planBPaths.getMergingDir().toAbsolutePath().toString());
 
         assertThat(mergeShardPath.toAbsolutePath().toString())
-                .as("merge shard path must NOT be under shardDir")
+                .as("holding shard path must NOT be under shardDir")
                 .doesNotStartWith(planBPaths.getShardDir().toAbsolutePath().toString());
     }
 

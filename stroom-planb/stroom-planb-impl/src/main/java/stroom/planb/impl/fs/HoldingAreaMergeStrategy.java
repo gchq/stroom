@@ -100,13 +100,13 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
 
         // Copies the current shared shard down to local disk so this cycle's batches merge into it
         // rather than replacing it.
-        final Path mergeShardDir = planBPaths.getMergingDir()
+        final Path localShardDir = planBPaths.getMergingDir()
                 .resolve(ctx.doc().getUuid() + "_" + ctx.shardIndex());
-        MergeShard shard = null;
+        HoldingShard shard = null;
         try {
-            shard = new MergeShard(
+            shard = new HoldingShard(
                     byteBuffers, byteBufferFactory, configProvider, ctx.doc(), ctx.shardIndex(),
-                    mergeShardDir,
+                    localShardDir,
                     holdingDocDir(ctx.doc()).resolve(PlanBConstants.formatShardIndex(ctx.shardIndex())));
             final MergeResult result = mergeAllBatches(shard, batchDirs);
             boolean modified = !result.mergedBatchDirs().isEmpty();
@@ -123,12 +123,13 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
             if (shard != null) {
                 shard.dispose();
             }
-            // The merge shard runs in an isolated subdirectory of mergingDir rather than shardDir.
+            // The holding shard's local copy lives in an isolated subdirectory of mergingDir rather
+            // than shardDir.
             // Clean it up now that the merge is done and published.
             try {
-                FileUtil.deleteDir(mergeShardDir);
+                FileUtil.deleteDir(localShardDir);
             } catch (final Exception e) {
-                LOGGER.warn("Failed to clean up merge directory {}: {}", mergeShardDir, e.getMessage());
+                LOGGER.warn("Failed to clean up local holding shard dir {}: {}", localShardDir, e.getMessage());
             }
         }
     }
@@ -138,7 +139,7 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
      * merged neither abandons the remaining batches nor discards the work already done by those
      * that succeeded.
      */
-    private MergeResult mergeAllBatches(final MergeShard shard, final List<Path> batchDirs) {
+    private MergeResult mergeAllBatches(final HoldingShard shard, final List<Path> batchDirs) {
         final Usage usage = shard.getUsage();
         if (usage.fraction() >= MERGE_MAX_USED_FRACTION) {
             LOGGER.warn(() -> LogUtil.message(
@@ -188,7 +189,7 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
 
     // Copies a batch directory to a local temp location, merges it into the shard, and cleans up
     // the temp copy.
-    private void mergeSingleBatch(final MergeShard shard, final Path batchDir) throws IOException {
+    private void mergeSingleBatch(final HoldingShard shard, final Path batchDir) throws IOException {
         LOGGER.info("Merging batch {}", batchDir);
         final Path localTempBatchDir = Files.createTempDirectory("planb_merge_");
         try {
@@ -206,7 +207,7 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
 
     // Applies the doc's retention to the holding shard. Records that never reach an archive bucket,
     // such as those of a trace still waiting for its root, would otherwise stay here for good.
-    boolean sweep(final MergeContext ctx, final MergeShard shard) {
+    boolean sweep(final MergeContext ctx, final HoldingShard shard) {
         final long deleted = shard.runRetention(ctx.doc());
         if (deleted > 0) {
             LOGGER.info("Deleted {} records from holding shard for {}", deleted, ctx.lockName());
@@ -218,7 +219,7 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
 
     // Moves records on into the buckets queries read, then occasionally compacts the pages that
     // leaves behind.
-    boolean drain(final MergeContext ctx, final MergeShard shard) throws IOException {
+    boolean drain(final MergeContext ctx, final HoldingShard shard) throws IOException {
         final HoldingAreaSettings holdingArea =
                 HasHoldingAreaSettings.holdingAreaSettings(ctx.doc().getSettings())
                         .orElseThrow(() -> new IllegalStateException(
@@ -247,7 +248,7 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
 
     // Reclaiming space is worth a full env copy only occasionally; the drain has already run.
     private void compactIfDue(final MergeContext ctx,
-                              final MergeShard shard,
+                              final HoldingShard shard,
                               final HoldingAreaSettings holdingArea) {
         final SimpleDuration interval = holdingArea.getCompactionFrequency();
         final Instant lastCompact = COMPACT_MARKER.lastRun(holdingDocDir(ctx.doc()), ctx.shardIndex());

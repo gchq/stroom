@@ -95,14 +95,14 @@ class TestHoldingAreaMergeStrategy {
 
     @Test
     void sweep_reportsModified_whenRecordsDeleted() {
-        final MergeShard shard = mock(MergeShard.class);
+        final HoldingShard shard = mock(HoldingShard.class);
         when(shard.runRetention(any())).thenReturn(3L);
         assertThat(strategy.sweep(ctx(doc()), shard)).isTrue();
     }
 
     @Test
     void sweep_reportsUnmodified_whenNothingDeleted() {
-        final MergeShard shard = mock(MergeShard.class);
+        final HoldingShard shard = mock(HoldingShard.class);
         when(shard.runRetention(any())).thenReturn(0L);
         assertThat(strategy.sweep(ctx(doc()), shard)).isFalse();
     }
@@ -114,7 +114,7 @@ class TestHoldingAreaMergeStrategy {
     /** Compaction is a full env copy, so it is throttled by the check interval and records a marker. */
     @Test
     void drain_compactsAndWritesMarker_whenNothingCompactedYet() throws IOException {
-        final MergeShard shard = mockShardWithBuckets(List.of("2025-05-18"));
+        final HoldingShard shard = mockShardWithBuckets(List.of("2025-05-18"));
 
         strategy.drain(ctx(doc()), shard);
 
@@ -128,7 +128,7 @@ class TestHoldingAreaMergeStrategy {
     @Test
     void drain_runsButSkipsCompaction_whenCompactedRecently() throws IOException {
         writeCompactionMarker(Instant.now());
-        final MergeShard shard = mockShardWithBuckets(List.of("2025-05-18"));
+        final HoldingShard shard = mockShardWithBuckets(List.of("2025-05-18"));
 
         assertThat(strategy.drain(ctx(doc()), shard)).isTrue();
         verify(shard, never()).compact();
@@ -137,7 +137,7 @@ class TestHoldingAreaMergeStrategy {
     /** Nothing drained means nothing to reclaim, so neither compaction nor the marker happens. */
     @Test
     void drain_writesNoMarker_whenNothingDrained() throws IOException {
-        final MergeShard shard = mockShard(0);
+        final HoldingShard shard = mockShard(0);
 
         assertThat(strategy.drain(ctx(doc()), shard)).isFalse();
         assertThat(compactMarkerFile()).doesNotExist();
@@ -149,7 +149,7 @@ class TestHoldingAreaMergeStrategy {
 
     @Test
     void drain_pushesEachDatedBucket() throws IOException {
-        final MergeShard shard = mockShardWithBuckets(List.of("2025-05-18", "2025-05-19"));
+        final HoldingShard shard = mockShardWithBuckets(List.of("2025-05-18", "2025-05-19"));
 
         strategy.drain(ctx(doc()), shard);
 
@@ -158,7 +158,7 @@ class TestHoldingAreaMergeStrategy {
 
     @Test
     void drain_pushesNothing_whenNothingDrained() throws IOException {
-        final MergeShard shard = mockShard(0);
+        final HoldingShard shard = mockShard(0);
 
         strategy.drain(ctx(doc()), shard);
 
@@ -185,8 +185,8 @@ class TestHoldingAreaMergeStrategy {
     }
 
     /** A shard whose store has nothing to move on. */
-    private static MergeShard mockShard(final long count) throws IOException {
-        final MergeShard shard = mock(MergeShard.class);
+    private static HoldingShard mockShard(final long count) throws IOException {
+        final HoldingShard shard = mock(HoldingShard.class);
         when(shard.publish(any(), any())).thenReturn(count);
         return shard;
     }
@@ -195,8 +195,8 @@ class TestHoldingAreaMergeStrategy {
      * A shard whose store fills one delta dir per date label under the base dir it is handed, so
      * {@link LocalArchive#pushAll} finds real deltas to publish.
      */
-    private static MergeShard mockShardWithBuckets(final List<String> dateLabels) throws IOException {
-        final MergeShard shard = mock(MergeShard.class);
+    private static HoldingShard mockShardWithBuckets(final List<String> dateLabels) throws IOException {
+        final HoldingShard shard = mock(HoldingShard.class);
         when(shard.publish(any(), any())).thenAnswer((InvocationOnMock inv) -> {
             final Path base = inv.getArgument(1, Path.class);
             for (final String label : dateLabels) {
