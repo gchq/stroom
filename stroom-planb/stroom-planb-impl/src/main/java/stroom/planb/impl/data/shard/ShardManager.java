@@ -53,7 +53,9 @@ import org.apache.commons.lang3.NotImplementedException;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -331,9 +333,23 @@ public class ShardManager {
                     LOGGER.error(() -> "Error sweeping generation dirs under " + identityDir
                             + ": " + e.getMessage(), e);
                 }
+                removeIfEmpty(identityDir, startup, cutoff);
             });
         } catch (final IOException e) {
             LOGGER.error(() -> "Error sweeping local shard dir " + root + ": " + e.getMessage(), e);
+        }
+    }
+
+    private static void removeIfEmpty(final Path identityDir, final boolean startup, final Instant cutoff) {
+        if (!startup && !isOlderThan(identityDir, cutoff)) {
+            return;
+        }
+        try {
+            Files.delete(identityDir);
+        } catch (final DirectoryNotEmptyException | NoSuchFileException e) {
+            // Still in use, or another sweep got there first.
+        } catch (final IOException e) {
+            LOGGER.debug(() -> "Could not remove empty identity dir " + identityDir + ": " + e.getMessage());
         }
     }
 
