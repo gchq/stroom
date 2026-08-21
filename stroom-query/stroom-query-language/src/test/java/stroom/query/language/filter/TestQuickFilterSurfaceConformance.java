@@ -154,7 +154,7 @@ class TestQuickFilterSurfaceConformance {
      * so rather than falling back to something it also does not declare.
      */
     @Test
-    void aFieldThatCanHonourNoDefaultConditionSaysSo() {
+    void fieldThatCanHonourNoDefaultConditionSaysSo() {
         final QueryField field = QueryField
                 .builder()
                 .fldName("docref")

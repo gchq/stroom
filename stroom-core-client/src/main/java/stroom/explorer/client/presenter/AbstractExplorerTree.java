@@ -471,6 +471,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             }
         }
     }
+
     /**
      * Receives the reason the server rejected the current filter, or null when it was applied.
      */

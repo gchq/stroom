@@ -119,7 +119,7 @@ class TestQuickFilter {
     }
 
     @Test
-    void aBadFilterThrowsSoTheCallerCanReportIt() {
+    void badFilterThrowsSoTheCallerCanReportIt() {
         assertThatThrownBy(() -> QuickFilter.and(STRUCTURAL, "abc and", DEFAULTS, ALL))
                 .describedAs("callers turn this into an empty page carrying the reason")
                 .isInstanceOf(TokenException.class);

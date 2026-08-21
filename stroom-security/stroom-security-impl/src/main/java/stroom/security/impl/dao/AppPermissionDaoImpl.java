@@ -313,7 +313,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
             });
 
             return ResultPage.createCriterialBasedList(list, request);
-    } catch (final TokenException e) {
+        } catch (final TokenException e) {
             // Debounced filter - match nothing and say why rather than erroring at the
             // user mid-keystroke. See ResultPage.filterError.
             LOGGER.debug(e::getMessage, e);

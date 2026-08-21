@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestQuickFilterCriteria {
 
     @Test
-    void aCopyBuiltCriteriaKeepsItsFilter() {
+    void copyBuiltCriteriaKeepsItsFilter() {
         final TestCriteria original = new TestCriteria.Builder()
                 .quickFilter("some text")
                 .pageRequest(PageRequest.unlimited())
@@ -30,7 +30,7 @@ class TestQuickFilterCriteria {
     }
 
     @Test
-    void aCopyBuiltCriteriaWithNoFilterStaysNull() {
+    void copyBuiltCriteriaWithNoFilterStaysNull() {
         final TestCriteria original = new TestCriteria.Builder().build();
         assertThat(new TestCriteria.Builder(original).build().getQuickFilter()).isNull();
     }

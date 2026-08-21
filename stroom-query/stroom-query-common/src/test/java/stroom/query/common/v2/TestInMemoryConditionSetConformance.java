@@ -46,11 +46,6 @@ class TestInMemoryConditionSetConformance {
      * evaluator needs one that resolves. The contents do not matter - this asserts the condition is
      * handled, not what it matches.
      */
-    /**
-     * IN_DICTIONARY resolves its value to a dictionary before it can build a predicate, so the
-     * evaluator needs one that resolves. The contents do not matter - this asserts the condition is
-     * handled, not what it matches.
-     */
     private static final WordListProvider WORD_LIST_PROVIDER = mockWordListProvider();
 
     private static WordListProvider mockWordListProvider() {

@@ -147,8 +147,8 @@ public class ActivityListPresenter
     String getCriteria() {
         return name;
     }
+
     public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
         this.filterErrorConsumer = filterErrorConsumer;
     }
-
 }
