@@ -88,25 +88,32 @@ public abstract sealed class AbstractPlanBSettings permits
         if (checkIntervalError != null) {
             return checkIntervalError;
         }
-        return archiveAgeError(settings);
+        return completionGraceError(settings);
     }
 
-    private static String archiveAgeError(final AbstractPlanBSettings settings) {
-        final ArchivalSettings archival =
-                HasSharedFileStore.archivalSettings(settings).orElse(null);
+    private static String completionGraceError(final AbstractPlanBSettings settings) {
+        final HoldingAreaSettings holdingArea =
+                HasHoldingAreaSettings.holdingAreaSettings(settings).orElse(null);
+        if (holdingArea == null) {
+            return null;
+        }
+        final SimpleDuration grace = holdingArea.getCompletionGrace();
+        if (grace.getTime() <= 0) {
+            return "'Completion Grace' must be greater than zero, otherwise data is published before "
+                   + "the records that belong with it have arrived.";
+        }
         final RetentionSettings retention = settings.getRetention();
-        if (archival == null || retention == null || !retention.isEnabled()) {
+        if (retention == null || !retention.isEnabled()) {
             return null;
         }
-        final SimpleDuration archiveAge = archival.getDuration();
         final SimpleDuration retainFor = retention.getDuration();
-        if (archiveAge == null || retainFor == null) {
+        if (retainFor == null) {
             return null;
         }
-        if (archiveAge.getApproxMillis() >= retainFor.getApproxMillis()) {
-            return "'Archive Data Older Than' (" + archiveAge.toLongString() + ") must be shorter than "
-                   + "'Retain For' (" + retainFor.toLongString() + "), otherwise retention deletes the "
-                   + "data before it can be archived and nothing is ever written to the archive.";
+        if (grace.getApproxMillis() >= retainFor.getApproxMillis()) {
+            return "'Completion Grace' (" + grace.toLongString() + ") must be shorter than "
+                   + "'Retain For' (" + retainFor.toLongString() + "), otherwise retention deletes an "
+                   + "incomplete record while it is still being held, so it never becomes queryable.";
         }
         return null;
     }

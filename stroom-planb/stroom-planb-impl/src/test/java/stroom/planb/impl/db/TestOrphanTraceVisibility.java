@@ -32,7 +32,6 @@ import stroom.planb.impl.fs.StagedArchive;
 import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanValue;
-import stroom.planb.shared.ArchivalGranularity;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.planb.shared.StateType;
@@ -91,7 +90,7 @@ class TestOrphanTraceVisibility {
             db.mergeComplete();
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            assertThat(db.runArchival(CUTOFF, ArchivalGranularity.DAY, archiveBaseDir))
+            assertThat(db.runArchival(CUTOFF, archiveBaseDir))
                     .as("the orphan's spans are swept by insert time")
                     .isGreaterThanOrEqualTo(1);
         }

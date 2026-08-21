@@ -30,25 +30,27 @@ import java.util.Objects;
 /**
  * Settings for a Traces (TraceDb / TracesDoc) shard.
  *
- * <p>Implements {@link HasSharedFileStore} to declare that trace shards support
- * horizontal sharding and time-based archival via a shared file store
- * (see {@link SharedFileStoreSettings}).
+ * <p>A trace store lives on a shared file store ({@link HasSharedFileStore}) and its writes pass
+ * through a holding shard before reaching the time buckets queries read
+ * ({@link HasHoldingAreaSettings}). The two are declared separately because they are independent
+ * capabilities — another store type could have the first without the second.
  *
- * <p>All other PlanB doc types use their own settings class and do <em>not</em>
- * implement {@link HasSharedFileStore}.  To add sharding support to a further type,
- * implement {@link HasSharedFileStore} on its settings class and provide an
- * {@code runArchival} override in its DB class — no changes are required to
- * the core infrastructure ({@code ShardManager}, {@code ArchiveOperation}, etc.).
+ * <p>{@link #getGranularity()} sits here rather than on {@link SharedFileStoreSettings} because how
+ * a store's data is bucketed is the store type's own decision: another type on the same shared file
+ * store might not bucket at all, or might bucket by something other than time.
  */
 @JsonPropertyOrder({
         "maxStoreSize",
         "retention",
         "sharedFileStore",
+        "granularity",
+        "holdingArea",
         "maxQueryTimeRange",
         "maxSpansPerTrace"
 })
 @JsonInclude(Include.NON_NULL)
-public final class TraceSettings extends AbstractPlanBSettings implements HasSharedFileStore {
+public final class TraceSettings extends AbstractPlanBSettings
+        implements HasSharedFileStore, HasHoldingAreaSettings {
 
     /**
      * Spans to accept for a single trace. A trace is sharded by its trace id, so all of its spans
@@ -58,8 +60,16 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
      */
     public static final long DEFAULT_MAX_SPANS_PER_TRACE = 100_000L;
 
+    public static final ArchivalGranularity DEFAULT_GRANULARITY = ArchivalGranularity.DAY;
+
     @JsonProperty
     private final SharedFileStoreSettings sharedFileStore;
+
+    @JsonProperty
+    private final ArchivalGranularity granularity;
+
+    @JsonProperty
+    private final HoldingAreaSettings holdingArea;
 
     @JsonProperty
     private final SimpleDuration maxQueryTimeRange;
@@ -71,22 +81,36 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
     public TraceSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
                          @JsonProperty("retention") final RetentionSettings retention,
                          @JsonProperty("sharedFileStore") final SharedFileStoreSettings sharedFileStore,
+                         @JsonProperty("granularity") final ArchivalGranularity granularity,
+                         @JsonProperty("holdingArea") final HoldingAreaSettings holdingArea,
                          @JsonProperty("maxQueryTimeRange") final SimpleDuration maxQueryTimeRange,
                          @JsonProperty("maxSpansPerTrace") final Long maxSpansPerTrace) {
         super(maxStoreSize, retention);
         this.sharedFileStore = sharedFileStore;
+        this.granularity = Objects.requireNonNullElse(granularity, DEFAULT_GRANULARITY);
+        this.holdingArea = Objects.requireNonNullElse(holdingArea, new HoldingAreaSettings.Builder().build());
         this.maxQueryTimeRange = maxQueryTimeRange;
         this.maxSpansPerTrace = maxSpansPerTrace;
     }
 
     /**
-     * Returns the shared file store settings (shard count, path and optional
-     * archival policy), or {@code null} if the shared file store has not been
-     * configured.
+     * Returns the shared store path and shard count, or {@code null} if the shared file store has
+     * not been configured.
      */
     @Override
     public SharedFileStoreSettings getSharedFileStore() {
         return sharedFileStore;
+    }
+
+    /** How the buckets that queries read are partitioned by time. Never null. */
+    public ArchivalGranularity getGranularity() {
+        return granularity;
+    }
+
+    /** Never null — an absent block means defaults, since a trace store always has a holding shard. */
+    @Override
+    public HoldingAreaSettings getHoldingArea() {
+        return holdingArea;
     }
 
     /**
@@ -127,13 +151,16 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
         }
         final TraceSettings that = (TraceSettings) o;
         return Objects.equals(sharedFileStore, that.sharedFileStore)
+                && granularity == that.granularity
+                && Objects.equals(holdingArea, that.holdingArea)
                 && Objects.equals(maxQueryTimeRange, that.maxQueryTimeRange)
                 && Objects.equals(maxSpansPerTrace, that.maxSpansPerTrace);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), sharedFileStore, maxQueryTimeRange, maxSpansPerTrace);
+        return Objects.hash(super.hashCode(), sharedFileStore, granularity, holdingArea,
+                maxQueryTimeRange, maxSpansPerTrace);
     }
 
     @Override
@@ -141,6 +168,8 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
         return "TraceSettings{" +
                super.toString() +
                ", sharedFileStore=" + sharedFileStore +
+               ", granularity=" + granularity +
+               ", holdingArea=" + holdingArea +
                ", maxQueryTimeRange=" + maxQueryTimeRange +
                ", maxSpansPerTrace=" + maxSpansPerTrace +
                '}';
@@ -149,6 +178,8 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
     public static class Builder extends AbstractBuilder<TraceSettings, Builder> {
 
         private SharedFileStoreSettings sharedFileStore;
+        private ArchivalGranularity granularity;
+        private HoldingAreaSettings holdingArea;
         private SimpleDuration maxQueryTimeRange;
         private Long maxSpansPerTrace;
 
@@ -159,6 +190,8 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
             super(settings);
             if (settings != null) {
                 this.sharedFileStore = settings.sharedFileStore;
+                this.granularity = settings.granularity;
+                this.holdingArea = settings.holdingArea;
                 this.maxQueryTimeRange = settings.maxQueryTimeRange;
                 this.maxSpansPerTrace = settings.maxSpansPerTrace;
             }
@@ -166,6 +199,16 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
 
         public Builder sharedFileStore(final SharedFileStoreSettings sharedFileStore) {
             this.sharedFileStore = sharedFileStore;
+            return self();
+        }
+
+        public Builder granularity(final ArchivalGranularity granularity) {
+            this.granularity = granularity;
+            return self();
+        }
+
+        public Builder holdingArea(final HoldingAreaSettings holdingArea) {
+            this.holdingArea = holdingArea;
             return self();
         }
 
@@ -190,6 +233,8 @@ public final class TraceSettings extends AbstractPlanBSettings implements HasSha
                     maxStoreSize,
                     retention,
                     sharedFileStore,
+                    granularity,
+                    holdingArea,
                     maxQueryTimeRange,
                     maxSpansPerTrace);
         }

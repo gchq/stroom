@@ -25,7 +25,6 @@ import stroom.planb.impl.db.trace.NanoTimeUtil;
 import stroom.planb.impl.db.trace.TraceDb;
 import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanValue;
-import stroom.planb.shared.ArchivalGranularity;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.planb.shared.TraceSettings;
@@ -104,8 +103,7 @@ class TestSyntheticRootStartTime {
         mergeBatch(dbDir, doc, tempDir, "b2", child("3333333333333333", LATE), LATE, LATE_END);
 
         try (final TraceDb db = TraceDb.create(dbDir, BB, BBF, doc, false)) {
-            db.runArchival(Instant.parse("2024-06-01T00:00:00.000Z"),
-                    ArchivalGranularity.DAY, archiveBaseDir);
+            db.runArchival(Instant.parse("2024-06-01T00:00:00.000Z"), archiveBaseDir);
         }
 
         assertThat(listSubDirs(archiveBaseDir).stream().map(p -> p.getFileName().toString()).toList())

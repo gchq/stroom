@@ -22,8 +22,8 @@ import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.db.PlanBEnv.Usage;
-import stroom.planb.shared.ArchivalSettings;
-import stroom.planb.shared.HasSharedFileStore;
+import stroom.planb.shared.HasHoldingAreaSettings;
+import stroom.planb.shared.HoldingAreaSettings;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -216,12 +216,13 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
         return deleted > 0;
     }
 
-    // Moves records on into their date-labelled archive buckets, then occasionally compacts the
-    // pages that leaves behind.
+    // Moves records on into the buckets queries read, then occasionally compacts the pages that
+    // leaves behind.
     boolean drain(final MergeContext ctx, final MergeShard shard) throws IOException {
-        final ArchivalSettings archival = HasSharedFileStore.archivalSettings(ctx.doc().getSettings())
-                .orElseThrow(() -> new IllegalStateException(
-                        "No shared file store settings for " + ctx.lockName()));
+        final HoldingAreaSettings holdingArea =
+                HasHoldingAreaSettings.holdingAreaSettings(ctx.doc().getSettings())
+                        .orElseThrow(() -> new IllegalStateException(
+                                "No holding area settings for " + ctx.lockName()));
 
         return localArchive.withLocalDir(ctx, localArchiveBase -> {
             final long count = shard.runArchival(ctx.doc(), localArchiveBase);
@@ -230,9 +231,9 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
                 return false;
             }
             localArchive.pushAll(ctx, localArchiveBase);
-            LOGGER.info("Archived {} row(s) for {}", count, ctx.lockName());
+            LOGGER.info("Published {} row(s) for {}", count, ctx.lockName());
 
-            compactIfDue(ctx, shard, archival);
+            compactIfDue(ctx, shard, holdingArea);
             return true;
         });
     }
@@ -247,8 +248,8 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
     // Reclaiming space is worth a full env copy only occasionally; the drain has already run.
     private void compactIfDue(final MergeContext ctx,
                               final MergeShard shard,
-                              final ArchivalSettings archival) {
-        final SimpleDuration interval = archival.getCheckInterval();
+                              final HoldingAreaSettings holdingArea) {
+        final SimpleDuration interval = holdingArea.getCompactionFrequency();
         final Instant lastCompact = COMPACT_MARKER.lastRun(holdingDocDir(ctx.doc()), ctx.shardIndex());
         if (lastCompact != null
                 && !Instant.now().isAfter(SimpleDurationUtil.plus(lastCompact, interval))) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.TraceSettingsPresenter.TraceSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
+import stroom.planb.client.view.PublishingSettingsView;
 import stroom.planb.client.view.RetentionSettingsView;
 import stroom.planb.client.view.SharedFileStoreSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.planb.shared.HoldingAreaSettings;
 import stroom.planb.shared.TraceSettings;
 import stroom.util.shared.time.SimpleDuration;
 
@@ -40,10 +42,13 @@ public class TraceSettingsPresenter
         extends AbstractPlanBSettingsPresenter<TraceSettingsView> {
 
     /**
-     * Held from the most recent {@link #read} so that {@link #write} round-trips it. There is no
-     * editor for it, and without this a save would silently clear whatever was configured.
+     * Held from the most recent {@link #read} so that {@link #write} round-trips them. Neither has an
+     * editor — the query range limit because nothing offers one yet, the compaction frequency because
+     * reclaiming pages in the holding area is internal housekeeping an operator has no reason to set.
+     * Without this a save would silently clear whatever was configured.
      */
     private SimpleDuration maxQueryTimeRange;
+    private SimpleDuration compactionFrequency;
 
     @Inject
     public TraceSettingsPresenter(
@@ -64,8 +69,11 @@ public class TraceSettingsPresenter
     private void read(final TraceSettings settings, final boolean readOnly) {
         setReadOnly(readOnly);
         maxQueryTimeRange = settings.getMaxQueryTimeRange();
+        compactionFrequency = settings.getHoldingArea().getCompactionFrequency();
         getView().setMaxStoreSize(settings.getMaxStoreSize());
         getView().setMaxSpansPerTrace(settings.getMaxSpansPerTrace());
+        getView().setGranularity(settings.getGranularity());
+        getView().setCompletionGrace(settings.getHoldingArea().getCompletionGrace());
         getView().setRetention(settings.getRetention());
         getView().setSharedFileStore(settings.getSharedFileStore());
     }
@@ -74,6 +82,11 @@ public class TraceSettingsPresenter
         return new TraceSettings.Builder()
                 .maxStoreSize(getView().getMaxStoreSize())
                 .maxSpansPerTrace(getView().getMaxSpansPerTrace())
+                .granularity(getView().getGranularity())
+                .holdingArea(new HoldingAreaSettings.Builder()
+                        .completionGrace(getView().getCompletionGrace())
+                        .compactionFrequency(compactionFrequency)
+                        .build())
                 .retention(getView().getRetention())
                 .sharedFileStore(getView().getSharedFileStore())
                 .maxQueryTimeRange(maxQueryTimeRange)
@@ -84,6 +97,7 @@ public class TraceSettingsPresenter
             View,
             GeneralSettingsView,
             SharedFileStoreSettingsView,
+            PublishingSettingsView,
             RetentionSettingsView,
             ReadOnlyChangeHandler,
             HasUiHandlers<ChangeUiHandlers> {

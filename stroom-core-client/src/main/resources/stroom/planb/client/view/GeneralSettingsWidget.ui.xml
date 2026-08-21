@@ -5,7 +5,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup label="Max Store Size"
-                        helpText="How large is this Plan B store allowed to be, e.g. 10G.">
+                        helpText="The maximum size of each part of the store, e.g. 10G — not its total size on disk.">
             <g:TextBox ui:field="maxStoreSize" addStyleNames="allow-focus"/>
         </form:FormGroup>
     </g:FlowPanel>

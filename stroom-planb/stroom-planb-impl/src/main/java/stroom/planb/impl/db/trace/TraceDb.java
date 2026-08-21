@@ -254,6 +254,13 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     /** Spans to accept per trace, or 0 for unlimited. See {@link #isOverSpanLimit}. */
     private final long maxSpansPerTrace;
 
+    /**
+     * How this store labels the buckets it publishes into. Read from settings here rather than passed
+     * to {@link #runArchival}, because how a store type buckets its data is its own business — the
+     * caller only supplies the directory to build the buckets under.
+     */
+    private final ArchivalGranularity granularity;
+
     private TraceDb(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
                     final ByteBufferFactory byteBufferFactory,
@@ -275,6 +282,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                         JsonUtil.writeValueAsString(new StateValueSchema.Builder().build())));
         this.byteBufferFactory = byteBufferFactory;
         this.maxSpansPerTrace = settings.getEffectiveMaxSpansPerTrace();
+        this.granularity = settings.getGranularity();
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
         this.lookupSerde = lookupSerde;
@@ -977,9 +985,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      */
     @Override
     public long runArchival(final Instant archiveBefore,
-                               final ArchivalGranularity granularity,
                                final Path archiveBaseDir) {
-        final ArchivalSelection selection = selectRoots(NanoTimeUtil.fromInstant(archiveBefore), granularity);
+        final ArchivalSelection selection = selectRoots(NanoTimeUtil.fromInstant(archiveBefore));
         if (selection.isEmpty()) {
             return 0L;
         }
@@ -994,7 +1001,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     // here is a span the archive has not got. That covers a single-span trace, whose root span is the one
     // span it has. A trace with none left is settled: it keeps its stored root until the cut-off retires it,
     // and staging it again would rewrite its bucket to carry nothing.
-    private ArchivalSelection selectRoots(final NanoTime cutOff, final ArchivalGranularity granularity) {
+    private ArchivalSelection selectRoots(final NanoTime cutOff) {
         final Map<String, String> labels = new HashMap<>();
         final Map<String, TraceRoot> retiring = new HashMap<>();
 

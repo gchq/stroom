@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package stroom.planb.client.view;
 
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.client.presenter.TraceSettingsPresenter.TraceSettingsView;
+import stroom.planb.shared.ArchivalGranularity;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.SharedFileStoreSettings;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -35,38 +37,47 @@ public class TraceSettingsViewImpl
     private final Widget widget;
     private final GeneralSettingsWidget generalSettingsWidget;
     private final TraceGeneralSettingsWidget traceGeneralSettingsWidget;
+    private final PublishingSettingsWidget publishingSettingsWidget;
     private final RetentionSettingsWidget retentionSettingsWidget;
     private final SharedFileStoreSettingsWidget sharedFileStoreSettingsWidget;
 
     @UiField
-    SettingsGroup generalPanel;
+    SettingsGroup sharedFileStorePanel;
+    @UiField
+    SettingsGroup publishingPanel;
+    @UiField
+    SettingsGroup storagePanel;
     @UiField
     SettingsGroup retentionPanel;
-    @UiField
-    SettingsGroup sharedFileStorePanel;
 
     @Inject
     public TraceSettingsViewImpl(final Binder binder,
                                  final GeneralSettingsWidget generalSettingsWidget,
                                  final TraceGeneralSettingsWidget traceGeneralSettingsWidget,
+                                 final PublishingSettingsWidget publishingSettingsWidget,
                                  final RetentionSettingsWidget retentionSettingsWidget,
                                  final SharedFileStoreSettingsWidget sharedFileStoreSettingsWidget) {
         widget = binder.createAndBindUi(this);
         this.generalSettingsWidget = generalSettingsWidget;
         this.traceGeneralSettingsWidget = traceGeneralSettingsWidget;
+        this.publishingSettingsWidget = publishingSettingsWidget;
         this.retentionSettingsWidget = retentionSettingsWidget;
         this.sharedFileStoreSettingsWidget = sharedFileStoreSettingsWidget;
 
-        final FlowPanel generalContent = new FlowPanel();
-        generalContent.addStyleName("form");
+        sharedFileStorePanel.add(sharedFileStoreSettingsWidget.asWidget());
+        publishingPanel.add(publishingSettingsWidget.asWidget());
+
+        // Max store size and the per-trace span limit are both about how much space this store may
+        // take, so they share one panel.
+        final FlowPanel storageContent = new FlowPanel();
+        storageContent.addStyleName("form");
         final Widget general = generalSettingsWidget.asWidget();
         general.removeStyleName("max");
-        generalContent.add(general);
-        generalContent.add(traceGeneralSettingsWidget.asWidget());
-        generalPanel.add(generalContent);
+        storageContent.add(general);
+        storageContent.add(traceGeneralSettingsWidget.asWidget());
+        storagePanel.add(storageContent);
 
         retentionPanel.add(retentionSettingsWidget.asWidget());
-        sharedFileStorePanel.add(sharedFileStoreSettingsWidget.asWidget());
 
         // Trace retention deletes by insert time whatever this says, so there is nothing to offer.
         retentionSettingsWidget.setUseStateTimeVisible(false);
@@ -77,6 +88,7 @@ public class TraceSettingsViewImpl
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
         traceGeneralSettingsWidget.setUiHandlers(uiHandlers);
+        publishingSettingsWidget.setUiHandlers(uiHandlers);
         retentionSettingsWidget.setUiHandlers(uiHandlers);
         sharedFileStoreSettingsWidget.setUiHandlers(uiHandlers);
     }
@@ -104,6 +116,26 @@ public class TraceSettingsViewImpl
     @Override
     public void setMaxSpansPerTrace(final Long maxSpansPerTrace) {
         traceGeneralSettingsWidget.setMaxSpansPerTrace(maxSpansPerTrace);
+    }
+
+    @Override
+    public ArchivalGranularity getGranularity() {
+        return publishingSettingsWidget.getGranularity();
+    }
+
+    @Override
+    public void setGranularity(final ArchivalGranularity granularity) {
+        publishingSettingsWidget.setGranularity(granularity);
+    }
+
+    @Override
+    public SimpleDuration getCompletionGrace() {
+        return publishingSettingsWidget.getCompletionGrace();
+    }
+
+    @Override
+    public void setCompletionGrace(final SimpleDuration completionGrace) {
+        publishingSettingsWidget.setCompletionGrace(completionGrace);
     }
 
     @Override
@@ -135,6 +167,7 @@ public class TraceSettingsViewImpl
     public void onReadOnly(final boolean readOnly) {
         generalSettingsWidget.onReadOnly(readOnly);
         traceGeneralSettingsWidget.onReadOnly(readOnly);
+        publishingSettingsWidget.onReadOnly(readOnly);
         retentionSettingsWidget.onReadOnly(readOnly);
         sharedFileStoreSettingsWidget.onReadOnly(readOnly);
     }

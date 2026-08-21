@@ -81,7 +81,7 @@ class TestTracesDocStore {
                 .uuid("test-uuid")
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(5, tempDir.resolve("shared").toString(), null))
+                        .sharedFileStore(new SharedFileStoreSettings(5, tempDir.resolve("shared").toString()))
                         .build())
                 .build();
 
@@ -99,14 +99,14 @@ class TestTracesDocStore {
                 .uuid("test-uuid")
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(5, sharedPath, null))
+                        .sharedFileStore(new SharedFileStoreSettings(5, sharedPath))
                         .build())
                 .build();
         final TracesDoc newDoc = TracesDoc.tracesBuilder()
                 .uuid("test-uuid")
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(5, sharedPath, null))
+                        .sharedFileStore(new SharedFileStoreSettings(5, sharedPath))
                         .build())
                 .build();
 
@@ -123,14 +123,14 @@ class TestTracesDocStore {
                 .uuid("test-uuid")
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(5, tempDir.resolve("shared").toString(), null))
+                        .sharedFileStore(new SharedFileStoreSettings(5, tempDir.resolve("shared").toString()))
                         .build())
                 .build();
         final TracesDoc newDoc = TracesDoc.tracesBuilder()
                 .uuid("test-uuid")
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(6, tempDir.resolve("shared").toString(), null))
+                        .sharedFileStore(new SharedFileStoreSettings(6, tempDir.resolve("shared").toString()))
                         .build())
                 .build();
 
@@ -150,14 +150,14 @@ class TestTracesDocStore {
                 .uuid(uuid)
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(5, sharedPath.toString(), null))
+                        .sharedFileStore(new SharedFileStoreSettings(5, sharedPath.toString()))
                         .build())
                 .build();
         final TracesDoc newDoc = TracesDoc.tracesBuilder()
                 .uuid(uuid)
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(6, sharedPath.toString(), null))
+                        .sharedFileStore(new SharedFileStoreSettings(6, sharedPath.toString()))
                         .build())
                 .build();
 
@@ -182,14 +182,14 @@ class TestTracesDocStore {
                 .uuid(uuid)
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(5, sharedPath, null))
+                        .sharedFileStore(new SharedFileStoreSettings(5, sharedPath))
                         .build())
                 .build();
         final TracesDoc newDoc = TracesDoc.tracesBuilder()
                 .uuid(uuid)
                 .name("test-name")
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(6, sharedPath, null))
+                        .sharedFileStore(new SharedFileStoreSettings(6, sharedPath))
                         .build())
                 .build();
 

@@ -21,8 +21,8 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.data.shard.AbstractStoreShard;
-import stroom.planb.shared.ArchivalSettings;
-import stroom.planb.shared.HasSharedFileStore;
+import stroom.planb.shared.HasHoldingAreaSettings;
+import stroom.planb.shared.HoldingAreaSettings;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.time.SimpleDurationUtil;
@@ -82,24 +82,25 @@ public class MergeShard extends AbstractStoreShard {
     }
 
     /**
-     * Moves entries into local date-labelled directories, then deletes them from this copy. The caller
+     * Moves entries into local per-bucket directories, then deletes them from this copy. The caller
      * publishes those directories to the shared store and removes them afterwards.
      *
-     * @param doc            the document carrying the archival settings
-     * @param archiveBaseDir local base dir; dated subdirs are created underneath
+     * @param doc            the document carrying the holding area settings
+     * @param archiveBaseDir local base dir; bucket subdirs are created underneath
      * @return count of entries moved out (0 if there was nothing to move)
      */
     public long runArchival(final PlanBDocument doc,
                             final Path archiveBaseDir) throws IOException {
-        // Present for any doc with a shared file store, which this shard by definition has. Throw rather
-        // than return 0: silently not archiving would leave data only in the holding area, which queries
-        // never read.
-        final ArchivalSettings archival = HasSharedFileStore.archivalSettings(doc.getSettings())
-                .orElseThrow(() -> new IllegalStateException(
-                        "No shared file store settings for " + doc.getName()));
+        // Present for any doc whose writes pass through a holding shard, which this shard by definition
+        // does. Throw rather than return 0: silently not publishing would leave data only in the holding
+        // area, which queries never read.
+        final HoldingAreaSettings holdingArea =
+                HasHoldingAreaSettings.holdingAreaSettings(doc.getSettings())
+                        .orElseThrow(() -> new IllegalStateException(
+                                "No holding area settings for " + doc.getName()));
 
         final Instant archiveBefore =
-                SimpleDurationUtil.minus(Instant.now(), archival.getDuration());
+                SimpleDurationUtil.minus(Instant.now(), holdingArea.getCompletionGrace());
 
         Files.createDirectories(archiveBaseDir);
 
@@ -110,7 +111,7 @@ public class MergeShard extends AbstractStoreShard {
             throw UncheckedInterruptedException.create(e);
         }
         try {
-            count = db.runArchival(archiveBefore, archival.getGranularity(), archiveBaseDir);
+            count = db.runArchival(archiveBefore, archiveBaseDir);
             if (count > 0) {
                 lastWriteTime = Instant.now();
             }

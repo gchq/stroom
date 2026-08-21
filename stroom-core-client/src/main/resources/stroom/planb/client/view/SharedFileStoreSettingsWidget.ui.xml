@@ -2,9 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:v="urn:import:stroom.widget.valuespinner.client"
-             xmlns:i="urn:import:stroom.item.client"
-             xmlns:sg="urn:import:stroom.planb.client.view">
+             xmlns:v="urn:import:stroom.widget.valuespinner.client">
     <g:FlowPanel styleName="form-group">
         <form:FormGroup label="Path"
                         helpText="Path to the shared file store. Note: This cannot be modified after data has been written.">
@@ -14,30 +12,5 @@
                         helpText="The number of shards to partition the data across. Use 1 for no sharding. Note: This cannot be modified after data has been written.">
             <v:ValueSpinner ui:field="shardCount" addStyleNames="allow-focus"/>
         </form:FormGroup>
-        <sg:SettingsGroup label="Archiving">
-            <g:FlowPanel styleName="form-group">
-                <form:FormGroup identity="archivalCheckIntervalPanel"
-                                label="Frequency"
-                                helpText="How often to look for data old enough to archive. This is the schedule, not the policy: the minimum archive age below decides which data moves, this decides how often we check. Data can stay in the main store for up to the minimum archive age plus this interval. Checking more often than the bucket granularity gains nothing.">
-                    <g:FlowPanel styleName="durationSetting">
-                        <v:ValueSpinner ui:field="archivalCheckInterval"/>
-                        <i:SelectionBox ui:field="archivalCheckIntervalTimeUnit" addStyleNames="allow-focus"/>
-                    </g:FlowPanel>
-                </form:FormGroup>
-                <form:FormGroup identity="archivalLeadTimePanel"
-                                label="Archive Data Older Than"
-                                helpText="Data older than this period becomes eligible for archiving. Must be less than the retention duration.">
-                    <g:FlowPanel styleName="durationSetting">
-                        <v:ValueSpinner ui:field="archivalAge"/>
-                        <i:SelectionBox ui:field="archivalTimeUnit" addStyleNames="allow-focus"/>
-                    </g:FlowPanel>
-                </form:FormGroup>
-                <form:FormGroup identity="archivalGranularityPanel"
-                                label="Bucket Granularity"
-                                helpText="How archive shards are time-bucketed: Hour, Day, or Week.">
-                    <i:SelectionBox ui:field="archivalGranularity" addStyleNames="allow-focus"/>
-                </form:FormGroup>
-            </g:FlowPanel>
-        </sg:SettingsGroup>
     </g:FlowPanel>
 </ui:UiBinder>

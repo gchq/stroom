@@ -16,44 +16,23 @@
 
 package stroom.planb.shared;
 
-import java.util.Optional;
-
 /**
- * Marker interface for {@link AbstractPlanBSettings} subclasses that support
- * sharding and archiving via a shared file store.
+ * Implemented by the settings class of a store type whose data lives on a shared filesystem rather
+ * than only on the local node, so that it can be split across shards and read by every node.
  *
- * <p>A settings class implementing this interface declares that the corresponding
- * PlanB doc type can be:
- * <ul>
- *   <li><b>Horizontally sharded</b> — entries are distributed across multiple
- *       LMDB environments according to {@link SharedFileStoreSettings#getShardCount()}.</li>
- *   <li><b>Archived</b> — entries older than the configured lead time are moved
- *       to dated archive shards on the shared file store, as configured by
- *       {@link SharedFileStoreSettings#getArchival()}.</li>
- * </ul>
+ * <p>This says nothing about how the data is laid out under the shared path. Bucketing, and whether
+ * writes pass through a holding shard, are the store type's own business — see
+ * {@link HasHoldingAreaSettings}.
  *
- * <p>Currently only {@link TraceSettings} implements this interface. When a
- * further PlanB doc type gains sharding and/or archiving support, its settings
- * class should implement {@code HasSharedFileStore} and provide a concrete value
- * for {@link #getSharedFileStore()}.  No changes are required to the core
- * infrastructure classes ({@code ShardManager}, {@code ArchiveOperation}, etc.).
+ * <p>How a store type's batches actually reach the place its queries read is decided by the
+ * {@code MergeStrategy} bound for its {@link StateType}; a store type with no strategy is not
+ * merged.
  */
 public interface HasSharedFileStore {
 
     /**
-     * Returns the shared file store settings — shard count, shared store path,
-     * and optional archival policy.  Returns {@code null} when the shared file
-     * store has not been configured.
+     * The shared store path and shard count, or {@code null} when the shared file store has not been
+     * configured.
      */
     SharedFileStoreSettings getSharedFileStore();
-
-    /**
-     * The archival policy for any settings object, empty when there is no shared file store to archive to.
-     * Archival itself cannot be switched off — see {@link SharedFileStoreSettings}.
-     */
-    static Optional<ArchivalSettings> archivalSettings(final AbstractPlanBSettings settings) {
-        return settings instanceof final HasSharedFileStore s && s.getSharedFileStore() != null
-                ? Optional.of(s.getSharedFileStore().getArchival())
-                : Optional.empty();
-    }
 }

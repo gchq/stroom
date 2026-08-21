@@ -76,7 +76,7 @@ class TestPathwaysIntegration {
                 .name(name)
                 .stateType(StateType.TRACE)
                 .settings(new TraceSettings.Builder()
-                        .sharedFileStore(new SharedFileStoreSettings(2, null, null))
+                        .sharedFileStore(new SharedFileStoreSettings(2, null))
                         .maxStoreSize(ByteSize.ofMebibytes(10).getBytes())
                         .retention(new RetentionSettings.Builder()
                                 .duration(SimpleDuration.ZERO)

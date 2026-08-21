@@ -22,7 +22,7 @@ import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBPaths;
 import stroom.planb.shared.ArchivalGranularity;
-import stroom.planb.shared.ArchivalSettings;
+import stroom.planb.shared.HoldingAreaSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.planb.shared.StateType;
@@ -219,12 +219,12 @@ class TestHoldingAreaMergeStrategy {
                 .settings(new TraceSettings.Builder()
                         .sharedFileStore(new SharedFileStoreSettings(
                                 1,
-                                sharedRoot().toAbsolutePath().toString(),
-                                new ArchivalSettings.Builder()
-                                        .duration(SEVEN_DAYS)
-                                        .checkInterval(CHECK_INTERVAL)
-                                        .granularity(ArchivalGranularity.DAY)
-                                        .build()))
+                                sharedRoot().toAbsolutePath().toString()))
+                        .granularity(ArchivalGranularity.DAY)
+                        .holdingArea(new HoldingAreaSettings.Builder()
+                                .completionGrace(SEVEN_DAYS)
+                                .compactionFrequency(CHECK_INTERVAL)
+                                .build())
                         .build())
                 .build();
     }

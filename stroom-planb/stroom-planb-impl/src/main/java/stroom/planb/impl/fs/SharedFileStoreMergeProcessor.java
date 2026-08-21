@@ -23,8 +23,6 @@ import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.data.archive.ArchivalGranularityUtil;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.ArchivalGranularity;
-import stroom.planb.shared.ArchivalSettings;
-import stroom.planb.shared.HasSharedFileStore;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.StateType;
@@ -282,11 +280,6 @@ public class SharedFileStoreMergeProcessor {
         final Instant retentionBefore =
                 SimpleDurationUtil.minus(Instant.now(), retention.getDuration());
 
-        final ArchivalGranularity configuredGranularity =
-                HasSharedFileStore.archivalSettings(ctx.doc().getSettings())
-                        .map(ArchivalSettings::getGranularity)
-                        .orElse(null);
-
         final Path archiveShardDir = archiveDocDir(ctx.doc())
                 .resolve(PlanBConstants.formatShardIndex(ctx.shardIndex()));
 
@@ -301,9 +294,10 @@ public class SharedFileStoreMergeProcessor {
                 }
                 final String dateLabel = dateDir.getFileName().toString();
 
-                final ArchivalGranularity granularity = configuredGranularity != null
-                        ? configuredGranularity
-                        : ArchivalGranularityUtil.detect(dateLabel);
+                // The directory name records how the bucket was written, so it is the only thing that
+                // can decode it: a doc whose granularity has since changed still has buckets in the
+                // old layout.
+                final ArchivalGranularity granularity = ArchivalGranularityUtil.detect(dateLabel);
 
                 if (granularity == null) {
                     LOGGER.warn("Cannot determine granularity for archive dir {}, skipping", dateDir);

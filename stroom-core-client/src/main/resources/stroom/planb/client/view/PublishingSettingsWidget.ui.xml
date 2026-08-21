@@ -1,0 +1,22 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:i="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="form-group">
+        <form:FormGroup identity="completionGracePanel"
+                        label="Completion Grace"
+                        helpText="How long incomplete data is held for the rest of it to arrive. Complete data is published on the next cycle regardless.">
+            <g:FlowPanel styleName="durationSetting">
+                <v:ValueSpinner ui:field="completionGrace"/>
+                <i:SelectionBox ui:field="completionGraceTimeUnit" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="granularityPanel"
+                        label="Bucket Granularity"
+                        helpText="How the queryable store is partitioned by time: Hour, Day, or Week.">
+            <i:SelectionBox ui:field="granularity" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

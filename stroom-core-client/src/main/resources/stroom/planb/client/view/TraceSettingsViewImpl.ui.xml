@@ -5,8 +5,10 @@
     <g:FlowPanel styleName="max form">
         <sg:SettingsGroup label="Shared File Store"
                           ui:field="sharedFileStorePanel"/>
-        <sg:SettingsGroup label="General"
-                          ui:field="generalPanel"/>
+        <sg:SettingsGroup label="Publishing"
+                          ui:field="publishingPanel"/>
+        <sg:SettingsGroup label="Storage"
+                          ui:field="storagePanel"/>
         <sg:SettingsGroup label="Data Retention"
                           ui:field="retentionPanel"/>
     </g:FlowPanel>

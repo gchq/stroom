@@ -19,7 +19,6 @@ package stroom.planb.impl.db;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.PlanBEnv.Usage;
-import stroom.planb.shared.ArchivalGranularity;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -52,8 +51,13 @@ public interface Db<K, V> extends AutoCloseable {
     long runRetention(Instant deleteBefore,
                        boolean useStateTime);
 
+    /**
+     * Moves records older than {@code archiveBefore} out of this store and into subdirectories of
+     * {@code archiveBaseDir}, one per bucket. How records are grouped into buckets, and how a bucket
+     * subdirectory is named, is up to the implementation — a store type need not bucket by time, or
+     * at all. Returns 0 for a store type that does not publish this way.
+     */
     default long runArchival(final Instant archiveBefore,
-                                final ArchivalGranularity granularity,
                                 final Path archiveBaseDir) {
         return 0L;
     }

@@ -23,7 +23,6 @@ import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.data.archive.ArchivalGranularityUtil;
 import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.shared.ArchivalGranularity;
-import stroom.planb.shared.ArchivalSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.SharedFileStoreSettings;
@@ -184,6 +183,30 @@ class TestSharedFileStoreRetention {
         assertThat(bucket).exists();
     }
 
+    /**
+     * Changing the granularity leaves buckets behind in the old layout, and their names are still the
+     * only record of how they were written. Decoding one with the doc's current granularity instead
+     * fails to parse it, which would skip it on every run and strand it for good.
+     */
+    @Test
+    void deletesDayBucket_afterGranularityChangedToHour() throws IOException {
+        final Path dayBucket = archiveBucket(
+                ArchivalGranularity.DAY, Instant.now().minusSeconds(7L * 24 * 3600));
+        SharedFileStoreMergeProcessor.deleteExpiredArchiveShards(
+                ctx(sharedDoc(ArchivalGranularity.HOUR)));
+        assertThat(dayBucket).doesNotExist();
+    }
+
+    /** The same, one granularity wider — a label that fails to parse rather than failing to split. */
+    @Test
+    void deletesWeekBucket_afterGranularityChangedToDay() throws IOException {
+        final Path weekBucket = archiveBucket(
+                ArchivalGranularity.WEEK, Instant.now().minusSeconds(30L * 24 * 3600));
+        SharedFileStoreMergeProcessor.deleteExpiredArchiveShards(
+                ctx(sharedDoc(ArchivalGranularity.DAY)));
+        assertThat(weekBucket).doesNotExist();
+    }
+
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
@@ -201,13 +224,22 @@ class TestSharedFileStoreRetention {
     }
 
     private Path archiveBucket(final Instant bucketTime) throws IOException {
+        return archiveBucket(ArchivalGranularity.DAY, bucketTime);
+    }
+
+    private Path archiveBucket(final ArchivalGranularity granularity,
+                               final Instant bucketTime) throws IOException {
         final Path bucket = archiveShardDir
-                .resolve(ArchivalGranularityUtil.label(ArchivalGranularity.DAY, bucketTime));
+                .resolve(ArchivalGranularityUtil.label(granularity, bucketTime));
         Files.createDirectories(bucket);
         return bucket;
     }
 
     private PlanBDoc sharedDoc() {
+        return sharedDoc(ArchivalGranularity.DAY);
+    }
+
+    private PlanBDoc sharedDoc(final ArchivalGranularity granularity) {
         return PlanBDoc.builder()
                 .uuid(docUuid)
                 .name("test")
@@ -215,10 +247,8 @@ class TestSharedFileStoreRetention {
                 .settings(new TraceSettings.Builder()
                         .sharedFileStore(new SharedFileStoreSettings(
                                 1,
-                                sharedRoot().toAbsolutePath().toString(),
-                                new ArchivalSettings.Builder()
-                                        .granularity(ArchivalGranularity.DAY)
-                                        .build()))
+                                sharedRoot().toAbsolutePath().toString()))
+                        .granularity(granularity)
                         .retention(new RetentionSettings.Builder()
                                 .enabled(true)
                                 .duration(ONE_HOUR)
@@ -236,10 +266,8 @@ class TestSharedFileStoreRetention {
                 .settings(new TraceSettings.Builder()
                         .sharedFileStore(new SharedFileStoreSettings(
                                 1,
-                                sharedRoot().toAbsolutePath().toString(),
-                                new ArchivalSettings.Builder()
-                                        .granularity(ArchivalGranularity.DAY)
-                                        .build()))
+                                sharedRoot().toAbsolutePath().toString()))
+                        .granularity(ArchivalGranularity.DAY)
                         .retention(new RetentionSettings.Builder()
                                 .enabled(enabled)
                                 .duration(duration)
