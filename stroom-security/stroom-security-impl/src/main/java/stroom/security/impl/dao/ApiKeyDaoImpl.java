@@ -150,8 +150,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
         try {
             // The user's text is parsed here rather than on the client, so this screen speaks the
             // same filter language as every other one. See the syntax spec §9 and §11.
-            expressionOperator = QuickFilter.and(
-                    criteria.getExpression(),
+            expressionOperator = QuickFilter.parse(
                     criteria.getQuickFilter(),
                     FindApiKeyCriteria.QUICK_FILTER_DEFAULT_FIELDS,
                     FindApiKeyCriteria.QUICK_FILTER_FIELDS);

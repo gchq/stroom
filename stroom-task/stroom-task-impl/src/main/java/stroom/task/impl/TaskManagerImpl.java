@@ -227,7 +227,7 @@ class TaskManagerImpl implements TaskManager {
         final long timeNowMs = System.currentTimeMillis();
 
         final Predicate<TaskProgress> fuzzyMatchPredicate;
-        final String nameFilter = NullSafe.get(findTaskProgressCriteria, FindTaskProgressCriteria::getNameFilter);
+        final String nameFilter = NullSafe.get(findTaskProgressCriteria, FindTaskProgressCriteria::getQuickFilter);
         if (!NullSafe.isBlankString(nameFilter)) {
             LOGGER.debug("Using nameFilter: '{}'", nameFilter);
             // ExpressionPredicateFactory swallows a bad filter and matches nothing, which is the

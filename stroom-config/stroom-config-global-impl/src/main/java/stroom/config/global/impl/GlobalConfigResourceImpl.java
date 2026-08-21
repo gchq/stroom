@@ -147,7 +147,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "list"))
                 .withDescription("List filtered configuration properties")
                 .withDefaultEventAction(SearchEventAction.builder()
-                        .withQuery(buildRawQuery(criteria.getQuickFilterInput()))
+                        .withQuery(buildRawQuery(criteria.getQuickFilter()))
                         .build())
                 .withComplexLoggedResult(searchEventAction -> {
                     // Do the work
@@ -155,7 +155,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
                     // Ignore the previous searchEventAction as it didn't have anything useful on it
                     final SearchEventAction newSearchEventAction = SearchEventAction.builder()
-                            .withQuery(buildRawQuery(criteria.getQuickFilterInput()))
+                            .withQuery(buildRawQuery(criteria.getQuickFilter()))
                             .withResultPage(StroomEventLoggingUtil.createResultPage(sanitisedResult))
                             .withTotalResults(BigInteger.valueOf(sanitisedResult.size()))
                             .build();

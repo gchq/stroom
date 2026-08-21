@@ -527,7 +527,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         AnnotationFields.COLLECTION_FIELD));
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
-                    .create(fieldProvider, request.getFilter());
+                    .create(fieldProvider, request.getQuickFilter());
             optionalExpressionOperator.ifPresent(expressionOperator ->
                     conditions.add(expressionMapper.apply(expressionOperator)));
             conditions.add(ANNOTATION.DELETED.isFalse());

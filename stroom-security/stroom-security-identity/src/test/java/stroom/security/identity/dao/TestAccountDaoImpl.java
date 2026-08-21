@@ -20,8 +20,6 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.db.util.JooqUtil;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docstore.mock.MockDocFinderModule;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.identity.account.AccountDao;
 import stroom.security.identity.account.ResetToken;
@@ -908,12 +906,12 @@ class TestAccountDaoImpl {
     }
 
     private List<String> searchUserIds(final boolean locked) {
+        // FindAccountRequest carries no expression any more - it extends QuickFilterCriteria.
+        // The same filter as text: "locked" is a boolean field, so the bare term takes EQUALS.
         final FindAccountRequest request = new FindAccountRequest(
                 null,
                 null,
-                ExpressionOperator.builder()
-                        .addBooleanTerm(AccountFields.FIELD_LOCKED, Condition.EQUALS, locked)
-                        .build());
+                AccountFields.FIELD_NAME_LOCKED + ":" + locked);
         return accountDao.search(request)
                 .getValues()
                 .stream()

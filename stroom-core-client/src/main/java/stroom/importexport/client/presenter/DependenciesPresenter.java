@@ -369,13 +369,13 @@ public class DependenciesPresenter
     }
 
     void setFilterInput(final String filterInput) {
-        this.criteria.setPartialName(filterInput);
+        this.criteria.setQuickFilter(filterInput);
         // Changing the filter means any existing offset is wrong, so we need to reset to the initial state
         resetRange();
     }
 
     void clearFilterInput() {
-        this.criteria.setPartialName(null);
+        this.criteria.setQuickFilter(null);
         // Changing the filter means any existing offset is wrong, so we need to reset to the initial state
         resetRange();
     }

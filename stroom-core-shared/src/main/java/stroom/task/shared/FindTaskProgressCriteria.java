@@ -18,9 +18,9 @@ package stroom.task.shared;
 
 import stroom.query.api.datasource.QueryField;
 import stroom.query.api.datasource.QuickFilterFields;
-import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
-public class FindTaskProgressCriteria extends BaseCriteria {
+public class FindTaskProgressCriteria extends QuickFilterCriteria {
 
     public static final String FIELD_NODE = "Node";
     public static final String FIELD_NAME = "Name";
@@ -68,8 +68,6 @@ public class FindTaskProgressCriteria extends BaseCriteria {
     @JsonProperty
     private Set<TaskProgress> expandedTasks;
     @JsonProperty
-    private String nameFilter;
-    @JsonProperty
     private String sessionId;
 
     public FindTaskProgressCriteria() {
@@ -79,11 +77,10 @@ public class FindTaskProgressCriteria extends BaseCriteria {
     public FindTaskProgressCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                     @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                     @JsonProperty("expandedTasks") final Set<TaskProgress> expandedTasks,
-                                    @JsonProperty("nameFilter") final String nameFilter,
+                                    @JsonProperty("quickFilter") final String quickFilter,
                                     @JsonProperty("sessionId") final String sessionId) {
-        super(pageRequest, sortList);
+        super(pageRequest, sortList, quickFilter);
         this.expandedTasks = expandedTasks;
-        this.nameFilter = nameFilter;
         this.sessionId = sessionId;
     }
 
@@ -95,13 +92,6 @@ public class FindTaskProgressCriteria extends BaseCriteria {
         this.expandedTasks = expandedTasks;
     }
 
-    public String getNameFilter() {
-        return nameFilter;
-    }
-
-    public void setNameFilter(final String nameFilter) {
-        this.nameFilter = nameFilter;
-    }
 
     public String getSessionId() {
         return sessionId;

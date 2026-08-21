@@ -16,9 +16,9 @@
 
 package stroom.ai.shared;
 
-import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,27 +32,21 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
-public class FindAiChatHistoryCriteria extends BaseCriteria {
+public class FindAiChatHistoryCriteria extends QuickFilterCriteria {
 
     public static final CriteriaFieldSort DEFAULT_SORT =
             new CriteriaFieldSort(AiChatHistoryFields.NAME, false, true);
     public static final List<CriteriaFieldSort> DEFAULT_SORT_LIST =
             Collections.singletonList(DEFAULT_SORT);
 
-    @JsonProperty
-    private final String filter;
 
     @JsonCreator
     public FindAiChatHistoryCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                      @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                     @JsonProperty("filter") final String filter) {
-        super(pageRequest, sortList);
-        this.filter = filter;
+                                     @JsonProperty("quickFilter") final String quickFilter) {
+        super(pageRequest, sortList, quickFilter);
     }
 
-    public String getFilter() {
-        return filter;
-    }
 
     @Override
     public boolean equals(final Object o) {
@@ -66,11 +60,11 @@ public class FindAiChatHistoryCriteria extends BaseCriteria {
             return false;
         }
         final FindAiChatHistoryCriteria that = (FindAiChatHistoryCriteria) o;
-        return Objects.equals(filter, that.filter);
+        return Objects.equals(getQuickFilter(), that.getQuickFilter());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), filter);
+        return Objects.hash(super.hashCode(), getQuickFilter());
     }
 }

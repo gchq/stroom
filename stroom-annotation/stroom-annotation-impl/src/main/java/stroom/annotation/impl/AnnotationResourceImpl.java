@@ -70,7 +70,7 @@ class AnnotationResourceImpl implements AnnotationResource {
             if (result != null) {
                 documentEventLog.get().search(
                         "Find Annotations",
-                        Query.builder().withRaw(request.getFilter()).build(),
+                        Query.builder().withRaw(request.getQuickFilter()).build(),
                         "Annotation",
                         result.getPageResponse(),
                         null);
@@ -78,7 +78,7 @@ class AnnotationResourceImpl implements AnnotationResource {
         } catch (final RuntimeException e) {
             documentEventLog.get().search(
                     "Find Annotations",
-                    Query.builder().withRaw(request.getFilter()).build(),
+                    Query.builder().withRaw(request.getQuickFilter()).build(),
                     "Annotation",
                     null,
                     e);

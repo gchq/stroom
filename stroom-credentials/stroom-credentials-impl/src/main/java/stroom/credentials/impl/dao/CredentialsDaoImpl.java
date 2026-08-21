@@ -122,7 +122,7 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                         stroom.credentials.shared.CredentialFields.CREDENTIAL_TYPE_FIELD));
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
-                    .create(fieldProvider, request.getFilter());
+                    .create(fieldProvider, request.getQuickFilter());
             optionalExpressionOperator.ifPresent(expressionOperator ->
                     conditions.add(expressionMapper.apply(expressionOperator)));
         } catch (final RuntimeException e) {

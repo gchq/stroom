@@ -40,34 +40,52 @@ public final class QuickFilter {
     }
 
     /**
-     * @param expression      the screen's own terms, or null
+     * Parse the text a user typed into a quick filter. Most surfaces want this: they have no
+     * expression of their own, so there is nothing to compose with.
+     *
      * @param quickFilter     what the user typed, or null/blank
      * @param defaultFields   the fields a bare, unqualified term ORs across
      * @param qualifiedFields every field the user can name with a qualifier
-     * @return the two ANDed together
+     * @return the parsed expression, or null if there was nothing to parse
      * @throws TokenException if the text cannot be parsed, or names a condition a field cannot
      *                        honour. Callers should turn this into an empty result carrying the
      *                        reason rather than an error - the filter re-queries on a debounce, so
      *                        a half-typed term is an expected transient state.
      */
+    public static ExpressionOperator parse(final String quickFilter,
+                                           final List<QueryField> defaultFields,
+                                           final List<QueryField> qualifiedFields) {
+        if (NullSafe.isBlankString(quickFilter)) {
+            return null;
+        }
+        final FieldProvider fieldProvider = new FieldProviderImpl(defaultFields, qualifiedFields);
+        return SimpleStringExpressionParser
+                .create(fieldProvider, quickFilter)
+                .orElse(null);
+    }
+
+    /**
+     * For the two surfaces that compose terms of their own - {@code FindUserCriteria} and
+     * {@code AdvancedDocumentFindRequest} - fold the user's text together with the screen's own
+     * expression. ANDed, so a filter can only ever narrow what the screen already asked for.
+     *
+     * @param expression the screen's own terms, or null
+     * @see #parse(String, List, List)
+     */
     public static ExpressionOperator and(final ExpressionOperator expression,
                                          final String quickFilter,
                                          final List<QueryField> defaultFields,
                                          final List<QueryField> qualifiedFields) {
-        if (NullSafe.isBlankString(quickFilter)) {
+        final ExpressionOperator parsed = parse(quickFilter, defaultFields, qualifiedFields);
+        if (parsed == null) {
             return expression;
         }
-
-        final FieldProvider fieldProvider = new FieldProviderImpl(defaultFields, qualifiedFields);
-        return SimpleStringExpressionParser
-                .create(fieldProvider, quickFilter)
-                .map(parsed -> expression == null || !expression.hasChildren()
-                        ? parsed
-                        : ExpressionOperator
-                                .builder()
-                                .op(Op.AND)
-                                .addOperators(expression, parsed)
-                                .build())
-                .orElse(expression);
+        return expression == null || !expression.hasChildren()
+                ? parsed
+                : ExpressionOperator
+                        .builder()
+                        .op(Op.AND)
+                        .addOperators(expression, parsed)
+                        .build();
     }
 }

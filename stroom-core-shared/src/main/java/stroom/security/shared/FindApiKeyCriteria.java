@@ -16,11 +16,10 @@
 
 package stroom.security.shared;
 
-import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
@@ -37,7 +36,7 @@ import java.util.Set;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class FindApiKeyCriteria extends ExpressionCriteria {
+public class FindApiKeyCriteria extends QuickFilterCriteria {
 
     public static final String FIELD_NAME = "name";
     public static final String FIELD_PREFIX = "prefix";
@@ -102,59 +101,31 @@ public class FindApiKeyCriteria extends ExpressionCriteria {
 
     @JsonProperty
     private UserRef owner;
-    @JsonProperty
-    private String quickFilter;
 
     public FindApiKeyCriteria() {
     }
 
     public FindApiKeyCriteria(final PageRequest pageRequest,
                               final List<CriteriaFieldSort> sortList,
-                              final ExpressionOperator expression,
                               final UserRef owner) {
-        this(pageRequest, sortList, expression, owner, null);
+        this(pageRequest, sortList, owner, null);
     }
 
     @JsonCreator
     public FindApiKeyCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                              @JsonProperty("expression") final ExpressionOperator expression,
                               @JsonProperty("owner") final UserRef owner,
                               @JsonProperty("quickFilter") final String quickFilter) {
-        super(pageRequest, sortList, expression);
+        super(pageRequest, sortList, quickFilter);
         this.owner = owner;
-        this.quickFilter = quickFilter;
     }
 
-    /**
-     * @see stroom.security.shared.FindUserCriteria#getQuickFilter()
-     */
-    public String getQuickFilter() {
-        return quickFilter;
-    }
-
-    public void setQuickFilter(final String quickFilter) {
-        this.quickFilter = quickFilter;
-    }
-
-    //    public static FindApiKeyCriteria create(final String quickFilterInput) {
-//        FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
-//        findApiKeyCriteria.setQuickFilterInput(quickFilterInput);
-//        return findApiKeyCriteria;
-//    }
-//
     public static FindApiKeyCriteria create(final UserRef owner) {
         final FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
         findApiKeyCriteria.setOwner(owner);
         return findApiKeyCriteria;
     }
-//
-//    public static FindApiKeyCriteria create(final String quickFilterInput, final UserRef owner) {
-//        FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
-//        findApiKeyCriteria.setQuickFilterInput(quickFilterInput);
-//        findApiKeyCriteria.setOwner(owner);
-//        return findApiKeyCriteria;
-//    }
+
 
     public UserRef getOwner() {
         return owner;
@@ -179,18 +150,16 @@ public class FindApiKeyCriteria extends ExpressionCriteria {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder extends ExpressionCriteriaBuilder<FindApiKeyCriteria, Builder> {
+    public static class Builder extends QuickFilterCriteriaBuilder<FindApiKeyCriteria, Builder> {
 
         private UserRef owner = null;
-        private String quickFilter;
 
         public Builder() {
         }
 
-        public Builder(final FindApiKeyCriteria expressionCriteria) {
-            super(expressionCriteria);
-            this.owner = expressionCriteria.owner;
-            this.quickFilter = expressionCriteria.quickFilter;
+        public Builder(final FindApiKeyCriteria criteria) {
+            super(criteria);
+            this.owner = criteria.owner;
         }
 
         public Builder owner(final UserRef owner) {
@@ -198,10 +167,6 @@ public class FindApiKeyCriteria extends ExpressionCriteria {
             return this;
         }
 
-        public Builder quickFilter(final String quickFilter) {
-            this.quickFilter = quickFilter;
-            return this;
-        }
 
         @Override
         protected Builder self() {
@@ -213,7 +178,6 @@ public class FindApiKeyCriteria extends ExpressionCriteria {
             return new FindApiKeyCriteria(
                     pageRequest,
                     sortList,
-                    expression,
                     owner,
                     quickFilter);
         }

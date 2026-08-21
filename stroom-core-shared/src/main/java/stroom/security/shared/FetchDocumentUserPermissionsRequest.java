@@ -17,10 +17,9 @@
 package stroom.security.shared;
 
 import stroom.docref.DocRef;
-import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
+public class FetchDocumentUserPermissionsRequest extends QuickFilterCriteria {
 
     @JsonProperty
     private final DocRef docRef;
@@ -39,31 +38,26 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
     private final UserRef userRef;
     @JsonProperty
     private final PermissionShowLevel showLevel;
-    @JsonProperty
-    private String quickFilter;
 
     public FetchDocumentUserPermissionsRequest(final PageRequest pageRequest,
                                                final List<CriteriaFieldSort> sortList,
-                                               final ExpressionOperator expression,
                                                final DocRef docRef,
                                                final UserRef userRef,
                                                final PermissionShowLevel showLevel) {
-        this(pageRequest, sortList, expression, docRef, userRef, showLevel, null);
+        this(pageRequest, sortList, docRef, userRef, showLevel, null);
     }
 
     @JsonCreator
     public FetchDocumentUserPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                                @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                               @JsonProperty("expression") final ExpressionOperator expression,
                                                @JsonProperty("docRef") final DocRef docRef,
                                                @JsonProperty("userRef") final UserRef userRef,
                                                @JsonProperty("showLevel") final PermissionShowLevel showLevel,
                                                @JsonProperty("quickFilter") final String quickFilter) {
-        super(pageRequest, sortList, expression);
+        super(pageRequest, sortList, quickFilter);
         this.docRef = docRef;
         this.userRef = userRef;
         this.showLevel = showLevel;
-        this.quickFilter = quickFilter;
     }
 
     public DocRef getDocRef() {
@@ -78,14 +72,10 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
         return showLevel;
     }
 
-    public String getQuickFilter() {
-        return quickFilter;
-    }
 
     public static class Builder
-            extends ExpressionCriteriaBuilder<FetchDocumentUserPermissionsRequest, Builder> {
+            extends QuickFilterCriteriaBuilder<FetchDocumentUserPermissionsRequest, Builder> {
 
-        private String quickFilter;
         private DocRef docRef;
         private UserRef userRef;
         private PermissionShowLevel showLevel;
@@ -101,10 +91,6 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
             this.showLevel = request.showLevel;
         }
 
-        public Builder quickFilter(final String quickFilter) {
-            this.quickFilter = quickFilter;
-            return self();
-        }
 
         public Builder docRef(final DocRef docRef) {
             this.docRef = docRef;
@@ -135,7 +121,6 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
             return new FetchDocumentUserPermissionsRequest(
                     pageRequest,
                     sortList,
-                    expression,
                     docRef,
                     userRef,
                     showLevel,

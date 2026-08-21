@@ -270,7 +270,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                         IndexFieldFields.CASE_SENSITIVE_FIELD));
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
-                    .create(fieldProvider, criteria.getFilter());
+                    .create(fieldProvider, criteria.getQuickFilter());
             optionalExpressionOperator.ifPresent(expressionOperator ->
                     conditions.add(expressionMapper.apply(expressionOperator)));
         } catch (final TokenException e) {

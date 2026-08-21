@@ -162,7 +162,7 @@ public class GlobalConfigService implements GlobalConfig {
             final AtomicReference<TokenException> filterError = new AtomicReference<>();
             final ListConfigResponse response = expressionPredicateFactory.filterAndSortStream(
                             configMapper.getGlobalProperties().stream(),
-                            criteria.getQuickFilterInput(), FIELD_PROVIDER, VALUE_FUNCTION_FACTORIES,
+                            criteria.getQuickFilter(), FIELD_PROVIDER, VALUE_FUNCTION_FACTORIES,
                             DateTimeSettings.builder().build(),
                             optConfigPropertyComparator,
                             filterError::set)

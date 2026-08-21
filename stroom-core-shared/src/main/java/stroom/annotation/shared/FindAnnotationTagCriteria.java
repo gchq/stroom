@@ -16,9 +16,9 @@
 
 package stroom.annotation.shared;
 
-import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -40,15 +40,10 @@ import java.util.List;
  * arbitrary expression for this endpoint, so it does not offer one.
  */
 @JsonInclude(Include.NON_NULL)
-public class FindAnnotationTagCriteria extends BaseCriteria {
+public class FindAnnotationTagCriteria extends QuickFilterCriteria {
 
     @JsonProperty
     private final AnnotationTagType type;
-    /**
-     * @see stroom.security.shared.FindUserCriteria#getQuickFilter()
-     */
-    @JsonProperty
-    private final String quickFilter;
 
     public FindAnnotationTagCriteria(final AnnotationTagType type) {
         this(null, null, type, null);
@@ -63,24 +58,20 @@ public class FindAnnotationTagCriteria extends BaseCriteria {
                                      @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                      @JsonProperty("type") final AnnotationTagType type,
                                      @JsonProperty("quickFilter") final String quickFilter) {
-        super(pageRequest, sortList);
+        super(pageRequest, sortList, quickFilter);
         this.type = type;
-        this.quickFilter = quickFilter;
     }
 
     public AnnotationTagType getType() {
         return type;
     }
 
-    public String getQuickFilter() {
-        return quickFilter;
-    }
 
     @Override
     public String toString() {
         return "FindAnnotationTagCriteria{" +
                "type=" + type +
-               ", quickFilter='" + quickFilter + '\'' +
+               ", quickFilter='" + getQuickFilter() + '\'' +
                '}';
     }
 }

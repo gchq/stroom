@@ -322,7 +322,7 @@ public class DocDependencyDao {
         // on input that is partially typed or uses a condition this field does not support, which
         // is expected while the user types, so match nothing rather than failing the request.
         final List<Condition> conditions = new ArrayList<>();
-        final String filterInput = NullSafe.get(criteria, DependencyCriteria::getPartialName);
+        final String filterInput = NullSafe.get(criteria, DependencyCriteria::getQuickFilter);
         try {
             SimpleStringExpressionParser
                     .create(FIELD_PROVIDER, filterInput)

@@ -600,7 +600,7 @@ class TestDocDependencyDao {
         assertThat(aware.getValues().getFirst().isOk()).isTrue();
 
         final DependencyCriteria criteria = new DependencyCriteria();
-        criteria.setPartialName("status:Missing");
+        criteria.setQuickFilter("status:Missing");
         assertThat(dao.fetchDependencies(criteria, pseudoRefUuids, dep -> true).getValues()).isEmpty();
     }
 
@@ -659,7 +659,7 @@ class TestDocDependencyDao {
         new Fixture();
 
         final DependencyCriteria criteria = new DependencyCriteria();
-        criteria.setPartialName("fromtype:Dashboard");
+        criteria.setQuickFilter("fromtype:Dashboard");
         criteria.setSortList(List.of(new CriteriaFieldSort(DependencyCriteria.FIELD_TO_NAME, false, true)));
         criteria.setPageRequest(new PageRequest(0, 1));
 
@@ -735,7 +735,7 @@ class TestDocDependencyDao {
 
     private ResultPage<Dependency> filter(final String quickFilterText) {
         final DependencyCriteria criteria = new DependencyCriteria();
-        criteria.setPartialName(quickFilterText);
+        criteria.setQuickFilter(quickFilterText);
         return dao.fetchDependencies(criteria, Set.of(), dep -> true);
     }
 

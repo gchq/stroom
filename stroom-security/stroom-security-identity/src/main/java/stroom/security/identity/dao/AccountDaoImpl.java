@@ -209,8 +209,7 @@ public class AccountDaoImpl implements AccountDao {
         try {
             // The user's text is parsed here rather than on the client, so this screen speaks the
             // same filter language as every other one. See the syntax spec §9 and §11.
-            expression = QuickFilter.and(
-                    request.getExpression(),
+            expression = QuickFilter.parse(
                     request.getQuickFilter(),
                     AccountFields.QUICK_FILTER_DEFAULT_FIELDS,
                     AccountFields.QUICK_FILTER_FIELDS);

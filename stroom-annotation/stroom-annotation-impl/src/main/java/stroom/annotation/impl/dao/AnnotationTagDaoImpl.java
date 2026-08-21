@@ -211,8 +211,7 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                     request.getType(),
                     type -> ANNOTATION_TAG.TYPE_ID.eq(type.getPrimitiveValue()),
                     DSL::trueCondition);
-            final ExpressionOperator quickFilter = QuickFilter.and(
-                    null,
+            final ExpressionOperator quickFilter = QuickFilter.parse(
                     request.getQuickFilter(),
                     AnnotationTagFields.QUICK_FILTER_DEFAULT_FIELDS,
                     AnnotationTagFields.QUICK_FILTER_FIELDS);

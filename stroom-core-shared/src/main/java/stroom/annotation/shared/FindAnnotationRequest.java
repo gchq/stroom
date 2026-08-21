@@ -17,9 +17,9 @@
 package stroom.annotation.shared;
 
 import stroom.security.shared.DocumentPermission;
-import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,10 +29,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class FindAnnotationRequest extends BaseCriteria {
+public class FindAnnotationRequest extends QuickFilterCriteria {
 
-    @JsonProperty
-    private final String filter;
     @JsonProperty
     private final DocumentPermission requiredPermission;
     @JsonProperty
@@ -43,20 +41,16 @@ public class FindAnnotationRequest extends BaseCriteria {
     @JsonCreator
     public FindAnnotationRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                  @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                 @JsonProperty("filter") final String filter,
+                                 @JsonProperty("quickFilter") final String quickFilter,
                                  @JsonProperty("requiredPermission") final DocumentPermission requiredPermission,
                                  @JsonProperty("sourceId") final Long sourceId,
                                  @JsonProperty("destinationId") final Long destinationId) {
-        super(pageRequest, sortList);
-        this.filter = filter;
+        super(pageRequest, sortList, quickFilter);
         this.requiredPermission = requiredPermission;
         this.sourceId = sourceId;
         this.destinationId = destinationId;
     }
 
-    public String getFilter() {
-        return filter;
-    }
 
     public DocumentPermission getRequiredPermission() {
         return requiredPermission;

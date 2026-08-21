@@ -16,10 +16,9 @@
 
 package stroom.security.identity.shared;
 
-import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,45 +28,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class FindAccountRequest extends ExpressionCriteria {
-
-    @JsonProperty
-    private final String quickFilter;
-
-    public FindAccountRequest(final PageRequest pageRequest,
-                              final List<CriteriaFieldSort> sortList,
-                              final ExpressionOperator expression) {
-        this(pageRequest, sortList, expression, null);
-    }
+public class FindAccountRequest extends QuickFilterCriteria {
 
     @JsonCreator
     public FindAccountRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                              @JsonProperty("expression") final ExpressionOperator expression,
                               @JsonProperty("quickFilter") final String quickFilter) {
-        super(pageRequest, sortList, expression);
-        this.quickFilter = quickFilter;
-    }
-
-    public String getQuickFilter() {
-        return quickFilter;
+        super(pageRequest, sortList, quickFilter);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder extends ExpressionCriteriaBuilder<FindAccountRequest, Builder> {
-
-        private String quickFilter;
-
-        /**
-         * @see FindAccountRequest#getQuickFilter()
-         */
-        public Builder quickFilter(final String quickFilter) {
-            this.quickFilter = quickFilter;
-            return self();
-        }
+    public static class Builder extends QuickFilterCriteriaBuilder<FindAccountRequest, Builder> {
 
         @Override
         protected Builder self() {
@@ -77,7 +51,7 @@ public class FindAccountRequest extends ExpressionCriteria {
 
         @Override
         public FindAccountRequest build() {
-            return new FindAccountRequest(pageRequest, sortList, expression, quickFilter);
+            return new FindAccountRequest(pageRequest, sortList, quickFilter);
         }
     }
 }

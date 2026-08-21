@@ -19,9 +19,9 @@ package stroom.importexport.shared;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
-import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class DependencyCriteria extends BaseCriteria {
+public class DependencyCriteria extends QuickFilterCriteria {
 
     // Display names. These are the column headings, and the sort ids sent in
     // CriteriaFieldSort - they are NOT what a user types in the quick filter.
@@ -129,8 +129,6 @@ public class DependencyCriteria extends BaseCriteria {
                 .build();
     }
 
-    @JsonProperty
-    private String partialName;
 
     public DependencyCriteria() {
     }
@@ -145,23 +143,15 @@ public class DependencyCriteria extends BaseCriteria {
     @JsonCreator
     public DependencyCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                              @JsonProperty("partialName") final String partialName) {
-        super(pageRequest, sortList);
-        this.partialName = partialName;
+                              @JsonProperty("quickFilter") final String quickFilter) {
+        super(pageRequest, sortList, quickFilter);
     }
 
-    public String getPartialName() {
-        return partialName;
-    }
-
-    public void setPartialName(final String partialName) {
-        this.partialName = partialName;
-    }
 
     @Override
     public String toString() {
         return "DependencyCriteria{" +
-                "partialName='" + partialName + '\'' +
+                "quickFilter='" + getQuickFilter() + '\'' +
                 '}';
     }
 }

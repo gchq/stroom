@@ -132,7 +132,7 @@ class TaskProgressUtil {
 
         // Filter the child map.
         Map<TaskId, Set<TaskProgress>> filteredMap = childMap;
-        if (criteria.getNameFilter() != null && !criteria.getNameFilter().isEmpty()) {
+        if (criteria.getQuickFilter() != null && !criteria.getQuickFilter().isEmpty()) {
             filteredMap = filter(completeIdMap, childMap);
         }
 
@@ -244,7 +244,7 @@ class TaskProgressUtil {
                                                     final Map<TaskId, Set<TaskProgress>> childTasksMap) {
 
         boolean isExpanded = false;
-        if (criteria != null && criteria.getNameFilter() != null && !criteria.getNameFilter().isEmpty()) {
+        if (criteria != null && criteria.getQuickFilter() != null && !criteria.getQuickFilter().isEmpty()) {
             // We want to expand all ancestors of a task that is a match of the filter so it
             // is clear to the user what is matching
             final Set<TaskProgress> childTasks = childTasksMap.get(parent.getId());

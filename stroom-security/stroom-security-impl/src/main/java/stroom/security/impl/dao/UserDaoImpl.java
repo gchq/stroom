@@ -788,12 +788,15 @@ public class UserDaoImpl implements UserDao {
 
     /**
      * The permission screens filter users by the same text and the same grammar as the user list
-     * does, so they resolve it against the same fields. Throws {@link TokenException} if the text
-     * is bad; callers should turn that into an empty result carrying the reason.
+     * does, so they resolve it against the same fields. Those screens carry no expression of their
+     * own - they extend {@code QuickFilterCriteria}, not {@code ExpressionCriteria} - so there is
+     * nothing to compose with.
+     * <p>
+     * Throws {@link TokenException} if the text is bad; callers turn that into an empty result
+     * carrying the reason.
      */
-    Condition getUserCondition(final ExpressionOperator expression, final String quickFilter) {
-        return expressionMapper.apply(QuickFilter.and(
-                expression,
+    Condition getUserCondition(final String quickFilter) {
+        return expressionMapper.apply(QuickFilter.parse(
                 quickFilter,
                 UserFields.QUICK_FILTER_DEFAULT_FIELDS,
                 UserFields.QUICK_FILTER_FIELDS));

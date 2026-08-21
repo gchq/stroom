@@ -54,6 +54,39 @@ class TestQuickFilter {
         assertThat(ExpressionUtil.fields(result)).containsExactly("name");
     }
 
+    // --------------------------------------------------------------------------------
+    // parse() is what the eleven surfaces with no expression of their own use. and() is defined in
+    // terms of it, so these also pin the shared half.
+
+    @Test
+    void parseReturnsNullWhenThereIsNothingToParse() {
+        for (final String blank : new String[]{null, "", "   "}) {
+            assertThat(QuickFilter.parse(blank, DEFAULTS, ALL))
+                    .describedAs("blank input [%s]", blank)
+                    .isNull();
+        }
+    }
+
+    @Test
+    void parseResolvesAgainstTheDeclaredFields() {
+        assertThat(ExpressionUtil.fields(QuickFilter.parse("abc", DEFAULTS, ALL)))
+                .containsExactly("name");
+        assertThat(ExpressionUtil.fields(QuickFilter.parse("status:live", DEFAULTS, ALL)))
+                .containsExactly("status");
+    }
+
+    @Test
+    void parseThrowsSoTheCallerCanReportIt() {
+        assertThatThrownBy(() -> QuickFilter.parse("abc and", DEFAULTS, ALL))
+                .isInstanceOf(TokenException.class);
+    }
+
+    @Test
+    void andWithNoScreenExpressionIsJustParse() {
+        assertThat(QuickFilter.and(null, "status:live", DEFAULTS, ALL))
+                .isEqualTo(QuickFilter.parse("status:live", DEFAULTS, ALL));
+    }
+
     @Test
     void anEmptyScreenExpressionIsNotWrappedAround() {
         final ExpressionOperator empty = ExpressionOperator.builder().build();

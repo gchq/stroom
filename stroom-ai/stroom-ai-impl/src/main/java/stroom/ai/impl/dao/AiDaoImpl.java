@@ -121,7 +121,7 @@ public class AiDaoImpl implements AiDao {
                 List.of(AiChatHistoryFields.NAME_FIELD));
         try {
             final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
-                    .create(fieldProvider, criteria.getFilter());
+                    .create(fieldProvider, criteria.getQuickFilter());
             optionalExpressionOperator.ifPresent(expressionOperator ->
                     conditions.add(expressionMapper.apply(expressionOperator)));
         } catch (final TokenException e) {

@@ -694,10 +694,10 @@ public class TaskManagerListPresenter
                 }
             }
 
-            if (!Objects.equals(filter, criteria.getNameFilter())) {
+            if (!Objects.equals(filter, criteria.getQuickFilter())) {
                 // This is a new filter so reset all the expander states
                 treeAction.reset();
-                criteria.setNameFilter(filter);
+                criteria.setQuickFilter(filter);
                 internalRefresh();
             }
         }

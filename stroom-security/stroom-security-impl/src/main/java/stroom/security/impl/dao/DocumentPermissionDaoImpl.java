@@ -469,7 +469,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
             final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
 
             final List<Condition> conditions = new ArrayList<>();
-            conditions.add(userDao.getUserCondition(request.getExpression(), request.getQuickFilter()));
+            conditions.add(userDao.getUserCondition(request.getQuickFilter()));
             if (request.getUserRef() != null) {
                 conditions.add(STROOM_USER.UUID.eq(request.getUserRef().getUuid()));
             }
@@ -671,7 +671,7 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
 
             final List<Condition> conditions = new ArrayList<>();
 
-            conditions.add(userDao.getUserCondition(request.getExpression(), request.getQuickFilter()));
+            conditions.add(userDao.getUserCondition(request.getQuickFilter()));
             if (request.getUserRef() != null) {
                 conditions.add(STROOM_USER.UUID.eq(request.getUserRef().getUuid()));
             }

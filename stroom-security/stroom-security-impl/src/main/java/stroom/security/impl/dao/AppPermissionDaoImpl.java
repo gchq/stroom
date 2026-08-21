@@ -154,7 +154,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
             final Collection<OrderField<?>> orderFields = userDao.createOrderFields(request);
 
             final List<Condition> conditions = new ArrayList<>();
-            conditions.add(userDao.getUserCondition(request.getExpression(), request.getQuickFilter()));
+            conditions.add(userDao.getUserCondition(request.getQuickFilter()));
             if (request.getUserRef() != null) {
                 conditions.add(STROOM_USER.UUID.eq(request.getUserRef().getUuid()));
             }

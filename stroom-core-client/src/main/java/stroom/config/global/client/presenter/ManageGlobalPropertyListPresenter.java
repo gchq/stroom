@@ -436,7 +436,7 @@ public class ManageGlobalPropertyListPresenter
     }
 
     void clearFilter() {
-        this.criteria.setQuickFilterInput(null);
+        this.criteria.setQuickFilter(null);
 
         if (!(lastNodeName == null || lastNodeName.isEmpty())) {
             refresh();
@@ -524,8 +524,8 @@ public class ManageGlobalPropertyListPresenter
                 }
             }
 
-            if (!Objects.equals(filter, criteria.getQuickFilterInput())) {
-                criteria.setQuickFilterInput(filter);
+            if (!Objects.equals(filter, criteria.getQuickFilter())) {
+                criteria.setQuickFilter(filter);
                 // Need to reset the range else the name criteria can push us outside the page we are on
                 final Range range = dataGrid.getVisibleRange();
                 dataGrid.setVisibleRange(0, range.getLength());

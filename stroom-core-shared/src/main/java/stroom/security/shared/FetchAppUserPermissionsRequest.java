@@ -16,10 +16,9 @@
 
 package stroom.security.shared;
 
-import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,37 +29,29 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
+public class FetchAppUserPermissionsRequest extends QuickFilterCriteria {
 
     @JsonProperty
     private final UserRef userRef;
     @JsonProperty
     private final PermissionShowLevel showLevel;
-    /**
-     * @see stroom.security.shared.FindUserCriteria#getQuickFilter()
-     */
-    @JsonProperty
-    private String quickFilter;
 
     public FetchAppUserPermissionsRequest(final PageRequest pageRequest,
                                           final List<CriteriaFieldSort> sortList,
-                                          final ExpressionOperator expression,
                                           final UserRef userRef,
                                           final PermissionShowLevel showLevel) {
-        this(pageRequest, sortList, expression, userRef, showLevel, null);
+        this(pageRequest, sortList, userRef, showLevel, null);
     }
 
     @JsonCreator
     public FetchAppUserPermissionsRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                           @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                          @JsonProperty("expression") final ExpressionOperator expression,
                                           @JsonProperty("userRef") final UserRef userRef,
                                           @JsonProperty("showLevel") final PermissionShowLevel showLevel,
                                           @JsonProperty("quickFilter") final String quickFilter) {
-        super(pageRequest, sortList, expression);
+        super(pageRequest, sortList, quickFilter);
         this.userRef = userRef;
         this.showLevel = showLevel;
-        this.quickFilter = quickFilter;
     }
 
     public UserRef getUserRef() {
@@ -72,21 +63,7 @@ public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
     }
 
 
-    public String getQuickFilter() {
-        return quickFilter;
-    }
-
-    public static class Builder extends ExpressionCriteriaBuilder<FetchAppUserPermissionsRequest, Builder> {
-
-        private String quickFilter;
-
-        /**
-         * @see FetchAppUserPermissionsRequest#getQuickFilter()
-         */
-        public Builder quickFilter(final String quickFilter) {
-            this.quickFilter = quickFilter;
-            return self();
-        }
+    public static class Builder extends QuickFilterCriteriaBuilder<FetchAppUserPermissionsRequest, Builder> {
 
         private UserRef userRef;
         private PermissionShowLevel showLevel;
@@ -121,7 +98,6 @@ public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
             return new FetchAppUserPermissionsRequest(
                     pageRequest,
                     sortList,
-                    expression,
                     userRef,
                     showLevel,
                     quickFilter);

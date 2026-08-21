@@ -16,11 +16,10 @@
 
 package stroom.security.shared;
 
-import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.QuickFilterCriteria;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
@@ -38,7 +37,7 @@ import java.util.Set;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class FindUserDependenciesCriteria extends ExpressionCriteria {
+public class FindUserDependenciesCriteria extends QuickFilterCriteria {
 
     public static final String FIELD_DOC_NAME = "docname";
     //    public static final String FIELD_DOC_UUID = "docuuid";
@@ -69,25 +68,20 @@ public class FindUserDependenciesCriteria extends ExpressionCriteria {
 
     @JsonProperty
     private UserRef userRef;
-    @JsonProperty
-    private String quickFilter;
 
     public FindUserDependenciesCriteria(final PageRequest pageRequest,
                                         final List<CriteriaFieldSort> sortList,
-                                        final ExpressionOperator expression,
                                         final UserRef userRef) {
-        this(pageRequest, sortList, expression, userRef, null);
+        this(pageRequest, sortList, userRef, null);
     }
 
     @JsonCreator
     public FindUserDependenciesCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                         @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                        @JsonProperty("expression") final ExpressionOperator expression,
                                         @JsonProperty("userRef") final UserRef userRef,
                                         @JsonProperty("quickFilter") final String quickFilter) {
-        super(pageRequest, sortList, expression);
+        super(pageRequest, sortList, quickFilter);
         this.userRef = userRef;
-        this.quickFilter = quickFilter;
     }
 
     public UserRef getUserRef() {
@@ -109,26 +103,17 @@ public class FindUserDependenciesCriteria extends ExpressionCriteria {
     // --------------------------------------------------------------------------------
 
 
-    public String getQuickFilter() {
-        return quickFilter;
-    }
+    public static class Builder extends QuickFilterCriteriaBuilder<FindUserDependenciesCriteria, Builder> {
 
-    public static class Builder extends ExpressionCriteriaBuilder<FindUserDependenciesCriteria, Builder> {
-
-        private String quickFilter;
         private UserRef userRef = null;
 
         public Builder() {
         }
 
-        public Builder(final FindUserDependenciesCriteria expressionCriteria) {
-            super(expressionCriteria);
+        public Builder(final FindUserDependenciesCriteria criteria) {
+            super(criteria);
         }
 
-        public Builder quickFilter(final String quickFilter) {
-            this.quickFilter = quickFilter;
-            return self();
-        }
 
         public Builder userRef(final UserRef userRef) {
             this.userRef = Objects.requireNonNull(userRef);
@@ -146,7 +131,6 @@ public class FindUserDependenciesCriteria extends ExpressionCriteria {
             return new FindUserDependenciesCriteria(
                     pageRequest,
                     sortList,
-                    expression,
                     userRef,
                     quickFilter);
         }
