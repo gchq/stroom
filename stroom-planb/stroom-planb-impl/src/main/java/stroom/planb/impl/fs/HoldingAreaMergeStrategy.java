@@ -225,7 +225,7 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
                                 "No holding area settings for " + ctx.lockName()));
 
         return localArchive.withLocalDir(ctx, localArchiveBase -> {
-            final long count = shard.runArchival(ctx.doc(), localArchiveBase);
+            final long count = shard.publish(ctx.doc(), localArchiveBase);
             if (count == 0) {
                 LOGGER.debug(() -> "Nothing to archive for " + ctx.lockName());
                 return false;

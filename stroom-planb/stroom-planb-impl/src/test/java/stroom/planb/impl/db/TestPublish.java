@@ -55,7 +55,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Integration tests for {@code TraceDb.runArchival} — the single archival path for a trace store.
+ * Integration tests for {@code TraceDb.publish} — the single publish path for a trace store.
  *
  * <p>Every trace with a real root is staged into the bucket for its root's START time, whatever the
  * individual spans' timestamps. Its non-root spans are removed from the holding area; the root itself stays
@@ -64,7 +64,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Buckets are labelled by day throughout, which is what the docs these tests build default to.
  */
-class TestRunArchival {
+class TestPublish {
 
     private static final ByteBufferFactoryImpl BYTE_BUFFER_FACTORY = new ByteBufferFactoryImpl();
     private static final ByteBuffers BYTE_BUFFERS = new ByteBuffers(BYTE_BUFFER_FACTORY);
@@ -105,7 +105,7 @@ class TestRunArchival {
             });
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.runArchival(CUTOFF, archiveBaseDir);
+            db.publish(CUTOFF, archiveBaseDir);
         }
 
         final List<Path> archiveDirs = listSubDirs(archiveBaseDir);
@@ -145,7 +145,7 @@ class TestRunArchival {
             });
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.runArchival(CUTOFF, archiveBaseDir);
+            db.publish(CUTOFF, archiveBaseDir);
         }
 
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
@@ -185,13 +185,13 @@ class TestRunArchival {
             });
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.runArchival(CUTOFF, firstArchive);
+            db.publish(CUTOFF, firstArchive);
         }
         assertThat(listSubDirs(firstArchive)).as("first pass stages the trace").hasSize(1);
 
         // The root is younger than the cut-off so it is still held, which is the case that used to re-stage.
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.runArchival(CUTOFF, secondArchive);
+            db.publish(CUTOFF, secondArchive);
         }
         assertThat(listSubDirs(secondArchive))
                 .as("nothing arrived since, so no bucket is put back in play")
@@ -212,7 +212,7 @@ class TestRunArchival {
             });
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.runArchival(CUTOFF, firstArchive);
+            db.publish(CUTOFF, firstArchive);
         }
 
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
@@ -220,7 +220,7 @@ class TestRunArchival {
                     db.insert(writer, new SpanKV(childKey(TRACE_A), span(AFTER_CUTOFF, AFTER_CUTOFF))));
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.runArchival(CUTOFF, secondArchive);
+            db.publish(CUTOFF, secondArchive);
         }
 
         final List<Path> secondDirs = listSubDirs(secondArchive);
@@ -254,7 +254,7 @@ class TestRunArchival {
         }
         // Staged while younger than the cut-off, so the root is retained and nothing is left pending.
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.runArchival(CUTOFF, firstArchive);
+            db.publish(CUTOFF, firstArchive);
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
             assertThat(traceIds(db)).as("root still held after the first pass").containsExactly(TRACE_A);
@@ -263,7 +263,7 @@ class TestRunArchival {
         // Now past the cut-off, with nothing new to stage.
         final Instant laterCutOff = Instant.parse("2024-04-01T00:00:00.000Z");
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.runArchival(laterCutOff, secondArchive);
+            db.publish(laterCutOff, secondArchive);
         }
 
         assertThat(listSubDirs(secondArchive)).as("nothing to stage").isEmpty();
@@ -288,7 +288,7 @@ class TestRunArchival {
             });
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            assertThat(db.runArchival(CUTOFF, archiveBaseDir))
+            assertThat(db.publish(CUTOFF, archiveBaseDir))
                     .as("two spans plus the root row")
                     .isGreaterThanOrEqualTo(3);
         }
@@ -317,7 +317,7 @@ class TestRunArchival {
             });
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.runArchival(CUTOFF, archiveBaseDir);
+            db.publish(CUTOFF, archiveBaseDir);
         }
 
         assertThat(listSubDirs(archiveBaseDir).stream().map(p -> p.getFileName().toString()).toList())
@@ -355,7 +355,7 @@ class TestRunArchival {
             db.mergeComplete();
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            assertThat(db.runArchival(CUTOFF, archiveBaseDir))
+            assertThat(db.publish(CUTOFF, archiveBaseDir))
                     .isGreaterThanOrEqualTo(1);
         }
 
@@ -386,7 +386,7 @@ class TestRunArchival {
             });
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.runArchival(CUTOFF, archiveBaseDir);
+            db.publish(CUTOFF, archiveBaseDir);
         }
 
         assertDeltaHoldsOnly(archiveBaseDir.resolve("2024-01-10"), doc, TRACE_A, TRACE_B);
@@ -424,7 +424,7 @@ class TestRunArchival {
         mergeChild(dbDir, doc, tempDir, "b1", CHILD_SPAN, AFTER_CUTOFF);
 
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            assertThat(db.runArchival(CUTOFF, archiveBaseDir)).isZero();
+            assertThat(db.publish(CUTOFF, archiveBaseDir)).isZero();
         }
 
         assertThat(listSubDirs(archiveBaseDir)).as("no bucket for a trace still awaiting its root").isEmpty();
@@ -443,7 +443,7 @@ class TestRunArchival {
         mergeChild(dbDir, doc, tempDir, "b1", CHILD_SPAN, AFTER_CUTOFF);
 
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            assertThat(db.runArchival(Instant.parse("2024-06-01T00:00:00.000Z"), archiveBaseDir))
+            assertThat(db.publish(Instant.parse("2024-06-01T00:00:00.000Z"), archiveBaseDir))
                     .as("span plus the retired root row")
                     .isGreaterThanOrEqualTo(2);
         }
@@ -473,7 +473,7 @@ class TestRunArchival {
 
         mergeChild(dbDir, doc, tempDir, "b1", CHILD_SPAN, childStart);
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            db.runArchival(CUTOFF, archiveBaseDir);
+            db.publish(CUTOFF, archiveBaseDir);
         }
         assertThat(listSubDirs(archiveBaseDir)).as("nothing staged while the root is outstanding").isEmpty();
 
@@ -484,7 +484,7 @@ class TestRunArchival {
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
             db.merge(rootBatch);
             db.mergeComplete();
-            db.runArchival(CUTOFF, archiveBaseDir);
+            db.publish(CUTOFF, archiveBaseDir);
         }
 
         final List<Path> archiveDirs = listSubDirs(archiveBaseDir);
@@ -512,7 +512,7 @@ class TestRunArchival {
             db.write(writer -> db.insert(writer, new SpanKV(childKey(TRACE_A), span(CUTOFF, CUTOFF))));
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            assertThat(db.runArchival(CUTOFF, archiveBaseDir)).isZero();
+            assertThat(db.publish(CUTOFF, archiveBaseDir)).isZero();
         }
         assertThat(listSubDirs(archiveBaseDir)).isEmpty();
     }
@@ -597,7 +597,7 @@ class TestRunArchival {
 
         final long archived;
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            archived = db.runArchival(CUTOFF, archiveBaseDir);
+            archived = db.publish(CUTOFF, archiveBaseDir);
         }
         // root + all children (+ the root-DBI entry) archived and deleted.
         assertThat(archived).isGreaterThanOrEqualTo(childCount + 1);

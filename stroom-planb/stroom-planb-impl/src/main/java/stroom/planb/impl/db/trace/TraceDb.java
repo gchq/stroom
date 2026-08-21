@@ -130,7 +130,7 @@ import java.util.stream.Stream;
  *       waits out.</li>
  * </ul>
  *
- * <p>Spans land in a holding-area shard, and every merge cycle {@link #runArchival} moves them into the
+ * <p>Spans land in a holding-area shard, and every merge cycle {@link #publish} moves them into the
  * archive bucket named after their root's start time. Queries read the buckets, never the holding area.
  */
 public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
@@ -197,7 +197,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     /** Interns span names so an unbounded name never lands raw in a length-capped LMDB key. */
     private final LookupSerde lookupSerde;
     // Typed reference to the same object as valueSerde, held so that
-    // runArchival / runRetention can call readInsertTime() without
+    // publish / runRetention can call readInsertTime() without
     // going through the UID lookup table.
     private final SpanValueSerde spanValueSerde;
     private final UsedLookupsRecorder keyRecorder;
@@ -256,7 +256,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
     /**
      * How this store labels the buckets it publishes into. Read from settings here rather than passed
-     * to {@link #runArchival}, because how a store type buckets its data is its own business — the
+     * to {@link #publish}, because how a store type buckets its data is its own business — the
      * caller only supplies the directory to build the buckets under.
      */
     private final ArchivalGranularity granularity;
@@ -972,11 +972,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     /**
-     * The one archival path for a trace store. Stages every trace's spans into the archive bucket for its
-     * root's start time, and retires a root once it is older than {@code archiveBefore}.
+     * The one publish path for a trace store. Stages every trace's spans into the bucket for its root's
+     * start time, and retires a root once it is older than {@code publishBefore}.
      *
      * <p>A trace's root lives in the holding area until the cut-off, then it goes. Its spans move to the
-     * bucket as they merge, which is what makes the archive the queryable copy rather than a cold copy.
+     * bucket as they merge, which is what makes the bucket the queryable copy rather than a cold copy.
      * Spans arriving after the cut-off get a synthesized root from {@link #buildRootFromStats} and may land
      * in a different bucket; that is accepted — the cut-off is the operator's answer to "how long until all
      * of a trace's spans have arrived".
@@ -984,13 +984,13 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * @return the number of rows removed from the holding area — spans plus root-side rows, not traces
      */
     @Override
-    public long runArchival(final Instant archiveBefore,
-                               final Path archiveBaseDir) {
-        final ArchivalSelection selection = selectRoots(NanoTimeUtil.fromInstant(archiveBefore));
+    public long publish(final Instant publishBefore,
+                        final Path bucketBaseDir) {
+        final ArchivalSelection selection = selectRoots(NanoTimeUtil.fromInstant(publishBefore));
         if (selection.isEmpty()) {
             return 0L;
         }
-        stageSpans(selection, archiveBaseDir);
+        stageSpans(selection, bucketBaseDir);
         return purgeStaged(selection);
     }
 
@@ -2009,7 +2009,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      * locator across all delegates, so siblings from different buckets interleave in start-time order.
      * A trace's spans normally all sit in the bucket of its root, so most reads union a single bucket;
      * a trace splits only when late spans are bucketed by a synthesized orphan root (see
-     * {@link #runArchival}). Duplicate spans (identical locator) collapse to one.
+     * {@link #publish}). Duplicate spans (identical locator) collapse to one.
      */
     public static final class MergedChildCursor implements ChildCursor {
 
@@ -2388,7 +2388,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                                                    final byte[] traceIdBytes) {
         final Optional<Span> optRoot = rootSpan(txn, traceIdBytes);
         if (optRoot.isEmpty()) {
-            // Archival takes every span it stages, root span included, so a trace that has been archived
+            // Publishing takes every span it stages, root span included, so a trace that has been published
             // has no root span here. Its stored root stays authoritative: name, start time, root end and
             // depth are all fixed by data already handed over, and depth in particular cannot be re-derived
             // from the spans left behind. Only the stats-backed fields move as late spans arrive.

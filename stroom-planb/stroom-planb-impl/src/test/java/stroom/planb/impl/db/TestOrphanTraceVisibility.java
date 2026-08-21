@@ -74,7 +74,7 @@ class TestOrphanTraceVisibility {
     private static final String CHILD_SPAN = "2222222222222222";
 
     /**
-     * The published bucket is the case that decides the design question. {@code runArchival} stages
+     * The published bucket is the case that decides the design question. {@code publish} stages
      * orphan spans with no root entry, but {@code pushArchive} merges that delta into the bucket and calls
      * {@code mergeComplete}, which synthesizes the flagged root there.
      */
@@ -90,7 +90,7 @@ class TestOrphanTraceVisibility {
             db.mergeComplete();
         }
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
-            assertThat(db.runArchival(CUTOFF, archiveBaseDir))
+            assertThat(db.publish(CUTOFF, archiveBaseDir))
                     .as("the orphan's spans are swept by insert time")
                     .isGreaterThanOrEqualTo(1);
         }
@@ -99,7 +99,7 @@ class TestOrphanTraceVisibility {
         assertThat(staged).hasSize(1);
         assertThat(staged.getFirst().getFileName().toString()).isEqualTo(OLD_DAY);
 
-        // What runArchival stages carries no trace-root entry of its own.
+        // What publish stages carries no trace-root entry of its own.
         try (final TraceDb delta = TraceDb.create(
                 staged.getFirst(), BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, true)) {
             assertThat(roots(delta)).as("the staged delta has no root entry").isEmpty();

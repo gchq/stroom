@@ -85,12 +85,12 @@ public class MergeShard extends AbstractStoreShard {
      * Moves entries into local per-bucket directories, then deletes them from this copy. The caller
      * publishes those directories to the shared store and removes them afterwards.
      *
-     * @param doc            the document carrying the holding area settings
-     * @param archiveBaseDir local base dir; bucket subdirs are created underneath
+     * @param doc           the document carrying the holding area settings
+     * @param bucketBaseDir local base dir; bucket subdirs are created underneath
      * @return count of entries moved out (0 if there was nothing to move)
      */
-    public long runArchival(final PlanBDocument doc,
-                            final Path archiveBaseDir) throws IOException {
+    public long publish(final PlanBDocument doc,
+                        final Path bucketBaseDir) throws IOException {
         // Present for any doc whose writes pass through a holding shard, which this shard by definition
         // does. Throw rather than return 0: silently not publishing would leave data only in the holding
         // area, which queries never read.
@@ -99,10 +99,10 @@ public class MergeShard extends AbstractStoreShard {
                         .orElseThrow(() -> new IllegalStateException(
                                 "No holding area settings for " + doc.getName()));
 
-        final Instant archiveBefore =
+        final Instant publishBefore =
                 SimpleDurationUtil.minus(Instant.now(), holdingArea.getCompletionGrace());
 
-        Files.createDirectories(archiveBaseDir);
+        Files.createDirectories(bucketBaseDir);
 
         final long count;
         try {
@@ -111,7 +111,7 @@ public class MergeShard extends AbstractStoreShard {
             throw UncheckedInterruptedException.create(e);
         }
         try {
-            count = db.runArchival(archiveBefore, archiveBaseDir);
+            count = db.publish(publishBefore, bucketBaseDir);
             if (count > 0) {
                 lastWriteTime = Instant.now();
             }

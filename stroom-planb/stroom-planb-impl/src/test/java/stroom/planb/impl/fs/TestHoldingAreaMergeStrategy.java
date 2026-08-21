@@ -187,7 +187,7 @@ class TestHoldingAreaMergeStrategy {
     /** A shard whose store has nothing to move on. */
     private static MergeShard mockShard(final long count) throws IOException {
         final MergeShard shard = mock(MergeShard.class);
-        when(shard.runArchival(any(), any())).thenReturn(count);
+        when(shard.publish(any(), any())).thenReturn(count);
         return shard;
     }
 
@@ -197,7 +197,7 @@ class TestHoldingAreaMergeStrategy {
      */
     private static MergeShard mockShardWithBuckets(final List<String> dateLabels) throws IOException {
         final MergeShard shard = mock(MergeShard.class);
-        when(shard.runArchival(any(), any())).thenAnswer((InvocationOnMock inv) -> {
+        when(shard.publish(any(), any())).thenAnswer((InvocationOnMock inv) -> {
             final Path base = inv.getArgument(1, Path.class);
             for (final String label : dateLabels) {
                 Files.createDirectories(base.resolve(label));

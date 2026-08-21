@@ -103,7 +103,7 @@ class TestSyntheticRootStartTime {
         mergeBatch(dbDir, doc, tempDir, "b2", child("3333333333333333", LATE), LATE, LATE_END);
 
         try (final TraceDb db = TraceDb.create(dbDir, BB, BBF, doc, false)) {
-            db.runArchival(Instant.parse("2024-06-01T00:00:00.000Z"), archiveBaseDir);
+            db.publish(Instant.parse("2024-06-01T00:00:00.000Z"), archiveBaseDir);
         }
 
         assertThat(listSubDirs(archiveBaseDir).stream().map(p -> p.getFileName().toString()).toList())

@@ -52,13 +52,14 @@ public interface Db<K, V> extends AutoCloseable {
                        boolean useStateTime);
 
     /**
-     * Moves records older than {@code archiveBefore} out of this store and into subdirectories of
-     * {@code archiveBaseDir}, one per bucket. How records are grouped into buckets, and how a bucket
-     * subdirectory is named, is up to the implementation — a store type need not bucket by time, or
-     * at all. Returns 0 for a store type that does not publish this way.
+     * Moves records older than {@code publishBefore} out of this store and into subdirectories of
+     * {@code bucketBaseDir}, one per bucket, so that queries can read them. How records are grouped
+     * into buckets, and how a bucket subdirectory is named, is up to the implementation — a store
+     * type need not bucket by time, or at all. Returns 0 for a store type that does not publish
+     * this way.
      */
-    default long runArchival(final Instant archiveBefore,
-                                final Path archiveBaseDir) {
+    default long publish(final Instant publishBefore,
+                         final Path bucketBaseDir) {
         return 0L;
     }
 
