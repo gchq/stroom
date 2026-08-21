@@ -19,37 +19,34 @@ package stroom.datagen.client.presenter;
 import stroom.datagen.client.presenter.DataGenSettingsPresenter.DataGenSettingsView;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyUiHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermission;
-import stroom.ui.config.client.UiConfigCache;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import javax.inject.Provider;
 
+/**
+ * The Settings tab: picks the destination feed and edits the template that will be sent to it.
+ */
 public class DataGenSettingsPresenter
         extends DocPresenter<DataGenSettingsView, DataGenDoc> {
 
-    final DocSelectionBoxPresenter destinationFeedPresenter;
-    private final UiConfigCache uiConfigCache;
+    private final DocSelectionBoxPresenter destinationFeedPresenter;
     private final EditorPresenter templatePresenter;
 
     @Inject
     public DataGenSettingsPresenter(final EventBus eventBus,
                                     final DataGenSettingsView view,
                                     final DocSelectionBoxPresenter destinationFeedPresenter,
-                                    final UiConfigCache uiConfigcache,
                                     final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
         this.destinationFeedPresenter = destinationFeedPresenter;
-        this.uiConfigCache = uiConfigcache;
         this.templatePresenter = editorPresenterProvider.get();
 
         view.setTemplateEditor(templatePresenter.getView());
@@ -67,18 +64,13 @@ public class DataGenSettingsPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final DataGenDoc dataGenDoc, final boolean readOnly) {
-        uiConfigCache.get(extendedUiConfig -> {
-            if (extendedUiConfig != null) {
-                final DocRef selectedDocRef = dataGenDoc.getFeed();
-
-                if (selectedDocRef != null) {
-                    destinationFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
-                }
-                templatePresenter.setText(dataGenDoc.getTemplate());
-                templatePresenter.setReadOnly(false);
-                templatePresenter.getFormatAction().setAvailable(!readOnly);
-            }
-        }, this);
+        // Set unconditionally - a null docRef clears the box, which is what a doc with no feed should show. Guarding
+        // on null would leave a previous read's selection in place, and onWrite would then write it straight back.
+        destinationFeedPresenter.setSelectedEntityReference(dataGenDoc.getFeed(), true);
+        destinationFeedPresenter.setEnabled(!readOnly);
+        templatePresenter.setText(dataGenDoc.getTemplate());
+        templatePresenter.setReadOnly(readOnly);
+        templatePresenter.getFormatAction().setAvailable(!readOnly);
     }
 
     @Override
