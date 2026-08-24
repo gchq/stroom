@@ -78,7 +78,7 @@ after a crash, `resolve()` skips already-downloaded files
 **Practical alternative**: the real concern is disk pressure from accumulated
 cache entries, better addressed by size- or time-based eviction on the cache
 directory, and by cleaning cache entries when the stage deletes the
-corresponding `FileStoreLocation`. Overlaps with §9.
+corresponding `FileStoreLocation`. Overlaps with §10.
 
 Changing `resolve()` from `Path` to `InputStream` would require deep changes to
 every production handler for marginal benefit.
@@ -110,7 +110,48 @@ Options for scaling a single stage across processes on local storage:
 In practice, multi-process deployments should use SQS or Kafka — see
 [deployments/split-stage-workers.yml](deployments/split-stage-workers.yml).
 
-### 6. Backpressure Between Stages
+### 6. Fan-Out Retry Amplifies Duplicates to Healthy Destinations
+
+**Priority**: Medium
+
+Duplicates on redelivery are expected — the pipeline is at-least-once by design
+(see [architecture.md §3.4](architecture.md#34-at-least-once-delivery-not-exactly-once)).
+Multi-destination forwarding is the one place where that cost is *amplified*
+rather than merely accepted.
+
+`ForwardStageFanOutForwarder.forward()` loops the destinations, committing and
+publishing to each in turn. There is no atomicity across the loop, so a failure
+at destination N leaves destinations 1..N-1 already delivered. The whole
+`process()` then fails, the source message is redelivered, and the loop restarts
+from the top. Measured with two destinations, one permanently failing, over
+three attempts:
+
+| | Result |
+|---|---|
+| Attempts that threw | 3 |
+| Messages on the healthy destination's queue | 3 |
+| File groups in the healthy destination's store | 3 |
+| File groups orphaned in the failing destination's store | 3 |
+
+So a destination that is down for an hour multiplies traffic to every other
+destination for that hour, and leaks a committed-but-unpublished file group per
+attempt into its own store.
+
+The natural fix is already built and unused: `FileStore.newDeterministicWrite(fileGroupId)`.
+Each destination has its own store, and the fan-out preserves the source
+`fileGroupId`, so a deterministic write per destination would make a retry a
+no-op for destinations that already succeeded — turning unbounded amplification
+back into ordinary at-least-once behaviour. It would also stop the orphan
+accumulation, since the retry would re-derive the existing path instead of
+committing a fresh copy.
+
+Note this does **not** apply to split-zip, whose re-published splits get fresh
+random `fileGroupId`s and so have no stable key to deduplicate on. Giving splits
+a derived, stable id would be a prerequisite for the same treatment there.
+
+---
+
+### 7. Backpressure Between Stages
 
 **Priority**: Low
 
@@ -125,7 +166,7 @@ upstream stages keep producing. Consider:
 
 ## Observability
 
-### 7. Pipeline Topology Dashboard
+### 8. Pipeline Topology Dashboard
 
 **Priority**: Medium
 
@@ -143,7 +184,7 @@ glance:
 
 ## Configuration & Deployment
 
-### 8. Operational Deployment Guides
+### 9. Operational Deployment Guides
 
 **Priority**: Medium
 **Origin**: Original design plan
@@ -159,7 +200,7 @@ the common topologies. Still missing:
 - Capacity planning guidelines (queue sizing, thread tuning, disk/S3 budgets)
 - Disaster recovery procedures (queue drain, store backup/restore)
 
-### 9. Orphaned File Cleanup
+### 10. Orphaned File Cleanup
 
 **Priority**: Medium
 
@@ -216,7 +257,7 @@ Note this covers *pipeline* stores only. The forward-stage quarantine
 deliberate quarantines and must not be swept — see
 [data-path.md §5](data-path.md#5-where-data-can-accumulate).
 
-### 10. Configuration Validation Improvements
+### 11. Configuration Validation Improvements
 
 **Priority**: Low
 
@@ -235,7 +276,7 @@ intended is visible at startup. Both checks are per-process and cannot tell
 whether *another* process consumes a stranded queue — a cluster-aware check
 would need to see the whole deployment's configuration.
 
-### 11. Dynamic Configuration Reload
+### 12. Dynamic Configuration Reload
 
 **Priority**: Low
 

@@ -347,7 +347,7 @@ filesystems where `ATOMIC_MOVE` is unsupported for store paths.
 
 Closing an uncommitted write deletes the staging directory, so an abandoned
 write leaves nothing behind. A hard crash does leave the staging directory —
-see [future-work.md §9](future-work.md#9-orphaned-file-cleanup).
+see [future-work.md §10](future-work.md#10-orphaned-file-cleanup).
 
 #### Multi-Node Write Safety
 
@@ -837,13 +837,41 @@ Each stage only knows about its input queue, output queue, and file store. Stage
 - Scale stage thread counts independently
 - Mix queue and file store types between stages
 
-### 4. Idempotent Writes
+### 4. At-Least-Once Delivery
 
-File stores use deterministic write IDs (`newDeterministicWrite(id)`) where possible, so that reprocessing the same item produces the same output path. Existence is checked inside that call — `LocalFileStore` tests for the target directory, `S3FileStore` for objects under the target key — and if the output is already there the store returns a pre-committed write handle whose `commit()` does nothing. Reprocessing a message after a crash therefore re-derives the same location rather than creating duplicate data.
+The pipeline guarantees at-least-once processing: a file group may be processed
+more than once, but it will never be lost. Exactly-once is **not** attempted.
 
-### 5. At-Least-Once Delivery
+Duplicates are therefore normal, not exceptional. Every stage writes its output
+with `newWrite()`, which allocates a fresh path per call, so a redelivered
+message produces a second output and a second onward message — and the file
+group reaches the downstream twice. Plan for it:
 
-The pipeline guarantees at-least-once processing. A message may be processed more than once (e.g. after a crash between step 4 and step 6 of the ownership contract), but it will never be lost. Idempotent writes ensure that duplicate processing is safe.
+- **Downstream must tolerate duplicate receipt.** Each copy carries the same
+  `fileGroupId`, which is the key to de-duplicate on if you need to.
+- **Expect duplicates after any ungraceful stop** — `kill -9`, OOM kill, node
+  loss, pod eviction — and after any transient processor failure that causes
+  `item.fail()`.
+- **A destination that is failing amplifies them.** With multiple forward
+  destinations, a retry re-delivers to the destinations that already succeeded;
+  see [future-work.md](future-work.md).
+
+### 5. Crash Windows and What They Cost
+
+The ownership ordering (write → publish → delete → acknowledge) is arranged so no
+crash point loses data. Each has a different cost:
+
+| Crash point | Result |
+|---|---|
+| Before output commit | Reprocessed cleanly; an uncommitted staging directory is left behind |
+| After commit, before publish | Reprocessed; the first output is orphaned in the store |
+| After publish, before delete | Reprocessed; **duplicate** output and onward message |
+| After delete, before acknowledge | The redelivered message can never succeed — the input is gone — so it retries until it dead-letters |
+
+That last row is worth recognising in an incident. The work *completed*: output
+was committed and published before the input was deleted. The failed message
+represents finished work, not lost work, and re-driving it will fail again for
+the same reason. Check that the onward message exists before acting on it.
 
 ### 6. Retry & Dead-Letter Handling
 

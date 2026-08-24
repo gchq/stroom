@@ -58,9 +58,30 @@ Every stage follows a strict ordering: **write output → publish message → de
 
 Each stage only knows its input queue, output queue, and file store. All stages are enabled by default. For distributed deployments, individual stages can be disabled so that each process runs only the stages it is responsible for. Stages can be run in separate processes, scaled independently, and use different queue/store backends.
 
-### 3.4 Idempotent Writes
+### 3.4 At-Least-Once Delivery, Not Exactly-Once
 
-File stores support deterministic write paths (`newDeterministicWrite(id)`) so reprocessing produces the same output path. The check is built into that call: if the target already exists, the store returns a pre-committed write handle whose `commit()` is a no-op, so a redelivered message re-derives the same location instead of writing duplicate data.
+The pipeline guarantees that every file group is processed **at least** once. It
+does not attempt exactly-once, and **duplicates are an expected outcome**, not a
+fault to be designed out.
+
+Every stage writes its output with `FileStore.newWrite()`, which allocates a
+fresh sequential path per call. A redelivered message therefore produces a
+*second* committed output and a *second* onward message; the file group is
+delivered downstream twice. That is the accepted cost of never losing data: the
+ownership-transfer ordering in §5 is built so that a crash at any point loses
+nothing, and the price of that is a window in which work can be repeated.
+
+Downstream consumers must tolerate duplicate receipt of the same file group.
+Each copy carries the same `fileGroupId`, so a consumer that needs to
+de-duplicate has a stable key to do it with.
+
+> `FileStore` also offers `newDeterministicWrite(fileGroupId)`, which re-derives
+> the same path for a given file group and returns a no-op handle if the output
+> already exists. No stage uses it, because at-least-once does not require it.
+> It exists for callers that would benefit from replay-safe writes — the
+> multi-destination fan-out retry described in
+> [future-work.md](future-work.md) is the obvious candidate — and is covered by
+> the file store contract tests.
 
 ## 4. Package Structure
 
@@ -204,12 +225,21 @@ sequenceDiagram
 
 ### Crash Recovery Scenarios
 
-| Crash Point | Recovery Behaviour |
-|---|---|
-| Before output commit | Input still in queue, redelivered, reprocessed |
-| After commit, before publish | Input redelivered; deterministic writes detect existing output |
-| After publish, before input delete | Input redelivered; output already exists (idempotent) |
-| After delete, before ack | Input redelivered but source gone; fails to dead-letter |
+| Crash Point | Recovery Behaviour | Cost |
+|---|---|---|
+| Before output commit | Input still in queue, redelivered, reprocessed | An orphaned uncommitted staging directory |
+| After commit, before publish | Input redelivered and fully reprocessed | The first output is committed but referenced by nothing — an orphan; the second is published normally |
+| After publish, before input delete | Input redelivered and fully reprocessed | A **duplicate** onward message and output; the file group is delivered downstream twice |
+| After delete, before ack | Input redelivered, but the source is gone, so the processor throws | The message can never succeed and is retried until it dead-letters — even though its work completed |
+
+No row loses data. The last one is the operational trap worth knowing: the work
+*did* complete — output was committed and published before the input was
+deleted — so the failing message in `failed/` or the DLQ represents finished
+work, not lost work. Re-driving it will fail again for the same reason. Confirm
+the onward message exists before deciding what to do with it.
+
+Orphans left by the first two rows are wasted space rather than lost data; see
+[future-work.md](future-work.md) for the proposed cleanup.
 
 ## 6. Detailed Stage Documents
 

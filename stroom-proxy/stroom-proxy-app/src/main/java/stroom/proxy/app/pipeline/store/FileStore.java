@@ -91,9 +91,23 @@ public interface FileStore {
      * <p>
      * Unlike {@link #newWrite()}, which allocates a sequential path, this
      * method always resolves the same output path for the same
-     * {@code fileGroupId}. This enables idempotent processing: if the
-     * output already exists and is complete, the caller can skip writing
-     * and use the existing location.
+     * {@code fileGroupId}. This enables replay-safe processing: if the
+     * output already exists, the caller gets a pre-committed handle whose
+     * {@code commit()} is a no-op, so reprocessing re-derives the existing
+     * location rather than writing a second copy.
+     * </p>
+     * <p>
+     * <strong>No pipeline stage currently calls this.</strong> Every stage uses
+     * {@link #newWrite()}, because the pipeline's contract is at-least-once and
+     * duplicates on redelivery are accepted rather than suppressed. It is
+     * retained because it is the natural mechanism for a caller that does need
+     * replay-safe writes - the multi-destination forward fan-out, where a retry
+     * currently re-delivers to destinations that already succeeded, is the
+     * obvious candidate.
+     * </p>
+     * <p>
+     * Implementers of new backends must still provide it, and it is exercised by
+     * the file store contract tests.
      * </p>
      *
      * @param fileGroupId A stable identifier for the file group

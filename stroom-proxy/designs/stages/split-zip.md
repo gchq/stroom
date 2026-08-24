@@ -149,7 +149,13 @@ flowchart LR
 
 - If the `splitFunction` throws, the exception propagates to the `FileGroupQueueWorker`, which calls `item.fail(error)`. The message is returned to the queue for retry.
 - The `finally` block ensures the temporary directory is always cleaned up.
-- If some splits have been published but a later split fails, the input message will be retried. Already-published splits may be re-published (at-least-once). Downstream stages handle this via idempotent writes.
+- If some splits have been published but a later split fails, the input message
+  is retried and the whole split runs again, so already-published splits are
+  **re-published**. This is at-least-once behaviour and is accepted; nothing
+  suppresses the duplicates. Note that each re-run assigns fresh random
+  `fileGroupId`s to its splits, so the duplicates cannot be correlated with the
+  originals — unlike a redelivered forward, where the `fileGroupId` is carried
+  through from the source message.
 
 ## 8. Acknowledgement Contract
 

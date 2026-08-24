@@ -117,6 +117,11 @@ Key properties:
 
 ### 2.5 Write Flow (Deterministic)
 
+> Not used by any pipeline stage — every stage calls `newWrite()`. The pipeline's
+> contract is at-least-once, so duplicate output on redelivery is accepted rather
+> than suppressed. This path is retained for callers that need replay-safe
+> writes; see [../architecture.md §3.4](../architecture.md#34-at-least-once-delivery-not-exactly-once).
+
 ```mermaid
 flowchart TD
     A["newDeterministicWrite(fileGroupId)"] --> B{"stablePath is\na directory?"}
@@ -251,7 +256,7 @@ partially-uploaded file group that looks complete to a subsequent deterministic
 write. In practice the ownership-transfer ordering covers this — the reference
 message is only published after `commit()` returns — so a partial upload is
 never referenced, and it is left as an orphan rather than being consumed. See
-[../future-work.md §9](../future-work.md#9-orphaned-file-cleanup).
+[../future-work.md §10](../future-work.md#10-orphaned-file-cleanup).
 
 ### 3.3 Local Directory Layout
 
