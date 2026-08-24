@@ -1,0 +1,122 @@
+# Deployment: One process per stage role
+#
+# Use case: separate the receive tier from the processing tier so each scales
+# on its own axis — receive scales with inbound connection count, aggregate
+# with data volume, forward with downstream throughput.
+#
+# The mechanism is `enabled`. Every process is given the *same* queues and
+# fileStores definitions, and differs only in which stages it enables. A
+# disabled stage creates no worker and consumes nothing; its queues still exist
+# for whichever process does enable it.
+#
+# This file holds three variants. Use one per process — they are shown together
+# so the shared parts are obviously identical. In practice, put the common
+# `queues` and `fileStores` in a base file and overlay just the `stages` block.
+#
+# Requires external queues and shared file stores; see sqs-s3-distributed.yml
+# or kafka-distributed.yml for those blocks. With LOCAL_FILESYSTEM queues these
+# processes cannot see each other's work at all.
+
+# ---------------------------------------------------------------------------
+# Variant A — receive tier. Runs the HTTP endpoint and nothing else.
+# Scale horizontally behind a load balancer.
+# ---------------------------------------------------------------------------
+proxyConfig:
+  pipeline:
+    stages:
+      receive:
+        enabled: true
+        fileStore: receiveStore
+        outputQueue: preAggregateInput
+        splitZipQueue: splitZipInput
+        threads:
+          maxConcurrentReceives: 50
+      splitZip:
+        enabled: false
+      preAggregate:
+        enabled: false
+      aggregate:
+        enabled: false
+      forward:
+        enabled: false
+
+# ---------------------------------------------------------------------------
+# Variant B — processing tier. Splits, pre-aggregates and aggregates.
+# Scale with data volume. Accepts no HTTP data.
+# ---------------------------------------------------------------------------
+# proxyConfig:
+#   pipeline:
+#     stages:
+#       receive:
+#         enabled: false
+#       splitZip:
+#         enabled: true
+#         inputQueue: splitZipInput
+#         outputQueue: preAggregateInput
+#         fileStore: splitStore
+#         threads:
+#           consumerThreads: 8
+#       preAggregate:
+#         enabled: true
+#         inputQueue: preAggregateInput
+#         outputQueue: aggregateInput
+#         fileStore: preAggregateStore
+#         threads:
+#           consumerThreads: 8
+#           closeOldAggregatesThreads: 2
+#       aggregate:
+#         enabled: true
+#         inputQueue: aggregateInput
+#         outputQueue: forwardingInput
+#         fileStore: aggregateStore
+#         threads:
+#           consumerThreads: 8
+#       forward:
+#         enabled: false
+
+# ---------------------------------------------------------------------------
+# Variant C — forward tier. Drains forwardingInput to the downstream.
+# Scale with downstream throughput and outage tolerance.
+# ---------------------------------------------------------------------------
+# proxyConfig:
+#   pipeline:
+#     stages:
+#       receive:
+#         enabled: false
+#       splitZip:
+#         enabled: false
+#       preAggregate:
+#         enabled: false
+#       aggregate:
+#         enabled: false
+#       forward:
+#         enabled: true
+#         inputQueue: forwardingInput
+#         threads:
+#           consumerThreads: 16
+#   forwardHttpDestinations:
+#     - name: "downstream-stroom"
+#       enabled: true
+#       forwardUrl: "https://stroom.example.com/stroom/datafeed"
+
+# Notes
+#
+# Exactly one tier should own the forward stage. Forward retry state lives on
+# the local disk of the process that owns the destination (50_forwarding/...),
+# not in a shared store, so two forward-tier processes each keep their own
+# independent retry queues and failure quarantine. That is workable — they
+# consume different messages from the shared queue — but it means
+# 03_failure has to be inspected on every forward node, not just one.
+#
+# Only the receive tier needs to be reachable by data senders. The processing
+# and forward tiers need no inbound HTTP at all beyond the admin port.
+#
+# Aggregation is stateful: preAggregate holds open aggregates on local disk
+# (21_pre_aggregates) until they age out. Running several processing-tier
+# processes means aggregates form independently in each, so a given feed's data
+# is spread across more, smaller aggregates than a single process would produce.
+# Scale the processing tier for throughput, not for aggregate quality.
+#
+# A stage disabled everywhere silently strands its input queue. Nothing warns
+# about this — the messages simply accumulate. Check that the union of enabled
+# stages across all processes covers the whole pipeline.

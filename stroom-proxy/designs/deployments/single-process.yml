@@ -1,0 +1,79 @@
+# Deployment: Single Process, All Stages, Local Everything
+#
+# Use case: "Receive + Store + Aggregate + Forward" — one proxy does the whole
+# job on one machine. This is the default shape; the pipeline is always active
+# and every stage is enabled unless you say otherwise.
+#
+# The whole `pipeline` block below is optional. `pipeline: {}` — or omitting it
+# entirely — produces exactly this topology with auto-derived paths. It is
+# spelled out here so you can see what the defaults actually are.
+#
+# Queue paths default to   data/pipeline/queues/<queueName>
+# Store paths default to   data/pipeline/file-stores/<storeName>
+#
+# Merge this under the `proxyConfig` key of your proxy.yml, alongside the
+# `server`, `logging` and `jerseyClients` blocks.
+
+proxyConfig:
+
+  pipeline:
+    queues:
+      splitZipInput:
+        type: LOCAL_FILESYSTEM
+      preAggregateInput:
+        type: LOCAL_FILESYSTEM
+      aggregateInput:
+        type: LOCAL_FILESYSTEM
+      forwardingInput:
+        type: LOCAL_FILESYSTEM
+
+    fileStores:
+      receiveStore:
+        type: LOCAL_FILESYSTEM
+      splitStore:
+        type: LOCAL_FILESYSTEM
+      preAggregateStore:
+        type: LOCAL_FILESYSTEM
+      aggregateStore:
+        type: LOCAL_FILESYSTEM
+
+    stages:
+      receive:
+        enabled: true
+        fileStore: receiveStore
+        outputQueue: preAggregateInput
+        splitZipQueue: splitZipInput
+        threads:
+          maxConcurrentReceives: 5
+      splitZip:
+        enabled: true
+        inputQueue: splitZipInput
+        outputQueue: preAggregateInput
+        fileStore: splitStore
+        threads:
+          consumerThreads: 1
+      preAggregate:
+        enabled: true
+        inputQueue: preAggregateInput
+        outputQueue: aggregateInput
+        fileStore: preAggregateStore
+        threads:
+          consumerThreads: 1
+          closeOldAggregatesThreads: 1
+      aggregate:
+        enabled: true
+        inputQueue: aggregateInput
+        outputQueue: forwardingInput
+        fileStore: aggregateStore
+        threads:
+          consumerThreads: 1
+      forward:
+        enabled: true
+        inputQueue: forwardingInput
+        threads:
+          consumerThreads: 1
+
+  forwardHttpDestinations:
+    - name: "downstream-stroom"
+      enabled: true
+      forwardUrl: "https://stroom.example.com/stroom/datafeed"

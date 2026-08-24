@@ -1,0 +1,131 @@
+# Deployment: Distributed with Kafka queues and a shared filesystem
+#
+# Use case: on-premise distributed pipeline where Kafka is already the messaging
+# backbone and a shared filesystem (NFS, PVC, SAN) is available to all nodes.
+#
+# Same constraint as SQS: Kafka carries references only, so the file stores must
+# be visible to every producer and consumer. Here that is an explicit shared
+# mount rather than S3, which is why each store sets `path` — the validator's
+# EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE check is satisfied by an explicit
+# path, and shared-mount visibility is your responsibility to arrange.
+#
+# LocalFileStore partitions committed groups by a per-instance writerId, so
+# several proxy nodes writing the same shared store never collide on a path.
+# That is what makes a shared mount safe here whereas a shared *local queue*
+# directory would not be — see infrastructure/queues.md §2.6.
+
+proxyConfig:
+
+  pipeline:
+    queues:
+      splitZipInput:
+        type: KAFKA
+        topic: "stroom-proxy-split-zip-input"
+        bootstrapServers: "kafka-1.example.com:9092,kafka-2.example.com:9092"
+        consumer:
+          group.id: "stroom-proxy-split-zip"
+          auto.offset.reset: "earliest"
+        producer:
+          compression.type: "lz4"
+      preAggregateInput:
+        type: KAFKA
+        topic: "stroom-proxy-pre-aggregate-input"
+        bootstrapServers: "kafka-1.example.com:9092,kafka-2.example.com:9092"
+        consumer:
+          group.id: "stroom-proxy-pre-aggregate"
+        producer:
+          compression.type: "lz4"
+      aggregateInput:
+        type: KAFKA
+        topic: "stroom-proxy-aggregate-input"
+        bootstrapServers: "kafka-1.example.com:9092,kafka-2.example.com:9092"
+        consumer:
+          group.id: "stroom-proxy-aggregate"
+        producer:
+          compression.type: "lz4"
+      forwardingInput:
+        type: KAFKA
+        topic: "stroom-proxy-forwarding-input"
+        bootstrapServers: "kafka-1.example.com:9092,kafka-2.example.com:9092"
+        consumer:
+          group.id: "stroom-proxy-forwarding"
+        producer:
+          compression.type: "lz4"
+
+    fileStores:
+      receiveStore:
+        type: LOCAL_FILESYSTEM
+        path: "/mnt/proxy-shared/file-stores/receiveStore"
+      splitStore:
+        type: LOCAL_FILESYSTEM
+        path: "/mnt/proxy-shared/file-stores/splitStore"
+      preAggregateStore:
+        type: LOCAL_FILESYSTEM
+        path: "/mnt/proxy-shared/file-stores/preAggregateStore"
+      aggregateStore:
+        type: LOCAL_FILESYSTEM
+        path: "/mnt/proxy-shared/file-stores/aggregateStore"
+
+    stages:
+      receive:
+        enabled: true
+        fileStore: receiveStore
+        outputQueue: preAggregateInput
+        splitZipQueue: splitZipInput
+        threads:
+          maxConcurrentReceives: 20
+      splitZip:
+        enabled: true
+        inputQueue: splitZipInput
+        outputQueue: preAggregateInput
+        fileStore: splitStore
+        threads:
+          consumerThreads: 4
+      preAggregate:
+        enabled: true
+        inputQueue: preAggregateInput
+        outputQueue: aggregateInput
+        fileStore: preAggregateStore
+        threads:
+          consumerThreads: 4
+          closeOldAggregatesThreads: 1
+      aggregate:
+        enabled: true
+        inputQueue: aggregateInput
+        outputQueue: forwardingInput
+        fileStore: aggregateStore
+        threads:
+          consumerThreads: 4
+      forward:
+        enabled: true
+        inputQueue: forwardingInput
+        threads:
+          consumerThreads: 8
+
+  forwardHttpDestinations:
+    - name: "downstream-stroom"
+      enabled: true
+      forwardUrl: "https://stroom.example.com/stroom/datafeed"
+
+# Kafka notes
+#
+# The proxy sets these itself and you rarely want to change them:
+#   enable.auto.commit = false     offsets are committed explicitly on acknowledge()
+#   max.poll.records   = 1         matches the single-item next() contract
+#   acks               = all       producer durability
+#   key/value serdes   = String / ByteArray
+# Record key is the fileGroupId, giving partition affinity for related groups.
+#
+# group.id defaults to "stroom-proxy-<queueName>". Override it — as above — when
+# you want the group name to be explicit, or when two pipelines share a cluster.
+# Anything you put under `consumer:` or `producer:` is applied *after* the
+# defaults, so it can override them.
+#
+# Partition count per topic sets the ceiling on useful consumerThreads for that
+# stage across the whole deployment: extra consumers in a group beyond the
+# partition count sit idle.
+#
+# fail() does not commit the offset, so a failed message is redelivered on the
+# next poll. There is no built-in delay before redelivery and no retry topic —
+# a persistently poisonous message will spin. If you need dead-lettering,
+# configure it in Kafka rather than expecting the proxy to do it.

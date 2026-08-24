@@ -1,0 +1,137 @@
+# Deployment: Distributed on AWS — SQS queues, S3 file stores
+#
+# Use case: receive-tier and processing-tier scale independently, in separate
+# processes or containers, possibly in different availability zones.
+#
+# The key constraint: external queues transport *references only*. A message
+# published by one process is consumed by another, and that consumer must be
+# able to resolve the referenced file group. So every file store crossing a
+# process boundary must be shared storage — S3 here. Pointing an external queue
+# at a node-local file store will "work" until the consumer lands on a different
+# node and cannot resolve the location.
+#
+# ProxyPipelineConfigValidator checks for this and raises
+# EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE as a *warning* (not an error) when it
+# sees an external queue alongside a file store with no explicit shared path.
+# Note that S3 stores legitimately leave `path` unset — they address by bucket —
+# so they trip that warning too. Read it as a prompt to check, not a defect.
+#
+# This file is the config every node shares. Per-node differences go in the
+# `stages` block — see split-stage-workers.yml.
+
+proxyConfig:
+
+  pipeline:
+    queues:
+      splitZipInput:
+        type: SQS
+        queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/proxy-split-zip-input"
+        visibilityTimeout: "PT5M"
+        waitTime: "PT20S"
+      preAggregateInput:
+        type: SQS
+        queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/proxy-pre-aggregate-input"
+        visibilityTimeout: "PT5M"
+        waitTime: "PT20S"
+      aggregateInput:
+        type: SQS
+        queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/proxy-aggregate-input"
+        visibilityTimeout: "PT5M"
+        waitTime: "PT20S"
+      forwardingInput:
+        type: SQS
+        queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/proxy-forwarding-input"
+        visibilityTimeout: "PT15M"
+        waitTime: "PT20S"
+
+    fileStores:
+      receiveStore:
+        type: S3
+        region: "eu-west-2"
+        bucket: "example-proxy-pipeline"
+        keyPrefix: "receive/"
+        credentialsType: "default"
+        localCachePath: "data/pipeline/file-stores/s3-receiveStore"
+      splitStore:
+        type: S3
+        region: "eu-west-2"
+        bucket: "example-proxy-pipeline"
+        keyPrefix: "split/"
+        credentialsType: "default"
+      preAggregateStore:
+        type: S3
+        region: "eu-west-2"
+        bucket: "example-proxy-pipeline"
+        keyPrefix: "pre-aggregate/"
+        credentialsType: "default"
+      aggregateStore:
+        type: S3
+        region: "eu-west-2"
+        bucket: "example-proxy-pipeline"
+        keyPrefix: "aggregate/"
+        credentialsType: "default"
+
+    stages:
+      receive:
+        enabled: true
+        fileStore: receiveStore
+        outputQueue: preAggregateInput
+        splitZipQueue: splitZipInput
+        threads:
+          maxConcurrentReceives: 20
+      splitZip:
+        enabled: true
+        inputQueue: splitZipInput
+        outputQueue: preAggregateInput
+        fileStore: splitStore
+        threads:
+          consumerThreads: 4
+      preAggregate:
+        enabled: true
+        inputQueue: preAggregateInput
+        outputQueue: aggregateInput
+        fileStore: preAggregateStore
+        threads:
+          consumerThreads: 4
+          closeOldAggregatesThreads: 1
+      aggregate:
+        enabled: true
+        inputQueue: aggregateInput
+        outputQueue: forwardingInput
+        fileStore: aggregateStore
+        threads:
+          consumerThreads: 4
+      forward:
+        enabled: true
+        inputQueue: forwardingInput
+        threads:
+          consumerThreads: 8
+
+  forwardHttpDestinations:
+    - name: "downstream-stroom"
+      enabled: true
+      forwardUrl: "https://stroom.example.com/stroom/datafeed"
+      queue:
+        retryDelay: "PT1M"
+        retryDelayGrowthFactor: 2
+        maxRetryDelay: "PT30M"
+        maxRetryAge: "P3D"
+        forwardThreadCount: 10
+        forwardRetryThreadCount: 4
+
+# Sizing notes
+#
+# visibilityTimeout must exceed the worst-case processing time for one item on
+# that stage, or SQS will redeliver an item that is still being worked on. The
+# SQS queue implementation extends visibility with a heartbeat while an item is
+# in flight (see infrastructure/queues.md §3.5), but the initial timeout should
+# still be generous. `forwardingInput` gets the longest because a slow
+# downstream stretches the forward stage most.
+#
+# waitTime enables long polling. PT20S is the SQS maximum and gives the lowest
+# empty-poll cost; the `polls.empty` / `polls.total` metrics show whether it is
+# doing its job.
+#
+# Configure a redrive policy with a maxReceiveCount and a target DLQ on each SQS
+# queue. The proxy deliberately implements no dead-letter logic of its own —
+# SQS already does this natively. See history/ for the rationale.
