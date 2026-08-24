@@ -62,7 +62,7 @@ proxyConfig:
       forwardThreadCount: 5
       livenessCheckInterval: "PT1M"
       maxRetryAge: "P7D"
-      maxRetryDelay: "P1D"
+      maxRetryDelay: "PT10M"
       queueAndRetryEnabled: false
       retryDelay: "PT10M"
       retryDelayGrowthFactor: 1.0
@@ -101,7 +101,7 @@ proxyConfig:
       forwardThreadCount: 5
       livenessCheckInterval: "PT1M"
       maxRetryAge: "P7D"
-      maxRetryDelay: "P1D"
+      maxRetryDelay: "PT10M"
       queueAndRetryEnabled: true
       retryDelay: "PT10M"
       retryDelayGrowthFactor: 1.0

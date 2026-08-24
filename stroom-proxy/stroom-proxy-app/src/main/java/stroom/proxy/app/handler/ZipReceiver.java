@@ -113,12 +113,6 @@ public class ZipReceiver implements Receiver {
         // Make receiving zip dir provider.
         receivingDirProvider = createDirProvider(dataDirProvider, DirNames.RECEIVING_ZIP);
 
-//        // Get or create the received dir provider.
-//        receivedDirProvider = createDirProvider(dataDirProvider, DirNames.RECEIVED_ZIP);
-
-//        // Move any received data from previous proxy usage to the store.
-//        transferOldReceivedData(receivedDir);
-
         this.receiveDataConfig = receiveDataConfigProvider.get();
 
         LOGGER.info("Initialised ZipReceiver, receivingDir base: {}", receivingDirProvider.getParentDir());

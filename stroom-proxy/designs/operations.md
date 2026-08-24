@@ -1,4 +1,30 @@
-# Stroom Proxy Pipeline Architecture
+# Stroom Proxy — Operations Guide
+
+Configuring, deploying and monitoring the proxy pipeline. For the design behind
+it see [architecture.md](architecture.md); for the end-to-end data path and
+on-disk layout see [data-path.md](data-path.md).
+
+## Use Cases
+
+The proxy has always been shaped around a handful of deployment intentions.
+Under the pipeline architecture these are no longer distinct code paths — they
+are all the same five stages with different stages enabled and different
+forwarding destinations configured.
+
+| Use case | What it does | How it is configured |
+|---|---|---|
+| **Repeater (forward only)** | Receives and immediately repeats to a single destination without storing or processing. Forwarding errors go back to the sender. Minimal validation — enough to confirm the headers carry a feed name, which can be checked against a receipt policy. | Disable `splitZip`, `preAggregate` and `aggregate`; set `queueAndRetryEnabled: false` on the destination so failures surface to the sender rather than being queued |
+| **Receive + store** | Receives and stores to disk for some other process to collect. | Disable `forward` |
+| **Receive + store + forward** | Acknowledges receipt once stored, then forwards to one or more destinations. Forward errors are logged and retried, not returned to the sender. | All stages except `preAggregate`/`aggregate` |
+| **Receive + store + aggregate + forward** | Also packs many small streams for the same feed into one archive before forwarding. Fewer connections and much less bandwidth, since log data compresses well. | The default — all five stages enabled |
+| **Scan + forward** | Picks up data written to a directory by another process — typically a remote receive-only proxy — and forwards it. | Enable `dirScanner`; disable `preAggregate`/`aggregate` |
+| **Scan + aggregate + forward** | As above, with aggregation. | Enable `dirScanner`; all stages enabled |
+
+The stage-disabling mechanism is the same one used to distribute a pipeline
+across processes — see
+[deployments/split-stage-workers.yml](deployments/split-stage-workers.yml).
+Scanning is an entry point rather than a stage; see
+[infrastructure/entry-points.md](infrastructure/entry-points.md).
 
 ## Overview
 
@@ -432,6 +458,18 @@ Each stage has the following fields:
 
 ## Deployment Examples
 
+> Complete, ready-to-copy versions of these live in
+> [deployments/](deployments/). Each is a full `proxyConfig` block that has been
+> checked to parse and to pass `ProxyPipelineConfigValidator` with no errors.
+> The snippets below show the `pipeline` block alone, for reading.
+>
+> | Example | File |
+> |---|---|
+> | 1, 2 — single process | [single-process.yml](deployments/single-process.yml) |
+> | 4 — SQS + S3 | [sqs-s3-distributed.yml](deployments/sqs-s3-distributed.yml) |
+> | 6 — Kafka | [kafka-distributed.yml](deployments/kafka-distributed.yml) |
+> | Per-stage worker processes | [split-stage-workers.yml](deployments/split-stage-workers.yml) |
+
 ### Example 1: Simple Single-Process (All Defaults)
 
 The simplest deployment — all stages run in one process with local filesystem queues and stores. **No pipeline configuration is needed at all.** An empty `pipeline` block (or omitting it entirely) auto-wires all five stages.
@@ -708,7 +746,7 @@ Each stage only knows about its input queue, output queue, and file store. Stage
 
 ### 4. Idempotent Writes
 
-File stores use deterministic write IDs (`newDeterministicWrite(id)`) where possible, so that reprocessing the same item produces the same output path. Combined with `isComplete()` checks, this provides idempotency — reprocessing a message after a crash doesn't create duplicate data.
+File stores use deterministic write IDs (`newDeterministicWrite(id)`) where possible, so that reprocessing the same item produces the same output path. Existence is checked inside that call — `LocalFileStore` tests for the target directory, `S3FileStore` for objects under the target key — and if the output is already there the store returns a pre-committed write handle whose `commit()` does nothing. Reprocessing a message after a crash therefore re-derives the same location rather than creating duplicate data.
 
 ### 5. At-Least-Once Delivery
 

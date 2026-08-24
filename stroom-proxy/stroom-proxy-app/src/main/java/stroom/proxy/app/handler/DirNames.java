@@ -33,26 +33,6 @@ public final class DirNames {
     public static final String RECEIVING_ZIP = "01_receiving_zip";
 
     /**
-     * Where we queue zips that need to be split by feed.
-     */
-    public static final String SPLIT_ZIP_QUEUE = "02_split_zip_input_queue";
-
-    /**
-     * This is the location for splitting source data where zip files contain multiple feeds.
-     */
-    public static final String SPLIT_ZIP = "03_split_zip_splits";
-
-//    /**
-//     * This is the final receive location for received zip data as we might have split the zip data.
-//     */
-//    public static final String RECEIVED_ZIP = "03_received_zip";
-
-    /**
-     * Where we queue data prior to the pre aggregation process picking it up.
-     */
-    public static final String PRE_AGGREGATE_INPUT_QUEUE = "20_pre_aggregate_input_queue";
-
-    /**
      * Where we are collecting multiple data items ready to be aggregated.
      */
     public static final String PRE_AGGREGATES = "21_pre_aggregates";
@@ -68,20 +48,10 @@ public final class DirNames {
     public static final String PRE_AGGREGATE_SPLIT_OUTPUT = "23_split_output";
 
     /**
-     * Where we queue data ready for aggregation.
-     */
-    public static final String AGGREGATE_INPUT_QUEUE = "30_aggregate_input_queue";
-
-    /**
      * Where we form the new aggregate zip files from the collection of parts provided by the pre aggregation process.
      * This is a temporary location where zips are formed prior to transfer to the forwarding input queue.
      */
     public static final String AGGREGATES = "31_aggregates";
-
-    /**
-     * Where we queue data ready for forwarding.
-     */
-    public static final String FORWARDING_INPUT_QUEUE = "40_forwarding_input_queue";
 
     /**
      * Where we perform forwarding.

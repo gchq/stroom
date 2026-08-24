@@ -48,7 +48,7 @@ public abstract class ForwardQueueConfig extends AbstractConfig implements IsPro
     protected static final StroomDuration DEFAULT_MAX_RETRY_AGE = StroomDuration.ofDays(7);
     protected static final double DEFAULT_RETRY_GROWTH_FACTOR = 1;
     protected static final StroomDuration DEFAULT_RETRY_DELAY = StroomDuration.ofMinutes(10);
-    protected static final StroomDuration DEFAULT_MAX_RETRY_DELAY = StroomDuration.ofDays(1);
+    protected static final StroomDuration DEFAULT_MAX_RETRY_DELAY = StroomDuration.ofMinutes(10);
     protected static final int DEFAULT_FORWARD_RETRY_THREAD_COUNT = 1;
     protected static final int DEFAULT_FORWARD_THREAD_COUNT = 5;
 
@@ -78,7 +78,7 @@ public abstract class ForwardQueueConfig extends AbstractConfig implements IsPro
         forwardDelay = DEFAULT_FORWARD_DELAY;
         retryDelay = DEFAULT_RETRY_DELAY;
         retryDelayGrowthFactor = DEFAULT_RETRY_GROWTH_FACTOR;
-        maxRetryDelay = DEFAULT_RETRY_DELAY;
+        maxRetryDelay = DEFAULT_MAX_RETRY_DELAY;
         maxRetryAge = DEFAULT_MAX_RETRY_AGE;
         errorSubPathTemplate = PathTemplateConfig.DEFAULT;
         forwardRetryThreadCount = DEFAULT_FORWARD_RETRY_THREAD_COUNT;
@@ -135,7 +135,8 @@ public abstract class ForwardQueueConfig extends AbstractConfig implements IsPro
     }
 
     @JsonPropertyDescription("If retryDelayGrowthFactor is > 1, " +
-                             "this property controls the maximum retry delay interval.")
+                             "this property controls the maximum retry delay interval. Default is 10 minutes, " +
+                             "the same as retryDelay, so growth has no effect until this is also raised.")
     public StroomDuration getMaxRetryDelay() {
         return maxRetryDelay;
     }

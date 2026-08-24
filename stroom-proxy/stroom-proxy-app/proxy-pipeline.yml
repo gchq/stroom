@@ -11,6 +11,10 @@
 #   pipeline: {}
 #
 # All queues, stores, and stages will use sensible defaults.
+#
+# For complete worked configurations — distributed SQS/S3, Kafka, and one
+# process per stage role — see ../designs/deployments/. For the architecture
+# behind them see ../designs/README.md.
 
 pipeline:
   # Named queues used by pipeline stages. All queues default to

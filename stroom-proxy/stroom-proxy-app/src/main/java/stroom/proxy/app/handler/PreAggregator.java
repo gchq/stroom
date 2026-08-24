@@ -294,7 +294,7 @@ public class PreAggregator {
     /**
      * This MUST be called under a feedKey lock.
      *
-     * @param dir Inside {@link DirNames#PRE_AGGREGATE_INPUT_QUEUE}
+     * @param dir A file group directory resolved from the pre-aggregate stage's input file store.
      */
     private void addDir(final Path dir, final FileGroup fileGroup, final FeedKey feedKey)
             throws IOException {
