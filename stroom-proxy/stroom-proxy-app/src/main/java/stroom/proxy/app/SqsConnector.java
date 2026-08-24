@@ -68,12 +68,6 @@ public class SqsConnector {
 
     public void poll() {
         try {
-//            if (queueUrl == null) {
-//                LOGGER.debug(() -> "Getting queue name");
-//                final String queueName = config.getQueueName();
-//                LOGGER.debug(() -> "Getting queue URL for queue: " + queueName);
-//                queueUrl = sqs.getQueueUrl(queueName).getQueueUrl();
-//            }
             LOGGER.debug(() -> "Got queue URL: " + queueUrl);
 
             List<Message> messages;

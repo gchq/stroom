@@ -111,7 +111,7 @@ public class ForwardHttpQueueConfig extends ForwardQueueConfig {
             this.livenessCheckInterval = forwardQueueConfig.getLivenessCheckInterval();
         }
 
-        public Builder forwardDelay(final boolean queueAndRetryEnabled) {
+        public Builder queueAndRetryEnabled(final boolean queueAndRetryEnabled) {
             this.queueAndRetryEnabled = queueAndRetryEnabled;
             return this;
         }

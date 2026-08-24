@@ -43,6 +43,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Pattern;
 
@@ -224,12 +225,20 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return dirScannerConfig;
     }
 
+    // @Valid is load-bearing on the config lists in this class. Bean validation does
+    // not descend into a collection without it, and the proxy's recursive config
+    // walker explicitly skips collections (PropertyUtil.walkObjectTree). Without it
+    // every constraint inside ForwardFileConfig, ForwardHttpPostConfig and
+    // SqsConnectorConfig is silently unenforced, and a destination missing a required
+    // field starts cleanly then fails later at runtime.
+    @Valid
     @RequiresProxyRestart
     @JsonProperty(PROP_NAME_FORWARD_FILE_DESTINATIONS)
     public List<ForwardFileConfig> getForwardFileDestinations() {
         return forwardFileDestinations;
     }
 
+    @Valid
     @RequiresProxyRestart
     @JsonProperty(PROP_NAME_FORWARD_HTTP_DESTINATIONS)
     public List<ForwardHttpPostConfig> getForwardHttpDestinations() {
@@ -252,6 +261,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return proxySecurityConfig;
     }
 
+    @Valid
     @JsonPropertyDescription("Configurations for AWS SQS connectors")
     @JsonProperty
     public List<SqsConnectorConfig> getSqsConnectors() {

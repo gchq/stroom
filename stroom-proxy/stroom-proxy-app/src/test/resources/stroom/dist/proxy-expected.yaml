@@ -319,8 +319,6 @@ proxyConfig:
         validIssuers: []
         validateAudience: true
   sqsConnectors:
-  - awsProfileName: null
-    awsRegionName: null
+  - awsRegionName: null
     pollFrequency: "PT10S"
-    queueName: null
     queueUrl: null
