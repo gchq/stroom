@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Singleton
 class DataRetentionRulesServiceImpl
@@ -111,13 +112,15 @@ class DataRetentionRulesServiceImpl
 
     @Override
     public DataRetentionRules getOrCreate() {
-        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
-        // access it via the proc user.
-        return securityContext.asProcessingUserResult(() -> {
-            final DocRef docRef = lazyDocRef.getValueWithLocks();
-            Objects.requireNonNull(docRef);
-            return readDocument(docRef);
-        });
+        final DocRef docRef = lazyDocRef.getValueWithLocks();
+        Objects.requireNonNull(docRef);
+        return readDocument(docRef);
+    }
+
+    @Override
+    public Optional<DataRetentionRules> get() {
+        return Optional.ofNullable(getSingletonDoc())
+                .map(this::readDocument);
     }
 
     private DocRef doGetOrCreate() {

@@ -31,6 +31,7 @@ import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StreamFeedProvider;
+import stroom.meta.impl.StreamAttributeMapRetentionRuleDecoratorFactory.StreamAttributeMapRetentionRuleDecorator;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -101,7 +102,7 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
     private final MetaRetentionTrackerDao metaRetentionTrackerDao;
     private final Provider<MetaServiceConfig> metaServiceConfigProvider;
     private final DocFinder docFinder;
-    private final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider;
+    private final Provider<StreamAttributeMapRetentionRuleDecoratorFactory> decoratorProvider;
     private final Optional<MetaSecurityFilter> metaSecurityFilter;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
@@ -117,7 +118,7 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
                     final MetaRetentionTrackerDao metaRetentionTrackerDao,
                     final Provider<MetaServiceConfig> metaServiceConfigProvider,
                     final DocFinder docFinder,
-                    final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
+                    final Provider<StreamAttributeMapRetentionRuleDecoratorFactory> decoratorProvider,
                     final Optional<MetaSecurityFilter> metaSecurityFilter,
                     final SecurityContext securityContext,
                     final TaskContextFactory taskContextFactory,
@@ -533,7 +534,8 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
             if (NullSafe.hasItems(list)) {
                 LOGGER.logDurationIfTraceEnabled(
                         () -> {
-                            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
+                            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get()
+                                    .createDecorator();
                             list.getValues().forEach(metaRow ->
                                     decorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
                         },

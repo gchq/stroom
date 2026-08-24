@@ -53,7 +53,6 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.UnauthenticatedUserIdentity;
 import stroom.receive.content.shared.ContentTemplate;
-import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
@@ -563,47 +562,50 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
     private Optional<ContentTemplate> getMatchingTemplate(final AttributeMap attributeMap) {
 
-        final ContentTemplates contentTemplates = contentTemplateStore.getOrCreate();
-        final List<ContentTemplate> activeTemplates = contentTemplates.getActiveTemplates();
-        ContentTemplate matchingTemplate = null;
-        Map<String, Object> normalisedAttributes = null;
-        if (NullSafe.hasItems(activeTemplates)) {
-            for (final ContentTemplate contentTemplate : activeTemplates) {
-                final ExpressionOperator expression = contentTemplate.getExpression();
-                if (expression == null) {
-                    matchingTemplate = contentTemplate;
-                    break;
-                } else {
-                    if (normalisedAttributes == null) {
-                        // Normalise the keys to lower case
-                        normalisedAttributes = attributeMap.asMap(true)
-                                .entrySet()
-                                .stream()
-                                .collect(Collectors.toMap(
-                                        entry1 -> normaliseField(entry1.getKey()),
-                                        entry -> NullSafe.get(
-                                                entry.getValue(),
-                                                val -> (Object) val)));
-                    }
+        return contentTemplateStore.get()
+                .map(contentTemplates -> {
+                    final List<ContentTemplate> activeTemplates = contentTemplates.getActiveTemplates();
+                    ContentTemplate matchingTemplate = null;
+                    Map<String, Object> normalisedAttributes = null;
+                    if (NullSafe.hasItems(activeTemplates)) {
+                        for (final ContentTemplate contentTemplate : activeTemplates) {
+                            final ExpressionOperator expression = contentTemplate.getExpression();
+                            if (expression == null) {
+                                matchingTemplate = contentTemplate;
+                                break;
+                            } else {
+                                if (normalisedAttributes == null) {
+                                    // Normalise the keys to lower case
+                                    normalisedAttributes = attributeMap.asMap(true)
+                                            .entrySet()
+                                            .stream()
+                                            .collect(Collectors.toMap(
+                                                    entry1 -> normaliseField(entry1.getKey()),
+                                                    entry -> NullSafe.get(
+                                                            entry.getValue(),
+                                                            val -> (Object) val)));
+                                }
 
-                    final boolean isMatch = cachedExpressionMatcher.getValue()
-                            .match(normalisedAttributes, expression);
-                    if (isMatch) {
-                        matchingTemplate = contentTemplate;
-                        break;
+                                final boolean isMatch = cachedExpressionMatcher.getValue()
+                                        .match(normalisedAttributes, expression);
+                                if (isMatch) {
+                                    matchingTemplate = contentTemplate;
+                                    break;
+                                }
+                            }
+                        }
                     }
-                }
-            }
-        }
-        if (LOGGER.isInfoEnabled()) {
-            if (matchingTemplate != null) {
-                LOGGER.info("Data matched content template {} '{}', attributeMap: {}",
-                        matchingTemplate.getTemplateNumber(), matchingTemplate.getName(), attributeMap);
-            } else {
-                LOGGER.info("Data didn't match any active content templates, attributeMap: {}", attributeMap);
-            }
-        }
-        return Optional.ofNullable(matchingTemplate);
+                    if (LOGGER.isInfoEnabled()) {
+                        if (matchingTemplate != null) {
+                            LOGGER.info("Data matched content template {} '{}', attributeMap: {}",
+                                    matchingTemplate.getTemplateNumber(), matchingTemplate.getName(), attributeMap);
+                        } else {
+                            LOGGER.info("Data didn't match any active content templates, attributeMap: {}",
+                                    attributeMap);
+                        }
+                    }
+                    return matchingTemplate;
+                });
     }
 
     private static String normaliseField(final String field) {
