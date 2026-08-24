@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.app.guice;
 
+import stroom.ai.impl.AiModule;
 import stroom.app.AdminAccountBootstrap;
 import stroom.app.metrics.StroomAppInfoProvider;
 import stroom.app.uri.UriFactoryModule;
@@ -24,6 +25,7 @@ import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.prometheus.AppInfoProvider;
 import stroom.dropwizard.common.prometheus.PrometheusModule;
+import stroom.dropwizard.common.sysinfo.SystemInfoAdminServletModule;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
@@ -44,7 +46,7 @@ public class AppModule extends AbstractModule {
 
         install(new UriFactoryModule());
         install(new CoreModule());
-        install(new stroom.langchain.impl.OpenAIModule());
+        install(new AiModule());
         install(new LifecycleServiceModule());
         install(new JobsModule());
         install(new ClusterModule());
@@ -54,6 +56,7 @@ public class AppModule extends AbstractModule {
         install(new ResourceModule());
         install(new JerseyModule());
         install(new PrometheusModule());
+        install(new SystemInfoAdminServletModule());
 
         bind(AppInfoProvider.class).to(StroomAppInfoProvider.class);
 

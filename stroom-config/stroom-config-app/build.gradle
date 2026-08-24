@@ -5,11 +5,12 @@ def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
 def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
 
 dependencies {
+    implementation project(':stroom-activity:stroom-activity-impl')
     implementation project(':stroom-activity:stroom-activity-impl-db')
+    implementation project(':stroom-ai:stroom-ai-impl')
     implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-annotation:stroom-annotation-impl-db')
-    implementation project(':stroom-contentstore:stroom-contentstore-api')
     implementation project(':stroom-contentstore:stroom-contentstore-impl')
     implementation project(':stroom-credentials:stroom-credentials-impl')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
@@ -17,32 +18,32 @@ dependencies {
     implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-cluster:stroom-cluster-api')
+    implementation project(':stroom-cluster:stroom-cluster-lock-impl')
     implementation project(':stroom-cluster:stroom-cluster-lock-impl-db')
-    implementation project(':stroom-cluster:stroom-cluster-task-impl')
     implementation project(':stroom-config:stroom-config-common')
-    implementation project(':stroom-core')
-    implementation project(':stroom-core-shared')
+    implementation project(':stroom-config:stroom-config-global-impl-db')
     implementation project(':stroom-dashboard:stroom-dashboard-impl')
+    implementation project(':stroom-dashboard:stroom-dashboard-impl-db')
     implementation project(':stroom-dashboard:stroom-storedquery-impl')
     implementation project(':stroom-dashboard:stroom-storedquery-impl-db')
     implementation project(':stroom-data:stroom-data-retention-api')
-    implementation project(':stroom-data:stroom-data-retention-impl')
     implementation project(':stroom-data:stroom-data-store-impl-fs')
+    implementation project(':stroom-data:stroom-data-store-impl-fs-db')
     implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-event-logging:stroom-event-logging-impl')
     implementation project(':stroom-explorer:stroom-explorer-impl')
     implementation project(':stroom-explorer:stroom-explorer-impl-db')
     implementation project(':stroom-feed:stroom-feed-impl')
-    implementation project(':stroom-gitrepo:stroom-gitrepo-api')
     implementation project(':stroom-gitrepo:stroom-gitrepo-impl')
     implementation project(':stroom-importexport:stroom-importexport-impl')
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-index:stroom-index-impl-db')
+    implementation project(':stroom-index:stroom-index-lucene')
     implementation project(':stroom-job:stroom-job-impl')
     implementation project(':stroom-job:stroom-job-impl-db')
     implementation project(':stroom-kafka:stroom-kafka-impl')
-    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-meta:stroom-meta-impl')
@@ -52,14 +53,15 @@ dependencies {
     implementation project(':stroom-pipeline')
     implementation project(':stroom-planb:stroom-planb-impl')
     implementation project(':stroom-processor:stroom-processor-impl')
+    implementation project(':stroom-processor:stroom-processor-impl-db')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-receive:stroom-receive-rules-impl')
     implementation project(':stroom-search:stroom-search-elastic')
     implementation project(':stroom-search:stroom-search-impl')
     implementation project(':stroom-search:stroom-search-solr')
-    implementation project(':stroom-search:stroom-searchable-impl')
     implementation project(':stroom-security:stroom-security-common-impl')
     implementation project(':stroom-security:stroom-security-identity')
+    implementation project(':stroom-security:stroom-security-identity-db')
     implementation project(':stroom-security:stroom-security-impl')
     implementation project(':stroom-security:stroom-security-impl-db')
     implementation project(':stroom-statistics:stroom-statistics-impl')
@@ -67,24 +69,12 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.commons.text
-    implementation libs.dropwizard.configuration
     implementation libs.dropwizard.client
-    implementation libs.dropwizard.core
-    implementation libs.dropwizard.validation
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
     implementation libs.jackson.dataformat.yaml
-    implementation libs.jakarta.inject
-    implementation libs.snake.yaml
+    implementation libs.jackson2.databind
 
-    testImplementation project(':stroom-test-common')
-
-    testImplementation libs.jackson.datatype.jdk8
     testImplementation libs.mbknor.jackson.jsonSchema
-    testImplementation libs.java.diff.utils
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

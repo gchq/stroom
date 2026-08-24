@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,10 @@ import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
-import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.importexport.api.ImportExportDocument;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorFilterUtil;
 import stroom.processor.shared.ProcessorFilter;
@@ -40,7 +36,6 @@ import stroom.query.language.SearchRequestFactory;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Message;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -50,18 +45,17 @@ import jakarta.inject.Singleton;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 @Singleton
-class AnalyticRuleStoreImpl implements AnalyticRuleStore {
+class AnalyticRuleStoreImpl
+        extends AbstractDocumentStore<AnalyticRuleDoc>
+        implements AnalyticRuleStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticRuleStoreImpl.class);
 
-    private final Store<AnalyticRuleDoc> store;
-    private final SecurityContext securityContext;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestFactory searchRequestFactory;
@@ -70,41 +64,24 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Inject
     AnalyticRuleStoreImpl(final StoreFactory storeFactory,
-                          final AnalyticRuleSerialiser serialiser,
                           final SecurityContext securityContext,
+                          final AnalyticRuleSerialiser serialiser,
                           final Provider<ProcessorFilterService> processorFilterServiceProvider,
                           final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                           final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
                           final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                           final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(
+        super(storeFactory,
+                securityContext,
                 serialiser,
                 AnalyticRuleDoc.TYPE,
                 AnalyticRuleDoc::builder,
                 AnalyticRuleDoc::copy);
-        this.securityContext = securityContext;
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
         this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
         this.executionScheduleDaoProvider = executionScheduleDaoProvider;
-    }
-
-    ////////////////////////////////////////////////////////////////////////
-    // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public DocRef createDocument(final String name) {
-        final DocRef docRef = store.createDocument(name);
-
-        // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
-        // them until after they are created in the store.
-        securityContext.asProcessingUser(() -> {
-            final AnalyticRuleDoc analyticRuleDoc = store.readDocument(docRef);
-            store.writeDocument(analyticRuleDoc);
-        });
-        return docRef;
     }
 
     @Override
@@ -113,8 +90,8 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        final AnalyticRuleDoc document = store.readDocument(docRef);
-        return store.createDocument(newName,
+        final AnalyticRuleDoc document = super.readDocument(docRef);
+        return getStore().createDocument(newName,
                 (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
                     final Builder builder = document
                             .copy()
@@ -152,52 +129,14 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     }
 
     @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
     public void deleteDocument(final DocRef docRef) {
         deleteProcessorFilter(docRef);
         deleteExecutionSchedules(docRef);
-        store.deleteDocument(docRef);
+        super.deleteDocument(docRef);
     }
 
     @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(createMapper());
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, createMapper());
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, createMapper());
-    }
-
-    private DependencyRemapFunction<AnalyticRuleDoc> createMapper() {
+    protected DependencyRemapFunction<AnalyticRuleDoc> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             final AnalyticRuleDoc.Builder builder = doc.copy();
             try {
@@ -242,57 +181,6 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         };
     }
 
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public AnalyticRuleDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
-    }
-
-    @Override
-    public AnalyticRuleDoc writeDocument(final AnalyticRuleDoc document) {
-        return store.writeDocument(document);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final ImportExportDocument importExportDocument,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                               final boolean omitAuditFields,
-                                               final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
     @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         final Set<DocRef> docRefs = new HashSet<>();
@@ -309,7 +197,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
                 docRefs.addAll(processorFilters);
 
-                docRefs.addAll(store.findDocRefsEmbeddedIn(docRef));
+                docRefs.addAll(getStore().findDocRefsEmbeddedIn(docRef));
             }
 
             if (ruleDoc.getAnalyticProcessType().equals(AnalyticProcessType.SCHEDULED_QUERY)) {
@@ -328,25 +216,6 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
             return docRefs;
         }
         return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
-    }
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
     }
 
     private void deleteProcessorFilter(final DocRef docRef) {

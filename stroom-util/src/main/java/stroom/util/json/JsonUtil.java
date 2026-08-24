@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,30 @@
 
 package stroom.util.json;
 
+import stroom.util.concurrent.LazyValue;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.string.EncodingUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.BeanProperty;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.cfg.EnumFeature;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,8 +52,14 @@ public final class JsonUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonUtil.class);
 
-    private static final ObjectMapper OBJECT_MAPPER = createMapper(true);
-    private static final ObjectMapper NO_INDENT_MAPPER = createMapper(false);
+    private static final JsonMapper OBJECT_MAPPER = createMapper(true);
+    private static final JsonMapper NO_INDENT_MAPPER = createMapper(false);
+
+    // Make them lazy as they are likely used in tests only
+    private static final LazyValue<JsonMapper> CONSISTENT_ORDER_MAPPER = LazyValue.initialisedBy(() ->
+            createConsistentOrderMapper(true));
+    private static final LazyValue<JsonMapper> NO_INDENT_CONSISTENT_ORDER_MAPPER = LazyValue.initialisedBy(() ->
+            createConsistentOrderMapper(false));
 
     public static String writeValueAsString(final Object object) {
         return writeValueAsString(object, true);
@@ -58,12 +70,42 @@ public final class JsonUtil {
 
         if (object != null) {
             try {
-                if (indent) {
-                    json = getMapper().writeValueAsString(object);
-                } else {
-                    json = getNoIndentMapper().writeValueAsString(object);
-                }
-            } catch (final JsonProcessingException e) {
+                json = getMapper(indent).writeValueAsString(object);
+            } catch (final JacksonException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+
+        return json;
+    }
+
+    public static byte[] writeValueAsBytes(final Object object) {
+        return writeValueAsBytes(object, true);
+    }
+
+    public static byte[] writeValueAsBytes(final Object object, final boolean indent) {
+        byte[] jsonBytes = null;
+        if (object != null) {
+            try {
+                jsonBytes = getMapper(indent).writeValueAsBytes(object);
+            } catch (final JacksonException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+        return jsonBytes;
+    }
+
+    public static String writeValueAsConsistentString(final Object object) {
+        return writeValueAsConsistentString(object, true);
+    }
+
+    public static String writeValueAsConsistentString(final Object object, final boolean indent) {
+        String json = null;
+
+        if (object != null) {
+            try {
+                json = getConsistentOrderMapper(indent).writeValueAsString(object);
+            } catch (final JacksonException e) {
                 LOGGER.error(e.getMessage(), e);
             }
         }
@@ -79,12 +121,9 @@ public final class JsonUtil {
         Preconditions.checkNotNull(outputFile);
         try {
             getMapper().writeValue(outputFile.toFile(), object);
-        } catch (final JsonProcessingException e) {
-            throw new RuntimeException(String.format("Error serialising object %s to json",
-                    object), e);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(String.format("Error writing json to file %s",
-                    outputFile.toAbsolutePath()), e);
+        } catch (final JacksonException e) {
+            throw new RuntimeException(String.format("Error serialising object %s to json and writing it to file %s",
+                    object, outputFile.toAbsolutePath()), e);
         }
     }
 
@@ -93,33 +132,99 @@ public final class JsonUtil {
         Preconditions.checkNotNull(valueType);
         try {
             return getMapper().readValue(content, valueType);
-        } catch (final JsonProcessingException e) {
+        } catch (final JacksonException e) {
             throw new RuntimeException(String.format("Error deserialising object %s %s",
                     content, e.getMessage()), e);
         }
     }
 
-    public static ObjectMapper getMapper() {
+    public static <T> T readValue(final byte[] content, final Class<T> valueType) {
+        Preconditions.checkNotNull(content);
+        Preconditions.checkNotNull(valueType);
+        try {
+            return getMapper().readValue(content, valueType);
+        } catch (final JacksonException e) {
+            throw new RuntimeException(String.format("Error deserialising object %s %s",
+                    EncodingUtil.asString(content), e.getMessage()), e);
+        }
+    }
+
+    /**
+     * @return A {@link JsonMapper} that won't fail on unknown properties, includes only non-null
+     * values and is indented.
+     */
+    public static JsonMapper getMapper() {
         return OBJECT_MAPPER;
     }
 
-    public static ObjectMapper getNoIndentMapper() {
+    public static JsonMapper getMapper(final boolean indent) {
+        return indent
+                ? OBJECT_MAPPER
+                : NO_INDENT_MAPPER;
+    }
+
+    /**
+     * @param indent Whether to pretty print or not
+     * @return A {@link JsonMapper} that will serialise with a consistent order, i.e.
+     * properties are in alphabetic order rather than declaration order.
+     * This {@link JsonMapper} has the same behaviour as that returned by {@link JsonUtil#getMapper(boolean)}
+     * except for the property order.
+     * <p>
+     * <Strong>WARNING:</Strong> There is a performance penalty for this ordering, so this is only intended
+     * for use in tests, see {@link tools.jackson.databind.MapperFeature#SORT_CREATOR_PROPERTIES_FIRST}.
+     * </p>
+     */
+    public static JsonMapper getConsistentOrderMapper(final boolean indent) {
+        return indent
+                ? CONSISTENT_ORDER_MAPPER.getValueWithLocks()
+                : NO_INDENT_CONSISTENT_ORDER_MAPPER.getValueWithLocks();
+    }
+
+    /**
+     * @return A {@link JsonMapper} that won't fail on unknown properties, includes only non-null
+     * values and is not indented.
+     */
+    public static JsonMapper getNoIndentMapper() {
         return NO_INDENT_MAPPER;
     }
 
-    private static ObjectMapper createMapper(final boolean indent) {
-//        final SimpleModule module = new SimpleModule();
-//        module.addSerializer(Double.class, new MyDoubleSerialiser());
-
-        final ObjectMapper mapper = new ObjectMapper();
-//        mapper.registerModule(module);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-        return mapper;
+    private static JsonMapper createMapper(final boolean indent) {
+        return JsonMapper.builder()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                // This defaults to true in Jackson v3, but false in v2.
+                // Make it behave like v2 for now, with the warning module to warn us about null
+                // primitives. When we think we have fixed the issues, we can make it error for null prims
+                .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
+                .configure(SerializationFeature.INDENT_OUTPUT, indent)
+                .changeDefaultPropertyInclusion(incl ->
+                        incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                .changeDefaultPropertyInclusion(incl ->
+                        incl.withContentInclusion(JsonInclude.Include.NON_NULL))
+                // JacksonV3 changes the default behaviour for enums to use the toString
+                // as the serialised form, so turn that off so we use the name.
+                .disable(EnumFeature.READ_ENUMS_USING_TO_STRING)
+                // JacksonV3 changes the default behaviour for enums to use the toString
+                // as the serialised form, so turn that off so we use the name.
+                .disable(EnumFeature.WRITE_ENUMS_USING_TO_STRING)
+                .addModule(createPrimitiveWarningModule())
+                // TODO ADJUST_DATES_TO_CONTEXT_TIME_ZONE defaults to true, which seems a bit
+                //  silly as a ZDT of 2026-08-06T16:32:59.123+01:00 in the JSON becomes
+                //  2026-08-06T15:32:59.123Z after deserialisation, thus losing the TZ info.
+                //  We may want to consider disabling this.
+//                .configure(DateTimeFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
+                .build();
     }
 
+    private static JsonMapper createConsistentOrderMapper(final boolean indent) {
+        // Include all the config from our standard JsonMapper
+        return getMapper(indent)
+                .rebuild()
+                .enable(tools.jackson.databind.SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+                .enable(tools.jackson.databind.MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+                // With this enabled the props in the ctor always come first (for perf reasons)
+                .disable(tools.jackson.databind.MapperFeature.SORT_CREATOR_PROPERTIES_FIRST)
+                .build();
+    }
 
     /**
      * Gets the entries from the passed json that are children of the root object.
@@ -196,10 +301,10 @@ public final class JsonUtil {
                         break;
                     }
 
-                    if (jsonToken == JsonToken.FIELD_NAME) {
-                        final String fieldName = jParser.getCurrentName();
+                    if (jsonToken == JsonToken.PROPERTY_NAME) {
+                        final String fieldName = jParser.currentName();
                         if (remainingFields.contains(fieldName)) {
-                            final String value = jParser.nextTextValue();
+                            final String value = jParser.nextStringValue();
                             if (value != null) {
                                 results.put(fieldName, value);
                                 remainingFields.remove(fieldName);
@@ -222,13 +327,159 @@ public final class JsonUtil {
                         endRootToken = JsonToken.END_OBJECT;
                     }
                 }
-            } catch (final IOException e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(LogUtil.message(
                         "Error extracting fields '{}' from json:\n{}", keys, json));
             } finally {
                 NullSafe.consume(jParser, ThrowingConsumer.unchecked(JsonParser::close));
             }
             return results;
+        }
+    }
+
+    /**
+     * This module puts errors in the app log if we try to deser primitive values that are null.
+     * Previously in Jackson v2, this was disabled. Enabling it makes sense, but for backward compatibility
+     * we allow it to use default values.
+     * <p>See <a href="https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md#changes-deserializationfeature">
+     * MIGRATING_TO_JACKSON_3
+     * </a>
+     */
+    private static SimpleModule createPrimitiveWarningModule() {
+        final SimpleModule warningModule = new SimpleModule("NullPrimitiveWarningModule");
+
+        // Register all 8 primitive types using the new Jackson v3 ValueDeserializer base
+        warningModule.addDeserializer(
+                boolean.class,
+                new WarnOnNullDeserializer<>("boolean", false, JsonParser::getValueAsBoolean));
+        warningModule.addDeserializer(
+                byte.class,
+                new WarnOnNullDeserializer<>("byte", (byte) 0, p -> (byte) p.getValueAsInt()));
+        warningModule.addDeserializer(
+                short.class,
+                new WarnOnNullDeserializer<>("short", (short) 0, p -> (short) p.getValueAsInt()));
+        warningModule.addDeserializer(
+                int.class, new WarnOnNullDeserializer<>("int", 0, JsonParser::getValueAsInt));
+        warningModule.addDeserializer(
+                long.class, new WarnOnNullDeserializer<>("long", 0L, JsonParser::getValueAsLong));
+        warningModule.addDeserializer(
+                float.class,
+                new WarnOnNullDeserializer<>("float", 0.0f, p -> (float) p.getValueAsDouble()));
+        warningModule.addDeserializer(
+                double.class,
+                new WarnOnNullDeserializer<>("double", 0.0d, JsonParser::getValueAsDouble));
+
+        warningModule.addDeserializer(
+                char.class,
+                new WarnOnNullDeserializer<>("char", '\u0000', p -> {
+                    final String text = p.getString();
+                    return (text != null && !text.isEmpty())
+                            ? text.charAt(0)
+                            : '\u0000';
+                }));
+        return warningModule;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @FunctionalInterface
+    private interface PrimitiveReader<T> {
+
+        T read(JsonParser p);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class WarnOnNullDeserializer<T> extends ValueDeserializer<T> {
+
+        private final String typeName;
+        private final T defaultValue;
+        private final PrimitiveReader<T> reader;
+
+        // Contextual fields to hold the class names captured during setup
+        private final Class<?> targetClass;
+        private final Class<?> enclosingClass;
+        private final String propertyName;
+
+        // Root constructor (registered initially in the module)
+        public WarnOnNullDeserializer(final String typeName,
+                                      final T defaultValue,
+                                      final PrimitiveReader<T> reader) {
+            this(typeName, defaultValue, reader, null, null, null);
+        }
+
+        // Contextual constructor (spawned per-property)
+        private WarnOnNullDeserializer(final String typeName,
+                                       final T defaultValue,
+                                       final PrimitiveReader<T> reader,
+                                       final Class<?> targetClass,
+                                       final Class<?> enclosingClass,
+                                       final String propertyName) {
+            this.typeName = typeName;
+            this.defaultValue = defaultValue;
+            this.reader = reader;
+            this.targetClass = targetClass;
+            this.enclosingClass = enclosingClass;
+            this.propertyName = propertyName;
+        }
+
+        @Override
+        public ValueDeserializer<?> createContextual(final DeserializationContext ctxt,
+                                                     final BeanProperty property) {
+            // This method is triggered during initialisation where ctxt and property ARE populated
+            // We only want to capture the extra info if the bean prop is a primitive
+            if (NullSafe.test(property, BeanProperty::getType, JavaType::isPrimitive)) {
+                final Class<?> target = property.getType().getRawClass();
+                final Class<?> enclosing = (property.getMember() != null)
+                        ? property.getMember().getDeclaringClass()
+                        : null;
+                final String beanPropertyName = property.getName();
+
+                // Return a clone of this deserializer containing the specific class context
+                return new WarnOnNullDeserializer<>(
+                        this.typeName, this.defaultValue, this.reader, target, enclosing, beanPropertyName);
+            } else {
+                return this;
+            }
+        }
+
+        @Override
+        public T deserialize(final JsonParser p, final DeserializationContext ctxt) {
+            return reader.read(p);
+        }
+
+        @Override
+        public T getNullValue(final DeserializationContext ctxt) {
+            // This method is only going to be called when we have a null primitive, so the overhead
+            // is acceptable as we are trying to eradicate cases of null primitives
+            final String enclosingClassName = NullSafe.getOrElse(enclosingClass, Class::getName, "?");
+            final String targetClassName = NullSafe.getOrElse(targetClass, Class::getName, "?");
+            String jsonNodeName = "?";
+
+            if (NullSafe.nonNull(ctxt, DeserializationContext::getParser)) {
+                try {
+                    // This will be null if the prop is not in the json
+                    final String currentField = ctxt.getParser().currentName();
+                    if (currentField != null) {
+                        jsonNodeName = currentField;
+                    }
+                } catch (final Exception e) {
+                    // Fallback gracefully if stream token evaluation fails
+                }
+            }
+
+            // Logs a warning when a null is mapped to a primitive default path
+            LOGGER.error("Found null value for {} primitive JSON property. Using default value '{}' instead. " +
+                         "jsonNodeName: '{}', targetClassName: '{}', enclosingClassName: '{}', " +
+                         "beanPropertyName: '{}'. " +
+                         "Please raise an issue at https://github.com/gchq/stroom/issues, including this " +
+                         "error in the description.",
+                    typeName, defaultValue, jsonNodeName, targetClassName, enclosingClassName, propertyName);
+            return defaultValue;
         }
     }
 }

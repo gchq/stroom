@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.core.receive;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
@@ -52,7 +53,6 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.UnauthenticatedUserIdentity;
 import stroom.receive.content.shared.ContentTemplate;
-import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
@@ -122,6 +122,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private final CachedValue<Templator, String> cachedDestinationSubPathTemplator;
     private final CachedValue<Templator, String> cachedGroupTemplator;
     private final CachedValue<Templator, String> cachedAdditionalGroupTemplator;
+    private final DocFinder docFinder;
 
     @Inject
     public ContentAutoCreationServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
@@ -139,7 +140,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                           final ProcessorFilterService processorFilterService,
                                           final PipelineService pipelineService,
                                           final ExpressionMatcherFactory expressionMatcherFactory,
-                                          final ExpressionPredicateFactory expressionPredicateFactory) {
+                                          final ExpressionPredicateFactory expressionPredicateFactory,
+                                          final DocFinder docFinder) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
         this.documentPermissionService = documentPermissionService;
@@ -154,6 +156,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         this.contentTemplateStore = contentTemplateStore;
         this.processorFilterService = processorFilterService;
         this.pipelineService = pipelineService;
+        this.docFinder = docFinder;
 
         // TODO change to use ExpressionPredicateFactory
         this.cachedExpressionMatcher = CachedValue.builder()
@@ -239,7 +242,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         Optional<FeedDoc> optFeedDoc = Optional.empty();
         if (NullSafe.isNonBlankString(feedName)) {
             // Should only ever be one
-            optFeedDoc = NullSafe.stream(feedStore.findByName(feedName))
+            optFeedDoc = NullSafe.stream(docFinder.findByName(FeedDoc.TYPE, feedName))
                     .findFirst()
                     .map(feedStore::readDocument);
             LOGGER.debug("tryCreateFeed - feedName: {}, feedDoc: {}",
@@ -302,7 +305,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             LOGGER.debug("Waited {} to obtain lock", timer);
             // Re-test under lock
             DocRef docRef;
-            final List<DocRef> feeds = feedStore.findByName(feedName);
+            final List<DocRef> feeds = docFinder.findByName(FeedDoc.TYPE, feedName);
             if (feeds.isEmpty()) {
                 try {
                     docRef = createFeedAndContent(feedName, userDesc, attributeMap, contentTemplate);
@@ -310,8 +313,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                     // It's possible that another thread/node has created the feed
                     if (NullSafe.containsIgnoringCase(e.getMessage(), "exists")) {
                         // Feeds have unique names, so get first
-                        docRef = feedStore.findByName(feedName)
-                                .get(0);
+                        docRef = docFinder.findByName(FeedDoc.TYPE, feedName)
+                                .getFirst();
                     } else {
                         throw e;
                     }
@@ -319,7 +322,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                 return docRef;
             } else {
                 // Feeds have unique name so get first
-                docRef = feeds.get(0);
+                docRef = feeds.getFirst();
             }
             return docRef;
         });
@@ -559,47 +562,50 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
     private Optional<ContentTemplate> getMatchingTemplate(final AttributeMap attributeMap) {
 
-        final ContentTemplates contentTemplates = contentTemplateStore.getOrCreate();
-        final List<ContentTemplate> activeTemplates = contentTemplates.getActiveTemplates();
-        ContentTemplate matchingTemplate = null;
-        Map<String, Object> normalisedAttributes = null;
-        if (NullSafe.hasItems(activeTemplates)) {
-            for (final ContentTemplate contentTemplate : activeTemplates) {
-                final ExpressionOperator expression = contentTemplate.getExpression();
-                if (expression == null) {
-                    matchingTemplate = contentTemplate;
-                    break;
-                } else {
-                    if (normalisedAttributes == null) {
-                        // Normalise the keys to lower case
-                        normalisedAttributes = attributeMap.asMap(true)
-                                .entrySet()
-                                .stream()
-                                .collect(Collectors.toMap(
-                                        entry1 -> normaliseField(entry1.getKey()),
-                                        entry -> NullSafe.get(
-                                                entry.getValue(),
-                                                val -> (Object) val)));
-                    }
+        return contentTemplateStore.get()
+                .map(contentTemplates -> {
+                    final List<ContentTemplate> activeTemplates = contentTemplates.getActiveTemplates();
+                    ContentTemplate matchingTemplate = null;
+                    Map<String, Object> normalisedAttributes = null;
+                    if (NullSafe.hasItems(activeTemplates)) {
+                        for (final ContentTemplate contentTemplate : activeTemplates) {
+                            final ExpressionOperator expression = contentTemplate.getExpression();
+                            if (expression == null) {
+                                matchingTemplate = contentTemplate;
+                                break;
+                            } else {
+                                if (normalisedAttributes == null) {
+                                    // Normalise the keys to lower case
+                                    normalisedAttributes = attributeMap.asMap(true)
+                                            .entrySet()
+                                            .stream()
+                                            .collect(Collectors.toMap(
+                                                    entry1 -> normaliseField(entry1.getKey()),
+                                                    entry -> NullSafe.get(
+                                                            entry.getValue(),
+                                                            val -> (Object) val)));
+                                }
 
-                    final boolean isMatch = cachedExpressionMatcher.getValue()
-                            .match(normalisedAttributes, expression);
-                    if (isMatch) {
-                        matchingTemplate = contentTemplate;
-                        break;
+                                final boolean isMatch = cachedExpressionMatcher.getValue()
+                                        .match(normalisedAttributes, expression);
+                                if (isMatch) {
+                                    matchingTemplate = contentTemplate;
+                                    break;
+                                }
+                            }
+                        }
                     }
-                }
-            }
-        }
-        if (LOGGER.isInfoEnabled()) {
-            if (matchingTemplate != null) {
-                LOGGER.info("Data matched content template {} '{}', attributeMap: {}",
-                        matchingTemplate.getTemplateNumber(), matchingTemplate.getName(), attributeMap);
-            } else {
-                LOGGER.info("Data didn't match any active content templates, attributeMap: {}", attributeMap);
-            }
-        }
-        return Optional.ofNullable(matchingTemplate);
+                    if (LOGGER.isInfoEnabled()) {
+                        if (matchingTemplate != null) {
+                            LOGGER.info("Data matched content template {} '{}', attributeMap: {}",
+                                    matchingTemplate.getTemplateNumber(), matchingTemplate.getName(), attributeMap);
+                        } else {
+                            LOGGER.info("Data didn't match any active content templates, attributeMap: {}",
+                                    attributeMap);
+                        }
+                    }
+                    return matchingTemplate;
+                });
     }
 
     private static String normaliseField(final String field) {

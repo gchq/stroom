@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,15 @@ import java.nio.charset.StandardCharsets;
 
 public final class EncodingUtil {
 
-    private static final Charset CHARSET = StandardCharsets.UTF_8;
+    public static final Charset CHARSET = StandardCharsets.UTF_8;
 
     private EncodingUtil() {
         // Utility class.
     }
 
+    /**
+     * Null-safe conversion from {@link String} to byte[] using UTF-8.
+     */
     public static byte[] asBytes(final String string) {
         if (string == null) {
             return null;
@@ -34,6 +37,9 @@ public final class EncodingUtil {
         return string.getBytes(CHARSET);
     }
 
+    /**
+     * Null-safe conversion from byte[] to {@link String} using UTF-8.
+     */
     public static String asString(final byte[] bytes) {
         if (bytes == null) {
             return null;

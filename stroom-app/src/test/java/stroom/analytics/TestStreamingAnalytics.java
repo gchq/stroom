@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.analytics;
 
+import stroom.ai.impl.mock.MockAiModule;
 import stroom.analytics.impl.AnalyticRuleProcessors;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -24,8 +25,8 @@ import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
+import stroom.docstore.impl.DocFinderModule;
 import stroom.index.VolumeTestConfigModule;
-import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
@@ -56,7 +57,8 @@ import java.util.UUID;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@IncludeModule(MockOpenAIModule.class)
+@IncludeModule(MockAiModule.class)
+@IncludeModule(DocFinderModule.class)
 class TestStreamingAnalytics extends AbstractAnalyticsTest {
 
     @Inject

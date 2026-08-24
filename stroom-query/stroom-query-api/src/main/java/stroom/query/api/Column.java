@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,17 +73,12 @@ public final class Column implements HasDisplayValue {
     @JsonProperty
     private final Integer group;
 
-    // Settings for visible table only.
-    @Schema(description = "IGNORE: UI use only",
-            hidden = true)
+    // Settings for visible table only. Set and used by the UI; serialised on the wire, so they must
+    // stay in the OpenAPI spec (previously @Schema(hidden = true), which wrongly dropped them).
     @JsonProperty
     private final Integer width;
-    @Schema(description = "IGNORE: UI use only",
-            hidden = true)
     @JsonProperty
     private final Boolean visible;
-    @Schema(description = "IGNORE: UI use only",
-            hidden = true)
     @JsonProperty
     private final Boolean special;
     @JsonProperty
@@ -191,6 +186,20 @@ public final class Column implements HasDisplayValue {
     @Override
     public String getDisplayValue() {
         return name;
+    }
+
+    public boolean hasActiveFilter() {
+        return ((filter != null &&
+                 (
+                         (filter.getIncludes() != null && !filter.getIncludes().trim().isEmpty()) ||
+                         (filter.getExcludes() != null && !filter.getExcludes().trim().isEmpty()) ||
+                         !filter.getIncludeDictionaries().isEmpty() ||
+                         !filter.getExcludeDictionaries().isEmpty()
+                 )) ||
+                (columnFilter != null &&
+                 columnFilter.isEnabled() &&
+                 columnFilter.getFilter() != null &&
+                 !columnFilter.getFilter().isBlank()));
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 
 package stroom.meta.impl;
 
+import stroom.ai.impl.mock.MockAiModule;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
-import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
@@ -59,7 +59,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@IncludeModule(MockOpenAIModule.class)
+@IncludeModule(MockAiModule.class)
 class TestMetaSecurityFilter extends StroomIntegrationTest {
 
     private static final String TEST_USER = "test_user";
@@ -82,29 +82,29 @@ class TestMetaSecurityFilter extends StroomIntegrationTest {
 
     @Test
     void testSecurityFilter() {
-        securityContext.asProcessingUser(() -> {
-            final User user = userService.getOrCreateUser(TEST_USER);
+        final User user = securityContext.asProcessingUserResult(() -> userService.getOrCreateUser(TEST_USER));
 
+        securityContext.asUser(user.asRef(), () -> {
             final DocRef docref1 = feedStore.createDocument(FEED_NO_PERMISSION);
             final DocRef docref2 = feedStore.createDocument(FEED_USE_PERMISSION);
             final DocRef docref3 = feedStore.createDocument(FEED_READ_PERMISSION);
 
-            documentPermissionService.setPermission(docref2, user.asRef(), DocumentPermission.USE);
-            documentPermissionService.setPermission(docref3, user.asRef(), DocumentPermission.VIEW);
-
-            securityContext.asUser(user.asRef(), () -> {
-                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
-                        DocumentPermission.USE,
-                        FEED_FIELDS);
-                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
-                        DocumentPermission.VIEW,
-                        FEED_FIELDS);
-
-                assertThat(useExpression).isNotEmpty();
-                assertThat(useExpression.get().getChildren().size() == 1);
-                assertThat(readExpression).isNotEmpty();
-                assertThat(readExpression.get().getChildren().size() == 1);
+            securityContext.asProcessingUser(() -> {
+                documentPermissionService.setPermission(docref2, user.asRef(), DocumentPermission.USE);
+                documentPermissionService.setPermission(docref3, user.asRef(), DocumentPermission.VIEW);
             });
+
+            final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
+                    DocumentPermission.USE,
+                    FEED_FIELDS);
+            final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
+                    DocumentPermission.VIEW,
+                    FEED_FIELDS);
+
+            assertThat(useExpression).isNotEmpty();
+            assertThat(useExpression.get().getChildren().size() == 1);
+            assertThat(readExpression).isNotEmpty();
+            assertThat(readExpression.get().getChildren().size() == 1);
         });
     }
 }

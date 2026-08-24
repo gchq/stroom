@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ public class UserDependenciesListPresenter
         this.pagerView = pagerView;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("User Dependencies");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
@@ -217,7 +218,5 @@ public class UserDependenciesListPresenter
                         .withToolTip("The details of the dependency.")
                         .build(),
                 700);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 }

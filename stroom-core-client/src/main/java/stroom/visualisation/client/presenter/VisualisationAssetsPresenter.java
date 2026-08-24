@@ -39,6 +39,7 @@ import stroom.visualisation.shared.VisualisationAssetUpdateContent;
 import stroom.visualisation.shared.VisualisationAssetUpdateDelete;
 import stroom.visualisation.shared.VisualisationAssetUpdateNewFile;
 import stroom.visualisation.shared.VisualisationAssetUpdateRename;
+import stroom.visualisation.shared.VisualisationAssets;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.InlineSvgButton;
@@ -162,6 +163,13 @@ public class VisualisationAssetsPresenter
      * State of content edited in editor
      */
     private final VisualisationAssetState assetDirtyState = new VisualisationAssetState();
+
+    /**
+     * True if the server has pending draft asset changes that have not yet been saved to live,
+     * as reported by {@link VisualisationAssets#isDirty()} on the last fetch. Drives isDirty()
+     * (and therefore the Save/revert buttons) via {@link #hasAssociatedDirty()}.
+     */
+    private boolean assetsDirty = false;
 
     /**
      * Current document - may be null
@@ -366,6 +374,18 @@ public class VisualisationAssetsPresenter
     @Override
     protected VisualisationDoc onWrite(final VisualisationDoc document) {
         return document;
+    }
+
+    /**
+     * Asset content lives in a server-side draft/live store rather than in the VisualisationDoc, so
+     * onWrite() cannot detect asset changes by comparison. Instead surface the asset dirtiness here:
+     * either the server has pending draft changes not yet saved to live (assetsDirty), or the editor
+     * holds content not yet flushed to the draft area (isDirtyAndNeedsSaveToDraft). This drives
+     * isDirty() and hence the parent Save button and the local revert/view buttons.
+     */
+    @Override
+    protected boolean hasAssociatedDirty() {
+        return assetsDirty || assetDirtyState.isDirtyAndNeedsSaveToDraft();
     }
 
     /**
@@ -1022,7 +1042,9 @@ public class VisualisationAssetsPresenter
                     // Mark the editor content as clean
                     assetDirtyState.onFetchDraftAssets();
 
-                    // Set dirty state from the state of the DB
+                    // Set dirty state from the state of the DB, i.e. whether the user has pending
+                    // draft asset changes not yet saved to live.
+                    assetsDirty = assets.isDirty();
                     onChange();
 
                     // Restore the open/closed state of the tree

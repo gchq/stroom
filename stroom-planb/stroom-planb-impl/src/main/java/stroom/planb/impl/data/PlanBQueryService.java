@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,16 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
-import stroom.planb.impl.db.rangestate.RangeStateDb;
-import stroom.planb.impl.db.rangestate.RangeStateRequest;
-import stroom.planb.impl.db.session.SessionDb;
-import stroom.planb.impl.db.session.SessionRequest;
-import stroom.planb.impl.db.state.StateDb;
-import stroom.planb.impl.db.state.StateRequest;
-import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateDb;
-import stroom.planb.impl.db.temporalrangestate.TemporalRangeStateRequest;
-import stroom.planb.impl.db.temporalstate.TemporalStateDb;
-import stroom.planb.impl.db.temporalstate.TemporalStateRequest;
+import stroom.planb.impl.dao.rangestate.RangeStateDb;
+import stroom.planb.impl.dao.rangestate.RangeStateRequest;
+import stroom.planb.impl.dao.session.SessionDb;
+import stroom.planb.impl.dao.session.SessionRequest;
+import stroom.planb.impl.dao.state.StateDb;
+import stroom.planb.impl.dao.state.StateRequest;
+import stroom.planb.impl.dao.temporalrangestate.TemporalRangeStateDb;
+import stroom.planb.impl.dao.temporalrangestate.TemporalRangeStateRequest;
+import stroom.planb.impl.dao.temporalstate.TemporalStateDb;
+import stroom.planb.impl.dao.temporalstate.TemporalStateRequest;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.shared.AbstractPlanBSettings;

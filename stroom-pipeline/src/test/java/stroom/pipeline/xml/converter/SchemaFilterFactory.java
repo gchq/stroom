@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package stroom.pipeline.xml.converter;
 import stroom.content.ContentPack;
 import stroom.content.ContentPacks;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.mock.MockDocRefInfoService;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
@@ -56,7 +55,9 @@ public class SchemaFilterFactory {
                     persistence,
                     null,
                     securityContext,
-                    MockDocRefInfoService::new),
+                    null,
+                    null),
+            securityContext,
             serialiser);
     private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore, securityContext);
     private final SchemaLoaderImpl schemaLoader = new SchemaLoaderImpl(xmlSchemaCache);

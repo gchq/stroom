@@ -20,41 +20,41 @@ dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-docref')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-identity-db')
     implementation project(':stroom-security:stroom-security-openid-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.bcrypt
-    implementation libs.caffeine
     implementation libs.dropwizard.client
-    implementation libs.dropwizard.metrics.annotation
-    implementation libs.dropwizard.metrics.healthchecks
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
-    implementation libs.jakarta.servlet.api
-    implementation libs.jakarta.validation.api
+    implementation libs.jooq
     implementation libs.jose4j
     implementation libs.restygwt
     implementation libs.simple.java.mail
-    implementation libs.simple.java.mail.batch.module
-    implementation libs.slf4j.api
     implementation libs.swagger.annotations
-    implementation libs.ws.rs.api
+    implementation libs.zxcvbn
 
     runtimeOnly libs.mysql.connector.java
 
-    testImplementation project(':stroom-security:stroom-security-identity')
+    testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
+    testImplementation project(':stroom-docstore:stroom-docstore-mock')
+    testImplementation project(':stroom-explorer:stroom-collection-mock')
+    testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
-    testImplementation libs.wiremock
     testImplementation libs.dropwizard.testing
+    testImplementation libs.wiremock
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

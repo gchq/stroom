@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletConnection;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletInputStream;
@@ -195,11 +196,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
-    public boolean isRequestedSessionIdFromUrl() {
-        return false;
-    }
-
-    @Override
     public boolean authenticate(final HttpServletResponse response) throws IOException, ServletException {
         return false;
     }
@@ -344,6 +340,21 @@ public class MockHttpServletRequest implements HttpServletRequest {
     }
 
     @Override
+    public String getRequestId() {
+        return "";
+    }
+
+    @Override
+    public String getProtocolRequestId() {
+        return "";
+    }
+
+    @Override
+    public ServletConnection getServletConnection() {
+        return null;
+    }
+
+    @Override
     public Locale getLocale() {
         return null;
     }
@@ -383,11 +394,6 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
     @Override
     public BufferedReader getReader() throws IOException {
-        return null;
-    }
-
-    @Override
-    public String getRealPath(final String arg0) {
         return null;
     }
 

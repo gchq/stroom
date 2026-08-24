@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -38,6 +39,7 @@ import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockUserSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 import stroom.test.StroomIntegrationTest;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
@@ -100,6 +102,7 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
             // Do setup if we don't have any streams.
             analyticsDataSetup.setup();
         }
+
         // Make sure we now have 8 streams.
         analyticsDataSetup.checkStreamCount(8);
 

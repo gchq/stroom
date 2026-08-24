@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,11 +77,12 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
     public DocRef(@JsonProperty("type") final String type,
                   @JsonProperty("uuid") final String uuid,
                   @JsonProperty("name") final String name) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(uuid);
         this.type = type;
         this.uuid = uuid;
         this.name = name;
+
+        Objects.requireNonNull(type, () -> "Null DocRef type " + toShortString());
+        Objects.requireNonNull(uuid, () -> "Null DocRef UUID " + toShortString());
     }
 
     /**

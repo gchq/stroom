@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,9 @@
 
 package stroom.meta.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.data.shared.StreamTypeNames;
+import stroom.meta.impl.db.MetaServiceDbConfig;
 import stroom.meta.shared.DataFormatNames;
 import stroom.util.cache.CacheConfig;
 import stroom.util.collections.CollectionUtil;
@@ -29,7 +27,6 @@ import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.validation.AllMatchPattern;
@@ -47,13 +44,15 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.Objects;
 import java.util.Set;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaServiceConfig.class);
+
+    private static final int DEFAULT_META_STATUS_UPDATE_BATCH_SIZE = 0;
 
     private final MetaServiceDbConfig dbConfig;
     private final MetaValueConfig metaValueConfig;
@@ -85,7 +84,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
         rawMetaTypes = CollectionUtil.asUnmodifiabledConsistentOrderSet(
                 StreamTypeNames.ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES);
         dataFormats = CollectionUtil.asUnmodifiabledConsistentOrderSet(DataFormatNames.ALL_HARD_CODED_FORMAT_NAMES);
-        metaStatusUpdateBatchSize = 0;
+        metaStatusUpdateBatchSize = DEFAULT_META_STATUS_UPDATE_BATCH_SIZE;
     }
 
     @SuppressWarnings("unused")
@@ -98,7 +97,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
                              @JsonProperty("metaTypes") final Set<String> metaTypes,
                              @JsonProperty("rawMetaTypes") final Set<String> rawMetaTypes,
                              @JsonProperty("dataFormats") final Set<String> dataFormats,
-                             @JsonProperty("metaStatusUpdateBatchSize") final int metaStatusUpdateBatchSize) {
+                             @JsonProperty("metaStatusUpdateBatchSize") final Integer metaStatusUpdateBatchSize) {
         this.dbConfig = dbConfig;
         this.metaValueConfig = metaValueConfig;
         this.metaFeedCache = metaFeedCache;
@@ -107,7 +106,8 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
         this.metaTypes = metaTypes;
         this.rawMetaTypes = rawMetaTypes;
         this.dataFormats = dataFormats;
-        this.metaStatusUpdateBatchSize = metaStatusUpdateBatchSize;
+        this.metaStatusUpdateBatchSize =
+                Objects.requireNonNullElse(metaStatusUpdateBatchSize, DEFAULT_META_STATUS_UPDATE_BATCH_SIZE);
     }
 
     @Override
@@ -262,24 +262,5 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
         LOGGER.debug("metaTypes: {}, rawMetaTypes: {}", metaTypes, rawMetaTypes);
         return metaTypes != null
                && metaTypes.containsAll(NullSafe.set(rawMetaTypes));
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    @BootStrapConfig
-    public static class MetaServiceDbConfig extends AbstractDbConfig {
-
-        public MetaServiceDbConfig() {
-            super();
-        }
-
-        @JsonCreator
-        public MetaServiceDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

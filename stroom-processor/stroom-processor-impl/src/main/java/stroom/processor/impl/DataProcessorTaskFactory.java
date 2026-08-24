@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.JobNames;
+import stroom.processor.impl.db.jooq.tables.Processor;
 import stroom.processor.shared.AssignTasksRequest;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;

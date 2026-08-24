@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.WordList;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.receive.rules.shared.HashedReceiveDataRules;
 import stroom.util.shared.NullSafe;
@@ -74,8 +73,7 @@ public class WordListProviderFactory {
                 }
 
                 @Override
-                public WordList getCombinedWordList(final DocRef dictionaryRef,
-                                                    final DocRefDecorator docRefDecorator) {
+                public WordList getCombinedWordList(final DocRef dictionaryRef) {
                     throw new UnsupportedOperationException("Not supported as this is only needed for the UI");
                 }
 
@@ -121,8 +119,7 @@ public class WordListProviderFactory {
         }
 
         @Override
-        public WordList getCombinedWordList(final DocRef dictionaryRef,
-                                            final DocRefDecorator docRefDecorator) {
+        public WordList getCombinedWordList(final DocRef dictionaryRef) {
             throw new DocumentNotFoundException(dictionaryRef);
         }
 

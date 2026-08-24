@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.event.logging.impl;
 
+import stroom.util.json.JsonV2Util;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -54,7 +55,8 @@ public class GenerateXPaths {
 
     @Test
     void name() throws Exception {
-        final ObjectMapper objectMapper = new ObjectMapper();
+        // TODO using legacy v2 jackson as introspect() is not a thing in v3
+        final ObjectMapper objectMapper = JsonV2Util.getMapper();
 //        final Events events = new Events();
         final List<String> xPaths = new ArrayList<>();
         inspectClass(objectMapper,

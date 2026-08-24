@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class SolrConnectionConfig implements Serializable {
 
+    private static final boolean DEFAULT_USE_ZK = false;
+
     @JsonProperty
     private final InstanceType instanceType;
     @JsonProperty
@@ -45,12 +47,12 @@ public class SolrConnectionConfig implements Serializable {
 
     @JsonCreator
     public SolrConnectionConfig(@JsonProperty("instanceType") final InstanceType instanceType,
-                                @JsonProperty("useZk") final boolean useZk,
+                                @JsonProperty("useZk") final Boolean useZk,
                                 @JsonProperty("solrUrls") final List<String> solrUrls,
                                 @JsonProperty("zkHosts") final List<String> zkHosts,
                                 @JsonProperty("zkPath") final String zkPath) {
         this.instanceType = instanceType;
-        this.useZk = useZk;
+        this.useZk = Objects.requireNonNullElse(useZk, DEFAULT_USE_ZK);
         this.solrUrls = solrUrls;
         this.zkHosts = zkHosts;
         this.zkPath = zkPath;

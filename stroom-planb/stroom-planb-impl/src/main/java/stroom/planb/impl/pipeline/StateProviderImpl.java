@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import stroom.planb.impl.data.PlanBQueryService;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.language.functions.StateProvider;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValErr;
 import stroom.query.language.functions.ValNull;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
@@ -62,6 +63,9 @@ public class StateProviderImpl implements StateProvider {
             final String docName = mapName.toLowerCase(Locale.ROOT);
             final Optional<PlanBDoc> stateOptional = securityContext.useAsReadResult(() ->
                     Optional.ofNullable(stateDocCache.get(docName)));
+            // Note that this never returns null, which callers rely on, see StateProvider.getState. A missing
+            // doc gives the orElse, and if the cache produced null, Optional.map would swallow it into an
+            // empty Optional and give the orElse too.
             return stateOptional
                     .map(stateDoc -> {
                         final GetRequest request = new GetRequest(docName, keyName, effectiveTimeMs);
@@ -70,7 +74,7 @@ public class StateProviderImpl implements StateProvider {
                     .orElse(ValNull.INSTANCE);
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
-            return null;
+            return ValErr.create(e.getMessage());
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -44,6 +43,7 @@ import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.WriterInterceptorContext;
 import org.glassfish.jersey.message.MessageUtils;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 
@@ -52,7 +52,7 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RestResourceAutoLoggerImpl.class);
 
-    private static final ObjectMapper OBJECT_MAPPER = JsonUtil.getMapper();
+    private static final JsonMapper OBJECT_MAPPER = JsonUtil.getMapper();
 
     private static final String REQUEST_LOG_INFO_PROPERTY = "stroom.rs.logging.request";
 

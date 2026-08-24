@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -444,7 +444,6 @@ public class FlatResultCreator implements ResultCreator {
             // Apply filter to parent.
             final Optional<Predicate<Values>> filter = FilteredMapper.createValuesPredicate(
                     parent.getColumns(),
-                    parent.applyValueFilters(),
                     parent.getAggregateFilter(),
                     dataStore.getDateTimeSettings(),
                     expressionPredicateFactory);

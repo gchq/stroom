@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,31 +49,6 @@ public class DataFeedIdentityServiceImpl implements DataFeedIdentityService {
     }
 
     @Override
-    public int addDataFeedKeys(final List<DataFeedIdentity> dataFeedIdentities, final Path sourceFile) {
-        if (NullSafe.hasItems(dataFeedIdentities) && sourceFile != null) {
-            final List<IdentityStatus> statuses = new ArrayList<>();
-            dataFeedIdentities.forEach(identity -> {
-                final IdentityStatus identityStatus = switch (identity) {
-                    case final HashedDataFeedKey hashedDataFeedKey ->
-                            dataFeedKeyService.addDataFeedKey(hashedDataFeedKey, sourceFile);
-                    case final CertificateIdentity certificateIdentity ->
-                            certificateIdentityService.addCertificateIdentity(certificateIdentity, sourceFile);
-                };
-                statuses.add(identityStatus);
-            });
-            LOGGER.debug(() -> LogUtil.message("addDataFeedKeys() - dataFeedIdentities.size: {}, statuses summary: {}",
-                    dataFeedIdentities.size(), statuses.stream()
-                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))));
-            return Math.toIntExact(statuses.stream()
-                    .filter(status -> IdentityStatus.ADDED == status)
-                    .count());
-        } else {
-            LOGGER.debug("addDataFeedKeys() - Empty dataFeedIdentities");
-            return 0;
-        }
-    }
-
-    @Override
     public void removeKeysForFile(final Path sourceFile) {
         if (sourceFile != null) {
             try {
@@ -88,6 +63,33 @@ public class DataFeedIdentityServiceImpl implements DataFeedIdentityService {
             }
         } else {
             LOGGER.debug("removeKeysForFile() - Null sourceFile");
+        }
+    }
+
+    @Override
+    public int addDataFeedKeys(final List<DataFeedIdentity> dataFeedIdentities, final Path sourceFile) {
+        if (NullSafe.hasItems(dataFeedIdentities) && sourceFile != null) {
+            final List<IdentityStatus> statuses = new ArrayList<>();
+            dataFeedIdentities.forEach(identity -> {
+                final IdentityStatus identityStatus = switch (identity) {
+                    case final HashedDataFeedKey hashedDataFeedKey -> dataFeedKeyService.addDataFeedKey(
+                            hashedDataFeedKey, sourceFile);
+                    case final CertificateIdentity certificateIdentity -> {
+                        //noinspection RedundantLabeledSwitchRuleCodeBlock // Stops CS moaning
+                        yield certificateIdentityService.addCertificateIdentity(certificateIdentity, sourceFile);
+                    }
+                };
+                statuses.add(identityStatus);
+            });
+            LOGGER.debug(() -> LogUtil.message("addDataFeedKeys() - dataFeedIdentities.size: {}, statuses summary: {}",
+                    dataFeedIdentities.size(), statuses.stream()
+                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))));
+            return Math.toIntExact(statuses.stream()
+                    .filter(status -> IdentityStatus.ADDED == status)
+                    .count());
+        } else {
+            LOGGER.debug("addDataFeedKeys() - Empty dataFeedIdentities");
+            return 0;
         }
     }
 }

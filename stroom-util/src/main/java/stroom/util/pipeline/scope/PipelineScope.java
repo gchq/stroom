@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,11 @@ public class PipelineScope implements Scope {
     public void enter() {
         final Deque<Map<Key<?>, Object>> deque = threadLocal.get();
         deque.offerLast(Maps.newHashMap());
+    }
+
+    public boolean isScopeActive() {
+        final Deque<Map<Key<?>, Object>> deque = threadLocal.get();
+        return deque != null && !deque.isEmpty();
     }
 
     public void exit() {

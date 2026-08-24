@@ -43,10 +43,10 @@
           "direction" : "ASCENDING"
         },
         "filter" : {
-          "includes" : "include1",
+          "excludeDictionaries" : [ ],
           "excludes" : "exclude1",
           "includeDictionaries" : [ ],
-          "excludeDictionaries" : [ ]
+          "includes" : "include1"
         },
         "format" : {
           "type" : "NUMBER",
@@ -69,10 +69,10 @@
           "direction" : "DESCENDING"
         },
         "filter" : {
-          "includes" : "include2",
+          "excludeDictionaries" : [ ],
           "excludes" : "exclude2",
           "includeDictionaries" : [ ],
-          "excludeDictionaries" : [ ]
+          "includes" : "include2"
         },
         "format" : {
           "type" : "DATE_TIME",

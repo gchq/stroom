@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,10 @@
 
 package stroom.index.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.index.impl.db.IndexDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
@@ -31,9 +28,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
+
+    private static final int DEFAULT_RAM_BUFFER_SIZE_MB = 1024;
 
     private final IndexDbConfig dbConfig;
     private final int ramBufferSizeMB;
@@ -43,7 +43,7 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
 
     public IndexConfig() {
         dbConfig = new IndexDbConfig();
-        ramBufferSizeMB = 1024;
+        ramBufferSizeMB = DEFAULT_RAM_BUFFER_SIZE_MB;
         indexWriterConfig = new IndexWriterConfig();
         indexCache = CacheConfig.builder()
                 .maximumSize(100L)
@@ -58,12 +58,12 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
     @SuppressWarnings("unused")
     @JsonCreator
     public IndexConfig(@JsonProperty("db") final IndexDbConfig dbConfig,
-                       @JsonProperty("ramBufferSizeMB") final int ramBufferSizeMB,
+                       @JsonProperty("ramBufferSizeMB") final Integer ramBufferSizeMB,
                        @JsonProperty("writer") final IndexWriterConfig indexWriterConfig,
                        @JsonProperty("indexCache") final CacheConfig indexCache,
                        @JsonProperty("indexFieldCache") final CacheConfig indexFieldCache) {
         this.dbConfig = dbConfig;
-        this.ramBufferSizeMB = ramBufferSizeMB;
+        this.ramBufferSizeMB = Objects.requireNonNullElse(ramBufferSizeMB, DEFAULT_RAM_BUFFER_SIZE_MB);
         this.indexWriterConfig = indexWriterConfig;
         this.indexCache = indexCache;
         this.indexFieldCache = indexFieldCache;
@@ -101,20 +101,5 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
                 ", indexWriterConfig=" + indexWriterConfig +
                 ", indexStructureCache=" + indexFieldCache +
                 '}';
-    }
-
-    @BootStrapConfig
-    public static class IndexDbConfig extends AbstractDbConfig {
-
-        public IndexDbConfig() {
-            super();
-        }
-
-        @JsonCreator
-        public IndexDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

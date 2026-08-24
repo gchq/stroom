@@ -16,6 +16,23 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+  ai:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   analytics:
     db:
       connection:
@@ -112,16 +129,36 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     defaultRetentionPeriod: "5y"
+    eventLinkCacheSizeLimit: 1000000
     physicalDeleteAge: "P7D"
   askStroomAi:
-    chatMemory:
-      timeToLive:
-        time: 1
-        timeUnit: "HOURS"
-      tokenLimit: 30000
-    tableSummary:
-      maximumBatchSize: 16384
-      maximumTableInputRows: 100
+    tableAnalysis:
+      maxTotalRows: 10000
+      maxRowsPerBatch: 1000
+      maxParallelBatches: 4
+      tableQuerySystemPrompt: "    You are a data analysis AI. You will answer user\
+        \ questions     using ONLY the markdown-formatted DATA TABLE records provided.\
+        \     If the records do not contain relevant details, say \"No relevant information.\"\
+        \n"
+      tableQueryUserPrompt: "    CONVERSATION CONTEXT:\n    {{context}}\n\n    USER\
+        \ QUERY:\n    {{query}}\n\n    DATA TABLE:\n    {{table}}\n\n    Provide findings\
+        \ relevant only to these records, in a concise structured format.     Use\
+        \ the conversation context to understand what has been previously discussed.\n"
+      multiSummaryMergePrompt: "    Merge the following summaries into a single unified,\
+        \ concise summary.     Preserve important details, numerical findings, and\
+        \ remove duplicates.\n\n    {{summaries}}\n"
+    chatSystemPrompt: "You are a helpful data analysis assistant within the Stroom\
+      \ data platform. When table data is attached to the conversation, it appears\
+      \ as markdown tables prefixed with [Attached Table: ...] labels identifying\
+      \ the source. Use data from all relevant attached tables to answer the user's\
+      \ questions. If multiple tables are present, cite the source table name in your\
+      \ answer. If you don't have enough information, say so."
+    historySummaryPrompt: "Summarise the following conversation history in 2-3 concise\
+      \ sentences. Preserve key facts, decisions, data findings, and any table names\
+      \ or sources referenced. Do not include greetings or filler."
+    maxHistorySafetyCapMessages: 200
+    attachmentDownloadTimeoutMs: 60000
+    enableDebugDetail: true
   autoContentCreation:
     additionalGroupParentGroupName: "Data Feed Developer"
     additionalGroupTemplate: "grp-${accountid}-dev"
@@ -190,6 +227,10 @@ appConfig:
       minimumIdle: 10
       prepStmtCacheSize: 25
       prepStmtCacheSqlLimit: 256
+  contentIndex:
+    contentIndexDir: "content_index"
+    minRebuildAge: "PT1M"
+    storageType: "LOCAL"
   contentPackImport:
     enabled: false
     importAsSubjectId: "Administrators"
@@ -272,8 +313,8 @@ appConfig:
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
       volumeCache:
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
+        expireAfterAccess: null
+        expireAfterWrite: "PT10M"
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
@@ -395,6 +436,19 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    docRefInfoCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    docRefNameCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    physicalDeleteAge: "P30D"
   elastic:
     client:
       maxConnections: 30
@@ -439,12 +493,6 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     dependencyWarningsEnabled: false
-    docRefInfoCache:
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-      maximumSize: 1000
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
     suggestedTags:
     - "reference-loader"
     - "dynamic"
@@ -587,6 +635,7 @@ appConfig:
   lifecycle:
     enabled: true
   lmdbLibrary:
+    providedJffiLibraryPath: null
     providedSystemLibraryPath: null
     systemLibraryExtractDir: "lmdb_library"
   logging:
@@ -659,6 +708,7 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      disableExternalEntities: true
       secureProcessing: true
     pipelineDataCache:
       expireAfterAccess: "PT10M"
@@ -711,10 +761,13 @@ appConfig:
         statisticsMode: "INTERNAL"
       maxElements: 1000000
   planb:
+    mergeStatusRetention: "P30D"
     minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
     nodeList: []
     path: "planb"
+    sendPartAttempts: 3
+    sendPartRetryDelay: "PT10S"
     snapshotRetryFetchInterval: "PT1M"
     stateDocCache:
       expireAfterAccess: null
@@ -776,9 +829,12 @@ appConfig:
       refreshAfterWrite: "PT10S"
       statisticsMode: "INTERNAL"
     queueSize: 1000
+    skipEmptyFilterFetchDuration: "PT10S"
     skipNonProducingFiltersDuration: "PT10S"
+    skipNonProducingFiltersMaxDuration: "PT1M"
     taskCreationThreadCount: 5
     tasksToCreate: 1000
+    useMaxMetaIdFromPreviousPoll: true
     waitToQueueTasksDuration: "PT10S"
   properties:
     db:
@@ -856,7 +912,6 @@ appConfig:
       AccountId: "Text"
       Component: "Text"
       Compression: "Text"
-      content-length: "Text"
       ContextEncoding: "Text"
       ContextFormat: "Text"
       EffectiveTime: "Date"
@@ -869,18 +924,19 @@ appConfig:
       ReceivedPath: "Text"
       ReceivedTime: "Date"
       ReceivedTimeHistory: "Text"
+      RemoteAddress: "Text"
       RemoteCertExpiry: "Date"
       RemoteDN: "Text"
       RemoteHost: "Text"
-      RemoteAddress: "Text"
       Schema: "Text"
       SchemaVersion: "Text"
       System: "Text"
       Type: "Text"
-      UploadUsername: "Text"
       UploadUserId: "Text"
-      user-agent: "Text"
+      UploadUsername: "Text"
       X-Forwarded-For: "Text"
+      content-length: "Text"
+      user-agent: "Text"
   receive:
     allowedCertificateProviders: []
     authenticatedDataFeedKeyCache:
@@ -978,11 +1034,19 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      csrf:
+        protectBrowserOriginatedRequests: true
+      edgeAuthentication:
+        enabled: false
+        logout:
+          cookiesToExpire: []
+          signOutUrl: null
       maxApiKeyExpiryAge: "P365D"
       openId:
         allowedAudiences: []
-        audienceClaimRequired: false
+        audienceClaimRequired: true
         authEndpoint: null
+        authenticationRequestExtraParams: {}
         clientCredentialsScopes:
         - "openid"
         clientId: null
@@ -1000,10 +1064,12 @@ appConfig:
         requestScopes:
         - "openid"
         - "email"
+        requiredAccessTokenType: null
         tokenEndpoint: null
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
         validIssuers: []
+        validateAudience: true
       preventLogin: false
     authorisation:
       appPermissionIdCache:
@@ -1048,7 +1114,7 @@ appConfig:
         statisticsMode: "INTERNAL"
       userCache:
         expireAfterAccess: "PT30M"
-        expireAfterWrite: null
+        expireAfterWrite: "PT30M"
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
@@ -1074,6 +1140,7 @@ appConfig:
       secretEncryptionKey: ""
     identity:
       allowCertificateAuthentication: false
+      allowLockedAccountPasswordReset: false
       autoCreateAdminAccountOnBoot: false
       certificateCnCaptureGroupIndex: 1
       certificateCnPattern: ".*\\((.*)\\)"
@@ -1094,31 +1161,24 @@ appConfig:
           prepStmtCacheSize: 25
           prepStmtCacheSqlLimit: 256
       email:
-        allowPasswordResets: false
         fromAddress: "noreply@stroom"
         fromName: "Stroom User Accounts"
         passwordResetSubject: "Password reset for Stroom"
         passwordResetText: "A password reset has been requested for this email address.\
           \ Please visit the following URL to reset your password: %s."
-        passwordResetUrl: "/s/resetPassword/?user=%s&token=%s"
         smtp:
           host: "localhost"
           password: null
           port: 2525
           transport: "plain"
           username: null
+      failedLoginLockDuration: "PT30M"
       failedLoginLockThreshold: 3
       openid:
         accessCodeCache:
           expireAfterAccess: "PT10M"
           expireAfterWrite: null
           maximumSize: 1000
-          refreshAfterWrite: null
-          statisticsMode: "INTERNAL"
-        refreshTokenCache:
-          expireAfterAccess: "P1D"
-          expireAfterWrite: null
-          maximumSize: 10000
           refreshAfterWrite: null
           statisticsMode: "INTERNAL"
       passwordPolicy:
@@ -1128,17 +1188,19 @@ appConfig:
         minimumPasswordLength: 8
         minimumPasswordStrength: 3
         neverUsedAccountDeactivationThreshold: "P30D"
-        passwordComplexityRegex: ".*"
         passwordPolicyMessage: "To conform with our Strong Password policy, you are\
-          \ required to use a sufficiently strong password. Password must be more\
-          \ than 8 characters."
+          \ required to use a sufficiently strong password. Password must be at least\
+          \ 8 characters."
         unusedAccountDeactivationThreshold: "P90D"
+      passwordResetRequestCooldown: "PT1M"
+      reactivateInactiveAccountsOnLogin: false
       token:
         accessTokenExpiration: "PT1H"
         algorithm: "RS256"
         defaultApiKeyExpiration: "P365D"
         emailResetTokenExpiration: "PT10M"
         idTokenExpiration: "PT1H"
+        jwkRotationInterval: "P30D"
         jwsIssuer: "stroom"
         refreshTokenExpiration: "P30D"
     webContent:
@@ -1305,12 +1367,12 @@ appConfig:
     defaultApiKeyHashAlgorithm: "SHA3_256"
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathDocumentation: "/user-guide/content/documentation/"
-    helpSubPathExpressions: "/user-guide/dashboards/expressions/"
+    helpSubPathExpressions: "/reference-section/expressions/"
     helpSubPathJobs: "/reference-section/jobs/"
     helpSubPathProperties: "/user-guide/properties/"
-    helpSubPathQuickFilter: "/user-guide/finding-things/"
-    helpSubPathStroomQueryLanguage: "/user-guide/dashboards/stroom-query-language/"
-    helpUrl: "https://gchq.github.io/stroom-docs/7.5/docs"
+    helpSubPathQuickFilter: "/user-guide/content/finding-things/"
+    helpSubPathStroomQueryLanguage: "/user-guide/search/queries/stroom-query-language/"
+    helpUrl: "https://gchq.github.io/stroom-docs/7.13/docs"
     htmlTitle: "Stroom"
     maxEditorCompletionEntries: 1000
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
@@ -1364,34 +1426,34 @@ appConfig:
     scheme: "https"
   visualisationAsset:
     aceEditorModes:
-      htm: "HTML"
-      txt: "TEXT"
       css: "CSS"
-      svg: "XML"
-      xml: "XML"
-      js: "JAVASCRIPT"
+      htm: "HTML"
       html: "HTML"
+      js: "JAVASCRIPT"
+      svg: "XML"
+      txt: "TEXT"
+      xml: "XML"
     assetCacheDir: "asset_cache"
     clearAssetCacheOnStartup: false
     default: "application/octet-stream"
     defaultAceEditorMode: "TEXT"
     mimetypes:
-      htm: "text/html"
-      jpg: "image/jpeg"
-      css: "text/css"
-      tiff: "image/tiff"
-      bmp: "image/bmp"
       apng: "image/apng"
+      bmp: "image/bmp"
+      css: "text/css"
       gif: "image/jpeg"
-      svg: "image/svg+xml"
-      png: "image/png"
-      js: "text/javascript"
-      webp: "image/webp"
-      tif: "image/tiff"
-      txt: "text/plain"
-      xml: "application/xml"
-      jpeg: "image/jpeg"
+      htm: "text/html"
       html: "text/html"
+      jpeg: "image/jpeg"
+      jpg: "image/jpeg"
+      js: "text/javascript"
+      png: "image/png"
+      svg: "image/svg+xml"
+      tif: "image/tiff"
+      tiff: "image/tiff"
+      txt: "text/plain"
+      webp: "image/webp"
+      xml: "application/xml"
   visualisationAssetDb:
     connection:
       jdbcDriverClassName: null

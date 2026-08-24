@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.credentials.client.presenter;
 
 import stroom.ai.shared.KeyStoreType;
@@ -5,14 +21,12 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.credentials.client.presenter.KeyStoreSecretPresenter.KeyStoreSecretView;
 import stroom.credentials.shared.KeyStoreSecret;
 import stroom.credentials.shared.Secret;
-import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.importexport.client.presenter.ImportUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.form.client.CustomFileUpload;
 
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.FormPanel;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -33,26 +47,15 @@ public class KeyStoreSecretPresenter
         super(eventBus, view);
 
         view.getFileUpload().setAction(ImportUtil.getImportFileURL());
-        view.getFileUpload().setEncoding(FormPanel.ENCODING_MULTIPART);
-        view.getFileUpload().setMethod(FormPanel.METHOD_POST);
 
-        final AbstractSubmitCompleteHandler submitCompleteHandler =
-                new AbstractSubmitCompleteHandler("Uploading Data", this) {
-                    @Override
-                    protected void onSuccess(final ResourceKey resourceKey) {
-                        KeyStoreSecretPresenter.this.resourceKey = resourceKey;
-                        afterSubmitConsumer.accept(true);
-                    }
-
-                    @Override
-                    protected void onFailure(final String message) {
-                        AlertEvent.fireError(KeyStoreSecretPresenter.this, message, () ->
-                                afterSubmitConsumer.accept(false));
-                    }
-                };
-
-        registerHandler(getView().getFileUpload().addSubmitHandler(submitCompleteHandler));
-        registerHandler(getView().getFileUpload().addSubmitCompleteHandler(submitCompleteHandler));
+        view.getFileUpload()
+                .onSuccess(resourceKey -> {
+                    this.resourceKey = resourceKey;
+                    afterSubmitConsumer.accept(true);
+                })
+                .onFailure(message -> AlertEvent.fireError(this, message, () ->
+                        afterSubmitConsumer.accept(false)))
+                .taskMonitorFactory(this, "Uploading Data");
     }
 
     public void setType(final KeyStoreType type) {

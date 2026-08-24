@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,7 +185,7 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
                 1,
                 "Parser elements parse raw text data that has an expected structure " +
                         "(e.g. XML, JSON, CSV) " +
-                        "into XML events (elements, attributes, text, etc) that can be further validated or " +
+                        "into XML events (elements, attributes, text, etc.) that can be further validated or " +
                         "transformed using XSLT.\n" +
                         "The choice of Parser will be dictated by the structure of the data.\n" +
                         "If no Reader is used before the Parser, the Parser will also do the job of a simple Reader " +

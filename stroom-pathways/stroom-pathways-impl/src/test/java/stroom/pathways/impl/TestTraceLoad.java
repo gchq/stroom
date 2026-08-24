@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import stroom.pathways.shared.TraceWriter;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
-import stroom.planb.impl.db.LmdbWriter;
-import stroom.planb.impl.db.trace.TraceDb;
+import stroom.planb.impl.dao.LmdbWriter;
+import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.TraceSettings;
 import stroom.util.shared.ResultPage;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -163,6 +162,11 @@ public class AnnotationEditPresenter
     private String currentTitle;
     private String currentSubject;
 
+    // When re-reading the entity purely to update local state (e.g. after a title change), suppress
+    // onRead()'s history refresh - the change's own success callback already refreshes history with the
+    // persisted data, so refreshing again here would be a redundant fetch of momentarily-stale data.
+    private boolean suppressHistoryUpdate;
+
     private final Set<Long> expandedItems = new HashSet<>();
 
     @Inject
@@ -221,12 +225,14 @@ public class AnnotationEditPresenter
 
         this.commentPresenter.setDataSupplier((filter, consumer) -> {
             final ExpressionCriteria criteria = createCriteria(AnnotationTagType.COMMENT, filter);
-            annotationResourceClient.findAnnotationTags(criteria, values -> {
-                if (values != null) {
-                    consumer.accept(values.getValues());
-                }
-            },
-                new DefaultErrorHandler(this, null), this);
+            annotationResourceClient.findAnnotationTags(
+                    criteria,
+                    values -> {
+                        if (values != null) {
+                            consumer.accept(values.getValues());
+                        }
+                    },
+                    new DefaultErrorHandler(this, null), this);
         });
         commentPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
         commentPresenter.setTooltipFunction(AnnotationTag::getTagText);
@@ -283,7 +289,15 @@ public class AnnotationEditPresenter
                     new ChangeTitle(selected));
             change(request);
 
-            read(getEntity().asDocRef(), getEntity().copy().name(selected).build(), isReadOnly());
+            // Re-read to update the entity's name (used for the tab title) and refresh the view, but
+            // suppress the history refresh - change()'s success callback refreshes it once with the
+            // persisted data.
+            suppressHistoryUpdate = true;
+            try {
+                read(getEntity().asDocRef(), getEntity().copy().name(selected).build(), isReadOnly());
+            } finally {
+                suppressHistoryUpdate = false;
+            }
             RefreshContentTabEvent.fire(this, parent);
         }
     }
@@ -469,7 +483,7 @@ public class AnnotationEditPresenter
 
     private void updateHistory(final List<AnnotationEntry> entries) {
         if (entries != null) {
-            final Date now = new Date();
+            final long nowMs = System.currentTimeMillis();
 
             final HtmlBuilder html = new HtmlBuilder();
             final StringBuilder text = new StringBuilder();
@@ -501,10 +515,10 @@ public class AnnotationEditPresenter
                 }
 
                 for (final AnnotationEntryGroup annotationEntryGroup : groups) {
-                    if (!annotationEntryGroup.entries.isEmpty()) {
-                        if (annotationEntryGroup.entries.size() == 1) {
-                            for (final AnnotationEntry entry : annotationEntryGroup.entries) {
-                                final boolean added = addEntryHtml(history, entry, now, line);
+                    if (!annotationEntryGroup.getEntries().isEmpty()) {
+                        if (annotationEntryGroup.getEntries().size() == 1) {
+                            for (final AnnotationEntry entry : annotationEntryGroup.getEntries()) {
+                                final boolean added = addEntryHtml(history, entry, nowMs, line);
                                 if (added && first) {
                                     // If we actually added some content then make sure we add a line marker before any
                                     // subsequent content.
@@ -513,7 +527,7 @@ public class AnnotationEditPresenter
                                 }
                             }
                         } else {
-                            final boolean added = addGroupHtml(history, annotationEntryGroup, now, line);
+                            final boolean added = addGroupHtml(history, annotationEntryGroup, nowMs, line);
                             if (added && first) {
                                 // If we actually added some content then make sure we add a line marker before any
                                 // subsequent content.
@@ -847,13 +861,13 @@ public class AnnotationEditPresenter
 
     private boolean addGroupHtml(final HtmlBuilder html,
                                  final AnnotationEntryGroup group,
-                                 final Date now,
+                                 final long nowMs,
                                  final SafeHtml line) {
-        final AnnotationEntry first = group.entries.get(0);
+        final AnnotationEntry first = group.getEntries().get(0);
         final boolean expanded = expandedItems.contains(first.getId());
         final AnnotationEntryType entryType = first.getEntryType();
         UserRef user = first.getEntryUser();
-        for (final AnnotationEntry entry : group.entries) {
+        for (final AnnotationEntry entry : group.getEntries()) {
             if (!Objects.equals(entry.getEntryUser(), user)) {
                 user = null;
                 break;
@@ -861,7 +875,7 @@ public class AnnotationEditPresenter
         }
         final UserRef userRef = user;
 
-        final int count = group.entries.size();
+        final int count = group.getEntries().size();
         final String actionText = switch (entryType) {
             case TITLE, SUBJECT, STATUS, ASSIGNED, COMMENT, RETENTION_PERIOD, DESCRIPTION, DELETE ->
                     entryType.getActionText();
@@ -886,7 +900,7 @@ public class AnnotationEditPresenter
                     }
                     label.append(actionText);
                     label.nbsp();
-                    durationLabel.append(label, first.getEntryTime(), now);
+                    durationLabel.append(label, first.getEntryTime(), nowMs);
                 }, HISTORY_LABEL);
 
                 // Add expander icon.
@@ -900,8 +914,8 @@ public class AnnotationEditPresenter
             // Add content if expanded.
             if (expanded) {
                 border.div(body -> {
-                    for (final AnnotationEntry entry : group.entries) {
-                        addEntryHtml(body, entry, now, line);
+                    for (final AnnotationEntry entry : group.getEntries()) {
+                        addEntryHtml(body, entry, nowMs, line);
                     }
                 }, HISTORY_GROUP_BODY);
             }
@@ -912,7 +926,7 @@ public class AnnotationEditPresenter
 
     private boolean addEntryHtml(final HtmlBuilder html,
                                  final AnnotationEntry entry,
-                                 final Date now,
+                                 final long nowMs,
                                  final SafeHtml line) {
         boolean added = false;
         final String entryUiValue = NullSafe.get(entry.getEntryValue(), EntryValue::asUiValue);
@@ -928,7 +942,7 @@ public class AnnotationEditPresenter
                             label.append(HtmlBuilder.NB_SPACE);
                             label.appendTrustedString("commented");
                             label.append(HtmlBuilder.NB_SPACE);
-                            durationLabel.append(label, entry.getEntryTime(), now);
+                            durationLabel.append(label, entry.getEntryTime(), nowMs);
 
                             if (!Objects.equals(entry.getEntryUser(), entry.getUpdateUser()) ||
                                 !Objects.equals(entry.getEntryTime(), entry.getUpdateTime())) {
@@ -939,7 +953,7 @@ public class AnnotationEditPresenter
                                 label.append(HtmlBuilder.NB_SPACE);
                                 label.appendTrustedString("edited");
                                 label.append(HtmlBuilder.NB_SPACE);
-                                durationLabel.append(label, entry.getUpdateTime(), now);
+                                durationLabel.append(label, entry.getUpdateTime(), nowMs);
                             }
                         }, HISTORY_LABEL);
 
@@ -973,7 +987,7 @@ public class AnnotationEditPresenter
                         label.nbsp();
                         link(html, entry.getEntryType(), entryUiValue);
                         label.nbsp();
-                        durationLabel.append(label, entry.getEntryTime(), now);
+                        durationLabel.append(label, entry.getEntryTime(), nowMs);
                     }, HISTORY_LABEL);
 
                     // Add change icon.
@@ -1000,7 +1014,7 @@ public class AnnotationEditPresenter
                                         ? "added " + values.size() + " row"
                                         : "added " + values.size() + " rows");
                                 label.nbsp();
-                                durationLabel.append(label, entry.getEntryTime(), now);
+                                durationLabel.append(label, entry.getEntryTime(), nowMs);
                             }, HISTORY_LABEL);
 
                             // Add change icon.
@@ -1052,7 +1066,7 @@ public class AnnotationEditPresenter
                                 label.bold(getValueString(entry.getPreviousValue().asUiValue()));
                             }
                             label.nbsp();
-                            durationLabel.append(label, entry.getEntryTime(), now);
+                            durationLabel.append(label, entry.getEntryTime(), nowMs);
                         }, HISTORY_LABEL);
 
                         // Add change icon.
@@ -1080,7 +1094,7 @@ public class AnnotationEditPresenter
                                 label.bold(getValueString(entryUiValue));
                             }
                             label.nbsp();
-                            durationLabel.append(label, entry.getEntryTime(), now);
+                            durationLabel.append(label, entry.getEntryTime(), nowMs);
                         }, HISTORY_LABEL);
 
                         // Add change icon.
@@ -1122,7 +1136,7 @@ public class AnnotationEditPresenter
                         }
 
                         label.nbsp();
-                        durationLabel.append(label, entry.getEntryTime(), now);
+                        durationLabel.append(label, entry.getEntryTime(), nowMs);
                     }, HISTORY_LABEL);
 
                     // Add change icon.
@@ -1329,7 +1343,9 @@ public class AnnotationEditPresenter
         setCollections(annotation.getCollections());
         setRetentionPeriod(annotation.getRetentionPeriod());
 
-        updateHistory();
+        if (!suppressHistoryUpdate) {
+            updateHistory();
+        }
     }
 
     @Override
@@ -1454,9 +1470,63 @@ public class AnnotationEditPresenter
         this.parent = parent;
     }
 
-    private record AnnotationEntryGroup(long id, AnnotationEntryType annotationEntryType,
-                                        List<AnnotationEntry> entries) {
 
+    // --------------------------------------------------------------------------------
+
+
+    @SuppressWarnings("ClassCanBeRecord") // GWT moans if this is a record
+    private static final class AnnotationEntryGroup {
+
+        private final long id;
+        private final AnnotationEntryType annotationEntryType;
+        private final List<AnnotationEntry> entries;
+
+        private AnnotationEntryGroup(final long id,
+                                     final AnnotationEntryType annotationEntryType,
+                                     final List<AnnotationEntry> entries) {
+            this.id = id;
+            this.annotationEntryType = annotationEntryType;
+            this.entries = entries;
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public AnnotationEntryType getAnnotationEntryType() {
+            return annotationEntryType;
+        }
+
+        public List<AnnotationEntry> getEntries() {
+            return entries;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (obj == null || obj.getClass() != this.getClass()) {
+                return false;
+            }
+            final AnnotationEntryGroup that = (AnnotationEntryGroup) obj;
+            return this.id == that.id &&
+                   Objects.equals(this.annotationEntryType, that.annotationEntryType) &&
+                   Objects.equals(this.entries, that.entries);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, annotationEntryType, entries);
+        }
+
+        @Override
+        public String toString() {
+            return "AnnotationEntryGroup[" +
+                   "id=" + id + ", " +
+                   "annotationEntryType=" + annotationEntryType + ", " +
+                   "entries=" + entries + ']';
+        }
     }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.planb.impl;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.planb.impl.data.ShardManager;
@@ -78,6 +79,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final SecurityContext securityContext;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
+    private final DocFinder docFinder;
 
     @Inject
     public StateSearchProvider(final Executor executor,
@@ -90,7 +92,8 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
                                final ShardManager shardManager,
                                final ExpressionPredicateFactory expressionPredicateFactory,
                                final SecurityContext securityContext,
-                               final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
+                               final FieldInfoResultPageFactory fieldInfoResultPageFactory,
+                               final DocFinder docFinder) {
         this.executor = executor;
         this.stateDocStore = stateDocStore;
         this.stateDocCache = stateDocCache;
@@ -102,6 +105,7 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.securityContext = securityContext;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
+        this.docFinder = docFinder;
     }
 
     private PlanBDoc getPlanBDoc(final DocRef docRef) {
@@ -122,6 +126,11 @@ public class StateSearchProvider implements SearchProvider, IndexFieldProvider {
     @Override
     public List<DocRef> getDataSourceDocRefs() {
         return stateDocStore.list();
+    }
+
+    @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return docFinder.findByName(getDataSourceType(), name);
     }
 
     @Override

@@ -1,0 +1,213 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl;
+
+import stroom.util.http.HttpClientConfiguration;
+import stroom.util.jersey.HttpClientProvider;
+import stroom.util.jersey.HttpClientProviderCache;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
+import dev.langchain4j.exception.HttpException;
+import dev.langchain4j.http.client.HttpClient;
+import dev.langchain4j.http.client.HttpRequest;
+import dev.langchain4j.http.client.SuccessfulHttpResponse;
+import dev.langchain4j.http.client.sse.ServerSentEventListener;
+import dev.langchain4j.http.client.sse.ServerSentEventParser;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpHead;
+import org.apache.hc.client5.http.classic.methods.HttpOptions;
+import org.apache.hc.client5.http.classic.methods.HttpPatch;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+public class ApacheHttpClient implements HttpClient {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApacheHttpClient.class);
+
+    private final HttpClientProviderCache httpClientProviderCache;
+    private final HttpClientConfiguration httpClientConfiguration;
+
+    public ApacheHttpClient(final HttpClientProviderCache httpClientProviderCache,
+                            final HttpClientConfiguration httpClientConfiguration) {
+        this.httpClientProviderCache = httpClientProviderCache;
+        this.httpClientConfiguration = httpClientConfiguration;
+    }
+
+    @Override
+    public SuccessfulHttpResponse execute(final HttpRequest request) {
+        try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
+            final ClassicHttpRequest apacheRequest = createApacheRequest(request);
+
+            final org.apache.hc.client5.http.classic.HttpClient httpClient = httpClientProvider.get();
+            return httpClient.execute(apacheRequest, this::convertResponse);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public void execute(final HttpRequest request,
+                        final ServerSentEventParser parser,
+                        final ServerSentEventListener listener) {
+        final ClassicHttpRequest apacheRequest = createApacheRequest(request);
+        try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
+            final org.apache.hc.client5.http.classic.HttpClient httpClient = httpClientProvider.get();
+
+            if (httpClient instanceof final CloseableHttpClient closeableHttpClient) {
+                httpClient.execute(apacheRequest, response -> {
+                    handleServerSentEvents(response, parser, listener);
+                    closeableHttpClient.close();
+                    return null;
+                });
+            } else {
+                httpClient.execute(apacheRequest, response -> {
+                    handleServerSentEvents(response, parser, listener);
+                    return null;
+                });
+            }
+        } catch (final IOException e) {
+            LOGGER.debug("execute() SSE - IOException: {}", e.getMessage(), e);
+            listener.onError(e);
+        }
+    }
+
+    private void handleServerSentEvents(final ClassicHttpResponse response,
+                                        final ServerSentEventParser parser,
+                                        final ServerSentEventListener listener) throws IOException {
+        final int statusCode = response.getCode();
+        if (statusCode < 200 || statusCode >= 300) {
+            String body = null;
+            if (response.getEntity() != null) {
+                try {
+                    body = EntityUtils.toString(response.getEntity());
+                } catch (final ParseException e) {
+                    LOGGER.debug("handleServerSentEvents() - ParseException reading error body: {}",
+                            e.getMessage(), e);
+                    body = "Failed to parse error response body: " + e.getMessage();
+                }
+            }
+            LOGGER.debug("handleServerSentEvents() - non-2xx response, statusCode: {}, body:\n{}",
+                    statusCode, body);
+            listener.onError(new HttpException(statusCode, body));
+            return;
+        }
+        parser.parse(response.getEntity().getContent(), listener);
+    }
+
+    private ClassicHttpRequest createApacheRequest(final HttpRequest request) {
+        final String method = request.method().name();
+        final String url = request.url();
+
+        final ClassicHttpRequest apacheRequest = switch (method.toUpperCase(Locale.ROOT)) {
+            case "GET" -> new HttpGet(url);
+            case "POST" -> {
+                final HttpPost post = new HttpPost(url);
+                if (request.body() != null) {
+                    post.setEntity(new StringEntity(request.body(), ContentType.APPLICATION_JSON));
+                }
+                yield post;
+            }
+            case "PUT" -> {
+                final HttpPut put = new HttpPut(url);
+                if (request.body() != null) {
+                    put.setEntity(new StringEntity(request.body(), ContentType.APPLICATION_JSON));
+                }
+                yield put;
+            }
+            case "DELETE" -> new HttpDelete(url);
+            case "PATCH" -> {
+                final HttpPatch patch = new HttpPatch(url);
+                if (request.body() != null) {
+                    patch.setEntity(new StringEntity(request.body(), ContentType.APPLICATION_JSON));
+                }
+                yield patch;
+            }
+            case "HEAD" -> new HttpHead(url);
+            case "OPTIONS" -> new HttpOptions(url);
+            default -> throw new IllegalArgumentException("Unsupported HTTP method: " + method);
+        };
+
+        // Add headers
+        if (request.headers() != null) {
+            request.headers().forEach((key, values) ->
+                    values.forEach(value ->
+                            apacheRequest.addHeader(key, value)));
+        }
+
+        LOGGER.debug("createApacheRequest() - method: {}, url: {}, returning: {}", method, url, apacheRequest);
+        return apacheRequest;
+    }
+
+    private SuccessfulHttpResponse convertResponse(final ClassicHttpResponse response) {
+        try {
+            final int statusCode = response.getCode();
+
+            final Map<String, List<String>> headers = new HashMap<>();
+            for (final Header header : response.getHeaders()) {
+                headers.computeIfAbsent(header.getName(), ignored -> new ArrayList<>())
+                        .add(header.getValue());
+            }
+
+            String body = null;
+            if (response.getEntity() != null) {
+                body = EntityUtils.toString(response.getEntity());
+            }
+            LOGGER.debug("convertResponse() - statusCode: {}, headers: {}, body:\n{}",
+                    statusCode, headers, body);
+
+            if (statusCode < 200 || statusCode >= 300) {
+                LOGGER.debug("convertResponse() - non-2xx response, throwing HttpException for statusCode: {}",
+                        statusCode);
+                throw new HttpException(statusCode, body);
+            }
+
+            return SuccessfulHttpResponse.builder()
+                    .statusCode(statusCode)
+                    .headers(headers)
+                    .body(body)
+                    .build();
+        } catch (final HttpException e) {
+            LOGGER.debug("convertResponse() - HttpException: statusCode: {}, message: {}",
+                    e.statusCode(), e.getMessage(), e);
+            throw e;
+        } catch (final IOException e) {
+            LOGGER.debug("convertResponse() - IOException: {}", e.getMessage(), e);
+            throw new UncheckedIOException(e);
+        } catch (final ParseException e) {
+            LOGGER.debug("convertResponse() - ParseException: {}", e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+}

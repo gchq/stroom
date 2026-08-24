@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestStringUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStringUtil.class);
+
+    @Test
+    void escapeHtml() {
+        Assertions.assertThat(StringUtil.escapeHtml(null)).isEqualTo("");
+        Assertions.assertThat(StringUtil.escapeHtml("")).isEqualTo("");
+        Assertions.assertThat(StringUtil.escapeHtml("plain text 123")).isEqualTo("plain text 123");
+        Assertions.assertThat(StringUtil.escapeHtml("<script>alert('x')</script>"))
+                .isEqualTo("&lt;script&gt;alert(&#x27;x&#x27;)&lt;/script&gt;");
+        Assertions.assertThat(StringUtil.escapeHtml("a & b \"c\"")).isEqualTo("a &amp; b &quot;c&quot;");
+    }
 
     @TestFactory
     Stream<DynamicTest> splitToLines_noTrim() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.pipeline.reader;
 
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.stepping.SteppingController;
+import stroom.task.api.TaskTerminatedException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +49,9 @@ class InputStreamRecordDetector extends FilterInputStream {
 
     @Override
     public int read(final byte[] buf, final int off, final int len) throws IOException {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new TaskTerminatedException();
+        }
         if (end) {
             return -1;
         }
@@ -82,6 +86,7 @@ class InputStreamRecordDetector extends FilterInputStream {
 
         if (length - offset == 0) {
             // Fill the buffer.
+            offset = 0;
             length = super.read(buffer, 0, Math.min(buffer.length, len));
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,7 @@ public class AnalyticsModule extends AbstractModule {
                 .bind(DuplicateCheckResourceImpl.class)
                 .bind(ExecutionScheduleResourceImpl.class);
         bind(DuplicateCheckResource.class).to(DuplicateCheckResourceImpl.class);
+        bind(ExecutionScheduleResource.class).to(ExecutionScheduleResourceImpl.class);
 
         bind(AnalyticsService.class).to(AnalyticsServiceImpl.class);
         bind(DuplicateCheckFactory.class).to(DuplicateCheckFactoryImpl.class);

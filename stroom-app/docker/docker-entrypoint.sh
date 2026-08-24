@@ -28,6 +28,7 @@ if [ "$(id -u)" = '0' ]; then
     # WARNING: use chown -R with caution as some dirs (e.g. proxy-repo) can
     # contain MANY files, resulting in a big delay on container start
     chown stroom:stroom /stroom/content_pack_import
+    chown stroom:stroom /stroom/content_index
     chown stroom:stroom /stroom/data_feed_identities
     chown stroom:stroom /stroom/git_repo
     chown stroom:stroom /stroom/lmdb

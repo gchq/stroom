@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,9 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.query.api.datasource.QueryField;
 import stroom.receive.rules.shared.ReceiveDataRules;
@@ -41,7 +39,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -74,6 +71,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
@@ -210,7 +208,6 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
                         .build(),
                 150);
 
-        dataGrid.addEndColumn(new EndColumn<>());
         dataGrid.sort(nameColumn);
 
         return DataGridUtil.comparatorFactoryBuilder(dataGrid)
@@ -237,7 +234,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
                     fields.add(newField);
                     refresh();
                     e.hide();
-                    DirtyEvent.fire(FieldListPresenter.this, true);
+                    onChange();
                 } else {
                     e.reset();
                 }
@@ -268,7 +265,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
 
                         refresh();
                         e.hide();
-                        DirtyEvent.fire(FieldListPresenter.this, true);
+                        onChange();
                     } else {
                         e.reset();
                     }
@@ -292,7 +289,7 @@ public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules
                     fields.removeAll(list);
                     selectionModel.clear();
                     refresh();
-                    DirtyEvent.fire(FieldListPresenter.this, true);
+                    onChange();
                 }
             });
         }

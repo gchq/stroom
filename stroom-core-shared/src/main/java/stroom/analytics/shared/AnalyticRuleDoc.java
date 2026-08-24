@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
+import stroom.query.shared.QueryTablePreferences;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -76,9 +77,10 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                            @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
                            @JsonProperty("notifications") final List<NotificationConfig> notifications,
                            @JsonProperty("errorFeed") final DocRef errorFeed,
-                           @JsonProperty("rememberNotifications") final boolean rememberNotifications,
-                           @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
+                           @JsonProperty("rememberNotifications") final Boolean rememberNotifications,
+                           @JsonProperty("suppressDuplicateNotifications") final Boolean suppressDuplicateNotifications,
                            @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
+                           @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences,
                            @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
                            @JsonProperty("level") final String level,
                            @JsonProperty("status") final String status) {
@@ -102,6 +104,7 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                 rememberNotifications,
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig,
+                queryTablePreferences,
                 level,
                 status);
         this.includeRuleDocumentation = includeRuleDocumentation == null
@@ -207,6 +210,7 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                     false,
                     false,
                     duplicateNotificationConfig,
+                    queryTablePreferences,
                     includeRuleDocumentation,
                     level,
                     status);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import stroom.security.api.UserIdentity;
 import stroom.util.PredicateUtil;
 import stroom.util.PredicateUtil.CountingPredicate;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
@@ -40,7 +42,8 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -49,12 +52,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 @Singleton
 public class CertificateIdentityServiceImpl
         implements CertificateIdentityService, AuthenticatorFilter, Managed, HasSystemInfo {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CertificateIdentityServiceImpl.class);
 
     private final CertificateExtractor certificateExtractor;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
@@ -176,6 +182,7 @@ public class CertificateIdentityServiceImpl
                 final Optional<UserIdentity> optUserIdentity = certificateExtractor.getDN(request)
                         .map(dn -> {
                             final CacheKey cacheKey = new CacheKey(CIKey.ofDynamicKey(keyOwnerFromHeaders), dn);
+                            LOGGER.debug("authenticate() - cacheKey: {}, attributeMap: {}", cacheKey, attributeMap);
                             return identityMap.get(cacheKey);
                         })
                         .filter(NullSafe::hasItems)
@@ -215,7 +222,7 @@ public class CertificateIdentityServiceImpl
     @Override
     public SystemInfoResult getSystemInfo() {
         // sourcePath => accountId => Map
-        final Map<String, Map<String, List<Map<String, String>>>> map = new HashMap<>();
+        final Map<String, Map<String, List<Map<String, Object>>>> map = new TreeMap<>();
         final String keyOwnerMetaKey = receiveDataConfigProvider.get().getDataFeedOwnerMetaKey();
         identityMap.values()
                 .forEach(cachedIdentities -> {
@@ -225,22 +232,37 @@ public class CertificateIdentityServiceImpl
                         final String keyOwner = Objects.requireNonNullElse(
                                 certificateIdentity.getStreamMetaValue(keyOwnerMetaKey),
                                 "null");
-                        final List<Map<String, String>> keysForAccountId = map.computeIfAbsent(path,
-                                        k -> new HashMap<>())
-                                .computeIfAbsent(keyOwner, k -> new ArrayList<>());
+                        final List<Map<String, Object>> keysForAccountId = map.computeIfAbsent(path,
+                                        ignored -> new TreeMap<>())
+                                .computeIfAbsent(keyOwner, ignored -> new ArrayList<>());
 
                         final String remaining = Duration.between(
                                 Instant.now(),
                                 certificateIdentity.getExpiryDate()).toString();
-                        final Map<String, String> leafMap = Map.of(
-                                "expiry", certificateIdentity.getExpiryDate().toString(),
-                                "remaining", remaining);
+                        final Map<String, Object> leafMap = new LinkedHashMap<>();
+                        leafMap.put("dn", certificateIdentity.getCertificateDn());
+                        leafMap.put("expiry", certificateIdentity.getExpiryDate().toString());
+                        leafMap.put("remaining", remaining);
+                        leafMap.put("streamMetaData", getStreamMetaData(certificateIdentity));
                         keysForAccountId.add(leafMap);
                     }
                 });
         return SystemInfoResult.builder(this)
+                .addDetail("ownerMetaKey", getOwnerMetaKey(receiveDataConfigProvider.get()).getAsLowerCase())
                 .addDetail("sourceFiles", map)
                 .build();
+    }
+
+    private Map<String, String> getStreamMetaData(final CertificateIdentity certificateIdentity) {
+        final Map<CIKey, String> sourceMap = NullSafe.map(certificateIdentity.getCIStreamMetaData());
+        final Map<String, String> map = new LinkedHashMap<>(sourceMap.size());
+        sourceMap.entrySet()
+                .stream()
+                .sorted(Comparator.comparing(entry ->
+                        entry.getKey().getAsLowerCase()))
+                .forEach(entry ->
+                        map.put(entry.getKey().getAsLowerCase(), entry.getValue()));
+        return map;
     }
 
     private CIKey getOwnerMetaKey(final ReceiveDataConfig receiveDataConfig) {

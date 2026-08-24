@@ -18,6 +18,4 @@ ext.moduleName = 'stroom.cluster.task.api'
 
 dependencies {
     implementation project(':stroom-core-shared')
-
-    implementation libs.jackson.annotations
 }

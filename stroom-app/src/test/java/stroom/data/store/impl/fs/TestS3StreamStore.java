@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,12 @@ import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.EffectiveMetaSet;
@@ -95,6 +97,8 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
     private FeedStore feedService;
     @Inject
     private ExplorerNodeService explorerNodeService;
+    @Inject
+    private DocFinder docFinder;
 
     private DocRef feed1;
     private DocRef feed2;
@@ -132,7 +136,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
      * Setup some test data.
      */
     private DocRef setupFeed(final String feedName) {
-        final List<DocRef> docRefs = feedService.findByName(feedName);
+        final List<DocRef> docRefs = docFinder.findByName(FeedDoc.TYPE, feedName);
         if (docRefs != null && docRefs.size() > 0) {
             return docRefs.get(0);
         }

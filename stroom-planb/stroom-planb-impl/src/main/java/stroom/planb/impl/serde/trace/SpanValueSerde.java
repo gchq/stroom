@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ import stroom.pathways.shared.otel.trace.SpanLink;
 import stroom.pathways.shared.otel.trace.SpanStatus;
 import stroom.pathways.shared.otel.trace.StatusCode;
 import stroom.pathways.shared.otel.trace.ValueType;
-import stroom.planb.impl.db.LmdbWriter;
-import stroom.planb.impl.db.PlanBEnv;
-import stroom.planb.impl.db.UsedLookupsRecorder;
-import stroom.planb.impl.db.trace.NanoTimeUtil;
+import stroom.planb.impl.dao.LmdbWriter;
+import stroom.planb.impl.dao.PlanBEnv;
+import stroom.planb.impl.dao.UsedLookupsRecorder;
+import stroom.planb.impl.dao.trace.NanoTimeUtil;
 import stroom.planb.impl.serde.Serde;
 import stroom.planb.impl.serde.time.NanoTimeSerde;
 import stroom.planb.impl.serde.time.TimeSerde;

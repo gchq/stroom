@@ -166,11 +166,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/UpdateAccountRequest"
+                "$ref" : "#/components/schemas/AccountChange"
               }
             }
           },
-          "description" : "account",
+          "description" : "change",
           "required" : true
         },
         "responses" : {
@@ -478,22 +478,153 @@
         "tags" : [ "AI" ]
       }
     },
-    "/ai/v1/askStroomAi/{nodeName}" : {
+    "/ai/v1/cancelProcessing/{chatId}" : {
       "post" : {
-        "operationId" : "askStroomAi_1",
+        "operationId" : "cancelProcessing",
         "parameters" : [ {
           "in" : "path",
-          "name" : "nodeName",
+          "name" : "chatId",
           "required" : true,
           "schema" : {
-            "type" : "string"
+            "type" : "integer",
+            "format" : "int32"
           }
         } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Cancel in-progress AI batch analysis for a chat",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/createChat" : {
+      "post" : {
+        "operationId" : "createChat",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiChat"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a new AI chat conversation",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/deleteAllMessages/{chatId}" : {
+      "post" : {
+        "operationId" : "deleteAllMessages",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete all messages and attachments from an AI chat conversation",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/deleteChat/{chatId}" : {
+      "post" : {
+        "operationId" : "deleteChat",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete an AI chat conversation",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/deleteMessage/{chatId}/{messageId}" : {
+      "post" : {
+        "operationId" : "deleteMessage",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "path",
+          "name" : "messageId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete a message from an AI chat conversation",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/downloadChatHistory" : {
+      "post" : {
+        "operationId" : "downloadChatHistory",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/AskStroomAiRequest"
+                "$ref" : "#/components/schemas/DownloadChatHistoryRequest"
               }
             }
           },
@@ -505,14 +636,72 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AskStroomAiResponse"
+                  "$ref" : "#/components/schemas/ResourceGeneration"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Ask Stroom AI a question relating to the current search context",
+        "summary" : "Download the chat history for a conversation as a Markdown file",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/getAttachmentData" : {
+      "post" : {
+        "operationId" : "getAttachmentData",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GetAttachmentDataRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiAttachmentDataPage"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get a page of attachment table data",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/getChat/{chatId}" : {
+      "post" : {
+        "operationId" : "getChat",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiChat"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get an AI chat conversation by ID",
         "tags" : [ "AI" ]
       }
     },
@@ -535,14 +724,114 @@
         "tags" : [ "AI" ]
       }
     },
-    "/ai/v1/setDefaultChatMemoryConfigConfig" : {
+    "/ai/v1/getMessages/{chatId}" : {
       "post" : {
-        "operationId" : "setDefaultChatMemoryConfigConfig",
+        "operationId" : "getMessages",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AiChatMessage"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get messages for an AI chat conversation",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/listChats" : {
+      "post" : {
+        "operationId" : "listChats",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ChatMemoryConfig"
+                "$ref" : "#/components/schemas/FindAiChatHistoryCriteria"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageAiChat"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "List all AI chat conversations for the current user",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/pollMessages/{chatId}" : {
+      "post" : {
+        "operationId" : "pollMessages",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AiChatPollRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiChatPollResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Poll for new messages in an AI chat conversation since a given message ID",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/setDefaultAskStroomAIConfig" : {
+      "post" : {
+        "operationId" : "setDefaultAskStroomAIConfig",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AskStroomAIConfig"
               }
             }
           },
@@ -561,22 +850,31 @@
             "description" : "default response"
           }
         },
-        "summary" : "Set the default chat memory config to use for asking questions",
+        "summary" : "Set the default Stroom AI config to use for asking questions",
         "tags" : [ "AI" ]
       }
     },
-    "/ai/v1/setDefaultModel" : {
+    "/ai/v1/updateChatTitle/{chatId}" : {
       "post" : {
-        "operationId" : "setDefaultModel",
+        "operationId" : "updateChatTitle",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
+                "type" : "string"
               }
             }
           },
-          "description" : "modelRef",
+          "description" : "title",
           "required" : true
         },
         "responses" : {
@@ -591,37 +889,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Set the default model to use for asking questions",
-        "tags" : [ "AI" ]
-      }
-    },
-    "/ai/v1/setDefaultTableSummaryConfig" : {
-      "post" : {
-        "operationId" : "setDefaultTableSummaryConfig",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/TableSummaryConfig"
-              }
-            }
-          },
-          "description" : "config",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Set the default table summary config to use for asking questions",
+        "summary" : "Update the title of an AI chat conversation",
         "tags" : [ "AI" ]
       }
     },
@@ -1575,7 +1843,61 @@
         "tags" : [ "API Key" ]
       }
     },
-    "/authentication/v1/noauth/changePassword" : {
+    "/auth/flow/v1/signin-oidc" : {
+      "get" : {
+        "operationId" : "authFlowSignInOidc",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "code",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "state",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "text/html" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "OIDC sign-in callback (redirect_uri) for the SPA authentication flow",
+        "tags" : [ "Auth Flow" ]
+      }
+    },
+    "/auth/flow/v1/status" : {
+      "get" : {
+        "operationId" : "authFlowStatus",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "redirect_uri",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuthFlowResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Check authentication status for the SPA",
+        "tags" : [ "Auth Flow" ]
+      }
+    },
+    "/authentication/v1/changePassword" : {
       "post" : {
         "operationId" : "changePassword",
         "requestBody" : {
@@ -1605,7 +1927,7 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v1/noauth/confirmPassword" : {
+    "/authentication/v1/confirmPassword" : {
       "post" : {
         "operationId" : "confirmPassword",
         "requestBody" : {
@@ -1635,7 +1957,7 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v1/noauth/fetchPasswordPolicy" : {
+    "/authentication/v1/fetchPasswordPolicy" : {
       "get" : {
         "operationId" : "fetchPasswordPolicy",
         "responses" : {
@@ -1654,7 +1976,7 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v1/noauth/login" : {
+    "/authentication/v1/login" : {
       "post" : {
         "operationId" : "login",
         "requestBody" : {
@@ -1684,7 +2006,7 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v1/noauth/logout" : {
+    "/authentication/v1/logout" : {
       "get" : {
         "operationId" : "logout",
         "parameters" : [ {
@@ -1711,7 +2033,7 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authentication/v1/noauth/reset" : {
+    "/authentication/v1/reset" : {
       "post" : {
         "operationId" : "resetEmail",
         "requestBody" : {
@@ -1741,7 +2063,37 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/authproxy/v1/noauth/fetchClientCredsToken" : {
+    "/authentication/v1/resetPassword" : {
+      "post" : {
+        "operationId" : "resetPassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "description" : "resetPasswordRequest",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ChangePasswordResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Set a new password using the token emailed to a user who has forgotten theirs.",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/authproxy/v1/fetchClientCredsToken" : {
       "post" : {
         "operationId" : "fetchClientCredsToken",
         "requestBody" : {
@@ -2075,6 +2427,36 @@
           }
         },
         "summary" : "Fetch a property by its name, e.g. 'stroom.path.home'",
+        "tags" : [ "Global Config" ]
+      }
+    },
+    "/config/v1/setConfigValue" : {
+      "post" : {
+        "operationId" : "setConfigValue",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SetConfigValueRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Set a single config property for all users",
         "tags" : [ "Global Config" ]
       }
     },
@@ -4449,6 +4831,36 @@
         "tags" : [ "Explorer (v2)" ]
       }
     },
+    "/explorer/v2/fetchDeleteConfirmation" : {
+      "post" : {
+        "operationId" : "fetchExplorerDeleteConfirmation",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeleteConfirmationRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeleteConfirmation"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch the information needed to confirm a delete (contained items and dependants)",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
     "/explorer/v2/fetchDocRefs" : {
       "post" : {
         "operationId" : "fetchExplorerDocRefs",
@@ -5662,6 +6074,25 @@
           }
         },
         "summary" : "Check if any content has changed",
+        "tags" : [ "GitRepos" ]
+      }
+    },
+    "/gitRepo/v1/getDefaultHttpClientConfig" : {
+      "post" : {
+        "operationId" : "getGitRepoDefaultHttpClientConfig",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HttpClientConfig"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get default HTTP client configuration",
         "tags" : [ "GitRepos" ]
       }
     },
@@ -7168,7 +7599,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageNodeGroupState"
+                  "$ref" : "#/components/schemas/NodeGroupState"
                 }
               }
             },
@@ -7478,7 +7909,7 @@
         "tags" : [ "Nodes" ]
       }
     },
-    "/oauth2/v1/noauth/.well-known/openid-configuration" : {
+    "/oauth2/v1/.well-known/openid-configuration" : {
       "get" : {
         "operationId" : "openIdConfiguration",
         "responses" : {
@@ -7497,7 +7928,7 @@
         "tags" : [ "API Keys", "Authentication" ]
       }
     },
-    "/oauth2/v1/noauth/auth" : {
+    "/oauth2/v1/auth" : {
       "get" : {
         "operationId" : "openIdAuth",
         "parameters" : [ {
@@ -7546,6 +7977,18 @@
           "schema" : {
             "type" : "string"
           }
+        }, {
+          "in" : "query",
+          "name" : "code_challenge",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "code_challenge_method",
+          "schema" : {
+            "type" : "string"
+          }
         } ],
         "responses" : {
           "default" : {
@@ -7559,7 +8002,7 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/oauth2/v1/noauth/certs" : {
+    "/oauth2/v1/certs" : {
       "get" : {
         "operationId" : "openIdCerts",
         "responses" : {
@@ -7587,7 +8030,7 @@
         "tags" : [ "API Keys", "Authentication" ]
       }
     },
-    "/oauth2/v1/noauth/token" : {
+    "/oauth2/v1/token" : {
       "post" : {
         "operationId" : "openIdToken",
         "responses" : {
@@ -9359,6 +9802,7 @@
     },
     "/query/v1/csv/search" : {
       "get" : {
+        "description" : "Returns the results as CSV. Sets the 'X-Stroom-Search-Incremental' header to say whether the search ran incrementally, and the 'X-Stroom-Search-Complete' header to say whether it finished. An incremental search returns whatever results it has when the timeout expires, so those may be partial; a non incremental search waits for the search to finish, which risks the request itself timing out.",
         "operationId" : "queryCsv",
         "parameters" : [ {
           "in" : "query",
@@ -9381,17 +9825,24 @@
             "format" : "int32",
             "default" : 100
           }
+        }, {
+          "in" : "query",
+          "name" : "incremental",
+          "schema" : {
+            "type" : "boolean",
+            "default" : true
+          }
+        }, {
+          "in" : "query",
+          "name" : "timeout",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
         } ],
         "responses" : {
           "default" : {
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string"
-                }
-              }
-            },
-            "description" : "default response"
+            "description" : "Returns the matching rows as CSV, which may be a subset of the matching data if the search had not finished"
           }
         },
         "summary" : "Perform a csv query",
@@ -10786,7 +11237,7 @@
       }
     },
     "/session/v1/logout" : {
-      "get" : {
+      "post" : {
         "operationId" : "stroomLogout",
         "parameters" : [ {
           "in" : "query",
@@ -10812,6 +11263,96 @@
         "tags" : [ "Sessions" ]
       }
     },
+    "/session/v1/terminate" : {
+      "post" : {
+        "operationId" : "terminateUserSessions",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "subjectId",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "exceptSessionId",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Terminate a user's sessions on a node (cluster fan-out; requires Manage Users)",
+        "tags" : [ "Sessions" ]
+      }
+    },
+    "/session/v1/terminateOther" : {
+      "post" : {
+        "operationId" : "terminateOtherSessions",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Sign out of all of the current user's other sessions across the cluster",
+        "tags" : [ "Sessions" ]
+      }
+    },
+    "/session/v1/terminateSession" : {
+      "post" : {
+        "operationId" : "terminateSession",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "sessionHandle",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Terminate a single session by id (own session, or requires Manage Users)",
+        "tags" : [ "Sessions" ]
+      }
+    },
     "/sessionInfo/v1" : {
       "get" : {
         "operationId" : "getSessionInfo",
@@ -10829,6 +11370,104 @@
         },
         "summary" : "Get information for the current session",
         "tags" : [ "Session Info" ]
+      }
+    },
+    "/signingKey/v1/list" : {
+      "get" : {
+        "operationId" : "listSigningKeys",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SigningKeyRow"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "List the internal identity provider's signing keys (requires Administrator)",
+        "tags" : [ "Signing Keys" ]
+      }
+    },
+    "/signingKey/v1/refresh" : {
+      "post" : {
+        "operationId" : "refreshSigningKeys",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Discard this node's cached signing keys (requires Administrator)",
+        "tags" : [ "Signing Keys" ]
+      }
+    },
+    "/signingKey/v1/revoke" : {
+      "post" : {
+        "operationId" : "revokeSigningKey",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Revoke one signing key (requires Administrator)",
+        "tags" : [ "Signing Keys" ]
+      }
+    },
+    "/signingKey/v1/revokeAll" : {
+      "post" : {
+        "operationId" : "revokeAllSigningKeys",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Revoke all signing keys (requires Administrator)",
+        "tags" : [ "Signing Keys" ]
       }
     },
     "/solrIndex/v1/fetchSolrTypes" : {
@@ -11959,6 +12598,32 @@
         "tags" : [ "Text Converters" ]
       }
     },
+    "/tokenRevocation/v1/invalidateCache" : {
+      "post" : {
+        "operationId" : "invalidateRevokedTokenCache",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Tell a node to re-read the revoked token denylist (inter-node call)",
+        "tags" : [ "Token Revocation" ]
+      }
+    },
     "/traces/v1/getTrace" : {
       "post" : {
         "operationId" : "tracesGetTrace",
@@ -12073,6 +12738,93 @@
         },
         "summary" : "Find traces",
         "tags" : [ "Traces" ]
+      }
+    },
+    "/userAccess/v1/find" : {
+      "post" : {
+        "operationId" : "findUserAccess",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindUserAccessCriteria"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageUserAccessRow"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find users holding live sessions or tokens",
+        "tags" : [ "User Access" ]
+      }
+    },
+    "/userAccess/v1/revoke" : {
+      "post" : {
+        "operationId" : "revokeUserAccess",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "subjectId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Revoke a user's sessions and tokens (requires Manage Users)",
+        "tags" : [ "User Access" ]
+      }
+    },
+    "/userAccess/v1/sessions" : {
+      "post" : {
+        "operationId" : "findUserSessions",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "subjectId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SessionDetails"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "List one user's sessions (requires Manage Users)",
+        "tags" : [ "User Access" ]
       }
     },
     "/userInfo/v1/{userUuid}" : {
@@ -13316,6 +14068,22 @@
       "AbstractAnnotationChange" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "addTable" : "#/components/schemas/AddAnnotationTable",
+            "addTag" : "#/components/schemas/AddTag",
+            "assignedTo" : "#/components/schemas/ChangeAssignedTo",
+            "comment" : "#/components/schemas/ChangeComment",
+            "description" : "#/components/schemas/ChangeDescription",
+            "linkAnnotations" : "#/components/schemas/LinkAnnotations",
+            "linkEvents" : "#/components/schemas/LinkEvents",
+            "removeTag" : "#/components/schemas/RemoveTag",
+            "retentionPeriod" : "#/components/schemas/ChangeRetentionPeriod",
+            "setTag" : "#/components/schemas/SetTag",
+            "subject" : "#/components/schemas/ChangeSubject",
+            "title" : "#/components/schemas/ChangeTitle",
+            "unlinkAnnotations" : "#/components/schemas/UnlinkAnnotations",
+            "unlinkEvents" : "#/components/schemas/UnlinkEvents"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -13328,6 +14096,10 @@
       "AbstractAppPermissionChange" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "AddAppPermission" : "#/components/schemas/AddAppPermission",
+            "RemoveAppPermission" : "#/components/schemas/RemoveAppPermission"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -13347,6 +14119,18 @@
       "AbstractDocumentPermissionsChange" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "AddAllDocumentUserCreatePermissions" : "#/components/schemas/AddAllDocumentUserCreatePermissions",
+            "AddAllPermissionsFrom" : "#/components/schemas/AddAllPermissionsFrom",
+            "AddDocumentUserCreatePermission" : "#/components/schemas/AddDocumentUserCreatePermission",
+            "RemoveAllDocumentUserCreatePermissions" : "#/components/schemas/RemoveAllDocumentUserCreatePermissions",
+            "RemoveAllPermissions" : "#/components/schemas/RemoveAllPermissions",
+            "RemoveDocumentUserCreatePermission" : "#/components/schemas/RemoveDocumentUserCreatePermission",
+            "RemovePermission" : "#/components/schemas/RemovePermission",
+            "SetAllPermissionsFrom" : "#/components/schemas/SetAllPermissionsFrom",
+            "SetDocumentUserCreatePermissions" : "#/components/schemas/SetDocumentUserCreatePermissions",
+            "SetPermission" : "#/components/schemas/SetPermission"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -13359,6 +14143,10 @@
       "AbstractFetchDataResult" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "data" : "#/components/schemas/FetchDataResult",
+            "marker" : "#/components/schemas/FetchMarkerResult"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -13409,6 +14197,16 @@
       "AbstractPlanBSettings" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "histogram" : "#/components/schemas/HistogramSettings",
+            "metric" : "#/components/schemas/MetricSettings",
+            "rangeState" : "#/components/schemas/RangeStateSettings",
+            "session" : "#/components/schemas/SessionSettings",
+            "state" : "#/components/schemas/StateSettings",
+            "temporalRangeState" : "#/components/schemas/TemporalRangeStateSettings",
+            "temporalState" : "#/components/schemas/TemporalStateSettings",
+            "trace" : "#/components/schemas/TraceSettings"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -13466,6 +14264,18 @@
           "enabled" : {
             "type" : "boolean"
           },
+          "failureCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "failureLockedMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "failureLockedUntilMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "firstName" : {
             "type" : "string"
           },
@@ -13486,21 +14296,11 @@
           "lastName" : {
             "type" : "string"
           },
-          "locked" : {
-            "type" : "boolean"
-          },
           "loginCount" : {
             "type" : "integer",
             "format" : "int32"
           },
-          "loginFailures" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
           "neverExpires" : {
-            "type" : "boolean"
-          },
-          "processingAccount" : {
             "type" : "boolean"
           },
           "reactivatedMs" : {
@@ -13520,6 +14320,46 @@
           "version" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "AccountChange" : {
+        "type" : "object",
+        "properties" : {
+          "actions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "UNLOCK", "ENABLE", "DISABLE", "REACTIVATE" ]
+            },
+            "uniqueItems" : true
+          },
+          "comments" : {
+            "type" : "string"
+          },
+          "confirmPassword" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "firstName" : {
+            "type" : "string"
+          },
+          "forcePasswordChange" : {
+            "type" : "boolean"
+          },
+          "lastName" : {
+            "type" : "string"
+          },
+          "neverExpires" : {
+            "type" : "boolean"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "userId" : {
+            "type" : "string"
           }
         }
       },
@@ -13788,6 +14628,156 @@
           }
         }
       },
+      "AiAttachmentDataPage" : {
+        "type" : "object",
+        "properties" : {
+          "headers" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "offset" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rows" : {
+            "type" : "array",
+            "items" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          },
+          "totalRowCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "AiChat" : {
+        "type" : "object",
+        "properties" : {
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "userUuid" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AiChatAttachment" : {
+        "type" : "object",
+        "properties" : {
+          "attachmentType" : {
+            "type" : "string",
+            "enum" : [ "DASHBOARD", "QUERY", "GENERAL" ]
+          },
+          "chatId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "errorMessage" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rowCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PENDING", "DOWNLOADING", "READY", "ERROR" ]
+          },
+          "truncated" : {
+            "type" : "boolean"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AiChatMessage" : {
+        "type" : "object",
+        "properties" : {
+          "attachmentId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "chatId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "messageType" : {
+            "type" : "string",
+            "enum" : [ "USER_MESSAGE", "AI_RESPONSE", "WORKING", "ERROR", "DASHBOARD_DATA", "QUERY_DATA", "TABLE_DATA", "ATTACHMENT", "DEBUG_DETAIL", "THINKING" ]
+          }
+        }
+      },
+      "AiChatPollRequest" : {
+        "type" : "object",
+        "properties" : {
+          "lastSeenMessageId" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "AiChatPollResponse" : {
+        "type" : "object",
+        "properties" : {
+          "attachments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AiChatAttachment"
+            }
+          },
+          "complete" : {
+            "type" : "boolean"
+          },
+          "newMessages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AiChatMessage"
+            }
+          }
+        }
+      },
       "AnalyticDataShard" : {
         "type" : "object",
         "properties" : {
@@ -13810,6 +14800,11 @@
       "AnalyticProcessConfig" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "scheduled_query" : "#/components/schemas/ScheduledQueryAnalyticProcessConfig",
+            "streaming" : "#/components/schemas/StreamingAnalyticProcessConfig",
+            "table_builder" : "#/components/schemas/TableBuilderAnalyticProcessConfig"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -13876,6 +14871,9 @@
           "query" : {
             "type" : "string"
           },
+          "queryTablePreferences" : {
+            "$ref" : "#/components/schemas/QueryTablePreferences"
+          },
           "rememberNotifications" : {
             "type" : "boolean"
           },
@@ -13920,6 +14918,11 @@
       "AnalyticTrackerData" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "scheduled_query" : "#/components/schemas/ScheduledQueryAnalyticTrackerData",
+            "streaming" : "#/components/schemas/StreamingAnalyticTrackerData",
+            "table_builder" : "#/components/schemas/TableBuilderAnalyticTrackerData"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -14166,6 +15169,11 @@
       "AppPermissionSet" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "empty" : "#/components/schemas/EmptyAppPermissionSet",
+            "multiple" : "#/components/schemas/AppPermissionSetImpl",
+            "single" : "#/components/schemas/SingletonAppPermissionSet"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -14291,24 +15299,43 @@
       "AskStroomAIConfig" : {
         "type" : "object",
         "properties" : {
-          "chatMemory" : {
-            "$ref" : "#/components/schemas/ChatMemoryConfig"
+          "attachmentDownloadTimeoutMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "chatSystemPrompt" : {
+            "type" : "string"
+          },
+          "enableDebugDetail" : {
+            "type" : "boolean"
+          },
+          "historySummaryPrompt" : {
+            "type" : "string"
+          },
+          "maxHistorySafetyCapMessages" : {
+            "type" : "integer",
+            "format" : "int32"
           },
           "modelRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "tableSummary" : {
-            "$ref" : "#/components/schemas/TableSummaryConfig"
+          "tableAnalysis" : {
+            "$ref" : "#/components/schemas/TableAnalysisConfig"
           }
         }
       },
       "AskStroomAiContext" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "dashboardTable" : "#/components/schemas/DashboardTableContext",
+            "generalTable" : "#/components/schemas/GeneralTableContext",
+            "queryTable" : "#/components/schemas/QueryTableContext"
+          },
           "propertyName" : "type"
         },
         "properties" : {
-          "chatMemoryId" : {
+          "description" : {
             "type" : "string"
           },
           "type" : {
@@ -14320,6 +15347,9 @@
       "AskStroomAiRequest" : {
         "type" : "object",
         "properties" : {
+          "aiChat" : {
+            "$ref" : "#/components/schemas/AiChat"
+          },
           "config" : {
             "$ref" : "#/components/schemas/AskStroomAIConfig"
           },
@@ -14351,6 +15381,27 @@
           },
           "sourceTaskId" : {
             "$ref" : "#/components/schemas/TaskId"
+          }
+        }
+      },
+      "AuthFlowResponse" : {
+        "type" : "object",
+        "properties" : {
+          "authenticated" : {
+            "type" : "boolean"
+          },
+          "displayName" : {
+            "type" : "string"
+          },
+          "expiresInSec" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "redirectUrl" : {
+            "type" : "string"
+          },
+          "subjectId" : {
+            "type" : "string"
           }
         }
       },
@@ -14472,6 +15523,16 @@
       "AwsCredentials" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "anonymous" : "#/components/schemas/AwsAnonymousCredentials",
+            "basic" : "#/components/schemas/AwsBasicCredentials",
+            "default" : "#/components/schemas/AwsDefaultCredentials",
+            "environment" : "#/components/schemas/AwsEnvironmentVariableCredentials",
+            "profile" : "#/components/schemas/AwsProfileCredentials",
+            "session" : "#/components/schemas/AwsSessionCredentials",
+            "system" : "#/components/schemas/AwsSystemPropertyCredentials",
+            "web" : "#/components/schemas/AwsWebCredentials"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -14909,18 +15970,6 @@
           }
         } ]
       },
-      "ChatMemoryConfig" : {
-        "type" : "object",
-        "properties" : {
-          "timeToLive" : {
-            "$ref" : "#/components/schemas/SimpleDuration"
-          },
-          "tokenLimit" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        }
-      },
       "CheckDocumentPermissionRequest" : {
         "type" : "object",
         "properties" : {
@@ -15022,12 +16071,25 @@
           },
           "sort" : {
             "$ref" : "#/components/schemas/Sort"
+          },
+          "special" : {
+            "type" : "boolean"
+          },
+          "visible" : {
+            "type" : "boolean"
+          },
+          "width" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
       "ColumnFilter" : {
         "type" : "object",
         "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
           "filter" : {
             "type" : "string"
           }
@@ -15116,6 +16178,10 @@
       "CompletionItem" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "snippet" : "#/components/schemas/CompletionSnippet",
+            "value" : "#/components/schemas/CompletionValue"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -15222,6 +16288,10 @@
       "ComponentResultRequest" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "table" : "#/components/schemas/TableResultRequest",
+            "vis" : "#/components/schemas/VisResultRequest"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -15259,6 +16329,17 @@
       "ComponentSettings" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "embedded-query" : "#/components/schemas/EmbeddedQueryComponentSettings",
+            "key-value-input" : "#/components/schemas/KeyValueInputComponentSettings",
+            "list-input" : "#/components/schemas/ListInputComponentSettings",
+            "query" : "#/components/schemas/QueryComponentSettings",
+            "table" : "#/components/schemas/TableComponentSettings",
+            "table-filter" : "#/components/schemas/TableFilterComponentSettings",
+            "text" : "#/components/schemas/TextComponentSettings",
+            "text-input" : "#/components/schemas/TextInputComponentSettings",
+            "vis" : "#/components/schemas/VisComponentSettings"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -15398,6 +16479,25 @@
       "ConstraintValue" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "anyValue" : "#/components/schemas/AnyTypeValue",
+            "boolean" : "#/components/schemas/BooleanValue",
+            "booleanSet" : "#/components/schemas/AnyBoolean",
+            "double" : "#/components/schemas/DoubleValue",
+            "doubleRange" : "#/components/schemas/DoubleRange",
+            "doubleSet" : "#/components/schemas/DoubleSet",
+            "duration" : "#/components/schemas/NanoTimeValue",
+            "durationRange" : "#/components/schemas/NanoTimeRange",
+            "integer" : "#/components/schemas/IntegerValue",
+            "integerRange" : "#/components/schemas/IntegerRange",
+            "integerSet" : "#/components/schemas/IntegerSet",
+            "long" : "#/components/schemas/LongValue",
+            "longRange" : "#/components/schemas/LongRange",
+            "longSet" : "#/components/schemas/LongSet",
+            "regex" : "#/components/schemas/Regex",
+            "string" : "#/components/schemas/StringValue",
+            "stringSet" : "#/components/schemas/StringSet"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -15602,6 +16702,10 @@
       "CoprocessorSettings" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "event" : "#/components/schemas/EventCoprocessorSettings",
+            "table" : "#/components/schemas/TableCoprocessorSettings"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -15765,6 +16869,9 @@
           "maxProcessingTasks" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "maxTaskCreationDelay" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
           },
           "minMetaCreateTimeMs" : {
             "type" : "integer",
@@ -16066,6 +17173,9 @@
         }, {
           "type" : "object",
           "properties" : {
+            "node" : {
+              "type" : "string"
+            },
             "searchRequest" : {
               "$ref" : "#/components/schemas/DashboardSearchRequest"
             }
@@ -16357,16 +17467,9 @@
       },
       "DefaultLocation" : {
         "type" : "object",
-        "properties" : {
-          "colNo" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "lineNo" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        }
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Location"
+        } ]
       },
       "DeleteAnnotationEntryRequest" : {
         "type" : "object",
@@ -16381,6 +17484,54 @@
           },
           "annotationIdentity" : {
             "$ref" : "#/components/schemas/AnnotationIdentity"
+          }
+        }
+      },
+      "DeleteConfirmation" : {
+        "type" : "object",
+        "properties" : {
+          "childItems" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          },
+          "childItemsTruncated" : {
+            "type" : "boolean"
+          },
+          "childTypeCounts" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "hasHiddenChildItems" : {
+            "type" : "boolean"
+          },
+          "hasHiddenDependants" : {
+            "type" : "boolean"
+          },
+          "totalChildCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "visibleDependants" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          }
+        }
+      },
+      "DeleteConfirmationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRefs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
           }
         }
       },
@@ -16549,6 +17700,33 @@
           }
         }
       },
+      "DocAuditEntry" : {
+        "type" : "object",
+        "properties" : {
+          "action" : {
+            "type" : "string",
+            "enum" : [ "CREATE", "UPDATE", "DELETE", "IMPORT", "EXPORT", "COPY", "MOVE", "RENAME" ]
+          },
+          "time" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "user" : {
+            "$ref" : "#/components/schemas/DocAuditUser"
+          }
+        }
+      },
+      "DocAuditUser" : {
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
       "DocContentHighlights" : {
         "type" : "object",
         "properties" : {
@@ -16613,31 +17791,6 @@
           }
         },
         "required" : [ "uuid" ]
-      },
-      "DocRefInfo" : {
-        "type" : "object",
-        "properties" : {
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createUser" : {
-            "type" : "string"
-          },
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "otherInfo" : {
-            "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateUser" : {
-            "type" : "string"
-          }
-        }
       },
       "DocRefs" : {
         "type" : "object",
@@ -16878,12 +18031,24 @@
           }
         } ]
       },
+      "DownloadChatHistoryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "chatId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "includeDataContexts" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "DownloadQueryResultsRequest" : {
         "type" : "object",
         "properties" : {
           "fileType" : {
             "type" : "string",
-            "enum" : [ "EXCEL", "CSV", "TSV" ]
+            "enum" : [ "EXCEL", "CSV", "TSV", "MARKDOWN" ]
           },
           "percent" : {
             "type" : "integer",
@@ -16908,7 +18073,7 @@
           },
           "fileType" : {
             "type" : "string",
-            "enum" : [ "EXCEL", "CSV", "TSV" ]
+            "enum" : [ "EXCEL", "CSV", "TSV", "MARKDOWN" ]
           },
           "percent" : {
             "type" : "integer",
@@ -17091,6 +18256,9 @@
           "rerankModelRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
+          "rerankScoreFieldSuffix" : {
+            "type" : "string"
+          },
           "rerankScoreMinimum" : {
             "type" : "number",
             "format" : "float"
@@ -17144,14 +18312,14 @@
           },
           "fieldUse" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR", "NESTED" ]
           },
           "fldName" : {
             "type" : "string"
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR", "NESTED" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -17299,6 +18467,11 @@
       "EntryValue" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "rows" : "#/components/schemas/AnnotationTable",
+            "string" : "#/components/schemas/StringEntryValue",
+            "user" : "#/components/schemas/UserRefEntryValue"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -17572,8 +18745,8 @@
       "ExplorerNodeInfo" : {
         "type" : "object",
         "properties" : {
-          "docRefInfo" : {
-            "$ref" : "#/components/schemas/DocRefInfo"
+          "auditEntries" : {
+            "$ref" : "#/components/schemas/ResultPageDocAuditEntry"
           },
           "explorerNode" : {
             "$ref" : "#/components/schemas/ExplorerNode"
@@ -17781,6 +18954,10 @@
         "type" : "object",
         "description" : "Base type for an item in an expression tree",
         "discriminator" : {
+          "mapping" : {
+            "operator" : "#/components/schemas/ExpressionOperator",
+            "term" : "#/components/schemas/ExpressionTerm"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -17797,25 +18974,25 @@
       },
       "ExpressionOperator" : {
         "type" : "object",
-        "description" : "A logical addOperator term in a query expression tree",
-        "properties" : {
-          "children" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ExpressionItem"
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ExpressionItem"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/ExpressionItem"
+              }
+            },
+            "op" : {
+              "type" : "string",
+              "description" : "The logical addOperator type",
+              "enum" : [ "AND", "OR", "NOT" ]
             }
-          },
-          "enabled" : {
-            "type" : "boolean",
-            "description" : "Whether this item in the expression tree is enabled or not",
-            "example" : true
-          },
-          "op" : {
-            "type" : "string",
-            "description" : "The logical addOperator type",
-            "enum" : [ "AND", "OR", "NOT" ]
           }
-        }
+        } ],
+        "description" : "A logical addOperator term in a query expression tree"
       },
       "ExpressionTerm" : {
         "type" : "object",
@@ -18314,6 +19491,27 @@
         "properties" : {
           "expression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
+      "FindAiChatHistoryCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "filter" : {
+            "type" : "string"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
@@ -18963,6 +20161,30 @@
           }
         }
       },
+      "FindUserAccessCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "activeOnly" : {
+            "type" : "boolean"
+          },
+          "filter" : {
+            "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
       "FindUserCriteria" : {
         "type" : "object",
         "properties" : {
@@ -19065,6 +20287,10 @@
       "FormatSettings" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "date" : "#/components/schemas/DateTimeFormatSettings",
+            "number" : "#/components/schemas/NumberFormatSettings"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -19236,6 +20462,22 @@
           }
         }
       },
+      "GetAttachmentDataRequest" : {
+        "type" : "object",
+        "properties" : {
+          "attachmentId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "chatId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          }
+        }
+      },
       "GetFeedStatusRequest" : {
         "type" : "object",
         "properties" : {
@@ -19379,6 +20621,9 @@
           },
           "description" : {
             "type" : "string"
+          },
+          "httpClientConfiguration" : {
+            "$ref" : "#/components/schemas/HttpClientConfig"
           },
           "name" : {
             "type" : "string"
@@ -19905,7 +21150,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR", "NESTED" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -20170,9 +21415,6 @@
             "format" : "int32",
             "maximum" : 5,
             "minimum" : 0
-          },
-          "passwordComplexityRegex" : {
-            "type" : "string"
           },
           "passwordPolicyMessage" : {
             "type" : "string"
@@ -20441,6 +21683,10 @@
       "LayoutConfig" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "splitLayout" : "#/components/schemas/SplitLayoutConfig",
+            "tabLayout" : "#/components/schemas/TabLayoutConfig"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -20583,6 +21829,10 @@
       "Location" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "default" : "#/components/schemas/DefaultLocation",
+            "stream" : "#/components/schemas/StreamLocation"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -20772,7 +22022,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR", "NESTED" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -20799,6 +22049,10 @@
       "Marker" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "storedError" : "#/components/schemas/StoredError",
+            "summary" : "#/components/schemas/Summary"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -21100,6 +22354,9 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "invertSelection" : {
+            "type" : "boolean"
+          },
           "name" : {
             "type" : "string"
           },
@@ -21119,27 +22376,29 @@
       "NodeGroupChange" : {
         "type" : "object",
         "properties" : {
-          "included" : {
-            "type" : "boolean"
+          "nodeGroup" : {
+            "$ref" : "#/components/schemas/NodeGroup"
           },
-          "nodeGroupId" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "nodeId" : {
-            "type" : "integer",
-            "format" : "int32"
+          "selectedNodes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "uniqueItems" : true
           }
         }
       },
       "NodeGroupState" : {
         "type" : "object",
         "properties" : {
-          "included" : {
-            "type" : "boolean"
-          },
-          "node" : {
-            "$ref" : "#/components/schemas/Node"
+          "selected" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "uniqueItems" : true
           }
         }
       },
@@ -21283,6 +22542,10 @@
       "NotificationDestination" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "email" : "#/components/schemas/NotificationEmailDestination",
+            "stream" : "#/components/schemas/NotificationStreamDestination"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -21393,6 +22656,10 @@
           "description" : {
             "type" : "string"
           },
+          "embeddingModelDimensions" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "httpClientConfiguration" : {
             "$ref" : "#/components/schemas/HttpClientConfig"
           },
@@ -21404,6 +22671,9 @@
             "type" : "string"
           },
           "name" : {
+            "type" : "string"
+          },
+          "reasoningEffort" : {
             "type" : "string"
           },
           "type" : {
@@ -21512,6 +22782,11 @@
       "PathKey" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "name" : "#/components/schemas/NamePathKey",
+            "names" : "#/components/schemas/NamesPathKey",
+            "terminal" : "#/components/schemas/TerminalPathKey"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -22076,6 +23351,15 @@
       "PlanBValue" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "histogram" : "#/components/schemas/TemporalValue",
+            "rangeState" : "#/components/schemas/RangeState",
+            "session" : "#/components/schemas/Session",
+            "state" : "#/components/schemas/State",
+            "temporalRangeState" : "#/components/schemas/TemporalRangeState",
+            "temporalState" : "#/components/schemas/TemporalState",
+            "trace" : "#/components/schemas/SpanKV"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -22202,6 +23486,9 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "maxTaskCreationDelay" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
           "minMetaCreateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -22316,6 +23603,14 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "nextPollMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "prevMaxMetaId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "status" : {
             "type" : "string",
             "enum" : [ "CREATED", "COMPLETE", "ERROR" ]
@@ -22329,6 +23624,10 @@
       "ProcessorListRow" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "processor" : "#/components/schemas/ProcessorRow",
+            "processorFilter" : "#/components/schemas/ProcessorFilterRow"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -22812,7 +24111,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', 'in', 'in dictionary'", "'=', '!='", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -22822,7 +24121,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR", "NESTED" ]
           },
           "name" : {
             "type" : "string"
@@ -22838,6 +24137,11 @@
       "QueryHelpData" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "document" : "#/components/schemas/QueryHelpDocument",
+            "field" : "#/components/schemas/QueryHelpField",
+            "functionSignature" : "#/components/schemas/QueryHelpFunctionSignature"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -23062,6 +24366,9 @@
         }, {
           "type" : "object",
           "properties" : {
+            "node" : {
+              "type" : "string"
+            },
             "searchRequest" : {
               "$ref" : "#/components/schemas/QuerySearchRequest"
             }
@@ -23092,6 +24399,9 @@
           },
           "selectionFilter" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "showValueFilters" : {
+            "type" : "boolean"
           }
         }
       },
@@ -23490,6 +24800,9 @@
           "query" : {
             "type" : "string"
           },
+          "queryTablePreferences" : {
+            "$ref" : "#/components/schemas/QueryTablePreferences"
+          },
           "rememberNotifications" : {
             "type" : "boolean"
           },
@@ -23528,7 +24841,7 @@
         "properties" : {
           "fileType" : {
             "type" : "string",
-            "enum" : [ "EXCEL", "CSV", "TSV" ]
+            "enum" : [ "EXCEL", "CSV", "TSV", "MARKDOWN" ]
           },
           "sendEmptyReports" : {
             "type" : "boolean"
@@ -23570,6 +24883,20 @@
           }
         }
       },
+      "ResetPasswordRequest" : {
+        "type" : "object",
+        "properties" : {
+          "confirmNewPassword" : {
+            "type" : "string"
+          },
+          "newPassword" : {
+            "type" : "string"
+          },
+          "token" : {
+            "type" : "string"
+          }
+        }
+      },
       "ResourceGeneration" : {
         "type" : "object",
         "properties" : {
@@ -23599,6 +24926,12 @@
         "type" : "object",
         "description" : "Base object for describing a set of result data",
         "discriminator" : {
+          "mapping" : {
+            "flat" : "#/components/schemas/FlatResult",
+            "ql_vis" : "#/components/schemas/QLVisResult",
+            "table" : "#/components/schemas/TableResult",
+            "vis" : "#/components/schemas/VisResult"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -23651,6 +24984,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Activity"
+            }
+          }
+        }
+      },
+      "ResultPageAiChat" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AiChat"
             }
           }
         }
@@ -23801,6 +25149,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Dependency"
+            }
+          }
+        }
+      },
+      "ResultPageDocAuditEntry" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocAuditEntry"
             }
           }
         }
@@ -24060,21 +25423,6 @@
           }
         }
       },
-      "ResultPageNodeGroupState" : {
-        "type" : "object",
-        "description" : "A page of results.",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/NodeGroupState"
-            }
-          }
-        }
-      },
       "ResultPageProcessorProfile" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -24191,6 +25539,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/User"
+            }
+          }
+        }
+      },
+      "ResultPageUserAccessRow" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/UserAccessRow"
             }
           }
         }
@@ -24799,6 +26162,12 @@
       "Secret" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "accessToken" : "#/components/schemas/AccessTokenSecret",
+            "keyStore" : "#/components/schemas/KeyStoreSecret",
+            "sshKey" : "#/components/schemas/SshKeySecret",
+            "usernamePassword" : "#/components/schemas/UsernamePasswordSecret"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -24990,6 +26359,9 @@
           "nodeName" : {
             "type" : "string"
           },
+          "sessionHandle" : {
+            "type" : "string"
+          },
           "userRef" : {
             "$ref" : "#/components/schemas/UserRef"
           }
@@ -25068,6 +26440,24 @@
             }
           }
         } ]
+      },
+      "SetConfigValueRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRefValue" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "propertyName" : {
+            "type" : "string"
+          },
+          "stringValue" : {
+            "type" : "string"
+          },
+          "target" : {
+            "type" : "string",
+            "enum" : [ "ANALYTIC_UI_DEFAULT", "REPORT_UI_DEFAULT" ]
+          }
+        }
       },
       "SetDocumentUserCreatePermissions" : {
         "type" : "object",
@@ -25150,6 +26540,27 @@
           },
           "sourceLocation" : {
             "$ref" : "#/components/schemas/SourceLocation"
+          }
+        }
+      },
+      "SigningKeyRow" : {
+        "type" : "object",
+        "properties" : {
+          "expiresMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "issuedMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "ACTIVE", "RETIRED", "EXPIRED", "REVOKED" ]
           }
         }
       },
@@ -25378,7 +26789,7 @@
           },
           "fldType" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF", "USER_REF", "DENSE_VECTOR", "NESTED" ]
           },
           "indexed" : {
             "type" : "boolean"
@@ -26006,25 +27417,26 @@
       },
       "StoredError" : {
         "type" : "object",
-        "properties" : {
-          "elementId" : {
-            "$ref" : "#/components/schemas/ElementId"
-          },
-          "errorType" : {
-            "type" : "string",
-            "enum" : [ "CODE", "GENERIC", "INPUT", "OUTPUT", "UNKNOWN" ]
-          },
-          "location" : {
-            "$ref" : "#/components/schemas/Location"
-          },
-          "message" : {
-            "type" : "string"
-          },
-          "severity" : {
-            "type" : "string",
-            "enum" : [ "INFO", "WARN", "ERROR", "FATAL" ]
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/Marker"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "elementId" : {
+              "$ref" : "#/components/schemas/ElementId"
+            },
+            "errorType" : {
+              "type" : "string",
+              "enum" : [ "CODE", "GENERIC", "INPUT", "OUTPUT", "UNKNOWN" ]
+            },
+            "location" : {
+              "$ref" : "#/components/schemas/Location"
+            },
+            "message" : {
+              "type" : "string"
+            }
           }
-        }
+        } ]
       },
       "StoredQuery" : {
         "type" : "object",
@@ -26371,6 +27783,32 @@
           }
         }
       },
+      "TableAnalysisConfig" : {
+        "type" : "object",
+        "properties" : {
+          "maxParallelBatches" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "maxRowsPerBatch" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "maxTotalRows" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "multiSummaryMergePrompt" : {
+            "type" : "string"
+          },
+          "tableQuerySystemPrompt" : {
+            "type" : "string"
+          },
+          "tableQueryUserPrompt" : {
+            "type" : "string"
+          }
+        }
+      },
       "TableBuilderAnalyticProcessConfig" : {
         "type" : "object",
         "allOf" : [ {
@@ -26463,6 +27901,12 @@
             "applyValueFilters" : {
               "type" : "boolean"
             },
+            "conditionalFormattingRules" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/ConditionalFormattingRule"
+              }
+            },
             "dataSourceRef" : {
               "$ref" : "#/components/schemas/DocRef"
             },
@@ -26493,6 +27937,9 @@
               "type" : "integer",
               "format" : "int32"
             },
+            "modelVersion" : {
+              "type" : "string"
+            },
             "overrideMaxStringFieldLength" : {
               "type" : "boolean"
             },
@@ -26513,6 +27960,9 @@
               }
             },
             "showDetail" : {
+              "type" : "boolean"
+            },
+            "showValueFilters" : {
               "type" : "boolean"
             },
             "useDefaultExtractionPipeline" : {
@@ -26639,6 +28089,12 @@
           "applyValueFilters" : {
             "type" : "boolean"
           },
+          "conditionalFormattingRules" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ConditionalFormattingRule"
+            }
+          },
           "extractValues" : {
             "type" : "boolean"
           },
@@ -26665,6 +28121,9 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "modelVersion" : {
+            "type" : "string"
+          },
           "overrideMaxStringFieldLength" : {
             "type" : "boolean"
           },
@@ -26684,19 +28143,6 @@
           },
           "window" : {
             "$ref" : "#/components/schemas/Window"
-          }
-        }
-      },
-      "TableSummaryConfig" : {
-        "type" : "object",
-        "properties" : {
-          "maximumBatchSize" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "maximumTableInputRows" : {
-            "type" : "integer",
-            "format" : "int32"
           }
         }
       },
@@ -27341,20 +28787,6 @@
           }
         } ]
       },
-      "UpdateAccountRequest" : {
-        "type" : "object",
-        "properties" : {
-          "account" : {
-            "$ref" : "#/components/schemas/Account"
-          },
-          "confirmPassword" : {
-            "type" : "string"
-          },
-          "password" : {
-            "type" : "string"
-          }
-        }
-      },
       "UpdateField" : {
         "type" : "object",
         "properties" : {
@@ -27490,6 +28922,46 @@
           }
         }
       },
+      "UserAccessRow" : {
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "lastAccessedMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastTokenExpiryMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "nextTokenExpiryMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "nodeNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "sessionCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "subjectId" : {
+            "type" : "string"
+          },
+          "tokenCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "userRef" : {
+            "$ref" : "#/components/schemas/UserRef"
+          }
+        }
+      },
       "UserDependency" : {
         "type" : "object",
         "properties" : {
@@ -27547,6 +29019,16 @@
       "UserPreferences" : {
         "type" : "object",
         "properties" : {
+          "aiDockLocation" : {
+            "type" : "string"
+          },
+          "aiDockSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "aiDockType" : {
+            "type" : "string"
+          },
           "dateTimePattern" : {
             "type" : "string",
             "description" : "A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter"
@@ -27669,6 +29151,22 @@
       "Val" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "boolean" : "#/components/schemas/ValBoolean",
+            "byte" : "#/components/schemas/ValByte",
+            "date" : "#/components/schemas/ValDate",
+            "double" : "#/components/schemas/ValDouble",
+            "duration" : "#/components/schemas/ValDuration",
+            "err" : "#/components/schemas/ValErr",
+            "float" : "#/components/schemas/ValFloat",
+            "integer" : "#/components/schemas/ValInteger",
+            "long" : "#/components/schemas/ValLong",
+            "null" : "#/components/schemas/ValNull",
+            "number" : "#/components/schemas/ValNumber",
+            "short" : "#/components/schemas/ValShort",
+            "string" : "#/components/schemas/ValString",
+            "xml" : "#/components/schemas/ValXml"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -28176,6 +29674,9 @@
       "Window" : {
         "type" : "object",
         "discriminator" : {
+          "mapping" : {
+            "hopping" : "#/components/schemas/HoppingWindow"
+          },
           "propertyName" : "type"
         },
         "properties" : {

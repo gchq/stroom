@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.search.solr.search;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
@@ -73,6 +74,7 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     private final SolrSearchExecutor solrSearchExecutor;
     private final IndexFieldCache indexFieldCache;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
+    private final DocFinder docFinder;
 
     @Inject
     public SolrSearchProvider(final WordListProvider wordListProvider,
@@ -83,7 +85,8 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
                               final SecurityContext securityContext,
                               final SolrSearchExecutor solrSearchExecutor,
                               final IndexFieldCache indexFieldCache,
-                              final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
+                              final FieldInfoResultPageFactory fieldInfoResultPageFactory,
+                              final DocFinder docFinder) {
         this.wordListProvider = wordListProvider;
         this.searchConfig = searchConfig;
         this.coprocessorsFactory = coprocessorsFactory;
@@ -93,6 +96,7 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
         this.solrSearchExecutor = solrSearchExecutor;
         this.indexFieldCache = indexFieldCache;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -241,6 +245,11 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     @Override
     public List<DocRef> getDataSourceDocRefs() {
         return solrIndexStore.list();
+    }
+
+    @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return docFinder.findByName(getDataSourceType(), name);
     }
 
     @Override

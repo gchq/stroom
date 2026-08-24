@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import stroom.test.common.util.test.ContentPackZipDownloader;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.yaml.YamlUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -91,7 +91,7 @@ public class ContentImportService {
 
     public void importFromDefinitionYaml(final Path definitionYaml) {
         try {
-            final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
+            final YAMLMapper mapper = YamlUtil.getVanillaMapper();
             final ContentPackCollection contentPacks = mapper.readValue(
                     definitionYaml.toFile(),
                     ContentPackCollection.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.pathways.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
@@ -33,6 +34,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import java.util.Objects;
 
+@Description(
+        """
+        Analyses trace logs held in a Plan B store to learn the paths that traces take between services, \
+        e.g. A -> B -> C.
+        Each distinct path is remembered, so that a new or changed path can be reported as soon as it appears.
+        For each span on a path it also learns constraints on the span's duration, kind, flags and \
+        attributes, held as an exact value, a set, a range or a regular expression, and widens them as \
+        further traces are seen.
+        Whether new paths and constraints may be added, and whether those already learnt may be widened, \
+        is controlled per document, so Pathways can be left learning or fixed so that anything deviating \
+        from what it has learnt is reported instead of absorbed.
+        Findings are written to a nominated Feed for analytic rules to act on.
+        Pathways makes no judgement about the changes it reports.
+        """)
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -46,6 +61,11 @@ import java.util.Objects;
         "pathways"})
 @JsonInclude(Include.NON_NULL)
 public class PathwaysDoc extends AbstractDoc {
+
+    private static final boolean DEFAULT_ALLOW_PATHWAY_CREATION = true;
+    private static final boolean DEFAULT_ALLOW_PATHWAY_MUTATION = true;
+    private static final boolean DEFAULT_ALLOW_CONSTRAINT_CREATION = true;
+    private static final boolean DEFAULT_ALLOW_CONSTRAINT_MUTATION = true;
 
     public static final String TYPE = "Pathways";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PATHWAYS_DOCUMENT_TYPE;
@@ -82,10 +102,10 @@ public class PathwaysDoc extends AbstractDoc {
                        @JsonProperty("description") final String description,
                        @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance,
                        @JsonProperty("pathways") final List<Pathway> pathways,
-                       @JsonProperty("allowPathwayCreation") final boolean allowPathwayCreation,
-                       @JsonProperty("allowPathwayMutation") final boolean allowPathwayMutation,
-                       @JsonProperty("allowConstraintCreation") final boolean allowConstraintCreation,
-                       @JsonProperty("allowConstraintMutation") final boolean allowConstraintMutation,
+                       @JsonProperty("allowPathwayCreation") final Boolean allowPathwayCreation,
+                       @JsonProperty("allowPathwayMutation") final Boolean allowPathwayMutation,
+                       @JsonProperty("allowConstraintCreation") final Boolean allowConstraintCreation,
+                       @JsonProperty("allowConstraintMutation") final Boolean allowConstraintMutation,
                        @JsonProperty("tracesDocRef") final DocRef tracesDocRef,
                        @JsonProperty("infoFeed") final DocRef infoFeed,
                        @JsonProperty("processingNode") final String processingNode) {
@@ -93,10 +113,14 @@ public class PathwaysDoc extends AbstractDoc {
         this.description = description;
         this.temporalOrderingTolerance = temporalOrderingTolerance;
         this.pathways = pathways;
-        this.allowPathwayCreation = allowPathwayCreation;
-        this.allowPathwayMutation = allowPathwayMutation;
-        this.allowConstraintCreation = allowConstraintCreation;
-        this.allowConstraintMutation = allowConstraintMutation;
+        this.allowPathwayCreation =
+                Objects.requireNonNullElse(allowPathwayCreation, DEFAULT_ALLOW_PATHWAY_CREATION);
+        this.allowPathwayMutation =
+                Objects.requireNonNullElse(allowPathwayMutation, DEFAULT_ALLOW_PATHWAY_MUTATION);
+        this.allowConstraintCreation =
+                Objects.requireNonNullElse(allowConstraintCreation, DEFAULT_ALLOW_CONSTRAINT_CREATION);
+        this.allowConstraintMutation =
+                Objects.requireNonNullElse(allowConstraintMutation, DEFAULT_ALLOW_CONSTRAINT_MUTATION);
         this.tracesDocRef = tracesDocRef;
         this.infoFeed = infoFeed;
         this.processingNode = processingNode;
@@ -225,7 +249,7 @@ public class PathwaysDoc extends AbstractDoc {
             extends AbstractBuilder<PathwaysDoc, Builder> {
 
         private String description;
-        private SimpleDuration temporalOrderingTolerance = new SimpleDuration(0, TimeUnit.NANOSECONDS);
+        private SimpleDuration temporalOrderingTolerance = new SimpleDuration(0L, TimeUnit.NANOSECONDS);
         private List<Pathway> pathways;
         private boolean allowPathwayCreation = true;
         private boolean allowPathwayMutation = true;

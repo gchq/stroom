@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package stroom.pathways.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -72,6 +71,7 @@ public class TracesListPresenter
         this.dateTimeFormatter = dateTimeFormatter;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Traces");
         view.setDataWidget(dataGrid);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         addColumns();
@@ -98,7 +98,6 @@ public class TracesListPresenter
         addServicesColumn();
         addDepthColumn();
         addTotalSpansColumn();
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {

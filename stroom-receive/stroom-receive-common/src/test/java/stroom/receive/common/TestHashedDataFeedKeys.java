@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,7 +45,7 @@ class TestHashedDataFeedKeys {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestHashedDataFeedKeys.class);
 
     static void main(final String[] ignored) throws IOException {
-        final ObjectMapper mapper = JsonUtil.getMapper();
+        final JsonMapper mapper = JsonUtil.getMapper();
         final Path dir = Paths.get("/tmp/TestDataFeedKeys");
         Files.createDirectories(dir);
 
@@ -148,9 +148,7 @@ class TestHashedDataFeedKeys {
     private <T> void doSerdeTest(final T entity,
                                  final Class<T> clazz) throws IOException {
 
-        final ObjectMapper mapper = JsonUtil.getMapper();
-        assertThat(mapper.canSerialize(entity.getClass()))
-                .isTrue();
+        final JsonMapper mapper = JsonUtil.getMapper();
 
         final String json = mapper.writeValueAsString(entity);
         System.out.println("\n" + json);

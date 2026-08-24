@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,12 +57,11 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
 
     ReceiveDataRule write() {
         final ExpressionOperator expression = editExpressionPresenter.write();
-        return new ReceiveDataRule(originalRule.getRuleNumber(),
-                originalRule.getCreationTime(),
-                getView().getName(),
-                originalRule.isEnabled(),
-                expression,
-                getView().getAction());
+        return originalRule.copy()
+                .withName(getView().getName())
+                .withExpression(expression)
+                .withAction(getView().getAction())
+                .build();
     }
 
 

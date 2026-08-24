@@ -36,7 +36,7 @@ eval EventId = first(EventId)
     },
     {
         "tabTrigger": "first",
-        "name": "Eval first first value",
+        "name": "Eval first value",
         "content": "eval ${1:field_name} = first(${1})\n$0",
     },
 ];

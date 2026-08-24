@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.index.client.presenter;
 
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.query.api.datasource.AnalyzerType;
@@ -40,7 +40,7 @@ import javax.validation.ValidationException;
 
 public class IndexFieldEditPresenter
         extends MyPresenterWidget<IndexFieldEditView>
-        implements DirtyUiHandlers {
+        implements ChangeUiHandlers {
 
     private final DenseVectorFieldPresenter denseVectorFieldPresenter;
 
@@ -66,7 +66,7 @@ public class IndexFieldEditPresenter
                 indexField,
                 IndexField::getDenseVectorFieldConfig,
                 DenseVectorFieldConfig.builder().build()));
-        onDirty();
+        onChange();
     }
 
     public IndexFieldImpl write() {
@@ -102,11 +102,11 @@ public class IndexFieldEditPresenter
     }
 
     @Override
-    public void onDirty() {
+    public void onChange() {
         getView().setDenseVectorOptionsVisible(FieldType.DENSE_VECTOR.equals(getView().getType()));
     }
 
-    public interface IndexFieldEditView extends View, Focus, HasUiHandlers<DirtyUiHandlers> {
+    public interface IndexFieldEditView extends View, Focus, HasUiHandlers<ChangeUiHandlers> {
 
         FieldType getType();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,7 @@ public class ContentTemplateServiceImpl implements ContentTemplateService {
 
     @Override
     public ContentTemplates fetch() {
-        return securityContext.secureResult(
-                AppPermission.MANAGE_CONTENT_TEMPLATES_PERMISSION,
-                contentTemplateStore::getOrCreate);
+        return contentTemplateStore.getOrCreate();
     }
 
     @Override

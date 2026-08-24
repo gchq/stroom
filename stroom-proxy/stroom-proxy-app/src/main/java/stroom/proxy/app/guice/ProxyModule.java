@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.dropwizard.common.prometheus.AppInfoProvider;
 import stroom.dropwizard.common.prometheus.PrometheusModule;
+import stroom.dropwizard.common.sysinfo.SystemInfoAdminServletModule;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.ProxyConfigHolder;
@@ -98,6 +99,7 @@ public class ProxyModule extends AbstractModule {
         install(new DropwizardModule());
         install(new ForwarderModule());
         install(new PrometheusModule());
+        install(new SystemInfoAdminServletModule());
 
         HasHealthCheckBinder.create(binder())
                 .bind(DataFeedIdentitiesDirWatcher.class)

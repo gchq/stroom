@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,11 @@ public class OpenAIModelSettingsViewImpl
     @UiField
     ValueSpinner maxContextWindowTokens;
     @UiField
+    TextBox reasoningEffort;
+    @UiField
     Button testModel;
+    @UiField
+    ValueSpinner embeddingModelDimensions;
     @UiField
     Button setHttpClientConfig;
 
@@ -61,6 +65,8 @@ public class OpenAIModelSettingsViewImpl
 
         maxContextWindowTokens.setMin(0L);
         maxContextWindowTokens.setMax(Integer.MAX_VALUE);
+        embeddingModelDimensions.setMin(0L);
+        embeddingModelDimensions.setMax(Integer.MAX_VALUE);
     }
 
     @Override
@@ -104,11 +110,33 @@ public class OpenAIModelSettingsViewImpl
     }
 
     @Override
+    public String getReasoningEffort() {
+        return reasoningEffort.getValue();
+    }
+
+    @Override
+    public void setReasoningEffort(final String reasoningEffort) {
+        this.reasoningEffort.setValue(reasoningEffort);
+    }
+
+    @Override
+    public int getEmbeddingModelDimensions() {
+        return embeddingModelDimensions.getIntValue();
+    }
+
+    @Override
+    public void setEmbeddingModelDimensions(final int embeddingModelDimensions) {
+        this.embeddingModelDimensions.setValue(embeddingModelDimensions);
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         baseUrl.setEnabled(!readOnly);
         apiKey.setEnabled(!readOnly);
         modelId.setEnabled(!readOnly);
         maxContextWindowTokens.setEnabled(!readOnly);
+        reasoningEffort.setEnabled(!readOnly);
+        embeddingModelDimensions.setEnabled(!readOnly);
     }
 
     private void fireChange() {
@@ -134,6 +162,16 @@ public class OpenAIModelSettingsViewImpl
 
     @UiHandler("maxContextWindowTokens")
     public void onMaxContextWindowTokensValueChange(final ValueChangeEvent<Long> event) {
+        fireChange();
+    }
+
+    @UiHandler("reasoningEffort")
+    public void onReasoningEffort(final ValueChangeEvent<String> event) {
+        fireChange();
+    }
+
+    @UiHandler("embeddingModelDimensions")
+    public void onEmbeddingModelDimensionsValueChange(final ValueChangeEvent<Long> event) {
         fireChange();
     }
 

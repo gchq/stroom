@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@ package stroom.processor.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -62,6 +63,7 @@ import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
@@ -71,6 +73,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -85,8 +88,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     private final ProcessorTaskDao processorTaskDao;
     private final MetaService metaService;
     private final SecurityContext securityContext;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final UserRefLookup userRefLookup;
+    private final Provider<DocDependencyService> docDependencyServiceProvider;
 
     @Inject
     ProcessorFilterServiceImpl(final ProcessorService processorService,
@@ -94,15 +98,17 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                                final ProcessorTaskDao processorTaskDao,
                                final MetaService metaService,
                                final SecurityContext securityContext,
-                               final DocRefInfoService docRefInfoService,
-                               final UserRefLookup userRefLookup) {
+                               final DocFinder docFinder,
+                               final UserRefLookup userRefLookup,
+                               final Provider<DocDependencyService> docDependencyServiceProvider) {
         this.processorService = processorService;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskDao = processorTaskDao;
         this.metaService = metaService;
         this.securityContext = securityContext;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
         this.userRefLookup = userRefLookup;
+        this.docDependencyServiceProvider = docDependencyServiceProvider;
     }
 
     @Override
@@ -149,7 +155,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                 .processor(processor)
                 .queryData(request.getQueryData())
                 .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
-                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs())
+                .maxTaskCreationDelay(request.getMaxTaskCreationDelay());
         setRunAs(request, builder);
         return create(builder.build());
     }
@@ -202,6 +209,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                 .queryData(queryData)
                 .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
                 .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs())
+                .maxTaskCreationDelay(request.getMaxTaskCreationDelay())
                 .stampAudit(securityContext);
         setRunAs(request, builder);
         if (processorFilterDocRef != null) {
@@ -244,6 +252,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         final ProcessorFilter updated = ensureRunAs(processorFilter);
         final ProcessorFilter createdFilter = securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.create(ensureValid(updated)));
+        updateDocDependencies(createdFilter);
         return createdFilter.copy().processor(updated.getProcessor()).build();
     }
 
@@ -272,7 +281,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     "You do not have permission to update this processor filter");
         }
 
-        return securityContext.secureResult(PERMISSION, () -> {
+        final ProcessorFilter result = securityContext.secureResult(PERMISSION, () -> {
             ProcessorFilter updated = processorFilter;
             if (processorFilter.getUuid() == null) {
                 updated = updated.copy().uuid(UUID.randomUUID().toString()).build();
@@ -282,20 +291,84 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
             updated = updated.copy().stampAudit(securityContext).build();
             return processorFilterDao.update(updated);
         });
+        // Recompute after the write has committed so the dependency service sees the current filter.
+        updateDocDependencies(result);
+        return result;
     }
 
     @Override
     public boolean delete(final int id) {
         return securityContext.secureResult(PERMISSION, () -> {
+            // Capture the filter's uuid before deletion so we can clear its dependency edges.
+            final String uuid = processorFilterDao.fetch(id)
+                    .map(ProcessorFilter::getUuid)
+                    .orElse(null);
             if (processorFilterDao.logicalDeleteByProcessorFilterId(id) > 0) {
                 // Logically delete any associated tasks that have not yet finished processing.
                 // Once the filter is logically deleted no new tasks will be created for it, but we may still have
                 // active tasks for 'deleted' filters.
                 processorTaskDao.logicalDeleteByProcessorFilterId(id);
+                removeDocDependencies(uuid);
                 return true;
             }
             return false;
         });
+    }
+
+    /**
+     * Keep the doc_dependency store current for a filter create/update by extracting the filter's
+     * dependencies <b>directly from the in-hand object</b> and storing them (once, on this node)
+     * rather than relying on a cluster-wide entity event or re-reading the filter back via the
+     * handler registry. Runs as the processing user (pipeline-name resolution may do privileged
+     * lookups); failures are swallowed and logged by {@link DocDependencyService} so they cannot
+     * break the filter write.
+     */
+    private void updateDocDependencies(final ProcessorFilter filter) {
+        final String uuid = NullSafe.get(filter, ProcessorFilter::getUuid);
+        if (uuid != null) {
+            final DocRef docRef = new DocRef(ProcessorFilter.ENTITY_TYPE, uuid);
+            securityContext.asProcessingUser(() -> {
+                final Set<DocRef> deps = getDependencies(
+                        filter, ref -> docFinder.getName(ref).orElse("Unknown"));
+                docDependencyServiceProvider.get().setDependencies(docRef, deps);
+            });
+        }
+    }
+
+    /**
+     * @param pipelineNameResolver resolves the display name for the filter's pipeline DocRef (e.g. a
+     *                             live lookup against the doc store). May be {@code null}, in which
+     *                             case the pipeline's own name (if any) is used.
+     */
+    private Set<DocRef> getDependencies(final ProcessorFilter processorFilter,
+                                        final Function<DocRef, String> pipelineNameResolver) {
+        final DependencyRemapper dependencyRemapper = new DependencyRemapper();
+        final QueryData queryData = processorFilter.getQueryData();
+        if (queryData != null) {
+            if (queryData.getDataSource() != null) {
+                dependencyRemapper.remap(queryData.getDataSource());
+            }
+            if (queryData.getExpression() != null) {
+                dependencyRemapper.remapExpression(queryData.getExpression());
+            }
+        }
+        final String pipelineUuid = processorFilter.getPipelineUuid();
+        if (NullSafe.isNonBlankString(pipelineUuid)) {
+            final DocRef pipeline = processorFilter.getPipeline();
+            final String name = pipelineNameResolver != null
+                    ? pipelineNameResolver.apply(pipeline)
+                    : NullSafe.get(pipeline, DocRef::getName);
+            dependencyRemapper.remap(new DocRef(PipelineDoc.TYPE, pipelineUuid, name));
+        }
+        return dependencyRemapper.getDependencies();
+    }
+
+    private void removeDocDependencies(final String uuid) {
+        if (uuid != null) {
+            final DocRef docRef = new DocRef(ProcessorFilter.ENTITY_TYPE, uuid);
+            securityContext.asProcessingUser(() ->
+                    docDependencyServiceProvider.get().removeDependencies(docRef));
+        }
     }
 
     @Override
@@ -384,9 +457,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                         for (final ProcessorFilter processorFilter : processorFilters.getValues()) {
                             if (processor.equals(processorFilter.getProcessor())) {
 
-                                // If the user is not an admin then only show them filters that are set to run as them.
-                                if (securityContext.isAdmin() ||
-                                    Objects.equals(currentUser, processorFilter.getRunAsUser())) {
+                                if (canSeeFilter(processorFilter, currentUser)) {
                                     final ProcessorFilter.Builder processorFilterBuilder = processorFilter.copy();
 
                                     // Decorate the expression with resolved dictionaries etc.
@@ -417,6 +488,36 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
             return ResultPage.createUnboundedList(values);
         });
+    }
+
+    private boolean canSeeFilter(final ProcessorFilter processorFilter, final UserRef currentUser) {
+        if (securityContext.isAdmin()) {
+            LOGGER.debug("canSeeFilter() - Is admin, current user: {}, processorFilter: {}",
+                    currentUser, processorFilter);
+            return true;
+        } else {
+            final UserRef runAsUser = processorFilter.getRunAsUser();
+            if (Objects.equals(currentUser, runAsUser)) {
+                LOGGER.debug("canSeeFilter() - Is runAsUser, current user: {}, runAsUser: {}, processorFilter: {}",
+                        currentUser, runAsUser, processorFilter);
+                return true;
+            } else if (runAsUser != null && runAsUser.isGroup()) {
+                final String groupName = runAsUser.getSubjectId();
+                if (securityContext.inGroup(groupName)) {
+                    LOGGER.debug("canSeeFilter() - Member of runAsUser group, current user: {}, runAsUser: {}, " +
+                                 "processorFilter: {}",
+                            currentUser, runAsUser, processorFilter);
+                    return true;
+                } else {
+                    LOGGER.debug("canSeeFilter() - Can't see filter, current user: {}, runAsUser: {}, " +
+                                 "processorFilter: {}",
+                            currentUser, runAsUser, processorFilter);
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
     }
 
     @Override
@@ -457,7 +558,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     .type(docType)
                     .uuid(uuid)
                     .build();
-            return docRefInfoService.name(pipelineDocRef);
+            return docFinder.getName(pipelineDocRef);
         } catch (final RuntimeException e) {
             // This error is expected in tests and the pipeline name isn't essential
             // as it is only used in here for logging purposes.
@@ -526,14 +627,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
                     try {
                         if (docRef != null) {
-                            final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(docRef);
-                            if (optionalDocRefInfo.isPresent()) {
+                            final Optional<DocRef> optionalDocRef = docFinder.decorateIfExists(docRef);
+                            if (optionalDocRef.isPresent()) {
                                 expressionTerm = ExpressionTerm.builder()
                                         .enabled(expressionTerm.enabled())
                                         .field(expressionTerm.getField())
                                         .condition(expressionTerm.getCondition())
                                         .value(expressionTerm.getValue())
-                                        .docRef(optionalDocRefInfo.get().getDocRef())
+                                        .docRef(optionalDocRef.orElse(docRef))
                                         .build();
                             }
                         }
@@ -617,9 +718,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     private String getPipelineDetails(final String uuid) {
         try {
             final DocRef pipelineDocRef = new DocRef("Pipeline", uuid);
-            final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(pipelineDocRef);
-            return optionalDocRefInfo
-                    .map(DocRefInfo::getDocRef)
+            return docFinder.decorateIfExists(pipelineDocRef)
                     .map(DocRef::getName)
                     .map(name -> name + " (" + uuid + ")")
                     .orElse(uuid);
@@ -665,11 +764,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     try {
                         final String pipeUuid = Objects.requireNonNull(processorFilter.getPipelineUuid());
 
-                        DocRef pipelineDocRef = PipelineDoc.getDocRef(pipeUuid);
-                        pipelineDocRef = docRefInfoService.decorate(pipelineDocRef);
-
+                        final DocRef pipelineDocRef = PipelineDoc.getDocRef(pipeUuid);
+                        final DocRef decorated = docFinder.decorate(pipelineDocRef);
                         final String details = LogUtil.message(
-                                "Pipeline '{}' has a filter with a run-as dependency.", pipelineDocRef.getName());
+                                "Pipeline '{}' has a filter with a run-as dependency.",
+                                decorated.getName());
                         return new UserDependency(
                                 userRef,
                                 details,

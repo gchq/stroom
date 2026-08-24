@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,10 +48,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasChangeHandlers;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.Column;
@@ -63,6 +60,7 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.Row;
+import stroom.query.api.SearchRequestSource;
 import stroom.query.api.TableResult;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
@@ -329,7 +327,7 @@ public class QueryResultTablePresenter
             }
         }));
 
-        registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
+        registerHandler(valueFilterButton.addClickHandler(event -> toggleShowValueFilters()));
 
         registerHandler(resetButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
@@ -404,21 +402,21 @@ public class QueryResultTablePresenter
         }
     }
 
-    public void toggleApplyValueFilters() {
+    public void toggleShowValueFilters() {
         final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
-        final boolean applyValueFilters = !queryTablePreferences.applyValueFilters();
-        setQueryTablePreferences(queryTablePreferences.copy().applyValueFilters(applyValueFilters).build());
+        final boolean showValueFilters = !queryTablePreferences.showValueFilters();
+        setQueryTablePreferences(queryTablePreferences.copy().showValueFilters(showValueFilters).build());
         onChange();
         refresh();
-        setApplyValueFilters(applyValueFilters);
+        setShowValueFilters(showValueFilters);
     }
 
-    private void setApplyValueFilters(final boolean applyValueFilters) {
-        valueFilterButton.setState(applyValueFilters);
-        if (applyValueFilters) {
-            dataGrid.addStyleName("applyValueFilters");
+    private void setShowValueFilters(final boolean showValueFilters) {
+        valueFilterButton.setState(showValueFilters);
+        if (showValueFilters) {
+            dataGrid.addStyleName("showValueFilters");
         } else {
-            dataGrid.removeStyleName("applyValueFilters");
+            dataGrid.removeStyleName("showValueFilters");
         }
     }
 
@@ -899,6 +897,26 @@ public class QueryResultTablePresenter
         setQueryTablePreferences(getQueryTablePreferences().copy().columns(columns).build());
         currentColumns = columns;
         onChange();
+
+
+        // Remove existing columns.
+        removeAllColumns();
+
+        // Add expander column.
+        addExpanderColumn();
+
+        // Add columns.
+        for (final Column column : columns) {
+            // Only include the field if it is supposed to be visible.
+            if (column.isVisible()) {
+                addColumn(column);
+            }
+        }
+
+//                dataGrid.redrawHeaders();
+        dataGrid.resizeTableToFitColumns();
+
+
         fireColumnAndDataUpdate();
     }
 
@@ -930,9 +948,9 @@ public class QueryResultTablePresenter
     }
 
     public void updateQueryTablePreferences() {
-        // Change value filter state.
+        // Change value filter visible state.
         final QueryTablePreferences queryTablePreferences = queryTablePreferencesSupplier.get();
-        setApplyValueFilters(queryTablePreferences.applyValueFilters());
+        setShowValueFilters(queryTablePreferences.showValueFilters());
         updatePageSize(queryTablePreferences);
         refresh();
     }
@@ -1044,9 +1062,20 @@ public class QueryResultTablePresenter
                         .storeHistory(false)
                         .requestedRange(OffsetRange.UNBOUNDED)
                         .build();
+                // Build a descriptive summary from the search request source.
+                final String queryName = NullSafe.get(
+                        currentSearch.getSearchRequestSource(),
+                        SearchRequestSource::getOwnerDocRef,
+                        DocRef::getName);
+                final String description = queryName != null
+                        ? "Query '" + queryName + "'"
+                        : "Query table";
+
                 AskStroomAiEvent.fire(this,
-                        currentSearchModel.getCurrentNode(),
-                        new QueryTableContext(queryKey.toString(), request));
+                        new QueryTableContext(
+                                description,
+                                currentSearchModel.getCurrentNode(),
+                                request));
             }
         }
     }

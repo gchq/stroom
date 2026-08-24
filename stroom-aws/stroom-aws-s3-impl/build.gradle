@@ -28,25 +28,17 @@ dependencies {
     implementation project(':stroom-pipeline')
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
-    implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.aws.crt
     implementation libs.aws.s3.transfer.manager
     implementation libs.aws.sts
     implementation libs.commons.compress
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.validation.api
-    implementation libs.jakarta.inject
     implementation libs.restygwt
-    implementation libs.slf4j.api
 
     testImplementation libs.mbknor.jackson.jsonSchema
 
-    testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }
 

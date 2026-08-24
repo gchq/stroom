@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.EmbeddedDocRef;
+import stroom.docstore.shared.DocDataType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -679,7 +680,8 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                         LOGGER.debug(() ->
                                 LogUtil.message("{}Found path with key '{}'", indent(importDocRefPath), key));
                         final byte[] bytes = Files.readAllBytes(file);
-                        importExportDocument.addExtAsset(new ByteArrayImportExportAsset(key, bytes));
+                        importExportDocument.addExtAsset(
+                                new ByteArrayImportExportAsset(key, DocDataType.BINARY, bytes));
                     }
                 }
             }
@@ -755,13 +757,13 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                     if (file.endsWith(GIT_KEEP_FILENAME)) {
                         // Check for .gitkeep - ignore the file and add the folder as an asset
                         final String key = "/"  + pathAssetsRootDirectory.relativize(file.getParent());
-                        final ImportExportAsset asset = new ByteArrayImportExportAsset(key, null);
+                        final ImportExportAsset asset = new ByteArrayImportExportAsset(key, DocDataType.BINARY, null);
                         importExportDocument.addPathAsset(asset);
                         LOGGER.info("{}Added asset for folder '{}'", logIndent, key);
                     } else {
                         // Normal file to import as a path asset
                         final String key = "/" + pathAssetsRootDirectory.relativize(file);
-                        final ImportExportAsset asset = new FileImportExportAsset(key, file);
+                        final ImportExportAsset asset = new FileImportExportAsset(key, DocDataType.BINARY, file);
                         importExportDocument.addPathAsset(asset);
                         LOGGER.info("{}Added asset with filename '{}'", logIndent, key);
                     }

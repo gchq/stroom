@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.statistics.impl.sql.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
@@ -60,6 +59,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Statistics Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
@@ -119,7 +119,6 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
 
     private void addColumns() {
         addNameColumn();
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {
@@ -217,6 +216,7 @@ public class StatisticsFieldListPresenter extends DocPresenter<PagerView, Statis
     protected void onRead(final DocRef docRef,
                           final StatisticStoreDoc document,
                           final boolean readOnly) {
+        dataGrid.setTableName("Statistics '" + docRef.getName() + "' Fields");
         enableButtons();
         refresh();
     }

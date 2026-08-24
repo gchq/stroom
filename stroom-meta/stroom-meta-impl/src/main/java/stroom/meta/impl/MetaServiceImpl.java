@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,7 @@ import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.EffectiveMetaDataCriteria;
@@ -32,6 +31,7 @@ import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StreamFeedProvider;
+import stroom.meta.impl.StreamAttributeMapRetentionRuleDecoratorFactory.StreamAttributeMapRetentionRuleDecorator;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -101,8 +101,8 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
     private final MetaValueDao metaValueDao;
     private final MetaRetentionTrackerDao metaRetentionTrackerDao;
     private final Provider<MetaServiceConfig> metaServiceConfigProvider;
-    private final DocRefInfoService docRefInfoService;
-    private final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider;
+    private final DocFinder docFinder;
+    private final Provider<StreamAttributeMapRetentionRuleDecoratorFactory> decoratorProvider;
     private final Optional<MetaSecurityFilter> metaSecurityFilter;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
@@ -117,8 +117,8 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
                     final MetaValueDao metaValueDao,
                     final MetaRetentionTrackerDao metaRetentionTrackerDao,
                     final Provider<MetaServiceConfig> metaServiceConfigProvider,
-                    final DocRefInfoService docRefInfoService,
-                    final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
+                    final DocFinder docFinder,
+                    final Provider<StreamAttributeMapRetentionRuleDecoratorFactory> decoratorProvider,
                     final Optional<MetaSecurityFilter> metaSecurityFilter,
                     final SecurityContext securityContext,
                     final TaskContextFactory taskContextFactory,
@@ -131,7 +131,7 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
         this.metaValueDao = metaValueDao;
         this.metaRetentionTrackerDao = metaRetentionTrackerDao;
         this.metaServiceConfigProvider = metaServiceConfigProvider;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
         this.decoratorProvider = decoratorProvider;
         this.metaSecurityFilter = metaSecurityFilter;
         this.securityContext = securityContext;
@@ -534,7 +534,8 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
             if (NullSafe.hasItems(list)) {
                 LOGGER.logDurationIfTraceEnabled(
                         () -> {
-                            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
+                            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get()
+                                    .createDecorator();
                             list.getValues().forEach(metaRow ->
                                     decorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
                         },
@@ -632,15 +633,7 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
 
     private DocRef getPipeline(final Meta meta) {
         if (meta.getPipelineUuid() != null) {
-            final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService
-                    .info(new DocRef(PipelineDoc.TYPE, meta.getPipelineUuid()));
-            return optionalDocRefInfo
-                    .map(DocRefInfo::getDocRef)
-                    .orElse(DocRef
-                            .builder()
-                            .type(PipelineDoc.TYPE)
-                            .uuid(meta.getPipelineUuid())
-                            .build());
+            return docFinder.decorate(new DocRef(PipelineDoc.TYPE, meta.getPipelineUuid()));
         }
         return null;
     }

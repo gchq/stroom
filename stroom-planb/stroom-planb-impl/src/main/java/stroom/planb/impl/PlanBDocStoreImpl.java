@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,68 +17,74 @@
 package stroom.planb.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docstore.api.Store;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
-import stroom.importexport.api.ImportExportDocument;
-import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportState;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.Message;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
-public class PlanBDocStoreImpl implements PlanBDocStore {
-
-    private final Store<PlanBDoc> store;
-    private final SecurityContext securityContext;
+public class PlanBDocStoreImpl
+        extends AbstractDocumentStore<PlanBDoc>
+        implements PlanBDocStore {
 
     @Inject
     public PlanBDocStoreImpl(
             final StoreFactory storeFactory,
-            final PlanBDocSerialiser serialiser,
-            final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(
+            final SecurityContext securityContext,
+            final PlanBDocSerialiser serialiser) {
+        super(storeFactory,
+                securityContext,
                 serialiser,
                 PlanBDoc.TYPE,
                 PlanBDoc::builder,
                 PlanBDoc::copy);
-        this.securityContext = securityContext;
     }
 
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
+    /**
+     * Create a state store, defaulting its state type.
+     * <p>
+     * The default is applied to the document SKELETON rather than by reading the new document back and
+     * writing it again. A second write is authorised against a document whose permissions are not
+     * attached until after this method returns ({@code ExplorerServiceImpl.create} calls
+     * {@code createNode} afterwards), so it succeeds only because {@code hasDocumentPermission} lets
+     * an administrator through before consulting any permission row — a non-admin creating a state
+     * store is refused.
+     */
     @Override
     public DocRef createDocument(final String name) {
         validateName(name);
 
-        final DocRef created = store.createDocument(name);
+        final DocRef created = getStore().createDocument(name,
+                (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> PlanBDoc
+                        .builder()
+                        .uuid(uuid)
+                        .name(docName)
+                        .version(version)
+                        .createTimeMs(createTime)
+                        .updateTimeMs(updateTime)
+                        .createUser(createUser)
+                        .updateUser(updateUser)
+                        .stateType(StateType.TEMPORAL_STATE)
+                        .build());
 
         // Double-check the feed wasn't created elsewhere at the same time.
         if (checkDuplicateName(name, created)) {
-            // Delete the newly created document as the key is duplicated.
-
-            // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
-            // permissions added to them until after they are created in the store.
-            securityContext.asProcessingUser(() -> store.deleteDocument(created));
+            // Delete the newly created document as the key is duplicated. getStore() is the
+            // deliberately unchecked handle, which is what undoing our own create needs: the document
+            // has no permissions yet, and the authority to remove it is that we just made it.
+            getStore().deleteDocument(created);
             throwNameException(name);
         }
-
-        PlanBDoc doc = store.readDocument(created);
-        doc = doc.copy().stateType(StateType.TEMPORAL_STATE).build();
-        store.writeDocument(doc);
 
         return created;
     }
@@ -96,8 +102,8 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
     }
 
     private boolean checkDuplicateName(final String name, final DocRef whitelistDocRef) {
-        final List<DocRef> list = list();
-        for (final DocRef docRef : list) {
+        final List<DocRef> docRefs = list();
+        for (final DocRef docRef : docRefs) {
             if (name.equals(docRef.getName()) &&
                 (whitelistDocRef == null || !whitelistDocRef.equals(docRef))) {
                 return true;
@@ -118,7 +124,11 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
             throwNameException(name);
         }
 
-        return store.copyDocument(docRef.getUuid(), newName);
+        // Copy reads the source document, so it needs VIEW on it. This override reaches
+        // getStore() directly, which is the unchecked handle, so the check the base applies is
+        // applied here.
+        checkDocumentPermission(docRef, DocumentPermission.VIEW);
+        return getStore().copyDocument(docRef.getUuid(), newName);
     }
 
     private Set<String> getExistingNames() {
@@ -163,11 +173,6 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
     }
 
     @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
     public DocRef renameDocument(final DocRef docRef, final String name) {
         validateName(name);
 
@@ -176,116 +181,12 @@ public class PlanBDocStoreImpl implements PlanBDocStore {
             throw new EntityServiceException("A state store named '" + name + "' already exists");
         }
 
-        return store.renameDocument(docRef, name);
-    }
-
-    @Override
-    public void deleteDocument(final DocRef docRef) {
-        store.deleteDocument(docRef);
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public PlanBDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
+        return super.renameDocument(docRef, name);
     }
 
     @Override
     public PlanBDoc writeDocument(final PlanBDoc document) {
         validateName(document.getName());
-        return store.writeDocument(document);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(null);
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, null);
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
-    @Override
-    public DocRef importDocument(final DocRef docRef,
-                                 final ImportExportDocument importExportDocument,
-                                 final ImportState importState,
-                                 final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
-    }
-
-    @Override
-    public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
-
-    @Override
-    public String getType() {
-        return store.getType();
-    }
-
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
-    }
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
+        return super.writeDocument(document);
     }
 }

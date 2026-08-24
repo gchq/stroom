@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,11 +64,11 @@ public class TestSearchRequestFactory extends AbstractQueryTest {
                     .build();
             searchRequest = new SearchRequestFactory(
                     (keywordGroup, parentTableSettings) -> null,
-                    MockDocResolver.getInstance(),
+                    MockDataSourceResolver.getInstance(),
                     () -> criteria -> null,
                     MockSecurityContext.getInstance())
                     .create(input, searchRequest, expressionContext);
-            return JsonUtil.writeValueAsString(searchRequest);
+            return JsonUtil.writeValueAsConsistentString(searchRequest);
 
         } catch (final RuntimeException e) {
             return e.toString();

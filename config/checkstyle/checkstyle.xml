@@ -183,6 +183,11 @@
       stroom.data.store.impl.fs.db.jooq.tables.FsVolume.*,
       stroom.data.store.impl.fs.db.jooq.tables.FsVolumeGroup.*,
       stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.*,
+      stroom.docstore.impl.db.jooq.tables.Doc.*,
+      stroom.docstore.impl.db.jooq.tables.DocData.*,
+      stroom.docstore.impl.db.jooq.tables.DocDataSnapshot.*,
+      stroom.docstore.impl.db.jooq.tables.DocAudit.*,
+      stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot.*,
       stroom.explorer.impl.db.jooq.tables.ExplorerFavourite.*,
       stroom.explorer.impl.db.jooq.tables.ExplorerNode.*,
       stroom.explorer.impl.db.jooq.tables.ExplorerPath.*,
@@ -215,6 +220,7 @@
       stroom.processor.impl.db.jooq.tables.ProcessorTask.*,
       stroom.security.identity.db.jooq.tables.Account.*,
       stroom.security.identity.db.jooq.tables.JsonWebKey.*,
+      stroom.security.identity.db.jooq.tables.OauthToken.*,
       stroom.security.impl.db.jooq.tables.ApiKey.*,
       stroom.security.impl.db.jooq.tables.PermissionApp.*,
       stroom.security.impl.db.jooq.tables.PermissionAppId.*,
@@ -225,6 +231,9 @@
       stroom.security.impl.db.jooq.tables.StroomUserArchive.*,
       stroom.security.impl.db.jooq.tables.StroomUserGroup.*,
       stroom.storedquery.impl.db.jooq.tables.Query.*,
+      stroom.ai.impl.db.jooq.tables.AiChat.*,
+      stroom.ai.impl.db.jooq.tables.AiChatMessage.*,
+      stroom.ai.impl.db.jooq.tables.AiChatAttachment.*,
 "/>
 <!--      <property name="excludes" value="org.mockito.*"/>-->
 <!--      <property name="excludes" value="java.lang.annotation.ElementType.*"/>-->

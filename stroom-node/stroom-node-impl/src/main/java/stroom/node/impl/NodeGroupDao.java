@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,17 @@
 
 package stroom.node.impl;
 
+import stroom.node.impl.db.jooq.tables.Node;
 import stroom.node.shared.FindNodeGroupRequest;
 import stroom.node.shared.NodeGroup;
 import stroom.node.shared.NodeGroupChange;
 import stroom.node.shared.NodeGroupState;
 import stroom.util.shared.ResultPage;
 
+import java.util.Set;
+
 public interface NodeGroupDao {
+
     ResultPage<NodeGroup> find(FindNodeGroupRequest request);
 
     NodeGroup create(NodeGroup nodeGroup);
@@ -35,7 +39,21 @@ public interface NodeGroupDao {
 
     void delete(int id);
 
-    ResultPage<NodeGroupState> getNodeGroupState(Integer id);
+    /**
+     * Returns all nodes along with their inclusion status for the specified node group.
+     * Each {@link NodeGroupState} pairs a {@link stroom.node.shared.Node} with a boolean
+     * indicating whether that node is a member of the group. This is achieved via a left
+     * outer join, so nodes not in the group are still returned with {@code included = false}.
+     * <p>
+     * Used by the UI to display a list of all nodes with a tick-box for toggling group membership.
+     *
+     * @param id the ID of the node group
+     * @return a {@link ResultPage} containing a {@link NodeGroupState} entry for every node,
+     * ordered by node name
+     */
+    NodeGroupState getNodeGroupState(Integer id);
 
-    boolean updateNodeGroupState(NodeGroupChange change);
+    Boolean updateNodeGroupState(NodeGroupChange change);
+
+    Set<String> getSelectedNodesForGroup(Integer id);
 }

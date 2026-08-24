@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 
 package stroom.security.shared;
 
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.UserRef;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.UUID;
 
@@ -34,7 +33,7 @@ class TestSessionDetails {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSessionDetails.class);
 
     @Test
-    void test() throws JsonProcessingException {
+    void test() {
         final SessionDetails sessionDetails1 = new SessionDetails(
                 UserRef
                         .builder()
@@ -46,20 +45,20 @@ class TestSessionDetails {
                 0,
                 0,
                 "agent",
-                "node1");
+                "node1",
+                "session-handle");
 
-        final ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        final String json1 = objectMapper.writeValueAsString(sessionDetails1);
+        final JsonMapper jsonMapper = JsonUtil.getMapper();
+        final String json1 = JsonUtil.getMapper().writeValueAsString(sessionDetails1);
 
         LOGGER.info("json1:\n{}", json1);
 
-        final SessionDetails sessionDetails2 = objectMapper.readValue(json1, SessionDetails.class);
+        final SessionDetails sessionDetails2 = jsonMapper.readValue(json1, SessionDetails.class);
 
         assertThat(sessionDetails2)
                 .isEqualTo(sessionDetails1);
 
-        final String json2 = objectMapper.writeValueAsString(sessionDetails2);
+        final String json2 = jsonMapper.writeValueAsString(sessionDetails2);
 
         assertThat(json2)
                 .isEqualTo(json1);

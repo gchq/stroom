@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,17 @@
 package stroom.docstore.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.docref.EmbeddedDocRef;
-import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
+import stroom.docstore.shared.AuditAction;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
@@ -63,13 +64,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
+/**
+ * Persistence for a document type: serialise, store, audit, keep the dependency edges current.
+ *
+ * <h2>This class does not authorise</h2>
+ * Document permissions are applied by {@code AbstractDocumentStore}, which is the service layer for a
+ * document type and the level that decides who may read, write or delete one. <b>Do not assume an
+ * instance of this class is safe to hand out</b>: it does what it is asked. It is reachable only
+ * through {@code AbstractDocumentStore.getStore()}, which is {@code protected} and documented as the
+ * deliberately unchecked handle.
+ *
+ * <p>There is exactly <b>one</b> exception, and it is here rather than at the boundary for two
+ * reasons: {@link #importDocument} checks EDIT only when the document <em>already exists</em> —
+ * importing a new one requires no document permission, for the same reason creating one does not —
+ * and its failures are collected onto the {@link stroom.importexport.shared.ImportState} as messages
+ * rather than thrown, which is what the import confirmation screen renders. Hoisting it would both
+ * refuse every new document (the path that loads content packs at startup) and turn a per-item
+ * message into a failed request.
+ *
+ * <p>The {@link stroom.security.api.SecurityContext} retained here is otherwise used only to
+ * attribute writes — {@code stampAudit} and the {@code UserRef} handed to the persistence layer, which
+ * must name the real user — and to elevate the dependency-index update.
+ */
 public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> implements Store<D> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoreImpl.class);
@@ -77,30 +98,36 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     private final Persistence persistence;
     private final EntityEventBus entityEventBus;
     private final SecurityContext securityContext;
-    private final Provider<DocRefDecorator> docRefInfoServiceProvider;
+    private final Provider<DocFinder> docFinderProvider;
+    private final Provider<DocDependencyService> docDependencyServiceProvider;
 
     private final DocumentSerialiser2<D> serialiser;
     private final String type;
     private final Supplier<B> builderSupplier;
     private final Function<D, B> builderFunction;
+    private final Supplier<DependencyRemapFunction<D>> dependencyRemapFunctionSupplier;
 
     @Inject
     StoreImpl(final Persistence persistence,
               final EntityEventBus entityEventBus,
               final SecurityContext securityContext,
-              final Provider<DocRefDecorator> docRefInfoServiceProvider,
+              final Provider<DocFinder> docFinderProvider,
+              final Provider<DocDependencyService> docDependencyServiceProvider,
               final DocumentSerialiser2<D> serialiser,
               final String type,
               final Supplier<B> builderSupplier,
-              final Function<D, B> builderFunction) {
+              final Function<D, B> builderFunction,
+              final Supplier<DependencyRemapFunction<D>> dependencyRemapFunctionSupplier) {
         this.persistence = persistence;
         this.entityEventBus = entityEventBus;
         this.securityContext = securityContext;
-        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.docFinderProvider = docFinderProvider;
+        this.docDependencyServiceProvider = docDependencyServiceProvider;
         this.serialiser = serialiser;
         this.type = type;
         this.builderSupplier = builderSupplier;
         this.builderFunction = builderFunction;
+        this.dependencyRemapFunctionSupplier = dependencyRemapFunctionSupplier;
     }
 
     // ---------------------------------------------------------------------
@@ -204,35 +231,11 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     @Override
     public final void deleteDocument(final DocRef docRef) {
         Objects.requireNonNull(docRef);
-        // Check that the user has permission to delete this item.
-        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE)) {
-            throwPermissionException(
-                    "You are not authorised to delete this item",
-                    () -> "document: " + toDocRefDisplayString(docRef));
-        }
+        // Authorisation is applied by AbstractDocumentStore, the service layer for this document type.
+        persistence.delete(docRef, securityContext.getUserRef());
+        EntityEvent.fire(entityEventBus, docRef, EntityAction.DELETE);
 
-        persistence.getLockFactory().lock(docRef.getUuid(), () -> {
-            persistence.delete(docRef);
-            EntityEvent.fire(entityEventBus, docRef, EntityAction.DELETE);
-        });
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        Objects.requireNonNull(docRef);
-        final D document = read(docRef);
-        return DocRefInfo
-                .builder()
-                .docRef(DocRef.builder()
-                        .type(document.getType())
-                        .uuid(document.getUuid())
-                        .name(document.getName())
-                        .build())
-                .createTime(document.getCreateTimeMs())
-                .createUser(document.getCreateUser())
-                .updateTime(document.getUpdateTimeMs())
-                .updateUser(document.getUpdateUser())
-                .build();
+        removeDocDependencies(docRef);
     }
 
     // ---------------------------------------------------------------------
@@ -244,36 +247,9 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     // ---------------------------------------------------------------------
 
     @Override
-    public Map<DocRef, Set<DocRef>> getDependencies(final DependencyRemapFunction<D> mapper) {
-        return list()
-                .stream()
-                .filter(this::canRead)
-                .collect(Collectors.toMap(docRef -> docRef, docRef ->
-                        getDependencies(docRef, mapper)));
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef,
-                                       final DependencyRemapFunction<D> mapper) {
-        if (mapper != null) {
-            try {
-                D doc = readDocument(docRef);
-                if (doc != null) {
-                    final DependencyRemapper dependencyRemapper = new DependencyRemapper();
-                    doc = mapper.remap(doc, dependencyRemapper);
-                    return dependencyRemapper.getDependencies();
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-        }
-        return Collections.emptySet();
-    }
-
-    @Override
     public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings,
-                                  final DependencyRemapFunction<D> mapper) {
+                                  final Map<DocRef, DocRef> remappings) {
+        final DependencyRemapFunction<D> mapper = getDependencyRemapFunction();
         if (mapper != null) {
             try {
                 D doc = readDocument(docRef);
@@ -329,17 +305,13 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         return persistence.exists(docRef);
     }
 
+    /**
+     * Every document of this type. Filtering to what the user may see is applied by
+     * {@code AbstractDocumentStore}, the service layer for this document type.
+     */
     @Override
     public Set<DocRef> listDocuments() {
-        final List<DocRef> list = list();
-        return list.stream()
-                .filter(this::canRead)
-                .collect(Collectors.toSet());
-    }
-
-    private boolean canRead(final DocRef docRef) {
-        Objects.requireNonNull(docRef);
-        return securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW);
+        return Set.copyOf(list());
     }
 
     @Override
@@ -401,46 +373,48 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     }
 
     private D importDocument(final DocRef docRef,
-                                final D existingDocument,
-                                final String uuid,
-                                final ImportExportDocument convertedImportExportDocument) {
-        return persistence.getLockFactory().lockResult(uuid, () -> {
-            try {
-                // Turn the data map into a document.
-                final D newDocument = serialiser.read(convertedImportExportDocument);
+                             final D existingDocument,
+                             final String uuid,
+                             final ImportExportDocument convertedImportExportDocument) {
+        try {
+            // Turn the data map into a document.
+            final D newDocument = serialiser.read(convertedImportExportDocument);
 
-                // Get a builder to mutate the doc.
-                final AbstractBuilder<D, ?> builder = builderFunction.apply(newDocument);
+            // Get a builder to mutate the doc.
+            final AbstractBuilder<D, ?> builder = builderFunction.apply(newDocument);
 
-                // Copy create time and user from the existing document.
-                if (existingDocument != null) {
-                    builder
-                            .name(existingDocument.getName())
-                            .createTimeMs(existingDocument.getCreateTimeMs())
-                            .createUser(existingDocument.getCreateUser());
-                }
-
-                // Stamp audit data on the imported document.
-                builder.stampAudit(securityContext);
-
-                // Convert the document back into a data map.
-                final ImportExportDocument finalData = serialiser.write(builder.build());
-                // Write the data.
-                persistence.write(docRef, existingDocument != null, finalData);
-
-                // Fire an entity event to alert other services of the change.
-                if (existingDocument != null) {
-                    EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE);
-                } else {
-                    EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
-                }
-
-                return newDocument;
-            } catch (final IOException e) {
-                LOGGER.error(e::getMessage, e);
-                throw new UncheckedIOException(e);
+            // Copy create time and user from the existing document.
+            if (existingDocument != null) {
+                builder
+                        .name(existingDocument.getName())
+                        .createTimeMs(existingDocument.getCreateTimeMs())
+                        .createUser(existingDocument.getCreateUser());
             }
-        });
+
+            // Stamp audit data on the imported document.
+            builder.stampAudit(securityContext);
+
+            final D builtDoc = builder.build();
+            // Convert the document back into a data map.
+            final ImportExportDocument finalData = serialiser.write(builtDoc);
+            // Write the data — import always succeeds, no version check.
+            persistence.write(docRef, AuditAction.IMPORT, securityContext.getUserRef(),
+                    finalData, null, builtDoc.getVersion());
+
+            // Fire an entity event to alert other services of the change.
+            if (existingDocument != null) {
+                EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE);
+            } else {
+                EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
+            }
+
+            updateDocDependencies(docRef, builtDoc, true);
+
+            return newDocument;
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
+            throw new UncheckedIOException(e);
+        }
     }
 
     private D getExistingDocument(final DocRef docRef) {
@@ -462,32 +436,28 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
 
     @Override
     public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
+                                               final boolean omitAuditFields,
+                                               final List<Message> messageList) {
         return exportDocument(docRef, omitAuditFields, messageList, d -> d);
     }
 
     @Override
     public ImportExportDocument exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList,
-                                              final Function<D, D> function) {
+                                               final boolean omitAuditFields,
+                                               final List<Message> messageList,
+                                               final Function<D, D> function) {
         ImportExportDocument importExportDocument = new ImportExportDocument();
 
         try {
-            // Check that the user has permission to read this item.
-            if (!canRead(docRef)) {
-                throwPermissionException("You are not authorised to read " + toDocRefDisplayString(docRef));
-            } else {
-                D document = read(docRef);
-                if (document == null) {
-                    throw new IOException("Unable to read " + toDocRefDisplayString(docRef));
-                }
-                if (omitAuditFields) {
-                    document = removeAuditData(builderFunction, document);
-                }
-                importExportDocument = serialiser.write(function.apply(document));
+            // Authorisation is applied by AbstractDocumentStore.
+            D document = read(docRef);
+            if (document == null) {
+                throw new IOException("Unable to read " + toDocRefDisplayString(docRef));
             }
+            if (omitAuditFields) {
+                document = removeAuditData(builderFunction, document);
+            }
+            importExportDocument = serialiser.write(function.apply(document));
         } catch (final IOException e) {
             messageList.add(new Message(Severity.ERROR, e.getMessage()));
         }
@@ -539,18 +509,85 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         return new DocRef(type, document.getUuid(), document.getName());
     }
 
+    /**
+     * Keep the doc_dependency store current for a create/update by extracting the document's
+     * dependencies <b>directly from the in-hand object</b> and writing them.
+     *
+     * @param propagateName if {@code true}, also propagate this document's (possibly changed) name
+     *                      to all edges that reference it as a target. Not required on create as
+     *                      nothing can reference a brand-new document yet.
+     */
+    private void updateDocDependencies(final DocRef docRef, final D document, final boolean propagateName) {
+        final DocDependencyService docDependencyService = getDocDependencyService();
+        if (docDependencyService != null) {
+            // The remap function may perform registry lookups for some doc types, so run as the
+            // processing user. Errors are swallowed and logged by the service so a dependency-update
+            // failure never blocks the document save (the table is a self-healing, rebuildable index).
+            securityContext.asProcessingUser(() -> {
+                final Set<DocRef> deps = extractDependencies(document, getDependencyRemapFunction());
+                docDependencyService.setDependencies(docRef, deps);
+                if (propagateName) {
+                    docDependencyService.propagateName(docRef);
+                }
+            });
+        }
+    }
+
+    /**
+     * Remove all of a deleted document's outgoing dependency edges directly (see
+     * {@link #updateDocDependencies}).
+     */
+    private void removeDocDependencies(final DocRef docRef) {
+        final DocDependencyService docDependencyService = getDocDependencyService();
+        if (docDependencyService != null) {
+            securityContext.asProcessingUser(() -> docDependencyService.removeDependencies(docRef));
+        }
+    }
+
+    /**
+     * Extract the dependencies of a document using this store's dependency remap function. Returns an
+     * empty set when this doc type has no mapper (i.e. it tracks no dependencies).
+     */
+    private Set<DocRef> extractDependencies(final D document, final DependencyRemapFunction<D> mapper) {
+        if (mapper == null || document == null) {
+            return Collections.emptySet();
+        }
+        final DependencyRemapper dependencyRemapper = new DependencyRemapper();
+        mapper.remap(document, dependencyRemapper);
+        return dependencyRemapper.getDependencies();
+    }
+
+    /**
+     * @return this store's dependency remap function, or {@code null} if it has none (either the doc
+     * type tracks no dependencies, or no supplier was provided, e.g. in lightweight tests).
+     */
+    private DependencyRemapFunction<D> getDependencyRemapFunction() {
+        return dependencyRemapFunctionSupplier != null
+                ? dependencyRemapFunctionSupplier.get()
+                : null;
+    }
+
+    /**
+     * @return the dependency service, or {@code null} when it has not been provided (e.g. in
+     * lightweight in-memory tests that construct a store directly, as with the nullable
+     * {@code entityEventBus}).
+     */
+    private DocDependencyService getDocDependencyService() {
+        return docDependencyServiceProvider != null
+                ? docDependencyServiceProvider.get()
+                : null;
+    }
+
     private D create(final D document) {
         try {
             final DocRef docRef = createDocRef(document);
             final ImportExportDocument importExportDocument = serialiser.write(document);
-            persistence.getLockFactory().lock(document.getUuid(), () -> {
-                try {
-                    persistence.write(docRef, false, importExportDocument);
-                    EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
+            persistence.write(docRef, AuditAction.CREATE, securityContext.getUserRef(),
+                    importExportDocument, null, document.getVersion());
+            EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
+
+            // A copied document inherits the original's outgoing edges, so this is needed on create.
+            updateDocDependencies(docRef, document, false);
         } catch (final IOException e) {
             LOGGER.error("Error serialising {}", document.getType(), e);
             throw new UncheckedIOException(e);
@@ -570,22 +607,10 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         final ImportExportDocument importExportDocument = readPersistence(docRef);
         if (importExportDocument != null) {
             try {
-                final D doc = serialiser.read(importExportDocument);
-                if (doc instanceof final Embeddable embeddable) {
-                    final DocRef parentDocRef = embeddable.getEmbeddedIn();
-                    if (parentDocRef != null) {
-                        if (!securityContext.hasDocumentPermission(parentDocRef, DocumentPermission.VIEW)) {
-                            throwPermissionException(LogUtil.message("You are not authorised to read {}",
-                                    toDocRefDisplayString(parentDocRef)));
-                        }
-                    } else {
-                        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
-                            throwPermissionException(LogUtil.message("You are not authorised to read {}",
-                                    toDocRefDisplayString(docRef)));
-                        }
-                    }
-                }
-                return doc;
+                // Authorisation is applied by AbstractDocumentStore, which reads the document and then
+                // authorises it — an embedded document is authorised by its parent, which can only be
+                // known from the document itself.
+                return serialiser.read(importExportDocument);
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw new UncheckedIOException(
@@ -640,19 +665,19 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         D updatedDoc = document;
         final DocRef docRef = createDocRef(updatedDoc);
 
-        // Check that the user has permission to update this item.
-        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
-            throwPermissionException("You are not authorised to update " + toDocRefDisplayString(docRef));
-        }
+        // Authorisation is applied by AbstractDocumentStore, the service layer for this document type.
+        // Note that `update` is also reached from the import path, which authorises itself — see
+        // importDocument, where the check is conditional on the document already existing.
 
         try {
-            // Get the current document version to make sure the document hasn't been changed by
-            // somebody else since we last read it.
+            // Capture the version the caller expects to be current.
             final String currentVersion = updatedDoc.getVersion();
-            // Copy and mutate the doc.
+            final String newVersion = UUID.randomUUID().toString();
+
+            // Copy and mutate the doc with a new version.
             final AbstractBuilder<D, ?> builder = builderFunction
                     .apply(updatedDoc)
-                    .version(UUID.randomUUID().toString());
+                    .version(newVersion);
 
             // Add audit data.
             builder.stampAudit(securityContext);
@@ -660,32 +685,16 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
 
             final ImportExportDocument newData = serialiser.write(updatedDoc);
 
-            persistence.getLockFactory().lock(updatedDoc.getUuid(), () -> {
-                try {
-                    // Read existing data for this document.
-                    final ImportExportDocument importExportDocument = persistence.read(docRef);
+            // Single atomic call — persistence layer handles version check.
+            // For DB: UPDATE ... WHERE version = expectedVersion (optimistic lock).
+            // For FS: StripedLockFactory in StoreImpl.readPersistence() serialises access.
+            persistence.write(docRef, AuditAction.UPDATE, securityContext.getUserRef(),
+                    newData, currentVersion, newVersion);
+            EntityEvent.fire(entityEventBus, docRef, oldDocRef, EntityAction.UPDATE);
 
-                    // Perform version check to ensure the item hasn't been updated by somebody
-                    // else before we try to update it.
-                    if (importExportDocument == null) {
-                        throw new DocumentNotFoundException(docRef);
-                    }
-
-                    final D existingDocument = serialiser.read(importExportDocument);
-
-                    // Perform version check to ensure the item hasn't been updated by somebody
-                    // else before we try to update it.
-                    if (!existingDocument.getVersion().equals(currentVersion)) {
-                        throw new RuntimeException(toDocRefDisplayString(docRef)
-                                                   + " has already been updated.");
-                    }
-
-                    persistence.write(docRef, true, newData);
-                    EntityEvent.fire(entityEventBus, docRef, oldDocRef, EntityAction.UPDATE);
-                } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
+            // Re-compute this doc's outgoing edges and propagate a potential name change to all
+            // edges that reference it (covers both a content save and a rename).
+            updateDocDependencies(docRef, updatedDoc, true);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -694,12 +703,12 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     }
 
     @Override
+    /**
+     * Every document of this type. Filtering to what the user may see is applied by
+     * {@code AbstractDocumentStore}, the service layer for this document type.
+     */
     public List<DocRef> list() {
-        return persistence
-                .list(type)
-                .stream()
-                .filter(this::canRead)
-                .collect(Collectors.toList());
+        return persistence.list(type);
     }
 
     @Override
@@ -708,19 +717,8 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     }
 
     @Override
-    public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
-        return persistence.find(type, names, allowWildCards)
-                .stream()
-                .filter(this::canRead)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public Map<String, String> getIndexableData(final DocRef docRef) {
-        if (!canRead(docRef)) {
-            return Collections.emptyMap();
-        }
-
+        // Authorisation is applied by AbstractDocumentStore.
         final ImportExportDocument importExportDocument = readPersistence(docRef);
         if (importExportDocument == null) {
             return Collections.emptyMap();
@@ -750,44 +748,16 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     }
 
     private ImportExportDocument readPersistence(final DocRef docRef) {
-        return persistence.getLockFactory().lockResult(docRef.getUuid(), () -> {
-            try {
-                return persistence.read(docRef);
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new UncheckedIOException(
-                        LogUtil.message("Error reading {} from store {}, {}",
-                                toDocRefDisplayString(docRef),
-                                persistence.getClass().getSimpleName(),
-                                e.getMessage()), e);
-            }
-        });
-    }
-
-    @Deprecated // remove once pipelines have been migrated.
-    public void migratePipelines(final Function<Map<String, byte[]>, Optional<Map<String, byte[]>>> function) {
-        persistence.list(type).forEach(docRef ->
-                persistence.getLockFactory().lock(docRef.getUuid(), () -> {
-                    final ImportExportDocument importExportDocument = readPersistence(docRef);
-                    if (importExportDocument != null) {
-                        try {
-                            final Map<String, byte[]> mapIn = importExportDocument.toDataMap();
-                            final Optional<Map<String, byte[]>> migrated = function.apply(mapIn);
-                            migrated.ifPresent(newData -> {
-                                try {
-                                    final ImportExportDocument migratedDocument =
-                                            ImportExportDocument.fromDataMap(newData);
-
-                                    persistence.write(docRef, true, migratedDocument);
-                                } catch (final Exception e) {
-                                    LOGGER.error(e::getMessage, e);
-                                }
-                            });
-                        } catch (final Exception e) {
-                            LOGGER.error(e::getMessage, e);
-                        }
-                    }
-                }));
+        try {
+            return persistence.read(docRef);
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new UncheckedIOException(
+                    LogUtil.message("Error reading {} from store {}, {}",
+                            toDocRefDisplayString(docRef),
+                            persistence.getClass().getSimpleName(),
+                            e.getMessage()), e);
+        }
     }
 
     private String toDocRefDisplayString(final DocRef docRef) {
@@ -795,8 +765,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
             return "";
         } else {
             try {
-                return DocRefUtil.createTypedDocRefString(docRefInfoServiceProvider.get()
-                        .decorate(docRef));
+                return DocRefUtil.createTypedDocRefString(docFinderProvider.get().decorate(docRef));
             } catch (final Exception e) {
                 // This method is for use in decorating the docref for exception messages
                 // so swallow any errors.
@@ -833,4 +802,5 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                 .updateUser(null)
                 .build();
     }
+
 }

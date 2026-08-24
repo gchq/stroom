@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,16 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
-import stroom.util.string.EncodingUtil;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.StringWriter;
 
 public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
 
@@ -68,10 +67,8 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
         final DashboardConfig dashboardConfig = document.getDashboardConfig();
         final ImportExportDocument importExportDocument = delegate.write(document.copy().dashboardConfig(null).build());
         if (dashboardConfig != null) {
-            final StringWriter stringWriter = new StringWriter();
-            dashboardConfigSerialiser.write(stringWriter, dashboardConfig);
-            importExportDocument.addExtAsset(
-                    new ByteArrayImportExportAsset(JSON, EncodingUtil.asBytes(stringWriter.toString())));
+            final byte[] jsonBytes = dashboardConfigSerialiser.writeAsBytes(dashboardConfig);
+            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(JSON, DocDataType.JSON, jsonBytes));
         }
         return importExportDocument;
     }
@@ -82,7 +79,7 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
 
     public DashboardConfig getDashboardConfigFromJson(final byte[] data) throws IOException {
         // Wrap the data in an asset for the serialiser
-        final ByteArrayImportExportAsset asset = new ByteArrayImportExportAsset("dummy", data);
+        final ByteArrayImportExportAsset asset = new ByteArrayImportExportAsset("dummy", DocDataType.JSON, data);
         return dashboardConfigSerialiser.read(asset);
     }
 }

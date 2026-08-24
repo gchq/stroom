@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package stroom.db.util;
 
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.query.api.datasource.QueryField;
 
 import com.google.inject.Provider;
@@ -29,15 +29,15 @@ public class TermHandlerFactory {
 
     private final Provider<WordListProvider> wordListProvider;
     private final Provider<CollectionService> collectionService;
-    private final Provider<DocRefInfoService> docRefInfoService;
+    private final Provider<DocFinder> docFinderProvider;
 
     @Inject
     public TermHandlerFactory(final Provider<WordListProvider> wordListProvider,
                               final Provider<CollectionService> collectionService,
-                              final Provider<DocRefInfoService> docRefInfoService) {
+                              final Provider<DocFinder> docFinderProvider) {
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinderProvider = docFinderProvider;
     }
 
     public <T> TermHandler<T> create(final QueryField dataSourceField,
@@ -55,7 +55,7 @@ public class TermHandlerFactory {
                 converter,
                 wordListProvider,
                 collectionService,
-                docRefInfoService,
+                docFinderProvider,
                 useName,
                 false);
     }

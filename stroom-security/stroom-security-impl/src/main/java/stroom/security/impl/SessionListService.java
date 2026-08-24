@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 package stroom.security.impl;
 
+import stroom.security.api.UserSessionEvictor;
 import stroom.security.shared.SessionListResponse;
 
-public interface SessionListService {
+public interface SessionListService extends UserSessionEvictor {
 
     /**
      * List all sessions on the specified node
@@ -29,4 +30,29 @@ public interface SessionListService {
      * List all sessions on all nodes
      */
     SessionListResponse listSessions();
+
+    /**
+     * Terminate the given user's sessions on the specified node only (the per-node step of the cluster
+     * fan-out performed by {@link #evictUserSessions(String, String)}).
+     *
+     * @return the number of sessions terminated on that node.
+     */
+    int evictUserSessionsOnNode(String userSubjectId, String exceptSessionId, String nodeName);
+
+    /**
+     * Terminate a single session, wherever in the cluster it lives. Identified by its opaque handle from
+     * {@link stroom.security.shared.SessionDetails#getSessionHandle()}, never by its raw id. Stops at the
+     * first node that reports having terminated it.
+     *
+     * @return true if the session was found and terminated on some node.
+     */
+    boolean evictSession(String sessionHandle);
+
+    /**
+     * Terminate a single session on the specified node only (the per-node step of the fan-out performed
+     * by {@link #evictSession(String)}).
+     *
+     * @return true if the session was found and terminated on that node.
+     */
+    boolean evictSessionOnNode(String sessionHandle, String nodeName);
 }

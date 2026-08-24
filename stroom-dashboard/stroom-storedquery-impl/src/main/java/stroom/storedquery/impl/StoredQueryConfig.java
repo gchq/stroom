@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,9 @@
 
 package stroom.storedquery.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.storedquery.impl.db.StoredQueryDbConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,25 +27,30 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class StoredQueryConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
+
+    private static final int DEFAULT_ITEMS_RETENTION = 100;
+    private static final int DEFAULT_DAYS_RETENTION = 365;
 
     private final int itemsRetention;
     private final int daysRetention;
     private final StoredQueryDbConfig dbConfig;
 
     public StoredQueryConfig() {
-        itemsRetention = 100;
-        daysRetention = 365;
+        itemsRetention = DEFAULT_ITEMS_RETENTION;
+        daysRetention = DEFAULT_DAYS_RETENTION;
         dbConfig = new StoredQueryDbConfig();
     }
 
     @JsonCreator
-    public StoredQueryConfig(@JsonProperty("itemsRetention") final int itemsRetention,
-                             @JsonProperty("daysRetention") final int daysRetention,
+    public StoredQueryConfig(@JsonProperty("itemsRetention") final Integer itemsRetention,
+                             @JsonProperty("daysRetention") final Integer daysRetention,
                              @JsonProperty("db") final StoredQueryDbConfig dbConfig) {
-        this.itemsRetention = itemsRetention;
-        this.daysRetention = daysRetention;
+        this.itemsRetention = Objects.requireNonNullElse(itemsRetention, DEFAULT_ITEMS_RETENTION);
+        this.daysRetention = Objects.requireNonNullElse(daysRetention, DEFAULT_DAYS_RETENTION);
         this.dbConfig = dbConfig;
     }
 
@@ -67,20 +69,5 @@ public class StoredQueryConfig extends AbstractConfig implements IsStroomConfig,
     @JsonProperty("db")
     public StoredQueryDbConfig getDbConfig() {
         return dbConfig;
-    }
-
-    @BootStrapConfig
-    public static class StoredQueryDbConfig extends AbstractDbConfig {
-
-        public StoredQueryDbConfig() {
-            super();
-        }
-
-        @JsonCreator
-        public StoredQueryDbConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

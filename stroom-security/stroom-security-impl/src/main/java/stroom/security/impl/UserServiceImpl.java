@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package stroom.security.impl;
 
 import stroom.activity.api.ActivityService;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;
@@ -68,10 +67,12 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     private final PermissionChangeEventBus permissionChangeEventBus;
     private final Map<String, Provider<HasUserDependencies>> hasUserDependenciesProviderMap;
     private final UserCache userCache;
-    private final DocRefInfoService docRefInfoService;
     private final StoredQueryService storedQueryService;
     private final UserPreferencesService userPreferencesService;
     private final ActivityService activityService;
+    // A Provider, because the revocation service reaches back into session and identity machinery
+    // that ultimately depends on this class - injecting it directly would be a construction cycle.
+    private final Provider<UserAccessRevocationService> userAccessRevocationServiceProvider;
 
     @Inject
     UserServiceImpl(final SecurityContext securityContext,
@@ -79,19 +80,19 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                     final PermissionChangeEventBus permissionChangeEventBus,
                     final Map<String, Provider<HasUserDependencies>> hasDependenciesSet,
                     final UserCache userCache,
-                    final DocRefInfoService docRefInfoService,
                     final StoredQueryService storedQueryService,
                     final UserPreferencesService userPreferencesService,
-                    final ActivityService activityService) {
+                    final ActivityService activityService,
+                    final Provider<UserAccessRevocationService> userAccessRevocationServiceProvider) {
         this.securityContext = securityContext;
         this.userDao = userDao;
         this.permissionChangeEventBus = permissionChangeEventBus;
         this.hasUserDependenciesProviderMap = hasDependenciesSet;
         this.userCache = userCache;
-        this.docRefInfoService = docRefInfoService;
         this.storedQueryService = storedQueryService;
         this.userPreferencesService = userPreferencesService;
         this.activityService = activityService;
+        this.userAccessRevocationServiceProvider = userAccessRevocationServiceProvider;
     }
 
     @Override
@@ -181,8 +182,50 @@ class UserServiceImpl implements UserService, ContentPackUserService {
             }
 
             fireUserChangeEvent(updatedUser.asRef());
+            revokeAccessIfDisabled(updatedUser);
             return updatedUser;
         });
+    }
+
+    /**
+     * Cut off live access when a user is disabled.
+     * <p>
+     * Without this, disabling a user is only eventually effective: the permission-change event fired above is
+     * best-effort and per-node, so a node that misses it keeps serving the cached, still-enabled user until the
+     * cache expires - and a bearer token the user already holds keeps working until it expires regardless,
+     * because token verification consults no user cache at all. Revoking makes "this account is disabled" take
+     * effect now rather than within the cache ceiling.
+     * </p>
+     * <p>
+     * Fires whenever the resulting user is disabled, rather than only on the enabled-to-disabled transition.
+     * That avoids an extra read to discover the previous state, and re-revoking is both harmless and
+     * self-healing: a disabled user should never hold live access, so if they somehow do, this removes it.
+     * </p>
+     */
+    private void revokeAccessIfDisabled(final User updatedUser) {
+        // Groups hold no sessions or tokens of their own; membership changes are handled by the event above.
+        if (updatedUser.isGroup() || updatedUser.isEnabled()) {
+            return;
+        }
+        final String subjectId = updatedUser.getSubjectId();
+        if (NullSafe.isBlankString(subjectId)) {
+            return;
+        }
+        try {
+            final int revoked = userAccessRevocationServiceProvider.get().revokeAccessForUser(subjectId);
+            LOGGER.info(() -> LogUtil.message(
+                    "User '{}' was disabled - revoked {} token(s) and terminated their sessions",
+                    subjectId, revoked));
+        } catch (final RuntimeException e) {
+            // Deliberately not fatal. Disabling the account is the primary, durable control and must not be
+            // undone because the follow-up failed; the user cache's expireAfterWrite ceiling still bounds how
+            // long the stale enabled state can be honoured. Logged loudly because the window is wider than
+            // intended until someone looks.
+            LOGGER.error(() -> LogUtil.message(
+                    "User '{}' was disabled but revoking their live access failed: {}. Their existing tokens "
+                    + "and sessions may remain usable until they expire or the user cache reloads.",
+                    subjectId, e.getMessage()), e);
+        }
     }
 
     @Override
@@ -426,7 +469,7 @@ class UserServiceImpl implements UserService, ContentPackUserService {
                         hasUserDependencies.getUserDependencies(UserRef.forUserUuid(userUuid)).stream())
                 .map(userDependency -> {
                     try {
-                        final DocRef docRef = NullSafe.get(userDependency.getDocRef(), docRefInfoService::decorate);
+                        final DocRef docRef = userDependency.getDocRef();
                         return new UserDependency(
                                 userDependency.getUserRef(),
                                 userDependency.getDetails(),

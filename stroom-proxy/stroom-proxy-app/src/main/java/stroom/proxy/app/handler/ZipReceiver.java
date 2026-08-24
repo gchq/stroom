@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -301,6 +301,10 @@ public class ZipReceiver implements Receiver {
     private Map<FeedKey, List<ZipEntryGroup>> filterAllowedEntries(final AttributeMap attributeMap,
                                                                    final ReceiveResult receiveResult) {
         final Map<FeedKey, List<ZipEntryGroup>> allowed = new HashMap<>();
+        // Callers must already be running as the processing user: filtering can consult feed status,
+        // which needs an identity, and no entry point's own user would carry the permission for it.
+        // Every entry point does this - see ProxyRequestHandler, ZipDirScanner and EventStore - so
+        // this must not elevate again here.
         final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
         receiveResult.feedGroups.forEach((feedKey, zipEntryGroups) -> {
             final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(attributeMap);

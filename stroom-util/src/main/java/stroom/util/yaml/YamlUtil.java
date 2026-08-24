@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,84 +20,51 @@ import stroom.util.io.DiffUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.BeanProperty;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.MapperFeature;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.cfg.EnumFeature;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.node.JsonNodeType;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
 public class YamlUtil {
 
-    private static final ObjectMapper VANILLA_OBJECT_MAPPER = createVanillaObjectMapper();
-    private static final ObjectMapper OBJECT_MAPPER = createYamlObjectMapper(true);
-    private static final ObjectMapper NO_INDENT_MAPPER = createYamlObjectMapper(false);
+    private static final YAMLMapper VANILLA_OBJECT_MAPPER = createVanillaMapper();
+    private static final YAMLMapper OBJECT_MAPPER = createYamlMapper(true);
+    private static final YAMLMapper NO_INDENT_MAPPER = createYamlMapper(false);
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(YamlUtil.class);
 
-    public static Path getYamlFileFromArgs(final String[] args) {
-        // This is not ideal as we are duplicating what dropwizard is doing but there appears to be
-        // no way of getting the yaml file location from the dropwizard classes
-        Path path = null;
-
-        for (final String arg : args) {
-            if (arg.toLowerCase().endsWith("yml") || arg.toLowerCase().endsWith("yaml")) {
-                final Path yamlFile = Path.of(arg);
-                if (Files.isRegularFile(yamlFile)) {
-                    path = yamlFile;
-                    break;
-                } else {
-                    // NOTE if you are getting here while running in IJ then you have probable not run
-                    // local.yaml.sh
-                    LOGGER.warn("YAML config file [{}] from arguments [{}] is not a valid file.\n" +
-                                "You need to supply a valid stroom configuration YAML file.",
-                            yamlFile, Arrays.asList(args));
-                }
-            }
-        }
-
-        if (path == null) {
-            throw new RuntimeException(
-                    "Could not extract YAML config file from arguments [" + Arrays.asList(args) + "]");
-        }
-
-        Path realConfigFile = null;
-        try {
-            realConfigFile = path.toRealPath();
-            LOGGER.info("Using config file: \"" + realConfigFile + "\"");
-        } catch (final IOException e) {
-            LOGGER.error("Unable to find location of real config file from \"" + path + "\"");
-        }
-
-        return realConfigFile;
-    }
-
     public static <T> T mergeYamlNodeTrees(final Class<T> valueType,
-                                           final Function<ObjectMapper, JsonNode> sparseTreeProvider,
-                                           final Function<ObjectMapper, JsonNode> defaultTreeProvider) {
+                                           final Function<YAMLMapper, JsonNode> sparseTreeProvider,
+                                           final Function<YAMLMapper, JsonNode> defaultTreeProvider) {
 
-        return mergeYamlNodeTrees(valueType, createYamlObjectMapper(), sparseTreeProvider, defaultTreeProvider);
+        return mergeYamlNodeTrees(valueType, createYamlMapper(), sparseTreeProvider, defaultTreeProvider);
     }
 
-    public static JsonNode mergeYamlNodeTrees(final ObjectMapper yamlObjectMapper,
-                                              final Function<ObjectMapper, JsonNode> sparseTreeProvider,
-                                              final Function<ObjectMapper, JsonNode> defaultTreeProvider) {
+    public static JsonNode mergeYamlNodeTrees(final YAMLMapper yamlMapper,
+                                              final Function<YAMLMapper, JsonNode> sparseTreeProvider,
+                                              final Function<YAMLMapper, JsonNode> defaultTreeProvider) {
 
-        final JsonNode sparseRootNode = sparseTreeProvider.apply(yamlObjectMapper);
-        final JsonNode defaultRootNode = defaultTreeProvider.apply(yamlObjectMapper);
+        final JsonNode sparseRootNode = sparseTreeProvider.apply(yamlMapper);
+        final JsonNode defaultRootNode = defaultTreeProvider.apply(yamlMapper);
 
         final JsonNode mergedNode;
         if (sparseRootNode == null || sparseRootNode.isMissingNode()) {
@@ -117,7 +84,7 @@ public class YamlUtil {
 
         LOGGER.doIfTraceEnabled(() -> {
             LOGGER.trace("Comparing default config (old) to the merged config (new)");
-            diffNodeTrees(yamlObjectMapper, defaultRootNode, mergedNode);
+            diffNodeTrees(yamlMapper, defaultRootNode, mergedNode);
         });
 
         return mergedNode;
@@ -130,7 +97,7 @@ public class YamlUtil {
      * explicit nulls.
      *
      * @param valueType           The POJO type to convert the merged yaml into.
-     * @param yamlObjectMapper    The {@link ObjectMapper} to use for (de)serialisation.
+     * @param yamlMapper          The {@link YAMLMapper} to use for (de)serialisation.
      * @param sparseTreeProvider  A function to produce a {@link JsonNode} tree of the sparse yaml. Allows you to
      *                            create the node tree from file/string/stream/etc.
      * @param defaultTreeProvider A function to produce a {@link JsonNode} tree of the default yaml. Allows you to*
@@ -139,29 +106,29 @@ public class YamlUtil {
      * @return The merged yaml de-serialised into T.
      */
     public static <T> T mergeYamlNodeTrees(final Class<T> valueType,
-                                           final ObjectMapper yamlObjectMapper,
-                                           final Function<ObjectMapper, JsonNode> sparseTreeProvider,
-                                           final Function<ObjectMapper, JsonNode> defaultTreeProvider) {
+                                           final YAMLMapper yamlMapper,
+                                           final Function<YAMLMapper, JsonNode> sparseTreeProvider,
+                                           final Function<YAMLMapper, JsonNode> defaultTreeProvider) {
 
         final JsonNode mergedNode = mergeYamlNodeTrees(
-                yamlObjectMapper,
+                yamlMapper,
                 sparseTreeProvider,
                 defaultTreeProvider);
 
         try {
-            return yamlObjectMapper.treeToValue(mergedNode, valueType);
-        } catch (final JsonProcessingException e) {
+            return yamlMapper.treeToValue(mergedNode, valueType);
+        } catch (final JacksonException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error converting merged tree to {}: {}", valueType.getName(), e.getMessage()), e);
         }
     }
 
-    private static void diffNodeTrees(final ObjectMapper objectMapper, final JsonNode node1, final JsonNode node2) {
+    private static void diffNodeTrees(final YAMLMapper objectMapper, final JsonNode node1, final JsonNode node2) {
         try {
             final String node1Yaml = objectMapper.writeValueAsString(node1);
             final String node2Yaml = objectMapper.writeValueAsString(node2);
             DiffUtil.unifiedDiff(node1Yaml, node2Yaml, true, 3);
-        } catch (final IOException e) {
+        } catch (final Exception e) {
             LOGGER.debug("Error writing node tree to string: " + e.getMessage(), e);
         }
     }
@@ -191,10 +158,9 @@ public class YamlUtil {
                 equivalentSourceNode.getNodeType());
 
         if (JsonNodeType.OBJECT.equals(jsonNode.getNodeType())) {
-            final Set<String> childFieldNames = new HashSet<>();
-            jsonNode.fieldNames().forEachRemaining(childFieldNames::add);
+            final Set<String> childFieldNames = new HashSet<>(jsonNode.propertyNames());
 
-            equivalentSourceNode.fieldNames().forEachRemaining(childFieldName -> {
+            equivalentSourceNode.propertyNames().forEach(childFieldName -> {
                 LOGGER.trace("{}Field: {}", indentBuilder, childFieldName);
                 if (!childFieldNames.contains(childFieldName)) {
                     // Add field that is in the source node tree but not in ours
@@ -217,8 +183,9 @@ public class YamlUtil {
                 }
             });
 
-            jsonNode.fields().forEachRemaining(entry -> {
-            });
+//            jsonNode.properties().forEach(entry -> {
+//
+//            });
         } else if (JsonNodeType.NULL.equals(jsonNode.getNodeType())) {
             if (equivalentSourceNode.isMissingNode()) {
                 throw new RuntimeException("Can't find node " + jsonPointerExpr + " in source tree");
@@ -236,40 +203,197 @@ public class YamlUtil {
         }
     }
 
-    public static ObjectMapper getMapper() {
+    public static YAMLMapper getMapper() {
         return OBJECT_MAPPER;
     }
 
-    public static ObjectMapper getNoIndentMapper() {
+    public static YAMLMapper getNoIndentMapper() {
         return NO_INDENT_MAPPER;
     }
 
-    public static ObjectMapper getVanillaObjectMapper() {
+    public static YAMLMapper getVanillaMapper() {
         return VANILLA_OBJECT_MAPPER;
     }
 
-    private static ObjectMapper createYamlObjectMapper() {
-        return createYamlObjectMapper(false);
+    private static YAMLMapper createYamlMapper() {
+        return createYamlMapper(false);
     }
 
     /**
-     * No configurations apart from registering {@link Jdk8Module} for {@link java.util.Optional}
-     * use.
+     * Standard {@link YAMLMapper} with almost no configurations
      */
-    private static ObjectMapper createVanillaObjectMapper() {
-        return new ObjectMapper(new YAMLFactory())
-                .registerModule(new Jdk8Module()); // Needed to deal with Optional<...>
+    private static YAMLMapper createVanillaMapper() {
+        return YAMLMapper.builder()
+                // JacksonV3 changes the default behaviour for enums to use the toString
+                // as the serialised form, so turn that off so we use the name.
+                .disable(EnumFeature.READ_ENUMS_USING_TO_STRING)
+                // JacksonV3 changes the default behaviour for enums to use the toString
+                // as the serialised form, so turn that off so we use the name.
+                .disable(EnumFeature.WRITE_ENUMS_USING_TO_STRING)
+                // This defaults to true in Jackson v3, but false in v2.
+                // Make it behave like v2 for now, with the warning module to warn us about null
+                // primitives. When we think we have fixed the issues, we can make it error for null prims
+                .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
+                .addModule(createPrimitiveWarningModule())
+                .build();
     }
 
-    private static ObjectMapper createYamlObjectMapper(final boolean indent) {
-        final YAMLFactory yamlFactory = new YAMLFactory();
-        return new ObjectMapper(yamlFactory)
-                .registerModule(new Jdk8Module()) // Needed to deal with Optional<...>
-//                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-//        mapper.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
+    private static YAMLMapper createYamlMapper(final boolean indent) {
+        return createVanillaMapper()
+                .rebuild()
                 .configure(SerializationFeature.INDENT_OUTPUT, indent)
                 .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
-//        mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, true);
-                .setSerializationInclusion(Include.NON_NULL);
+                .changeDefaultPropertyInclusion(incl ->
+                        incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                .changeDefaultPropertyInclusion(incl ->
+                        incl.withContentInclusion(JsonInclude.Include.NON_NULL))
+                .build();
+    }
+
+    public static YAMLMapper createConsistentOrderYamlMapper(final boolean indent) {
+        return createYamlMapper(indent)
+                .rebuild()
+                .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+                .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+                .disable(MapperFeature.SORT_CREATOR_PROPERTIES_FIRST)
+                .build();
+    }
+
+    private static SimpleModule createPrimitiveWarningModule() {
+        final SimpleModule warningModule = new SimpleModule("NullPrimitiveWarningModule");
+
+        // Register all 8 primitive types using the new Jackson v3 ValueDeserializer base
+        warningModule.addDeserializer(
+                boolean.class,
+                new WarnOnNullDeserializer<>("boolean", false, JsonParser::getValueAsBoolean));
+        warningModule.addDeserializer(
+                byte.class,
+                new WarnOnNullDeserializer<>("byte", (byte) 0, p -> (byte) p.getValueAsInt()));
+        warningModule.addDeserializer(
+                short.class,
+                new WarnOnNullDeserializer<>("short", (short) 0, p -> (short) p.getValueAsInt()));
+        warningModule.addDeserializer(
+                int.class, new WarnOnNullDeserializer<>("int", 0, JsonParser::getValueAsInt));
+        warningModule.addDeserializer(
+                long.class, new WarnOnNullDeserializer<>("long", 0L, JsonParser::getValueAsLong));
+        warningModule.addDeserializer(
+                float.class,
+                new WarnOnNullDeserializer<>("float", 0.0f, p -> (float) p.getValueAsDouble()));
+        warningModule.addDeserializer(
+                double.class,
+                new WarnOnNullDeserializer<>("double", 0.0d, JsonParser::getValueAsDouble));
+
+        warningModule.addDeserializer(
+                char.class,
+                new WarnOnNullDeserializer<>("char", '\u0000', p -> {
+                    final String text = p.getString();
+                    return (text != null && !text.isEmpty())
+                            ? text.charAt(0)
+                            : '\u0000';
+                }));
+        return warningModule;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @FunctionalInterface
+    private interface PrimitiveReader<T> {
+
+        T read(JsonParser p);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class WarnOnNullDeserializer<T> extends ValueDeserializer<T> {
+
+        private final String typeName;
+        private final T defaultValue;
+        private final PrimitiveReader<T> reader;
+
+        // Contextual fields to hold the class names captured during setup
+        private final Class<?> targetClass;
+        private final Class<?> enclosingClass;
+        private final String propertyName;
+
+        // Root constructor (registered initially in the module)
+        public WarnOnNullDeserializer(final String typeName,
+                                      final T defaultValue,
+                                      final PrimitiveReader<T> reader) {
+            this(typeName, defaultValue, reader, null, null, null);
+        }
+
+        // Contextual constructor (spawned per-property)
+        private WarnOnNullDeserializer(final String typeName,
+                                       final T defaultValue,
+                                       final PrimitiveReader<T> reader,
+                                       final Class<?> targetClass,
+                                       final Class<?> enclosingClass,
+                                       final String propertyName) {
+            this.typeName = typeName;
+            this.defaultValue = defaultValue;
+            this.reader = reader;
+            this.targetClass = targetClass;
+            this.enclosingClass = enclosingClass;
+            this.propertyName = propertyName;
+        }
+
+        @Override
+        public ValueDeserializer<?> createContextual(final DeserializationContext ctxt,
+                                                     final BeanProperty property) {
+            // This method is triggered during initialisation where ctxt and property ARE populated
+            // We only want to capture the extra info if the bean prop is a primitive
+            if (NullSafe.test(property, BeanProperty::getType, JavaType::isPrimitive)) {
+                final Class<?> target = property.getType().getRawClass();
+                final Class<?> enclosing = (property.getMember() != null)
+                        ? property.getMember().getDeclaringClass()
+                        : null;
+                final String beanPropertyName = property.getName();
+
+                // Return a clone of this deserializer containing the specific class context
+                return new WarnOnNullDeserializer<>(
+                        this.typeName, this.defaultValue, this.reader, target, enclosing, beanPropertyName);
+            } else {
+                return this;
+            }
+        }
+
+        @Override
+        public T deserialize(final JsonParser p, final DeserializationContext ctxt) {
+            return reader.read(p);
+        }
+
+        @Override
+        public T getNullValue(final DeserializationContext ctxt) {
+            // This method is only going to be called when we have a null primitive, so the overhead
+            // is acceptable as we are trying to eradicate cases of null primitives
+            final String enclosingClassName = NullSafe.getOrElse(enclosingClass, Class::getName, "?");
+            final String targetClassName = NullSafe.getOrElse(targetClass, Class::getName, "?");
+            String jsonNodeName = "?";
+
+            if (NullSafe.nonNull(ctxt, DeserializationContext::getParser)) {
+                try {
+                    // This will be null if the prop is not in the json
+                    final String currentField = ctxt.getParser().currentName();
+                    if (currentField != null) {
+                        jsonNodeName = currentField;
+                    }
+                } catch (final Exception e) {
+                    // Fallback gracefully if stream token evaluation fails
+                }
+            }
+
+            // Logs a warning when a null is mapped to a primitive default path
+            LOGGER.error("Found null value for {} primitive YAML property. Using default value '{}' instead. " +
+                         "jsonNodeName: '{}', targetClassName: '{}', enclosingClassName: '{}', " +
+                         "beanPropertyName: '{}'. " +
+                         "Please raise an issue at https://github.com/gchq/stroom/issues, including this " +
+                         "error in the description.",
+                    typeName, defaultValue, jsonNodeName, targetClassName, enclosingClassName, propertyName);
+            return defaultValue;
+        }
     }
 }

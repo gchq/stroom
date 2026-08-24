@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.preferences.client;
 
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -32,7 +32,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import java.util.List;
 
 public final class ThemePreferencesViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements ThemePreferencesView {
 
     private final Widget widget;
@@ -151,42 +151,42 @@ public final class ThemePreferencesViewImpl
     @UiHandler("theme")
     public void onThemeValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
     }
 
     @UiHandler("density")
     public void onDensityValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
     }
 
     @UiHandler("font")
     public void onFontValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
     }
 
     @UiHandler("fontSize")
     public void onFontSizeValueChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
     }
 
     @UiHandler("enableTransparency")
     public void onEnableTransparency(final ValueChangeEvent<Boolean> e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
     }
 
     @UiHandler("hideConditionalStyles")
     public void onHideConditionalStyles(final ValueChangeEvent<Boolean> e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
     }
 

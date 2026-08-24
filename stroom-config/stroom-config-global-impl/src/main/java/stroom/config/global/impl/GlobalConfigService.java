@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,6 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 
 import java.lang.reflect.InvocationTargetException;
@@ -398,7 +397,6 @@ public class GlobalConfigService implements GlobalConfig {
 
         // Get info about the config class, i.e. ctor, prop names, etc.
         final ObjectInfo<AbstractConfig> objectInfo = PropertyUtil.getObjectInfo(
-                new ObjectMapper(),
                 propertyPath.getParentPropertyName()
                         .orElse(null),
                 config);

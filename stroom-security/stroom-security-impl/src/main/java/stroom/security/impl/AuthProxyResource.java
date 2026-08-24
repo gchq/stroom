@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import jakarta.ws.rs.core.MediaType;
  * identity provider.
  * No authentication required as we are just proxying for unauthenticated endpoints on the IDP.
  */
-@Path("/authproxy/v1/noauth")
+@Path("/authproxy/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "AuthProxy")

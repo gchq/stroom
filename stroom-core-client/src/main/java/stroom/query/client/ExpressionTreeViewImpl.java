@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,13 +69,17 @@ public class ExpressionTreeViewImpl
             @Override
             protected void setSelected(final Item item) {
                 if (selectionModel != null) {
-                    selectionModel.setSelected(item, true);
+                    if (!selectionModel.isSelected(item)) {
+                        endEditing();
+                        selectionModel.setSelected(item, true);
+                    }
                 }
             }
 
             @Override
             protected void startDragging(final Item parent, final Item child) {
                 if (selectionModel != null) {
+                    endEditing();
                     selectionModel.clear();
                 }
             }
@@ -117,6 +121,11 @@ public class ExpressionTreeViewImpl
                      final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
         treePanel.init(restFactory, dataSource, fieldSelectionListModel);
+    }
+
+    @Override
+    public void write() {
+        treePanel.write();
     }
 
     @Override

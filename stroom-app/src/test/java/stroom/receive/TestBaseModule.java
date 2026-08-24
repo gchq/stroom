@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,13 @@ import stroom.core.receive.ReceiveDataModule;
 import stroom.credentials.api.KeyStore;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
-import stroom.credentials.impl.db.MockCredentialsDaoModule;
+import stroom.credentials.impl.dao.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
-import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.impl.DocFinderModule;
 import stroom.docstore.impl.DocStoreModule;
+import stroom.docstore.impl.dao.MockDocDependencyService;
 import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.documentation.impl.DocumentationModule;
 import stroom.event.logging.api.DocumentEventLog;
@@ -60,6 +62,7 @@ import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
+import stroom.util.jersey.MockJerseyModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 
 import com.google.inject.AbstractModule;
@@ -76,9 +79,12 @@ public class TestBaseModule extends AbstractModule {
         install(new DictionaryModule());
         install(new DocumentationModule());
         install(new DocStoreModule());
-        install(new MockDocRefInfoModule());
+        install(new DocFinderModule());
         install(new FeedModule());
         install(new MockGitRepoModule());
+        // The Git repo storage service builds an HTTP client from the document's own configuration, so
+        // it needs the client cache even in tests that never touch Git.
+        install(new MockJerseyModule());
         install(new MockCredentialsDaoModule());
         install(new ImportExportModule());
         install(new MemoryPersistenceModule());
@@ -103,6 +109,7 @@ public class TestBaseModule extends AbstractModule {
 
         bind(DocumentEventLog.class).toProvider(Providers.of(null));
 
+        bind(DocDependencyService.class).to(MockDocDependencyService.class);
         bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
         bind(ContentPackUserService.class).to(MockSecurityContext.class); //?
         bind(PathConfig.class).to(StroomPathConfig.class);

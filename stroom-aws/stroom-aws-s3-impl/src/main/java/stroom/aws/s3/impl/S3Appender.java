@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.io.CompressionUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.NullSafe;
+import stroom.util.time.TimeBasis;
 
 import jakarta.inject.Inject;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
@@ -79,6 +80,10 @@ public class S3Appender extends AbstractAppender {
     private String bucketNamePattern;
     private String keyNamePattern;
     private S3ClientConfig s3ClientConfig;
+    private String cacheControl;
+    private String contentDisposition;
+    private String contentEncoding;
+    private String contentType;
 
     @Inject
     public S3Appender(final ErrorReceiverProxy errorReceiverProxy,
@@ -146,7 +151,24 @@ public class S3Appender extends AbstractAppender {
                         final Meta meta = metaHolder.getMeta();
                         final AttributeMap attributeMap = metaDataHolder.getMetaData();
 
-                        s3Manager.upload(bucketNamePattern, keyNamePattern, meta, attributeMap, tempFile);
+                        final S3UploadProperties uploadProperties =
+                                new S3UploadProperties(cacheControl, contentDisposition, contentEncoding, contentType);
+
+                        // The appender is potentially creating multiple files so use current time for
+                        // time var replacement in s3 keys. This is consistent with FileAppender.
+                        s3Manager.upload(
+                                bucketNamePattern,
+                                keyNamePattern,
+                                meta,
+                                attributeMap,
+                                tempFile,
+                                uploadProperties,
+                                TimeBasis.CURRENT_TIME);
+
+                        LOGGER.debug(
+                                "createOutput() - Uploaded tempFile '{}' to S3, meta: {}, bucketNamePattern: '{}', " +
+                                "keyNamePattern: '{}'",
+                                tempFile, meta, bucketNamePattern, keyNamePattern);
                     } catch (final RuntimeException e) {
                         fatal(e.getMessage(), e);
                     } finally {
@@ -227,5 +249,33 @@ public class S3Appender extends AbstractAppender {
             error(e.getMessage(), e);
             throw e;
         }
+    }
+
+    @PipelineProperty(
+            description = "A general header field used to specify caching policies.",
+            displayPriority = 9)
+    public void setCacheControl(final String cacheControl) {
+        this.cacheControl = cacheControl;
+    }
+
+    @PipelineProperty(
+            description = "Object presentational information.",
+            displayPriority = 10)
+    public void setContentDisposition(final String contentDisposition) {
+        this.contentDisposition = contentDisposition;
+    }
+
+    @PipelineProperty(
+            description = "The content encodings (like compression) that have been applied to the object's data.",
+            displayPriority = 11)
+    public void setContentEncoding(final String contentEncoding) {
+        this.contentEncoding = contentEncoding;
+    }
+
+    @PipelineProperty(
+            description = "The object type.",
+            displayPriority = 12)
+    public void setContentType(final String contentType) {
+        this.contentType = contentType;
     }
 }

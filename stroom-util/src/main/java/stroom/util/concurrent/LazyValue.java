@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@ public class LazyValue<T> {
      * called once.
      * Use this method if supplier is not idempotent, has side effects or is
      * costly to run.
+     * Once fully initialised, no locking is required on future calls.
      */
     public T getValueWithLocks() {
         if (!isInitialised) {

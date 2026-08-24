@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,16 +29,21 @@ import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsV
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
+import stroom.http.client.presenter.HttpClientConfigPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.http.HttpClientConfig;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -69,6 +74,13 @@ public class GitRepoSettingsPresenter
      */
     private GitRepoDoc gitRepoDoc = null;
     private final CredentialClient credentialClient;
+    private final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider;
+
+    /**
+     * Held here rather than read back off the view, because the editor is a popup: it is only shown on
+     * demand and the value has to survive between showings and into onWrite().
+     */
+    private HttpClientConfig httpClientConfiguration;
 
     /**
      * Injected constructor.
@@ -83,10 +95,12 @@ public class GitRepoSettingsPresenter
                                     final GitRepoSettingsView view,
                                     final RestFactory restFactory,
                                     final GitRepoCommitDialogPresenter commitDialog,
-                                    final CredentialClient credentialClient) {
+                                    final CredentialClient credentialClient,
+                                    final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.credentialClient = credentialClient;
+        this.httpClientConfigPresenterProvider = httpClientConfigPresenterProvider;
         view.setUiHandlers(this);
         this.commitDialog = commitDialog;
         final CredentialListModel credentialListModel = new CredentialListModel(eventBus, credentialClient,
@@ -118,6 +132,18 @@ public class GitRepoSettingsPresenter
         view.setCommitToPull(doc.getCommit());
         view.setAutoPush(doc.isAutoPush());
 
+        httpClientConfiguration = doc.getHttpClientConfiguration();
+        if (httpClientConfiguration == null) {
+            // Nothing saved, so fetch a starting point rather than opening an empty editor. Note this does
+            // not make the document dirty - it is only written back if the user changes something.
+            restFactory
+                    .create(GIT_REPO_RESOURCE)
+                    .method(GitRepoResource::getDefaultHttpClientConfig)
+                    .onSuccess(result -> httpClientConfiguration = result)
+                    .taskMonitorFactory(this)
+                    .exec();
+        }
+
         // Credentials - store locally
         grabCredentialsList(doc.getCredentialName());
 
@@ -139,13 +165,13 @@ public class GitRepoSettingsPresenter
                 .path(view.getPath())
                 .commit(view.getCommitToPull());
 
-        // Only save autoPush = true if we can push i.e. no commit hash ref
-        if (doc.getCommit().isEmpty()) {
-            builder.autoPush(view.isAutoPush());
-        } else {
-            builder.autoPush(false);
-            view.setAutoPush(false);
-        }
+        // Only enable auto-push when the repo is not pinned to a specific commit (a commit hash implies
+        // a detached, non-pushable state). Derive this from the LIVE commit field, not the last-saved
+        // doc, and do NOT mutate the view here - onWrite runs on every dirty check, and the visibility
+        // of the auto-push option is already handled by the view's setState().
+        final String commit = view.getCommitToPull();
+        final boolean pinnedToCommit = commit != null && !commit.isEmpty();
+        builder.autoPush(!pinnedToCommit && view.isAutoPush());
 
         // Credentials - store from local values
         final Credential credential = view.getCredentialSelectionBox().getValue();
@@ -153,7 +179,19 @@ public class GitRepoSettingsPresenter
                 ? null
                 : credential.getName());
 
+        builder.httpClientConfiguration(httpClientConfiguration);
+
         return builder.build();
+    }
+
+    @Override
+    public void onSetHttpClientConfiguration() {
+        httpClientConfigPresenterProvider.get().show(httpClientConfiguration, isReadOnly(), updated -> {
+            if (!Objects.equals(httpClientConfiguration, updated)) {
+                httpClientConfiguration = updated;
+                onChange();
+            }
+        });
     }
 
     /**
@@ -306,7 +344,7 @@ public class GitRepoSettingsPresenter
      *                       null if nothing is selected.
      */
     private void grabCredentialsList(final String credentialName) {
-        if (credentialName == null) {
+        if (NullSafe.isBlankString(credentialName)) {
             getView().getCredentialSelectionBox().setValue(null);
         } else {
             credentialClient.getCredentialByName(credentialName, credential ->

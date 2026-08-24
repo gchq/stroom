@@ -23,11 +23,8 @@ dependencies {
 
     //--------3rd party--------
     implementation libs.jackson.annotations
-    implementation libs.jackson.databind
     implementation libs.swagger.annotations
 
-//    implementation libs.dropwizard.core // should be flagged
-//    testImplementation libs.dropwizard.core // should be flagged
 
     testImplementation project(':stroom-util')
     testImplementation project(':stroom-test-common')

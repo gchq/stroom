@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,8 +82,8 @@ public final class ExplorerConstants {
 
     public static boolean isFavouritesNode(final String type,
                                            final String uuid) {
-        return Objects.equals(SYSTEM_NODE.getType(), type)
-               && Objects.equals(SYSTEM_NODE.getUuid(), uuid);
+        return Objects.equals(FAVOURITES_NODE.getType(), type)
+               && Objects.equals(FAVOURITES_NODE.getUuid(), uuid);
     }
 
     /**

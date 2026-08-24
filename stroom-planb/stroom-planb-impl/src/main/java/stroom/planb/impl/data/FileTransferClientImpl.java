@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,19 @@
 package stroom.planb.impl.data;
 
 import stroom.cluster.task.api.TargetNodeSetFactory;
+import stroom.node.api.NodeCallException;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.planb.impl.PlanBConfig;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.zip.ZipUtil;
@@ -35,6 +38,7 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
@@ -45,6 +49,10 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -55,6 +63,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Predicate;
 
 @Singleton
 public class FileTransferClientImpl implements FileTransferClient {
@@ -120,7 +129,9 @@ public class FileTransferClientImpl implements FileTransferClient {
                         }
                     }
                 } catch (final Exception e) {
-                    LOGGER.error(e::getMessage, e);
+                    // Debug only as we rethrow, so the caller reports the failure, e.g. to the pipeline error
+                    // receiver, which records it in the stream processing error file. See gh-5706.
+                    LOGGER.debug(e::getMessage, e);
                     throw new RuntimeException(e.getMessage(), e);
                 }
             }
@@ -153,7 +164,9 @@ public class FileTransferClientImpl implements FileTransferClient {
                                             synchroniseMerge);
                                 }
                             } catch (final IOException e) {
-                                LOGGER.error(e::getMessage, e);
+                                // Debug only as the exception is collected and rethrown to the caller, which
+                                // reports it. See gh-5706.
+                                LOGGER.debug(e::getMessage, e);
                                 final UncheckedIOException uncheckedIOException = new UncheckedIOException(e);
                                 collectedExceptions.add(uncheckedIOException);
                                 throw uncheckedIOException;
@@ -205,11 +218,45 @@ public class FileTransferClientImpl implements FileTransferClient {
         final String url = baseEndpointUrl + ResourcePaths.buildAuthenticatedApiPath(FileTransferResource.BASE_PATH,
                 FileTransferResource.SEND_PART_PATH_PART);
         final WebTarget webTarget = webTargetFactory.create(url);
-        try {
-            storePartRemotely(webTarget, fileDescriptor, path, synchroniseMerge);
-        } catch (final Exception e) {
-            LOGGER.error(e::getMessage, e);
-            throw new IOException("Unable to send file to '" + targetNode + "': " + e.getMessage(), e);
+
+        final PlanBConfig planBConfig = configProvider.get();
+        // Not always 1 despite the @Min(1) on the property. A planb config block that omits the property leaves
+        // Jackson with nothing to pass to the creator for a primitive, giving 0, and validation of an explicit 0
+        // only halts boot if haltBootOnConfigValidationFailure is set. The loop always makes one attempt anyway,
+        // so this just keeps the count reported below honest.
+        final int maxAttempts = Math.max(1, planBConfig.getSendPartAttempts());
+        for (int attempt = 1; ; attempt++) {
+            try {
+                storePartRemotely(webTarget, fileDescriptor, path, synchroniseMerge);
+                return;
+
+            } catch (final Exception e) {
+                // Debug only as we eventually rethrow, so the caller reports the failure. A network blip, e.g. a
+                // DNS lookup failure, is expected in normal operation and fails the processing task, which puts
+                // the reason in the stream processing error file. Logging it here as well just duplicates it.
+                // See gh-5706.
+                final int attemptNumber = attempt;
+                LOGGER.debug(() -> "Attempt " +
+                                   attemptNumber +
+                                   " of " +
+                                   maxAttempts +
+                                   " to send file to '" +
+                                   targetNode +
+                                   "' failed: " +
+                                   e.getMessage(), e);
+
+                if (attempt >= maxAttempts || !isWorthRetrying(e)) {
+                    throw new IOException("Unable to send file to '" +
+                                          targetNode +
+                                          "' after " +
+                                          attempt +
+                                          " attempt(s): " +
+                                          e.getMessage(), e);
+                }
+
+                // Interruption, i.e. task termination, aborts the retries by throwing.
+                ThreadUtil.sleep(planBConfig.getSendPartRetryDelay());
+            }
         }
     }
 
@@ -240,26 +287,86 @@ public class FileTransferClientImpl implements FileTransferClient {
                                  final SnapshotRequest request,
                                  final Path snapshotDir) {
         return securityContext.asProcessingUserResult(() -> {
+            String url = null;
             try {
                 LOGGER.info(() -> "Fetching snapshot from '" +
                                   nodeName +
                                   "' for '" +
                                   request.getPlanBDocRef() +
                                   "'");
-                final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
-                                   + ResourcePaths.buildAuthenticatedApiPath(
+                url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+                      + ResourcePaths.buildAuthenticatedApiPath(
                         FileTransferResource.BASE_PATH,
                         FileTransferResource.FETCH_SNAPSHOT_PATH_PART);
                 final WebTarget webTarget = webTargetFactory.create(url);
                 return fetchSnapshot(webTarget, request, snapshotDir);
+            } catch (final NotModifiedException e) {
+                // Not a failure, but the node's confirmation that the snapshot the caller already holds is
+                // current. Rethrow as is, as wrapping it would hide the type from the caller, which would then
+                // treat this as a fetch failure and eventually fail reads for a store that simply hasn't
+                // changed. See gh-5705.
+                LOGGER.debug(() -> "Snapshot not modified on '" +
+                                   nodeName +
+                                   "' for '" +
+                                   request.getPlanBDocRef() +
+                                   "'");
+                throw e;
             } catch (final Exception e) {
+                // Distinguish 'we couldn't reach this node' from 'this node answered and told us no'. Only the
+                // former is worth trying another node for, as every configured node holds a copy of the same
+                // data, so an answer from one is the answer from all. See gh-5689.
+                if (isUnreachable(e)) {
+                    throw new NodeCallException(nodeName, url, e);
+                }
+
                 throw new RuntimeException("Error fetching snapshot from '" +
                                            nodeName +
                                            "' for '" +
                                            request.getPlanBDocRef() +
-                                           "'", e);
+                                           "': " +
+                                           e.getMessage(), e);
             }
         });
+    }
+
+    /**
+     * Is this failure the node being unreachable, rather than the node answering with an error? Only transport
+     * level failures count, so a response of any status, including a server error, is treated as an answer.
+     */
+    private static boolean isUnreachable(final Throwable throwable) {
+        return hasCauseMatching(throwable, t -> t instanceof ConnectException
+                                                || t instanceof UnknownHostException
+                                                || t instanceof NoRouteToHostException
+                                                || t instanceof SocketTimeoutException);
+    }
+
+    /**
+     * Is this failure worth sending the part again for? Only transport level failures are, i.e. those where the
+     * node gave no answer, such as the DNS lookup failing during a network blip. Jersey reports those as a
+     * {@link ProcessingException}, so anything else is either an answer from the node, which sending again will
+     * not change, or a local failure such as being unable to read the part.
+     * <p>
+     * Sending again is safe even where the node may have received the part already, e.g. the request completed
+     * but the response was lost, because merging a part twice does not double count. The additive stores
+     * (histogram and metric) skip a source they have already merged, keyed by the instance UUID the part carries
+     * with it, and all other stores merge by put, so are naturally idempotent. See gh-5706.
+     */
+    private static boolean isWorthRetrying(final Throwable throwable) {
+        return hasCauseMatching(throwable, t -> t instanceof ProcessingException);
+    }
+
+    private static boolean hasCauseMatching(final Throwable throwable,
+                                            final Predicate<Throwable> predicate) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (predicate.test(current)) {
+                return true;
+            }
+            current = current.getCause() == current
+                    ? null
+                    : current.getCause();
+        }
+        return false;
     }
 
     Instant fetchSnapshot(final WebTarget webTarget,
@@ -269,11 +376,13 @@ public class FileTransferClientImpl implements FileTransferClient {
                 .request(MediaType.APPLICATION_OCTET_STREAM)
                 .post(Entity.json(request))) {
             if (response.getStatus() == Status.NOT_MODIFIED.getStatusCode()) {
-                throw new NotModifiedException(response.getStatusInfo().getReasonPhrase());
+                throw new NotModifiedException(describeError(response));
             } else if (response.getStatus() == Status.UNAUTHORIZED.getStatusCode()) {
-                throw new PermissionException(null, response.getStatusInfo().getReasonPhrase());
+                throw new PermissionException(null, describeError(response));
+            } else if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
+                throw new SnapshotNotFoundException(describeError(response));
             } else if (response.getStatus() != Status.OK.getStatusCode()) {
-                throw new RuntimeException(response.getStatusInfo().getReasonPhrase());
+                throw new RuntimeException(describeError(response));
             }
 
             try (final InputStream stream = (InputStream) response.getEntity()) {
@@ -284,5 +393,29 @@ public class FileTransferClientImpl implements FileTransferClient {
             final String info = Files.readString(snapshotDir.resolve(Shard.SNAPSHOT_INFO_FILE_NAME));
             return Instant.parse(info);
         }
+    }
+
+    /**
+     * Describe an error response. The remote end puts the reason in the response body because the status reason
+     * phrase is just the generic text for the status code, e.g. 'Not Found', which says nothing about the cause.
+     */
+    private String describeError(final Response response) {
+        final int status = response.getStatus();
+        final String reasonPhrase = response.getStatusInfo().getReasonPhrase();
+
+        String body = null;
+        try {
+            if (response.hasEntity()) {
+                body = response.readEntity(String.class);
+            }
+        } catch (final Exception e) {
+            // Never let a failure to read the error body mask the error itself.
+            LOGGER.debug(() -> "Unable to read error response body: " + e.getMessage(), e);
+        }
+
+        if (NullSafe.isBlankString(body)) {
+            return status + " " + reasonPhrase;
+        }
+        return status + " " + reasonPhrase + " - " + body.trim();
     }
 }

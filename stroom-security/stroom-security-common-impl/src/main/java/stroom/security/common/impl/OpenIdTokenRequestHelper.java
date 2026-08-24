@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
@@ -40,6 +38,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -58,23 +58,24 @@ public class OpenIdTokenRequestHelper {
 
     private final String endpointUri;
     private final OpenIdConfiguration openIdConfiguration;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
     private final JerseyClientFactory jerseyClientFactory;
 
     private String code = null;
     private String grantType = null;
     private String redirectUri = null;
     private String refreshToken = null;
+    private String codeVerifier = null;
     private List<String> scopes = null;
     private ClientCredentials clientCredentials = null;
 
     public OpenIdTokenRequestHelper(final String endpointUri,
                                     final OpenIdConfiguration openIdConfiguration,
-                                    final ObjectMapper objectMapper,
+                                    final JsonMapper jsonMapper,
                                     final JerseyClientFactory jerseyClientFactory) {
         this.endpointUri = endpointUri;
         this.openIdConfiguration = openIdConfiguration;
-        this.objectMapper = objectMapper;
+        this.jsonMapper = jsonMapper;
         this.jerseyClientFactory = jerseyClientFactory;
     }
 
@@ -103,6 +104,11 @@ public class OpenIdTokenRequestHelper {
 
     public OpenIdTokenRequestHelper withRefreshToken(final String refreshToken) {
         this.refreshToken = refreshToken;
+        return this;
+    }
+
+    public OpenIdTokenRequestHelper withCodeVerifier(final String codeVerifier) {
+        this.codeVerifier = codeVerifier;
         return this;
     }
 
@@ -139,7 +145,7 @@ public class OpenIdTokenRequestHelper {
             if (HttpServletResponse.SC_OK == response.getStatus()) {
                 final String json = response.readEntity(String.class);
                 LOGGER.debug("response json:\n{}", json);
-                tokenResponse = objectMapper.readValue(json, TokenResponse.class);
+                tokenResponse = jsonMapper.readValue(json, TokenResponse.class);
             } else {
                 // Attempt to get content from the response, e.g. an error msg
 
@@ -200,6 +206,7 @@ public class OpenIdTokenRequestHelper {
         mapAddFunc.accept(OpenId.GRANT_TYPE, grantType);
         mapAddFunc.accept(OpenId.REDIRECT_URI, redirectUri);
         mapAddFunc.accept(OpenId.REFRESH_TOKEN, refreshToken);
+        mapAddFunc.accept(OpenId.CODE_VERIFIER, codeVerifier);
         mapAddFunc.accept(OpenId.SCOPE, getScopesAsString());
 
         // application/x-www-form-urlencoded in, application/json out
@@ -227,7 +234,7 @@ public class OpenIdTokenRequestHelper {
 
             final TokenRequest tokenRequest = builder.build();
 
-            final String json = objectMapper.writeValueAsString(tokenRequest);
+            final String json = jsonMapper.writeValueAsString(tokenRequest);
 
             // json in, json out
             invocationBuilder.header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_TYPE);
@@ -236,7 +243,7 @@ public class OpenIdTokenRequestHelper {
             // Do this rather than Entity.json, so we can use our own lenient object mapper
             return invocationBuilder.post(Entity.entity(json, MediaType.APPLICATION_JSON_TYPE));
 
-        } catch (final JsonProcessingException e) {
+        } catch (final JacksonException e) {
             throw new AuthenticationException(e.getMessage(), e);
         }
     }

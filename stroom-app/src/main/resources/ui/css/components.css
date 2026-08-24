@@ -553,7 +553,7 @@
 
 .curveTabLayoutViewImpl-tabBarOuter {
     height: 33px;
-    margin-right: 62px;
+    margin-right: 95px;
     flex-grow: 1;
 }
 
@@ -1117,19 +1117,10 @@
     padding-left: 5px;
 }
 
-.askStroomAiViewImpl {
-    display: flex;
-    gap: var(--control__padding--vertical);
-}
-
-.askStroomAiViewImpl-bottom {
-    display: flex;
-    gap: var(--control__padding--horizontal);
-    align-items: center;
-}
-
-.askStroomAiViewImpl-bottom button.Button {
-    min-width: 80px;
+/* Docked AI panel styles */
+.mainViewImpl-outerSplitPanel {
+    width: 100%;
+    height: 100%;
 }
 
 .columnFunctionEditorViewImpl {
@@ -1279,28 +1270,38 @@
 
 
 
+.mainViewImpl-contentWrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
 .mainViewImpl-contentPanel {
     width: 100%;
     height: 100%;
     overflow: hidden;
 }
 
-.mainViewImpl-menu {
+.mainToolbar {
     position: absolute;
     top: 0;
-    right: 2px;
+    right: 0px;
+    z-index: 1;
+    padding: 1px;
+    display: flex;
+    gap: 0px;
+    align-items: center;
+}
+
+.mainViewImpl-menu {
     width: 32px;
     height: 32px;
-    z-index: 1;
 }
 
 .mainViewImpl-spinner {
-    position: absolute;
-    top: 5px;
-    right: 36px;
     width: 22px;
     height: 22px;
-    z-index: 1;
 }
 
 .userTaskManagerViewImpl-layout {
@@ -1642,7 +1643,6 @@ button.main-menu svg {
 
     display: flex;
     align-items: center;
-    height: 33px;
     justify-content: center;
 }
 
@@ -2400,6 +2400,7 @@ button.main-menu svg {
 
 .duration-picker {
     display: flex;
+    width: 200px;
 }
 
 .editNodeTagsAllTagsFrmGrp,
@@ -2769,6 +2770,54 @@ button.main-menu svg {
     align-items: center;
     gap: var(--control__gap--horizontal);
 }
+
+.dataGridWidget .dashboard-table-filter-cell {
+    display: none;
+    position: relative;
+    width: 100%;
+}
+
+.dataGridWidget.showValueFilters .dashboard-table-filter-cell {
+    display: block;
+}
+
+.dataGridWidget .dashboard-table-filter-cell-text {
+    padding-right: 25px;
+}
+
+.dataGridWidget .dashboard-table-filter-cell-text-disabled {
+	border: solid 1px var(--control__border-color--disabled);
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
+}
+
+.dataGridWidget .dashboard-table-filter-cell-buttons {
+    position: absolute;
+    display: flex;
+    height: 100%;
+    top: 0;
+    right: 0;
+    align-items: center;
+    padding: 5px;
+}
+
+.dataGridWidget .dashboard-table-filter-cell-disable-button {
+    display: flex;
+    position: relative;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    align-items: center;
+    outline: none;
+    background-color: transparent;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0;
+    border-radius: .25rem;
+}
+
 
 /* Visualisation Assets */
 .visualisation-asset-tree table {

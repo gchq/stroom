@@ -21,10 +21,7 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-util-shared')
-    implementation project(':stroom-util')
 
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api
 }

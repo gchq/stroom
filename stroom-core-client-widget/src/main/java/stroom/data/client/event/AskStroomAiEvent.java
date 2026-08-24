@@ -27,28 +27,16 @@ public class AskStroomAiEvent extends GwtEvent<Handler> {
 
     private static Type<Handler> TYPE;
 
-    private final String node;
     private final AskStroomAiContext data;
 
-    private AskStroomAiEvent(final String node,
-                             final AskStroomAiContext data) {
-        this.node = node;
+    private AskStroomAiEvent(final AskStroomAiContext data) {
         this.data = data;
     }
 
     public static void fire(final HasHandlers source,
                             final AskStroomAiContext data) {
         if (TYPE != null) {
-            final AskStroomAiEvent event = new AskStroomAiEvent(null, data);
-            source.fireEvent(event);
-        }
-    }
-
-    public static void fire(final HasHandlers source,
-                            final String node,
-                            final AskStroomAiContext data) {
-        if (TYPE != null) {
-            final AskStroomAiEvent event = new AskStroomAiEvent(node, data);
+            final AskStroomAiEvent event = new AskStroomAiEvent(data);
             source.fireEvent(event);
         }
     }
@@ -65,21 +53,17 @@ public class AskStroomAiEvent extends GwtEvent<Handler> {
         return TYPE;
     }
 
-    public String getNode() {
-        return node;
-    }
-
     public AskStroomAiContext getData() {
         return data;
     }
 
     @Override
     protected void dispatch(final Handler handler) {
-        handler.onShow(this);
+        handler.onAsk(this);
     }
 
     public interface Handler extends EventHandler {
 
-        void onShow(AskStroomAiEvent event);
+        void onAsk(AskStroomAiEvent event);
     }
 }

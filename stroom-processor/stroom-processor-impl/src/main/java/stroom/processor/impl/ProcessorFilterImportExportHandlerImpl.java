@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
 package stroom.processor.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.Serialiser2;
@@ -43,7 +41,6 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterDoc;
-import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorType;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
@@ -59,7 +56,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -81,7 +77,7 @@ public class ProcessorFilterImportExportHandlerImpl
     // DocRefInfoService uses this class to find its documents, but this class
     // uses DocRefInfoService to find details of pipelines. Be careful not to
     // make an infinite loop
-    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<DocFinder> docFinderProvider;
 
     private final Serialiser2<ProcessorFilter> delegate;
 
@@ -90,12 +86,12 @@ public class ProcessorFilterImportExportHandlerImpl
                                            final ProcessorService processorService,
                                            final ImportExportDocumentEventLog importExportDocumentEventLog,
                                            final Serialiser2Factory serialiser2Factory,
-                                           final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+                                           final Provider<DocFinder> docFinderProvider) {
         this.processorFilterService = processorFilterService;
         this.processorService = processorService;
         this.importExportDocumentEventLog = importExportDocumentEventLog;
         this.delegate = serialiser2Factory.createSerialiser(ProcessorFilter.class);
-        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.docFinderProvider = docFinderProvider;
     }
 
     @Override
@@ -216,6 +212,7 @@ public class ProcessorFilterImportExportHandlerImpl
                             .export(processorFilter.isExport())
                             .minMetaCreateTimeMs(minMetaCreateTimeMs)
                             .maxMetaCreateTimeMs(processorFilter.getMaxMetaCreateTimeMs())
+                            .maxTaskCreationDelay(processorFilter.getMaxTaskCreationDelay())
                             .build();
 
                     processorFilterService.importFilter(
@@ -242,6 +239,7 @@ public class ProcessorFilterImportExportHandlerImpl
                         ProcessorFilter::getPipelineName,
                         ProcessorFilter::getPriority,
                         ProcessorFilter::getMaxProcessingTasks,
+                        ProcessorFilter::getMaxTaskCreationDelay,
                         ProcessorFilter::isReprocess,
                         ProcessorFilter::isEnabled,
                         ProcessorFilter::getFilterInfo));
@@ -255,8 +253,8 @@ public class ProcessorFilterImportExportHandlerImpl
         return processorFilterService.fetchByUuid(docRef.getUuid())
                 .map(filter -> {
                     if (filter.getPipelineName() == null && filter.getPipelineUuid() != null) {
-                        final Optional<String> optional = docRefInfoServiceProvider.get()
-                                .name(new DocRef(PipelineDoc.TYPE, filter.getPipelineUuid()));
+                        final Optional<String> optional = docFinderProvider.get()
+                                .getName(new DocRef(PipelineDoc.TYPE, filter.getPipelineUuid()));
                         final String pipelineName = optional.orElse(null);
                         if (pipelineName == null) {
                             LOGGER.warn("Unable to find Pipeline " + filter.getPipelineUuid()
@@ -363,32 +361,6 @@ public class ProcessorFilterImportExportHandlerImpl
         return null;
     }
 
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return processorFilterService.fetchByUuid(docRef.getUuid())
-                .map(processorFilter -> {
-                    // Gets the name of the pipe as the proc filter has no name
-                    final String name = this.findNameOfDocRef(ProcessorFilter.buildDocRef()
-                            .uuid(docRef.getUuid())
-                            .build());
-
-                    final DocRef decoratedDocRef = processorFilter.asDocRef()
-                            .copy()
-                            .name(name)
-                            .build();
-
-                    return DocRefInfo.builder()
-                            .docRef(decoratedDocRef)
-                            .createTime(processorFilter.getCreateTimeMs())
-                            .createUser(processorFilter.getCreateUser())
-                            .updateTime(processorFilter.getUpdateTimeMs())
-                            .updateUser(processorFilter.getUpdateUser())
-                            .build();
-                })
-                .orElseThrow(() -> new IllegalArgumentException(LogUtil.message(
-                        "Processor filter {} not found", docRef)));
-    }
-
     private Processor findProcessorForFilter(final ProcessorFilter filter) {
         Processor processor = filter.getProcessor();
         if (processor == null) {
@@ -462,50 +434,6 @@ public class ProcessorFilterImportExportHandlerImpl
     // ---------------------------------------------------------------------
     // START OF HasDependencies
     // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        final Map<DocRef, Set<DocRef>> dependencies = new HashMap<>();
-        final ResultPage<ProcessorFilter> page = processorFilterService.find(new ExpressionCriteria());
-
-        if (page != null && page.getValues() != null) {
-            page.getValues().forEach(processorFilter -> {
-                final DependencyRemapper dependencyRemapper = new DependencyRemapper();
-                if (processorFilter.getQueryData() != null && processorFilter.getQueryData().getExpression() != null) {
-                    dependencyRemapper.remapExpression(processorFilter.getQueryData().getExpression());
-                }
-                final DocRef docRef = new DocRef(
-                        ProcessorFilter.ENTITY_TYPE,
-                        processorFilter.getPipelineUuid(),
-                        getPipelineName(processorFilter.getPipeline()));
-
-                dependencies.put(docRef, dependencyRemapper.getDependencies());
-            });
-        }
-
-        return dependencies;
-    }
-
-    private String getPipelineName(final DocRef pipeline) {
-        return docRefInfoServiceProvider.get().name(pipeline).orElse("Unknown");
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        final DependencyRemapper dependencyRemapper = new DependencyRemapper();
-        final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTextTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
-        final ExpressionCriteria criteria = new ExpressionCriteria(expression);
-        final ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);
-        if (page != null && page.getValues() != null) {
-            page.getValues().forEach(processorFilter -> {
-                if (processorFilter.getQueryData() != null && processorFilter.getQueryData().getExpression() != null) {
-                    dependencyRemapper.remapExpression(processorFilter.getQueryData().getExpression());
-                }
-            });
-        }
-        return dependencyRemapper.getDependencies();
-    }
 
     @Override
     public void remapDependencies(final DocRef docRef,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,10 @@ import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.ReportDoc;
+import stroom.config.global.shared.ConfigTarget;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
@@ -40,7 +41,7 @@ import com.gwtplatform.mvp.client.View;
 
 public class AnalyticNotificationEditPresenter
         extends MyPresenterWidget<AnalyticNotificationEditView>
-        implements DirtyUiHandlers {
+        implements ChangeUiHandlers {
 
     private final AnalyticStreamDestinationPresenter analyticStreamDestinationPresenter;
     private final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter;
@@ -63,8 +64,8 @@ public class AnalyticNotificationEditPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(analyticStreamDestinationPresenter.addDirtyHandler(e -> onDirty()));
-        registerHandler(analyticEmailDestinationPresenter.addDirtyHandler(e -> onDirty()));
+        registerHandler(analyticStreamDestinationPresenter.addChangeHandler(this::onChange));
+        registerHandler(analyticEmailDestinationPresenter.addChangeHandler(this::onChange));
     }
 
     public void read(final DocRef docRef,
@@ -86,8 +87,10 @@ public class AnalyticNotificationEditPresenter
                 final AbstractAnalyticUiDefaultConfig defaultConfig;
                 if (ReportDoc.TYPE.equals(docRef.getType())) {
                     defaultConfig = extendedUiConfig.getReportUiDefaultConfig();
+                    analyticStreamDestinationPresenter.setConfigTarget(ConfigTarget.REPORT_UI_DEFAULT);
                 } else {
                     defaultConfig = extendedUiConfig.getAnalyticUiDefaultConfig();
+                    analyticStreamDestinationPresenter.setConfigTarget(ConfigTarget.ANALYTIC_UI_DEFAULT);
                 }
 
                 final NotificationDestination destination = NullSafe.get(
@@ -183,7 +186,7 @@ public class AnalyticNotificationEditPresenter
     }
 
     @Override
-    public void onDirty() {
+    public void onChange() {
         setDestinationPresenter(getView().getDestinationType());
     }
 
@@ -193,7 +196,7 @@ public class AnalyticNotificationEditPresenter
 //        analyticStreamDestinationPresenter.setTaskListener(taskListener);
     }
 
-    public interface AnalyticNotificationEditView extends View, HasUiHandlers<DirtyUiHandlers> {
+    public interface AnalyticNotificationEditView extends View, HasUiHandlers<ChangeUiHandlers> {
 
 
         boolean isEnabled();

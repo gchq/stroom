@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import stroom.util.concurrent.LazyValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.yaml.YamlUtil;
+import stroom.util.yaml.YamlV2Util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.configuration.ConfigurationException;
@@ -101,10 +101,10 @@ public class ProxyYamlUtil {
     }
 
     public static void writeConfig(final Config config, final OutputStream outputStream) throws IOException {
-        final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
+        // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+        final ObjectMapper mapper = getConsistentOrderYAMLMapper();
         // wrap the AppConfig so that it sits at the right level
         mapper.writeValue(outputStream, config);
-
     }
 
     public static void writeConfig(final ProxyConfig proxyConfig, final OutputStream outputStream) throws IOException {
@@ -114,7 +114,8 @@ public class ProxyYamlUtil {
     }
 
     public static void writeConfig(final Config config, final Path path) throws IOException {
-        final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
+        // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+        final ObjectMapper mapper = getConsistentOrderYAMLMapper();
         // wrap the AppConfig so that it sits at the right level
         mapper.writeValue(path.toFile(), config);
     }
@@ -123,5 +124,10 @@ public class ProxyYamlUtil {
         final Config config = new Config();
         config.setProxyConfig(proxyConfig);
         writeConfig(config, path);
+    }
+
+    private static ObjectMapper getConsistentOrderYAMLMapper() {
+        // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+        return YamlV2Util.createConsistentOrderYamlMapper(true);
     }
 }

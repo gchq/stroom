@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -41,11 +38,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -244,15 +245,16 @@ public class ExternalIdpConfigurationProvider
 
     private OpenIdConfigurationResponse parseConfigurationResponse(final String configurationEndpoint,
                                                                    final String msg) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        final JsonMapper jsonMapper = JsonMapper.builder()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .build();
 
         final OpenIdConfigurationResponse openIdConfigurationResponse;
         try {
-            openIdConfigurationResponse = mapper.readValue(
+            openIdConfigurationResponse = jsonMapper.readValue(
                     msg,
                     OpenIdConfigurationResponse.class);
-        } catch (final JsonProcessingException e) {
+        } catch (final JacksonException e) {
             throw new AuthenticationException(LogUtil.message("Unable to parse open ID configuration " +
                                                               "from {}. {}", configurationEndpoint, e.getMessage()), e);
         }
@@ -331,6 +333,11 @@ public class ExternalIdpConfigurationProvider
     }
 
     @Override
+    public String getRequiredAccessTokenType() {
+        return localOpenIdConfigProvider.get().getRequiredAccessTokenType();
+    }
+
+    @Override
     public String getClientSecret() {
         return localOpenIdConfigProvider.get().getClientSecret();
     }
@@ -361,6 +368,11 @@ public class ExternalIdpConfigurationProvider
     }
 
     @Override
+    public boolean isValidateAudience() {
+        return localOpenIdConfigProvider.get().isValidateAudience();
+    }
+
+    @Override
     public Set<String> getValidIssuers() {
         return localOpenIdConfigProvider.get().getValidIssuers();
     }
@@ -388,6 +400,11 @@ public class ExternalIdpConfigurationProvider
     @Override
     public Set<String> getExpectedSignerPrefixes() {
         return localOpenIdConfigProvider.get().getExpectedSignerPrefixes();
+    }
+
+    @Override
+    public Map<String, String> getAuthenticationRequestExtraParams() {
+        return localOpenIdConfigProvider.get().getAuthenticationRequestExtraParams();
     }
 
     @Override

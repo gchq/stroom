@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
-import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -50,7 +49,6 @@ import stroom.util.xml.SAXParserSettings;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -262,7 +260,6 @@ public class ConfigMapper {
 //        throwAwayPropertyMap.clear();
 
         buildObjectInfoMap(
-                JsonUtil.getMapper(),
                 defaultAppConfig,
                 PropertyPath.fromParts("stroom"),
                 objectInfoMap);
@@ -344,6 +341,7 @@ public class ConfigMapper {
     private void updateXmlSecureProcessing() {
         final ParserConfig parserConfig = getConfigObject(ParserConfig.class);
         SAXParserSettings.setSecureProcessingEnabled(parserConfig.isSecureProcessing());
+        SAXParserSettings.setExternalEntitiesDisabled(parserConfig.isDisableExternalEntities());
     }
 
     private synchronized AbstractConfig rebuildObjectInstance(
@@ -1391,7 +1389,6 @@ public class ConfigMapper {
             objectInfoMap = new HashMap<>();
 
             buildObjectInfoMap(
-                    JsonUtil.getMapper(),
                     new AppConfig(),
                     PropertyPath.fromParts("stroom"),
                     objectInfoMap);
@@ -1410,7 +1407,6 @@ public class ConfigMapper {
     }
 
     private static void buildObjectInfoMap(
-            final ObjectMapper objectMapper,
             final AbstractConfig config,
             final PropertyPath path,
             final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap) {
@@ -1420,7 +1416,6 @@ public class ConfigMapper {
         config.setBasePath(path);
 
         final ObjectInfo<AbstractConfig> objectInfo = PropertyUtil.getObjectInfo(
-                objectMapper,
                 path.getPropertyName(),
                 config);
 
@@ -1431,7 +1426,7 @@ public class ConfigMapper {
         objectInfoMap.put(path, objectInfo);
 
         objectInfo.getPropertyMap()
-                .forEach((k, prop) -> {
+                .forEach((ignored, prop) -> {
                     final PropertyPath fullPath = path.merge(prop.getName());
 
                     final Class<?> valueType = prop.getValueClass();
@@ -1444,7 +1439,6 @@ public class ConfigMapper {
                         if (childConfigObject != null) {
                             // Recurse into the child
                             buildObjectInfoMap(
-                                    objectMapper,
                                     childConfigObject,
                                     fullPath,
                                     objectInfoMap);

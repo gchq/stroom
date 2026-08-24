@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,9 @@ package stroom.node.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.node.api.NodeGroupCache;
-import stroom.node.shared.Node;
+import stroom.node.api.NodeGroupState;
 import stroom.node.shared.NodeGroup;
-import stroom.node.shared.NodeGroupState;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -31,14 +29,13 @@ import jakarta.inject.Singleton;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Singleton
 public class NodeGroupCacheImpl implements Clearable, NodeGroupCache {
 
     private static final String CACHE_NAME = "Node Group Cache";
 
-    private final LoadingStroomCache<String, Optional<Set<String>>> cache;
+    private final LoadingStroomCache<String, Optional<NodeGroupState>> cache;
     private final NodeGroupDao nodeGroupDao;
 
     @Inject
@@ -53,23 +50,17 @@ public class NodeGroupCacheImpl implements Clearable, NodeGroupCache {
     }
 
     @Override
-    public Optional<Set<String>> getIncludedGroupNodes(final String name) {
+    public Optional<NodeGroupState> getSelectedGroupNodes(final String name) {
         return cache.get(name);
     }
 
-    private Optional<Set<String>> create(final String name) {
+    private Optional<NodeGroupState> create(final String name) {
         final NodeGroup nodeGroup = nodeGroupDao.fetchByName(name);
         if (nodeGroup == null) {
             return Optional.empty();
         }
-        final ResultPage<NodeGroupState> state = nodeGroupDao.getNodeGroupState(nodeGroup.getId());
-        return Optional.of(state
-                .getValues()
-                .stream()
-                .filter(NodeGroupState::isIncluded)
-                .map(NodeGroupState::getNode)
-                .map(Node::getName)
-                .collect(Collectors.toSet()));
+        final Set<String> selectedNodes = nodeGroupDao.getSelectedNodesForGroup(nodeGroup.getId());
+        return Optional.of(new NodeGroupState(nodeGroup, selectedNodes));
     }
 
     @Override
