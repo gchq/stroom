@@ -25,18 +25,25 @@ import stroom.pathways.shared.FindPathwayCriteria;
 import stroom.pathways.shared.PathwayResultPage;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.pathway.Pathway;
+import stroom.planb.impl.data.archive.ArchiveShardLocator;
+import stroom.planb.impl.data.archive.ArchiveShardRef;
 import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.impl.db.Count;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.trace.PathwaysDb;
 import stroom.planb.impl.db.trace.TraceDb;
+import stroom.planb.shared.HasHoldingAreaSettings;
+import stroom.planb.shared.HoldingAreaSettings;
+import stroom.planb.shared.PlanBDocument;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.time.SimpleDurationUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -72,6 +79,7 @@ public class PathwaysProcessor {
     private final ShardManager shardManager;
     private final NodeInfo nodeInfo;
     private final ClusterLockService clusterLockService;
+    private final ArchiveShardLocator archiveShardLocator;
 
     @Inject
     public PathwaysProcessor(final PathwaysStore pathwaysStore,
@@ -81,7 +89,8 @@ public class PathwaysProcessor {
                              final PathwaySerde pathwaySerde,
                              final ShardManager shardManager,
                              final NodeInfo nodeInfo,
-                             final ClusterLockService clusterLockService) {
+                             final ClusterLockService clusterLockService,
+                             final ArchiveShardLocator archiveShardLocator) {
         this.pathwaysStore = pathwaysStore;
         this.messageReceiverFactory = messageReceiverFactory;
         this.byteBuffers = byteBuffers;
@@ -89,6 +98,7 @@ public class PathwaysProcessor {
         this.shardManager = shardManager;
         this.nodeInfo = nodeInfo;
         this.clusterLockService = clusterLockService;
+        this.archiveShardLocator = archiveShardLocator;
 
         dbPath = pathCreator.toAppPath("${stroom.home}/pathways");
     }
@@ -172,28 +182,50 @@ public class PathwaysProcessor {
      * different shards concurrently without blocking each other.
      */
     private void processCompletedTraces(final PathwaysDoc doc, final long cutoffMs) {
-//        if (shardManager.isSnapshotNode()) {
-//            // Trace completion runs only on merge (shard-owning) nodes.
-//            return;
-//        }
-//
-//        final PlanBDocument tracesDoc = shardManager.getDoc(doc.getTracesDocRef().getName());
-//        if (tracesDoc == null) {
-//            LOGGER.warn("No PlanB doc found for traces doc ref '{}' — skipping for pathways doc {}",
-//                    doc.getTracesDocRef().getName(), doc.getName());
-//            return;
-//        }
-//
-//        final PathwaysDb pathwaysDb = getPathwaysDb(doc.asDocRef());
-//        final DocRef infoFeed = doc.getInfoFeed();
-//        for (int i = 0; i < tracesDoc.getShardCount(); i++) {
-//            final int shardIdx = i;
-//            // Per-shard lock: nodes in a cluster can process different shards in parallel.
-//            final String lockName = "pathways-write-" + doc.getUuid() + "-" + shardIdx;
-//            clusterLockService.tryLock(lockName, () ->
-//                    shardManager.get(doc.getTracesDocRef().getName(), shardIdx, db ->
-//                            processShardTraces(db, pathwaysDb, infoFeed, doc, cutoffMs)));
-//        }
+        if (shardManager.isSnapshotNode()) {
+            // Trace completion runs only on merge (shard-owning) nodes.
+            return;
+        }
+
+        final PlanBDocument tracesDoc = shardManager.getDoc(doc.getTracesDocRef().getName());
+        if (tracesDoc == null) {
+            LOGGER.warn("No PlanB doc found for traces doc ref '{}' — skipping for pathways doc {}",
+                    doc.getTracesDocRef().getName(), doc.getName());
+            return;
+        }
+
+        final PathwaysDb pathwaysDb = getPathwaysDb(doc.asDocRef());
+        final DocRef infoFeed = doc.getInfoFeed();
+        final long toMs = System.currentTimeMillis();
+        final long fromMs = bucketWindowStartMs(tracesDoc, toMs);
+        for (int i = 0; i < tracesDoc.getShardCount(); i++) {
+            final int shardIdx = i;
+            // Per-shard lock: nodes in a cluster can process different shards in parallel.
+            final String lockName = "pathways-write-" + doc.getUuid() + "-" + shardIdx;
+            clusterLockService.tryLock(lockName, () -> {
+                for (final ArchiveShardRef ref :
+                        archiveShardLocator.findRelevantShards(tracesDoc, shardIdx, fromMs, toMs)) {
+                    shardManager.getArchive(tracesDoc, shardIdx, ref, db ->
+                            processShardTraces(db, pathwaysDb, infoFeed, doc, cutoffMs));
+                }
+            });
+        }
+    }
+
+    /**
+     * How far back to look for buckets holding traces not yet processed.
+     *
+     * <p>One completion grace, because that is the furthest back a newly published trace can land.
+     * Buckets are labelled by the root's start time, and a trace whose real root never arrived is
+     * held for the grace and then published under a root synthesized from its earliest span — so its
+     * label can be a whole grace period old, but no older. Anything earlier was published in a
+     * previous window and has a processed marker already.
+     */
+    private static long bucketWindowStartMs(final PlanBDocument tracesDoc, final long toMs) {
+        final SimpleDuration grace = HasHoldingAreaSettings.holdingAreaSettings(tracesDoc.getSettings())
+                .map(HoldingAreaSettings::getCompletionGrace)
+                .orElse(HoldingAreaSettings.DEFAULT_COMPLETION_GRACE);
+        return SimpleDurationUtil.minus(Instant.ofEpochMilli(toMs), grace).toEpochMilli();
     }
 
     /**
