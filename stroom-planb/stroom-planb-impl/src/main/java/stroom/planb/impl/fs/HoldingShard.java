@@ -100,7 +100,7 @@ public class HoldingShard extends AbstractStoreShard {
                                 "No holding area settings for " + doc.getName()));
 
         final Instant publishBefore =
-                SimpleDurationUtil.minus(Instant.now(), holdingArea.getCompletionGrace());
+                SimpleDurationUtil.minus(Instant.now(), holdingArea.getMaxWaitForData());
 
         Files.createDirectories(bucketBaseDir);
 

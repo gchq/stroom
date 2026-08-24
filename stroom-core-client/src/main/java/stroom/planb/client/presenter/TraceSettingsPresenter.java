@@ -73,7 +73,7 @@ public class TraceSettingsPresenter
         getView().setMaxStoreSize(settings.getMaxStoreSize());
         getView().setMaxSpansPerTrace(settings.getMaxSpansPerTrace());
         getView().setGranularity(settings.getGranularity());
-        getView().setCompletionGrace(settings.getHoldingArea().getCompletionGrace());
+        getView().setMaxWaitForData(settings.getHoldingArea().getMaxWaitForData());
         getView().setRetention(settings.getRetention());
         getView().setSharedFileStore(settings.getSharedFileStore());
     }
@@ -84,7 +84,7 @@ public class TraceSettingsPresenter
                 .maxSpansPerTrace(getView().getMaxSpansPerTrace())
                 .granularity(getView().getGranularity())
                 .holdingArea(new HoldingAreaSettings.Builder()
-                        .completionGrace(getView().getCompletionGrace())
+                        .maxWaitForData(getView().getMaxWaitForData())
                         .compactionFrequency(compactionFrequency)
                         .build())
                 .retention(getView().getRetention())

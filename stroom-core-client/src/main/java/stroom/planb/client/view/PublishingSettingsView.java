@@ -24,8 +24,8 @@ import stroom.util.shared.time.SimpleDuration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 
 /**
- * How and when a store's data becomes queryable: the width of the buckets queries read, and how long
- * an incomplete record is kept open before it is published with whatever it has.
+ * How and when a store's data becomes queryable: the width of the buckets queries read, and the
+ * longest an incomplete record waits before it is published with whatever it has.
  */
 public interface PublishingSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<ChangeUiHandlers> {
 
@@ -33,7 +33,7 @@ public interface PublishingSettingsView extends ReadOnlyChangeHandler, HasUiHand
 
     void setGranularity(BucketGranularity granularity);
 
-    SimpleDuration getCompletionGrace();
+    SimpleDuration getMaxWaitForData();
 
-    void setCompletionGrace(SimpleDuration completionGrace);
+    void setMaxWaitForData(SimpleDuration maxWaitForData);
 }

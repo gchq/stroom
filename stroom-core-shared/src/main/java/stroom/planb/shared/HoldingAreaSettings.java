@@ -34,11 +34,11 @@ import java.util.Objects;
  * <p>A store type declares that it has these by implementing {@link HasHoldingAreaSettings}. One
  * that merges straight into its buckets has no holding shard, so neither setting exists for it.
  */
-@JsonPropertyOrder({"completionGrace", "compactionFrequency"})
+@JsonPropertyOrder({"maxWaitForData", "compactionFrequency"})
 @JsonInclude(Include.NON_NULL)
 public final class HoldingAreaSettings {
 
-    public static final SimpleDuration DEFAULT_COMPLETION_GRACE = SimpleDuration.builder()
+    public static final SimpleDuration DEFAULT_MAX_WAIT_FOR_DATA = SimpleDuration.builder()
             .time(12)
             .timeUnit(TimeUnit.HOURS)
             .build();
@@ -49,33 +49,33 @@ public final class HoldingAreaSettings {
             .build();
 
     @JsonProperty
-    private final SimpleDuration completionGrace;
+    private final SimpleDuration maxWaitForData;
 
     @JsonProperty
     private final SimpleDuration compactionFrequency;
 
     /**
-     * A non-positive completion grace is accepted here and reported by
+     * A non-positive wait is accepted here and reported by
      * {@link AbstractPlanBSettings#validationError}. Throwing instead would fail the whole document
      * on import rather than telling the user which setting is wrong.
      */
     @JsonCreator
     public HoldingAreaSettings(
-            @JsonProperty("completionGrace") final SimpleDuration completionGrace,
+            @JsonProperty("maxWaitForData") final SimpleDuration maxWaitForData,
             @JsonProperty("compactionFrequency") final SimpleDuration compactionFrequency) {
-        this.completionGrace = Objects.requireNonNullElse(completionGrace, DEFAULT_COMPLETION_GRACE);
+        this.maxWaitForData = Objects.requireNonNullElse(maxWaitForData, DEFAULT_MAX_WAIT_FOR_DATA);
         this.compactionFrequency =
                 Objects.requireNonNullElse(compactionFrequency, DEFAULT_COMPACTION_FREQUENCY);
     }
 
     /**
-     * How long the holding shard keeps an incomplete record open for the rest of its data to arrive.
-     * This is not latency every record pays: one that is already complete is published on the next
-     * merge cycle. Once the grace elapses the record is published with whatever it has, and data
-     * arriving after that is published separately.
+     * The longest the holding shard waits for the rest of a record's data to arrive. This is not
+     * latency every record pays: one that is already complete is published on the next merge cycle.
+     * Once the wait runs out the record is published with whatever it has, and data arriving after
+     * that is published separately.
      */
-    public SimpleDuration getCompletionGrace() {
-        return completionGrace;
+    public SimpleDuration getMaxWaitForData() {
+        return maxWaitForData;
     }
 
     /**
@@ -94,26 +94,26 @@ public final class HoldingAreaSettings {
         if (!(o instanceof final HoldingAreaSettings other)) {
             return false;
         }
-        return Objects.equals(completionGrace, other.completionGrace)
+        return Objects.equals(maxWaitForData, other.maxWaitForData)
                && Objects.equals(compactionFrequency, other.compactionFrequency);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(completionGrace, compactionFrequency);
+        return Objects.hash(maxWaitForData, compactionFrequency);
     }
 
     @Override
     public String toString() {
         return "HoldingAreaSettings{" +
-               "completionGrace=" + completionGrace +
+               "maxWaitForData=" + maxWaitForData +
                ", compactionFrequency=" + compactionFrequency +
                '}';
     }
 
     public static class Builder {
 
-        private SimpleDuration completionGrace;
+        private SimpleDuration maxWaitForData;
         private SimpleDuration compactionFrequency;
 
         public Builder() {
@@ -121,13 +121,13 @@ public final class HoldingAreaSettings {
 
         public Builder(final HoldingAreaSettings settings) {
             if (settings != null) {
-                this.completionGrace = settings.completionGrace;
+                this.maxWaitForData = settings.maxWaitForData;
                 this.compactionFrequency = settings.compactionFrequency;
             }
         }
 
-        public Builder completionGrace(final SimpleDuration completionGrace) {
-            this.completionGrace = completionGrace;
+        public Builder maxWaitForData(final SimpleDuration maxWaitForData) {
+            this.maxWaitForData = maxWaitForData;
             return this;
         }
 
@@ -137,7 +137,7 @@ public final class HoldingAreaSettings {
         }
 
         public HoldingAreaSettings build() {
-            return new HoldingAreaSettings(completionGrace, compactionFrequency);
+            return new HoldingAreaSettings(maxWaitForData, compactionFrequency);
         }
     }
 }

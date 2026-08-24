@@ -77,10 +77,11 @@ public class TraceSettingsViewImpl
         storageContent.add(traceGeneralSettingsWidget.asWidget());
         storagePanel.add(storageContent);
 
-        // A trace store has one environment per bucket, so the limit is per part rather than the
-        // size of the whole store, and neither write option reaches the shared file store.
+        // A trace store has one environment per bucket and shard, so the limit is per file rather
+        // than the size of the whole store, and neither write option reaches the shared file store.
         generalSettingsWidget.setMaxStoreSizeHelpText(
-                "The maximum size of each part of the store, e.g. 10G — not its total size on disk.");
+                "The size limit for each file in the store. A trace store has one file per time "
+                + "bucket and shard, so the whole store can be much bigger than this.");
         generalSettingsWidget.setWriteOptionsVisible(false);
 
         retentionPanel.add(retentionSettingsWidget.asWidget());
@@ -138,13 +139,13 @@ public class TraceSettingsViewImpl
     }
 
     @Override
-    public SimpleDuration getCompletionGrace() {
-        return publishingSettingsWidget.getCompletionGrace();
+    public SimpleDuration getMaxWaitForData() {
+        return publishingSettingsWidget.getMaxWaitForData();
     }
 
     @Override
-    public void setCompletionGrace(final SimpleDuration completionGrace) {
-        publishingSettingsWidget.setCompletionGrace(completionGrace);
+    public void setMaxWaitForData(final SimpleDuration maxWaitForData) {
+        publishingSettingsWidget.setMaxWaitForData(maxWaitForData);
     }
 
     @Override

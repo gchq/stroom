@@ -31,8 +31,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 /**
- * The two settings that decide when a store's data can be queried: how wide each bucket is, and how
- * long an incomplete record is kept open before it is published with whatever it has.
+ * The two settings that decide when a store's data can be queried: how wide each bucket is, and the
+ * longest an incomplete record waits before it is published with whatever it has.
  *
  * <p>Both stay editable once data exists. Neither decides where existing data lives — a change only
  * affects records published from then on, and buckets already written are read back using the layout
@@ -47,9 +47,9 @@ public class PublishingSettingsWidget
     @UiField
     SelectionBox<BucketGranularity> granularity;
     @UiField
-    ValueSpinner completionGrace;
+    ValueSpinner maxWaitForData;
     @UiField
-    SelectionBox<TimeUnit> completionGraceTimeUnit;
+    SelectionBox<TimeUnit> maxWaitForDataTimeUnit;
 
     @Inject
     public PublishingSettingsWidget(final Binder binder) {
@@ -60,16 +60,16 @@ public class PublishingSettingsWidget
         granularity.addItem(BucketGranularity.WEEK);
         granularity.setValue(BucketGranularity.DAY);
 
-        completionGrace.setMin(1);
-        completionGrace.setMax(9999);
+        maxWaitForData.setMin(1);
+        maxWaitForData.setMax(9999);
 
-        completionGraceTimeUnit.addItem(TimeUnit.MINUTES);
-        completionGraceTimeUnit.addItem(TimeUnit.HOURS);
-        completionGraceTimeUnit.addItem(TimeUnit.DAYS);
-        completionGraceTimeUnit.addItem(TimeUnit.WEEKS);
-        completionGraceTimeUnit.addItem(TimeUnit.MONTHS);
+        maxWaitForDataTimeUnit.addItem(TimeUnit.MINUTES);
+        maxWaitForDataTimeUnit.addItem(TimeUnit.HOURS);
+        maxWaitForDataTimeUnit.addItem(TimeUnit.DAYS);
+        maxWaitForDataTimeUnit.addItem(TimeUnit.WEEKS);
+        maxWaitForDataTimeUnit.addItem(TimeUnit.MONTHS);
 
-        setCompletionGrace(HoldingAreaSettings.DEFAULT_COMPLETION_GRACE);
+        setMaxWaitForData(HoldingAreaSettings.DEFAULT_MAX_WAIT_FOR_DATA);
     }
 
     @Override
@@ -90,28 +90,28 @@ public class PublishingSettingsWidget
     }
 
     @Override
-    public SimpleDuration getCompletionGrace() {
+    public SimpleDuration getMaxWaitForData() {
         return SimpleDuration.builder()
-                .time(completionGrace.getValue())
-                .timeUnit(completionGraceTimeUnit.getValue())
+                .time(maxWaitForData.getValue())
+                .timeUnit(maxWaitForDataTimeUnit.getValue())
                 .build();
     }
 
     @Override
-    public void setCompletionGrace(final SimpleDuration completionGrace) {
-        final SimpleDuration grace = completionGrace == null
-                ? HoldingAreaSettings.DEFAULT_COMPLETION_GRACE
-                : completionGrace;
-        this.completionGrace.setValue(grace.getTime());
-        this.completionGraceTimeUnit.setValue(grace.getTimeUnit());
+    public void setMaxWaitForData(final SimpleDuration maxWaitForData) {
+        final SimpleDuration maxWait = maxWaitForData == null
+                ? HoldingAreaSettings.DEFAULT_MAX_WAIT_FOR_DATA
+                : maxWaitForData;
+        this.maxWaitForData.setValue(maxWait.getTime());
+        this.maxWaitForDataTimeUnit.setValue(maxWait.getTimeUnit());
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
         final boolean editable = !readOnly;
         granularity.setEnabled(editable);
-        completionGrace.setEnabled(editable);
-        completionGraceTimeUnit.setEnabled(editable);
+        maxWaitForData.setEnabled(editable);
+        maxWaitForDataTimeUnit.setEnabled(editable);
     }
 
     @UiHandler("granularity")
@@ -119,13 +119,13 @@ public class PublishingSettingsWidget
         getUiHandlers().onChange();
     }
 
-    @UiHandler("completionGrace")
-    public void onCompletionGrace(final ValueChangeEvent<Long> event) {
+    @UiHandler("maxWaitForData")
+    public void onMaxWaitForData(final ValueChangeEvent<Long> event) {
         getUiHandlers().onChange();
     }
 
-    @UiHandler("completionGraceTimeUnit")
-    public void onCompletionGraceTimeUnit(final ValueChangeEvent<TimeUnit> event) {
+    @UiHandler("maxWaitForDataTimeUnit")
+    public void onMaxWaitForDataTimeUnit(final ValueChangeEvent<TimeUnit> event) {
         getUiHandlers().onChange();
     }
 

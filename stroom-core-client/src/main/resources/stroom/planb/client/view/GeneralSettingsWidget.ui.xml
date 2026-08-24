@@ -6,7 +6,7 @@
     <g:FlowPanel styleName="max form">
         <form:FormGroup ui:field="maxStoreSizePanel"
                         label="Max Store Size"
-                        helpText="How large is this Plan B store allowed to be, e.g. 10G.">
+                        helpText="How big this store's data file may grow. Writes fail once it is full, so leave some headroom.">
             <g:TextBox ui:field="maxStoreSize" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup ui:field="synchroniseMergePanel"

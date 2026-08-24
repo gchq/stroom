@@ -441,17 +441,17 @@ public class PathwaysProcessor {
     /**
      * How far back to look for buckets holding traces not yet processed.
      *
-     * <p>One completion grace, because that is the furthest back a newly published trace can land.
-     * Buckets are labelled by the root's start time, and a trace whose real root never arrived is
-     * held for the grace and then published under a root synthesized from its earliest span — so its
-     * label can be a whole grace period old, but no older. Anything earlier was published in a
-     * previous window and has a processed marker already.
+     * <p>One maximum wait for data, because that is the furthest back a newly published trace can
+     * land. Buckets are labelled by the root's start time, and a trace whose real root never arrived
+     * waits the full time and is then published under a root synthesized from its earliest span — so
+     * its label can be a whole wait old, but no older. Anything earlier was published in a previous
+     * window and has a processed marker already.
      */
     private static long bucketWindowStartMs(final PlanBDocument tracesDoc, final long toMs) {
-        final SimpleDuration grace = HasHoldingAreaSettings.holdingAreaSettings(tracesDoc.getSettings())
-                .map(HoldingAreaSettings::getCompletionGrace)
-                .orElse(HoldingAreaSettings.DEFAULT_COMPLETION_GRACE);
-        return SimpleDurationUtil.minus(Instant.ofEpochMilli(toMs), grace).toEpochMilli();
+        final SimpleDuration maxWait = HasHoldingAreaSettings.holdingAreaSettings(tracesDoc.getSettings())
+                .map(HoldingAreaSettings::getMaxWaitForData)
+                .orElse(HoldingAreaSettings.DEFAULT_MAX_WAIT_FOR_DATA);
+        return SimpleDurationUtil.minus(Instant.ofEpochMilli(toMs), maxWait).toEpochMilli();
     }
 
     /**

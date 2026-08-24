@@ -222,7 +222,7 @@ class TestHoldingAreaMergeStrategy {
                                 sharedRoot().toAbsolutePath().toString()))
                         .granularity(BucketGranularity.DAY)
                         .holdingArea(new HoldingAreaSettings.Builder()
-                                .completionGrace(SEVEN_DAYS)
+                                .maxWaitForData(SEVEN_DAYS)
                                 .compactionFrequency(CHECK_INTERVAL)
                                 .build())
                         .build())

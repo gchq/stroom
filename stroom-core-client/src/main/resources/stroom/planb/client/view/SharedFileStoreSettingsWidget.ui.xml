@@ -6,7 +6,7 @@
     <g:FlowPanel styleName="form-group">
         <form:FormGroup label="Path"
                         helpText="Path to the shared file store. Note: This cannot be modified after data has been written.">
-            <g:TextBox ui:field="sharedPath" addStyleNames="gwt-TextBox allow-focus"/>
+            <g:TextBox ui:field="sharedPath" width="400px" addStyleNames="gwt-TextBox allow-focus"/>
         </form:FormGroup>
         <form:FormGroup label="Shard Count"
                         helpText="The number of shards to partition the data across. Use 1 for no sharding. Note: This cannot be modified after data has been written.">

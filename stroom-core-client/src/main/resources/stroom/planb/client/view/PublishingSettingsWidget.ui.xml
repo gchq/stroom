@@ -5,12 +5,12 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="form-group">
-        <form:FormGroup identity="completionGracePanel"
-                        label="Completion Grace"
-                        helpText="How long incomplete data is held for the rest of it to arrive. Complete data is published on the next cycle regardless.">
+        <form:FormGroup identity="maxWaitForDataPanel"
+                        label="Max Wait For Data"
+                        helpText="The longest that incomplete data is held back until the rest of it arrives. Data that is already complete does not wait: it becomes queryable on the next merge. Once the wait runs out, whatever has arrived is published as it stands, and anything turning up after that is published on its own. A longer wait keeps more data together; a shorter wait makes incomplete data queryable sooner.">
             <g:FlowPanel styleName="durationSetting">
-                <v:ValueSpinner ui:field="completionGrace"/>
-                <i:SelectionBox ui:field="completionGraceTimeUnit" addStyleNames="allow-focus"/>
+                <v:ValueSpinner ui:field="maxWaitForData"/>
+                <i:SelectionBox ui:field="maxWaitForDataTimeUnit" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="granularityPanel"

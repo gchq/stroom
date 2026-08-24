@@ -107,18 +107,18 @@ public abstract sealed class AbstractPlanBSettings permits
                 return checkIntervalError;
             }
         }
-        return completionGraceError(settings);
+        return maxWaitForDataError(settings);
     }
 
-    private static String completionGraceError(final AbstractPlanBSettings settings) {
+    private static String maxWaitForDataError(final AbstractPlanBSettings settings) {
         final HoldingAreaSettings holdingArea =
                 HasHoldingAreaSettings.holdingAreaSettings(settings).orElse(null);
         if (holdingArea == null) {
             return null;
         }
-        final SimpleDuration grace = holdingArea.getCompletionGrace();
-        if (grace.getTime() <= 0) {
-            return "'Completion Grace' must be greater than zero, otherwise data is published before "
+        final SimpleDuration maxWait = holdingArea.getMaxWaitForData();
+        if (maxWait.getTime() <= 0) {
+            return "'Max Wait For Data' must be greater than zero, otherwise data is published before "
                    + "the records that belong with it have arrived.";
         }
         final RetentionSettings retention = settings.getRetention();
@@ -129,8 +129,8 @@ public abstract sealed class AbstractPlanBSettings permits
         if (retainFor == null) {
             return null;
         }
-        if (grace.getApproxMillis() >= retainFor.getApproxMillis()) {
-            return "'Completion Grace' (" + grace.toLongString() + ") must be shorter than "
+        if (maxWait.getApproxMillis() >= retainFor.getApproxMillis()) {
+            return "'Max Wait For Data' (" + maxWait.toLongString() + ") must be shorter than "
                    + "'Retain For' (" + retainFor.toLongString() + "), otherwise retention deletes an "
                    + "incomplete record while it is still being held, so it never becomes queryable.";
         }
