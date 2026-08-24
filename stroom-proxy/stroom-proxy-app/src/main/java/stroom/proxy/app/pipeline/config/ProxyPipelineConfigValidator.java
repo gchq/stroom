@@ -254,9 +254,10 @@ public class ProxyPipelineConfigValidator {
             }
 
             // Reject an unrecognised credentials type rather than quietly falling back
-            // to the default chain. 'profile' in particular used to be accepted and
-            // behaved almost identically to 'default', so it looked like per-store
-            // profile selection while doing nothing of the sort.
+            // to the default chain, which is what previously absorbed 'profile'. That
+            // option was removed because per-store profiles are the wrong shape here -
+            // identity belongs to the workload's IAM role - and because as implemented
+            // it never selected a profile anyway.
             final String credentialsType = definition.getEffectiveCredentialsType();
             if (!S3FileStore.SUPPORTED_CREDENTIALS_TYPES.contains(credentialsType.toLowerCase())) {
                 issues.add(PipelineValidationIssue.errorForFileStore(

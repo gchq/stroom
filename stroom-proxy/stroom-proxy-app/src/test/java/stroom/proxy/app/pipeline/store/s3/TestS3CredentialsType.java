@@ -39,13 +39,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * S3-compatible endpoints such as MinIO, which have no instance identity.
  * </p>
  * <p>
- * {@code profile} was removed. The SDK resolves a profile from {@code AWS_PROFILE}
- * or the {@code aws.profile} system property rather than from an argument, so a
- * per-store setting could never select a profile - it resolved exactly what
- * {@code default} resolves while skipping the rest of the chain, which made it look
- * like a per-store choice it was not. An unrecognised type is now rejected rather
- * than silently falling back to the default chain, which is what previously absorbed
- * it.
+ * {@code profile} was removed because a per-store profile is the wrong shape for
+ * this system - it would put a second, competing notion of identity in the config
+ * file alongside the workload's own role. The SDK could support one
+ * ({@code ProfileCredentialsProvider.create(String)} takes a profile name), but as
+ * implemented the option called the no-argument form with no {@code profileName}
+ * property to pass, so it resolved the same profile {@code default} would. An
+ * unrecognised type is now rejected rather than silently falling back to the default
+ * chain, which is what previously absorbed it.
  * </p>
  */
 class TestS3CredentialsType {

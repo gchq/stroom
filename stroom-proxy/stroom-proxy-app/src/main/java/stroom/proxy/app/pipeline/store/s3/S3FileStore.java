@@ -82,6 +82,18 @@ public class S3FileStore implements FileStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(S3FileStore.class);
 
 
+    /**
+     * Shared default credentials provider.
+     * <p>
+     * {@code DefaultCredentialsProvider.create()} is deprecated - it returns a shared
+     * singleton that no caller can safely close. The builder gives an instance the
+     * caller owns, so it is created once here and reused across stores rather than
+     * once per store, each of which would start its own credential refresh.
+     * </p>
+     */
+    private static final AwsCredentialsProvider DEFAULT_CREDENTIALS_PROVIDER =
+            DefaultCredentialsProvider.builder().build();
+
     /** Recognised values for {@code credentialsType}, lower case. */
     public static final Set<String> SUPPORTED_CREDENTIALS_TYPES =
             Set.of("default", "basic", "environment");
@@ -383,12 +395,18 @@ public class S3FileStore implements FileStore {
      * which have no instance identity and can only be reached with static keys.
      * </p>
      * <p>
-     * There is deliberately no {@code profile} option. The SDK's
-     * {@code ProfileCredentialsProvider} selects a profile from {@code AWS_PROFILE}
-     * or the {@code aws.profile} system property, not from an argument, so a
-     * per-store setting could not actually choose a profile - it would resolve
-     * exactly what {@code default} already resolves while skipping the rest of the
-     * chain. Set {@code AWS_PROFILE} in the environment instead.
+     * There is deliberately no {@code profile} option. The SDK could support one -
+     * {@code ProfileCredentialsProvider.create(String)} takes a profile name - but a
+     * per-store profile is the wrong shape for this system: it would put a second,
+     * competing notion of identity in the config file alongside the workload's own
+     * role. Set {@code AWS_PROFILE} in the environment if a named profile is needed;
+     * the default chain honours it.
+     * </p>
+     * <p>
+     * Note the option that was removed never selected a profile anyway - it called
+     * the no-argument {@code ProfileCredentialsProvider.create()} and there was no
+     * {@code profileName} property to pass, so it resolved the same profile
+     * {@code default} would.
      * </p>
      *
      * @throws IllegalArgumentException If the configured type is not recognised.
@@ -396,7 +414,7 @@ public class S3FileStore implements FileStore {
     private static AwsCredentialsProvider buildCredentialsProvider(final FileStoreDefinition definition) {
         final String type = definition.getEffectiveCredentialsType();
         return switch (type.toLowerCase()) {
-            case "default" -> DefaultCredentialsProvider.create();
+            case "default" -> DEFAULT_CREDENTIALS_PROVIDER;
             case "basic" -> {
                 final String accessKey = requireNonBlank(definition.getAccessKeyId(), "accessKeyId");
                 final String secretKey = requireNonBlank(definition.getSecretAccessKey(), "secretAccessKey");

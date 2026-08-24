@@ -365,12 +365,16 @@ single process would be, and keeps secrets out of the configuration entirely.
 `basic` exists for S3-compatible endpoints such as MinIO or LocalStack, which
 have no instance identity and can only be reached with static keys.
 
-> There is deliberately **no `profile` option**. The SDK's
-> `ProfileCredentialsProvider` selects a profile from `AWS_PROFILE` or the
-> `aws.profile` system property rather than from an argument, so a per-store
-> setting could never actually choose a profile — it resolved exactly what
-> `default` resolves while skipping the rest of the chain, which made it look like
-> a per-store choice it was not. Set `AWS_PROFILE` in the environment instead.
+> There is deliberately **no `profile` option**. The SDK could support one —
+> `ProfileCredentialsProvider.create(String)` takes a profile name — but a
+> per-store profile is the wrong shape here: it would put a second, competing
+> notion of identity in the config file alongside the workload's own IAM role. Set
+> `AWS_PROFILE` in the environment if a named profile is needed; the default chain
+> honours it.
+>
+> The option that was removed never selected a profile anyway — it called the
+> no-argument `ProfileCredentialsProvider.create()`, and there was no `profileName`
+> property to pass, so it resolved the same profile `default` would.
 >
 > An unrecognised `credentialsType` is now a `S3_UNSUPPORTED_CREDENTIALS_TYPE`
 > validation error rather than a silent fall-back to the default chain — that

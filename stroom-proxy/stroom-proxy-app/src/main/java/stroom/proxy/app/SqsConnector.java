@@ -40,6 +40,14 @@ public class SqsConnector {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqsConnector.class);
 
+    /**
+     * Shared default credentials provider. {@code DefaultCredentialsProvider.create()}
+     * is deprecated - it returns a shared singleton no caller can safely close - so
+     * the provider is built once here and reused across connectors.
+     */
+    private static final DefaultCredentialsProvider CREDENTIALS_PROVIDER =
+            DefaultCredentialsProvider.builder().build();
+
     private final EventStore eventStore;
     private final SqsClient sqsClient;
     private final ReceiptIdGenerator receiptIdGenerator;
@@ -56,7 +64,7 @@ public class SqsConnector {
             LOGGER.debug(() -> "Creating SQS client");
             sqsClient = SqsClient.builder()
                     .region(Region.of(config.getAwsRegionName()))
-                    .credentialsProvider(DefaultCredentialsProvider.create())
+                    .credentialsProvider(CREDENTIALS_PROVIDER)
                     .build();
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
