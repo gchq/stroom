@@ -802,8 +802,11 @@ stage across processes; see
 [future-work.md §5](future-work.md#5-local-queue-multi-process-consumers) and
 [deployments/split-stage-workers.yml](deployments/split-stage-workers.yml).
 
-For Kafka, the topic's partition count caps useful parallelism across the whole
-consumer group — extra threads beyond the partition count sit idle.
+For Kafka, each consumer thread gets its own consumer in the shared consumer
+group, so the topic's partition count caps useful parallelism — threads beyond
+the partition count are assigned no partitions and sit idle. Size partitions for
+the total thread count across all processes consuming that topic, not per
+process.
 
 ---
 

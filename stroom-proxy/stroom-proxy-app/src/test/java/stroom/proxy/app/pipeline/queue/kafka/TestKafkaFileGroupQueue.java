@@ -249,7 +249,12 @@ class TestKafkaFileGroupQueue {
      * constructor already calls {@code subscribe()}, and Kafka disallows
      * mixing {@code subscribe()} with {@code assign()}.
      */
-    private TopicPartition simulateRebalance() {
+    private TopicPartition simulateRebalance() throws IOException {
+        // The queue creates and subscribes a consumer per consuming thread, on that
+        // thread's first next(). MockConsumer only accepts a simulated rebalance once
+        // subscribed, so drive one poll first to trigger subscription.
+        queue.next();
+
         final TopicPartition tp = new TopicPartition(TOPIC, 0);
         mockConsumer.rebalance(Collections.singletonList(tp));
         mockConsumer.updateBeginningOffsets(Map.of(tp, 0L));

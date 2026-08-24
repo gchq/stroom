@@ -46,7 +46,9 @@ classDiagram
         -String topic
         -String bootstrapServers
         -Producer producer
-        -Consumer consumer
+        -Supplier~Consumer~ consumerFactory
+        -ThreadLocal~Consumer~ threadConsumer
+        -List~Consumer~ consumers
         -FileGroupQueueMessageCodec codec
         -AdminClient adminClient
     }
@@ -384,13 +386,41 @@ Kafka properties under `producer:`/`consumer:` (`security.protocol`,
 - **Auto-commit disabled** (`enable.auto.commit=false`) — explicit manual commit on `acknowledge()`
 - **Max poll records = 1** to match the single-item `next()` contract
 - **Poll timeout** = 100ms (non-blocking-ish)
+- **One consumer per consuming thread** — see below
+
+### 4.3.1 Threading
+
+Each consuming thread gets **its own** `Consumer`, created on that thread's first
+`next()` and subscribed to the shared consumer group. Kafka then distributes the
+topic's partitions across them, which is the intended way to consume a topic in
+parallel. The `Producer` is shared, because `KafkaProducer` is thread-safe.
+
+A single shared consumer would be wrong twice over:
+
+1. `KafkaConsumer` is not thread-safe and throws
+   `ConcurrentModificationException` when two threads enter it, so any stage with
+   `consumerThreads > 1` failed outright.
+2. Even behind a lock it would be unsafe for offsets. `acknowledge()` commits
+   `offset + 1`; whichever thread finished first would therefore acknowledge every
+   earlier offset, including records other threads were still processing. Those
+   records would be lost on restart.
+
+Two consequences worth planning around:
+
+- **Partition count caps parallelism.** Consumers in a group beyond the number of
+  partitions are assigned nothing and sit idle, so `consumerThreads` above the
+  topic's partition count buys nothing.
+- **Subscription is lazy.** The queue joins the consumer group on the first
+  `next()` rather than at construction, because consumers are created per thread.
+
+Covered by `TestKafkaFileGroupQueueConcurrency`.
 
 ### 4.4 KafkaFileGroupQueueItem
 
 | Method | Behaviour |
 |---|---|
 | `getId()` | `"<topic>-<partition>-<offset>"` |
-| `acknowledge()` | `consumer.commitSync({TopicPartition → offset+1})` |
+| `acknowledge()` | `commitSync({TopicPartition → offset+1})` on the consumer that produced the record |
 | `fail(error)` | No-op (does not commit offset; message redelivered on next poll) |
 | `close()` | No-op |
 

@@ -121,9 +121,15 @@ proxyConfig:
 # Anything you put under `consumer:` or `producer:` is applied *after* the
 # defaults, so it can override them.
 #
-# Partition count per topic sets the ceiling on useful consumerThreads for that
+# Each consumer thread gets its own Kafka consumer in the shared group, so
+# partition count per topic sets the ceiling on useful consumerThreads for that
 # stage across the whole deployment: extra consumers in a group beyond the
-# partition count sit idle.
+# partition count are assigned nothing and sit idle. The thread counts below
+# assume each topic has at least that many partitions.
+#
+# Do NOT override max.poll.records under `consumer:`. next() returns one record
+# per poll and discards the rest of the batch, so a larger value silently skips
+# records until the consumer restarts or rebalances.
 #
 # fail() does not commit the offset, so a failed message is redelivered on the
 # next poll. There is no built-in delay before redelivery and no retry topic —

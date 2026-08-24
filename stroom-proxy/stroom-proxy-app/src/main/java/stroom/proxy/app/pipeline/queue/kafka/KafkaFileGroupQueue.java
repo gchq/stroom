@@ -22,6 +22,9 @@ import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessageCodec;
 import stroom.proxy.app.pipeline.queue.QueueDefinition;
 import stroom.proxy.app.pipeline.queue.QueueType;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -47,13 +50,17 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 /**
  * Kafka-backed implementation of {@link FileGroupQueue}.
@@ -70,8 +77,33 @@ import java.util.concurrent.TimeoutException;
  * does not commit, causing the message to be redelivered on the next poll
  * (at-least-once semantics).
  * </p>
+ * <h2>Threading</h2>
+ * <p>
+ * A stage may run several consumer threads, so this queue gives each calling
+ * thread <strong>its own</strong> {@link Consumer}, created on that thread's
+ * first call to {@link #next()} and joined to the shared consumer group. Kafka
+ * then distributes the topic's partitions across those consumers, which is the
+ * intended way to consume a topic in parallel.
+ * </p>
+ * <p>
+ * A single shared consumer would be wrong twice over. {@link KafkaConsumer} is
+ * not thread-safe and throws {@code ConcurrentModificationException} when two
+ * threads enter it; and even with a lock, committing {@code offset + 1} from
+ * whichever thread finished first would acknowledge earlier offsets still being
+ * processed by other threads, losing those records on restart.
+ * </p>
+ * <p>
+ * The {@link Producer} is shared - {@link KafkaProducer} is thread-safe and is
+ * designed to be shared across threads.
+ * </p>
+ * <p>
+ * Parallelism is bounded by the topic's partition count: consumers in a group
+ * beyond the number of partitions are assigned nothing and sit idle.
+ * </p>
  */
 public class KafkaFileGroupQueue implements FileGroupQueue {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(KafkaFileGroupQueue.class);
 
     static final String DEFAULT_CONSUMER_GROUP_PREFIX = "stroom-proxy-";
     static final Duration DEFAULT_POLL_TIMEOUT = Duration.ofMillis(100);
@@ -80,8 +112,25 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
     private final String topic;
     private final String bootstrapServers;
     private final Producer<String, byte[]> producer;
-    private final Consumer<String, byte[]> consumer;
     private final FileGroupQueueMessageCodec codec;
+
+    /**
+     * Creates a consumer already subscribed to the topic. Invoked once per
+     * consuming thread.
+     */
+    private final Supplier<Consumer<String, byte[]>> consumerFactory;
+
+    /**
+     * This thread's consumer. Never shared with another thread.
+     */
+    private final ThreadLocal<Consumer<String, byte[]>> threadConsumer = new ThreadLocal<>();
+
+    /**
+     * Every consumer handed out, so they can all be closed.
+     */
+    private final List<Consumer<String, byte[]>> consumers = new CopyOnWriteArrayList<>();
+
+    private final AtomicBoolean closed = new AtomicBoolean();
 
     // Lazy AdminClient for health checks — created on first healthCheck() call.
     private volatile AdminClient adminClient;
@@ -101,12 +150,17 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
                 requireNonBlank(definition.getTopic(), "definition.topic"),
                 requireNonBlank(definition.getBootstrapServers(), "definition.bootstrapServers"),
                 createProducer(definition),
-                createConsumer(name, definition),
+                () -> createConsumer(name, definition),
                 codec);
     }
 
     /**
-     * Test-friendly constructor that accepts pre-built producer and consumer.
+     * Test-friendly constructor accepting a single pre-built consumer.
+     * <p>
+     * The same instance is handed to every thread, so this is only appropriate
+     * for single-threaded tests. Use the {@link Supplier} form to exercise
+     * multi-threaded consumption.
+     * </p>
      */
     KafkaFileGroupQueue(final String name,
                         final String topic,
@@ -114,14 +168,61 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
                         final Producer<String, byte[]> producer,
                         final Consumer<String, byte[]> consumer,
                         final FileGroupQueueMessageCodec codec) {
+        this(name,
+                topic,
+                bootstrapServers,
+                producer,
+                () -> Objects.requireNonNull(consumer, "consumer"),
+                codec);
+    }
+
+    /**
+     * Test-friendly constructor accepting a consumer factory, mirroring
+     * production behaviour of one consumer per consuming thread.
+     */
+    KafkaFileGroupQueue(final String name,
+                        final String topic,
+                        final String bootstrapServers,
+                        final Producer<String, byte[]> producer,
+                        final Supplier<Consumer<String, byte[]>> consumerFactory,
+                        final FileGroupQueueMessageCodec codec) {
         this.name = requireNonBlank(name, "name");
         this.topic = requireNonBlank(topic, "topic");
         this.bootstrapServers = bootstrapServers != null ? bootstrapServers : "";
         this.producer = Objects.requireNonNull(producer, "producer");
-        this.consumer = Objects.requireNonNull(consumer, "consumer");
+        this.consumerFactory = Objects.requireNonNull(consumerFactory, "consumerFactory");
         this.codec = Objects.requireNonNull(codec, "codec");
+    }
 
-        consumer.subscribe(Collections.singletonList(this.topic));
+    /**
+     * @return This thread's consumer, creating and subscribing it on first use.
+     */
+    private Consumer<String, byte[]> consumerForCurrentThread() throws IOException {
+        Consumer<String, byte[]> threadsConsumer = threadConsumer.get();
+        if (threadsConsumer == null) {
+            if (closed.get()) {
+                throw new IOException("Kafka queue '" + name + "' is closed");
+            }
+
+            threadsConsumer = Objects.requireNonNull(
+                    consumerFactory.get(), "consumerFactory returned null");
+            threadsConsumer.subscribe(Collections.singletonList(topic));
+
+            consumers.add(threadsConsumer);
+            threadConsumer.set(threadsConsumer);
+
+            LOGGER.debug(() -> LogUtil.message(
+                    "Created Kafka consumer for thread '{}' on queue '{}' (topic {})",
+                    Thread.currentThread().getName(), name, topic));
+        }
+        return threadsConsumer;
+    }
+
+    /**
+     * @return The number of consumers created so far - one per consuming thread.
+     */
+    int getConsumerCount() {
+        return consumers.size();
     }
 
     @Override
@@ -161,7 +262,8 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
 
     @Override
     public Optional<FileGroupQueueItem> next() throws IOException {
-        final ConsumerRecords<String, byte[]> records = consumer.poll(DEFAULT_POLL_TIMEOUT);
+        final Consumer<String, byte[]> threadsConsumer = consumerForCurrentThread();
+        final ConsumerRecords<String, byte[]> records = threadsConsumer.poll(DEFAULT_POLL_TIMEOUT);
 
         if (records.isEmpty()) {
             return Optional.empty();
@@ -171,13 +273,17 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
         final ConsumerRecord<String, byte[]> record = records.iterator().next();
         final FileGroupQueueMessage message = codec.fromBytes(record.value());
 
+        // The item carries the consumer that produced it so that acknowledge()
+        // commits on the consumer that actually owns the partition.
         return Optional.of(new KafkaFileGroupQueueItem(
+                threadsConsumer,
                 record,
                 message));
     }
 
     @Override
     public void close() throws IOException {
+        closed.set(true);
         try {
             final AdminClient ac = adminClient;
             if (ac != null) {
@@ -187,9 +293,34 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
             try {
                 producer.close();
             } finally {
-                consumer.close();
+                closeConsumers();
             }
         }
+    }
+
+    private void closeConsumers() {
+        // wakeup() is the only method on a Kafka consumer that is safe to call
+        // from another thread. Closing normally happens after the stage runner
+        // has joined its threads, but if a poll is still in flight this unblocks
+        // it rather than letting close hang.
+        for (final Consumer<String, byte[]> c : consumers) {
+            try {
+                c.wakeup();
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message(
+                        "Error waking Kafka consumer on queue '{}': {}", name, e.getMessage()));
+            }
+        }
+
+        for (final Consumer<String, byte[]> c : consumers) {
+            try {
+                c.close();
+            } catch (final RuntimeException e) {
+                LOGGER.warn(() -> LogUtil.message(
+                        "Error closing Kafka consumer on queue '{}': {}", name, e.getMessage()));
+            }
+        }
+        consumers.clear();
     }
 
     @Override
@@ -294,12 +425,19 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
      */
     private final class KafkaFileGroupQueueItem implements FileGroupQueueItem {
 
+        /**
+         * The consumer this record came from. Offsets must be committed on the
+         * consumer that owns the partition, not on some other thread's.
+         */
+        private final Consumer<String, byte[]> owningConsumer;
         private final ConsumerRecord<String, byte[]> record;
         private final FileGroupQueueMessage message;
         private boolean completed;
 
-        private KafkaFileGroupQueueItem(final ConsumerRecord<String, byte[]> record,
+        private KafkaFileGroupQueueItem(final Consumer<String, byte[]> owningConsumer,
+                                        final ConsumerRecord<String, byte[]> record,
                                         final FileGroupQueueMessage message) {
+            this.owningConsumer = Objects.requireNonNull(owningConsumer, "owningConsumer");
             this.record = Objects.requireNonNull(record, "record");
             this.message = Objects.requireNonNull(message, "message");
         }
@@ -337,7 +475,7 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
             final OffsetAndMetadata offsetMeta = new OffsetAndMetadata(record.offset() + 1);
 
             try {
-                consumer.commitSync(Map.of(tp, offsetMeta));
+                owningConsumer.commitSync(Map.of(tp, offsetMeta));
             } catch (final Exception e) {
                 throw new IOException("Failed to commit Kafka offset for " + getId(), e);
             }
