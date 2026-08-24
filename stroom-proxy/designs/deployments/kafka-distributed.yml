@@ -109,27 +109,24 @@ proxyConfig:
 
 # Kafka notes
 #
-# The proxy sets these itself and you rarely want to change them:
-#   enable.auto.commit = false     offsets are committed explicitly on acknowledge()
-#   max.poll.records   = 1         matches the single-item next() contract
-#   acks               = all       producer durability
-#   key/value serdes   = String / ByteArray
+# These properties are RESERVED - the proxy sets them and configuration that
+# tries to override them is rejected at startup:
+#   consumer: max.poll.records, enable.auto.commit, key/value.deserializer
+#   producer: acks, key/value.serializer
+# Each one breaks the queue invisibly if changed, so it fails loudly instead.
 # Record key is the fileGroupId, giving partition affinity for related groups.
 #
-# group.id defaults to "stroom-proxy-<queueName>". Override it — as above — when
-# you want the group name to be explicit, or when two pipelines share a cluster.
-# Anything you put under `consumer:` or `producer:` is applied *after* the
-# defaults, so it can override them.
+# Everything else under `consumer:`/`producer:` is yours to tune - group.id,
+# auto.offset.reset, security.protocol, sasl.*, ssl.*, fetch.*, session and poll
+# timeouts, compression, and so on. group.id defaults to
+# "stroom-proxy-<queueName>"; override it — as above — when you want the group
+# name to be explicit, or when two pipelines share a cluster.
 #
 # Each consumer thread gets its own Kafka consumer in the shared group, so
 # partition count per topic sets the ceiling on useful consumerThreads for that
 # stage across the whole deployment: extra consumers in a group beyond the
 # partition count are assigned nothing and sit idle. The thread counts below
 # assume each topic has at least that many partitions.
-#
-# Do NOT override max.poll.records under `consumer:`. next() returns one record
-# per poll and discards the rest of the batch, so a larger value silently skips
-# records until the consumer restarts or rebalances.
 #
 # fail() does not commit the offset, so a failed message is redelivered on the
 # next poll. There is no built-in delay before redelivery and no retry topic —

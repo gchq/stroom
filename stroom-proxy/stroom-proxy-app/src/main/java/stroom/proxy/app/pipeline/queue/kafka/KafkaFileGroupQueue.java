@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -107,6 +108,30 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
 
     static final String DEFAULT_CONSUMER_GROUP_PREFIX = "stroom-proxy-";
     static final Duration DEFAULT_POLL_TIMEOUT = Duration.ofMillis(100);
+
+    /**
+     * Consumer properties whose values this implementation depends on. Setting them
+     * under {@code consumer:} is rejected by validation rather than quietly ignored,
+     * because each one breaks the queue in a way that is hard to observe:
+     * {@code max.poll.records} above 1 silently skips records, auto-commit
+     * acknowledges unprocessed records, and the wrong deserialiser corrupts payloads.
+     */
+    public static final Set<String> RESERVED_CONSUMER_PROPERTIES = Set.of(
+            ConsumerConfig.MAX_POLL_RECORDS_CONFIG,
+            ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG);
+
+    /**
+     * Producer properties whose values this implementation depends on. Weakening
+     * {@code acks} would let a publish report success before the record is durably
+     * replicated, breaking the pipeline's no-data-loss guarantee at the point where
+     * the ownership-transfer contract assumes the message is safe.
+     */
+    public static final Set<String> RESERVED_PRODUCER_PROPERTIES = Set.of(
+            ProducerConfig.ACKS_CONFIG,
+            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG);
 
     private final String name;
     private final String topic;
@@ -377,39 +402,63 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
     }
 
     private static KafkaProducer<String, byte[]> createProducer(final QueueDefinition definition) {
+        return new KafkaProducer<>(buildProducerProperties(definition));
+    }
+
+    static Properties buildProducerProperties(final QueueDefinition definition) {
         final Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 requireNonBlank(definition.getBootstrapServers(), "definition.bootstrapServers"));
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
-        props.put(ProducerConfig.ACKS_CONFIG, "all");
 
-        // Apply user-supplied overrides.
+        // User overrides go on first so that the reserved properties below always win.
+        // Validation rejects an attempt to set a reserved property, so reaching here
+        // with one is not expected - this ordering just means the resulting client is
+        // still correct if validation is ever bypassed.
         if (definition.getProducerConfig() != null) {
             props.putAll(definition.getProducerConfig());
         }
 
-        return new KafkaProducer<>(props);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+        props.put(ProducerConfig.ACKS_CONFIG, "all");
+
+        return props;
     }
 
     private static KafkaConsumer<String, byte[]> createConsumer(final String queueName,
                                                                 final QueueDefinition definition) {
+        return new KafkaConsumer<>(buildConsumerProperties(queueName, definition));
+    }
+
+    static Properties buildConsumerProperties(final String queueName,
+                                              final QueueDefinition definition) {
         final Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 requireNonBlank(definition.getBootstrapServers(), "definition.bootstrapServers"));
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        // Defaults that callers may legitimately override.
         props.put(ConsumerConfig.GROUP_ID_CONFIG, DEFAULT_CONSUMER_GROUP_PREFIX + queueName);
-        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "1");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-        // Apply user-supplied overrides (may override group.id etc.).
+        // User overrides go on next so that the reserved properties below always win.
+        // Validation rejects an attempt to set a reserved property, so reaching here
+        // with one is not expected - this ordering just means the resulting client is
+        // still correct if validation is ever bypassed.
         if (definition.getConsumerConfig() != null) {
             props.putAll(definition.getConsumerConfig());
         }
 
-        return new KafkaConsumer<>(props);
+        // Reserved: the code depends on these values.
+        //   max.poll.records   next() returns a single record and discards the rest of
+        //                      the batch, so anything above 1 silently skips records.
+        //   enable.auto.commit acknowledgement is explicit; auto-commit would commit
+        //                      offsets for records that have not been processed.
+        //   deserializers      the codec requires a String key and byte[] value.
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "1");
+
+        return props;
     }
 
     private static String requireNonBlank(final String value,

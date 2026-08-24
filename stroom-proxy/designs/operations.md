@@ -306,6 +306,15 @@ queues:
 | `producer` | No | Additional Kafka producer properties |
 | `consumer` | No | Additional Kafka consumer properties |
 
+Some properties are **reserved** — the proxy sets them and configuration that
+tries to override them is rejected at startup with `QUEUE_RESERVED_PROPERTY`:
+`max.poll.records`, `enable.auto.commit`, the key/value deserialisers, `acks`
+and the key/value serialisers. Each one breaks the queue in a way that is hard
+to observe, so it fails loudly rather than being quietly discarded — see
+[infrastructure/queues.md §4.2](infrastructure/queues.md#42-configuration).
+Everything else, including `group.id`, `auto.offset.reset` and all transport and
+security settings, is passed through untouched.
+
 ---
 
 ## File Store Types

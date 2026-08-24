@@ -18,6 +18,7 @@ package stroom.proxy.app.pipeline.config;
 
 import stroom.proxy.app.pipeline.queue.QueueDefinition;
 import stroom.proxy.app.pipeline.queue.QueueType;
+import stroom.proxy.app.pipeline.queue.kafka.KafkaFileGroupQueue;
 import stroom.proxy.app.pipeline.runtime.PipelineStageName;
 import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
 import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Validator for the reference-message proxy pipeline configuration.
@@ -56,6 +58,7 @@ public class ProxyPipelineConfigValidator {
     public static final String CODE_QUEUE_DEFINITION_NULL = "QUEUE_DEFINITION_NULL";
     public static final String CODE_FILE_STORE_DEFINITION_NULL = "FILE_STORE_DEFINITION_NULL";
     public static final String CODE_QUEUE_DEFINITION_INVALID = "QUEUE_DEFINITION_INVALID";
+    public static final String CODE_QUEUE_RESERVED_PROPERTY = "QUEUE_RESERVED_PROPERTY";
     public static final String CODE_STAGE_MISSING_INPUT_QUEUE = "STAGE_MISSING_INPUT_QUEUE";
     public static final String CODE_STAGE_MISSING_OUTPUT_QUEUE = "STAGE_MISSING_OUTPUT_QUEUE";
     public static final String CODE_STAGE_MISSING_SPLIT_ZIP_QUEUE = "STAGE_MISSING_SPLIT_ZIP_QUEUE";
@@ -142,6 +145,7 @@ public class ProxyPipelineConfigValidator {
                             CODE_QUEUE_DEFINITION_INVALID,
                             "Kafka queue definitions must set both topic and bootstrapServers"));
                 }
+                validateReservedKafkaProperties(queueName, queueDefinition, issues);
             }
             case SQS -> {
                 if (!queueDefinition.isSqsConfigValid()) {
@@ -152,6 +156,56 @@ public class ProxyPipelineConfigValidator {
                 }
             }
         }
+    }
+
+    /**
+     * Reject attempts to override Kafka properties the implementation depends on.
+     * <p>
+     * These are forced to their required values when the client is built, so an
+     * override would otherwise be accepted and then quietly discarded. Each one also
+     * fails invisibly if it did take effect - most sharply {@code max.poll.records},
+     * where {@code next()} returns one record per poll and drops the rest of the
+     * batch, silently skipping them until the consumer restarts or rebalances.
+     * </p>
+     */
+    private void validateReservedKafkaProperties(final String queueName,
+                                                 final QueueDefinition queueDefinition,
+                                                 final List<PipelineValidationIssue> issues) {
+        addReservedPropertyIssues(
+                queueName,
+                "consumer",
+                queueDefinition.getConsumerConfig(),
+                KafkaFileGroupQueue.RESERVED_CONSUMER_PROPERTIES,
+                issues);
+
+        addReservedPropertyIssues(
+                queueName,
+                "producer",
+                queueDefinition.getProducerConfig(),
+                KafkaFileGroupQueue.RESERVED_PRODUCER_PROPERTIES,
+                issues);
+    }
+
+    private void addReservedPropertyIssues(final String queueName,
+                                           final String blockName,
+                                           final Map<String, String> suppliedConfig,
+                                           final Set<String> reservedProperties,
+                                           final List<PipelineValidationIssue> issues) {
+        if (suppliedConfig == null || suppliedConfig.isEmpty()) {
+            return;
+        }
+
+        suppliedConfig.keySet()
+                .stream()
+                .filter(reservedProperties::contains)
+                .sorted()
+                .forEach(property -> issues.add(PipelineValidationIssue.errorForQueue(
+                        queueName,
+                        CODE_QUEUE_RESERVED_PROPERTY,
+                        "Kafka property '" + property + "' is set by the proxy and must not be "
+                        + "overridden under '" + blockName + "' for queue '" + queueName
+                        + "'. Reserved " + blockName + " properties: "
+                        + reservedProperties.stream().sorted().collect(Collectors.joining(", ")))));
     }
 
     private void validateFileStoreDefinitions(final Map<String, FileStoreDefinition> fileStores,

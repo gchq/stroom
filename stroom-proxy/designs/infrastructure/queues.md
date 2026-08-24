@@ -363,21 +363,40 @@ pipeline:
         compression.type: "lz4"
 ```
 
-The queue sets these itself before applying your overrides, so anything in
-`producer:`/`consumer:` takes precedence:
+#### Reserved properties
 
-| Property | Value set | Why |
+These are set by the queue and **cannot be overridden**. Supplying any of them
+under `producer:`/`consumer:` is a `QUEUE_RESERVED_PROPERTY` validation error,
+which halts startup:
+
+| Property | Value | Why it is reserved |
 |---|---|---|
-| `acks` | `all` | Producer durability |
-| `key.serializer` / `value.serializer` | String / ByteArray | Key is the file group id, value is JSON bytes |
-| `enable.auto.commit` | `false` | Offsets are committed explicitly in `acknowledge()` |
+| `max.poll.records` | `1` | `next()` returns one record per poll and discards the rest of the batch, so anything higher silently skips records until the consumer restarts or rebalances |
+| `enable.auto.commit` | `false` | Acknowledgement is explicit; auto-commit would commit offsets for records that have not been processed |
+| `key.deserializer` / `value.deserializer` | String / ByteArray | The codec requires a String key and `byte[]` value |
+| `acks` | `all` | A weaker setting lets a publish report success before the record is durably replicated, breaking the no-data-loss guarantee at the point the ownership-transfer contract assumes the message is safe |
+| `key.serializer` / `value.serializer` | String / ByteArray | Counterpart to the deserialisers |
+
+They were previously applied *before* user overrides, so an override took effect
+and was neither honoured visibly nor rejected. They are now applied last as well
+as validated, so the built client is correct even if validation is bypassed.
+
+#### Overridable defaults
+
+Set by the queue but yours to change:
+
+| Property | Default | Notes |
+|---|---|---|
 | `group.id` | `stroom-proxy-<queueName>` | Override when two pipelines share a cluster |
-| `max.poll.records` | `1` | Matches the single-item `next()` contract |
 | `auto.offset.reset` | `earliest` | A new consumer group picks up the existing backlog |
+
+Anything not listed above — `security.protocol`, `sasl.*`, `ssl.*`, `fetch.*`,
+`session.timeout.ms`, `max.poll.interval.ms`, `compression.type` and so on — is
+passed through untouched.
 
 Credentials and TLS are not modelled as first-class config — supply them as
 Kafka properties under `producer:`/`consumer:` (`security.protocol`,
-`sasl.jaas.config`, and so on).
+`sasl.jaas.config`, and so on). None of those are reserved.
 
 ### 4.3 Key Design Decisions
 
