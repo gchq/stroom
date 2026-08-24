@@ -17,6 +17,7 @@
 package stroom.util.shared.time;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -78,6 +79,7 @@ public class SimpleDuration {
      * server agree. Use {@code SimpleDurationUtil.plus/minus} for real date arithmetic — those
      * work in calendar terms and are exact.
      */
+    @JsonIgnore
     public long getApproxMillis() {
         if (timeUnit == null) {
             return 0L;
