@@ -96,7 +96,27 @@ data/pipeline/queues/<queueName>/       # FileGroupQueueFactory, DEFAULT_QUEUE_R
 data/pipeline/file-stores/<storeName>/  # FileStoreFactory, DEFAULT_FILE_STORE_ROOT
   <writerId>/                           # per-writer subtree — see below
   writing/<writerId>/                   # uncommitted writes
+
 ```
+
+Split-zip staging is the exception: it lives under the **configured temp
+directory**, not the data directory.
+
+```
+<path.temp>/pipeline/splitZip/          # split-zip staging, cleared at startup
+  split-zip-<n>/                        # one in-progress split
+```
+
+Temp is the right home for it — the data is transient, deleted as soon as the
+split completes, and the directory is cleared at startup — and being
+memory-backed is usually an advantage for a copy-heavy operation. What matters is
+that it resolves through `TempDirProvider` and therefore honours `path.temp`,
+rather than going to `java.io.tmpdir` outside the proxy's configured paths where
+nothing cleaned it.
+
+One sizing note: the *whole* split of a multi-feed file group lands there before
+any of it is committed. If `path.temp` resolves to a small tmpfs and your file
+groups are large, point it at disk.
 
 `LocalFileGroupQueue` uses `Files.move(ATOMIC_MOVE)` from `pending/` to
 `in-flight/` as a lock-free competing-consumer claim, which is what makes
@@ -168,6 +188,7 @@ Useful when diagnosing a proxy that is filling its disk:
 | `data/pipeline/queues/*/in-flight` | Workers are stuck, or a process died mid-item | Startup recovery moves them back to `pending` |
 | `data/pipeline/queues/*/failed` | Processors are throwing | Never automatically |
 | `data/pipeline/file-stores/*` | Normal transit | The consuming stage deletes after ownership transfer |
+| `<path.temp>/pipeline/splitZip` | A split is in progress | Deleted when the split finishes, and the whole directory is cleared at startup |
 | `21_pre_aggregates` | Aggregates are open and not yet aged out | `closeOldAggregates` closes them |
 | `50_forwarding/*/02_retry` | A destination is unreachable | Destination recovers, or `maxRetryAge` expires |
 | `50_forwarding/*/03_failure` | Terminal forward failures | **Never** — manual intervention only |

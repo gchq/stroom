@@ -301,7 +301,8 @@ class TestProxyPipelineAssembler extends StroomUnitTest {
             stageProcessors.put(PipelineStageName.SPLIT_ZIP,
                     new SplitZipStageProcessor(fileStoreRegistry, splitStore,
                             preAggregateInputQueue, sourceNodeId,
-                            (sourceDir, outputParentDir) -> { /* pass-through */ }));
+                            (sourceDir, outputParentDir) -> { /* pass-through */ },
+                            testDir.resolve("split-tmp")));
 
             // Build the runtime
             this.runtime = ProxyPipelineRuntime.fromConfig(

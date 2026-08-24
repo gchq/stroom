@@ -61,7 +61,8 @@ class TestSplitZipStageProcessor extends StroomUnitTest {
         };
 
         final SplitZipStageProcessor processor = new SplitZipStageProcessor(
-                registry, outputStore, outputQueue, "test-node", stubSplit);
+                registry, outputStore, outputQueue, "test-node", stubSplit,
+                getCurrentTestDir().resolve("split-tmp"));
 
         final FileGroupQueueItem item = createItem(outputQueue.getName(), inputLocation);
         processor.process(item);
@@ -101,7 +102,8 @@ class TestSplitZipStageProcessor extends StroomUnitTest {
         };
 
         final SplitZipStageProcessor processor = new SplitZipStageProcessor(
-                registry, outputStore, outputQueue, "test-node", stubSplit);
+                registry, outputStore, outputQueue, "test-node", stubSplit,
+                getCurrentTestDir().resolve("split-tmp"));
 
         final FileGroupQueueItem item = createItem(outputQueue.getName(), inputLocation);
         processor.process(item);
@@ -127,7 +129,8 @@ class TestSplitZipStageProcessor extends StroomUnitTest {
         };
 
         final SplitZipStageProcessor processor = new SplitZipStageProcessor(
-                registry, outputStore, outputQueue, "test-node", stubSplit);
+                registry, outputStore, outputQueue, "test-node", stubSplit,
+                getCurrentTestDir().resolve("split-tmp"));
 
         // Create an item with a traceId.
         final FileGroupQueueMessage inputMessage = FileGroupQueueMessage.create(
@@ -162,7 +165,8 @@ class TestSplitZipStageProcessor extends StroomUnitTest {
                 getCurrentTestDir().resolve("nonexistent"));
 
         final SplitZipStageProcessor processor = new SplitZipStageProcessor(
-                registry, outputStore, outputQueue, "test-node", (s, o) -> {});
+                registry, outputStore, outputQueue, "test-node", (s, o) -> {},
+                getCurrentTestDir().resolve("split-tmp"));
 
         final FileGroupQueueItem item = createItem(outputQueue.getName(), fakeLocation);
 
@@ -186,7 +190,8 @@ class TestSplitZipStageProcessor extends StroomUnitTest {
         };
 
         final SplitZipStageProcessor processor = new SplitZipStageProcessor(
-                registry, outputStore, outputQueue, "test-node", failingSplit);
+                registry, outputStore, outputQueue, "test-node", failingSplit,
+                getCurrentTestDir().resolve("split-tmp"));
 
         final FileGroupQueueItem item = createItem(outputQueue.getName(), inputLocation);
 

@@ -72,6 +72,7 @@ import stroom.util.cert.CertificateExtractor;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.http.HttpClientFactory;
 import stroom.util.io.PathCreator;
+import stroom.util.io.TempDirProvider;
 import stroom.util.shared.BuildInfo;
 
 import com.codahale.metrics.MetricRegistry;
@@ -146,6 +147,7 @@ public class ProxyCoreModule extends AbstractModule {
                                                          final SimpleReceiver simpleReceiver,
                                                          final ZipReceiver zipReceiver,
                                                          final PathCreator pathCreator,
+                                                         final TempDirProvider tempDirProvider,
                                                          final MetricRegistry metricRegistry) {
         final ProxyPipelineAssembler assembler = new ProxyPipelineAssembler(
                 proxyConfig.getPipelineConfig(),
@@ -155,7 +157,8 @@ public class ProxyCoreModule extends AbstractModule {
                 forwarder,
                 simpleReceiver,
                 zipReceiver,
-                pathCreator);
+                pathCreator,
+                tempDirProvider);
 
         // Register pipeline metrics after assembly.
         PipelineMetricsRegistrar.register(assembler.getRuntime(), metricRegistry);

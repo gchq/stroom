@@ -353,7 +353,8 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
             stageProcessors.put(PipelineStageName.SPLIT_ZIP,
                     new SplitZipStageProcessor(fileStoreRegistry, splitStore,
                             preAggregateInputQueue, "test-node",
-                            (sourceDir, outputParentDir) -> { /* no-op */ }));
+                            (sourceDir, outputParentDir) -> { /* no-op */ },
+                            testDir.resolve("split-tmp")));
 
             this.runtime = ProxyPipelineRuntime.fromConfig(
                     config, queueFactory, fileStoreFactory, stageProcessors);

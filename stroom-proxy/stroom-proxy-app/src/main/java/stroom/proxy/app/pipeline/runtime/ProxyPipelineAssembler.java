@@ -41,6 +41,7 @@ import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageProcessor;
 import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.proxy.repo.FeedKey;
 import stroom.util.io.PathCreator;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -87,6 +88,18 @@ public class ProxyPipelineAssembler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyPipelineAssembler.class);
 
+    /**
+     * Split-zip staging, relative to the proxy's configured temp directory.
+     * <p>
+     * Temp is the right home for it: the data is transient, deleted as soon as the
+     * split completes, and the stage clears the directory at startup. Resolving it
+     * through {@link TempDirProvider} rather than {@code java.io.tmpdir} means it
+     * honours {@code path.temp}, so an operator can point it at memory-backed
+     * storage for speed or at disk when file groups are large.
+     * </p>
+     */
+    static final String SPLIT_ZIP_TEMP_SUBDIR = "pipeline/splitZip";
+
     private final ReceiverFactory receiverFactory;
     private final ProxyPipelineLifecycle lifecycle;
     private final ProxyPipelineRuntime runtime;
@@ -102,6 +115,8 @@ public class ProxyPipelineAssembler {
      * @param simpleReceiver The production simple (non-zip) receiver.
      * @param zipReceiver    The production zip receiver.
      * @param pathCreator    Path resolver for queue and file-store paths.
+     * @param tempDirProvider Resolves the proxy's configured temp directory, used
+     *                        for transient split-zip staging.
      */
     public ProxyPipelineAssembler(final ProxyPipelineConfig pipelineConfig,
                                   final ProxyId proxyId,
@@ -110,7 +125,8 @@ public class ProxyPipelineAssembler {
                                   final Forwarder forwarder,
                                   final SimpleReceiver simpleReceiver,
                                   final ZipReceiver zipReceiver,
-                                  final PathCreator pathCreator) {
+                                  final PathCreator pathCreator,
+                                  final TempDirProvider tempDirProvider) {
 
         Objects.requireNonNull(pipelineConfig, "pipelineConfig");
         Objects.requireNonNull(proxyId, "proxyId");
@@ -120,6 +136,7 @@ public class ProxyPipelineAssembler {
         Objects.requireNonNull(simpleReceiver, "simpleReceiver");
         Objects.requireNonNull(zipReceiver, "zipReceiver");
         Objects.requireNonNull(pathCreator, "pathCreator");
+        Objects.requireNonNull(tempDirProvider, "tempDirProvider");
 
         final String sourceNodeId = proxyId.getId();
 
@@ -220,7 +237,8 @@ public class ProxyPipelineAssembler {
                                     attributeMap,
                                     allowedEntries,
                                     outputParentDir);
-                        }));
+                        },
+                        tempDirProvider.get().resolve(SPLIT_ZIP_TEMP_SUBDIR)));
 
         // 4. Build the runtime with all stage processors.
         this.runtime = ProxyPipelineRuntime.fromConfig(

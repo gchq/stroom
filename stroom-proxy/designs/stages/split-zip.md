@@ -91,7 +91,25 @@ sequenceDiagram
 
 1. **Resolve input** — Uses `FileStoreRegistry` to resolve the input message's `FileStoreLocation` to a local directory path. Validates it is a directory.
 
-2. **Create temp directory** — Creates a temporary directory for split outputs using `Files.createTempDirectory("split-zip-")`.
+2. **Create staging directory** — Creates `split-zip-<n>` under
+   `<path.temp>/pipeline/splitZip`, resolved through `TempDirProvider`.
+
+   Temp is the correct home for this data: it is purely transient, deleted as soon
+   as the split completes, and never needs to survive a restart. Being
+   memory-backed is usually an advantage for what is a copy-heavy operation.
+
+   What matters is that it goes through `TempDirProvider` rather than
+   `java.io.tmpdir` directly, so it honours the proxy's `path.temp` setting. Using
+   the raw system temp directory put staging outside the proxy's configured paths,
+   where nothing cleaned it after a hard kill and no operator would think to look.
+
+   The stage clears its staging root at startup, as `CleanupDirQueue` does for
+   `99_deleting`, so an ungraceful stop cannot leave directories accumulating. The
+   root must therefore not be shared with another proxy process.
+
+   **Sizing.** The *whole* split of a multi-feed file group lands here before any
+   of it is committed. If `path.temp` resolves to a small tmpfs and your file
+   groups are large, point `path.temp` at disk.
 
 3. **Delegate splitting** — Calls `splitFunction.split(sourceDir, tempSplitDir)`. The function writes one child directory per feed into `tempSplitDir`.
 

@@ -26,6 +26,7 @@ import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
 import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import stroom.proxy.app.pipeline.store.FileStoreWrite;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -68,6 +69,26 @@ public class SplitZipStageProcessor implements FileGroupQueueItemProcessor {
     private final SplitFunction splitFunction;
 
     /**
+     * Where split output is staged, supplied from the proxy's configured temp
+     * directory rather than {@code java.io.tmpdir} directly.
+     * <p>
+     * Temp is the right home for this data - it is transient, deleted as soon as the
+     * split completes, and never needs to survive a restart - and memory-backed
+     * storage is usually an advantage for a copy-heavy operation. The point of
+     * resolving it through {@code TempDirProvider} is that it then honours
+     * {@code path.temp}: using the raw system temp directory put staging outside the
+     * proxy's configured paths, where nothing cleaned up after a hard kill and no
+     * operator would think to look.
+     * </p>
+     * <p>
+     * Sizing is the caller's decision. The whole split of a multi-feed file group
+     * lands here before any of it is committed, so a deployment with large file
+     * groups and a small tmpfs should point {@code path.temp} at disk.
+     * </p>
+     */
+    private final Path tempRoot;
+
+    /**
      * Functional interface for the actual zip-splitting logic.
      * <p>
      * This allows production code to delegate to the existing
@@ -103,17 +124,41 @@ public class SplitZipStageProcessor implements FileGroupQueueItemProcessor {
      * @param sourceNodeId      Node identifier for message provenance.
      * @param splitFunction     The function that performs the actual zip
      *                          splitting.
+     * @param tempRoot          Directory under which split output is staged, from
+     *                          the proxy's configured temp directory. Must be sized
+     *                          for the largest file group and must not be shared
+     *                          with another proxy process - stale contents are
+     *                          cleared here.
      */
     public SplitZipStageProcessor(final FileStoreRegistry fileStoreRegistry,
                                    final FileStore outputStore,
                                    final FileGroupQueue outputQueue,
                                    final String sourceNodeId,
-                                   final SplitFunction splitFunction) {
+                                   final SplitFunction splitFunction,
+                                   final Path tempRoot) {
         this.fileStoreRegistry = Objects.requireNonNull(fileStoreRegistry, "fileStoreRegistry");
         this.outputStore = Objects.requireNonNull(outputStore, "outputStore");
         this.outputQueue = Objects.requireNonNull(outputQueue, "outputQueue");
         this.sourceNodeId = Objects.requireNonNull(sourceNodeId, "sourceNodeId");
         this.splitFunction = Objects.requireNonNull(splitFunction, "splitFunction");
+        this.tempRoot = Objects.requireNonNull(tempRoot, "tempRoot").toAbsolutePath().normalize();
+
+        FileUtil.ensureDirExists(this.tempRoot);
+
+        // A hard kill leaves a staging directory behind - the finally block in
+        // process() only covers an orderly failure. Clear them at startup, as
+        // CleanupDirQueue does for its own delete area, so they cannot accumulate.
+        FileUtil.deleteContents(this.tempRoot);
+
+        LOGGER.info(() -> LogUtil.message(
+                "Split-zip stage staging split output under {}", this.tempRoot));
+    }
+
+    /**
+     * @return The directory under which split output is staged.
+     */
+    public Path getTempRoot() {
+        return tempRoot;
     }
 
     @Override
@@ -133,7 +178,7 @@ public class SplitZipStageProcessor implements FileGroupQueueItemProcessor {
         }
 
         // 2. Create a temporary directory for split outputs.
-        final Path tempSplitDir = Files.createTempDirectory("split-zip-");
+        final Path tempSplitDir = Files.createTempDirectory(tempRoot, "split-zip-");
 
         try {
             // 3. Delegate to the split function.
