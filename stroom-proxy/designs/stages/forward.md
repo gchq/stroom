@@ -153,7 +153,37 @@ The critical ordering is:
 2. **Then** delete input (done by `ForwardStageProcessor`)
 3. **Then** acknowledge input message (done by `FileGroupQueueWorker`)
 
-If a crash occurs after some destinations but not all, the input message is redelivered. Some destinations may receive duplicates (at-least-once), but no destination misses data.
+If a crash occurs after some destinations but not all, the input message is
+redelivered. No destination misses data; delivery is at-least-once, so some may
+see duplicates.
+
+#### Destination Isolation
+
+A retry must not re-deliver to destinations that already succeeded. The fan-out
+aborts at the first failing destination and the worker fails the whole item, so
+without isolation a single unreachable destination would restart the loop and
+copy the file group to every healthy destination again — and again on every
+retry. Measured against a permanently failing destination and no retry backoff,
+that produced over a thousand duplicate deliveries per second from one file
+group, plus an orphaned copy in the failing destination's store per attempt.
+
+Destinations already delivered for a given `fileGroupId` are therefore recorded
+and skipped on retry. The record is:
+
+- **In memory only.** Losing it across a restart re-delivers, which at-least-once
+  permits. Making it durable would buy exactly-once, which is not the contract.
+- **Written only after that destination's `publish()` returns**, so a skipped
+  destination provably holds both the data and its queue message.
+- **Discarded once every destination succeeds** — the message is about to be
+  acknowledged and will not come back.
+- **Bounded** by `MAX_TRACKED_FILE_GROUPS` (10,000) and a one-hour expiry.
+  Entries exist only for partially-complete fan-outs, so this is normally near
+  empty; eviction costs at most a duplicate delivery.
+
+The failing destination still accumulates one committed-but-unpublished file
+group per attempt in its own store — the ordinary orphan case, now bounded by
+the retry backoff rather than unbounded. See
+[../future-work.md §10](../future-work.md#10-orphaned-file-cleanup).
 
 ## 6. Destination Message Attributes
 

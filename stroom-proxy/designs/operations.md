@@ -779,16 +779,35 @@ while (running and not interrupted):
     result = worker.processNext()   // next() → process → acknowledge / fail
     if result is noItem:
         sleep(100ms)                // Empty-poll backoff, all queue types
-    // processed and failed items loop immediately, with no delay
+    else if result is failed:
+        consecutiveFailures++
+        sleep(min(1s << (consecutiveFailures-1), 30s))   // Failure backoff
+    else:
+        consecutiveFailures = 0     // Processed — loop immediately
   on IOException or RuntimeException:
     sleep(1s)                       // Error backoff
 ```
 
 The empty-poll backoff applies to **every** queue type, not just local queues.
 For SQS it is additive to the long poll, so an idle SQS stage waits `waitTime`
-plus 100 ms per cycle — negligible against a 20-second long poll. Both backoffs
-are `PipelineStageRunner.DEFAULT_EMPTY_POLL_BACKOFF` (100 ms) and
-`DEFAULT_ERROR_BACKOFF` (1 s); neither is currently exposed as configuration.
+plus 100 ms per cycle — negligible against a 20-second long poll.
+
+**The failure backoff is what stops a stuck message becoming a hot loop.**
+`item.fail()` puts the message straight back on the queue, so with no delay a
+message that can never succeed is retried as fast as the thread can run. In most
+stages that just burns a core; in the forward stage each attempt copies the file
+group to every healthy destination, so one unreachable destination previously
+produced over a thousand duplicate deliveries per second.
+
+The consecutive-failure count is per thread, not per message, so a stuck item is
+retried about once per interval *per consumer thread*. Raising `consumerThreads`
+therefore raises the retry rate for stuck items as well as the throughput for
+healthy ones.
+
+All four delays are `PipelineStageRunner` constants —
+`DEFAULT_EMPTY_POLL_BACKOFF` (100 ms), `DEFAULT_FAILURE_BACKOFF` (1 s),
+`DEFAULT_MAX_FAILURE_BACKOFF` (30 s) and `DEFAULT_ERROR_BACKOFF` (1 s) — and none
+is currently exposed as configuration.
 
 ### Thread Counts
 

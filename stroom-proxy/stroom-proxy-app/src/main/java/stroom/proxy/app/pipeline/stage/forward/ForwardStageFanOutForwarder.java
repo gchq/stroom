@@ -22,6 +22,12 @@ import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
 import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import stroom.proxy.app.pipeline.store.FileStoreWrite;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -30,10 +36,13 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Fan-out adapter for the reference-message forward stage.
@@ -59,22 +68,51 @@ import java.util.Objects;
  * acknowledgement remains owned by {@link FileGroupQueueWorker}.
  * </p>
  * <p>
- * Publication is at-least-once. If copying/publishing succeeds for one
- * destination and then a later destination fails, the input queue item will be
- * failed by the worker and retried. That can publish duplicate destination work
- * unless a later idempotency layer suppresses duplicates.
+ * Publication is at-least-once, so a destination may legitimately receive the same
+ * file group more than once. What must not happen is <em>amplification</em>: one
+ * unreachable destination causing the whole fan-out to be retried, re-delivering to
+ * every destination that already succeeded. With no retry backoff that produced
+ * upwards of a thousand duplicate deliveries per second per stuck file group, and an
+ * orphaned copy in the failing destination's store on every attempt.
+ * </p>
+ * <p>
+ * Destinations that have already been delivered for a given file group are therefore
+ * remembered and skipped on retry. The record is in memory only and is deliberately
+ * not durable: losing it across a restart simply re-delivers, which at-least-once
+ * permits. It is recorded only after the destination's publish has returned, so a
+ * skipped destination provably has both the data and its queue message.
  * </p>
  */
 public final class ForwardStageFanOutForwarder implements ForwardStageProcessor.FileGroupForwarder {
+
+    private static final LambdaLogger LOGGER =
+            LambdaLoggerFactory.getLogger(ForwardStageFanOutForwarder.class);
 
     public static final String ATTRIBUTE_FORWARD_DESTINATION = "forwardDestination";
     public static final String ATTRIBUTE_SOURCE_MESSAGE_ID = "sourceMessageId";
     public static final String ATTRIBUTE_SOURCE_QUEUE_NAME = "sourceQueueName";
     public static final String DEFAULT_PRODUCING_STAGE = "forwardFanOut";
 
+    /**
+     * Bounds the delivery record. Entries exist only for file groups whose fan-out is
+     * partially complete, so this is normally near-empty; the cap and expiry stop a
+     * large backlog of failing items from growing it without limit. Eviction costs at
+     * most a duplicate delivery.
+     */
+    static final int MAX_TRACKED_FILE_GROUPS = 10_000;
+    static final Duration TRACKED_FILE_GROUP_TTL = Duration.ofHours(1);
+
     private final List<Destination> destinations;
     private final String producerId;
     private final String producingStage;
+
+    /**
+     * fileGroupId to the names of destinations already delivered for it.
+     */
+    private final Cache<String, Set<String>> deliveredDestinations = Caffeine.newBuilder()
+            .maximumSize(MAX_TRACKED_FILE_GROUPS)
+            .expireAfterWrite(TRACKED_FILE_GROUP_TTL)
+            .build();
 
     public ForwardStageFanOutForwarder(final List<Destination> destinations,
                                        final String producerId) {
@@ -104,9 +142,42 @@ public final class ForwardStageFanOutForwarder implements ForwardStageProcessor.
                                   + "' because source path is not a directory: " + sourceDir);
         }
 
+        final Set<String> alreadyDelivered = deliveredDestinations.getIfPresent(message.fileGroupId());
+
         for (final Destination destination : destinations) {
+            if (alreadyDelivered != null && alreadyDelivered.contains(destination.name())) {
+                LOGGER.debug(() -> LogUtil.message(
+                        "Skipping destination {} for file group {} - already delivered on an "
+                        + "earlier attempt of this message",
+                        destination.name(),
+                        message.fileGroupId()));
+                continue;
+            }
+
             fanOutToDestination(message, sourceDir, destination);
+            recordDelivered(message.fileGroupId(), destination.name());
         }
+
+        // Every destination is done, so the message is about to be acknowledged and
+        // will not be retried. Nothing left to remember.
+        deliveredDestinations.invalidate(message.fileGroupId());
+    }
+
+    private void recordDelivered(final String fileGroupId, final String destinationName) {
+        deliveredDestinations
+                .asMap()
+                .computeIfAbsent(fileGroupId, k -> ConcurrentHashMap.newKeySet())
+                .add(destinationName);
+    }
+
+    /**
+     * @return The destinations recorded as already delivered for a file group.
+     */
+    Set<String> getDeliveredDestinations(final String fileGroupId) {
+        final Set<String> delivered = deliveredDestinations.getIfPresent(fileGroupId);
+        return delivered == null
+                ? Set.of()
+                : Set.copyOf(delivered);
     }
 
     public List<Destination> getDestinations() {

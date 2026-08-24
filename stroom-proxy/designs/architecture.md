@@ -435,6 +435,25 @@ graph TD
     end
 ```
 
-Each `PipelineStageRunner` manages N daemon threads named `stage-<configName>-<n>`. A thread that finds no item sleeps for the empty-poll backoff (100 ms, applied for every queue type); processed and failed items loop straight round with no delay. An `IOException` or `RuntimeException` escaping the worker triggers the error backoff (1 s). Both are constructor parameters defaulting to `DEFAULT_EMPTY_POLL_BACKOFF` and `DEFAULT_ERROR_BACKOFF`, and are not currently exposed as configuration.
+Each `PipelineStageRunner` manages N daemon threads named `stage-<configName>-<n>`, looping with three different delays:
+
+| Outcome | Delay |
+|---|---|
+| No item available | Empty-poll backoff, 100 ms, applied for every queue type |
+| Item processed | None — loop straight round |
+| Item **failed** | Failure backoff: 1 s, doubling per consecutive failure to a 30 s cap, reset by the next success |
+| Exception escaping the worker | Error backoff, 1 s |
+
+The failure backoff matters more than it looks. `item.fail()` returns the message
+to the queue, so without a delay a message that can never succeed is retried as
+fast as the thread can run — thousands of attempts a second, indefinitely. That
+is merely wasteful in most stages, but the forward stage copies the file group to
+every destination on each attempt, so one unreachable destination turned into a
+flood of duplicate deliveries to the healthy ones.
+
+The count is per thread, not per message — the pipeline deliberately holds no
+per-message attempt state — so with N consumer threads a stuck item is retried
+roughly N times per interval rather than once. All four delays are constructor
+parameters with `DEFAULT_*` values and are not exposed as configuration.
 
 Queue backends differ in how long `next()` itself blocks — SQS long-polls for up to `waitTime` (default 20 s), Kafka polls with a 100 ms timeout, and local queues return immediately — but the backoff above is applied on top of all of them.

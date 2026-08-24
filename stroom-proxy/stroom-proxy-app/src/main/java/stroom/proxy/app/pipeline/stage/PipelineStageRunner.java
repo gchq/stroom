@@ -50,11 +50,28 @@ public class PipelineStageRunner implements AutoCloseable {
     public static final Duration DEFAULT_EMPTY_POLL_BACKOFF = Duration.ofMillis(100);
     public static final Duration DEFAULT_ERROR_BACKOFF = Duration.ofSeconds(1);
 
+    /**
+     * First delay after an item fails, doubling up to {@link #DEFAULT_MAX_FAILURE_BACKOFF}
+     * while failures continue and resetting as soon as an item is processed.
+     * <p>
+     * Without this a failed item is retried immediately: {@code fail()} returns it to
+     * the queue and the loop picks it straight back up, so an item that can never
+     * succeed spins a core at thousands of attempts per second. That is merely
+     * wasteful in most stages, but the forward stage does real work per attempt -
+     * copying the file group to every healthy destination - so an unreachable
+     * destination turned into a self-inflicted flood of duplicates downstream.
+     * </p>
+     */
+    public static final Duration DEFAULT_FAILURE_BACKOFF = Duration.ofSeconds(1);
+    public static final Duration DEFAULT_MAX_FAILURE_BACKOFF = Duration.ofSeconds(30);
+
     private final PipelineStageName stageName;
     private final FileGroupQueueWorker worker;
     private final int threadCount;
     private final Duration emptyPollBackoff;
     private final Duration errorBackoff;
+    private final Duration failureBackoff;
+    private final Duration maxFailureBackoff;
 
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final AtomicInteger activeThreadCount = new AtomicInteger(0);
@@ -71,6 +88,22 @@ public class PipelineStageRunner implements AutoCloseable {
                                final int threadCount,
                                final Duration emptyPollBackoff,
                                final Duration errorBackoff) {
+        this(stageName,
+                worker,
+                threadCount,
+                emptyPollBackoff,
+                errorBackoff,
+                DEFAULT_FAILURE_BACKOFF,
+                DEFAULT_MAX_FAILURE_BACKOFF);
+    }
+
+    public PipelineStageRunner(final PipelineStageName stageName,
+                               final FileGroupQueueWorker worker,
+                               final int threadCount,
+                               final Duration emptyPollBackoff,
+                               final Duration errorBackoff,
+                               final Duration failureBackoff,
+                               final Duration maxFailureBackoff) {
         this.stageName = Objects.requireNonNull(stageName, "stageName");
         this.worker = Objects.requireNonNull(worker, "worker");
 
@@ -80,6 +113,8 @@ public class PipelineStageRunner implements AutoCloseable {
         this.threadCount = threadCount;
         this.emptyPollBackoff = Objects.requireNonNull(emptyPollBackoff, "emptyPollBackoff");
         this.errorBackoff = Objects.requireNonNull(errorBackoff, "errorBackoff");
+        this.failureBackoff = Objects.requireNonNull(failureBackoff, "failureBackoff");
+        this.maxFailureBackoff = Objects.requireNonNull(maxFailureBackoff, "maxFailureBackoff");
     }
 
     /**
@@ -197,6 +232,9 @@ public class PipelineStageRunner implements AutoCloseable {
                 threadName,
                 stageName.getConfigName()));
 
+        // Consecutive failures on this thread, driving the failure backoff below.
+        int consecutiveFailures = 0;
+
         try {
             while (running.get() && !Thread.currentThread().isInterrupted()) {
                 try {
@@ -204,9 +242,26 @@ public class PipelineStageRunner implements AutoCloseable {
 
                     if (result.isNoItem()) {
                         sleepUninterruptibly(emptyPollBackoff);
+
+                    } else if (result.isFailed()) {
+                        consecutiveFailures++;
+                        final int failureCount = consecutiveFailures;
+                        final Duration delay = failureBackoffFor(failureCount);
+
+                        LOGGER.debug(() -> LogUtil.message(
+                                "Consumer thread {} in stage {} had {} consecutive failure(s), "
+                                + "backing off for {}",
+                                threadName,
+                                stageName.getConfigName(),
+                                failureCount,
+                                delay));
+
+                        sleepUninterruptibly(delay);
+
+                    } else {
+                        // Processed successfully - clear the backoff and loop immediately.
+                        consecutiveFailures = 0;
                     }
-                    // Processed and failed items loop immediately to pick up
-                    // the next item without delay.
 
                 } catch (final IOException e) {
                     LOGGER.error(() -> LogUtil.message(
@@ -233,6 +288,32 @@ public class PipelineStageRunner implements AutoCloseable {
                     threadName,
                     stageName.getConfigName()));
         }
+    }
+
+    /**
+     * Exponential backoff, doubling per consecutive failure and capped at
+     * {@code maxFailureBackoff}.
+     * <p>
+     * The count is per thread, not per item - the pipeline deliberately does not
+     * track per-message attempt counts. With several consumer threads a poison item
+     * can therefore still be retried once per thread per backoff period, which
+     * bounds the rate at roughly {@code threadCount} attempts per interval rather
+     * than eliminating retries entirely.
+     * </p>
+     */
+    private Duration failureBackoffFor(final int consecutiveFailures) {
+        if (consecutiveFailures <= 1) {
+            return failureBackoff;
+        }
+
+        final int doublings = Math.min(consecutiveFailures - 1, 32);
+        final long millis = failureBackoff.toMillis() << doublings;
+
+        // Guard against overflow from a very long-running failure streak.
+        if (millis <= 0 || millis > maxFailureBackoff.toMillis()) {
+            return maxFailureBackoff;
+        }
+        return Duration.ofMillis(millis);
     }
 
     private void sleepUninterruptibly(final Duration duration) {

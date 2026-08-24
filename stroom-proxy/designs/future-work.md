@@ -110,44 +110,29 @@ Options for scaling a single stage across processes on local storage:
 In practice, multi-process deployments should use SQS or Kafka — see
 [deployments/split-stage-workers.yml](deployments/split-stage-workers.yml).
 
-### 6. Fan-Out Retry Amplifies Duplicates to Healthy Destinations
+### 6. Per-Destination Delivery State Is Not Durable
 
-**Priority**: Medium
+**Priority**: Low
 
-Duplicates on redelivery are expected — the pipeline is at-least-once by design
-(see [architecture.md §3.4](architecture.md#34-at-least-once-delivery-not-exactly-once)).
-Multi-destination forwarding is the one place where that cost is *amplified*
-rather than merely accepted.
+A fan-out retry no longer re-delivers to destinations that already succeeded —
+see [stages/forward.md](stages/forward.md). The record of which destinations are
+done is held in memory, so it is lost on restart and a destination may then see a
+duplicate.
 
-`ForwardStageFanOutForwarder.forward()` loops the destinations, committing and
-publishing to each in turn. There is no atomicity across the loop, so a failure
-at destination N leaves destinations 1..N-1 already delivered. The whole
-`process()` then fails, the source message is redelivered, and the loop restarts
-from the top. Measured with two destinations, one permanently failing, over
-three attempts:
+That is deliberate: at-least-once permits duplicates, and making the record
+durable would amount to exactly-once delivery, which the pipeline explicitly does
+not attempt. It is noted here only so the limit is written down rather than
+discovered.
 
-| | Result |
-|---|---|
-| Attempts that threw | 3 |
-| Messages on the healthy destination's queue | 3 |
-| File groups in the healthy destination's store | 3 |
-| File groups orphaned in the failing destination's store | 3 |
+Two related gaps remain, both bounded rather than eliminated:
 
-So a destination that is down for an hour multiplies traffic to every other
-destination for that hour, and leaks a committed-but-unpublished file group per
-attempt into its own store.
-
-The natural fix is already built and unused: `FileStore.newDeterministicWrite(fileGroupId)`.
-Each destination has its own store, and the fan-out preserves the source
-`fileGroupId`, so a deterministic write per destination would make a retry a
-no-op for destinations that already succeeded — turning unbounded amplification
-back into ordinary at-least-once behaviour. It would also stop the orphan
-accumulation, since the retry would re-derive the existing path instead of
-committing a fresh copy.
-
-Note this does **not** apply to split-zip, whose re-published splits get fresh
-random `fileGroupId`s and so have no stable key to deduplicate on. Giving splits
-a derived, stable id would be a prerequisite for the same treatment there.
+- The failing destination still accumulates one committed-but-unpublished file
+  group per attempt in its own store. Ordinary orphan behaviour, now at the
+  retry-backoff rate rather than unbounded — see §10.
+- Split-zip re-publishes assign fresh random `fileGroupId`s to each split, so
+  duplicate splits carry no stable key and cannot be correlated with the
+  originals. Giving splits a derived, stable id would be a prerequisite for
+  treating them the same way.
 
 ---
 

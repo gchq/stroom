@@ -230,6 +230,8 @@ stateDiagram-v2
 |---|---|---|
 | `threadCount` | From config | Number of consumer threads |
 | `emptyPollBackoff` | 100ms | Sleep duration when queue is empty |
+| `failureBackoff` | 1s | First sleep after an item fails; doubles per consecutive failure |
+| `maxFailureBackoff` | 30s | Ceiling for the failure backoff |
 | `errorBackoff` | 1s | Sleep duration after unhandled error |
 
 Threads are daemon threads named `stage-<configName>-<n>`.
