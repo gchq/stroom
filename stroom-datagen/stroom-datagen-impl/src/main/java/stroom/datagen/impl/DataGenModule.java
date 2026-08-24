@@ -30,6 +30,16 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
+/**
+ * Guice bindings for the data generator: its document store, REST resource, audit logging, and the
+ * scheduled job that runs the generators.
+ * <p>
+ * The "Data Generator" job is bound disabled and marked advanced, since generating data is not
+ * something a normal installation should be doing until an admin asks for it. Scheduling itself is
+ * borrowed from the analytics module, so a data generator is driven by an
+ * {@code ExecutionSchedule} exactly as a scheduled analytic rule is.
+ * </p>
+ */
 public class DataGenModule extends AbstractModule {
 
     @Override
@@ -61,6 +71,9 @@ public class DataGenModule extends AbstractModule {
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * Entry point for the scheduled "Data Generator" job: runs every generator that is due.
+     */
     private static class ScheduledDataGenExecutorRunnable extends RunnableWrapper {
 
         @Inject
@@ -74,21 +87,24 @@ public class DataGenModule extends AbstractModule {
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * Runs a single generator immediately, on demand, from the Execution tab of the editor.
+     */
     private static class DataGenExecuteNow implements ExecuteNow {
 
         private final ScheduledExecutorService<DataGenDoc> scheduledExecutorService;
-        private final ScheduledDataGenExecutable scheduledQueryAnalyticExecutor;
+        private final ScheduledDataGenExecutable scheduledDataGenExecutable;
 
         @Inject
         DataGenExecuteNow(final ScheduledExecutorService<DataGenDoc> scheduledExecutorService,
-                          final ScheduledDataGenExecutable scheduledQueryAnalyticExecutor) {
+                          final ScheduledDataGenExecutable scheduledDataGenExecutable) {
             this.scheduledExecutorService = scheduledExecutorService;
-            this.scheduledQueryAnalyticExecutor = scheduledQueryAnalyticExecutor;
+            this.scheduledDataGenExecutable = scheduledDataGenExecutable;
         }
 
         @Override
         public void execute(final ExecutionSchedule executionSchedule) {
-            scheduledExecutorService.executeNow(executionSchedule, scheduledQueryAnalyticExecutor);
+            scheduledExecutorService.executeNow(executionSchedule, scheduledDataGenExecutable);
         }
     }
 }

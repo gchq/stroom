@@ -21,21 +21,21 @@ import stroom.event.logging.api.ObjectInfoProvider;
 
 import event.logging.BaseObject;
 import event.logging.OtherObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * Describes a {@link DataGenDoc} to the event logging service, so that actions on a data generator
+ * appear in the audit log with its name, UUID and description rather than as an opaque object.
+ */
 class DataGenDocObjectInfoProvider implements ObjectInfoProvider {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataGenDocObjectInfoProvider.class);
 
     @Override
     public BaseObject createBaseObject(final Object obj) {
-        final DataGenDoc alertRule = (DataGenDoc) obj;
+        final DataGenDoc dataGenDoc = (DataGenDoc) obj;
         final OtherObject.Builder<Void> builder = OtherObject.builder()
-                .withType(alertRule.getType())
-                .withId(alertRule.getUuid())
-                .withName(alertRule.getName())
-                .withDescription(alertRule.getDescription());
+                .withType(dataGenDoc.getType())
+                .withId(dataGenDoc.getUuid())
+                .withName(dataGenDoc.getName())
+                .withDescription(dataGenDoc.getDescription());
 
         return builder.build();
     }
