@@ -29,6 +29,7 @@ import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
 import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig;
 import stroom.proxy.app.pipeline.store.FileStoreDefinition;
 import stroom.proxy.app.pipeline.store.FileStoreType;
+import stroom.proxy.app.pipeline.store.s3.S3FileStore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +76,7 @@ public class ProxyPipelineConfigValidator {
             "EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE";
     public static final String CODE_S3_FILE_STORE_MISSING_BUCKET = "S3_FILE_STORE_MISSING_BUCKET";
     public static final String CODE_S3_FILE_STORE_MISSING_REGION = "S3_FILE_STORE_MISSING_REGION";
+    public static final String CODE_S3_UNSUPPORTED_CREDENTIALS_TYPE = "S3_UNSUPPORTED_CREDENTIALS_TYPE";
 
     public PipelineValidationResult validate(final ProxyPipelineConfig pipelineConfig) {
         final List<PipelineValidationIssue> issues = new ArrayList<>();
@@ -249,6 +251,22 @@ public class ProxyPipelineConfigValidator {
                         fileStoreName,
                         CODE_S3_FILE_STORE_MISSING_REGION,
                         "S3 file store '" + fileStoreName + "' must have a region"));
+            }
+
+            // Reject an unrecognised credentials type rather than quietly falling back
+            // to the default chain. 'profile' in particular used to be accepted and
+            // behaved almost identically to 'default', so it looked like per-store
+            // profile selection while doing nothing of the sort.
+            final String credentialsType = definition.getEffectiveCredentialsType();
+            if (!S3FileStore.SUPPORTED_CREDENTIALS_TYPES.contains(credentialsType.toLowerCase())) {
+                issues.add(PipelineValidationIssue.errorForFileStore(
+                        fileStoreName,
+                        CODE_S3_UNSUPPORTED_CREDENTIALS_TYPE,
+                        "S3 file store '" + fileStoreName + "' has unsupported credentialsType '"
+                        + credentialsType + "'. Supported types are: "
+                        + S3FileStore.SUPPORTED_CREDENTIALS_TYPES.stream().sorted()
+                                .collect(Collectors.joining(", "))
+                        + ". To select a named AWS profile set AWS_PROFILE in the environment."));
             }
         }
     }

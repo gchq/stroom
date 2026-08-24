@@ -424,7 +424,7 @@ fileStores:
 | `bucket` | For S3 | — | S3 bucket name |
 | `keyPrefix` | No | `{storeName}/` | S3 key prefix |
 | `endpointOverride` | No | — | Override for S3-compatible stores |
-| `credentialsType` | No | `default` | `default`, `basic`, `environment`, `profile` |
+| `credentialsType` | No | `default` | `default` (SDK chain — IRSA, container or instance role), `basic` (static keys, for S3-compatible endpoints), or `environment`. Anything else is a validation error. For a named AWS profile set `AWS_PROFILE` in the environment. |
 | `accessKeyId` | If basic | — | AWS access key (basic credentials only) |
 | `secretAccessKey` | If basic | — | AWS secret key (basic credentials only) |
 | `localCachePath` | No | Derived | Local staging/cache directory |

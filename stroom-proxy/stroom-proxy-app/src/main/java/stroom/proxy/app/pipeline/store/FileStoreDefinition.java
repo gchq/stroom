@@ -126,7 +126,10 @@ public class FileStoreDefinition extends AbstractConfig implements IsProxyConfig
     }
 
     @JsonProperty
-    @JsonPropertyDescription("AWS credentials type: 'default' (SDK chain), 'basic' (access key/secret), 'environment', 'profile'. Defaults to 'default'.")
+    @JsonPropertyDescription("AWS credentials type: 'default' (SDK chain - IRSA, container or instance role), "
+            + "'basic' (static access key/secret, for S3-compatible endpoints such as MinIO) or "
+            + "'environment'. Defaults to 'default'. To select a named profile set AWS_PROFILE "
+            + "in the environment.")
     public String getCredentialsType() {
         return credentialsType;
     }

@@ -351,8 +351,30 @@ flowchart TD
     B -->|"default"| C["DefaultCredentialsProvider\n(SDK chain)"]
     B -->|"basic"| D["StaticCredentialsProvider\n(accessKeyId + secretAccessKey)"]
     B -->|"environment"| E["EnvironmentVariableCredentialsProvider"]
-    B -->|"profile"| F["ProfileCredentialsProvider"]
+    B -->|"anything else"| F["Rejected by validation"]
 ```
+
+**Identity belongs to the workload, not to configuration.** The expected model is
+that a pod, task or instance carries an IAM role scoped to the stages it runs, and
+`default` picks that up through the SDK chain — IRSA/web identity on EKS,
+container credentials on ECS, or the instance profile on EC2. Because stages can
+be split across nodes, each node's role can be scoped to just the stores and
+queues that stage touches, which is finer-grained than per-store credentials in a
+single process would be, and keeps secrets out of the configuration entirely.
+
+`basic` exists for S3-compatible endpoints such as MinIO or LocalStack, which
+have no instance identity and can only be reached with static keys.
+
+> There is deliberately **no `profile` option**. The SDK's
+> `ProfileCredentialsProvider` selects a profile from `AWS_PROFILE` or the
+> `aws.profile` system property rather than from an argument, so a per-store
+> setting could never actually choose a profile — it resolved exactly what
+> `default` resolves while skipping the rest of the chain, which made it look like
+> a per-store choice it was not. Set `AWS_PROFILE` in the environment instead.
+>
+> An unrecognised `credentialsType` is now a `S3_UNSUPPORTED_CREDENTIALS_TYPE`
+> validation error rather than a silent fall-back to the default chain — that
+> fall-back is what previously absorbed `profile`.
 
 For S3-compatible stores (MinIO, LocalStack), set `endpointOverride` which also enables `forcePathStyle(true)`.
 

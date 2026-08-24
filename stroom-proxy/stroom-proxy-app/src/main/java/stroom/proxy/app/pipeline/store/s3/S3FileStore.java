@@ -28,7 +28,6 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -50,6 +49,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
@@ -81,6 +81,10 @@ public class S3FileStore implements FileStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(S3FileStore.class);
 
+
+    /** Recognised values for {@code credentialsType}, lower case. */
+    public static final Set<String> SUPPORTED_CREDENTIALS_TYPES =
+            Set.of("default", "basic", "environment");
 
     private static final String CACHE_DIR_NAME = "cache";
     private static final String STAGING_DIR_NAME = "staging";
@@ -363,9 +367,36 @@ public class S3FileStore implements FileStore {
         return builder.build();
     }
 
+    /**
+     * Build the credentials provider for this store.
+     * <p>
+     * The intended model is that identity belongs to the workload, not to
+     * configuration: a pod, task or instance carries an IAM role scoped to the
+     * stages it runs, and {@code default} picks that up through the SDK chain
+     * (IRSA/web identity, container credentials, or instance profile). Because
+     * stages can be split across nodes, each node's role can be scoped to just the
+     * stores and queues that stage touches, which is finer-grained than per-store
+     * credentials in one process would be - and keeps secrets out of the config.
+     * </p>
+     * <p>
+     * {@code basic} exists for S3-compatible endpoints such as MinIO or LocalStack,
+     * which have no instance identity and can only be reached with static keys.
+     * </p>
+     * <p>
+     * There is deliberately no {@code profile} option. The SDK's
+     * {@code ProfileCredentialsProvider} selects a profile from {@code AWS_PROFILE}
+     * or the {@code aws.profile} system property, not from an argument, so a
+     * per-store setting could not actually choose a profile - it would resolve
+     * exactly what {@code default} already resolves while skipping the rest of the
+     * chain. Set {@code AWS_PROFILE} in the environment instead.
+     * </p>
+     *
+     * @throws IllegalArgumentException If the configured type is not recognised.
+     */
     private static AwsCredentialsProvider buildCredentialsProvider(final FileStoreDefinition definition) {
         final String type = definition.getEffectiveCredentialsType();
         return switch (type.toLowerCase()) {
+            case "default" -> DefaultCredentialsProvider.create();
             case "basic" -> {
                 final String accessKey = requireNonBlank(definition.getAccessKeyId(), "accessKeyId");
                 final String secretKey = requireNonBlank(definition.getSecretAccessKey(), "secretAccessKey");
@@ -373,8 +404,9 @@ public class S3FileStore implements FileStore {
                         AwsBasicCredentials.create(accessKey, secretKey));
             }
             case "environment" -> EnvironmentVariableCredentialsProvider.create();
-            case "profile" -> ProfileCredentialsProvider.create();
-            default -> DefaultCredentialsProvider.create();
+            default -> throw new IllegalArgumentException(
+                    "Unsupported credentialsType '" + type + "' for S3 file store '" + definition.getBucket()
+                    + "'. Supported types are: " + String.join(", ", SUPPORTED_CREDENTIALS_TYPES));
         };
     }
 
