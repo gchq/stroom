@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DeleteConfirmation;
 import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocumentFindRequest;
 import stroom.explorer.shared.ExplorerNode;
@@ -95,6 +96,14 @@ public interface ExplorerService extends Clearable {
     void removeTags(List<DocRef> docRefs, Set<String> tags);
 
     BulkActionResult delete(List<ExplorerNode> explorerNodes);
+
+    /**
+     * Gather the information needed to confirm a delete of the supplied documents: the items contained
+     * within any selected folders that would also be deleted, and the documents outside the selection
+     * that depend on what is being deleted. Contained items and dependants that the current user may
+     * view are returned; the existence of any they may not view is disclosed via flags.
+     */
+    DeleteConfirmation getDeleteConfirmation(List<DocRef> docRefs);
 
     void rebuildTree();
 

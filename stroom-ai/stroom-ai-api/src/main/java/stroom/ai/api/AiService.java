@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.http.HttpClientConfig;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -35,6 +36,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AiService {
+
+    HttpClientConfig getDefaultHttpClientConfig();
 
     // ---------------------------------------------------------------------
     // Model operations
@@ -77,6 +80,10 @@ public interface AiService {
     void updateMessageText(int messageId, String message);
 
     void deleteMessage(int messageId);
+
+    void deleteAttachment(int attachmentId);
+
+    void deleteAllChatMessagesAndAttachments(int chatId);
 
     void verifyOwnership(int chatId);
 

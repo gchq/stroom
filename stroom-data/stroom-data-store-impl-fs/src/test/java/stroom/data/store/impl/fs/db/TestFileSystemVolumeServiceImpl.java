@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,16 @@
 
 package stroom.data.store.impl.fs.db;
 
-
 import stroom.data.store.api.FsVolumeGroupService;
-import stroom.data.store.impl.fs.DataStoreServiceDbConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeGroupDao;
 import stroom.data.store.impl.fs.FsVolumeGroupServiceImpl;
 import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.FsVolumeStateDao;
+import stroom.data.store.impl.fs.dao.FsVolumeDaoImpl;
+import stroom.data.store.impl.fs.dao.FsVolumeGroupDaoImpl;
+import stroom.data.store.impl.fs.dao.FsVolumeStateDaoImpl;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeState;

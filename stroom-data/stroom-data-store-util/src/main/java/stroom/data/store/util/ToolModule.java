@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,12 +55,12 @@ public class ToolModule extends AbstractModule {
         install(new stroom.activity.mock.MockActivityModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
-        install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
-        install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
+        install(new stroom.data.store.impl.fs.dao.FsDataStoreDaoModule());
+        install(new stroom.data.store.impl.fs.dao.FsDataStoreDaoModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.meta.impl.MetaModule());
-        install(new stroom.meta.impl.db.MetaDaoModule());
+        install(new stroom.meta.impl.dao.MetaDaoModule());
         install(new stroom.meta.impl.db.MetaDbModule());
 
         bind(PathCreator.class).to(SimplePathCreator.class);

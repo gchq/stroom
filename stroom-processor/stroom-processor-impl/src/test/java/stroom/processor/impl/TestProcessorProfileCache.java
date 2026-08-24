@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package stroom.processor.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.node.api.NodeGroupCache;
-import stroom.node.api.NodeGroupInfo;
+import stroom.node.api.NodeGroupState;
 import stroom.node.shared.NodeGroup;
 import stroom.processor.impl.ProcessorProfileCache.ProfileResult;
 import stroom.processor.shared.ProcessorProfile;
@@ -175,8 +175,8 @@ class TestProcessorProfileCache {
         final ProfileResult result = processorProfileCache.getProfile(
                 NODE_NAME, PROFILE_NAME, WEDNESDAY_14_30);
 
-        assertThat(result.maxNodeTasks()).isEqualTo(maxNodeThreads);
-        assertThat(result.maxClusterTasks()).isEqualTo(maxClusterThreads);
+        assertThat(result.maxNodeThreads()).isEqualTo(maxNodeThreads);
+        assertThat(result.maxClusterThreads()).isEqualTo(maxClusterThreads);
     }
 
     @Test
@@ -195,8 +195,8 @@ class TestProcessorProfileCache {
         final ProfileResult result = processorProfileCache.getProfile(
                 NODE_NAME, PROFILE_NAME, WEDNESDAY_14_30);
 
-        assertThat(result.maxNodeTasks()).isEqualTo(Integer.MAX_VALUE);
-        assertThat(result.maxClusterTasks()).isEqualTo(Integer.MAX_VALUE);
+        assertThat(result.maxNodeThreads()).isEqualTo(Integer.MAX_VALUE);
+        assertThat(result.maxClusterThreads()).isEqualTo(Integer.MAX_VALUE);
     }
 
     // ---- No periods ----
@@ -261,8 +261,8 @@ class TestProcessorProfileCache {
         final ProfileResult result = processorProfileCache.getProfile(
                 NODE_NAME, PROFILE_NAME, WEDNESDAY_14_30);
 
-        assertThat(result.maxNodeTasks()).isEqualTo(7);
-        assertThat(result.maxClusterTasks()).isEqualTo(3);
+        assertThat(result.maxNodeThreads()).isEqualTo(7);
+        assertThat(result.maxClusterThreads()).isEqualTo(3);
     }
 
     // ---- Period time window filtering ----
@@ -330,8 +330,8 @@ class TestProcessorProfileCache {
         final ProfileResult result = processorProfileCache.getProfile(
                 NODE_NAME, PROFILE_NAME, WEDNESDAY_14_30);
 
-        assertThat(result.maxNodeTasks()).isEqualTo(20);
-        assertThat(result.maxClusterTasks()).isEqualTo(10);
+        assertThat(result.maxNodeThreads()).isEqualTo(20);
+        assertThat(result.maxClusterThreads()).isEqualTo(10);
     }
 
     // ---- Overnight period (end time before start time) ----
@@ -358,8 +358,8 @@ class TestProcessorProfileCache {
         final ProfileResult result = processorProfileCache.getProfile(
                 NODE_NAME, PROFILE_NAME, wednesday23);
 
-        assertThat(result.maxNodeTasks()).isEqualTo(50);
-        assertThat(result.maxClusterTasks()).isEqualTo(25);
+        assertThat(result.maxNodeThreads()).isEqualTo(50);
+        assertThat(result.maxClusterThreads()).isEqualTo(25);
     }
 
     @Test
@@ -417,8 +417,8 @@ class TestProcessorProfileCache {
         final ProfileResult result = processorProfileCache.getProfile(
                 NODE_NAME, PROFILE_NAME, WEDNESDAY_14_30);
 
-        assertThat(result.maxNodeTasks()).isEqualTo(5);
-        assertThat(result.maxClusterTasks()).isEqualTo(2);
+        assertThat(result.maxNodeThreads()).isEqualTo(5);
+        assertThat(result.maxClusterThreads()).isEqualTo(2);
     }
 
     @Test
@@ -454,8 +454,8 @@ class TestProcessorProfileCache {
         final ProfileResult result = processorProfileCache.getProfile(
                 NODE_NAME, PROFILE_NAME, wednesday19);
 
-        assertThat(result.maxNodeTasks()).isEqualTo(50);
-        assertThat(result.maxClusterTasks()).isEqualTo(20);
+        assertThat(result.maxNodeThreads()).isEqualTo(50);
+        assertThat(result.maxClusterThreads()).isEqualTo(20);
     }
 
     @Test
@@ -513,8 +513,8 @@ class TestProcessorProfileCache {
         final ProfileResult result = processorProfileCache.getProfile(
                 NODE_NAME, PROFILE_NAME, WEDNESDAY_14_30);
 
-        assertThat(result.maxNodeTasks()).isEqualTo(15);
-        assertThat(result.maxClusterTasks()).isEqualTo(Integer.MAX_VALUE);
+        assertThat(result.maxNodeThreads()).isEqualTo(15);
+        assertThat(result.maxClusterThreads()).isEqualTo(Integer.MAX_VALUE);
     }
 
     @Test
@@ -534,8 +534,8 @@ class TestProcessorProfileCache {
         final ProfileResult result = processorProfileCache.getProfile(
                 NODE_NAME, PROFILE_NAME, WEDNESDAY_14_30);
 
-        assertThat(result.maxNodeTasks()).isEqualTo(Integer.MAX_VALUE);
-        assertThat(result.maxClusterTasks()).isEqualTo(8);
+        assertThat(result.maxNodeThreads()).isEqualTo(Integer.MAX_VALUE);
+        assertThat(result.maxClusterThreads()).isEqualTo(8);
     }
 
     // ---- Weekday-specific periods ----
@@ -572,8 +572,8 @@ class TestProcessorProfileCache {
         final ProfileResult result = processorProfileCache.getProfile(
                 NODE_NAME, PROFILE_NAME, WEDNESDAY_14_30);
 
-        assertThat(result.maxNodeTasks()).isEqualTo(5);
-        assertThat(result.maxClusterTasks()).isEqualTo(2);
+        assertThat(result.maxNodeThreads()).isEqualTo(5);
+        assertThat(result.maxClusterThreads()).isEqualTo(2);
     }
 
     @Test
@@ -610,8 +610,8 @@ class TestProcessorProfileCache {
         final ProfileResult result = processorProfileCache.getProfile(
                 NODE_NAME, PROFILE_NAME, saturday14_30);
 
-        assertThat(result.maxNodeTasks()).isEqualTo(100);
-        assertThat(result.maxClusterTasks()).isEqualTo(50);
+        assertThat(result.maxNodeThreads()).isEqualTo(100);
+        assertThat(result.maxClusterThreads()).isEqualTo(50);
     }
 
     // ---- Error cases ----
@@ -629,7 +629,7 @@ class TestProcessorProfileCache {
     @Test
     void testGetProfile_nodeGroupNotFound_throws() {
         setupProfile(PROFILE_NAME, "missingGroup", createAllDayPeriod(10, 5));
-        when(nodeGroupCache.getIncludedGroupNodes("missingGroup")).thenReturn(Optional.empty());
+        when(nodeGroupCache.getSelectedGroupNodes("missingGroup")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> processorProfileCache.getProfile("node1", PROFILE_NAME, WEDNESDAY_14_30))
                 .isInstanceOf(RuntimeException.class)
@@ -644,8 +644,8 @@ class TestProcessorProfileCache {
 
         final ProfileResult result = processorProfileCache.getProfile(PROFILE_NAME, WEDNESDAY_14_30);
 
-        assertThat(result.maxNodeTasks()).isEqualTo(8);
-        assertThat(result.maxClusterTasks()).isEqualTo(4);
+        assertThat(result.maxNodeThreads()).isEqualTo(8);
+        assertThat(result.maxClusterThreads()).isEqualTo(4);
     }
 
     @Test
@@ -715,7 +715,7 @@ class TestProcessorProfileCache {
                 .enabled(enabled)
                 .stampAudit("test")
                 .build();
-        when(nodeGroupCache.getIncludedGroupNodes(groupName))
-                .thenReturn(Optional.of(new NodeGroupInfo(nodeGroup, includedNodes)));
+        when(nodeGroupCache.getSelectedGroupNodes(groupName))
+                .thenReturn(Optional.of(new NodeGroupState(nodeGroup, includedNodes)));
     }
 }

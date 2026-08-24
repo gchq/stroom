@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,9 @@ public final class PropertyUtil {
                                 indent + "  ",
                                 childValue.getClass().getSimpleName()));
                     } else if (childValue instanceof Map<?, ?>) {
-                        // We don't want to recurse into map types
+                        // Maps are leaf values just like Collections (e.g. a Map<String, String>
+                        // config prop) - recursing into the JDK map class would fail on its
+                        // private internals.
                         LOGGER.trace(() -> LogUtil.message("{}Ignoring Map value of type {}",
                                 indent + "  ",
                                 childValue.getClass().getSimpleName()));

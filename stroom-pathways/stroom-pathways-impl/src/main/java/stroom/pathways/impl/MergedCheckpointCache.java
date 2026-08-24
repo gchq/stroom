@@ -17,7 +17,7 @@
 package stroom.pathways.impl;
 
 import stroom.planb.impl.PlanBConfig;
-import stroom.planb.impl.db.trace.TraceDb.CheckpointIndex;
+import stroom.planb.impl.dao.trace.TraceDb.CheckpointIndex;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;

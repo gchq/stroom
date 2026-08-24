@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import stroom.query.api.datasource.FieldType;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrSynchState;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
@@ -64,9 +66,11 @@ public class SolrIndexStoreImpl
 
     @Inject
     SolrIndexStoreImpl(final StoreFactory storeFactory,
+                       final SecurityContext securityContext,
                        final SolrIndexClientCache solrIndexClientCache,
                        final SolrIndexSerialiser serialiser) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 SolrIndexDoc.TYPE,
                 SolrIndexDoc::builder,
@@ -183,7 +187,9 @@ public class SolrIndexStoreImpl
 
         builder.solrSynchState(new SolrSynchState(System.currentTimeMillis(), messages));
 
-        return getStore().writeDocument(builder.build());
+        // super, not getStore(): the base applies this type's EDIT check, and getStore() is the
+        // deliberately unchecked handle.
+        return super.writeDocument(builder.build());
     }
 
     private List<SolrIndexField> fetchSolrFields(final SolrClient solrClient,
@@ -286,6 +292,9 @@ public class SolrIndexStoreImpl
     public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
+        // The four-arg export has no counterpart on the base, so the check the base would have applied
+        // is applied explicitly here.
+        checkDocumentPermission(docRef, DocumentPermission.VIEW);
         return getStore().exportDocument(docRef, omitAuditFields, messageList, doc ->
                 doc.copy().solrSynchState(null).build());
     }

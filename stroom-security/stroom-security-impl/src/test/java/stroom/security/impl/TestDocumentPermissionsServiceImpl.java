@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,10 @@
 
 package stroom.security.impl;
 
-
 import stroom.docref.DocRef;
 import stroom.security.api.UserService;
+import stroom.security.impl.dao.SecurityTestUtil;
 import stroom.security.impl.db.SecurityDbConnProvider;
-import stroom.security.impl.db.SecurityTestUtil;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;

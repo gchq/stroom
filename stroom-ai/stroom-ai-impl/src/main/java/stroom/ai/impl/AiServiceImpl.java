@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
-import stroom.credentials.api.KeyStore;
+import stroom.credentials.api.HttpConfigResolver;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.AccessTokenSecret;
@@ -33,21 +33,18 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.api.SecurityContext;
-import stroom.util.http.HttpAuthConfiguration;
 import stroom.util.http.HttpClientConfiguration;
-import stroom.util.http.HttpProxyConfiguration;
-import stroom.util.http.HttpTlsConfiguration;
+import stroom.util.http.HttpClientUtil;
 import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.net.SsrfGuard;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.http.HttpAuthConfig;
 import stroom.util.shared.http.HttpClientConfig;
-import stroom.util.shared.http.HttpProxyConfig;
-import stroom.util.shared.http.HttpTlsConfig;
-import stroom.util.time.SimpleDurationUtil;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 
 import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
@@ -65,6 +62,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.config.RequestConfig;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -78,23 +76,34 @@ public class AiServiceImpl implements AiService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AiServiceImpl.class);
 
+    private static final SimpleDuration DEFAULT_TIMEOUT = SimpleDuration
+            .builder()
+            .time(10)
+            .timeUnit(TimeUnit.MINUTES)
+            .build();
+
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<StoredSecrets> storedSecretsProvider;
+    private final HttpConfigResolver httpConfigResolver;
     private final Provider<HttpClientProviderCache> httpClientCacheProvider;
     private final SecurityContext securityContext;
     private final AiDao aiDao;
+
+    private HttpClientConfig defaultHttpClientConfig;
 
     @Inject
     AiServiceImpl(final Provider<OpenAIModelStore> openAIModelStoreProvider,
                   final Provider<DocumentResourceHelper> documentResourceHelperProvider,
                   final Provider<StoredSecrets> storedSecretsProvider,
+                  final HttpConfigResolver httpConfigResolver,
                   final Provider<HttpClientProviderCache> httpClientCacheProvider,
                   final SecurityContext securityContext,
                   final AiDao aiDao) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.storedSecretsProvider = storedSecretsProvider;
+        this.httpConfigResolver = httpConfigResolver;
         this.httpClientCacheProvider = httpClientCacheProvider;
         this.securityContext = securityContext;
         this.aiDao = aiDao;
@@ -107,20 +116,25 @@ public class AiServiceImpl implements AiService {
             //   -H "Authorization: Bearer $OPENAI_API_KEY"
 
 
-            final HttpClientConfiguration httpClientConfiguration = convert(NullSafe.getOrElse(
+            final HttpClientConfiguration httpClientConfiguration = httpConfigResolver.resolve(NullSafe.getOrElse(
                     modelDoc,
                     OpenAIModelDoc::getHttpClientConfiguration,
-                    HttpClientConfig.builder().build()));
+                    getDefaultHttpClientConfig()));
             final HttpClientProviderCache httpClientProviderCache = httpClientCacheProvider.get();
             try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
                 final String url = getUrl(modelDoc, "models");
-                final String apiKey = getApiKey(modelDoc);
+                // Reject cloud-metadata/wildcard targets to prevent SSRF.
+                SsrfGuard.rejectMetadataAndWildcard(url);
 
                 final HttpGet httpGet = new HttpGet(url);
+                // Do not follow redirects - a redirect could otherwise reach a blocked address after the
+                // check above, since this client's redirect behaviour is request-supplied.
+                httpGet.setConfig(RequestConfig.custom().setRedirectsEnabled(false).build());
                 httpGet.addHeader("Content-Type", "application/audit");
-                if (NullSafe.isNonBlankString(apiKey)) {
-                    httpGet.addHeader("Authorization", "Bearer " + apiKey);
-                }
+
+                // Provide an API key
+                getApiKey(modelDoc).ifPresent(apiKey ->
+                        httpGet.addHeader("Authorization", "Bearer " + apiKey));
 
                 return httpClientProvider.get().execute(httpGet, response -> {
 //                        final StringBuilder sb = new StringBuilder()
@@ -163,22 +177,19 @@ public class AiServiceImpl implements AiService {
         }
     }
 
-    private String getApiKey(final OpenAIModelDoc doc) {
-        return getApiKey(doc.getApiKeyName());
-    }
-
-    private String getApiKey(final String apiKeyName) {
+    private Optional<String> getApiKey(final OpenAIModelDoc doc) {
+        final String apiKeyName = doc.getApiKeyName();
         if (NullSafe.isNonBlankString(apiKeyName)) {
             final StoredSecret storedSecret = storedSecretsProvider.get().get(apiKeyName);
             if (storedSecret != null) {
                 if (storedSecret.secret() instanceof final AccessTokenSecret accessTokenSecret) {
                     if (accessTokenSecret.getAccessToken() != null) {
-                        return accessTokenSecret.getAccessToken();
+                        return Optional.of(accessTokenSecret.getAccessToken());
                     }
                 }
             }
         }
-        return "";
+        return Optional.empty();
     }
 
     private String getUrl(final OpenAIModelDoc modelDoc, final String path) {
@@ -199,24 +210,25 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public ChatModel getChatModel(final OpenAIModelDoc modelDoc) {
-        final String apiKey = getApiKey(modelDoc.getApiKeyName());
-
         LOGGER.debug(() -> "getChatModel: modelId='" + modelDoc.getModelId()
                            + "' baseUrl='" + NullSafe.toString(modelDoc.getBaseUrl()) + "'");
 
+        final OpenAiChatModelBuilder modelBuilder = OpenAiChatModel.builder()
+                .modelName(modelDoc.getModelId());
+
         // Need to specify HTTP 1.1 for vLLM interoperability
         // Ref: https://github.com/langchain4j/langchain4j/issues/3682
-
-        final HttpClientBuilder httpClientBuilder = getClientBuilder(modelDoc);
-        final OpenAiChatModelBuilder modelBuilder = OpenAiChatModel.builder()
-                .modelName(modelDoc.getModelId())
-                .apiKey(apiKey)
-                .httpClientBuilder(httpClientBuilder);
+        modelBuilder.httpClientBuilder(getClientBuilder(modelDoc));
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
+            // Override the base URL. Reject cloud-metadata/wildcard targets to prevent SSRF (private and
+            // loopback are allowed, since a self-hosted OpenAI-compatible model legitimately lives there).
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
+
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         if (NullSafe.isNonEmptyString(modelDoc.getReasoningEffort())) {
             modelBuilder.reasoningEffort(modelDoc.getReasoningEffort());
@@ -229,38 +241,36 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public EmbeddingModel getEmbeddingModel(final OpenAIModelDoc modelDoc) {
-        final String apiKey = getApiKey(modelDoc.getApiKeyName());
+        final OpenAiEmbeddingModelBuilder modelBuilder = OpenAiEmbeddingModel.builder()
+                .modelName(modelDoc.getModelId());
 
         // Need to specify HTTP 1.1 for vLLM interoperability
         // Ref: https://github.com/langchain4j/langchain4j/issues/3682
-//        final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
-//                .version(HttpClient.Version.HTTP_1_1);
-//        final JdkHttpClientBuilder jdkHttpClientBuilder = JdkHttpClient.builder()
-//                .httpClientBuilder(httpClientBuilder);
+        modelBuilder.httpClientBuilder(getClientBuilder(modelDoc));
 
-        final HttpClientBuilder httpClientBuilder = getClientBuilder(modelDoc);
-        final OpenAiEmbeddingModelBuilder modelBuilder = OpenAiEmbeddingModel.builder()
-                .modelName(modelDoc.getModelId())
-                .apiKey(apiKey)
-                .httpClientBuilder(httpClientBuilder)
-                .dimensions(1024); // Lucene can only support 1024 dimensions.
+        // Set embedding dimensions
+        if (modelDoc.getEmbeddingModelDimensions() > 0) {
+            modelBuilder.dimensions(modelDoc.getEmbeddingModelDimensions());
+        }
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
+            // Override the base URL. Reject cloud-metadata/wildcard targets to prevent SSRF (private and
+            // loopback are allowed, since a self-hosted OpenAI-compatible model legitimately lives there).
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        // Provide a bearer token
-        modelBuilder.apiKey(getApiKey(modelDoc));
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         return modelBuilder.build();
     }
 
     private HttpClientBuilder getClientBuilder(final OpenAIModelDoc modelDoc) {
-        final HttpClientConfiguration httpClientConfiguration = convert(NullSafe.getOrElse(
+        final HttpClientConfiguration httpClientConfiguration = httpConfigResolver.resolve(NullSafe.getOrElse(
                 modelDoc,
                 OpenAIModelDoc::getHttpClientConfiguration,
-                HttpClientConfig.builder().build()));
+                getDefaultHttpClientConfig()));
         return new ApacheHttpClientBuilder(httpClientCacheProvider.get(), httpClientConfiguration);
     }
 
@@ -270,14 +280,14 @@ public class AiServiceImpl implements AiService {
                 .modelName(modelDoc.getModelId());
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
+            // Override the base URL. Reject cloud-metadata/wildcard targets to prevent SSRF (private and
+            // loopback are allowed, since a self-hosted OpenAI-compatible model legitimately lives there).
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        modelBuilder.apiKey(getApiKey(modelDoc));
-//        } else {
-//            modelBuilder.apiKey("dummy_api_key");
-//        }
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         return modelBuilder.build();
     }
@@ -288,109 +298,16 @@ public class AiServiceImpl implements AiService {
                 .modelName(modelDoc.getModelId());
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
+            // Override the base URL. Reject cloud-metadata/wildcard targets to prevent SSRF (private and
+            // loopback are allowed, since a self-hosted OpenAI-compatible model legitimately lives there).
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        // Provide a bearer token
-        modelBuilder.apiKey(getApiKey(modelDoc));
-//        } else {
-//            modelBuilder.apiKey("dummy_api_key");
-//        }
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         return modelBuilder.build();
-    }
-
-    private HttpClientConfiguration convert(final HttpClientConfig config) {
-        if (config == null) {
-            return new HttpClientConfiguration();
-        }
-
-        return HttpClientConfiguration
-                .builder()
-                .timeout(SimpleDurationUtil.convertToStroomDuration(config.getTimeout()))
-                .connectionTimeout(SimpleDurationUtil.convertToStroomDuration(config.getConnectionTimeout()))
-                .connectionRequestTimeout(
-                        SimpleDurationUtil.convertToStroomDuration(config.getConnectionRequestTimeout()))
-                .timeToLive(SimpleDurationUtil.convertToStroomDuration(config.getTimeToLive()))
-                .cookiesEnabled(config.isCookiesEnabled())
-                .maxConnections(config.getMaxConnections())
-                .maxConnectionsPerRoute(config.getMaxConnectionsPerRoute())
-                .keepAlive(SimpleDurationUtil.convertToStroomDuration(config.getKeepAlive()))
-                .retries(config.getRetries())
-                .userAgent(config.getUserAgent())
-                .proxyConfiguration(convert(config.getProxy()))
-                .validateAfterInactivityPeriod(
-                        SimpleDurationUtil.convertToStroomDuration(config.getValidateAfterInactivityPeriod()))
-                .tlsConfiguration(convert(config.getTls()))
-                .build();
-    }
-
-    private HttpProxyConfiguration convert(final HttpProxyConfig config) {
-        if (config == null) {
-            return null;
-        }
-
-        return HttpProxyConfiguration
-                .builder()
-                .host(config.getHost())
-                .port(config.getPort())
-                .scheme(config.getScheme())
-                .auth(convert(config.getAuth()))
-                .nonProxyHosts(config.getNonProxyHosts())
-                .build();
-    }
-
-    private HttpAuthConfiguration convert(final HttpAuthConfig config) {
-        if (config == null) {
-            return null;
-        }
-
-        return HttpAuthConfiguration
-                .builder()
-                .username(config.getUsername())
-                .password(config.getPassword())
-                .authScheme(config.getAuthScheme())
-                .realm(config.getRealm())
-                .hostname(config.getHostname())
-                .domain(config.getDomain())
-                .credentialType(config.getCredentialType())
-                .build();
-    }
-
-    private HttpTlsConfiguration convert(final HttpTlsConfig config) {
-        if (config == null) {
-            return null;
-        }
-
-        final HttpTlsConfiguration.Builder builder = HttpTlsConfiguration.builder();
-        if (NullSafe.isNonBlankString(config.getKeyStoreName())) {
-            final KeyStore keyStore = storedSecretsProvider.get().getKeyStore(config.getKeyStoreName());
-            builder
-                    .keyStorePath(keyStore.keyStorePath())
-                    .keyStorePassword(keyStore.keyStorePassword())
-                    .keyStoreType(keyStore.keyStoreType())
-                    .keyStoreProvider(keyStore.keyStoreProvider());
-        }
-
-        if (NullSafe.isNonBlankString(config.getTrustStoreName())) {
-            final KeyStore trustStore = storedSecretsProvider.get().getKeyStore(config.getTrustStoreName());
-            builder
-                    .trustStorePath(trustStore.keyStorePath())
-                    .trustStorePassword(trustStore.keyStorePassword())
-                    .trustStoreType(trustStore.keyStoreType())
-                    .trustStoreProvider(trustStore.keyStoreProvider());
-        }
-
-        return builder
-                .protocol(config.getProtocol())
-                .provider(config.getProvider())
-                .trustSelfSignedCertificates(config.isTrustSelfSignedCertificates())
-                .verifyHostname(config.isVerifyHostname())
-                .supportedProtocols(config.getSupportedProtocols())
-                .supportedCiphers(config.getSupportedCiphers())
-                .certAlias(config.getCertAlias())
-                .build();
     }
 
     // ---------------------------------------------------------------------
@@ -484,6 +401,17 @@ public class AiServiceImpl implements AiService {
         aiDao.deleteMessage(messageId);
     }
 
+    @Override
+    public void deleteAttachment(final int attachmentId) {
+        aiDao.deleteAttachment(attachmentId);
+    }
+
+    @Override
+    public void deleteAllChatMessagesAndAttachments(final int chatId) {
+        verifyOwnership(chatId);
+        aiDao.deleteAllChatMessagesAndAttachments(chatId);
+    }
+
     // ---------------------------------------------------------------------
     // Attachment operations (delegate to AiDao)
     // ---------------------------------------------------------------------
@@ -529,5 +457,17 @@ public class AiServiceImpl implements AiService {
     public List<AiChatAttachment> getAttachmentsByChatId(final int chatId) {
         verifyOwnership(chatId);
         return aiDao.getAttachmentsByChatId(chatId);
+    }
+
+    @Override
+    public HttpClientConfig getDefaultHttpClientConfig() {
+        if (defaultHttpClientConfig == null) {
+            defaultHttpClientConfig = createDefaultHttpClientConfig();
+        }
+        return defaultHttpClientConfig;
+    }
+
+    private HttpClientConfig createDefaultHttpClientConfig() {
+        return HttpClientUtil.createDefaultHttpClientConfig(DEFAULT_TIMEOUT);
     }
 }

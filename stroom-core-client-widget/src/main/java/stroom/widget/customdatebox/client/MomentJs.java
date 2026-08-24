@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,28 @@ public final class MomentJs {
             }
         }
         return m.format(dateTimePattern);
+    }-*/;
+
+    /**
+     * Compute the number of calendar days between two timestamps
+     * in the user's preferred timezone.
+     */
+    public static native int daysBetween(final double ms1,
+                                         final double ms2,
+                                         final String use,
+                                         final String id,
+                                         final int offsetMinutes)/*-{
+        function toMoment(ms) {
+            var m = $wnd.moment.utc(ms);
+            switch (use) {
+                case "UTC":    return m.utc();
+                case "Local":  return m.local();
+                case "Offset": return m.utcOffset(offsetMinutes);
+                case "Id":     return m.tz(id);
+            }
+            return m;
+        }
+        return toMoment(ms2).startOf('day').diff(toMoment(ms1).startOf('day'), 'days');
     }-*/;
 
     public static native String humanise(final double ms)/*-{

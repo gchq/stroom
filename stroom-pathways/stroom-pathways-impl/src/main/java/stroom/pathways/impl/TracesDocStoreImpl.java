@@ -66,7 +66,8 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
                 serialiser,
                 TracesDoc.TYPE,
                 TracesDoc::tracesBuilder,
-                TracesDoc::copyTraces);
+                TracesDoc::copyTraces,
+                () -> null);
         this.serialiser = serialiser;
         this.clusterLockServiceProvider = clusterLockServiceProvider;
     }
@@ -180,19 +181,9 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
     // ---------------------------------------------------------------------
 
     @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(null);
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, null);
-    }
-
-    @Override
     public void remapDependencies(final DocRef docRef,
                                   final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
+        store.remapDependencies(docRef, remappings);
     }
 
     // ---------------------------------------------------------------------

@@ -21,9 +21,9 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBPaths;
+import stroom.planb.impl.dao.Db;
 import stroom.planb.impl.data.archive.ArchiveShardRef;
 import stroom.planb.impl.data.shard.AbstractStoreShard;
-import stroom.planb.impl.db.Db;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
@@ -207,7 +207,7 @@ public class ArchiveStoreShard extends AbstractStoreShard {
             try {
                 exclusiveReadLock.lockInterruptibly();
                 try {
-                    close();
+                    closeDb();
                     Files.move(syncTmpDir.resolve(PlanBConstants.DATA_FILE_NAME),
                             shardDir.resolve(PlanBConstants.DATA_FILE_NAME),
                             StandardCopyOption.REPLACE_EXISTING);

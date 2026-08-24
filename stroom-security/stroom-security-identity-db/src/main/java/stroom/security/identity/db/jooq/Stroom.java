@@ -15,6 +15,7 @@ import org.jooq.impl.SchemaImpl;
 import stroom.security.identity.db.jooq.tables.Account;
 import stroom.security.identity.db.jooq.tables.JsonWebKey;
 import stroom.security.identity.db.jooq.tables.OauthClient;
+import stroom.security.identity.db.jooq.tables.OauthToken;
 import stroom.security.identity.db.jooq.tables.TokenType;
 
 
@@ -47,6 +48,11 @@ public class Stroom extends SchemaImpl {
     public final OauthClient OAUTH_CLIENT = OauthClient.OAUTH_CLIENT;
 
     /**
+     * The table <code>stroom.oauth_token</code>.
+     */
+    public final OauthToken OAUTH_TOKEN = OauthToken.OAUTH_TOKEN;
+
+    /**
      * The table <code>stroom.token_type</code>.
      */
     public final TokenType TOKEN_TYPE = TokenType.TOKEN_TYPE;
@@ -70,6 +76,7 @@ public class Stroom extends SchemaImpl {
             Account.ACCOUNT,
             JsonWebKey.JSON_WEB_KEY,
             OauthClient.OAUTH_CLIENT,
+            OauthToken.OAUTH_TOKEN,
             TokenType.TOKEN_TYPE
         );
     }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.grid.client;
 
 import stroom.ai.shared.GeneralTableContext;
@@ -25,6 +41,17 @@ public class MyDataGridAiSupport<T> {
                                final MyDataGrid<T> dataGrid) {
         this.globalEventBus = globalEventBus;
         this.dataGrid = dataGrid;
+    }
+
+    /**
+     * Returns the table name prefix for descriptions, e.g. "Annotations "
+     * or "" if no table name has been set.
+     */
+    private String prefix() {
+        final String name = dataGrid.getTableName();
+        return name != null
+                ? name + " "
+                : "";
     }
 
     Item createContextMenu(final int row,
@@ -64,7 +91,7 @@ public class MyDataGridAiSupport<T> {
 
         menuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.AI)
-                .text("Table")
+                .text("Current Page")
                 .command(this::aiTable)
                 .build());
 
@@ -80,7 +107,7 @@ public class MyDataGridAiSupport<T> {
         final String colName = !headers.isEmpty()
                 ? headers.get(0)
                 : "";
-        final String description = "Cell [" + colName + "]";
+        final String description = prefix() + "Cell [" + colName + "]";
         AskStroomAiEvent.fire(globalEventBus,
                 new GeneralTableContext(description, headers,
                         Collections.singletonList(Collections.singletonList(dataGrid.getCellText(row, col)))));
@@ -88,7 +115,7 @@ public class MyDataGridAiSupport<T> {
 
     private void aiRow(final int row) {
         final List<String> headers = getHeaders();
-        final String description = "Row (" + headers.size() + " cols)";
+        final String description = prefix() + "Row (" + headers.size() + " cols)";
         AskStroomAiEvent.fire(globalEventBus,
                 new GeneralTableContext(description, headers,
                         Collections.singletonList(getRow(row))));
@@ -106,7 +133,8 @@ public class MyDataGridAiSupport<T> {
         }
 
         final List<String> headers = getHeaders();
-        final String description = "Selected rows (" + rows.size() + " rows, " + headers.size() + " cols)";
+        final String description = prefix() + "Selected rows (" + rows.size()
+                                   + " rows, " + headers.size() + " cols)";
         AskStroomAiEvent.fire(globalEventBus,
                 new GeneralTableContext(description, headers, rows));
     }
@@ -121,7 +149,7 @@ public class MyDataGridAiSupport<T> {
         final String colName = !headers.isEmpty()
                 ? headers.get(0)
                 : "";
-        final String description = "Column [" + colName + "] (" + rows.size() + " rows)";
+        final String description = prefix() + "Column [" + colName + "] (" + rows.size() + " rows)";
         AskStroomAiEvent.fire(globalEventBus,
                 new GeneralTableContext(description, headers, rows));
     }
@@ -141,7 +169,7 @@ public class MyDataGridAiSupport<T> {
         final String colName = !headers.isEmpty()
                 ? headers.get(0)
                 : "";
-        final String description = "Column [" + colName + "] (" + rows.size() + " selected rows)";
+        final String description = prefix() + "Column [" + colName + "] (" + rows.size() + " selected rows)";
         AskStroomAiEvent.fire(globalEventBus,
                 new GeneralTableContext(description, headers, rows));
     }
@@ -153,7 +181,10 @@ public class MyDataGridAiSupport<T> {
         }
 
         final List<String> headers = getHeaders();
-        final String description = "Table (" + rows.size() + " rows, " + headers.size() + " cols)";
+        final String name = dataGrid.getTableName();
+        final String description = name != null
+                ? name + " (" + rows.size() + " rows, " + headers.size() + " cols)"
+                : "Table (" + rows.size() + " rows, " + headers.size() + " cols)";
         AskStroomAiEvent.fire(globalEventBus,
                 new GeneralTableContext(description, headers, rows));
     }

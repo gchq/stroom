@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.script.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.script.shared.ScriptDoc;
@@ -41,8 +40,7 @@ public class ScriptSettingsPresenter extends DocPresenter<ScriptSettingsView, Sc
 
     @Override
     protected void onBind() {
-        final DirtyHandler dirtyHandler = event -> onChange();
-        registerHandler(scriptDependencyListPresenter.addDirtyHandler(dirtyHandler));
+        registerHandler(scriptDependencyListPresenter.addChangeHandler(this::onChange));
     }
 
     @Override

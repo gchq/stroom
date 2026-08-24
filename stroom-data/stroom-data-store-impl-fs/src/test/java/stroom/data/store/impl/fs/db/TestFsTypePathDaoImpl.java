@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,9 @@
 
 package stroom.data.store.impl.fs.db;
 
-
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.data.store.impl.fs.DataStoreServiceDbConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
+import stroom.data.store.impl.fs.dao.FsTypePathDaoImpl;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 

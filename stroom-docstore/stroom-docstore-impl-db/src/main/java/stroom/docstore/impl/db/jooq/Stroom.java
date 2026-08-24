@@ -17,6 +17,7 @@ import stroom.docstore.impl.db.jooq.tables.DocAudit;
 import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
 import stroom.docstore.impl.db.jooq.tables.DocData;
 import stroom.docstore.impl.db.jooq.tables.DocDataSnapshot;
+import stroom.docstore.impl.db.jooq.tables.DocDependency;
 
 
 /**
@@ -58,6 +59,11 @@ public class Stroom extends SchemaImpl {
     public final DocDataSnapshot DOC_DATA_SNAPSHOT = DocDataSnapshot.DOC_DATA_SNAPSHOT;
 
     /**
+     * The table <code>stroom.doc_dependency</code>.
+     */
+    public final DocDependency DOC_DEPENDENCY = DocDependency.DOC_DEPENDENCY;
+
+    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -77,7 +83,8 @@ public class Stroom extends SchemaImpl {
             DocAudit.DOC_AUDIT,
             DocAuditDataSnapshot.DOC_AUDIT_DATA_SNAPSHOT,
             DocData.DOC_DATA,
-            DocDataSnapshot.DOC_DATA_SNAPSHOT
+            DocDataSnapshot.DOC_DATA_SNAPSHOT,
+            DocDependency.DOC_DEPENDENCY
         );
     }
 }

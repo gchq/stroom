@@ -10,7 +10,7 @@
         <form:FormGroup identity="nodeGroup" label="Node Group">
             <i:SelectionBox ui:field="nodeGroup" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="nodeList" label="Nodes" addStyleNames="dock-max">
+        <form:FormGroup identity="processingSchedules" label="Processing Schedules" addStyleNames="dock-max">
             <g:SimplePanel ui:field="list" styleName="dock-max"/>
         </form:FormGroup>
         <g:SimplePanel ui:field="timeZone" addStyleNames="form-group"/>

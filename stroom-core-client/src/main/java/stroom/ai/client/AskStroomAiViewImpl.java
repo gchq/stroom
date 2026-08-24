@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiField
     InlineSvgButton download;
     @UiField
+    InlineSvgButton deleteAll;
+    @UiField
     InlineSvgButton configure;
     @UiField
     Label emptyPrompt;
@@ -92,6 +94,11 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         download.setTitle("Download");
         download.setSvg(SvgImage.DOWN);
         download.setEnabled(false);
+
+        deleteAll.setText("Delete All Messages");
+        deleteAll.setTitle("Delete All Messages");
+        deleteAll.setSvg(SvgImage.DELETE);
+        deleteAll.setEnabled(false);
 
         configure.setText("Configure");
         configure.setTitle("Configure");
@@ -206,6 +213,13 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
         }
     }
 
+    @UiHandler("deleteAll")
+    public void onDeleteAll(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onDeleteAllMessages();
+        }
+    }
+
     public void setTitle(final String title) {
         chatTitle.setText(title);
     }
@@ -242,6 +256,11 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @Override
     public void setDownloadEnabled(final boolean enabled) {
         download.setEnabled(enabled);
+    }
+
+    @Override
+    public void setDeleteAllEnabled(final boolean enabled) {
+        deleteAll.setEnabled(enabled);
     }
 
     private void sendMessage() {

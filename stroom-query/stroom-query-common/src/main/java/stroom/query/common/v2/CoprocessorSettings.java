@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package stroom.query.common.v2;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 
@@ -29,6 +31,11 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = TableCoprocessorSettings.class, name = "table"),
         @JsonSubTypes.Type(value = EventCoprocessorSettings.class, name = "event")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "table", schema = TableCoprocessorSettings.class),
+                @DiscriminatorMapping(value = "event", schema = EventCoprocessorSettings.class)})
 public sealed interface CoprocessorSettings extends Serializable permits
         TableCoprocessorSettings,
         EventCoprocessorSettings {

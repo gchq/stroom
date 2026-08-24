@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package stroom.test;
 
 import stroom.activity.mock.MockActivityModule;
 import stroom.ai.impl.AiDao;
-import stroom.ai.impl.MockAiDao;
-import stroom.ai.impl.MockAiModule;
+import stroom.ai.impl.mock.MockAiDao;
+import stroom.ai.impl.mock.MockAiModule;
 import stroom.cache.impl.CacheModule;
 import stroom.cache.service.impl.CacheServiceModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
@@ -27,13 +27,15 @@ import stroom.core.dataprocess.PipelineStreamTaskModule;
 import stroom.credentials.api.KeyStore;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
-import stroom.credentials.impl.db.MockCredentialsDaoModule;
+import stroom.credentials.impl.dao.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.impl.DictionaryStoreImpl;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.impl.DocFinderModule;
 import stroom.docstore.impl.DocStoreModule;
+import stroom.docstore.impl.dao.MockDocDependencyService;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.impl.MockFeedModule;
@@ -126,6 +128,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockAiModule());
         install(new stroom.core.entity.event.EntityEventModule());
 
+        bind(DocDependencyService.class).to(MockDocDependencyService.class);
         bind(AiDao.class).to(MockAiDao.class);
         bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
         bind(ContentPackUserService.class).to(MockSecurityContext.class);

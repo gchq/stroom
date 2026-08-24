@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,14 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             summary = "Delete explorer items",
             operationId = "deleteExplorerItems")
     BulkActionResult delete(@Parameter(description = "request", required = true) ExplorerServiceDeleteRequest request);
+
+    @POST
+    @Path("/fetchDeleteConfirmation")
+    @Operation(
+            summary = "Fetch the information needed to confirm a delete (contained items and dependants)",
+            operationId = "fetchExplorerDeleteConfirmation")
+    DeleteConfirmation fetchDeleteConfirmation(
+            @Parameter(description = "request", required = true) DeleteConfirmationRequest request);
 
     @POST
     @Path("/copy")

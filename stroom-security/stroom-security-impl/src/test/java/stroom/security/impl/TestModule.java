@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,13 @@ import stroom.docstore.mock.MockDocFinderModule;
 import stroom.explorer.api.ExplorerService;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.UserService;
-import stroom.security.impl.db.SecurityDaoModule;
+import stroom.security.impl.dao.SecurityDaoModule;
 import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.mock.MockHasUserDependenciesModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.mock.MockUserIdentityFactoryModule;
+import stroom.security.openid.api.TokenRevoker;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.MockMetricsModule;
@@ -63,6 +64,8 @@ public class TestModule extends AbstractModule {
 
         bind(AppPermissionService.class).to(AppPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
+        bind(SessionListService.class).toInstance(mock(SessionListService.class));
+        bind(TokenRevoker.class).toInstance(mock(TokenRevoker.class));
         bind(ExplorerService.class).toInstance(mock(ExplorerService.class));
         bind(EntityEventBus.class).toInstance(mock(EntityEventBus.class));
         bind(PermissionChangeEventBus.class).toInstance(mock(PermissionChangeEventBus.class));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import stroom.docstore.api.DocumentStoreBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.pipeline.xsltfunctions.PlanBLookup;
+import stroom.planb.impl.dao.BatchDestination;
+import stroom.planb.impl.dao.DefaultBatchDestination;
 import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.query.PlanBRemoteQueryResourceImpl;
 import stroom.planb.impl.data.query.PlanBShardInfoServiceImpl;
 import stroom.planb.impl.data.shard.ShardManager;
-import stroom.planb.impl.db.BatchDestination;
-import stroom.planb.impl.db.DefaultBatchDestination;
 import stroom.planb.impl.fs.MergeStrategy;
 import stroom.planb.impl.fs.SharedFileStoreCleaner;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
@@ -33,7 +33,6 @@ import stroom.planb.impl.fs.SharedFileStoreMergeProcessor;
 import stroom.planb.impl.fs.SharedFileStorePublisher;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
-import stroom.planb.impl.pipeline.StateFetcherImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
 import stroom.planb.impl.rest.FileTransferClient;
 import stroom.planb.impl.rest.FileTransferClientImpl;
@@ -46,7 +45,6 @@ import stroom.query.api.QueryNodeResolver;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
-import stroom.query.language.functions.StateFetcher;
 import stroom.query.language.functions.StateProvider;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
@@ -67,8 +65,9 @@ public class PlanBModule extends AbstractModule {
         install(new PlanBElementModule());
 
         bind(PlanBLookup.class).to(PlanBLookupImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
-        bind(StateFetcher.class).to(StateFetcherImpl.class);
+        // A single StateProvider binding, deliberately, so a second provider is a duplicate binding error
+        // at startup rather than a silent precedence problem. See gh-5692.
+        bind(StateProvider.class).to(StateProviderImpl.class);
 
         // Caches
         bind(PlanBDocCache.class).to(PlanBDocCacheImpl.class);

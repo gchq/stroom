@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,8 @@ public class GitRepoSettingsViewImpl
     Button btnGitRepoPull;
     @UiField
     Button btnCheckForUpdates;
+    @UiField
+    Button setHttpClientConfig;
 
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
@@ -266,6 +268,19 @@ public class GitRepoSettingsViewImpl
             getUiHandlers().onChange();
         }
         this.setState();
+    }
+
+    /**
+     * Handles 'Set Http Client Config' button clicks.
+     *
+     * @param event The button push event. Ignored. Can be null.
+     */
+    @SuppressWarnings("unused")
+    @UiHandler("setHttpClientConfig")
+    public void onSetHttpClientConfigClick(@SuppressWarnings("unused") final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onSetHttpClientConfiguration();
+        }
     }
 
     /**

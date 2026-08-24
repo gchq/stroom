@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.impl;
 
 import stroom.planb.shared.StateType;
@@ -10,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Min;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +45,9 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     private final int shardMergeThreadCount;
     private final StroomDuration minTimeToKeepStoreShardEnv;
     private final StroomDuration mergedCheckpointCacheTtl;
+    private final StroomDuration mergeStatusRetention;
+    private final int sendPartAttempts;
+    private final StroomDuration sendPartRetryDelay;
 
     public PlanBConfig() {
         this("planb");
@@ -56,7 +76,10 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                 ),
                 4,
                 StroomDuration.ofMinutes(60),
-                StroomDuration.ofMinutes(10));
+                StroomDuration.ofMinutes(10),
+                StroomDuration.ofDays(30),
+                3,
+                StroomDuration.ofSeconds(10));
     }
 
     @Deprecated
@@ -75,7 +98,10 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
              null,
              4,
              null,
-             null);
+             null,
+             StroomDuration.ofDays(30),
+             3,
+             StroomDuration.ofSeconds(10));
     }
 
     @SuppressWarnings("unused")
@@ -91,7 +117,10 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                        @JsonProperty("minTimeToKeepStoreShardEnv")
                        final StroomDuration minTimeToKeepStoreShardEnv,
                        @JsonProperty("mergedCheckpointCacheTtl")
-                       final StroomDuration mergedCheckpointCacheTtl) {
+                       final StroomDuration mergedCheckpointCacheTtl,
+                       @JsonProperty("mergeStatusRetention") final StroomDuration mergeStatusRetention,
+                       @JsonProperty("sendPartAttempts") final int sendPartAttempts,
+                       @JsonProperty("sendPartRetryDelay") final StroomDuration sendPartRetryDelay) {
         this.stateDocCache = stateDocCache;
         this.nodeList = nodeList;
         this.path = path;
@@ -117,6 +146,9 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
         this.mergedCheckpointCacheTtl = mergedCheckpointCacheTtl != null
                 ? mergedCheckpointCacheTtl
                 : StroomDuration.ofMinutes(10);
+        this.mergeStatusRetention = mergeStatusRetention;
+        this.sendPartAttempts = sendPartAttempts;
+        this.sendPartRetryDelay = sendPartRetryDelay;
     }
 
     @JsonProperty
@@ -146,8 +178,10 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonProperty
-    @JsonPropertyDescription("How long should we keep a snapshot shard before cleaning it up " +
-                             "due to inactivity. Should be at least twice minTimeToKeepSnapshots.")
+    @JsonPropertyDescription("How long snapshot data remains useful. This bounds both how stale a snapshot " +
+                             "may be and still be served, measured from when the store node last confirmed " +
+                             "it was current, and how long an inactive snapshot shard is kept before being " +
+                             "cleaned up. Should be at least twice minTimeToKeepSnapshots.")
     public StroomDuration getMinTimeToKeepSnapshotEnv() {
         return minTimeToKeepSnapshotEnv;
     }
@@ -187,6 +221,32 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
         return mergedCheckpointCacheTtl;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("How long to keep the per source merge status records that stop additive " +
+                             "stores (histogram and metric) double counting when a merge is rerun after " +
+                             "interruption. Records are only pruned once no replayable copy of the source " +
+                             "data remains, so this only needs to exceed any realistic replay delay.")
+    public StroomDuration getMergeStatusRetention() {
+        return mergeStatusRetention;
+    }
+
+    @Min(1)
+    @JsonProperty
+    @JsonPropertyDescription("How many times to attempt sending a part of Plan B data to a node, including the " +
+                             "first attempt. Only transport level failures, e.g. a DNS lookup failure during a " +
+                             "network blip, are retried. A node that answers, even with an error, is not asked " +
+                             "again. Set to 1 for no retries.")
+    public int getSendPartAttempts() {
+        return sendPartAttempts;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription("How long to wait between attempts to send a part of Plan B data to a node. " +
+                             "Note that the sending processing task is held for the duration of any retries.")
+    public StroomDuration getSendPartRetryDelay() {
+        return sendPartRetryDelay;
+    }
+
     @Override
     public String toString() {
         return "PlanBConfig{" +
@@ -200,6 +260,9 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                ", shardMergeThreadCount=" + shardMergeThreadCount +
                ", minTimeToKeepStoreShardEnv=" + minTimeToKeepStoreShardEnv +
                ", mergedCheckpointCacheTtl=" + mergedCheckpointCacheTtl +
+               ", mergeStatusRetention=" + mergeStatusRetention +
+               ", sendPartAttempts=" + sendPartAttempts +
+               ", sendPartRetryDelay=" + sendPartRetryDelay +
                '}';
     }
 
@@ -221,7 +284,10 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                Objects.equals(defaultShardCounts, that.defaultShardCounts) &&
                shardMergeThreadCount == that.shardMergeThreadCount &&
                Objects.equals(minTimeToKeepStoreShardEnv, that.minTimeToKeepStoreShardEnv) &&
-               Objects.equals(mergedCheckpointCacheTtl, that.mergedCheckpointCacheTtl);
+               Objects.equals(mergedCheckpointCacheTtl, that.mergedCheckpointCacheTtl) &&
+               Objects.equals(mergeStatusRetention, that.mergeStatusRetention) &&
+               sendPartAttempts == that.sendPartAttempts &&
+               Objects.equals(sendPartRetryDelay, that.sendPartRetryDelay);
     }
 
     @Override
@@ -236,7 +302,10 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                 defaultShardCounts,
                 shardMergeThreadCount,
                 minTimeToKeepStoreShardEnv,
-                mergedCheckpointCacheTtl);
+                mergedCheckpointCacheTtl,
+                mergeStatusRetention,
+                sendPartAttempts,
+                sendPartRetryDelay);
     }
 
     public static Builder builder() {
@@ -259,6 +328,9 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
         private int shardMergeThreadCount;
         private StroomDuration minTimeToKeepStoreShardEnv;
         private StroomDuration mergedCheckpointCacheTtl;
+        private StroomDuration mergeStatusRetention;
+        private int sendPartAttempts;
+        private StroomDuration sendPartRetryDelay;
 
         public Builder() {
             // Set defaults
@@ -285,6 +357,9 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
             this.shardMergeThreadCount = 4;
             this.minTimeToKeepStoreShardEnv = StroomDuration.ofMinutes(60);
             this.mergedCheckpointCacheTtl = StroomDuration.ofMinutes(10);
+            this.mergeStatusRetention = StroomDuration.ofDays(30);
+            this.sendPartAttempts = 3;
+            this.sendPartRetryDelay = StroomDuration.ofSeconds(10);
         }
 
         public Builder(final PlanBConfig config) {
@@ -298,6 +373,9 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
             this.shardMergeThreadCount = config.shardMergeThreadCount;
             this.minTimeToKeepStoreShardEnv = config.minTimeToKeepStoreShardEnv;
             this.mergedCheckpointCacheTtl = config.mergedCheckpointCacheTtl;
+            this.mergeStatusRetention = config.mergeStatusRetention;
+            this.sendPartAttempts = config.sendPartAttempts;
+            this.sendPartRetryDelay = config.sendPartRetryDelay;
         }
 
         public Builder stateDocCache(final CacheConfig stateDocCache) {
@@ -350,6 +428,21 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
             return this;
         }
 
+        public Builder mergeStatusRetention(final StroomDuration mergeStatusRetention) {
+            this.mergeStatusRetention = mergeStatusRetention;
+            return this;
+        }
+
+        public Builder sendPartAttempts(final int sendPartAttempts) {
+            this.sendPartAttempts = sendPartAttempts;
+            return this;
+        }
+
+        public Builder sendPartRetryDelay(final StroomDuration sendPartRetryDelay) {
+            this.sendPartRetryDelay = sendPartRetryDelay;
+            return this;
+        }
+
         public PlanBConfig build() {
             return new PlanBConfig(
                     stateDocCache,
@@ -361,7 +454,10 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                     defaultShardCounts,
                     shardMergeThreadCount,
                     minTimeToKeepStoreShardEnv,
-                    mergedCheckpointCacheTtl);
+                    mergedCheckpointCacheTtl,
+                    mergeStatusRetention,
+                    sendPartAttempts,
+                    sendPartRetryDelay);
         }
     }
 }

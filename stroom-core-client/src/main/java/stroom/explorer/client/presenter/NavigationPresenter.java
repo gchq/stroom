@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.DocumentTabData;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.client.event.CreateNewDocumentEvent;
@@ -125,6 +125,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     private final InlineSvgToggleButton showAlertsBtn;
     private boolean menuVisible = false;
     private boolean hasActiveFilter = false;
+    private final DocumentPluginRegistry documentPluginRegistry;
     private DocRef selectedDoc;
 
     @Inject
@@ -134,12 +135,14 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                                final MenuItems menuItems,
                                final RestFactory restFactory,
                                final DocumentTypeCache documentTypeCache,
+                               final DocumentPluginRegistry documentPluginRegistry,
                                final TypeFilterPresenter typeFilterPresenter,
                                final CurrentActivity currentActivity,
                                final UiConfigCache uiConfigCache) {
         super(eventBus, view, proxy);
         this.menuItems = menuItems;
         this.documentTypeCache = documentTypeCache;
+        this.documentPluginRegistry = documentPluginRegistry;
         this.typeFilterPresenter = typeFilterPresenter;
         this.currentActivity = currentActivity;
 
@@ -274,10 +277,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         // track the currently selected doc.
         registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
-            selectedDoc = null;
-            if (e.getTabData() instanceof final DocumentTabData documentTabData) {
-                selectedDoc = documentTabData.getDocRef();
-            }
+            selectedDoc = documentPluginRegistry.getExplorerDocRef(e.getTabData());
             locate.setEnabled(selectedDoc != null);
         }));
         registerHandler(collapseAll.addClickHandler((e) -> {

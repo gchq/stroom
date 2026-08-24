@@ -42,3 +42,20 @@ dependencies {
     runtimeOnly libs.bundles.common.test.runtime
     runtimeOnly libs.jersey.test.framework.grizzly2
 }
+
+// Interactive setup of a named dev environment (creates the DB and rewrites the
+// local*.yml / proxy-*.yml config files). Prompts for input, so run with
+// --console=plain, e.g. ./gradlew :stroom-test-common:setupDevEnv --console=plain
+tasks.register('setupDevEnv', JavaExec) {
+    group = 'stroom'
+    description = 'Interactive setup of a named dev environment (DB + config files)'
+    mainClass = 'stroom.test.common.util.db.SetupDevEnv'
+    classpath = sourceSets.main.runtimeClasspath
+    workingDir = rootProject.projectDir // so it finds local.yml at the repo root
+    standardInput = System.in // it prompts for input
+    jvmArgs = [
+            '--add-opens', 'java.base/java.nio=ALL-UNNAMED',
+            '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED',
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+    ]
+}

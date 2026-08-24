@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,15 +95,34 @@ public class OffHeapStagingStoreFactory {
                 lmdbEnvFactory,
                 refStreamDefinition);
 
-        final KeyValueStagingDb keyValueStagingDb = keyValueStagingDbFactory.create(stagingLmdbEnv);
-        final RangeValueStagingDb rangeValueStagingDb = rangeValueStagingDbFactory.create(stagingLmdbEnv);
+        // If anything below fails the env is open but no store references it, so nothing could
+        // ever close it and its dir would linger too. The loader only closes what create()
+        // returned, so unwind here instead. Guarded with a flag rather than catch(Exception) so
+        // that an Error leaks the env no more than an exception does.
+        boolean storeCreated = false;
+        try {
+            final KeyValueStagingDb keyValueStagingDb = keyValueStagingDbFactory.create(stagingLmdbEnv);
+            final RangeValueStagingDb rangeValueStagingDb = rangeValueStagingDbFactory.create(stagingLmdbEnv);
 
-        return new OffHeapStagingStore(
-                stagingLmdbEnv,
-                keyValueStagingDb,
-                rangeValueStagingDb,
-                mapDefinitionUIDStore,
-                pooledByteBufferOutputStreamFactory);
+            final OffHeapStagingStore stagingStore = new OffHeapStagingStore(
+                    stagingLmdbEnv,
+                    keyValueStagingDb,
+                    rangeValueStagingDb,
+                    mapDefinitionUIDStore,
+                    pooledByteBufferOutputStreamFactory);
+            storeCreated = true;
+            return stagingStore;
+        } finally {
+            if (!storeCreated) {
+                try {
+                    stagingLmdbEnv.close();
+                    stagingLmdbEnv.delete();
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Error cleaning up staging LMDB env {}: {}",
+                            stagingLmdbEnv, e.getMessage(), e);
+                }
+            }
+        }
     }
 
     private LmdbEnv buildStagingEnv(final LmdbEnvFactory lmdbEnvFactory,

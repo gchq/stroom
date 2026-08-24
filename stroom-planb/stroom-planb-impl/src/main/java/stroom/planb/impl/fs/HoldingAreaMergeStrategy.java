@@ -21,7 +21,7 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBPaths;
-import stroom.planb.impl.db.PlanBEnv.Usage;
+import stroom.planb.impl.dao.PlanBEnv.Usage;
 import stroom.planb.shared.HasHoldingAreaSettings;
 import stroom.planb.shared.HoldingAreaSettings;
 import stroom.planb.shared.PlanBDocument;

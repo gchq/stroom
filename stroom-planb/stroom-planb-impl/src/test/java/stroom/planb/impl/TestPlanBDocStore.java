@@ -65,7 +65,11 @@ class TestPlanBDocStore {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        doReturn(store).when(storeFactory).createStore(any(), any(), any(), any());
+        doReturn(store).when(storeFactory).createStore(any(), any(), any(), any(), any());
+        doReturn(PlanBDoc.TYPE).when(store).getType();
+        // master's writeDocument now authorises the write; this test is about shard count
+        // handling, not permissions
+        doReturn(true).when(securityContext).hasDocumentPermission(any(), any());
 
         planBPaths = new PlanBPaths(tempDir.resolve("local_state"));
         final Provider<PlanBPaths> planBPathsProvider = () -> planBPaths;

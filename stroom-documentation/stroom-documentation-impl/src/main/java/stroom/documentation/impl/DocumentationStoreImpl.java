@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.security.api.SecurityContext;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 @Singleton
 public class DocumentationStoreImpl
@@ -35,23 +34,14 @@ public class DocumentationStoreImpl
 
     @Inject
     public DocumentationStoreImpl(final StoreFactory storeFactory,
+                                  final SecurityContext securityContext,
                                   final DocumentationSerialiser documentationSerialiser) {
         super(storeFactory,
+                securityContext,
                 documentationSerialiser,
                 DocumentationDoc.TYPE,
                 DocumentationDoc::builder,
                 DocumentationDoc::copy);
-    }
-
-    // Documentation docs have no dependencies.
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return Collections.emptyMap();
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return Collections.emptySet();
     }
 
     @Override

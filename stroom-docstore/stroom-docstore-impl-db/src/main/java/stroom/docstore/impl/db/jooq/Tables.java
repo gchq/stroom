@@ -9,6 +9,7 @@ import stroom.docstore.impl.db.jooq.tables.DocAudit;
 import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
 import stroom.docstore.impl.db.jooq.tables.DocData;
 import stroom.docstore.impl.db.jooq.tables.DocDataSnapshot;
+import stroom.docstore.impl.db.jooq.tables.DocDependency;
 
 
 /**
@@ -41,4 +42,9 @@ public class Tables {
      * The table <code>stroom.doc_data_snapshot</code>.
      */
     public static final DocDataSnapshot DOC_DATA_SNAPSHOT = DocDataSnapshot.DOC_DATA_SNAPSHOT;
+
+    /**
+     * The table <code>stroom.doc_dependency</code>.
+     */
+    public static final DocDependency DOC_DEPENDENCY = DocDependency.DOC_DEPENDENCY;
 }

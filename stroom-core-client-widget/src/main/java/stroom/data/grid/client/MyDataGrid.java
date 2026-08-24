@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     private final DoubleClickTester doubleClickTester = new DoubleClickTester();
 
+    private String tableName;
+
     public MyDataGrid(final HasHandlers globalEventBus) {
         this(globalEventBus, DEFAULT_LIST_PAGE_SIZE);
     }
@@ -138,6 +140,14 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         sinkEvents(Event.ONCONTEXTMENU);
 
         aiSupport = new MyDataGridAiSupport<>(globalEventBus, this);
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(final String tableName) {
+        this.tableName = tableName;
     }
 
     public MultiSelectionModelImpl<R> addDefaultSelectionModel(final boolean allowMultiSelect) {
@@ -985,9 +995,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         colSettings.add(new ColSettings(true, true));
         super.addColumn(column, header);
         setColumnWidth(column, width, Unit.PX);
-    }
-
-    public void addEndColumn(final EndColumn<R> column) {
     }
 
     @Override

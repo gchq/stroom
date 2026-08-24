@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.io.CompressionUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.NullSafe;
+import stroom.util.time.TimeBasis;
 
 import jakarta.inject.Inject;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
@@ -153,13 +154,16 @@ public class S3Appender extends AbstractAppender {
                         final S3UploadProperties uploadProperties =
                                 new S3UploadProperties(cacheControl, contentDisposition, contentEncoding, contentType);
 
+                        // The appender is potentially creating multiple files so use current time for
+                        // time var replacement in s3 keys. This is consistent with FileAppender.
                         s3Manager.upload(
                                 bucketNamePattern,
                                 keyNamePattern,
                                 meta,
                                 attributeMap,
                                 tempFile,
-                                uploadProperties);
+                                uploadProperties,
+                                TimeBasis.CURRENT_TIME);
 
                         LOGGER.debug(
                                 "createOutput() - Uploaded tempFile '{}' to S3, meta: {}, bucketNamePattern: '{}', " +

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
+import stroom.config.global.client.presenter.ConfigDefaultSetter;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.ui.config.client.UiConfigCache;
@@ -36,12 +37,14 @@ public class AnalyticNotificationPresenter
                                          final AnalyticNotificationView view,
                                          final DocSelectionBoxPresenter errorFeedPresenter,
                                          final AnalyticNotificationListPresenter notificationListPresenter,
-                                         final UiConfigCache uiConfigCache) {
+                                         final UiConfigCache uiConfigCache,
+                                         final ConfigDefaultSetter configDefaultSetter) {
         super(eventBus,
                 view,
                 errorFeedPresenter,
                 notificationListPresenter,
-                uiConfigCache);
+                uiConfigCache,
+                configDefaultSetter);
         this.notificationListPresenter = notificationListPresenter;
         getView().setIncludeRuleDocumentationVisible(true);
     }

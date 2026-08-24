@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,15 +51,52 @@ class TestJq extends AbstractFunctionTest<Jq> {
                         ValString.create(".arr[1]")),
                 TestCase.of(
                         "Filter",
-                        // Multiple nodes are returned in an array string with standard spacing
-                        ValString.create("[2, 3]"),
+                        // The values of all the matched elements are concatenated.
+                        ValString.create("23"),
                         ValString.create(json),
                         ValString.create(".arr[] | select(. > 1)")),
+                TestCase.of(
+                        "Filter with delimiter",
+                        ValString.create("2, 3"),
+                        ValString.create(json),
+                        ValString.create(".arr[] | select(. > 1)"),
+                        ValString.create(", ")),
+                TestCase.of(
+                        "All array elements",
+                        ValString.create("1|2|3"),
+                        ValString.create(json),
+                        ValString.create(".arr[]"),
+                        ValString.create("|")),
+                TestCase.of(
+                        "Multiple objects",
+                        ValString.create("{\"a\":1},{\"b\":2}"),
+                        ValString.create("{\"items\":[{\"a\":1},{\"b\":2}]}"),
+                        ValString.create(".items[]"),
+                        ValString.create(",")),
+                TestCase.of(
+                        "Single match with delimiter",
+                        ValString.create("bar"),
+                        ValString.create(json),
+                        ValString.create(".foo"),
+                        ValString.create(",")),
+                TestCase.of(
+                        "Delimiter is only inserted between values",
+                        ValString.create("bar"),
+                        ValString.create(json),
+                        ValString.create(".foo"),
+                        ValString.create("")),
                 TestCase.of(
                         "No match",
                         ValNull.INSTANCE,
                         ValString.create(json),
                         ValString.create(".missing")),
+                TestCase.of(
+                        // A single null is null, but a null among several matches has to render as something.
+                        "Null among multiple matches",
+                        ValString.create("1,null,2"),
+                        ValString.create("{\"arr\":[1,null,2]}"),
+                        ValString.create(".arr[]"),
+                        ValString.create(",")),
                 TestCase.of(
                         "Invalid JSON",
                         // Error message from Jackson
@@ -67,11 +104,16 @@ class TestJq extends AbstractFunctionTest<Jq> {
                         ValString.create("{unclosed"),
                         ValString.create(".")),
                 TestCase.of(
-                        "Invalid JQ",
+                        "Empty JQ",
                         ValString.create(
                                 "An empty JQ expression has been defined for second argument of 'Jq' function"),
                         ValString.create(json),
-                        ValString.create(""))
+                        ValString.create("")),
+                TestCase.of(
+                        "Invalid JQ",
+                        ValString.create("Error in JQ expression"),
+                        ValString.create(json),
+                        ValString.create(".["))
         );
     }
 }

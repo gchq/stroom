@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,6 +156,9 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                     NullSafe.size(docs)));
             final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
             for (final T doc : docs) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new UncheckedInterruptedException(new InterruptedException());
+                }
                 final Runnable runnable = createRunnable(doc, taskContext, scheduledExecutable);
                 try {
                     workQueue.exec(runnable);
@@ -359,6 +362,9 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
 
         final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
         for (final ExecutionSchedule executionSchedule : executionSchedules.getValues()) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new UncheckedInterruptedException(new InterruptedException());
+            }
             final Runnable runnable = () -> {
                 try {
                     // We need to set the user again here as it will have been lost from the parent context as we are
@@ -430,6 +436,7 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
 
     public void executeNow(final ExecutionSchedule executionSchedule,
                            final ScheduledExecutable<T> scheduledExecutable) {
+        // TODO Why is this using the workQueue, only one task is ever executed
         final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
         final Runnable runnable = () -> {
             try {
@@ -533,23 +540,53 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                                    "' with effective time: " +
                                    DateUtil.createNormalDateTimeString(effectiveExecutionTime.toEpochMilli()));
 
-            scheduledExecutable.beforeProcess(doc,
-                    trigger,
-                    executionTime,
-                    effectiveExecutionTime,
-                    executionSchedule,
-                    currentTracker,
-                    taskContext,
-                    (t) -> {
-                        process(doc,
-                                trigger,
-                                executionTime,
-                                effectiveExecutionTime,
-                                executionSchedule,
-                                currentTracker,
-                                scheduledExecutable);
-                        return doc;
-                    });
+            try {
+                scheduledExecutable.beforeProcess(doc,
+                        trigger,
+                        executionTime,
+                        effectiveExecutionTime,
+                        executionSchedule,
+                        currentTracker,
+                        taskContext,
+                        (t) -> {
+                            process(doc,
+                                    trigger,
+                                    executionTime,
+                                    effectiveExecutionTime,
+                                    executionSchedule,
+                                    currentTracker,
+                                    scheduledExecutable);
+                            return doc;
+                        });
+            } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                // Shutting down rather than a fault with the schedule, so leave it enabled to run again.
+                LOGGER.debug(e::getMessage, e);
+                throw e;
+            } catch (final RuntimeException e) {
+                // Setting up processing failed, e.g. because there is no error feed to write errors to, so we
+                // can't report this through the error writer. Record it against the execution history to make it
+                // visible in the UI. Without this the failure is only logged and repeats silently on every
+                // scheduled execution.
+                LOGGER.error(() -> LogUtil.message("Error executing {}: {}",
+                        scheduledExecutable.getProcessType(), scheduledExecutable.getIdentity(doc)), e);
+                addExecutionHistory(executionSchedule,
+                        executionTime,
+                        effectiveExecutionTime,
+                        ExecutionResult.error(LogUtil.exceptionMessage(e)));
+
+                // Every subsequent execution would fail in exactly the same way, so disable the schedule rather
+                // than filling the execution history with identical errors. This matches how other execution
+                // errors are handled.
+                LOGGER.info(() -> LogUtil.message("Disabling schedule '{}' for {}: {}",
+                        executionSchedule.getName(),
+                        scheduledExecutable.getProcessType(),
+                        scheduledExecutable.getIdentity(doc)));
+                executionScheduleDao.updateExecutionSchedule(executionSchedule
+                        .copy()
+                        .enabled(false)
+                        .build());
+                return false;
+            }
             return true;
         }
         return false;

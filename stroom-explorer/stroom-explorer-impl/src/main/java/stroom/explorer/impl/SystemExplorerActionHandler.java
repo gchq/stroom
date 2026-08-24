@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -97,16 +96,6 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     // ---------------------------------------------------------------------
     // START OF HasDependencies
     // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return Collections.emptyMap();
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return Collections.emptySet();
-    }
 
     @Override
     public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {

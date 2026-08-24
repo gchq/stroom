@@ -17,9 +17,9 @@
 package stroom.planb.impl.rest;
 
 import stroom.meta.shared.Meta;
+import stroom.planb.impl.dao.PartDestination;
+import stroom.planb.impl.dao.WrittenPart;
 import stroom.planb.impl.data.queue.SequentialFileStore;
-import stroom.planb.impl.db.PartDestination;
-import stroom.planb.impl.db.WrittenPart;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

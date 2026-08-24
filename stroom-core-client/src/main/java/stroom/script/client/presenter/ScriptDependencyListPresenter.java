@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ package stroom.script.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.WrapperView;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.explorer.client.presenter.DocSelectionPopup;
@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasDocumentRead<ScriptDoc>, HasDocumentWrite<ScriptDoc>, HasDirtyHandlers {
+        implements HasDocumentRead<ScriptDoc>, HasDocumentWrite<ScriptDoc>, HasChangeHandlers {
 
     private final ScriptListPresenter scriptListPresenter;
     private final DocSelectionPopup explorerDropDownTreePresenter;
@@ -82,7 +82,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         explorerDropDownTreePresenter.show(script -> {
             if (script != null) {
                 if (!scripts.contains(script) && scripts.add(script)) {
-                    DirtyEvent.fire(ScriptDependencyListPresenter.this, true);
+                    ChangeEvent.fire(ScriptDependencyListPresenter.this);
                     refresh();
                 }
             }
@@ -104,7 +104,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
                     }
 
                     scriptListPresenter.getSelectionModel().clear();
-                    DirtyEvent.fire(ScriptDependencyListPresenter.this, true);
+                    ChangeEvent.fire(ScriptDependencyListPresenter.this);
                     refresh();
                 }
             });
@@ -115,6 +115,9 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     public void read(final DocRef docRef, final ScriptDoc document, final boolean readOnly) {
         this.readOnly = readOnly;
         enableButtons();
+        if (docRef != null && docRef.getName() != null) {
+            scriptListPresenter.setTableName("Script '" + docRef.getName() + "' Dependencies");
+        }
 
         scripts = new ArrayList<>();
         if (document != null) {
@@ -155,7 +158,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 }

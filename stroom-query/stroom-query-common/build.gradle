@@ -40,6 +40,7 @@ dependencies {
     implementation libs.kryo
     implementation libs.lmdbjava
     implementation libs.slf4j.api
+    implementation libs.swagger.annotations
     implementation libs.zero.allocation.hashing
 
     testImplementation testFixtures(project(':stroom-query:stroom-query-language'))

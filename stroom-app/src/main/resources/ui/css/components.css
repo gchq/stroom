@@ -1273,7 +1273,7 @@
 .mainViewImpl-contentWrapper {
     position: relative;
     width: 100%;
-    flex-grow: 1;
+    height: 100%;
     overflow: hidden;
 }
 
@@ -1643,7 +1643,6 @@ button.main-menu svg {
 
     display: flex;
     align-items: center;
-    height: 33px;
     justify-content: center;
 }
 

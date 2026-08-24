@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,42 +25,37 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelResource;
 import stroom.openai.shared.OpenAIModelTestResponse;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.http.HttpClientConfig;
-import stroom.util.shared.http.HttpTlsConfig;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.NoSuchElementException;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
 
 @AutoLogged
 public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUuid<OpenAIModelDoc> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenAIModelResourceImpl.class);
-
-    private static HttpClientConfig defaultHttpClientConfig;
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<AiService> aiServiceProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
     OpenAIModelResourceImpl(
             final Provider<OpenAIModelStore> openAIModelStoreProvider,
             final Provider<AiService> aiServiceProvider,
-            final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+            final Provider<DocumentResourceHelper> documentResourceHelperProvider,
+            final Provider<SecurityContext> securityContextProvider) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
         this.aiServiceProvider = aiServiceProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @Override
@@ -91,6 +86,15 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
                 throw new IllegalArgumentException("Model ID must not be empty");
             }
 
+            // Validating a model makes a server-side request to the model's (request-supplied) base URL, so
+            // require USE permission on the model document rather than allowing any logged-in user.
+            final DocRef docRef = getDocRef(modelDoc.getUuid());
+            final SecurityContext securityContext = securityContextProvider.get();
+            if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
+                throw new PermissionException(securityContext.getUserRef(),
+                        "You do not have USE permission on AI model " + docRef);
+            }
+
             final String model = aiServiceProvider.get().getModel(modelDoc);
             return new OpenAIModelTestResponse(model != null, model);
         } catch (final NoSuchElementException e) {
@@ -100,29 +104,6 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
 
     @Override
     public HttpClientConfig getDefaultHttpClientConfig() {
-        if (defaultHttpClientConfig == null) {
-            defaultHttpClientConfig = createDefaultHttpClientConfig();
-        }
-        return defaultHttpClientConfig;
-    }
-
-    private HttpClientConfig createDefaultHttpClientConfig() {
-        try (final SSLServerSocket sslServerSocket = ((SSLServerSocket) SSLServerSocketFactory.getDefault()
-                .createServerSocket())) {
-            final List<String> supportedCiphers = Arrays.stream(sslServerSocket.getEnabledCipherSuites()).toList();
-            final List<String> supportedProtocols = Arrays.stream(sslServerSocket.getEnabledProtocols()).toList();
-            final HttpTlsConfig httpTlsConfig = HttpTlsConfig
-                    .builder()
-                    .supportedCiphers(supportedCiphers)
-                    .supportedProtocols(supportedProtocols)
-                    .build();
-            return HttpClientConfig
-                    .builder()
-                    .tlsConfiguration(httpTlsConfig)
-                    .build();
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-            return HttpClientConfig.builder().build();
-        }
+        return aiServiceProvider.get().getDefaultHttpClientConfig();
     }
 }

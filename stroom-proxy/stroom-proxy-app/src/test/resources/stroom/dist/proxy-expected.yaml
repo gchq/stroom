@@ -138,8 +138,8 @@ proxyConfig:
     dataFeedIdentitiesDir: "data_feed_identities"
     dataFeedOwnerMetaKey: "AccountId"
     enabledAuthenticationTypes:
-    - "AuthenticationType{displayValue='OAuth Token'}"
-    - "AuthenticationType{displayValue='Client certificate'}"
+    - "TOKEN"
+    - "CERTIFICATE"
     fallbackReceiveAction: "RECEIVE"
     feedNameGenerationEnabled: false
     feedNameGenerationMandatoryHeaders:
@@ -170,8 +170,9 @@ proxyConfig:
       authenticationRequired: true
       openId:
         allowedAudiences: []
-        audienceClaimRequired: false
+        audienceClaimRequired: true
         authEndpoint: null
+        authenticationRequestExtraParams: {}
         clientCredentialsScopes:
         - "openid"
         clientId: null
@@ -189,10 +190,12 @@ proxyConfig:
         requestScopes:
         - "openid"
         - "email"
+        requiredAccessTokenType: null
         tokenEndpoint: null
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
         validIssuers: []
+        validateAudience: true
   sqsConnectors:
   - awsProfileName: null
     awsRegionName: null

@@ -73,6 +73,13 @@
             </g:HorizontalPanel>
         </form:FormGroup>
 
+        <!-- Button to configure how Stroom talks to the remote over HTTP(S), including which key stores
+             to trust. Needed for servers presenting a certificate from a private CA. -->
+        <b:Button ui:field="setHttpClientConfig"
+                  text="Set Http Client Config"
+                  addStyleNames="allow-focus"
+                  title="Configure the HTTP client used to talk to the Git repository"/>
+
         <!-- Button to push into Git -->
         <b:Button ui:field="btnGitRepoPush"
                   text="Push to Git"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         this.editPresenterProvider = editPresenterProvider;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Notifications");
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<NotificationConfig> selectionEventManager =
                 new DataGridSelectionEventManager<>(
@@ -135,7 +136,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                     .onHideRequest(e -> {
                         if (e.isOk()) {
                             final NotificationConfig updated = presenter.write();
-                            replace(updated);
+                            replace(selected, updated);
                             onChange();
                             refresh();
                         }
@@ -178,7 +179,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                             final NotificationConfig updated = row.copy()
                                     .enabled(TickBoxState.getAsBoolean(value))
                                     .build();
-                            replace(updated);
+                            replace(row, updated);
                             onChange();
                             refresh();
                         })
@@ -218,7 +219,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                             final NotificationConfig updated = row.copy()
                                     .limitNotifications(TickBoxState.getAsBoolean(value))
                                     .build();
-                            replace(updated);
+                            replace(row, updated);
                             onChange();
                             refresh();
                         })
@@ -242,8 +243,6 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                         .rightAligned()
                         .build(),
                 ColumnSizeConstants.MEDIUM_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private String getDestinationAsString(final NotificationConfig row) {
@@ -256,13 +255,14 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         return null;
     }
 
-    private void replace(final NotificationConfig notificationConfig) {
-        final int index = list.indexOf(notificationConfig);
+    private void replace(final NotificationConfig oldConfig,
+                         final NotificationConfig newConfig) {
+        final int index = list.indexOf(oldConfig);
         if (index >= 0) {
-            list.remove(notificationConfig);
-            list.add(index, notificationConfig);
+            list.remove(index);
+            list.add(index, newConfig);
         } else {
-            list.add(notificationConfig);
+            list.add(newConfig);
         }
     }
 
@@ -282,11 +282,6 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         if (document.getNotifications() != null) {
             list.addAll(document.getNotifications());
         }
-        refresh();
-    }
-
-    public void clear() {
-        list.clear();
         refresh();
     }
 

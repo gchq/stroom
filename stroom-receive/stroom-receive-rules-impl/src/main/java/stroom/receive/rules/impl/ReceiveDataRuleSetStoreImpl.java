@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
@@ -65,11 +64,12 @@ public class ReceiveDataRuleSetStoreImpl
 
     @Inject
     public ReceiveDataRuleSetStoreImpl(final StoreFactory storeFactory,
-                                       final Serialiser2Factory serialiser2Factory,
                                        final SecurityContext securityContext,
+                                       final Serialiser2Factory serialiser2Factory,
                                        final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider,
                                        final ClusterLockService clusterLockService) {
         super(storeFactory,
+                securityContext,
                 serialiser2Factory.createSerialiser(ReceiveDataRules.class),
                 ReceiveDataRules.TYPE,
                 ReceiveDataRules::builder,
@@ -175,16 +175,6 @@ public class ReceiveDataRuleSetStoreImpl
     }
 
     @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        throw new UnsupportedOperationException("Get Dependencies not supported by Data Receipt Rules");
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        throw new UnsupportedOperationException("Get Dependencies not supported by Data Receipt Rules");
-    }
-
-    @Override
     protected DependencyRemapFunction<ReceiveDataRules> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) -> {
             final List<ReceiveDataRule> templates = doc.getRules();
@@ -207,9 +197,21 @@ public class ReceiveDataRuleSetStoreImpl
 
     @Override
     public ReceiveDataRules writeDocument(final ReceiveDataRules document) {
-        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
-        // access it via the proc user (so long as use has MANAGE_DATA_RECEIPT_RULES_PERMISSION)
+        // Authorised by the APPLICATION permission, not by a document permission.
         return securityContext.secureResult(AppPermission.MANAGE_DATA_RECEIPT_RULES_PERMISSION,
-                () -> securityContext.asProcessingUserResult(() -> getStore().writeDocument(document)));
+                () -> getStore().writeDocument(document));
+    }
+
+    /**
+     * The data receipt rules are not an explorer document and no user will ever hold a document
+     * permission on them, so a document check has nothing to consult. Authority comes from
+     * {@link AppPermission#MANAGE_DATA_RECEIPT_RULES_PERMISSION}, checked at the entry points above.
+     * <p>
+     * This is the store's way of saying "my documents carry no permissions", which keeps the write
+     * running as the real user, so the audit trail names whoever changed the rules.
+     */
+    @Override
+    protected boolean isDocumentPermissionCheckRequired() {
+        return false;
     }
 }

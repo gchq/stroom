@@ -288,6 +288,11 @@ subprojects {
         maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
         // maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
 
+        // Capture the report output location here (where 'reports' is in scope on the
+        // Test task) so the TestListener below can reference it. Inside the anonymous
+        // TestListener class 'reports' is not resolvable.
+        def junitXmlOutputLocation = reports.junitXml.outputLocation
+
         addTestListener(new TestListener() {
             @Override
             void beforeSuite(TestDescriptor descriptor) {
@@ -319,7 +324,7 @@ subprojects {
 
                     // test class failed so add its project info and test report file to a global list for
                     // processing at the end of the build
-                    def reportFileName = "${reports.junitXml.outputLocation}/TEST-${descriptor.className}.xml"
+                    def reportFileName = "${junitXmlOutputLocation.get().asFile}/TEST-${descriptor.className}.xml"
                     def reportFile = file(reportFileName)
                     def pair = new Tuple2("${project.name} ${descriptor.name}", reportFile)
                     failedTestReportFiles.add(pair)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@ import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-
-import java.util.Date;
 
 public class FindAnnotationCell extends AbstractCell<Annotation> {
 
@@ -87,7 +85,7 @@ public class FindAnnotationCell extends AbstractCell<Annotation> {
                     durationLabel.div(sub,
                             "annotationDurationLabel",
                             value.getCreateTimeMs(),
-                            new Date());
+                            System.currentTimeMillis());
 
                     if (value.getAssignedTo() != null) {
                         // Dash

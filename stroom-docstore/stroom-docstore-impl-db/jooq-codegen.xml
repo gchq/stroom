@@ -29,6 +29,7 @@
                 | doc_audit
                 | doc_data_snapshot
                 | doc_audit_data_snapshot
+                | doc_dependency
             </includes>
             <!-- We don't want to include the Flyway schema history table -->
             <excludes>doc_schema_history</excludes>

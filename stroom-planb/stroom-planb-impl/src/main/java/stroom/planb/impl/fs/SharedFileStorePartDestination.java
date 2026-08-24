@@ -18,8 +18,8 @@ package stroom.planb.impl.fs;
 
 import stroom.meta.shared.Meta;
 import stroom.planb.impl.PlanBConstants;
-import stroom.planb.impl.db.PartDestination;
-import stroom.planb.impl.db.WrittenPart;
+import stroom.planb.impl.dao.PartDestination;
+import stroom.planb.impl.dao.WrittenPart;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

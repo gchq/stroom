@@ -220,6 +220,7 @@
       stroom.processor.impl.db.jooq.tables.ProcessorTask.*,
       stroom.security.identity.db.jooq.tables.Account.*,
       stroom.security.identity.db.jooq.tables.JsonWebKey.*,
+      stroom.security.identity.db.jooq.tables.OauthToken.*,
       stroom.security.impl.db.jooq.tables.ApiKey.*,
       stroom.security.impl.db.jooq.tables.PermissionApp.*,
       stroom.security.impl.db.jooq.tables.PermissionAppId.*,

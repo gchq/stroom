@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class TabContentProvider<E>
     private final Map<TabData, TabProvider<E>> presenterCache = new HashMap<>();
 
     private final Set<TabProvider<E>> usedProviders = new HashSet<>();
+    private final Set<TabProvider<E>> dirtyHandlerProviders = new HashSet<>();
 
     private final EventBus eventBus;
     private TabProvider<E> currentTabProvider;
@@ -93,6 +94,11 @@ public class TabContentProvider<E>
     public void replace(final TabData tab, final TabProvider<E> provider) {
         tabProviders.replace(tab, provider);
         presenterCache.replace(tab, provider);
+        // A replacement provider bypasses getPresenter(), so wire up its dirty events here or edits
+        // made in it would never reach the enclosing document.
+        if (dirtyHandlerProviders.add(provider)) {
+            registerHandler(provider.addDirtyHandler(this::fireEvent));
+        }
     }
 
     public PresenterWidget<?> getPresenter(final TabData tab, final TaskMonitorFactory taskMonitorFactory) {
@@ -105,7 +111,9 @@ public class TabContentProvider<E>
                 presenterCache.put(tab, currentTabProvider);
 
                 // Handle dirty events.
-                registerHandler(currentTabProvider.addDirtyHandler(this::fireEvent));
+                if (dirtyHandlerProviders.add(currentTabProvider)) {
+                    registerHandler(currentTabProvider.addDirtyHandler(this::fireEvent));
+                }
 
                 if (currentTabProvider instanceof HasTaskMonitorFactory) {
                     ((HasTaskMonitorFactory) currentTabProvider)

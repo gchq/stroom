@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 
 package stroom.planb.impl.data.shard;
 
-
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBPaths;
-import stroom.planb.impl.db.Db;
-import stroom.planb.impl.db.PlanBDb;
-import stroom.planb.impl.db.PlanBEnv.Usage;
+import stroom.planb.impl.dao.Db;
+import stroom.planb.impl.dao.PlanBDb;
+import stroom.planb.impl.dao.PlanBEnv.Usage;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.HasCondenseSettings;
@@ -32,8 +31,10 @@ import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.RetentionSettings;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.time.SimpleDurationUtil;
@@ -153,7 +154,7 @@ public abstract class AbstractStoreShard implements Shard {
                 if (exclusiveReadLock.tryLock()) {
                     try {
                         LOGGER.info(() -> "Deleting data for: " + doc);
-                        close();
+                        closeDb();
                         FileUtil.deleteDir(shardDir);
                         return true;
                     } finally {
@@ -179,7 +180,7 @@ public abstract class AbstractStoreShard implements Shard {
         try {
             writeLock.lockInterruptibly();
             try {
-                db.merge(sourceDir);
+                requireDb().merge(sourceDir);
                 lastWriteTime = Instant.now();
                 afterMutation();
             } finally {
@@ -224,7 +225,7 @@ public abstract class AbstractStoreShard implements Shard {
             try {
                 writeLock.lockInterruptibly();
                 try {
-                    result = db.runRetention(deleteBefore, useStateTime);
+                    result = requireDb().runRetention(deleteBefore, useStateTime);
                     lastWriteTime = Instant.now();
                 } finally {
                     writeLock.unlock();
@@ -263,7 +264,7 @@ public abstract class AbstractStoreShard implements Shard {
             try {
                 writeLock.lockInterruptibly();
                 try {
-                    result = db.condense(condenseBefore);
+                    result = requireDb().condense(condenseBefore);
                     lastWriteTime = Instant.now();
                 } finally {
                     writeLock.unlock();
@@ -288,6 +289,20 @@ public abstract class AbstractStoreShard implements Shard {
     }
 
     @Override
+    public long deleteOldMergeStatus(final Instant deleteBefore) {
+        try {
+            writeLock.lockInterruptibly();
+            try {
+                return requireDb().deleteOldMergeStatus(deleteBefore);
+            } finally {
+                writeLock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
+    }
+
+    @Override
     public void compact() {
         final Path dataFile = shardDir.resolve(PlanBConstants.DATA_FILE_NAME);
         final Path compactedDir = shardDir.resolve(COMPACTED_DIR_NAME);
@@ -298,14 +313,16 @@ public abstract class AbstractStoreShard implements Shard {
             writeLock.lockInterruptibly();
             try {
 
-                // Ensure the DB is open and won't be closed.
+                // Ensure the DB is open and won't be closed. Checked before we create the
+                // compacted dir below so a closed shard doesn't leave one behind.
+                final Db<?, ?> openDb = requireDb();
                 try {
                     // Perform compaction.
                     LOGGER.info("Running compaction");
                     LOGGER.info(() -> "Size before compaction: " + fileSize(dataFile));
                     FileUtil.deleteDir(compactedDir);
                     Files.createDirectory(compactedDir);
-                    db.compact(compactedDir);
+                    openDb.compact(compactedDir);
                     LOGGER.info(() -> "Size after compaction: " + fileSize(compactedFile));
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
@@ -316,7 +333,7 @@ public abstract class AbstractStoreShard implements Shard {
                 exclusiveReadLock.lockInterruptibly();
                 try {
                     // Close the DB.
-                    close();
+                    closeDb();
 
                     // Switch files.
                     try {
@@ -397,7 +414,7 @@ public abstract class AbstractStoreShard implements Shard {
                 try {
                     LOGGER.info(() -> "Evicting idle local shard for: " + doc.asDocRef()
                             + " (shardIndex: " + shardIndex + ")");
-                    close();
+                    closeDb();
                     FileUtil.deleteDir(shardDir);
                 } finally {
                     exclusiveReadLock.unlock();
@@ -431,7 +448,7 @@ public abstract class AbstractStoreShard implements Shard {
     /**
      * Must only be called while holding {@code exclusiveReadLock}.
      */
-    protected void close() {
+    protected void closeDb() {
         if (db != null) {
             try {
                 db.close();
@@ -448,6 +465,60 @@ public abstract class AbstractStoreShard implements Shard {
      */
     public void dispose() {
         close();
+    }
+
+    @Override
+    public void close() {
+        // The env must be closed whatever happens, so neither wait here is interruptible.
+        // Shutdown interrupts task threads, so bailing out on interrupt would routinely
+        // leave envs open with their map reserved, and a later shard could then open a
+        // second env on the same dir. Unlike delete(), we wait for in-flight readers rather
+        // than giving up, so the env is never closed under a live read txn — that wait is
+        // exactly what makes closing safe, so it cannot be skippable. The interrupt flag is
+        // restored before returning.
+        lockUninterruptibly(writeLock);
+        try {
+            lockUninterruptibly(exclusiveReadLock);
+            try {
+                LOGGER.debug(() -> "Closing shard for: " + doc);
+                closeDb();
+            } finally {
+                exclusiveReadLock.unlock();
+            }
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    /**
+     * Must be called while holding {@code readLock} or {@code writeLock}, both of which
+     * exclude the paths that null the db, so it stays non-null for the rest of the
+     * caller's locked section.
+     */
+    private Db<?, ?> requireDb() {
+        final Db<?, ?> db = this.db;
+        if (db == null) {
+            throw new ShardClosedException();
+        }
+        return db;
+    }
+
+    /**
+     * Acquires the lock, ignoring interrupts. {@link Lock#lock()} already does exactly that,
+     * restoring the interrupt flag once it has the lock, so all this adds is a log line when
+     * we actually have to wait — a holder that never lets go is then visible rather than a
+     * silent block.
+     * <p>
+     * Deliberately not a timed {@code tryLock} retry loop: a timed acquire cancels its queue
+     * node on timeout, which lets arriving readers barge past a waiting writer and can starve
+     * this call indefinitely, and it throws rather than times out when the caller is already
+     * interrupted, so any periodic logging it did would never fire during shutdown anyway.
+     */
+    private void lockUninterruptibly(final Lock lock) {
+        if (!lock.tryLock()) {
+            LOGGER.warn(() -> "Waiting to lock shard for: " + doc);
+            lock.lock();
+        }
     }
 
     @Override

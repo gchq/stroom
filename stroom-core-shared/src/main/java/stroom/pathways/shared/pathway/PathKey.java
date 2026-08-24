@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package stroom.pathways.shared.pathway;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -29,6 +31,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = NamesPathKey.class, name = "names"),
         @JsonSubTypes.Type(value = TerminalPathKey.class, name = "terminal")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "name", schema = NamePathKey.class),
+                @DiscriminatorMapping(value = "names", schema = NamesPathKey.class),
+                @DiscriminatorMapping(value = "terminal", schema = TerminalPathKey.class)})
 public sealed interface PathKey permits NamePathKey, NamesPathKey, TerminalPathKey {
 
 }

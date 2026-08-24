@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.util.NextNameGenerator;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -94,10 +93,9 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     @Override
     public FsVolumeGroup create(final String name) {
         ensureDefaultVolumes();
-        final String newName = NextNameGenerator.getNextName(volumeGroupDao.getNames(), "New group");
         final FsVolumeGroup indexVolumeGroup = FsVolumeGroup
                 .builder()
-                .name(newName)
+                .name(name)
                 .stampAudit(securityContext)
                 .build();
         final FsVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +103,7 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
         getView().setModelId(model.getModelId());
         getView().setMaxContextWindowTokens(model.getMaxContextWindowTokens());
         getView().setReasoningEffort(model.getReasoningEffort());
+        getView().setEmbeddingModelDimensions(model.getEmbeddingModelDimensions());
 
         httpClientConfiguration = model.getHttpClientConfiguration();
         if (httpClientConfiguration == null) {
@@ -128,16 +129,17 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
                 .modelId(getView().getModelId())
                 .maxContextWindowTokens(getView().getMaxContextWindowTokens())
                 .reasoningEffort(getView().getReasoningEffort())
+                .embeddingModelDimensions(getView().getEmbeddingModelDimensions())
                 .httpClientConfiguration(httpClientConfiguration)
                 .build();
     }
 
     @Override
     public void onSetHttpClientConfiguration() {
-        httpClientSettingsPresenterProvider.get().show(httpClientConfiguration, updated -> {
+        httpClientSettingsPresenterProvider.get().show(httpClientConfiguration, isReadOnly(), updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
-                onChange();
                 httpClientConfiguration = updated;
+                onChange();
             }
         });
     }
@@ -162,5 +164,9 @@ public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettin
         String getReasoningEffort();
 
         void setReasoningEffort(String reasoningEffort);
+
+        int getEmbeddingModelDimensions();
+
+        void setEmbeddingModelDimensions(int embeddingModelDimensions);
     }
 }

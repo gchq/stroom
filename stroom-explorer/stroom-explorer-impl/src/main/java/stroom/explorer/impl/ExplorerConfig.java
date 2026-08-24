@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.explorer.impl;
 
 import stroom.config.common.HasDbConfig;
+import stroom.explorer.impl.db.ExplorerDbConfig;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.StandardExplorerTags;
 import stroom.util.shared.AbstractConfig;
@@ -34,7 +35,6 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 
 @JsonPropertyOrder(alphabetic = true)
 public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {

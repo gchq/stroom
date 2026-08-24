@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.NullSafe;
 
@@ -54,6 +55,7 @@ public class PlanBDocStoreImpl
             final Provider<PlanBPaths> planBPathsProvider,
             final Provider<ClusterLockService> clusterLockServiceProvider) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 PlanBDoc.TYPE,
                 PlanBDoc::builder,
@@ -63,25 +65,41 @@ public class PlanBDocStoreImpl
         this.clusterLockServiceProvider = clusterLockServiceProvider;
     }
 
+    /**
+     * Create a state store, defaulting its state type.
+     * <p>
+     * The default is applied to the document SKELETON rather than by reading the new document back and
+     * writing it again. A second write is authorised against a document whose permissions are not
+     * attached until after this method returns ({@code ExplorerServiceImpl.create} calls
+     * {@code createNode} afterwards), so it succeeds only because {@code hasDocumentPermission} lets
+     * an administrator through before consulting any permission row — a non-admin creating a state
+     * store is refused.
+     */
     @Override
     public DocRef createDocument(final String name) {
         validateName(name);
 
-        final DocRef created = getStore().createDocument(name);
+        final DocRef created = getStore().createDocument(name,
+                (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> PlanBDoc
+                        .builder()
+                        .uuid(uuid)
+                        .name(docName)
+                        .version(version)
+                        .createTimeMs(createTime)
+                        .updateTimeMs(updateTime)
+                        .createUser(createUser)
+                        .updateUser(updateUser)
+                        .stateType(StateType.TEMPORAL_STATE)
+                        .build());
 
         // Double-check the feed wasn't created elsewhere at the same time.
         if (checkDuplicateName(name, created)) {
-            // Delete the newly created document as the key is duplicated.
-
-            // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
-            // permissions added to them until after they are created in the store.
-            securityContext.asProcessingUser(() -> getStore().deleteDocument(created));
+            // Delete the newly created document as the key is duplicated. getStore() is the
+            // deliberately unchecked handle, which is what undoing our own create needs: the document
+            // has no permissions yet, and the authority to remove it is that we just made it.
+            getStore().deleteDocument(created);
             throwNameException(name);
         }
-
-        PlanBDoc doc = getStore().readDocument(created);
-        doc = doc.copy().stateType(StateType.TEMPORAL_STATE).build();
-        getStore().writeDocument(doc);
 
         return created;
     }
@@ -121,6 +139,10 @@ public class PlanBDocStoreImpl
             throwNameException(name);
         }
 
+        // Copy reads the source document, so it needs VIEW on it. This override reaches
+        // getStore() directly, which is the unchecked handle, so the check the base applies is
+        // applied here.
+        checkDocumentPermission(docRef, DocumentPermission.VIEW);
         return getStore().copyDocument(docRef.getUuid(), newName);
     }
 

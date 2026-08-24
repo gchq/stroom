@@ -708,6 +708,7 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      disableExternalEntities: true
       secureProcessing: true
     pipelineDataCache:
       expireAfterAccess: "PT10M"
@@ -769,12 +770,15 @@ appConfig:
       HISTOGRAM: 16
       METRIC: 16
       TRACE: 64
+    mergeStatusRetention: "P30D"
     mergedCheckpointCacheTtl: "PT10M"
     minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
     minTimeToKeepStoreShardEnv: "PT1H"
     nodeList: []
     path: "planb"
+    sendPartAttempts: 3
+    sendPartRetryDelay: "PT10S"
     shardMergeThreadCount: 4
     snapshotRetryFetchInterval: "PT1M"
     stateDocCache:
@@ -837,9 +841,12 @@ appConfig:
       refreshAfterWrite: "PT10S"
       statisticsMode: "INTERNAL"
     queueSize: 1000
+    skipEmptyFilterFetchDuration: "PT10S"
     skipNonProducingFiltersDuration: "PT10S"
+    skipNonProducingFiltersMaxDuration: "PT1M"
     taskCreationThreadCount: 5
     tasksToCreate: 1000
+    useMaxMetaIdFromPreviousPoll: true
     waitToQueueTasksDuration: "PT10S"
   properties:
     db:
@@ -954,8 +961,8 @@ appConfig:
     dataFeedIdentitiesDir: "data_feed_identities"
     dataFeedOwnerMetaKey: "AccountId"
     enabledAuthenticationTypes:
-    - "AuthenticationType{displayValue='OAuth Token'}"
-    - "AuthenticationType{displayValue='Client certificate'}"
+    - "TOKEN"
+    - "CERTIFICATE"
     fallbackReceiveAction: "RECEIVE"
     feedNameGenerationEnabled: false
     feedNameGenerationMandatoryHeaders:
@@ -1039,11 +1046,19 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      csrf:
+        protectBrowserOriginatedRequests: true
+      edgeAuthentication:
+        enabled: false
+        logout:
+          cookiesToExpire: []
+          signOutUrl: null
       maxApiKeyExpiryAge: "P365D"
       openId:
         allowedAudiences: []
-        audienceClaimRequired: false
+        audienceClaimRequired: true
         authEndpoint: null
+        authenticationRequestExtraParams: {}
         clientCredentialsScopes:
         - "openid"
         clientId: null
@@ -1061,10 +1076,12 @@ appConfig:
         requestScopes:
         - "openid"
         - "email"
+        requiredAccessTokenType: null
         tokenEndpoint: null
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
         validIssuers: []
+        validateAudience: true
       preventLogin: false
     authorisation:
       appPermissionIdCache:
@@ -1109,7 +1126,7 @@ appConfig:
         statisticsMode: "INTERNAL"
       userCache:
         expireAfterAccess: "PT30M"
-        expireAfterWrite: null
+        expireAfterWrite: "PT30M"
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
@@ -1135,6 +1152,7 @@ appConfig:
       secretEncryptionKey: ""
     identity:
       allowCertificateAuthentication: false
+      allowLockedAccountPasswordReset: false
       autoCreateAdminAccountOnBoot: false
       certificateCnCaptureGroupIndex: 1
       certificateCnPattern: ".*\\((.*)\\)"
@@ -1155,31 +1173,24 @@ appConfig:
           prepStmtCacheSize: 25
           prepStmtCacheSqlLimit: 256
       email:
-        allowPasswordResets: false
         fromAddress: "noreply@stroom"
         fromName: "Stroom User Accounts"
         passwordResetSubject: "Password reset for Stroom"
         passwordResetText: "A password reset has been requested for this email address.\
           \ Please visit the following URL to reset your password: %s."
-        passwordResetUrl: "/s/resetPassword/?user=%s&token=%s"
         smtp:
           host: "localhost"
           password: null
           port: 2525
           transport: "plain"
           username: null
+      failedLoginLockDuration: "PT30M"
       failedLoginLockThreshold: 3
       openid:
         accessCodeCache:
           expireAfterAccess: "PT10M"
           expireAfterWrite: null
           maximumSize: 1000
-          refreshAfterWrite: null
-          statisticsMode: "INTERNAL"
-        refreshTokenCache:
-          expireAfterAccess: "P1D"
-          expireAfterWrite: null
-          maximumSize: 10000
           refreshAfterWrite: null
           statisticsMode: "INTERNAL"
       passwordPolicy:
@@ -1189,17 +1200,19 @@ appConfig:
         minimumPasswordLength: 8
         minimumPasswordStrength: 3
         neverUsedAccountDeactivationThreshold: "P30D"
-        passwordComplexityRegex: ".*"
         passwordPolicyMessage: "To conform with our Strong Password policy, you are\
-          \ required to use a sufficiently strong password. Password must be more\
-          \ than 8 characters."
+          \ required to use a sufficiently strong password. Password must be at least\
+          \ 8 characters."
         unusedAccountDeactivationThreshold: "P90D"
+      passwordResetRequestCooldown: "PT1M"
+      reactivateInactiveAccountsOnLogin: false
       token:
         accessTokenExpiration: "PT1H"
         algorithm: "RS256"
         defaultApiKeyExpiration: "P365D"
         emailResetTokenExpiration: "PT10M"
         idTokenExpiration: "PT1H"
+        jwkRotationInterval: "P30D"
         jwsIssuer: "stroom"
         refreshTokenExpiration: "P30D"
     webContent:
@@ -1366,12 +1379,12 @@ appConfig:
     defaultApiKeyHashAlgorithm: "SHA3_256"
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathDocumentation: "/user-guide/content/documentation/"
-    helpSubPathExpressions: "/user-guide/dashboards/expressions/"
+    helpSubPathExpressions: "/reference-section/expressions/"
     helpSubPathJobs: "/reference-section/jobs/"
     helpSubPathProperties: "/user-guide/properties/"
-    helpSubPathQuickFilter: "/user-guide/finding-things/"
-    helpSubPathStroomQueryLanguage: "/user-guide/dashboards/stroom-query-language/"
-    helpUrl: "https://gchq.github.io/stroom-docs/7.5/docs"
+    helpSubPathQuickFilter: "/user-guide/content/finding-things/"
+    helpSubPathStroomQueryLanguage: "/user-guide/search/queries/stroom-query-language/"
+    helpUrl: "https://gchq.github.io/stroom-docs/7.13/docs"
     htmlTitle: "Stroom"
     maxEditorCompletionEntries: 1000
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,7 +236,9 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     public ResultPage<FsVolume> find(final FindFsVolumeCriteria criteria) {
         // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
         ensureDefaultVolumes();
-        return doFind(criteria);
+        // Enumerating volumes (server paths, capacity, usage, state) is a volume-management read, gated like
+        // create/update/fetch.
+        return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> doFind(criteria));
     }
 
     private ResultPage<FsVolume> doFind(final FindFsVolumeCriteria criteria) {
@@ -770,7 +772,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         ValidationResult validationResult = ValidationResult.ok();
 
         if (NullSafe.isBlankString(volume, FsVolume::getPath)) {
-            validationResult = ValidationResult.error("You must select a node for the volume.");
+            validationResult = ValidationResult.error("You must provide a path for the volume.");
         }
 
         // Don't need to make absolute here as comparing like with like

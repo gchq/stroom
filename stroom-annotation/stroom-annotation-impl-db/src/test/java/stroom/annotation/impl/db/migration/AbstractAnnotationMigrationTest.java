@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.annotation.impl.db.migration;
 
-import stroom.annotation.impl.AnnotationDBConfig;
+import stroom.annotation.impl.db.AnnotationDBConfig;
 import stroom.annotation.impl.db.AnnotationDbConnProvider;
 import stroom.annotation.impl.db.AnnotationDbModule;
 import stroom.db.util.AbstractFlyWayDbModule;

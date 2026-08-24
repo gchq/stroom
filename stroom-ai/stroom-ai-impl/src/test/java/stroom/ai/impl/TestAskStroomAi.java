@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class TestAskStroomAi {
                 null,
                 null,
                 null,
+                null,
                 null);
         final OpenAIModelDoc modelDoc = new OpenAIModelDoc(
                 UUID.randomUUID().toString(),
@@ -69,6 +70,7 @@ public class TestAskStroomAi {
                 apiKey,
                 modelId,
                 1000,
+                null,
                 null,
                 null);
         final ChatModel chatModel = aiService.getChatModel(modelDoc);

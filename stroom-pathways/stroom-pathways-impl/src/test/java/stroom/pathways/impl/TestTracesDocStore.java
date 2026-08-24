@@ -63,7 +63,7 @@ class TestTracesDocStore {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        doReturn(store).when(storeFactory).createStore(any(), any(), any(), any());
+        doReturn(store).when(storeFactory).createStore(any(), any(), any(), any(), any());
 
         planBPaths = new PlanBPaths(tempDir.resolve("local_state"));
         final Provider<PlanBPaths> planBPathsProvider = () -> planBPaths;

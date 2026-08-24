@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.impl.db.AnalyticsDbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
@@ -28,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 
 @SuppressWarnings("unused")
 @JsonPropertyOrder(alphabetic = true)

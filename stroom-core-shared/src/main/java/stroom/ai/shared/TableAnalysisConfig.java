@@ -118,7 +118,8 @@ public class TableAnalysisConfig extends AbstractConfig implements IsStroomConfi
         return maxTotalRows;
     }
 
-    @JsonPropertyDescription("Maximum number of table rows to include in a single AI prompt batch")
+    @JsonPropertyDescription("Maximum number of data rows to include in a single AI prompt batch when using batch " +
+                             "processing for large tables")
     public int getMaxRowsPerBatch() {
         return maxRowsPerBatch;
     }

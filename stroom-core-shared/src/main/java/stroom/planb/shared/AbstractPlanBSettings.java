@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
@@ -48,6 +50,17 @@ import java.util.Objects;
         "retention"
 })
 @JsonInclude(Include.NON_NULL)
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "state", schema = StateSettings.class),
+                @DiscriminatorMapping(value = "temporalState", schema = TemporalStateSettings.class),
+                @DiscriminatorMapping(value = "rangeState", schema = RangeStateSettings.class),
+                @DiscriminatorMapping(value = "temporalRangeState", schema = TemporalRangeStateSettings.class),
+                @DiscriminatorMapping(value = "session", schema = SessionSettings.class),
+                @DiscriminatorMapping(value = "histogram", schema = HistogramSettings.class),
+                @DiscriminatorMapping(value = "metric", schema = MetricSettings.class),
+                @DiscriminatorMapping(value = "trace", schema = TraceSettings.class)})
 public abstract sealed class AbstractPlanBSettings permits
         AbstractHttpStoreSettings,
         TraceSettings {

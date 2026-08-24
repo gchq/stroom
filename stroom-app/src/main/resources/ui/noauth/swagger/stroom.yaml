@@ -119,8 +119,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateAccountRequest"
-        description: account
+              $ref: "#/components/schemas/AccountChange"
+        description: change
         required: true
       responses:
         default:
@@ -363,6 +363,26 @@ paths:
       summary: Create a new AI chat conversation
       tags:
       - AI
+  /ai/v1/deleteAllMessages/{chatId}:
+    post:
+      operationId: deleteAllMessages
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete all messages and attachments from an AI chat conversation
+      tags:
+      - AI
   /ai/v1/deleteChat/{chatId}:
     post:
       operationId: deleteChat
@@ -383,6 +403,32 @@ paths:
       summary: Delete an AI chat conversation
       tags:
       - AI
+  /ai/v1/deleteMessage/{chatId}/{messageId}:
+    post:
+      operationId: deleteMessage
+      parameters:
+      - in: path
+        name: chatId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: path
+        name: messageId
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete a message from an AI chat conversation
+      tags:
+      - AI
   /ai/v1/downloadChatHistory:
     post:
       operationId: downloadChatHistory
@@ -401,6 +447,26 @@ paths:
                 $ref: "#/components/schemas/ResourceGeneration"
           description: default response
       summary: Download the chat history for a conversation as a Markdown file
+      tags:
+      - AI
+  /ai/v1/getAttachmentData:
+    post:
+      operationId: getAttachmentData
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GetAttachmentDataRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiAttachmentDataPage"
+          description: default response
+      summary: Get a page of attachment table data
       tags:
       - AI
   /ai/v1/getChat/{chatId}:
@@ -1194,7 +1260,45 @@ paths:
       summary: Update a dictionary doc
       tags:
       - API Key
-  /authentication/v1/noauth/changePassword:
+  /auth/flow/v1/signin-oidc:
+    get:
+      operationId: authFlowSignInOidc
+      parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+      - in: query
+        name: state
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            text/html: {}
+          description: default response
+      summary: OIDC sign-in callback (redirect_uri) for the SPA authentication flow
+      tags:
+      - Auth Flow
+  /auth/flow/v1/status:
+    get:
+      operationId: authFlowStatus
+      parameters:
+      - in: query
+        name: redirect_uri
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthFlowResponse"
+          description: default response
+      summary: Check authentication status for the SPA
+      tags:
+      - Auth Flow
+  /authentication/v1/changePassword:
     post:
       operationId: changePassword
       requestBody:
@@ -1214,7 +1318,7 @@ paths:
       summary: Change a user's password.
       tags:
       - Authentication
-  /authentication/v1/noauth/confirmPassword:
+  /authentication/v1/confirmPassword:
     post:
       operationId: confirmPassword
       requestBody:
@@ -1234,7 +1338,7 @@ paths:
       summary: Confirm an authenticated user's current password.
       tags:
       - Authentication
-  /authentication/v1/noauth/fetchPasswordPolicy:
+  /authentication/v1/fetchPasswordPolicy:
     get:
       operationId: fetchPasswordPolicy
       responses:
@@ -1247,7 +1351,7 @@ paths:
       summary: Get the password policy
       tags:
       - Authentication
-  /authentication/v1/noauth/login:
+  /authentication/v1/login:
     post:
       operationId: login
       requestBody:
@@ -1267,7 +1371,7 @@ paths:
       summary: Handle a login request made using username and password credentials.
       tags:
       - Authentication
-  /authentication/v1/noauth/logout:
+  /authentication/v1/logout:
     get:
       operationId: logout
       parameters:
@@ -1286,7 +1390,7 @@ paths:
       summary: Log a user out of their session
       tags:
       - Authentication
-  /authentication/v1/noauth/reset:
+  /authentication/v1/reset:
     post:
       operationId: resetEmail
       requestBody:
@@ -1306,7 +1410,28 @@ paths:
       summary: Reset a user account using an email address.
       tags:
       - Authentication
-  /authproxy/v1/noauth/fetchClientCredsToken:
+  /authentication/v1/resetPassword:
+    post:
+      operationId: resetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+        description: resetPasswordRequest
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangePasswordResponse"
+          description: default response
+      summary: Set a new password using the token emailed to a user who has forgotten
+        theirs.
+      tags:
+      - Authentication
+  /authproxy/v1/fetchClientCredsToken:
     post:
       operationId: fetchClientCredsToken
       requestBody:
@@ -1537,6 +1662,26 @@ paths:
                 $ref: "#/components/schemas/ConfigProperty"
           description: default response
       summary: "Fetch a property by its name, e.g. 'stroom.path.home'"
+      tags:
+      - Global Config
+  /config/v1/setConfigValue:
+    post:
+      operationId: setConfigValue
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetConfigValueRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Set a single config property for all users
       tags:
       - Global Config
   /content/v1/abortImport:
@@ -3141,6 +3286,27 @@ paths:
       summary: Delete explorer items
       tags:
       - Explorer (v2)
+  /explorer/v2/fetchDeleteConfirmation:
+    post:
+      operationId: fetchExplorerDeleteConfirmation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteConfirmationRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteConfirmation"
+          description: default response
+      summary: Fetch the information needed to confirm a delete (contained items and
+        dependants)
+      tags:
+      - Explorer (v2)
   /explorer/v2/fetchDocRefs:
     post:
       operationId: fetchExplorerDocRefs
@@ -3972,6 +4138,19 @@ paths:
                 $ref: "#/components/schemas/GitRepoResponse"
           description: default response
       summary: Check if any content has changed
+      tags:
+      - GitRepos
+  /gitRepo/v1/getDefaultHttpClientConfig:
+    post:
+      operationId: getGitRepoDefaultHttpClientConfig
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpClientConfig"
+          description: default response
+      summary: Get default HTTP client configuration
       tags:
       - GitRepos
   /gitRepo/v1/pullFromGit:
@@ -5013,7 +5192,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResultPageNodeGroupState"
+                $ref: "#/components/schemas/NodeGroupState"
           description: default response
       summary: Gets node group states
       tags:
@@ -5224,7 +5403,7 @@ paths:
       summary: Sets the priority of a node
       tags:
       - Nodes
-  /oauth2/v1/noauth/.well-known/openid-configuration:
+  /oauth2/v1/.well-known/openid-configuration:
     get:
       operationId: openIdConfiguration
       responses:
@@ -5238,7 +5417,7 @@ paths:
       tags:
       - API Keys
       - Authentication
-  /oauth2/v1/noauth/auth:
+  /oauth2/v1/auth:
     get:
       operationId: openIdAuth
       parameters:
@@ -5274,6 +5453,14 @@ paths:
         name: prompt
         schema:
           type: string
+      - in: query
+        name: code_challenge
+        schema:
+          type: string
+      - in: query
+        name: code_challenge_method
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -5282,7 +5469,7 @@ paths:
       summary: Submit an OpenId AuthenticationRequest.
       tags:
       - Authentication
-  /oauth2/v1/noauth/certs:
+  /oauth2/v1/certs:
     get:
       operationId: openIdCerts
       responses:
@@ -5303,7 +5490,7 @@ paths:
       tags:
       - API Keys
       - Authentication
-  /oauth2/v1/noauth/token:
+  /oauth2/v1/token:
     post:
       operationId: openIdToken
       responses:
@@ -6512,6 +6699,12 @@ paths:
       - Queries
   /query/v1/csv/search:
     get:
+      description: "Returns the results as CSV. Sets the 'X-Stroom-Search-Incremental'\
+        \ header to say whether the search ran incrementally, and the 'X-Stroom-Search-Complete'\
+        \ header to say whether it finished. An incremental search returns whatever\
+        \ results it has when the timeout expires, so those may be partial; a non\
+        \ incremental search waits for the search to finish, which risks the request\
+        \ itself timing out."
       operationId: queryCsv
       parameters:
       - in: query
@@ -6529,13 +6722,20 @@ paths:
           type: integer
           format: int32
           default: 100
+      - in: query
+        name: incremental
+        schema:
+          type: boolean
+          default: true
+      - in: query
+        name: timeout
+        schema:
+          type: integer
+          format: int64
       responses:
         default:
-          content:
-            text/plain:
-              schema:
-                type: string
-          description: default response
+          description: "Returns the matching rows as CSV, which may be a subset of\
+            \ the matching data if the search had not finished"
       summary: Perform a csv query
       tags:
       - Queries
@@ -7499,7 +7699,7 @@ paths:
       tags:
       - Sessions
   /session/v1/logout:
-    get:
+    post:
       operationId: stroomLogout
       parameters:
       - in: query
@@ -7517,6 +7717,70 @@ paths:
       summary: Logout of Stroom session
       tags:
       - Sessions
+  /session/v1/terminate:
+    post:
+      operationId: terminateUserSessions
+      parameters:
+      - in: query
+        name: subjectId
+        schema:
+          type: string
+      - in: query
+        name: exceptSessionId
+        schema:
+          type: string
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Terminate a user's sessions on a node (cluster fan-out; requires Manage
+        Users)
+      tags:
+      - Sessions
+  /session/v1/terminateOther:
+    post:
+      operationId: terminateOtherSessions
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Sign out of all of the current user's other sessions across the cluster
+      tags:
+      - Sessions
+  /session/v1/terminateSession:
+    post:
+      operationId: terminateSession
+      parameters:
+      - in: query
+        name: sessionHandle
+        schema:
+          type: string
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Terminate a single session by id (own session, or requires Manage\
+        \ Users)"
+      tags:
+      - Sessions
   /sessionInfo/v1:
     get:
       operationId: getSessionInfo
@@ -7530,6 +7794,75 @@ paths:
       summary: Get information for the current session
       tags:
       - Session Info
+  /signingKey/v1/list:
+    get:
+      operationId: listSigningKeys
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SigningKeyRow"
+          description: default response
+      summary: List the internal identity provider's signing keys (requires Administrator)
+      tags:
+      - Signing Keys
+  /signingKey/v1/refresh:
+    post:
+      operationId: refreshSigningKeys
+      parameters:
+      - in: query
+        name: nodeName
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Discard this node's cached signing keys (requires Administrator)
+      tags:
+      - Signing Keys
+  /signingKey/v1/revoke:
+    post:
+      operationId: revokeSigningKey
+      parameters:
+      - in: query
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Revoke one signing key (requires Administrator)
+      tags:
+      - Signing Keys
+  /signingKey/v1/revokeAll:
+    post:
+      operationId: revokeAllSigningKeys
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Revoke all signing keys (requires Administrator)
+      tags:
+      - Signing Keys
   /solrIndex/v1/fetchSolrTypes:
     post:
       operationId: fetchSolrTypes
@@ -8293,6 +8626,24 @@ paths:
       summary: Update a text converter doc
       tags:
       - Text Converters
+  /tokenRevocation/v1/invalidateCache:
+    post:
+      operationId: invalidateRevokedTokenCache
+      parameters:
+      - in: query
+        name: nodeName
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Tell a node to re-read the revoked token denylist (inter-node call)
+      tags:
+      - Token Revocation
   /traces/v1/getTrace:
     post:
       operationId: tracesGetTrace
@@ -8369,6 +8720,66 @@ paths:
       summary: Find traces
       tags:
       - Traces
+  /userAccess/v1/find:
+    post:
+      operationId: findUserAccess
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindUserAccessCriteria"
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageUserAccessRow"
+          description: default response
+      summary: Find users holding live sessions or tokens
+      tags:
+      - User Access
+  /userAccess/v1/revoke:
+    post:
+      operationId: revokeUserAccess
+      parameters:
+      - in: query
+        name: subjectId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Revoke a user's sessions and tokens (requires Manage Users)
+      tags:
+      - User Access
+  /userAccess/v1/sessions:
+    post:
+      operationId: findUserSessions
+      parameters:
+      - in: query
+        name: subjectId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionDetails"
+          description: default response
+      summary: List one user's sessions (requires Manage Users)
+      tags:
+      - User Access
   /userInfo/v1/{userUuid}:
     get:
       operationId: fetchUser
@@ -9229,6 +9640,21 @@ components:
     AbstractAnnotationChange:
       type: object
       discriminator:
+        mapping:
+          addTable: "#/components/schemas/AddAnnotationTable"
+          addTag: "#/components/schemas/AddTag"
+          assignedTo: "#/components/schemas/ChangeAssignedTo"
+          comment: "#/components/schemas/ChangeComment"
+          description: "#/components/schemas/ChangeDescription"
+          linkAnnotations: "#/components/schemas/LinkAnnotations"
+          linkEvents: "#/components/schemas/LinkEvents"
+          removeTag: "#/components/schemas/RemoveTag"
+          retentionPeriod: "#/components/schemas/ChangeRetentionPeriod"
+          setTag: "#/components/schemas/SetTag"
+          subject: "#/components/schemas/ChangeSubject"
+          title: "#/components/schemas/ChangeTitle"
+          unlinkAnnotations: "#/components/schemas/UnlinkAnnotations"
+          unlinkEvents: "#/components/schemas/UnlinkEvents"
         propertyName: type
       properties:
         type:
@@ -9238,6 +9664,9 @@ components:
     AbstractAppPermissionChange:
       type: object
       discriminator:
+        mapping:
+          AddAppPermission: "#/components/schemas/AddAppPermission"
+          RemoveAppPermission: "#/components/schemas/RemoveAppPermission"
         propertyName: type
       properties:
         permission:
@@ -9284,6 +9713,17 @@ components:
     AbstractDocumentPermissionsChange:
       type: object
       discriminator:
+        mapping:
+          AddAllDocumentUserCreatePermissions: "#/components/schemas/AddAllDocumentUserCreatePermissions"
+          AddAllPermissionsFrom: "#/components/schemas/AddAllPermissionsFrom"
+          AddDocumentUserCreatePermission: "#/components/schemas/AddDocumentUserCreatePermission"
+          RemoveAllDocumentUserCreatePermissions: "#/components/schemas/RemoveAllDocumentUserCreatePermissions"
+          RemoveAllPermissions: "#/components/schemas/RemoveAllPermissions"
+          RemoveDocumentUserCreatePermission: "#/components/schemas/RemoveDocumentUserCreatePermission"
+          RemovePermission: "#/components/schemas/RemovePermission"
+          SetAllPermissionsFrom: "#/components/schemas/SetAllPermissionsFrom"
+          SetDocumentUserCreatePermissions: "#/components/schemas/SetDocumentUserCreatePermissions"
+          SetPermission: "#/components/schemas/SetPermission"
         propertyName: type
       properties:
         type:
@@ -9293,6 +9733,9 @@ components:
     AbstractFetchDataResult:
       type: object
       discriminator:
+        mapping:
+          data: "#/components/schemas/FetchDataResult"
+          marker: "#/components/schemas/FetchMarkerResult"
         propertyName: type
       properties:
         availableChildStreamTypes:
@@ -9331,6 +9774,15 @@ components:
     AbstractPlanBSettings:
       type: object
       discriminator:
+        mapping:
+          histogram: "#/components/schemas/HistogramSettings"
+          metric: "#/components/schemas/MetricSettings"
+          rangeState: "#/components/schemas/RangeStateSettings"
+          session: "#/components/schemas/SessionSettings"
+          state: "#/components/schemas/StateSettings"
+          temporalRangeState: "#/components/schemas/TemporalRangeStateSettings"
+          temporalState: "#/components/schemas/TemporalStateSettings"
+          trace: "#/components/schemas/TraceSettings"
         propertyName: type
       properties:
         maxStoreSize:
@@ -9370,6 +9822,15 @@ components:
           type: string
         enabled:
           type: boolean
+        failureCount:
+          type: integer
+          format: int32
+        failureLockedMs:
+          type: integer
+          format: int64
+        failureLockedUntilMs:
+          type: integer
+          format: int64
         firstName:
           type: string
         forcePasswordChange:
@@ -9384,17 +9845,10 @@ components:
           format: int64
         lastName:
           type: string
-        locked:
-          type: boolean
         loginCount:
           type: integer
           format: int32
-        loginFailures:
-          type: integer
-          format: int32
         neverExpires:
-          type: boolean
-        processingAccount:
           type: boolean
         reactivatedMs:
           type: integer
@@ -9409,6 +9863,37 @@ components:
         version:
           type: integer
           format: int32
+    AccountChange:
+      type: object
+      properties:
+        actions:
+          type: array
+          items:
+            type: string
+            enum:
+            - UNLOCK
+            - ENABLE
+            - DISABLE
+            - REACTIVATE
+          uniqueItems: true
+        comments:
+          type: string
+        confirmPassword:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+        forcePasswordChange:
+          type: boolean
+        lastName:
+          type: string
+        neverExpires:
+          type: boolean
+        password:
+          type: string
+        userId:
+          type: string
     AcknowledgeSplashRequest:
       type: object
       properties:
@@ -9596,6 +10081,25 @@ components:
             $ref: "#/components/schemas/CriteriaFieldSort"
         userRef:
           $ref: "#/components/schemas/UserRef"
+    AiAttachmentDataPage:
+      type: object
+      properties:
+        headers:
+          type: array
+          items:
+            type: string
+        offset:
+          type: integer
+          format: int32
+        rows:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        totalRowCount:
+          type: integer
+          format: int32
     AiChat:
       type: object
       properties:
@@ -9714,6 +10218,10 @@ components:
     AnalyticProcessConfig:
       type: object
       discriminator:
+        mapping:
+          scheduled_query: "#/components/schemas/ScheduledQueryAnalyticProcessConfig"
+          streaming: "#/components/schemas/StreamingAnalyticProcessConfig"
+          table_builder: "#/components/schemas/TableBuilderAnalyticProcessConfig"
         propertyName: type
       properties:
         type:
@@ -9765,6 +10273,8 @@ components:
             $ref: "#/components/schemas/Param"
         query:
           type: string
+        queryTablePreferences:
+          $ref: "#/components/schemas/QueryTablePreferences"
         rememberNotifications:
           type: boolean
         status:
@@ -9794,6 +10304,10 @@ components:
     AnalyticTrackerData:
       type: object
       discriminator:
+        mapping:
+          scheduled_query: "#/components/schemas/ScheduledQueryAnalyticTrackerData"
+          streaming: "#/components/schemas/StreamingAnalyticTrackerData"
+          table_builder: "#/components/schemas/TableBuilderAnalyticTrackerData"
         propertyName: type
       properties:
         message:
@@ -10002,6 +10516,10 @@ components:
     AppPermissionSet:
       type: object
       discriminator:
+        mapping:
+          empty: "#/components/schemas/EmptyAppPermissionSet"
+          multiple: "#/components/schemas/AppPermissionSetImpl"
+          single: "#/components/schemas/SingletonAppPermissionSet"
         propertyName: type
       properties:
         type:
@@ -10248,6 +10766,10 @@ components:
     AskStroomAiContext:
       type: object
       discriminator:
+        mapping:
+          dashboardTable: "#/components/schemas/DashboardTableContext"
+          generalTable: "#/components/schemas/GeneralTableContext"
+          queryTable: "#/components/schemas/QueryTableContext"
         propertyName: type
       properties:
         description:
@@ -10282,6 +10804,20 @@ components:
           type: string
         sourceTaskId:
           $ref: "#/components/schemas/TaskId"
+    AuthFlowResponse:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+        displayName:
+          type: string
+        expiresInSec:
+          type: integer
+          format: int64
+        redirectUrl:
+          type: string
+        subjectId:
+          type: string
     Automate:
       type: object
       properties:
@@ -10360,6 +10896,15 @@ components:
     AwsCredentials:
       type: object
       discriminator:
+        mapping:
+          anonymous: "#/components/schemas/AwsAnonymousCredentials"
+          basic: "#/components/schemas/AwsBasicCredentials"
+          default: "#/components/schemas/AwsDefaultCredentials"
+          environment: "#/components/schemas/AwsEnvironmentVariableCredentials"
+          profile: "#/components/schemas/AwsProfileCredentials"
+          session: "#/components/schemas/AwsSessionCredentials"
+          system: "#/components/schemas/AwsSystemPropertyCredentials"
+          web: "#/components/schemas/AwsWebCredentials"
         propertyName: type
       properties:
         type:
@@ -10744,6 +11289,13 @@ components:
           type: string
         sort:
           $ref: "#/components/schemas/Sort"
+        special:
+          type: boolean
+        visible:
+          type: boolean
+        width:
+          type: integer
+          format: int32
     ColumnFilter:
       type: object
       properties:
@@ -10806,6 +11358,9 @@ components:
     CompletionItem:
       type: object
       discriminator:
+        mapping:
+          snippet: "#/components/schemas/CompletionSnippet"
+          value: "#/components/schemas/CompletionValue"
         propertyName: type
       properties:
         caption:
@@ -10888,6 +11443,9 @@ components:
     ComponentResultRequest:
       type: object
       discriminator:
+        mapping:
+          table: "#/components/schemas/TableResultRequest"
+          vis: "#/components/schemas/VisResultRequest"
         propertyName: type
       properties:
         componentId:
@@ -10919,6 +11477,16 @@ components:
     ComponentSettings:
       type: object
       discriminator:
+        mapping:
+          embedded-query: "#/components/schemas/EmbeddedQueryComponentSettings"
+          key-value-input: "#/components/schemas/KeyValueInputComponentSettings"
+          list-input: "#/components/schemas/ListInputComponentSettings"
+          query: "#/components/schemas/QueryComponentSettings"
+          table: "#/components/schemas/TableComponentSettings"
+          table-filter: "#/components/schemas/TableFilterComponentSettings"
+          text: "#/components/schemas/TextComponentSettings"
+          text-input: "#/components/schemas/TextInputComponentSettings"
+          vis: "#/components/schemas/VisComponentSettings"
         propertyName: type
       properties:
         type:
@@ -11036,6 +11604,24 @@ components:
     ConstraintValue:
       type: object
       discriminator:
+        mapping:
+          anyValue: "#/components/schemas/AnyTypeValue"
+          boolean: "#/components/schemas/BooleanValue"
+          booleanSet: "#/components/schemas/AnyBoolean"
+          double: "#/components/schemas/DoubleValue"
+          doubleRange: "#/components/schemas/DoubleRange"
+          doubleSet: "#/components/schemas/DoubleSet"
+          duration: "#/components/schemas/NanoTimeValue"
+          durationRange: "#/components/schemas/NanoTimeRange"
+          integer: "#/components/schemas/IntegerValue"
+          integerRange: "#/components/schemas/IntegerRange"
+          integerSet: "#/components/schemas/IntegerSet"
+          long: "#/components/schemas/LongValue"
+          longRange: "#/components/schemas/LongRange"
+          longSet: "#/components/schemas/LongSet"
+          regex: "#/components/schemas/Regex"
+          string: "#/components/schemas/StringValue"
+          stringSet: "#/components/schemas/StringSet"
         propertyName: type
       properties:
         type:
@@ -11183,6 +11769,9 @@ components:
     CoprocessorSettings:
       type: object
       discriminator:
+        mapping:
+          event: "#/components/schemas/EventCoprocessorSettings"
+          table: "#/components/schemas/TableCoprocessorSettings"
         propertyName: type
       properties:
         coprocessorId:
@@ -11303,6 +11892,8 @@ components:
         maxProcessingTasks:
           type: integer
           format: int32
+        maxTaskCreationDelay:
+          $ref: "#/components/schemas/SimpleDuration"
         minMetaCreateTimeMs:
           type: integer
           format: int64
@@ -11757,13 +12348,8 @@ components:
           uniqueItems: true
     DefaultLocation:
       type: object
-      properties:
-        colNo:
-          type: integer
-          format: int32
-        lineNo:
-          type: integer
-          format: int32
+      allOf:
+      - $ref: "#/components/schemas/Location"
     DeleteAnnotationEntryRequest:
       type: object
       properties:
@@ -11792,6 +12378,38 @@ components:
           - DELETE
         annotationIdentity:
           $ref: "#/components/schemas/AnnotationIdentity"
+    DeleteConfirmation:
+      type: object
+      properties:
+        childItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocRef"
+        childItemsTruncated:
+          type: boolean
+        childTypeCounts:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+        hasHiddenChildItems:
+          type: boolean
+        hasHiddenDependants:
+          type: boolean
+        totalChildCount:
+          type: integer
+          format: int32
+        visibleDependants:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocRef"
+    DeleteConfirmationRequest:
+      type: object
+      properties:
+        docRefs:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocRef"
     DeleteDuplicateCheckRequest:
       type: object
       properties:
@@ -12541,6 +13159,8 @@ components:
           type: string
         rerankModelRef:
           $ref: "#/components/schemas/DocRef"
+        rerankScoreFieldSuffix:
+          type: string
         rerankScoreMinimum:
           type: number
           format: float
@@ -12592,6 +13212,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         fldName:
           type: string
         fldType:
@@ -12610,6 +13231,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         nativeType:
@@ -12720,6 +13342,10 @@ components:
     EntryValue:
       type: object
       discriminator:
+        mapping:
+          rows: "#/components/schemas/AnnotationTable"
+          string: "#/components/schemas/StringEntryValue"
+          user: "#/components/schemas/UserRefEntryValue"
         propertyName: type
       properties:
         type:
@@ -13091,6 +13717,9 @@ components:
       type: object
       description: Base type for an item in an expression tree
       discriminator:
+        mapping:
+          operator: "#/components/schemas/ExpressionOperator"
+          term: "#/components/schemas/ExpressionTerm"
         propertyName: type
       properties:
         enabled:
@@ -13103,23 +13732,22 @@ components:
       - type
     ExpressionOperator:
       type: object
+      allOf:
+      - $ref: "#/components/schemas/ExpressionItem"
+      - type: object
+        properties:
+          children:
+            type: array
+            items:
+              $ref: "#/components/schemas/ExpressionItem"
+          op:
+            type: string
+            description: The logical addOperator type
+            enum:
+            - AND
+            - OR
+            - NOT
       description: A logical addOperator term in a query expression tree
-      properties:
-        children:
-          type: array
-          items:
-            $ref: "#/components/schemas/ExpressionItem"
-        enabled:
-          type: boolean
-          description: Whether this item in the expression tree is enabled or not
-          example: true
-        op:
-          type: string
-          description: The logical addOperator type
-          enum:
-          - AND
-          - OR
-          - NOT
     ExpressionTerm:
       type: object
       allOf:
@@ -13978,6 +14606,22 @@ components:
             $ref: "#/components/schemas/CriteriaFieldSort"
         temporalOrderingTolerance:
           $ref: "#/components/schemas/SimpleDuration"
+    FindUserAccessCriteria:
+      type: object
+      properties:
+        activeOnly:
+          type: boolean
+        filter:
+          type: string
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
     FindUserCriteria:
       type: object
       properties:
@@ -14058,6 +14702,9 @@ components:
     FormatSettings:
       type: object
       discriminator:
+        mapping:
+          date: "#/components/schemas/DateTimeFormatSettings"
+          number: "#/components/schemas/NumberFormatSettings"
         propertyName: type
       properties:
         default:
@@ -14181,6 +14828,17 @@ components:
           $ref: "#/components/schemas/OffsetRange"
         timeRange:
           $ref: "#/components/schemas/TimeRange"
+    GetAttachmentDataRequest:
+      type: object
+      properties:
+        attachmentId:
+          type: integer
+          format: int32
+        chatId:
+          type: integer
+          format: int32
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
     GetFeedStatusRequest:
       type: object
       properties:
@@ -14310,6 +14968,8 @@ components:
           type: string
         description:
           type: string
+        httpClientConfiguration:
+          $ref: "#/components/schemas/HttpClientConfig"
         name:
           type: string
         path:
@@ -14740,6 +15400,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         stored:
@@ -14934,8 +15595,6 @@ components:
           format: int32
           maximum: 5
           minimum: 0
-        passwordComplexityRegex:
-          type: string
         passwordPolicyMessage:
           type: string
       required:
@@ -15125,6 +15784,9 @@ components:
     LayoutConfig:
       type: object
       discriminator:
+        mapping:
+          splitLayout: "#/components/schemas/SplitLayoutConfig"
+          tabLayout: "#/components/schemas/TabLayoutConfig"
         propertyName: type
       properties:
         preferredSize:
@@ -15219,6 +15881,9 @@ components:
     Location:
       type: object
       discriminator:
+        mapping:
+          default: "#/components/schemas/DefaultLocation"
+          stream: "#/components/schemas/StreamLocation"
         propertyName: type
       properties:
         colNo:
@@ -15383,6 +16048,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         stored:
@@ -15399,6 +16065,9 @@ components:
     Marker:
       type: object
       discriminator:
+        mapping:
+          storedError: "#/components/schemas/StoredError"
+          summary: "#/components/schemas/Summary"
         propertyName: type
       properties:
         severity:
@@ -15642,6 +16311,8 @@ components:
         id:
           type: integer
           format: int32
+        invertSelection:
+          type: boolean
         name:
           type: string
         updateTimeMs:
@@ -15655,21 +16326,23 @@ components:
     NodeGroupChange:
       type: object
       properties:
-        included:
-          type: boolean
-        nodeGroupId:
-          type: integer
-          format: int32
-        nodeId:
-          type: integer
-          format: int32
+        nodeGroup:
+          $ref: "#/components/schemas/NodeGroup"
+        selectedNodes:
+          type: array
+          items:
+            type: integer
+            format: int32
+          uniqueItems: true
     NodeGroupState:
       type: object
       properties:
-        included:
-          type: boolean
-        node:
-          $ref: "#/components/schemas/Node"
+        selected:
+          type: array
+          items:
+            type: integer
+            format: int32
+          uniqueItems: true
     NodeInfo:
       type: object
       properties:
@@ -15774,6 +16447,9 @@ components:
     NotificationDestination:
       type: object
       discriminator:
+        mapping:
+          email: "#/components/schemas/NotificationEmailDestination"
+          stream: "#/components/schemas/NotificationStreamDestination"
         propertyName: type
       properties:
         type:
@@ -15855,6 +16531,9 @@ components:
           type: string
         description:
           type: string
+        embeddingModelDimensions:
+          type: integer
+          format: int32
         httpClientConfiguration:
           $ref: "#/components/schemas/HttpClientConfig"
         maxContextWindowTokens:
@@ -15940,6 +16619,10 @@ components:
     PathKey:
       type: object
       discriminator:
+        mapping:
+          name: "#/components/schemas/NamePathKey"
+          names: "#/components/schemas/NamesPathKey"
+          terminal: "#/components/schemas/TerminalPathKey"
         propertyName: type
       properties:
         type:
@@ -16545,6 +17228,14 @@ components:
     PlanBValue:
       type: object
       discriminator:
+        mapping:
+          histogram: "#/components/schemas/TemporalValue"
+          rangeState: "#/components/schemas/RangeState"
+          session: "#/components/schemas/Session"
+          state: "#/components/schemas/State"
+          temporalRangeState: "#/components/schemas/TemporalRangeState"
+          temporalState: "#/components/schemas/TemporalState"
+          trace: "#/components/schemas/SpanKV"
         propertyName: type
       properties:
         type:
@@ -16643,6 +17334,8 @@ components:
         maxProcessingTasks:
           type: integer
           format: int32
+        maxTaskCreationDelay:
+          $ref: "#/components/schemas/SimpleDuration"
         minMetaCreateTimeMs:
           type: integer
           format: int64
@@ -16725,6 +17418,12 @@ components:
         minMetaId:
           type: integer
           format: int64
+        nextPollMs:
+          type: integer
+          format: int64
+        prevMaxMetaId:
+          type: integer
+          format: int64
         status:
           type: string
           enum:
@@ -16737,6 +17436,9 @@ components:
     ProcessorListRow:
       type: object
       discriminator:
+        mapping:
+          processor: "#/components/schemas/ProcessorRow"
+          processorFilter: "#/components/schemas/ProcessorFilterRow"
         propertyName: type
       properties:
         expander:
@@ -17108,6 +17810,9 @@ components:
           - '''between'''
           - "'=', '!=', 'in'"
           - "'contains', '=', '!=', 'matches regex', 'in'"
+          - "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', 'in',\
+            \ 'in dictionary'"
+          - "'=', '!='"
           - "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts\
             \ with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches\
             \ regex (CS)', 'in', 'in dictionary'"
@@ -17146,6 +17851,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         name:
           type: string
         queryable:
@@ -17155,6 +17861,10 @@ components:
     QueryHelpData:
       type: object
       discriminator:
+        mapping:
+          document: "#/components/schemas/QueryHelpDocument"
+          field: "#/components/schemas/QueryHelpField"
+          functionSignature: "#/components/schemas/QueryHelpFunctionSignature"
         propertyName: type
       properties:
         type:
@@ -17654,6 +18364,8 @@ components:
             $ref: "#/components/schemas/Param"
         query:
           type: string
+        queryTablePreferences:
+          $ref: "#/components/schemas/QueryTablePreferences"
         rememberNotifications:
           type: boolean
         reportSettings:
@@ -17714,6 +18426,15 @@ components:
           - WARN
           - ERROR
           - FATAL
+    ResetPasswordRequest:
+      type: object
+      properties:
+        confirmNewPassword:
+          type: string
+        newPassword:
+          type: string
+        token:
+          type: string
     ResourceGeneration:
       type: object
       properties:
@@ -17734,6 +18455,11 @@ components:
       type: object
       description: Base object for describing a set of result data
       discriminator:
+        mapping:
+          flat: "#/components/schemas/FlatResult"
+          ql_vis: "#/components/schemas/QLVisResult"
+          table: "#/components/schemas/TableResult"
+          vis: "#/components/schemas/VisResult"
         propertyName: type
       properties:
         componentId:
@@ -18065,16 +18791,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NodeGroup"
-    ResultPageNodeGroupState:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: "#/components/schemas/PageResponse"
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/NodeGroupState"
     ResultPageProcessorProfile:
       type: object
       description: A page of results.
@@ -18155,6 +18871,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/User"
+    ResultPageUserAccessRow:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserAccessRow"
     ResultPageUserDependency:
       type: object
       description: A page of results.
@@ -18613,6 +19339,11 @@ components:
     Secret:
       type: object
       discriminator:
+        mapping:
+          accessToken: "#/components/schemas/AccessTokenSecret"
+          keyStore: "#/components/schemas/KeyStoreSecret"
+          sshKey: "#/components/schemas/SshKeySecret"
+          usernamePassword: "#/components/schemas/UsernamePasswordSecret"
         propertyName: type
       properties:
         type:
@@ -18761,6 +19492,8 @@ components:
           format: int64
         nodeName:
           type: string
+        sessionHandle:
+          type: string
         userRef:
           $ref: "#/components/schemas/UserRef"
     SessionInfo:
@@ -18831,6 +19564,20 @@ components:
         properties:
           sourceDocRef:
             $ref: "#/components/schemas/DocRef"
+    SetConfigValueRequest:
+      type: object
+      properties:
+        docRefValue:
+          $ref: "#/components/schemas/DocRef"
+        propertyName:
+          type: string
+        stringValue:
+          type: string
+        target:
+          type: string
+          enum:
+          - ANALYTIC_UI_DEFAULT
+          - REPORT_UI_DEFAULT
     SetDocumentUserCreatePermissions:
       type: object
       allOf:
@@ -18890,6 +19637,25 @@ components:
             $ref: "#/components/schemas/SharedElementData"
         sourceLocation:
           $ref: "#/components/schemas/SourceLocation"
+    SigningKeyRow:
+      type: object
+      properties:
+        expiresMs:
+          type: integer
+          format: int64
+        id:
+          type: integer
+          format: int32
+        issuedMs:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - RETIRED
+          - EXPIRED
+          - REVOKED
     SimpleDuration:
       type: object
       properties:
@@ -19108,6 +19874,7 @@ components:
           - DOC_REF
           - USER_REF
           - DENSE_VECTOR
+          - NESTED
         indexed:
           type: boolean
         multiValued:
@@ -19590,28 +20357,24 @@ components:
             $ref: "#/components/schemas/SteppingFilterSettings"
     StoredError:
       type: object
-      properties:
-        elementId:
-          $ref: "#/components/schemas/ElementId"
-        errorType:
-          type: string
-          enum:
-          - CODE
-          - GENERIC
-          - INPUT
-          - OUTPUT
-          - UNKNOWN
-        location:
-          $ref: "#/components/schemas/Location"
-        message:
-          type: string
-        severity:
-          type: string
-          enum:
-          - INFO
-          - WARN
-          - ERROR
-          - FATAL
+      allOf:
+      - $ref: "#/components/schemas/Marker"
+      - type: object
+        properties:
+          elementId:
+            $ref: "#/components/schemas/ElementId"
+          errorType:
+            type: string
+            enum:
+            - CODE
+            - GENERIC
+            - INPUT
+            - OUTPUT
+            - UNKNOWN
+          location:
+            $ref: "#/components/schemas/Location"
+          message:
+            type: string
     StoredQuery:
       type: object
       properties:
@@ -19943,6 +20706,10 @@ components:
         properties:
           applyValueFilters:
             type: boolean
+          conditionalFormattingRules:
+            type: array
+            items:
+              $ref: "#/components/schemas/ConditionalFormattingRule"
           dataSourceRef:
             $ref: "#/components/schemas/DocRef"
           extractValues:
@@ -19971,6 +20738,8 @@ components:
           maxStringFieldLength:
             type: integer
             format: int32
+          modelVersion:
+            type: string
           overrideMaxStringFieldLength:
             type: boolean
           pageSize:
@@ -20079,6 +20848,10 @@ components:
           $ref: "#/components/schemas/ExpressionOperator"
         applyValueFilters:
           type: boolean
+        conditionalFormattingRules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConditionalFormattingRule"
         extractValues:
           type: boolean
         extractionPipeline:
@@ -20104,6 +20877,8 @@ components:
         maxStringFieldLength:
           type: integer
           format: int32
+        modelVersion:
+          type: string
         overrideMaxStringFieldLength:
           type: boolean
         queryId:
@@ -20621,15 +21396,6 @@ components:
             type: array
             items:
               $ref: "#/components/schemas/EventId"
-    UpdateAccountRequest:
-      type: object
-      properties:
-        account:
-          $ref: "#/components/schemas/Account"
-        confirmPassword:
-          type: string
-        password:
-          type: string
     UpdateField:
       type: object
       properties:
@@ -20726,6 +21492,34 @@ components:
         version:
           type: integer
           format: int32
+    UserAccessRow:
+      type: object
+      properties:
+        displayName:
+          type: string
+        lastAccessedMs:
+          type: integer
+          format: int64
+        lastTokenExpiryMs:
+          type: integer
+          format: int64
+        nextTokenExpiryMs:
+          type: integer
+          format: int64
+        nodeNames:
+          type: array
+          items:
+            type: string
+        sessionCount:
+          type: integer
+          format: int32
+        subjectId:
+          type: string
+        tokenCount:
+          type: integer
+          format: int32
+        userRef:
+          $ref: "#/components/schemas/UserRef"
     UserDependency:
       type: object
       properties:
@@ -20867,6 +21661,21 @@ components:
     Val:
       type: object
       discriminator:
+        mapping:
+          boolean: "#/components/schemas/ValBoolean"
+          byte: "#/components/schemas/ValByte"
+          date: "#/components/schemas/ValDate"
+          double: "#/components/schemas/ValDouble"
+          duration: "#/components/schemas/ValDuration"
+          err: "#/components/schemas/ValErr"
+          float: "#/components/schemas/ValFloat"
+          integer: "#/components/schemas/ValInteger"
+          long: "#/components/schemas/ValLong"
+          "null": "#/components/schemas/ValNull"
+          number: "#/components/schemas/ValNumber"
+          short: "#/components/schemas/ValShort"
+          string: "#/components/schemas/ValString"
+          xml: "#/components/schemas/ValXml"
         propertyName: type
       properties:
         type:
@@ -21203,6 +22012,8 @@ components:
     Window:
       type: object
       discriminator:
+        mapping:
+          hopping: "#/components/schemas/HoppingWindow"
         propertyName: type
       properties:
         type:

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.impl.pipeline;
 
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
@@ -16,23 +32,28 @@ import stroom.pathways.shared.otel.trace.StatusCode;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.filter.TestFilter;
 import stroom.pipeline.filter.TestSAXEventFilter;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.util.ProcessorUtil;
 import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.dao.PlanBStreamWriter;
+import stroom.planb.impl.dao.PlanBStreamWriterFactory;
 import stroom.planb.impl.data.value.SpanKV;
-import stroom.planb.impl.db.PlanBStreamWriter;
-import stroom.planb.impl.db.PlanBStreamWriterFactory;
+import stroom.planb.impl.data.value.TemporalValue;
 import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanValue;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -55,6 +76,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import javax.xml.transform.stream.StreamSource;
@@ -296,6 +318,114 @@ public class TestPlanBFilter {
         return schemaFactory.newSchema(new StreamSource(inputStream));
     }
 
+    /**
+     * A trace without a span must be reported as a record error, not silently store the previous trace's
+     * span again.
+     */
+    @Test
+    void traceWithoutSpanDoesNotReuseThePreviousSpan() {
+        Mockito.when(shardWriters.createWriter(Mockito.any()))
+                .thenReturn(shardWriter);
+        Mockito.when(planBDocCache.get(Mockito.eq("test")))
+                .thenReturn(PlanBDoc.builder()
+                        .uuid(UUID.randomUUID().toString())
+                        .stateType(StateType.TRACE)
+                        .build());
+
+        final String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <plan-b xmlns="plan-b:2" version="2.0">
+                   <trace>
+                      <map>test</map>
+                      <span>
+                         <traceId>0123456789abcdef0123456789abcdef</traceId>
+                         <spanId>0123456789abcdef</spanId>
+                         <name>span-one</name>
+                         <kind>Internal</kind>
+                         <startTimeUnixNano>1000000000</startTimeUnixNano>
+                         <endTimeUnixNano>2000000000</endTimeUnixNano>
+                      </span>
+                   </trace>
+                   <trace>
+                      <map>test</map>
+                   </trace>
+                </plan-b>
+                """;
+
+        final LoggingErrorReceiver errorReceiver = process(xml);
+
+        // Only the trace that actually contained a span is stored; the span-less trace is an error.
+        Mockito.verify(shardWriter, Mockito.times(1)).addSpanValue(Mockito.any(), Mockito.any());
+        assertThat(errorReceiver.getTotal(Severity.ERROR)).isEqualTo(1);
+    }
+
+    /**
+     * A bad or missing histogram value must be reported as a record error and processing must continue
+     * with the next record, mirroring the from/to range handling.
+     */
+    @Test
+    void histogramBadValueIsARecordErrorNotFatal() {
+        Mockito.when(shardWriters.createWriter(Mockito.any()))
+                .thenReturn(shardWriter);
+        Mockito.when(planBDocCache.get(Mockito.eq("hmap")))
+                .thenReturn(PlanBDoc.builder()
+                        .uuid(UUID.randomUUID().toString())
+                        .stateType(StateType.HISTOGRAM)
+                        .build());
+
+        final String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <plan-b xmlns="plan-b:2" version="2.0">
+                   <histogram>
+                      <map>hmap</map>
+                      <key>k1</key>
+                      <time>2000-01-01T00:00:00.000Z</time>
+                      <value>notanumber</value>
+                   </histogram>
+                   <histogram>
+                      <map>hmap</map>
+                      <key>k1</key>
+                      <time>2000-01-01T00:00:00.000Z</time>
+                      <value>42</value>
+                   </histogram>
+                </plan-b>
+                """;
+
+        final LoggingErrorReceiver errorReceiver = process(xml);
+
+        final ArgumentCaptor<TemporalValue> valueCaptor = ArgumentCaptor.forClass(TemporalValue.class);
+        Mockito.verify(shardWriter, Mockito.times(1)).addHistogramValue(Mockito.any(), valueCaptor.capture());
+        assertThat(valueCaptor.getValue().val()).isEqualTo(42L);
+        assertThat(errorReceiver.getTotal(Severity.ERROR)).isEqualTo(1);
+    }
+
+    /**
+     * Process xml through the filter, capturing record errors rather than failing on them.
+     */
+    private LoggingErrorReceiver process(final String xml) {
+        final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
+        final ByteArrayInputStream input = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
+
+        final MetaHolder metaHolder = new MetaHolder();
+        metaHolder.setMeta(new Meta());
+        final PlanBFilter filter = new PlanBFilter(
+                new ErrorReceiverProxy(errorReceiver),
+                new LocationFactoryProxy(),
+                metaHolder,
+                new ByteBufferFactoryImpl(),
+                shardWriters,
+                planBDocCache);
+        filter.setElementId(new ElementId("planBFilter"));
+
+        ProcessorUtil.processXml(input, new ErrorReceiverProxy(errorReceiver), filter,
+                new LocationFactoryProxy());
+        return errorReceiver;
+    }
+
+    private long countLines(final String text, final String prefix) {
+        return text.lines().filter(line -> line.startsWith(prefix)).count();
+    }
+
     private void testFilter(final String xml) {
         final ByteArrayInputStream input = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
 
@@ -318,6 +448,12 @@ public class TestPlanBFilter {
 
         ProcessorUtil.processXml(input, new ErrorReceiverProxy(new FatalErrorReceiver()), splitter,
                 new LocationFactoryProxy());
+
+        // The filter must forward balanced SAX events to downstream filters, including for trace content.
+        final String saxEvents = testSAXEventFilter.getOutput();
+        assertThat(countLines(saxEvents, "startElement:"))
+                .isGreaterThan(0)
+                .isEqualTo(countLines(saxEvents, "endElement:"));
 
 //        final List<String> actualXmlList = testFilter.getOutputs()
 //                .stream()

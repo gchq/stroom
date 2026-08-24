@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.Objects;
 public class DataGenDoc extends AbstractDoc {
 
     public static final String TYPE = "DataGen";
-    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANALYTIC_RULE_DOCUMENT_TYPE;
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.DATA_GENERATOR_DOCUMENT_TYPE;
 
     @JsonProperty
     private final String description;
