@@ -75,7 +75,7 @@ Filesystem-based queue for single-process deployments, development, and testing.
 
 ```
 <queueRoot>/
-├── sequence.txt          ← Global sequence counter (file-locked)
+├── sequence.txt          ← Persisted id counter (a hint; see below)
 ├── pending/              ← Messages available to consumers
 │   ├── 00000000000000000001.json
 │   ├── 00000000000000000002.json
@@ -97,17 +97,37 @@ sequenceDiagram
     participant FS as Filesystem
 
     P->>Q: publish(message)
-    Q->>FS: Lock sequence.txt, read+increment, write, force, unlock
+    Q->>Q: sequence.incrementAndGet() (in memory)
     Q->>FS: Write JSON to tmp/<id>-<rand>.json.tmp
     Q->>FS: Atomic move → pending/<id>.json
     Q->>FS: Delete temp file (finally)
 ```
 
 Key details:
-- **Sequence allocation** uses `FileChannel.lock()` for cross-thread safety
+- **Id allocation** is an in-memory `AtomicLong.incrementAndGet()` — no file I/O and
+  no locking on the publish path. The counter is seeded at construction from the
+  greater of the persisted `sequence.txt` value and the highest id found in
+  `pending/`, `in-flight/` and `failed/`.
+- **`sequence.txt` is a hint, not the source of truth.** It is written on `close()`
+  so ids stay monotonic across a clean restart, but correctness does not depend on
+  it: a lost, truncated or restored-out-of-step counter is corrected by the
+  directory scan. This matters because `ATOMIC_MOVE` silently replaces its target,
+  so a reused id would otherwise destroy a queued message with no error.
+- **Durable write** — the temp file is written through a `FileChannel` and
+  `force(true)`d before the move, so a published message survives power loss and
+  not just process death.
+- **Collision guard** — publish refuses to overwrite an existing `pending/` file,
+  turning any residual id collision into a loud `FileAlreadyExistsException`
+  rather than silent data loss.
 - **Atomic publish** writes to `tmp/` first, then uses `Files.move(ATOMIC_MOVE)` to `pending/`
 - **Sequence width** is 20 digits, zero-padded (`00000000000000000001`)
 - The queue validates that `message.queueName()` matches the queue's name
+
+> Allocation was originally guarded by a `FileChannel.lock()` on `sequence.txt`.
+> File locks are held per JVM rather than per thread, so a second thread
+> publishing to the same queue concurrently threw
+> `OverlappingFileLockException` and lost its message. Concurrent publishers are
+> now covered by `TestLocalFileGroupQueueConcurrency`.
 
 ### 2.4 Next (Consume) Flow
 

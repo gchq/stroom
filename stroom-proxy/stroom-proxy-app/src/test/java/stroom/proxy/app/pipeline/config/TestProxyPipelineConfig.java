@@ -22,8 +22,12 @@ import stroom.proxy.app.pipeline.queue.QueueDefinition;
 import stroom.proxy.app.pipeline.queue.QueueType;
 import stroom.proxy.app.pipeline.queue.local.LocalFileGroupQueue;
 import stroom.proxy.app.pipeline.runtime.FileGroupQueueFactory;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageConfig;
 import stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig;
 import stroom.proxy.app.pipeline.stage.receive.ReceiveStageThreadsConfig;
+import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig;
 import stroom.proxy.app.pipeline.store.FileStoreDefinition;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.PathCreator;
@@ -102,10 +106,10 @@ class TestProxyPipelineConfig extends StroomUnitTest {
                                 null,
                                 ProxyPipelineConfig.RECEIVE_STORE,
                                 new ReceiveStageThreadsConfig(7)),
-                        null,
-                        null,
-                        null,
-                        null),
+                        disabledSplitZipStage(),
+                        disabledPreAggregateStage(),
+                        disabledAggregateStage(),
+                        disabledForwardStage()),
                 Map.of(ProxyPipelineConfig.RECEIVE_STORE, new FileStoreDefinition("stores/receive")));
 
         final ProxyConfig proxyConfig = ProxyConfig.builder()
@@ -339,5 +343,22 @@ class TestProxyPipelineConfig extends StroomUnitTest {
         public String replaceContextVars(final String path) {
             return path;
         }
+    }
+
+
+    private static SplitZipStageConfig disabledSplitZipStage() {
+        return new SplitZipStageConfig(false, null, null, null, null);
+    }
+
+    private static PreAggregateStageConfig disabledPreAggregateStage() {
+        return new PreAggregateStageConfig(false, null, null, null, null);
+    }
+
+    private static AggregateStageConfig disabledAggregateStage() {
+        return new AggregateStageConfig(false, null, null, null, null);
+    }
+
+    private static ForwardStageConfig disabledForwardStage() {
+        return new ForwardStageConfig(false, null, null);
     }
 }

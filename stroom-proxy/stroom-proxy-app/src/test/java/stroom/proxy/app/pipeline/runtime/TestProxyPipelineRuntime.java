@@ -90,10 +90,10 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.RECEIVE_STORE,
                                 new ReceiveStageThreadsConfig(7)),
-                        null,
-                        null,
-                        null,
-                        null),
+                        disabledSplitZipStage(),
+                        disabledPreAggregateStage(),
+                        disabledAggregateStage(),
+                        disabledForwardStage()),
                 defaultFileStores());
 
         final ProxyPipelineRuntime runtime = createRuntime(pipelineConfig);
@@ -138,15 +138,15 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
                                 null,
                                 ProxyPipelineConfig.RECEIVE_STORE,
                                 new ReceiveStageThreadsConfig()),
-                        null,
+                        disabledSplitZipStage(),
                         new PreAggregateStageConfig(
                                 true,
                                 ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
                                 ProxyPipelineConfig.PRE_AGGREGATE_STORE,
                                 new PreAggregateStageThreadsConfig(3, 2)),
-                        null,
-                        null),
+                        disabledAggregateStage(),
+                        disabledForwardStage()),
                 defaultFileStores());
 
         final ProxyPipelineRuntime runtime = createRuntime(pipelineConfig);
@@ -278,10 +278,10 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
                                 null,
                                 ProxyPipelineConfig.RECEIVE_STORE,
                                 new ReceiveStageThreadsConfig()),
-                        null,
-                        null,
-                        null,
-                        null),
+                        disabledSplitZipStage(),
+                        disabledPreAggregateStage(),
+                        disabledAggregateStage(),
+                        disabledForwardStage()),
                 defaultFileStores());
 
         assertThatThrownBy(() -> createRuntime(invalidConfig))
@@ -302,10 +302,10 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
                                 null,
                                 ProxyPipelineConfig.RECEIVE_STORE,
                                 new ReceiveStageThreadsConfig()),
-                        null,
-                        null,
-                        null,
-                        null),
+                        disabledSplitZipStage(),
+                        disabledPreAggregateStage(),
+                        disabledAggregateStage(),
+                        disabledForwardStage()),
                 defaultFileStores());
 
         final ProxyPipelineRuntime runtime = createRuntime(pipelineConfig);
@@ -391,10 +391,10 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
         final ProxyPipelineConfig pipelineConfig = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        null,
-                        null,
-                        null,
-                        null,
+                        disabledReceiveStage(),
+                        disabledSplitZipStage(),
+                        disabledPreAggregateStage(),
+                        disabledAggregateStage(),
                         new ForwardStageConfig(
                                 true,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
@@ -416,10 +416,10 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
         final ProxyPipelineConfig pipelineConfig = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
-                        null,
-                        null,
-                        null,
-                        null,
+                        disabledReceiveStage(),
+                        disabledSplitZipStage(),
+                        disabledPreAggregateStage(),
+                        disabledAggregateStage(),
                         new ForwardStageConfig(
                                 true,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
@@ -467,10 +467,10 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.RECEIVE_STORE,
                                 new ReceiveStageThreadsConfig()),
-                        null,
-                        null,
-                        null,
-                        null),
+                        disabledSplitZipStage(),
+                        disabledPreAggregateStage(),
+                        disabledAggregateStage(),
+                        disabledForwardStage()),
                 defaultFileStores());
 
         final ProxyPipelineRuntime runtime = ProxyPipelineRuntime.fromConfig(
@@ -505,10 +505,10 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
                                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.RECEIVE_STORE,
                                 new ReceiveStageThreadsConfig()),
-                        null,
-                        null,
-                        null,
-                        null),
+                        disabledSplitZipStage(),
+                        disabledPreAggregateStage(),
+                        disabledAggregateStage(),
+                        disabledForwardStage()),
                 defaultFileStores());
 
         final ProxyPipelineRuntime runtime = ProxyPipelineRuntime.fromConfig(
@@ -723,5 +723,26 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
         public String replaceContextVars(final String path) {
             return path;
         }
+    }
+
+
+    private static ReceiveStageConfig disabledReceiveStage() {
+        return new ReceiveStageConfig(false, null, null, null, null);
+    }
+
+    private static SplitZipStageConfig disabledSplitZipStage() {
+        return new SplitZipStageConfig(false, null, null, null, null);
+    }
+
+    private static PreAggregateStageConfig disabledPreAggregateStage() {
+        return new PreAggregateStageConfig(false, null, null, null, null);
+    }
+
+    private static AggregateStageConfig disabledAggregateStage() {
+        return new AggregateStageConfig(false, null, null, null, null);
+    }
+
+    private static ForwardStageConfig disabledForwardStage() {
+        return new ForwardStageConfig(false, null, null);
     }
 }

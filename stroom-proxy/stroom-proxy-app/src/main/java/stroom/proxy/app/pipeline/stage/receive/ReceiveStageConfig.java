@@ -48,7 +48,7 @@ public class ReceiveStageConfig extends AbstractConfig implements IsProxyConfig 
     private final ReceiveStageThreadsConfig threads;
 
     public ReceiveStageConfig() {
-        this(false, null, null, null, new ReceiveStageThreadsConfig());
+        this(true, null, null, null, new ReceiveStageThreadsConfig());
     }
 
     @JsonCreator
@@ -59,7 +59,9 @@ public class ReceiveStageConfig extends AbstractConfig implements IsProxyConfig 
             @JsonProperty("fileStore") final String fileStore,
             @JsonProperty("threads") final ReceiveStageThreadsConfig threads) {
 
-        this.enabled = Objects.requireNonNullElse(enabled, false);
+        // Omitting `enabled` means "run this stage", matching the behaviour when no
+        // stages block is supplied at all. Disabling a stage must be explicit.
+        this.enabled = Objects.requireNonNullElse(enabled, true);
         this.outputQueue = normaliseOptional(outputQueue);
         this.splitZipQueue = normaliseOptional(splitZipQueue);
         this.fileStore = normaliseOptional(fileStore);

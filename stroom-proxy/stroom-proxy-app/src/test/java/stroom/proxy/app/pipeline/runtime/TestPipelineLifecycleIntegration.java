@@ -27,11 +27,15 @@ import stroom.proxy.app.pipeline.queue.FileGroupQueueItemProcessor;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
 import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
 import stroom.proxy.app.pipeline.stage.FileGroupQueueWorkerCounters;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
 import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageProcessor;
 import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
 import stroom.proxy.app.pipeline.stage.forward.ForwardStageProcessor;
+import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageConfig;
 import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageProcessor;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig;
 import stroom.proxy.app.pipeline.stage.receive.ReceiveStagePublisher;
+import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig;
 import stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageProcessor;
 import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -225,7 +229,7 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
     void testExplicitStagesPreservedWhenProvided() {
         // Simulate: explicit stages provided in YAML
         final PipelineStagesConfig explicitStages = new PipelineStagesConfig(
-                null, null, null, null,
+                disabledReceiveStage(), disabledSplitZipStage(), disabledPreAggregateStage(), disabledAggregateStage(),
                 new ForwardStageConfig(
                         true,
                         "customInput",
@@ -434,5 +438,22 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
         public String replaceContextVars(final String path) {
             return path;
         }
+    }
+
+
+    private static ReceiveStageConfig disabledReceiveStage() {
+        return new ReceiveStageConfig(false, null, null, null, null);
+    }
+
+    private static SplitZipStageConfig disabledSplitZipStage() {
+        return new SplitZipStageConfig(false, null, null, null, null);
+    }
+
+    private static PreAggregateStageConfig disabledPreAggregateStage() {
+        return new PreAggregateStageConfig(false, null, null, null, null);
+    }
+
+    private static AggregateStageConfig disabledAggregateStage() {
+        return new AggregateStageConfig(false, null, null, null, null);
     }
 }

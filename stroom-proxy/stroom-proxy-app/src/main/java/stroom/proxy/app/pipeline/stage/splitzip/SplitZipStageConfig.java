@@ -48,7 +48,7 @@ public class SplitZipStageConfig extends AbstractConfig implements IsProxyConfig
     private final ConsumerStageThreadsConfig threads;
 
     public SplitZipStageConfig() {
-        this(false, null, null, null, new ConsumerStageThreadsConfig());
+        this(true, null, null, null, new ConsumerStageThreadsConfig());
     }
 
     @JsonCreator
@@ -59,7 +59,9 @@ public class SplitZipStageConfig extends AbstractConfig implements IsProxyConfig
             @JsonProperty("fileStore") final String fileStore,
             @JsonProperty("threads") final ConsumerStageThreadsConfig threads) {
 
-        this.enabled = Objects.requireNonNullElse(enabled, false);
+        // Omitting `enabled` means "run this stage", matching the behaviour when no
+        // stages block is supplied at all. Disabling a stage must be explicit.
+        this.enabled = Objects.requireNonNullElse(enabled, true);
         this.inputQueue = normaliseOptional(inputQueue);
         this.outputQueue = normaliseOptional(outputQueue);
         this.fileStore = normaliseOptional(fileStore);

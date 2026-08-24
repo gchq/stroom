@@ -240,11 +240,18 @@ public class ProxyPipelineAssembler {
                 .flatMap(ProxyPipelineRuntime.RuntimeStage::getInputQueue)
                 .orElse(null);
 
+        final int maxConcurrentReceives = pipelineConfig
+                .getStages()
+                .getReceive()
+                .getThreads()
+                .getMaxConcurrentReceives();
+
         final ReceiveStagePublisher receiveStagePublisher = new ReceiveStagePublisher(
                 receiveStore,
                 preAggregateInputQueue,
                 splitZipQueue,
-                sourceNodeId);
+                sourceNodeId,
+                maxConcurrentReceives);
 
 
         // Set the pipeline publisher as the destination on both receivers.

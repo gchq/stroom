@@ -70,10 +70,9 @@ field-level detail.
 ### Deployments
 
 Complete, validated sample configurations. Each parses as a `proxyConfig` block
-and passes `ProxyPipelineConfigValidator` with no errors. The SQS/S3 sample
-raises four `EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE` warnings; these are a
-known false positive for S3 stores, explained in the file itself and tracked in
-[future-work.md §10](future-work.md#10-configuration-validation-improvements).
+and passes `ProxyPipelineConfigValidator` with no errors.
+`split-stage-workers.yml` additionally raises four informational
+`STAGE_DISABLED` warnings, one per stage that node deliberately does not run.
 
 - [deployments/single-process.yml](deployments/single-process.yml) — everything
   on one node with local queues and stores; the default shape, written out in full

@@ -456,14 +456,68 @@ Each stage has the following fields:
 
 | Field | Description |
 |-------|-------------|
-| `enabled` | Whether this stage runs in this process (default: `true`) |
+| `enabled` | Whether this stage runs in this process. Defaults to `true` for any stage you list; disabling is explicit |
 | `inputQueue` | Logical name of the input queue (references a key in `queues`) |
 | `outputQueue` | Logical name of the output queue |
 | `splitZipQueue` | Logical name of the split-zip queue (receive stage only) |
 | `fileStore` | Logical name of the file store for this stage's output |
 | `threads.consumerThreads` | Number of worker threads consuming from the input queue (default: `1`) |
-| `threads.maxConcurrentReceives` | Max concurrent HTTP receives (receive stage only, default: `5`) |
+| `threads.maxConcurrentReceives` | Max concurrent receives admitted to the receive file store and output queue (receive stage only, default: `5`) |
 | `threads.closeOldAggregatesThreads` | Threads for closing aged aggregates (pre-aggregate only, default: `1`) |
+
+### A `stages` Block Must List All Five Stages
+
+Omit the `stages` block entirely and you get the standard full pipeline, all
+stages enabled. **Write a `stages` block and you must list all five.** A stage
+you leave out is a `STAGE_NOT_CONFIGURED` validation error naming it, and
+because pipeline validation runs during assembly, the proxy refuses to start.
+
+This is deliberate, because omission is ambiguous. On a single-process proxy,
+naming one stage to raise a thread count means "leave the others alone". On a
+single-purpose node in a distributed deployment, naming one stage means "run
+only this one". Those are opposite intentions expressed by identical YAML, so
+guessing either way is silently wrong for the other — the proxy starts and
+quietly does too little, or quietly does too much. Refusing to guess costs a few
+lines of boilerplate and removes a whole class of misconfiguration.
+
+So a forward-only worker is written out in full:
+
+```yaml
+pipeline:
+  stages:
+    receive:
+      enabled: false
+    splitZip:
+      enabled: false
+    preAggregate:
+      enabled: false
+    aggregate:
+      enabled: false
+    forward:
+      enabled: true
+      inputQueue: forwardingInput
+      threads:
+        consumerThreads: 16
+```
+
+Every disabled stage additionally raises a `STAGE_DISABLED` **warning** naming
+it. Disabling is legitimate — it is how work is split across processes — so this
+is not an error; it puts each process's role in the startup log and shows which
+queues this process is not draining.
+
+A stage you *do* list without an explicit `enabled` defaults to enabled: naming
+a stage means you want it, and turning it off is the explicit act.
+
+### `maxConcurrentReceives`
+
+This bounds how many receives may be writing to the receive file store and
+publishing to the output queue at once. A receiving thread blocks on a fair
+semaphore in `ReceiveStagePublisher` until a slot frees, which applies
+backpressure back up the calling HTTP or scanner thread.
+
+It bounds the *pipeline-facing* part of a receive, not the reading of the
+request body — inbound connection concurrency is governed by the HTTP connector
+configuration.
 
 ---
 

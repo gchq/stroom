@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Validator for the reference-message proxy pipeline configuration.
@@ -64,6 +65,8 @@ public class ProxyPipelineConfigValidator {
     public static final String CODE_STAGE_UNKNOWN_SPLIT_ZIP_QUEUE = "STAGE_UNKNOWN_SPLIT_ZIP_QUEUE";
     public static final String CODE_STAGE_UNKNOWN_FILE_STORE = "STAGE_UNKNOWN_FILE_STORE";
     public static final String CODE_STAGE_INVALID_THREADS = "STAGE_INVALID_THREADS";
+    public static final String CODE_STAGE_DISABLED = "STAGE_DISABLED";
+    public static final String CODE_STAGE_NOT_CONFIGURED = "STAGE_NOT_CONFIGURED";
     public static final String CODE_LOCAL_QUEUE_PATH_BLANK = "LOCAL_QUEUE_PATH_BLANK";
     public static final String CODE_EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE =
             "EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE";
@@ -208,6 +211,68 @@ public class ProxyPipelineConfigValidator {
         validatePreAggregateStage(pipelineConfig, stages.getPreAggregate(), issues);
         validateAggregateStage(pipelineConfig, stages.getAggregate(), issues);
         validateForwardStage(pipelineConfig, stages.getForward(), issues);
+
+        validateStagesAreFullySpecified(stages, issues);
+        warnOnDisabledStages(stages, issues);
+    }
+
+    /**
+     * Require an explicit {@code stages} block to name every stage.
+     * <p>
+     * Omission is ambiguous - a single-process proxy naming one stage to tune it
+     * means "leave the rest alone", while a single-purpose node in a distributed
+     * deployment means "run only this one". Either default is silently wrong for
+     * the other case, so an incomplete block is rejected instead of guessed at.
+     * Omitting the {@code stages} block entirely still gives the standard full
+     * pipeline.
+     * </p>
+     */
+    private void validateStagesAreFullySpecified(final PipelineStagesConfig stages,
+                                                 final List<PipelineValidationIssue> issues) {
+        final Set<PipelineStageName> configured = stages.getConfiguredStages();
+
+        for (final PipelineStageName stageName : PipelineStageName.values()) {
+            if (!configured.contains(stageName)) {
+                issues.add(PipelineValidationIssue.errorForStage(
+                        stageName,
+                        CODE_STAGE_NOT_CONFIGURED,
+                        "Stage '" + stageName.getConfigName() + "' is missing from the 'stages' "
+                        + "block. When 'stages' is specified it must list all "
+                        + PipelineStageName.values().length + " stages, each with an explicit "
+                        + "'enabled'. Omit the 'stages' block entirely to get the standard "
+                        + "full pipeline."));
+            }
+        }
+    }
+
+    /**
+     * Report every disabled stage.
+     * <p>
+     * Disabling stages is legitimate - it is how work is split across processes -
+     * so this is a warning, not an error. It makes each process's role explicit in
+     * the startup log and shows which queues this process is not draining.
+     * </p>
+     */
+    private void warnOnDisabledStages(final PipelineStagesConfig stages,
+                                      final List<PipelineValidationIssue> issues) {
+        addDisabledStageWarning(PipelineStageName.RECEIVE, stages.getReceive().isEnabled(), issues);
+        addDisabledStageWarning(PipelineStageName.SPLIT_ZIP, stages.getSplitZip().isEnabled(), issues);
+        addDisabledStageWarning(PipelineStageName.PRE_AGGREGATE, stages.getPreAggregate().isEnabled(), issues);
+        addDisabledStageWarning(PipelineStageName.AGGREGATE, stages.getAggregate().isEnabled(), issues);
+        addDisabledStageWarning(PipelineStageName.FORWARD, stages.getForward().isEnabled(), issues);
+    }
+
+    private void addDisabledStageWarning(final PipelineStageName stageName,
+                                         final boolean enabled,
+                                         final List<PipelineValidationIssue> issues) {
+        if (!enabled) {
+            issues.add(PipelineValidationIssue.warningForStage(
+                    stageName,
+                    CODE_STAGE_DISABLED,
+                    "Stage '" + stageName.getConfigName() + "' is disabled in this process. "
+                    + "Data will accumulate on its input queue unless another process "
+                    + "is configured to consume it."));
+        }
     }
 
     private void validateReceiveStage(final ProxyPipelineConfig pipelineConfig,
@@ -472,6 +537,14 @@ public class ProxyPipelineConfigValidator {
         }
 
         fileStores.forEach((fileStoreName, fileStoreDefinition) -> {
+            // An S3 store is inherently shared - it addresses by bucket and has no
+            // filesystem path - so a blank path says nothing about its shareability.
+            // Warning on it flagged every correct S3 deployment and taught operators
+            // to ignore this check.
+            if (fileStoreDefinition != null && fileStoreDefinition.getType() == FileStoreType.S3) {
+                return;
+            }
+
             if (fileStoreDefinition == null || isBlank(fileStoreDefinition.getPath())) {
                 issues.add(PipelineValidationIssue.warningForFileStore(
                         fileStoreName,

@@ -227,14 +227,13 @@ stage references. Additions worth making:
   multi-node — likely a misconfiguration that should use SQS/Kafka
 - Warn when a file store is `LOCAL_FILESYSTEM` with consumer threads > 1 and no
   shared filesystem configured
-- Warn when a stage is disabled and nothing else consumes its input queue —
-  currently this silently strands messages
 - Validate SQS visibility timeout against expected processing duration
-- Suppress `EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE` for S3 stores. The check
-  tests `isBlank(getPath())`, but S3 stores address by bucket and legitimately
-  leave `path` unset, so every correct S3 configuration currently trips the
-  warning. See the note in
-  [deployments/sqs-s3-distributed.yml](deployments/sqs-s3-distributed.yml).
+
+An incomplete `stages` block is now a `STAGE_NOT_CONFIGURED` error, and each
+disabled stage raises a `STAGE_DISABLED` warning, so a process doing less than
+intended is visible at startup. Both checks are per-process and cannot tell
+whether *another* process consumes a stranded queue — a cluster-aware check
+would need to see the whole deployment's configuration.
 
 ### 11. Dynamic Configuration Reload
 

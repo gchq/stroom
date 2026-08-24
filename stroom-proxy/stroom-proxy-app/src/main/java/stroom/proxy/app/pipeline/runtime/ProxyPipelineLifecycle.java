@@ -25,7 +25,6 @@ import stroom.util.logging.LogUtil;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -129,12 +128,17 @@ public class ProxyPipelineLifecycle implements AutoCloseable {
                 runners.size(),
                 shutdownTimeout));
 
-        // Stop in reverse order so downstream consumers stop before
-        // upstream producers, reducing in-flight work.
-        final List<PipelineStageRunner> reversed = new ArrayList<>(runners);
-        Collections.reverse(reversed);
-
-        for (final PipelineStageRunner runner : reversed) {
+        // Stop in pipeline order - upstream producers first - so that each stage
+        // stops feeding the next while the next is still draining. Runners are
+        // built in PipelineStageName order, so the list order is already correct.
+        //
+        // This previously stopped in reverse. That halted the drain end of the
+        // pipeline first, leaving upstream stages publishing into queues nobody
+        // was consuming, which grew the backlog during shutdown rather than
+        // shrinking it. No data was at risk either way - every queue and store is
+        // durable and delivery is at-least-once - but more work now completes
+        // within the shutdown timeout.
+        for (final PipelineStageRunner runner : runners) {
             final boolean clean = runner.stop(shutdownTimeout);
             if (!clean) {
                 LOGGER.warn(() -> LogUtil.message(

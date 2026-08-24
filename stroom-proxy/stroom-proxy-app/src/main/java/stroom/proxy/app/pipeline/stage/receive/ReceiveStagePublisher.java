@@ -27,6 +27,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -35,6 +36,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 
 /**
@@ -60,8 +62,21 @@ public class ReceiveStagePublisher implements Consumer<Path> {
     private final FileGroupQueue splitZipQueue;
     private final String sourceNodeId;
 
+    /**
+     * Bounds how many receives may be writing to the file store and publishing at
+     * once. Acquired for the whole of {@link #accept(Path)}, so a receiving thread
+     * blocks here rather than piling more concurrent work onto the store, which
+     * applies backpressure up the calling (HTTP or scanner) thread.
+     * <p>
+     * Fair ordering is used so a sustained burst cannot starve an early arrival.
+     * </p>
+     */
+    private final Semaphore receiveSlots;
 
     /**
+     * Create a publisher admitting {@link ReceiveStageThreadsConfig#DEFAULT_MAX_CONCURRENT_RECEIVES}
+     * concurrent receives.
+     *
      * @param receiveStore The receive stage's output file store.
      * @param outputQueue  The primary output queue (e.g. preAggregateInput or
      *                     forwardingInput).
@@ -74,11 +89,39 @@ public class ReceiveStagePublisher implements Consumer<Path> {
                                   final FileGroupQueue outputQueue,
                                   final FileGroupQueue splitZipQueue,
                                   final String sourceNodeId) {
+        this(receiveStore,
+                outputQueue,
+                splitZipQueue,
+                sourceNodeId,
+                ReceiveStageThreadsConfig.DEFAULT_MAX_CONCURRENT_RECEIVES);
+    }
+
+    /**
+     * @param receiveStore The receive stage's output file store.
+     * @param outputQueue  The primary output queue (e.g. preAggregateInput or
+     *                     forwardingInput).
+     * @param splitZipQueue Optional split-zip queue — if non-null, zip files
+     *                      that require splitting are published here instead
+     *                      of the primary output queue.
+     * @param sourceNodeId The node identifier for queue message provenance.
+     * @param maxConcurrentReceives Maximum number of concurrent receives admitted
+     *                              to the file store and output queue. Must be >= 1.
+     */
+    public ReceiveStagePublisher(final FileStore receiveStore,
+                                  final FileGroupQueue outputQueue,
+                                  final FileGroupQueue splitZipQueue,
+                                  final String sourceNodeId,
+                                  final int maxConcurrentReceives) {
         this.receiveStore = Objects.requireNonNull(receiveStore, "receiveStore");
         this.outputQueue = Objects.requireNonNull(outputQueue, "outputQueue");
         this.splitZipQueue = splitZipQueue; // Nullable — split-zip is optional.
         this.sourceNodeId = Objects.requireNonNull(sourceNodeId, "sourceNodeId");
 
+        if (maxConcurrentReceives < 1) {
+            throw new IllegalArgumentException(
+                    "maxConcurrentReceives must be >= 1 but was " + maxConcurrentReceives);
+        }
+        this.receiveSlots = new Semaphore(maxConcurrentReceives, true);
     }
 
     /**
@@ -93,6 +136,14 @@ public class ReceiveStagePublisher implements Consumer<Path> {
     @Override
     public void accept(final Path receivedDir) {
         Objects.requireNonNull(receivedDir, "receivedDir");
+
+        try {
+            receiveSlots.acquire();
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new UncheckedIOException(new InterruptedIOException(
+                    "Interrupted waiting for a receive slot for " + receivedDir));
+        }
 
         try {
             // 1. Copy received files into the file store.
@@ -130,6 +181,8 @@ public class ReceiveStagePublisher implements Consumer<Path> {
         } catch (final IOException e) {
             throw new UncheckedIOException(
                     "Failed to publish received file group from " + receivedDir, e);
+        } finally {
+            receiveSlots.release();
         }
     }
 

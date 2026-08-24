@@ -12,9 +12,9 @@
 #
 # ProxyPipelineConfigValidator checks for this and raises
 # EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE as a *warning* (not an error) when it
-# sees an external queue alongside a file store with no explicit shared path.
-# Note that S3 stores legitimately leave `path` unset — they address by bucket —
-# so they trip that warning too. Read it as a prompt to check, not a defect.
+# sees an external queue alongside a local file store with no explicit shared
+# path. S3 stores are exempt - they address by bucket and are shared by
+# definition.
 #
 # This file is the config every node shares. Per-node differences go in the
 # `stages` block — see split-stage-workers.yml.

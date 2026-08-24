@@ -293,7 +293,10 @@ class TestPipelineStageRunner extends StroomUnitTest {
                                 null,
                                 ProxyPipelineConfig.RECEIVE_STORE,
                                 new ReceiveStageThreadsConfig()),
-                        null, null, null, null),
+                        disabledSplitZipStage(),
+                        disabledPreAggregateStage(),
+                        disabledAggregateStage(),
+                        disabledForwardStage()),
                 defaultFileStores());
 
         final TestPathCreator pathCreator = new TestPathCreator(getCurrentTestDir());
@@ -466,5 +469,22 @@ class TestPipelineStageRunner extends StroomUnitTest {
         public String replaceContextVars(final String path) {
             return path;
         }
+    }
+
+
+    private static SplitZipStageConfig disabledSplitZipStage() {
+        return new SplitZipStageConfig(false, null, null, null, null);
+    }
+
+    private static PreAggregateStageConfig disabledPreAggregateStage() {
+        return new PreAggregateStageConfig(false, null, null, null, null);
+    }
+
+    private static AggregateStageConfig disabledAggregateStage() {
+        return new AggregateStageConfig(false, null, null, null, null);
+    }
+
+    private static ForwardStageConfig disabledForwardStage() {
+        return new ForwardStageConfig(false, null, null);
     }
 }

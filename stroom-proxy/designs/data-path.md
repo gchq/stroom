@@ -91,7 +91,7 @@ data/pipeline/queues/<queueName>/       # FileGroupQueueFactory, DEFAULT_QUEUE_R
   in-flight/                            # claimed by a worker
   failed/                               # item.fail() landed it here
   tmp/                                  # publish staging
-  sequence.txt                          # monotonic message id
+  sequence.txt                          # persisted id counter (re-derived at startup)
 
 data/pipeline/file-stores/<storeName>/  # FileStoreFactory, DEFAULT_FILE_STORE_ROOT
   <writerId>/                           # per-writer subtree — see below

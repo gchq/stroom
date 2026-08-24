@@ -47,7 +47,7 @@ public class PreAggregateStageConfig extends AbstractConfig implements IsProxyCo
     private final PreAggregateStageThreadsConfig threads;
 
     public PreAggregateStageConfig() {
-        this(false, null, null, null, new PreAggregateStageThreadsConfig());
+        this(true, null, null, null, new PreAggregateStageThreadsConfig());
     }
 
     @JsonCreator
@@ -58,7 +58,9 @@ public class PreAggregateStageConfig extends AbstractConfig implements IsProxyCo
             @JsonProperty("fileStore") final String fileStore,
             @JsonProperty("threads") final PreAggregateStageThreadsConfig threads) {
 
-        this.enabled = Objects.requireNonNullElse(enabled, false);
+        // Omitting `enabled` means "run this stage", matching the behaviour when no
+        // stages block is supplied at all. Disabling a stage must be explicit.
+        this.enabled = Objects.requireNonNullElse(enabled, true);
         this.inputQueue = normaliseOptional(inputQueue);
         this.outputQueue = normaliseOptional(outputQueue);
         this.fileStore = normaliseOptional(fileStore);

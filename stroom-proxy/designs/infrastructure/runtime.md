@@ -184,16 +184,23 @@ sequenceDiagram
     L->>R3: start()
     L->>R4: start()
 
-    Note over M,R4: Stop (downstream → upstream)
+    Note over M,R4: Stop (upstream → downstream)
     M->>L: stop()
-    L->>R4: stop(30s)
-    L->>R3: stop(30s)
-    L->>R2: stop(30s)
     L->>R1: stop(30s)
+    L->>R2: stop(30s)
+    L->>R3: stop(30s)
+    L->>R4: stop(30s)
 ```
 
-- **Start order**: upstream → downstream
-- **Stop order**: downstream → upstream (reverse) — reduces in-flight work by stopping consumers before producers
+- **Start order**: upstream → downstream, so consumers are ready before producers feed them
+- **Stop order**: also upstream → downstream, so each stage stops feeding the next
+  while the next is still draining
+
+Stopping previously ran in reverse. That halted the drain end of the pipeline
+first, leaving upstream stages publishing into queues nobody was consuming, which
+grew the backlog during shutdown rather than shrinking it. Nothing was at risk of
+loss either way — every queue and store is durable and delivery is at-least-once
+— but more work now completes inside the shutdown timeout.
 
 ---
 

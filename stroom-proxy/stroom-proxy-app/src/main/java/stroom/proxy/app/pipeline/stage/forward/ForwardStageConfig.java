@@ -47,7 +47,7 @@ public class ForwardStageConfig extends AbstractConfig implements IsProxyConfig 
     private final ConsumerStageThreadsConfig threads;
 
     public ForwardStageConfig() {
-        this(false, null, new ConsumerStageThreadsConfig());
+        this(true, null, new ConsumerStageThreadsConfig());
     }
 
     @JsonCreator
@@ -56,7 +56,9 @@ public class ForwardStageConfig extends AbstractConfig implements IsProxyConfig 
             @JsonProperty("inputQueue") final String inputQueue,
             @JsonProperty("threads") final ConsumerStageThreadsConfig threads) {
 
-        this.enabled = Objects.requireNonNullElse(enabled, false);
+        // Omitting `enabled` means "run this stage", matching the behaviour when no
+        // stages block is supplied at all. Disabling a stage must be explicit.
+        this.enabled = Objects.requireNonNullElse(enabled, true);
         this.inputQueue = normaliseOptional(inputQueue);
         this.threads = Objects.requireNonNullElseGet(threads, ConsumerStageThreadsConfig::new);
     }

@@ -106,34 +106,64 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
      */
     public static PipelineStagesConfig defaultFullPipelineStages() {
         return new PipelineStagesConfig(
-                new ReceiveStageConfig(
-                        true,
-                        PRE_AGGREGATE_INPUT_QUEUE,
-                        SPLIT_ZIP_INPUT_QUEUE,
-                        RECEIVE_STORE,
-                        new ReceiveStageThreadsConfig()),
-                new SplitZipStageConfig(
-                        true,
-                        SPLIT_ZIP_INPUT_QUEUE,
-                        PRE_AGGREGATE_INPUT_QUEUE,
-                        SPLIT_STORE,
-                        new ConsumerStageThreadsConfig()),
-                new PreAggregateStageConfig(
-                        true,
-                        PRE_AGGREGATE_INPUT_QUEUE,
-                        AGGREGATE_INPUT_QUEUE,
-                        PRE_AGGREGATE_STORE,
-                        new PreAggregateStageThreadsConfig()),
-                new AggregateStageConfig(
-                        true,
-                        AGGREGATE_INPUT_QUEUE,
-                        FORWARDING_INPUT_QUEUE,
-                        AGGREGATE_STORE,
-                        new ConsumerStageThreadsConfig()),
-                new ForwardStageConfig(
-                        true,
-                        FORWARDING_INPUT_QUEUE,
-                        new ConsumerStageThreadsConfig()));
+                defaultReceiveStage(),
+                defaultSplitZipStage(),
+                defaultPreAggregateStage(),
+                defaultAggregateStage(),
+                defaultForwardStage());
+    }
+
+    /**
+     * The standard wiring for a single stage.
+     * <p>
+     * These are used both when no {@code stages} block is supplied at all and, by
+     * {@link PipelineStagesConfig}, to fill in individual stages omitted from a
+     * partial {@code stages} block. Filling from the standard wiring rather than
+     * from a bare disabled config means listing one stage in order to tune it no
+     * longer silently disables the rest of the pipeline.
+     * </p>
+     */
+    public static ReceiveStageConfig defaultReceiveStage() {
+        return new ReceiveStageConfig(
+                true,
+                PRE_AGGREGATE_INPUT_QUEUE,
+                SPLIT_ZIP_INPUT_QUEUE,
+                RECEIVE_STORE,
+                new ReceiveStageThreadsConfig());
+    }
+
+    public static SplitZipStageConfig defaultSplitZipStage() {
+        return new SplitZipStageConfig(
+                true,
+                SPLIT_ZIP_INPUT_QUEUE,
+                PRE_AGGREGATE_INPUT_QUEUE,
+                SPLIT_STORE,
+                new ConsumerStageThreadsConfig());
+    }
+
+    public static PreAggregateStageConfig defaultPreAggregateStage() {
+        return new PreAggregateStageConfig(
+                true,
+                PRE_AGGREGATE_INPUT_QUEUE,
+                AGGREGATE_INPUT_QUEUE,
+                PRE_AGGREGATE_STORE,
+                new PreAggregateStageThreadsConfig());
+    }
+
+    public static AggregateStageConfig defaultAggregateStage() {
+        return new AggregateStageConfig(
+                true,
+                AGGREGATE_INPUT_QUEUE,
+                FORWARDING_INPUT_QUEUE,
+                AGGREGATE_STORE,
+                new ConsumerStageThreadsConfig());
+    }
+
+    public static ForwardStageConfig defaultForwardStage() {
+        return new ForwardStageConfig(
+                true,
+                FORWARDING_INPUT_QUEUE,
+                new ConsumerStageThreadsConfig());
     }
 
     private static Map<String, QueueDefinition> defaultQueues() {

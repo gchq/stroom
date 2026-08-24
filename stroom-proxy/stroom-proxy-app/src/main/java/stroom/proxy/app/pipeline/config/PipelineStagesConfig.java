@@ -16,6 +16,7 @@
 
 package stroom.proxy.app.pipeline.config;
 
+import stroom.proxy.app.pipeline.runtime.PipelineStageName;
 import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
 import stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig;
 import stroom.proxy.app.pipeline.stage.preaggregate.PreAggregateStageConfig;
@@ -25,17 +26,40 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.Valid;
 
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Stage definitions for independently enabled proxy pipeline stages.
  * <p>
  * Each stage has its own typed configuration class containing only the
  * fields relevant to that stage.
+ * </p>
+ * <h2>Omitted stages</h2>
+ * <p>
+ * Omitting a stage from an explicit {@code stages} block is <em>ambiguous</em>.
+ * A single-process proxy naming one stage to tune a thread count means "leave
+ * the rest alone"; a single-purpose node in a distributed deployment naming one
+ * stage means "run only this one". Guessing either way is wrong half the time,
+ * and wrong silently - the proxy starts and quietly does too little or too much.
+ * </p>
+ * <p>
+ * So this class does not guess. Omitted stages are recorded as unconfigured, and
+ * {@code ProxyPipelineConfigValidator} raises an error naming each one, which
+ * halts startup. A {@code stages} block must list all five stages; the standard
+ * full pipeline is still what you get by omitting the block entirely.
+ * </p>
+ * <p>
+ * The getters fall back to a <em>disabled</em> stage rather than a wired one, so
+ * that if validation is ever bypassed the failure mode is an idle process rather
+ * than one silently doing work it was not meant to do.
  * </p>
  */
 @JsonPropertyOrder(alphabetic = true)
@@ -46,6 +70,13 @@ public class PipelineStagesConfig extends AbstractConfig implements IsProxyConfi
     private final PreAggregateStageConfig preAggregate;
     private final AggregateStageConfig aggregate;
     private final ForwardStageConfig forward;
+
+    /**
+     * The stages that were explicitly present in configuration, as opposed to
+     * defaulted. Used by validation to reject an incomplete {@code stages} block.
+     */
+    @JsonIgnore
+    private final Set<PipelineStageName> configuredStages;
 
     public PipelineStagesConfig() {
         this(null, null, null, null, null);
@@ -59,11 +90,45 @@ public class PipelineStagesConfig extends AbstractConfig implements IsProxyConfi
             @JsonProperty("aggregate") final AggregateStageConfig aggregate,
             @JsonProperty("forward") final ForwardStageConfig forward) {
 
-        this.receive = Objects.requireNonNullElseGet(receive, ReceiveStageConfig::new);
-        this.splitZip = Objects.requireNonNullElseGet(splitZip, SplitZipStageConfig::new);
-        this.preAggregate = Objects.requireNonNullElseGet(preAggregate, PreAggregateStageConfig::new);
-        this.aggregate = Objects.requireNonNullElseGet(aggregate, AggregateStageConfig::new);
-        this.forward = Objects.requireNonNullElseGet(forward, ForwardStageConfig::new);
+        final EnumSet<PipelineStageName> configured = EnumSet.noneOf(PipelineStageName.class);
+        if (receive != null) {
+            configured.add(PipelineStageName.RECEIVE);
+        }
+        if (splitZip != null) {
+            configured.add(PipelineStageName.SPLIT_ZIP);
+        }
+        if (preAggregate != null) {
+            configured.add(PipelineStageName.PRE_AGGREGATE);
+        }
+        if (aggregate != null) {
+            configured.add(PipelineStageName.AGGREGATE);
+        }
+        if (forward != null) {
+            configured.add(PipelineStageName.FORWARD);
+        }
+        this.configuredStages = Collections.unmodifiableSet(configured);
+
+        // Omitted stages fall back to disabled - see the class javadoc. Validation
+        // rejects them before this fallback can take effect in a running proxy.
+        this.receive = Objects.requireNonNullElseGet(
+                receive, () -> new ReceiveStageConfig(false, null, null, null, null));
+        this.splitZip = Objects.requireNonNullElseGet(
+                splitZip, () -> new SplitZipStageConfig(false, null, null, null, null));
+        this.preAggregate = Objects.requireNonNullElseGet(
+                preAggregate, () -> new PreAggregateStageConfig(false, null, null, null, null));
+        this.aggregate = Objects.requireNonNullElseGet(
+                aggregate, () -> new AggregateStageConfig(false, null, null, null, null));
+        this.forward = Objects.requireNonNullElseGet(
+                forward, () -> new ForwardStageConfig(false, null, null));
+    }
+
+    /**
+     * @return The stages that were explicitly present in configuration. Anything
+     * absent from this set was defaulted, and validation will reject it.
+     */
+    @JsonIgnore
+    public Set<PipelineStageName> getConfiguredStages() {
+        return configuredStages;
     }
 
     @Valid

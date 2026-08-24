@@ -21,6 +21,8 @@ import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessageCodec;
 import stroom.proxy.app.pipeline.queue.QueueType;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.codahale.metrics.health.HealthCheck;
 
@@ -29,7 +31,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.DirectoryStream;
@@ -45,6 +46,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 /**
@@ -71,6 +73,8 @@ import java.util.stream.Stream;
  */
 public class LocalFileGroupQueue implements FileGroupQueue {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LocalFileGroupQueue.class);
+
     private static final String PENDING_DIR_NAME = "pending";
     private static final String IN_FLIGHT_DIR_NAME = "in-flight";
     private static final String FAILED_DIR_NAME = "failed";
@@ -87,6 +91,17 @@ public class LocalFileGroupQueue implements FileGroupQueue {
     private final Path tempDir;
     private final Path sequenceFile;
     private final FileGroupQueueMessageCodec codec;
+
+    /**
+     * Item id allocator.
+     * <p>
+     * Seeded at construction from the greater of the persisted counter and the
+     * highest id actually present on disk, so a lost, truncated or restored
+     * {@code sequence.txt} can never cause a previously queued message to be
+     * overwritten. Allocation is a plain atomic increment - no file locking.
+     * </p>
+     */
+    private final AtomicLong sequence = new AtomicLong();
 
     public LocalFileGroupQueue(final String name,
                                final Path root) throws IOException {
@@ -146,13 +161,24 @@ public class LocalFileGroupQueue implements FileGroupQueue {
                                                + "' does not match queue '" + name + "'");
         }
 
-        final long sequence = allocateSequence();
-        final String itemId = formatSequence(sequence);
+        final String itemId = formatSequence(allocateSequence());
         final Path destination = pendingDir.resolve(itemId + MESSAGE_FILE_EXTENSION);
         final Path tempFile = Files.createTempFile(tempDir, itemId + "-", MESSAGE_FILE_EXTENSION + ".tmp");
 
         try {
-            Files.write(tempFile, codec.toBytes(message));
+            writeDurably(tempFile, codec.toBytes(message));
+
+            // Never overwrite an already queued message. With the sequence seeded from
+            // disk this should be unreachable, but ATOMIC_MOVE silently clobbers its
+            // target, so a collision must fail loudly rather than destroy data.
+            if (Files.exists(destination)) {
+                throw new FileAlreadyExistsException(
+                        destination.toString(),
+                        null,
+                        "Queue sequence collision on '" + name + "' - refusing to overwrite "
+                        + "an existing queued message");
+            }
+
             moveAtomically(tempFile, destination);
         } finally {
             Files.deleteIfExists(tempFile);
@@ -195,7 +221,10 @@ public class LocalFileGroupQueue implements FileGroupQueue {
 
     @Override
     public void close() {
-        // No open resources are held between operations.
+        // No open resources are held between operations. Persist the id allocator so
+        // ids stay monotonic across a clean restart; correctness does not depend on
+        // this succeeding, because startup re-derives a safe value by scanning.
+        persistSequence();
     }
 
     @Override
@@ -275,6 +304,79 @@ public class LocalFileGroupQueue implements FileGroupQueue {
         }
 
         recoverInFlightMessages();
+        seedSequence();
+    }
+
+    /**
+     * Seed the id allocator from the greater of the persisted counter and the highest
+     * id present in any of the queue directories.
+     * <p>
+     * The persisted counter alone is not trustworthy - it can be lost, truncated or
+     * restored out of step with the queue contents - and reusing an id would silently
+     * overwrite a queued message. Scanning the directories makes the allocator correct
+     * regardless of the counter's state; the counter merely keeps ids monotonic across
+     * restarts once a queue has drained.
+     * </p>
+     */
+    private void seedSequence() throws IOException {
+        long highest = readPersistedSequence();
+
+        for (final Path dir : new Path[]{pendingDir, inFlightDir, failedDir}) {
+            highest = Math.max(highest, highestIdIn(dir));
+        }
+
+        sequence.set(highest);
+    }
+
+    private long readPersistedSequence() {
+        try {
+            final String value = Files.readString(sequenceFile, StandardCharsets.UTF_8).trim();
+            return value.isEmpty()
+                    ? 0L
+                    : Long.parseLong(value);
+        } catch (final IOException | NumberFormatException e) {
+            // A missing or corrupt counter is recoverable - the directory scan below
+            // establishes a safe floor on its own.
+            return 0L;
+        }
+    }
+
+    private static long highestIdIn(final Path dir) throws IOException {
+        if (!Files.isDirectory(dir)) {
+            return 0L;
+        }
+        try (final Stream<Path> stream = Files.list(dir)) {
+            return stream
+                    .filter(LocalFileGroupQueue::isMessageFile)
+                    .mapToLong(LocalFileGroupQueue::idFromFileOrZero)
+                    .max()
+                    .orElse(0L);
+        }
+    }
+
+    private static long idFromFileOrZero(final Path file) {
+        try {
+            return Long.parseLong(itemIdFromFile(file));
+        } catch (final NumberFormatException e) {
+            // Files moved to failed/ carry a suffix and are not plain ids. They can
+            // never be re-published under their original name, so ignore them.
+            return 0L;
+        }
+    }
+
+    private void persistSequence() {
+        try {
+            Files.writeString(
+                    sequenceFile,
+                    sequence.get() + "\n",
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (final IOException e) {
+            // Best effort only - the next startup re-derives a safe value by scanning.
+            LOGGER.debug("Unable to persist queue sequence for '{}': {}", name, e.getMessage(), e);
+        }
     }
 
     private void recoverInFlightMessages() throws IOException {
@@ -290,44 +392,32 @@ public class LocalFileGroupQueue implements FileGroupQueue {
         }
     }
 
-    private long allocateSequence() throws IOException {
-        try (final FileChannel channel = FileChannel.open(
-                sequenceFile,
-                StandardOpenOption.CREATE,
-                StandardOpenOption.READ,
-                StandardOpenOption.WRITE);
-             final FileLock ignored = channel.lock()) {
-            final long current = readSequence(channel);
-            final long next = current + 1;
-
-            channel.truncate(0);
-            channel.position(0);
-            channel.write(ByteBuffer.wrap((Long.toString(next) + "\n").getBytes(StandardCharsets.UTF_8)));
-            channel.force(true);
-
-            return next;
-        }
+    /**
+     * Allocate the next item id.
+     * <p>
+     * This was previously guarded by a {@link java.nio.channels.FileLock} on
+     * {@code sequence.txt}. File locks are held on behalf of the whole JVM rather
+     * than per thread, so a second thread publishing concurrently to the same queue
+     * hit {@link java.nio.channels.OverlappingFileLockException} and its publish
+     * failed. Allocation is now an atomic increment of a counter seeded from disk at
+     * construction, which is both correct across threads and free of I/O.
+     * </p>
+     */
+    private long allocateSequence() {
+        return sequence.incrementAndGet();
     }
 
-    private long readSequence(final FileChannel channel) throws IOException {
-        channel.position(0);
-
-        final ByteBuffer buffer = ByteBuffer.allocate(64);
-        final int bytesRead = channel.read(buffer);
-        if (bytesRead <= 0) {
-            return 0;
-        }
-
-        buffer.flip();
-        final String value = StandardCharsets.UTF_8.decode(buffer).toString().trim();
-        if (value.isEmpty()) {
-            return 0;
-        }
-
-        try {
-            return Long.parseLong(value);
-        } catch (final NumberFormatException e) {
-            throw new IOException("Invalid queue sequence value in " + sequenceFile + ": " + value, e);
+    /**
+     * Write and flush to stable storage before the file is made visible in
+     * {@code pending/} by the subsequent atomic move.
+     */
+    private static void writeDurably(final Path file, final byte[] content) throws IOException {
+        try (final FileChannel channel = FileChannel.open(
+                file,
+                StandardOpenOption.WRITE,
+                StandardOpenOption.TRUNCATE_EXISTING)) {
+            channel.write(ByteBuffer.wrap(content));
+            channel.force(true);
         }
     }
 
