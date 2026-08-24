@@ -86,7 +86,7 @@ sequenceDiagram
 
 ### Step-by-step
 
-1. **Copy to file store** — Opens a new `FileStoreWrite`, copies all files from the temporary receive directory (`proxy.meta`, `proxy.zip`, `proxy.entries`) into the write path, then commits. The commit atomically moves data from the staging area to the stable store and writes a `.complete` marker.
+1. **Copy to file store** — Opens a new `FileStoreWrite`, copies all files from the temporary receive directory (`proxy.meta`, `proxy.zip`, `proxy.entries`) into the write path, then commits. For a local store the commit is a single atomic move from the staging area into the stable store; there is no marker file, so the file group becomes visible complete or not at all. See [infrastructure/file-stores.md](../infrastructure/file-stores.md).
 
 2. **Route decision** — Inspects `proxy.entries` to count distinct feeds. If more than one feed is present and a `splitZipQueue` is configured, the file group is routed to `splitZipQueue`. Otherwise it goes to the primary `outputQueue`.
 

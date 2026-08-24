@@ -219,7 +219,7 @@ The pipeline supports three queue backends. All share the same `FileGroupQueue` 
 
 **Best for**: Single-process deployments, development, testing.
 
-Messages are stored as individual numbered JSON files in a filesystem directory. The queue provides FIFO ordering within a single consumer, and uses file-rename-based acknowledgement.
+Messages are stored as individual numbered JSON files in a filesystem directory. Items are claimed and acknowledged by moving the file between `pending/`, `in-flight/` and `failed/` subdirectories.
 
 ```yaml
 queues:
@@ -230,10 +230,15 @@ queues:
 
 **Characteristics**:
 - No external dependencies
-- FIFO ordering
-- Single-consumer only (no competing consumers across processes)
+- Roughly FIFO — `pending/` is drained in filename (sequence) order
+- **Multi-threaded within one process, single-process only.** Competing consumer
+  threads are safe: a claim is an atomic `pending/` → `in-flight/` move and the
+  loser of a race retries. Two *processes* sharing one queue directory are not
+  safe, because startup recovery returns every in-flight item to `pending/`.
 - `next()` is non-blocking — returns `Optional.empty()` immediately if no messages
 - Worker uses a 100ms empty-poll backoff to avoid busy-waiting
+- Nothing drains `failed/`; monitor it (see
+  [§Monitoring](#monitoring--observability))
 
 ### SQS (AWS Simple Queue Service)
 
@@ -253,7 +258,7 @@ queues:
 **Characteristics**:
 - Multiple consumers can compete for messages across processes
 - At-least-once delivery (messages may be redelivered if not acknowledged)
-- **Visibility heartbeat**: A background thread automatically extends the visibility timeout for in-flight items at 2/3 of the configured interval, preventing premature redelivery during long-running processing
+- **Visibility heartbeat**: a per-queue scheduler thread (`sqs-heartbeat-<queueName>`) re-issues `changeMessageVisibility` for each in-flight item every `2/3 × visibilityTimeout` (minimum 1 s), so processing that outlasts the timeout is not redelivered under itself. Heartbeat attempts, successes and failures are exported as metrics — a rising failure rate means items are at risk of duplicate processing.
 - `next()` uses SQS long-polling (blocks up to `waitTime` waiting for a message)
 - `acknowledge()` deletes the SQS message
 - `fail()` sets visibility timeout to 0, making the message immediately available for retry
@@ -289,8 +294,8 @@ queues:
 **Characteristics**:
 - Consumer group semantics — multiple consumers share partitions
 - Offset-based acknowledgement (committed on `acknowledge()`)
-- `fail()` does not commit the offset, so the message will be redelivered on next poll
-- `next()` uses Kafka polling with a 1-second timeout
+- `fail()` does not commit the offset, so the message will be redelivered on next poll — immediately, with no back-off, so a poison message will spin
+- `next()` polls with a 100 ms timeout (`DEFAULT_POLL_TIMEOUT`), so it is effectively non-blocking rather than long-polling like SQS
 
 **Configuration fields**:
 
@@ -324,9 +329,16 @@ fileStores:
 1. `newWrite()` creates a temporary directory in the staging area (`writing/<writerId>/`)
 2. Files are written to this temporary directory
 3. `commit()` atomically renames (moves) the directory into the stable area (`<writerId>/<sequenceId>/`) and returns a `FileStoreLocation`
-4. A `.complete` marker file is written as the final step, enabling idempotency checks
 
-This ensures that other stages only see complete, committed file groups — never partial writes.
+There is no completion marker file — **the atomic move is the commit**. A file
+group directory exists in the stable area only once it is complete, so other
+stages cannot observe a partial write. If the filesystem does not support atomic
+moves the store falls back to a plain move, which weakens that guarantee; avoid
+filesystems where `ATOMIC_MOVE` is unsupported for store paths.
+
+Closing an uncommitted write deletes the staging directory, so an abandoned
+write leaves nothing behind. A hard crash does leave the staging directory —
+see [future-work.md §9](future-work.md#9-orphaned-file-cleanup).
 
 #### Multi-Node Write Safety
 
@@ -340,8 +352,7 @@ The resulting directory structure looks like this:
 │   ├── 0000000001/                           ← File group (committed)
 │   │   ├── proxy.meta
 │   │   ├── proxy.zip
-│   │   ├── proxy.entries
-│   │   └── .complete
+│   │   └── proxy.entries
 │   ├── 0000000002/
 │   └── ...
 ├── f9e8d7c6-b5a4-3210-fedc-ba0987654321/   ← Node B's writer directory
@@ -701,28 +712,44 @@ Each enabled stage that has an input queue runs one or more `FileGroupQueueWorke
 Each worker thread runs a continuous poll loop:
 
 ```
-while (not shutdown):
-    item = queue.next()           // Non-blocking for local; long-poll for SQS/Kafka
-    if item is empty:
-        if local queue:
-            sleep(100ms)          // Empty-poll backoff
-        continue
-    try:
-        processor.process(item)   // Steps 1–5 of the ownership contract
-        item.acknowledge()        // Step 6
-    catch Exception:
-        item.fail(error)          // Return to queue for retry
+while (running and not interrupted):
+    result = worker.processNext()   // next() → process → acknowledge / fail
+    if result is noItem:
+        sleep(100ms)                // Empty-poll backoff, all queue types
+    // processed and failed items loop immediately, with no delay
+  on IOException or RuntimeException:
+    sleep(1s)                       // Error backoff
 ```
+
+The empty-poll backoff applies to **every** queue type, not just local queues.
+For SQS it is additive to the long poll, so an idle SQS stage waits `waitTime`
+plus 100 ms per cycle — negligible against a 20-second long poll. Both backoffs
+are `PipelineStageRunner.DEFAULT_EMPTY_POLL_BACKOFF` (100 ms) and
+`DEFAULT_ERROR_BACKOFF` (1 s); neither is currently exposed as configuration.
 
 ### Thread Counts
 
 Thread counts are independently configurable per stage via the `threads` block:
 
 - `consumerThreads` controls how many workers poll the input queue concurrently
-- For **local queues**, only a single consumer thread makes sense (single-consumer design)
-- For **SQS/Kafka**, multiple consumer threads enable parallel processing across partitions/messages
 - `maxConcurrentReceives` controls the HTTP receive concurrency (receive stage only)
 - `closeOldAggregatesThreads` controls the background closer for aged aggregates (pre-aggregate stage only)
+
+**Local queues are safe with multiple consumer threads.** `LocalFileGroupQueue.next()`
+claims an item by atomically moving it from `pending/` to `in-flight/`; a thread
+that loses the race gets `NoSuchFileException` and retries the loop. Raising
+`consumerThreads` above 1 on a local queue is a supported way to scale a stage
+within one process.
+
+What local queues do **not** support is multiple *processes* sharing one queue
+directory — startup recovery moves every in-flight item back to pending, which
+would steal work from another running JVM. Use SQS or Kafka to distribute a
+stage across processes; see
+[future-work.md §5](future-work.md#5-local-queue-multi-process-consumers) and
+[deployments/split-stage-workers.yml](deployments/split-stage-workers.yml).
+
+For Kafka, the topic's partition count caps useful parallelism across the whole
+consumer group — extra threads beyond the partition count sit idle.
 
 ---
 
@@ -930,7 +957,13 @@ The pipeline worker sets MDC (Mapped Diagnostic Context) fields before processin
 | `traceId` | `FileGroupQueueMessage.traceId()` | End-to-end trace ID (may be null) |
 | `fileGroupId` | `FileGroupQueueMessage.fileGroupId()` | Unique file group identifier |
 | `messageId` | `FileGroupQueueMessage.messageId()` | Queue message ID |
-| `stageName` | Queue name / stage name | Pipeline stage being processed |
+| `stageName` | `queue.getName()` | See caveat below |
+
+Despite its name, `stageName` holds the **input queue name**, not the stage
+name — `FileGroupQueueWorker` sets it from `queue.getName()`. With the default
+topology the two are effectively interchangeable (the `aggregate` stage consumes
+`aggregateInput`), but if you rename queues they will diverge. Filter on the
+queue name you configured.
 
 MDC values are automatically cleared after processing completes (success or failure). If `traceId` is null on the message, the MDC key is not set (no `NullPointerException`).
 

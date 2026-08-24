@@ -35,7 +35,8 @@ across many.
   forwarded file group, including the two queue tiers (`FileGroupQueue` between
   stages, `DirQueue` inside handlers), the on-disk layout, and where data can
   accumulate.
-- **[operations.md](operations.md)** — operator-facing: queue and file store
+- **[operations.md](operations.md)** — operator-facing: the supported use cases
+  and how each maps onto stage enablement, queue and file store
   types, configuration reference, deployment examples, the worker thread model,
   health checks, Prometheus metrics, structured logging, and the admin
   monitoring endpoint.
@@ -69,7 +70,10 @@ field-level detail.
 ### Deployments
 
 Complete, validated sample configurations. Each parses as a `proxyConfig` block
-and passes `ProxyPipelineConfigValidator` with no errors.
+and passes `ProxyPipelineConfigValidator` with no errors. The SQS/S3 sample
+raises four `EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE` warnings; these are a
+known false positive for S3 stores, explained in the file itself and tracked in
+[future-work.md §10](future-work.md#10-configuration-validation-improvements).
 
 - [deployments/single-process.yml](deployments/single-process.yml) — everything
   on one node with local queues and stores; the default shape, written out in full

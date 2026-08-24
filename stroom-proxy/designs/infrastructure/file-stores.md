@@ -65,8 +65,7 @@ Local/shared filesystem implementation. Supports single-node and multi-node depl
 │   ├── 0000000001/                ← Committed file group
 │   │   ├── proxy.meta
 │   │   ├── proxy.zip
-│   │   ├── proxy.entries
-│   │   └── .complete              ← Completeness marker
+│   │   └── proxy.entries
 │   ├── 0000000002/
 │   └── ...
 └── writing/                      ← Staging area
@@ -99,29 +98,43 @@ sequenceDiagram
     P->>LFS: write.commit()
     LFS->>LFS: nextStablePath() → writerRoot/<seqId>
     LFS->>FS: Files.move(tempPath, stablePath, ATOMIC_MOVE)
-    LFS->>FS: Write .complete marker
     LFS-->>P: FileStoreLocation(file:///.../stablePath)
 ```
 
 Key properties:
-- **Atomic commit** — `Files.move(ATOMIC_MOVE)` ensures consumers never see partial writes
-- **Completeness marker** — `.complete` file written as the final step
-- **Sequence isolation** — Each writer has its own counter, no cross-node contention
+- **The move is the commit** — there is no marker file. A directory exists under
+  `writerRoot` only once it is complete, so consumers cannot see a partial
+  write. `AtomicMoveNotSupportedException` falls back to a non-atomic
+  `Files.move`, which weakens that guarantee on filesystems lacking atomic
+  rename.
+- **Commit is idempotent** — a second `commit()` on the same handle returns the
+  same `FileStoreLocation` without repeating the move.
+- **Abandoned writes self-clean** — `close()` on an uncommitted handle deletes
+  the staging directory.
+- **Sequence isolation** — each writer has its own counter, no cross-node
+  contention. `nextStablePath()` skips any id whose directory already exists, so
+  a counter reset after restart cannot overwrite existing data.
 
 ### 2.5 Write Flow (Deterministic)
 
 ```mermaid
 flowchart TD
-    A["newDeterministicWrite(fileGroupId)"] --> B{"stablePath exists\nwith .complete?"}
+    A["newDeterministicWrite(fileGroupId)"] --> B{"stablePath is\na directory?"}
     B -->|Yes| C["Return PreCommittedFileStoreWrite\n(no-op handle)"]
-    B -->|No, partial exists| D["deleteRecursively(stablePath)"]
+    B -->|"Exists but not a directory"| D["deleteRecursively(stablePath)"]
     D --> E["Create temp dir, return DeterministicFileStoreWrite"]
-    B -->|No, doesn't exist| E
+    B -->|"Doesn't exist"| E
 ```
 
-- **Idempotent** — If the output already exists and is complete, returns a pre-committed handle. Callers can check `isCommitted()` and skip writing.
-- **Crash recovery** — If a partial write exists (no `.complete` marker), it is cleaned up before starting fresh.
-- Stable path = `writerRoot/<fileGroupId>/`
+- **Idempotent** — because commit is an atomic move, a directory at the stable
+  path *is* a complete file group. `Files.isDirectory(stablePath)` is therefore
+  the whole completeness test, and a pre-committed handle is returned whose
+  `commit()` is a no-op. Callers can check `isCommitted()` and skip writing.
+- **Stable path** = `writerRoot/<fileGroupId>/`, so the same file group id always
+  re-derives the same location on this node.
+- Note the writer partitioning means "deterministic" is deterministic *per
+  writer*, not globally: two nodes reprocessing the same file group would each
+  produce their own copy under their own `writerId`.
 
 ### 2.6 Write Handle Types
 
@@ -226,8 +239,19 @@ s3://<bucket>/<keyPrefix>/<writerId>/<seqId>/
     proxy.meta
     proxy.zip
     proxy.entries
-    .committed              ← Commit marker object
 ```
+
+As with the local store there is no marker object. `commit()` uploads the file
+group's objects and the presence of objects under the key is what
+`newDeterministicWrite()` tests via `hasObjectsInS3()`.
+
+This is a weaker guarantee than the local store's atomic move: S3 has no atomic
+multi-object commit, so a crash part-way through `uploadDirectory()` leaves a
+partially-uploaded file group that looks complete to a subsequent deterministic
+write. In practice the ownership-transfer ordering covers this — the reference
+message is only published after `commit()` returns — so a partial upload is
+never referenced, and it is left as an orphan rather than being consumed. See
+[../future-work.md §9](../future-work.md#9-orphaned-file-cleanup).
 
 ### 3.3 Local Directory Layout
 
@@ -272,8 +296,6 @@ sequenceDiagram
         S3FS->>S3: putObject(bucket, keyPrefix/writerId/seqId/filename)
     end
     
-    S3FS->>FS: Write .committed marker locally
-    S3FS->>S3: putObject(bucket, .../. committed)
     S3FS->>FS: deleteRecursively(tempPath)
     S3FS-->>P: FileStoreLocation(s3://bucket/keyPrefix/writerId/seqId)
 ```
@@ -292,7 +314,7 @@ sequenceDiagram
     S3FS->>S3: listObjectsV2(bucket, keyPrefix)
     S3-->>S3FS: List of S3Objects
     
-    loop For each object (skip .committed and dirs)
+    loop For each object (skip "directory" keys)
         alt Not in local cache
             S3FS->>S3: getObject(bucket, key)
             S3->>FS: Download to cache/<cacheId>/filename
@@ -302,8 +324,13 @@ sequenceDiagram
     S3FS-->>C: Path to cache directory
 ```
 
-- Downloads are cached locally — subsequent resolves skip already-downloaded files
-- Cache directory name derived from the key prefix
+- `resolve()` rejects a location whose `storeName`, `locationType` or `bucket`
+  does not match this store, so a message that crossed stores fails loudly.
+- Downloads are cached locally — `if (!Files.exists(localFile))` means a
+  redelivered message re-uses whatever was already fetched.
+- The cache directory name is the key prefix with `/` replaced by `_`, so it is
+  stable across restarts and shared by every resolve of the same file group.
+- Nothing evicts the cache; see [../future-work.md §3](../future-work.md#3-s3-streaming-reads).
 
 ### 3.7 Delete Flow
 

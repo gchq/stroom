@@ -195,11 +195,35 @@ AWS SQS-backed queue for distributed deployments with multiple competing consume
 
 ### 3.2 Configuration
 
-| Field | Default | Description |
-|---|---|---|
-| `queueUrl` | Required | Full SQS queue URL |
-| `visibilityTimeoutSeconds` | 1800 (30 min) | Time before unacked messages reappear |
-| `waitTimeSeconds` | 20 (SQS max) | Long-poll wait time |
+These are the keys under `pipeline.queues.<name>`:
+
+| Config key | Type | Default | Description |
+|---|---|---|---|
+| `queueUrl` | String | **Required** | Full SQS queue URL. Validation fails without it. |
+| `visibilityTimeout` | Duration | `PT30M` | Time before an unacknowledged message reappears |
+| `waitTime` | Duration | `PT20S` | Long-poll wait time; 20s is the SQS maximum |
+
+```yaml
+pipeline:
+  queues:
+    forwardingInput:
+      type: SQS
+      queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/proxy-forwarding-input"
+      visibilityTimeout: "PT15M"
+      waitTime: "PT20S"
+```
+
+Both durations are `StroomDuration`, so they are written in ISO-8601 form and
+converted to whole seconds for the SDK — `resolveVisibilityTimeout()` and
+`resolveWaitTime()` fall back to `DEFAULT_VISIBILITY_TIMEOUT_SECONDS` (1800) and
+`DEFAULT_WAIT_TIME_SECONDS` (20) when unset. Internally the class holds them as
+the int fields `visibilityTimeoutSeconds` and `waitTimeSeconds`; those are **not**
+config keys.
+
+Credentials are not configurable per queue — `SqsClient.create()` uses the
+default AWS provider chain (environment, system properties, profile, container
+or instance role). This differs from `S3FileStore`, which does accept an
+explicit `credentialsType`.
 
 ### 3.3 Publish Flow
 
@@ -292,12 +316,46 @@ Kafka-backed queue for high-throughput distributed deployments with existing Kaf
 
 ### 4.2 Configuration
 
-| Field | Default | Description |
+These are the keys under `pipeline.queues.<name>`:
+
+| Config key | Type | Default | Description |
+|---|---|---|---|
+| `topic` | String | **Required** | Kafka topic name |
+| `bootstrapServers` | String | **Required** | Comma-separated broker addresses |
+| `producer` | Map | `{}` | Producer property overrides |
+| `consumer` | Map | `{}` | Consumer property overrides |
+
+Validation requires **both** `topic` and `bootstrapServers`; supplying one
+without the other fails with `QUEUE_DEFINITION_INVALID`.
+
+```yaml
+pipeline:
+  queues:
+    forwardingInput:
+      type: KAFKA
+      topic: "stroom-proxy-forwarding-input"
+      bootstrapServers: "kafka-1.example.com:9092,kafka-2.example.com:9092"
+      consumer:
+        group.id: "stroom-proxy-forwarding"
+      producer:
+        compression.type: "lz4"
+```
+
+The queue sets these itself before applying your overrides, so anything in
+`producer:`/`consumer:` takes precedence:
+
+| Property | Value set | Why |
 |---|---|---|
-| `topic` | Required | Kafka topic name |
-| `bootstrapServers` | Required | Comma-separated broker addresses |
-| `producer` | `acks=all` | Additional producer properties |
-| `consumer` | `group.id=stroom-proxy-<name>` | Additional consumer properties |
+| `acks` | `all` | Producer durability |
+| `key.serializer` / `value.serializer` | String / ByteArray | Key is the file group id, value is JSON bytes |
+| `enable.auto.commit` | `false` | Offsets are committed explicitly in `acknowledge()` |
+| `group.id` | `stroom-proxy-<queueName>` | Override when two pipelines share a cluster |
+| `max.poll.records` | `1` | Matches the single-item `next()` contract |
+| `auto.offset.reset` | `earliest` | A new consumer group picks up the existing backlog |
+
+Credentials and TLS are not modelled as first-class config — supply them as
+Kafka properties under `producer:`/`consumer:` (`security.protocol`,
+`sasl.jaas.config`, and so on).
 
 ### 4.3 Key Design Decisions
 

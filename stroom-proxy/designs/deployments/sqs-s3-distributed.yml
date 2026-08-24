@@ -134,4 +134,4 @@ proxyConfig:
 #
 # Configure a redrive policy with a maxReceiveCount and a target DLQ on each SQS
 # queue. The proxy deliberately implements no dead-letter logic of its own —
-# SQS already does this natively. See history/ for the rationale.
+# SQS already does this natively. See ../future-work.md §1 for the rationale.

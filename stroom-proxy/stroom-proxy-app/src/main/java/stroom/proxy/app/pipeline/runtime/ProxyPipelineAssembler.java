@@ -52,10 +52,11 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * Bridges the new reference-message pipeline to existing production handlers.
+ * Bridges the reference-message pipeline to the existing production handlers.
  * <p>
- * This class mirrors the assembly pattern of {@code ReceiverFactoryProvider}
- * but targets the new pluggable queue pipeline. It:
+ * This is the single place the runtime topology is assembled, replacing the
+ * imperative wiring that used to live in the receive-side receiver factory
+ * provider. It:
  * </p>
  * <ol>
  *     <li>Builds {@link FileGroupQueueFactory} and {@link FileStoreFactory}

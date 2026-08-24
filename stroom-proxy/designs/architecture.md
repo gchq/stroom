@@ -405,4 +405,6 @@ graph TD
     end
 ```
 
-Each `PipelineStageRunner` manages N daemon threads named `stage-<configName>-<n>`. Threads poll in a loop with 100ms empty-poll backoff (local queues) or long-poll blocking (SQS/Kafka). Errors trigger a 1-second backoff before retrying.
+Each `PipelineStageRunner` manages N daemon threads named `stage-<configName>-<n>`. A thread that finds no item sleeps for the empty-poll backoff (100 ms, applied for every queue type); processed and failed items loop straight round with no delay. An `IOException` or `RuntimeException` escaping the worker triggers the error backoff (1 s). Both are constructor parameters defaulting to `DEFAULT_EMPTY_POLL_BACKOFF` and `DEFAULT_ERROR_BACKOFF`, and are not currently exposed as configuration.
+
+Queue backends differ in how long `next()` itself blocks — SQS long-polls for up to `waitTime` (default 20 s), Kafka polls with a 100 ms timeout, and local queues return immediately — but the backoff above is applied on top of all of them.
