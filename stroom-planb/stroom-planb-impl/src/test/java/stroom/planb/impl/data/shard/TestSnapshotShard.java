@@ -123,6 +123,9 @@ class TestSnapshotShard {
                 .nodeList(Collections.singletonList("test-node"))
                 .minTimeToKeepSnapshots(StroomDuration.ofSeconds(10))
                 .minTimeToKeepSnapshotEnv(StroomDuration.ofSeconds(1))
+                // This also bounds how long a read with no snapshot yet waits for its first fetch,
+                // so a test must only shorten it if it is exercising the retry window itself. A
+                // cold JVM can take tens of milliseconds to complete a first fetch.
                 .snapshotRetryFetchInterval(StroomDuration.ofSeconds(2))
                 .build();
 
@@ -1128,7 +1131,6 @@ class TestSnapshotShard {
         config = config
                 .copy()
                 .minTimeToKeepSnapshots(StroomDuration.ofMillis(50))
-                .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
                 .build();
 
         final AtomicBoolean fail = new AtomicBoolean(false);
@@ -1341,7 +1343,6 @@ class TestSnapshotShard {
                 .copy()
                 .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
                 .minTimeToKeepSnapshotEnv(StroomDuration.ofMillis(400))
-                .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
                 .build();
 
         final AtomicInteger fetchCount = new AtomicInteger();
@@ -1429,8 +1430,7 @@ class TestSnapshotShard {
         config = config
                 .copy()
                 .minTimeToKeepSnapshots(StroomDuration.ofMillis(50))
-                .minTimeToKeepSnapshotEnv(StroomDuration.ofMillis(300))
-                .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofSeconds(5))
                 .build();
 
         final AtomicInteger fetchCount = new AtomicInteger();
@@ -1460,8 +1460,14 @@ class TestSnapshotShard {
         final String stale = shard.get(db -> "read");
         assertThat(stale).isEqualTo("read");
 
-        // Beyond the bound reads error rather than serve very stale data.
-        Thread.sleep(400);
+        // Beyond the bound reads error rather than serve very stale data. Bring the bound below the age of
+        // the data we already hold, rather than waiting for that data to age past a fixed bound, so a slow
+        // machine cannot overshoot the window the assertion above depends on.
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(1))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofMillis(1))
+                .build();
         assertThatThrownBy(() -> shard.get(db -> "read")).hasMessageContaining("node down");
     }
 
