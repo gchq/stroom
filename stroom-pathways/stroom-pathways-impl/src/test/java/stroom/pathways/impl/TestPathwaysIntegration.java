@@ -47,15 +47,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration tests for the {@code trace-pathways-pending} DBI trigger
  * introduced as part of the completion-based pathways processing mechanism.
  *
- * <p>These tests replace the old event-driven {@code PathwaysEntityEventHandler}
- * tests; they verify directly on {@link TraceDb} that:
+ * <p>They verify directly on {@link TraceDb} that:
  * <ul>
- *   <li>Inserting a root span (empty {@code parentSpanId}) populates the
- *       pending DBI.</li>
- *   <li>Inserting only child spans does NOT populate the pending DBI.</li>
- *   <li>The grace-period cutoff used by
- *       {@link PathwaysProcessor#exec()} correctly selects only
- *       traces whose root-span end time has elapsed the threshold.</li>
+ *   <li>Inserting a root span (empty {@code parentSpanId}) records a merge time.</li>
+ *   <li>Inserting only child spans does not.</li>
+ *   <li>The cutoff passed to {@link TraceDb#iterateRootsMergedBefore} selects on the time the
+ *       store took the trace on, so a caller can bound what it picks up.</li>
  * </ul>
  */
 class TestPathwaysIntegration {
@@ -171,10 +168,9 @@ class TestPathwaysIntegration {
     }
 
     /**
-     * The grace-period cutoff is based on the wall-clock time at which the
-     * root span was merged into the store (not the span's declared end time).
-     * Traces merged after the cutoff are still within the grace period and
-     * should NOT be returned by {@link TraceDb#iterateRootsMergedBefore}.
+     * The cutoff selects on the wall-clock time at which the root span was merged into the store,
+     * not the span's declared end time, so a trace merged after the cutoff is not returned by
+     * {@link TraceDb#iterateRootsMergedBefore}.
      *
      * <p>This test verifies:
      * <ul>
@@ -183,12 +179,12 @@ class TestPathwaysIntegration {
      * </ul>
      */
     @Test
-    void testGracePeriodCutoffFiltersEligibleTraces() throws Exception {
+    void testCutoffFiltersEligibleTraces() throws Exception {
         final TracesDoc doc = buildTracesDoc("traces_cutoff_test");
         final Path dbPath = Files.createDirectories(tempDir.resolve("db_cutoff"));
 
         // Record a cutoff time BEFORE insertion so that the merge times of both
-        // traces will be >= cutoff (i.e. both still within the grace period).
+        // traces will be >= cutoff.
         final long cutoffBeforeInsert = Instant.now().toEpochMilli() - 1_000L;
 
         final Span rootA = buildRootSpan(
@@ -208,10 +204,10 @@ class TestPathwaysIntegration {
                 writer.commit();
             }
 
-            // Cutoff strictly before insertion → grace period not yet elapsed for either trace.
-            final List<byte[]> stillInGracePeriod = new ArrayList<>();
-            db.iterateRootsMergedBefore(cutoffBeforeInsert, stillInGracePeriod::add);
-            assertThat(stillInGracePeriod).isEmpty();
+            // Cutoff strictly before insertion → neither trace is in range.
+            final List<byte[]> beforeCutoff = new ArrayList<>();
+            db.iterateRootsMergedBefore(cutoffBeforeInsert, beforeCutoff::add);
+            assertThat(beforeCutoff).isEmpty();
 
             // Long.MAX_VALUE cutoff → all inserted root traces are eligible.
             final List<byte[]> allEligible = new ArrayList<>();

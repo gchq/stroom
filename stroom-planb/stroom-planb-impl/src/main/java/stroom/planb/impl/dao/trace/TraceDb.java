@@ -387,6 +387,16 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
     // MDB_NOOVERWRITE throughout: an identical key (same sort value AND same traceId) is already the
     // entry we would write, so ignoring it keeps the index free of duplicates.
+    // Records when this store took on a trace, which is what PathwaysProcessor measures its grace
+    // period from. MDB_NOOVERWRITE so a repeat within the same millisecond cannot double up.
+    private void stampMergeTime(final Txn<ByteBuffer> writeTxn, final byte[] traceIdBytes) {
+        final byte[] mergeKeyBytes = new byte[Long.BYTES + traceIdBytes.length];
+        ByteBuffer.wrap(mergeKeyBytes).putLong(System.currentTimeMillis()).put(traceIdBytes);
+        byteBuffers.useBytes(mergeKeyBytes, mergeTimeKey -> {
+            traceRootsMergeTimeDbi.put(writeTxn, mergeTimeKey, emptyValue(), PutFlags.MDB_NOOVERWRITE);
+        });
+    }
+
     private void writeSecondaryIndexes(final Txn<ByteBuffer> writeTxn,
                                        final byte[] traceIdBytes,
                                        final TraceRoot root) {
@@ -560,13 +570,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                 writeSecondaryIndexes(writeTxn, traceIdBytes, newRoot);
 
                 // Initialise the merge-time clock for the PathwaysProcessor.
-                final long mergeTimeMs = System.currentTimeMillis();
-                final byte[] mergeKeyBytes = new byte[Long.BYTES + traceIdBytes.length];
-                ByteBuffer.wrap(mergeKeyBytes).putLong(mergeTimeMs).put(traceIdBytes);
-                byteBuffers.useBytes(mergeKeyBytes, mergeTimeKey -> {
-                    traceRootsMergeTimeDbi.put(writeTxn, mergeTimeKey, emptyValue(),
-                            PutFlags.MDB_NOOVERWRITE);
-                });
+                stampMergeTime(writeTxn, traceIdBytes);
             } catch (final LmdbNativeException e) {
                 throw e;
             } catch (final RuntimeException e) {
@@ -845,12 +849,23 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
                     final TraceRootKey traceRootKey = new TraceRootKey(traceIdBytes);
 
                     // Drop stale sort-index entries for the existing stored root, then overwrite.
-                    getTraceRoot(writeTxn, traceIdBytes).ifPresent(oldRoot ->
+                    final Optional<TraceRoot> optOldRoot = getTraceRoot(writeTxn, traceIdBytes);
+                    optOldRoot.ifPresent(oldRoot ->
                             deleteSecondaryIndexes(writeTxn, traceIdBytes, oldRoot));
                     traceRootKeySerde.write(traceRootKey, keyBuf ->
                             traceRootValueSerde.write(rebuilt, valBuf ->
                                     traceRootsDbi.put(writeTxn, keyBuf, valBuf)));
                     writeSecondaryIndexes(writeTxn, traceIdBytes, rebuilt);
+
+                    // A rooted trace this store did not already hold needs its merge time here,
+                    // because only some spans reach it through insert: a span whose stored bytes
+                    // reference no lookup table is merged by a direct put, which stamps nothing.
+                    // Keying on the absent root keeps it to one entry per trace per store, and the
+                    // read it needs has already happened above. An orphan root is left unstamped,
+                    // so a trace with no root span still waits rather than being handed on.
+                    if (optOldRoot.isEmpty() && !rebuilt.isOrphan()) {
+                        stampMergeTime(writeTxn, traceIdBytes);
+                    }
                     writer.tryCommit();
                 } catch (final LmdbNativeException e) {
                     throw e;

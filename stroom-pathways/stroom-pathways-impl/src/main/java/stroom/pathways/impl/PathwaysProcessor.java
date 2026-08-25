@@ -79,7 +79,6 @@ public class PathwaysProcessor {
      * Traces whose root-span merge time is older than this threshold are
      * considered complete and eligible for pathways processing.
      */
-    private static final long DEFAULT_GRACE_PERIOD_MS = 10_000L; // 10 seconds
 
     private final PathwaysStore pathwaysStore;
     private final MessageReceiverFactory messageReceiverFactory;
@@ -117,17 +116,21 @@ public class PathwaysProcessor {
     }
 
     /**
-     * Scheduled entry point. Computes the grace-period cutoff and delegates to
-     * {@link #processCompletedTraces} for each PathwaysDoc assigned to this node.
-     * Uses the {@code trace-roots-merge-time} DBI for an O(eligible) range scan,
-     * processing only traces whose root span was merged more than
-     * {@link #DEFAULT_GRACE_PERIOD_MS} ago.
+     * Scheduled entry point. Delegates to {@link #processCompletedTraces} for each PathwaysDoc
+     * assigned to this node, taking every trace a bucket holds a merge time for.
+     *
+     * <p>No settling delay is applied here. A trace only reaches a bucket once publishing has
+     * waited out the store's {@code Max Wait For Data}, so the wait for a trace's remaining spans
+     * has already happened by the time this can see it, and a bucket is only offered for reading
+     * once its version marker is in place.
      */
     public void exec() {
         // Reclaim stores for docs that have been deleted since the last run.
         deleteOldStores();
 
-        final long cutoffMs = Instant.now().toEpochMilli() - DEFAULT_GRACE_PERIOD_MS;
+        // Everything stamped up to now; the ordered scan stops there rather than running to the
+        // end of the index. Anything stamped during this pass is taken on the next one.
+        final long cutoffMs = Instant.now().toEpochMilli();
 
         for (final DocRef docRef : NullSafe.list(pathwaysStore.list())) {
             try {
@@ -468,7 +471,7 @@ public class PathwaysProcessor {
             return null;
         }
 
-        // Collect traceIds past the grace period. iterateRootsMergedBefore stops
+        // Collect the traces this bucket holds a merge time for. iterateRootsMergedBefore stops
         // early once the time-ordered key exceeds cutoffMs — O(eligible) scan.
         // TODO: Replace the full scan from the beginning of trace-roots-merge-time with a
         //  persistent cursor (watermark) stored in PathwaysDb. On each tick the scan would
