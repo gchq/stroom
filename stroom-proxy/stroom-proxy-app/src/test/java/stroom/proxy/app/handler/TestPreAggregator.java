@@ -50,6 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
 public class TestPreAggregator extends StroomUnitTest {
@@ -279,4 +280,32 @@ public class TestPreAggregator extends StroomUnitTest {
     private record ExpectedOutput(List<Integer> entryCounts) {
 
     }
+
+    /**
+     * Audit ledger C5. {@code PreAggregateFunction.addDir} declares no throws, so a swallowed failure
+     * here is indistinguishable from success to {@code PreAggregateStageProcessor} - which then deletes
+     * the input file group from the store and acknowledges the queue message. The data is gone with a
+     * single ERROR line, no duplicate, no quarantine. {@code Aggregator.addDir} already rethrows; this
+     * pins that its sibling does too.
+     */
+    @Test
+    void testAddDirRethrowsSoTheStageCannotMistakeFailureForSuccess() throws IOException {
+        final Path dataDir = Files.createTempDirectory("data");
+        final DataDirProvider dataDirProvider = () -> dataDir;
+        final CleanupDirQueue cleanupDirQueue = new CleanupDirQueue(dataDirProvider);
+        final ProxyConfig proxyConfig = getProxyConfig(false);
+        final PreAggregator preAggregator = new PreAggregator(
+                cleanupDirQueue,
+                dataDirProvider,
+                proxyServices,
+                proxyConfig::getAggregatorConfig, new MockMetrics());
+
+        // A file group directory with no proxy.meta, so reading the feed key raises an IOException.
+        final Path unreadableFileGroup = Files.createDirectory(dataDir.resolve("unreadable-file-group"));
+
+        assertThatThrownBy(() -> preAggregator.addDir(unreadableFileGroup))
+                .as("a failed pre-aggregation must be visible to the caller")
+                .isInstanceOf(UncheckedIOException.class);
+    }
+
 }

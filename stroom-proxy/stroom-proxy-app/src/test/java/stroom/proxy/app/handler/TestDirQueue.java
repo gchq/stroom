@@ -602,4 +602,46 @@ class TestDirQueue extends StroomUnitTest {
             throw new UncheckedIOException(e);
         }
     }
+
+    /**
+     * Audit ledger C13. {@code tryNext()} has three exits. Two leave the cursor one past the id being
+     * returned; the block-jump exit set {@code readId = id} and then fell through to the return without
+     * advancing it, leaving the cursor on the dir just handed out. Nothing else claims a dir - it carries
+     * no lease and the queue lock is released before the consumer touches it - so with five forward
+     * threads on one queue a second reader was handed the same directory and both forwarded it.
+     */
+    @Test
+    void testTheCursorAdvancesPastADirFoundAfterABlockJump(@TempDir final Path rootDir) {
+        // id 1 is in the first block; id 1000 is the first id of the next block, so reaching it
+        // requires the block-jump path.
+        createDirWithContent(rootDir, 1L);
+        final Path path1000 = createDirWithContent(rootDir, 1000L);
+
+        final DirQueue dirQueue = new DirQueue(rootDir,
+                new QueueMonitors(getMetrics()),
+                new FileStores(getMetrics()),
+                1,
+                "test");
+
+        final Dir first = dirQueue.next();
+        assertThat(first.getPath()).isEqualTo(DirUtil.createPath(rootDir, 1L));
+        dirQueue.close(first);
+
+        // This one is only reachable via the block jump.
+        final Dir afterJump = dirQueue.next();
+        assertThat(afterJump.getPath()).isEqualTo(path1000);
+        assertThat(dirQueue.getReadId())
+                .as("the cursor must be past the dir just returned, not still on it")
+                .isEqualTo(1001L);
+
+        // Deliberately do not close it - the directory is still on disk, exactly as it is between a
+        // consumer taking a Dir and finishing with it. A second reader must not be given it as well.
+        final Optional<Dir> secondReader = dirQueue.next(200, TimeUnit.MILLISECONDS);
+        assertThat(secondReader)
+                .as("the same directory must not be handed to a second reader")
+                .isEmpty();
+
+        dirQueue.close(afterJump);
+    }
+
 }

@@ -136,6 +136,7 @@ public class PreAggregator {
         // Move any split data from previous proxy usage to the aggregates.
         // We will assume that data has been split appropriately for the current aggregate state.
         final AtomicInteger movedSplitCount = new AtomicInteger();
+        final AtomicInteger recoveryFailureCount = new AtomicInteger();
         final AtomicInteger delCount = new AtomicInteger();
         try (final Stream<Path> stream = Files.list(stagedSplittingDir)) {
             stream.forEach(splitGroup -> {
@@ -143,9 +144,21 @@ public class PreAggregator {
                 try (final Stream<Path> fileGroupStream = Files.list(splitGroup)) {
                     fileGroupStream.forEach(dir -> {
                         splitGroupItemCount.incrementAndGet();
-                        // No need for locking as we are a single thread as this is a singleton
-                        addDir(dir);
-                        movedSplitCount.incrementAndGet();
+                        try {
+                            // No need for locking as we are a single thread as this is a singleton
+                            addDir(dir);
+                            movedSplitCount.incrementAndGet();
+                        } catch (final RuntimeException e) {
+                            // addDir now rethrows, so without this one unreadable recovered file group
+                            // would stop the proxy starting - and every subsequent start too. Leave the
+                            // directory where it is so an operator can inspect or move it, and carry on
+                            // with the rest of the recovery.
+                            recoveryFailureCount.incrementAndGet();
+                            LOGGER.error(() -> LogUtil.message(
+                                    "Unable to recover split file group '{}' on start-up: {}. "
+                                    + "It has been left in place; the remaining groups will still be "
+                                    + "recovered.", dir, LogUtil.exceptionMessage(e)), e);
+                        }
                     });
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
@@ -157,6 +170,10 @@ public class PreAggregator {
             });
             if (delCount.get() > 0) {
                 LOGGER.info("Deleted {} empty directories in {}", delCount, stagedSplittingDir);
+            }
+            if (recoveryFailureCount.get() > 0) {
+                LOGGER.error("Failed to recover {} split file group(s) in {}. They have been left in "
+                             + "place for manual inspection.", recoveryFailureCount, stagedSplittingDir);
             }
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
@@ -287,7 +304,12 @@ public class PreAggregator {
                 lock.unlock();
             }
         } catch (final IOException e) {
+            // Must not be swallowed. PreAggregateFunction.addDir declares no throws, so a swallowed
+            // failure here is indistinguishable from success to PreAggregateStageProcessor, which then
+            // deletes the input file group and acknowledges the queue message - losing the data with a
+            // single ERROR line. Aggregator.addDir already rethrows for exactly this reason.
             LOGGER.error(e::getMessage, e);
+            throw new UncheckedIOException(e);
         }
     }
 

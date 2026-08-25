@@ -272,7 +272,14 @@ public class PipelineStageRunner implements AutoCloseable {
                             errorBackoff), e);
                     sleepUninterruptibly(errorBackoff);
 
-                } catch (final RuntimeException e) {
+                } catch (final Throwable e) {
+                    // Throwable, not RuntimeException. An Error - an OutOfMemoryError merging a large
+                    // zip, a StackOverflowError from the recursive directory helpers - would otherwise
+                    // unwind this loop, and because the loop was handed to ExecutorService.submit() the
+                    // throwable lands in a Future nobody reads. The thread would return to the pool,
+                    // running would still be true, getActiveThreadCount() counts threads created rather
+                    // than live, and the health check inspects only queue and store backends - so the
+                    // stage would stop draining its queue with no signal anywhere.
                     LOGGER.error(() -> LogUtil.message(
                             "Consumer thread {} encountered unexpected error in stage {}, " +
                             "backing off for {}",

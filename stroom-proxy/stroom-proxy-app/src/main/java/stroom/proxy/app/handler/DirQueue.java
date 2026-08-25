@@ -204,7 +204,6 @@ public class DirQueue {
                         if (nextSiblingId.isPresent()) {
                             foundIdPath = true;
                             id = nextSiblingId.getAsLong();
-                            readId = id + 1;
                             path = DirUtil.createPath(rootDir, id);
                             if (LOGGER.isDebugEnabled()) { // Mutable id
                                 LOGGER.debug("tryNext() - Finding next sibling in {}, nextSibling: {} (id: {})",
@@ -229,6 +228,13 @@ public class DirQueue {
             }
 
             if (foundIdPath) {
+                // Advance the cursor past the dir we are about to return, on every path that returns
+                // one. Nothing else claims the dir - Dir carries no lease and the queue lock is
+                // released before the consumer touches it - so the cursor having moved past this id is
+                // the only thing that stops a second reader being handed the same directory. The
+                // block-jump path above sets readId = id and then reaches here, so without this it
+                // returned a dir the cursor was still pointing at.
+                readId = id + 1;
                 queueMonitor.setReadPos(id);
                 dir = createDir(path);
                 // Gaps should be unlikely but if we do get them it would be useful to know about it,

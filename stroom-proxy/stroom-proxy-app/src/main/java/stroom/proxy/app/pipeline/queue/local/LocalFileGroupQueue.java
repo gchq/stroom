@@ -296,14 +296,17 @@ public class LocalFileGroupQueue implements FileGroupQueue {
     @Override
     public Optional<FileGroupQueueItem> next() throws IOException {
         while (true) {
+            // Reclaim before looking for work, not only when the queue looks empty. Driving the scan
+            // off an empty poll meant a queue that always had something pending never ran it at all,
+            // so an in-flight item whose lease was released without an acknowledge or a fail stayed in
+            // in-flight/ for the life of the process - the exact stall the scan exists to end. The
+            // interval CAS inside this call already bounds how often a scan actually runs, so calling
+            // it on every poll costs a timestamp comparison. Anything reclaimed lands in pending/ and
+            // is picked up by the findNextPendingFile below in this same iteration.
+            maybeReclaimAbandonedLeases();
+
             final Optional<Path> optionalPendingFile = findNextPendingFile();
             if (optionalPendingFile.isEmpty()) {
-                // Nothing to do, so this is the cheapest moment to notice work that
-                // a consumer walked away from. Anything reclaimed lands in pending,
-                // so look again rather than reporting the queue empty when it is not.
-                if (maybeReclaimAbandonedLeases() > 0) {
-                    continue;
-                }
                 return Optional.empty();
             }
 

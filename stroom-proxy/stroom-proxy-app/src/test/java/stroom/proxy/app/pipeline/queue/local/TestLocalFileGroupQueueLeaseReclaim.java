@@ -295,4 +295,44 @@ class TestLocalFileGroupQueueLeaseReclaim extends StroomUnitTest {
                 .isPresent();
         assertThat(redelivered.orElseThrow().getMessage().fileGroupId()).isEqualTo("fg-1");
     }
+
+    /**
+     * Audit ledger H8. The reclaim scan used to be reachable only from the empty-poll branch of
+     * {@code next()}, so a queue that always had something pending never ran it and an in-flight item
+     * whose lease was released without an acknowledge or a fail stayed in {@code in-flight/} for the
+     * life of the process. That is the busy-system case, which is why a quiet test never caught it.
+     */
+    @Test
+    void testAnAbandonedLeaseIsReclaimedEvenWhileTheQueueIsBacklogged() throws Exception {
+        final LocalFileGroupQueue queue = eagerQueue("backlogged");
+        queue.publish(message(queue, "fg-1"));
+        queue.publish(message(queue, "fg-2"));
+
+        // Take fg-1 and walk away. fg-2 stays pending, so the queue is never empty from here on.
+        final FileGroupQueueItem abandoned = queue.next().orElseThrow();
+        assertThat(abandoned.getMessage().fileGroupId()).isEqualTo("fg-1");
+        abandoned.close();
+
+        assertThat(queue.getApproximateInFlightCount())
+                .as("fg-1 is in-flight with no holder")
+                .isEqualTo(1);
+        assertThat(queue.getApproximatePendingCount())
+                .as("and the queue still has work, so an empty poll never happens")
+                .isEqualTo(1);
+
+        final FileGroupQueueItem reclaimed = queue.next().orElseThrow();
+
+        assertThat(reclaimed.getMessage().fileGroupId())
+                .as("the abandoned item is recovered rather than stranded behind the backlog")
+                .isEqualTo("fg-1");
+        reclaimed.acknowledge();
+
+        final FileGroupQueueItem remaining = queue.next().orElseThrow();
+        assertThat(remaining.getMessage().fileGroupId()).isEqualTo("fg-2");
+        remaining.acknowledge();
+
+        assertThat(queue.getApproximateInFlightCount()).isZero();
+        assertThat(queue.getApproximatePendingCount()).isZero();
+    }
+
 }

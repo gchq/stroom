@@ -22,6 +22,7 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -355,6 +356,39 @@ class TestParallelExecutor {
         } finally {
             letTaskFinish.set(true);
             helpers.shutdownNow();
+        }
+    }
+
+
+    /**
+     * Audit ledger H28. The supplier call sat outside the try whose stated purpose is "swallow the
+     * exception to keep this thread running", so a throw from caller-supplied supplier code escaped to
+     * the handler outside the while loop and retired that worker permanently. Nothing resubmitted it,
+     * and isStopped, isPaused and the semaphore all continued to report a full complement - so the
+     * executor silently degraded towards zero workers with no signal.
+     */
+    @Test
+    void testAThrowingSupplierDoesNotKillTheWorker() throws Exception {
+        final AtomicInteger supplierCalls = new AtomicInteger();
+        final CountDownLatch ranAfterFailures = new CountDownLatch(1);
+
+        final Supplier<Runnable> taskSupplier = () -> {
+            // Fail the first few times the worker asks for work, then start returning tasks.
+            if (supplierCalls.incrementAndGet() <= 3) {
+                throw new RuntimeException("supplier failed on call " + supplierCalls.get());
+            }
+            return ranAfterFailures::countDown;
+        };
+
+        final ParallelExecutor parallelExecutor = new ParallelExecutor("test-thread", taskSupplier, 1);
+        try {
+            parallelExecutor.start();
+
+            assertThat(ranAfterFailures.await(10, TimeUnit.SECONDS))
+                    .as("the single worker must survive the supplier throwing and go on to run a task")
+                    .isTrue();
+        } finally {
+            parallelExecutor.stop();
         }
     }
 

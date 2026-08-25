@@ -240,23 +240,27 @@ public class ParallelExecutor implements Managed {
     }
 
     private void runTask() {
-        // Got our permit, so run the task
-        final Runnable task = runnableSupplier.get();
-        if (task != null) {
-            LOGGER.debug("Running task");
-            try {
+        // Got our permit, so run the task.
+        // The supplier call belongs inside the try: it is caller-supplied code and can throw, and a
+        // throw from here escapes to the handler outside the while loop, which retires this worker
+        // permanently. Nothing resubmits it, and isStopped, isPaused and the semaphore all continue to
+        // report a full complement, so the executor silently degrades to zero workers.
+        try {
+            final Runnable task = runnableSupplier.get();
+            if (task != null) {
+                LOGGER.debug("Running task");
                 task.run();
-            } catch (final UncheckedInterruptedException e) {
-                // Swallow the exception to keep this thread running
-                LOGGER.debug("Parallel executor interrupted: '{}' task: {}",
-                        threadNamePrefix, LogUtil.exceptionMessage(e), e);
-            } catch (final Exception e) {
-                // Swallow the exception to keep this thread running
-                LOGGER.error("Error running parallel executor '{}' task: {}",
-                        threadNamePrefix, LogUtil.exceptionMessage(e), e);
+            } else {
+                LOGGER.warn("Null task on parallel executor '{}'", threadNamePrefix);
             }
-        } else {
-            LOGGER.warn("Null task on parallel executor '{}'", threadNamePrefix);
+        } catch (final UncheckedInterruptedException e) {
+            // Swallow the exception to keep this thread running
+            LOGGER.debug("Parallel executor interrupted: '{}' task: {}",
+                    threadNamePrefix, LogUtil.exceptionMessage(e), e);
+        } catch (final Exception e) {
+            // Swallow the exception to keep this thread running
+            LOGGER.error("Error running parallel executor '{}' task: {}",
+                    threadNamePrefix, LogUtil.exceptionMessage(e), e);
         }
     }
 
