@@ -79,7 +79,10 @@ public class FileGroupQueueFactory {
                 try {
                     yield new LocalFileGroupQueue(
                             queueName,
-                            getLocalFilesystemQueuePath(queueName, definition));
+                            getLocalFilesystemQueuePath(queueName, definition),
+                            new FileGroupQueueMessageCodec(),
+                            definition.getAbandonedLeaseScanInterval().getDuration(),
+                            definition.getMaxDeliveryAttempts());
                 } catch (final IOException e) {
                     throw new UncheckedIOException("Unable to create local filesystem queue " + queueName, e);
                 }

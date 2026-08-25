@@ -50,6 +50,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 @Singleton
@@ -139,50 +140,58 @@ public class EventStore implements EventConsumer, Managed {
     public void tryRoll() {
         stores.keySet().forEach(feedKey -> {
             LOGGER.debug("Try rolling: {}", feedKey);
+            final AtomicReference<Path> rolledFile = new AtomicReference<>();
+
             stores.compute(feedKey, (k, v) -> {
                 EventAppender eventAppender = v;
-                if (eventAppender != null) {
-                    if (eventAppender.shouldRoll(0)) {
-                        try {
-                            forwardQueue.put(eventAppender.closeAndGetFile());
-                            eventAppender = null;
-                        } catch (final InterruptedException e) {
-                            throw UncheckedInterruptedException.create(e);
-                        }
-                    }
+                if (eventAppender != null && eventAppender.shouldRoll(0)) {
+                    rolledFile.set(eventAppender.closeAndGetFile());
+                    eventAppender = null;
                 }
                 return eventAppender;
             });
+
+            enqueueForForwarding(rolledFile.get());
         });
     }
 
     public void roll() {
         stores.keySet().forEach(feedKey -> {
             LOGGER.debug("Rolling: {}", feedKey);
+            final AtomicReference<Path> rolledFile = new AtomicReference<>();
+
             stores.compute(feedKey, (k, v) -> {
                 if (v != null) {
-                    try {
-                        forwardQueue.put(v.closeAndGetFile());
-                    } catch (final InterruptedException e) {
-                        throw UncheckedInterruptedException.create(e);
-                    }
+                    rolledFile.set(v.closeAndGetFile());
                 }
                 return null;
             });
+
+            enqueueForForwarding(rolledFile.get());
         });
     }
 
-    public void forwardAll() {
+    /**
+     * Take the next rolled file from the forward queue and forward it, blocking until
+     * one is available.
+     * <p>
+     * This handles a single file and returns, so it must be driven by a
+     * {@code ParallelExecutor}, which re-invokes its runnable in a loop. It was
+     * previously an unbounded {@code while} loop registered as a <em>frequency</em>
+     * executor, which meant the first invocation never returned and the configured
+     * frequency was meaningless.
+     * </p>
+     */
+    public void forwardNext() {
         try {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    final Path file = forwardQueue.take();
-                    forward(file);
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
-                }
+            final Path file = forwardQueue.take();
+            try {
+                forward(file);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
             }
         } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw UncheckedInterruptedException.create(e);
         }
     }
@@ -266,20 +275,18 @@ public class EventStore implements EventConsumer, Managed {
 
     private void put(final FeedKey feedKey,
                      final byte[] bytes) {
+        // Captured inside compute() and enqueued after it returns - see enqueueForForwarding.
+        final AtomicReference<Path> rolledFile = new AtomicReference<>();
+
         stores.compute(feedKey, (k, v) -> {
             EventAppender eventAppender = v;
 
             // Roll the current appender if we have one if it is time to roll.
             if (eventAppender != null && eventAppender.shouldRoll(bytes.length)) {
-                try {
-                    // Add the appender to the forward queue.
-                    forwardQueue.put(eventAppender.closeAndGetFile());
-                    // Invalidate the cache item that keeps the appender open.
-                    openAppendersCache.invalidate(k);
-                    eventAppender = null;
-                } catch (final InterruptedException e) {
-                    throw UncheckedInterruptedException.create(e);
-                }
+                rolledFile.set(eventAppender.closeAndGetFile());
+                // Invalidate the cache item that keeps the appender open.
+                openAppendersCache.invalidate(k);
+                eventAppender = null;
             }
 
             if (eventAppender == null) {
@@ -304,9 +311,13 @@ public class EventStore implements EventConsumer, Managed {
                 eventAppender = new EventAppender(file, now, eventStoreConfigProvider.get());
                 openAppendersCache.put(k, eventAppender);
 
-            } else {
-                // Keep the existing appender open by keeping its cache entry fresh.
-                openAppendersCache.getIfPresent(feedKey);
+            } else if (openAppendersCache.getIfPresent(feedKey).isEmpty()) {
+                // Keeping the entry fresh is normally all that is needed, but if it has
+                // been evicted the appender is still in use - write() reopens the file
+                // lazily - so re-register it. Without this the open handle stops being
+                // accounted for by the cache and the open-file limit is not honoured
+                // for this feed until it next rolls.
+                openAppendersCache.put(k, eventAppender);
             }
 
             try {
@@ -319,6 +330,36 @@ public class EventStore implements EventConsumer, Managed {
 
             return eventAppender;
         });
+
+        enqueueForForwarding(rolledFile.get());
+    }
+
+    /**
+     * Hand a rolled file to the forward queue.
+     * <p>
+     * Deliberately called <em>outside</em> {@code stores.compute()}. The forward queue
+     * is bounded, so {@link LinkedBlockingQueue#put} blocks once it is full - which is
+     * the intended backpressure, but doing it inside {@code compute()} would block
+     * while holding that bin's lock and stall unrelated feeds whose {@link FeedKey}
+     * hashes to the same bin. {@code ConcurrentHashMap} explicitly requires the
+     * remapping function to be short and non-blocking.
+     * </p>
+     * <p>
+     * The file is closed and complete by this point, so enqueuing it slightly later
+     * only delays forwarding. If the thread is interrupted before it is enqueued the
+     * file is still on disk and is picked up by {@code forwardOldFiles()} at startup.
+     * </p>
+     */
+    private void enqueueForForwarding(@Nullable final Path file) {
+        if (file == null) {
+            return;
+        }
+        try {
+            forwardQueue.put(file);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw UncheckedInterruptedException.create(e);
+        }
     }
 
     @Override

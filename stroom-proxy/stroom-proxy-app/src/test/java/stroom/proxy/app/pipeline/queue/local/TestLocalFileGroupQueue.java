@@ -146,8 +146,16 @@ class TestLocalFileGroupQueue extends AbstractFileGroupQueueContractTest {
         assertThat(queue.getApproximateFailedCount()).isZero();
 
         try (final FileGroupQueueItem retryItem = queue.next().orElseThrow()) {
-            assertThat(retryItem.getId()).isEqualTo("00000000000000000001");
-            assertThat(retryItem.getMessage()).isEqualTo(message);
+            // A retry is re-queued under a new id so it goes to the back rather than
+            // straight back to the head, where it would block everything behind it.
+            assertThat(retryItem.getId()).isNotEqualTo("00000000000000000001");
+
+            // It is still the same message, plus the delivery-attempt count that
+            // bounds how long it can keep circulating.
+            assertThat(retryItem.getMessage().messageId()).isEqualTo(message.messageId());
+            assertThat(retryItem.getMessage().fileGroupId()).isEqualTo(message.fileGroupId());
+            assertThat(retryItem.getMessage().fileStoreLocation()).isEqualTo(message.fileStoreLocation());
+            assertThat(LocalFileGroupQueue.deliveryAttempts(retryItem.getMessage())).isEqualTo(1);
 
             retryItem.acknowledge();
         }

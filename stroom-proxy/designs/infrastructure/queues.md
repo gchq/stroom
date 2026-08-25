@@ -182,14 +182,93 @@ classDiagram
 | Method | Behaviour |
 |---|---|
 | `acknowledge()` | Deletes the in-flight JSON file |
-| `fail(error)` | Moves in-flight file back to `pending/` for retry. Writes `.last-error.txt` alongside. If a pending duplicate exists, moves to `failed/` instead. |
-| `close()` | No-op. Unacknowledged items are recovered on queue restart. |
+| `fail(error)` | Re-queues the message at the back of `pending/` under a new id with an incremented attempt count, or quarantines it in `failed/` once `maxDeliveryAttempts` is reached — see §2.7. |
+| `close()` | Releases the lease. Not a substitute for `acknowledge()` or `fail()` — see §2.6. |
 
-### 2.6 Startup Recovery
+### 2.6 Recovering Leased Work
 
-On construction, `recoverInFlightMessages()` moves all files from `in-flight/` back to `pending/`. This handles the case where a previous process crashed with leased items. If a pending file with the same name already exists, the in-flight file is moved to `failed/` to prevent duplicates.
+Two mechanisms, for two different ways of losing a consumer.
 
-### 2.7 Monitoring Methods
+**On construction**, `recoverInFlightMessages()` moves every file from
+`in-flight/` back to `pending/`. This covers a previous process that died while
+holding leases. If a pending file with the same name already exists, the
+in-flight file goes to `failed/` rather than overwriting it.
+
+**While running**, `reclaimAbandonedLeases()` returns to `pending/` any in-flight
+message whose lease is held by no live consumer. This covers the case the
+constructor cannot: `FileGroupQueueWorker` logs and rethrows if `acknowledge()`
+or `fail()` throws, which leaves the message in `in-flight/` with nobody left to
+finish it. Without this the work was not lost, but it stopped until somebody
+restarted the proxy.
+
+The lease is claimed before the pending file moves into `in-flight/` — never
+after, or a concurrent scan could take an item from a consumer about to start on
+it — and released when the item is closed.
+
+This is deliberately **not** a visibility timeout. Being confined to one process,
+the queue knows exactly which in-flight messages a live consumer still holds, so
+it never has to guess from elapsed time and can never take work from a consumer
+that is merely slow. SQS and Kafka, being distributed, have no such option.
+
+| Config key | Type | Default | Description |
+|---|---|---|---|
+| `abandonedLeaseScanInterval` | Duration | `PT10S` | Minimum gap between scans for abandoned leases |
+
+```yaml
+pipeline:
+  queues:
+    preAggregateInput:
+      type: LOCAL_FILESYSTEM
+      abandonedLeaseScanInterval: "PT30S"
+```
+
+The scan runs only when a poll finds nothing pending, so it costs a directory
+listing on an otherwise idle queue and nothing at all on a busy one. Anything it
+reclaims is logged at `WARN`: a consumer that neither acknowledges nor fails its
+work is a bug somewhere.
+
+Every consumer that sees a pending file claims its lease *before* attempting the
+move, because the scan has to be blocked from the instant the in-flight file
+could appear. Only the consumer that wins the move owns the lease and may release
+it — a loser that released it would erase the winner's claim and hand a live item
+straight to the next scan.
+
+### 2.7 Retry and Quarantine
+
+`findNextPendingFile()` always takes the lowest id. Returning a failed message to
+`pending/` under its original id therefore put it back at the **head**, so it was
+handed straight out again and everything behind it waited. One message the
+pipeline could not process was enough to stop a queue completely.
+
+`fail()` now re-queues under a **new** id, at the back, carrying a delivery-attempt
+count in the message's attributes (`queue.deliveryAttempts`). The message id and
+creation time are preserved, so a retry stays traceable as the same message
+rather than looking like a new arrival.
+
+Re-queuing needs a bound to go with it. At-least-once delivery makes
+unprocessable messages normal: a message can legitimately reference a file group
+that an earlier duplicate already consumed, and no amount of retrying will fix
+that. After `maxDeliveryAttempts` the message is moved to `failed/` with the last
+error beside it as `<name>.error.txt`, and logged at `ERROR`. That is a
+quarantine an operator can inspect and replay, not a deletion.
+
+| Config key | Type | Default | Description |
+|---|---|---|---|
+| `maxDeliveryAttempts` | int | `100` | Deliveries before a message is quarantined instead of re-queued |
+
+```yaml
+pipeline:
+  queues:
+    forwardingInput:
+      type: LOCAL_FILESYSTEM
+      maxDeliveryAttempts: 50
+```
+
+The replacement is written before the original is removed, so a crash in between
+costs a duplicate — which the pipeline tolerates — rather than the loss the other
+order would risk.
+
+### 2.8 Monitoring Methods
 
 | Method | Returns |
 |---|---|
@@ -198,7 +277,7 @@ On construction, `recoverInFlightMessages()` moves all files from `in-flight/` b
 | `getApproximateFailedCount()` | Count of `.json` files in `failed/` |
 | `getOldestPendingItemTime()` | Last-modified time of oldest pending file |
 
-### 2.8 Health Check
+### 2.9 Health Check
 
 Overrides `FileGroupQueue.healthCheck()` to verify:
 
@@ -471,7 +550,7 @@ Creates queue instances from `QueueDefinition` configuration:
 ```mermaid
 flowchart TD
     A["getQueue(queueName)"] --> B{"QueueDefinition.type?"}
-    B -->|LOCAL_FILESYSTEM| C["new LocalFileGroupQueue(name, path)"]
+    B -->|LOCAL_FILESYSTEM| C["new LocalFileGroupQueue(name, path, codec,<br/>abandonedLeaseScanInterval, maxDeliveryAttempts)"]
     B -->|SQS| D["new SqsFileGroupQueue(name, definition, codec)"]
     B -->|KAFKA| E["new KafkaFileGroupQueue(name, definition, codec)"]
 ```

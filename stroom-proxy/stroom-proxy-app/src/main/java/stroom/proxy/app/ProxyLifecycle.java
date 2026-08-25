@@ -56,10 +56,13 @@ public class ProxyLifecycle implements Managed {
                 () -> eventStore::tryRoll,
                 eventStoreConfig.getRollFrequency().toMillis());
 
-        // Add executor to forward event store.
-        proxyServices.addFrequencyExecutor("Event Store - forward",
-                () -> eventStore::forwardAll,
-                eventStoreConfig.getRollFrequency().toMillis());
+        // Forwarding is a blocking consumer of the event store's forward queue, not a
+        // periodic task, so it is driven by a parallel executor which re-invokes it in
+        // a loop. Registering it as a frequency executor meant the first invocation
+        // never returned and the frequency was ignored.
+        proxyServices.addParallelExecutor("Event Store - forward",
+                () -> eventStore::forwardNext,
+                1);
 
         // Add executor to scan dirs for proxy zips.
         proxyServices.addFrequencyExecutor("ZIP Dir Scanner",

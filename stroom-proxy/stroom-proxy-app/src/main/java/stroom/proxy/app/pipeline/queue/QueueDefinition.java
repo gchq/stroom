@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
+import jakarta.validation.constraints.Min;
 
 import java.util.Map;
 import java.util.Objects;
@@ -60,10 +61,27 @@ public class QueueDefinition extends AbstractConfig implements IsProxyConfig {
     private final String queueUrl;
     private final StroomDuration visibilityTimeout;
     private final StroomDuration waitTime;
+    private final StroomDuration abandonedLeaseScanInterval;
+    private final int maxDeliveryAttempts;
+
+    /**
+     * How often an idle LOCAL_FILESYSTEM queue looks for leases abandoned by a
+     * consumer that never acknowledged or failed its item.
+     */
+    public static final StroomDuration DEFAULT_ABANDONED_LEASE_SCAN_INTERVAL =
+            StroomDuration.ofSeconds(10);
+
+    /**
+     * How many times a LOCAL_FILESYSTEM message may be delivered before it is
+     * quarantined instead of re-queued.
+     */
+    public static final int DEFAULT_MAX_DELIVERY_ATTEMPTS = 100;
 
     public QueueDefinition() {
         this(
                 DEFAULT_TYPE,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -84,7 +102,9 @@ public class QueueDefinition extends AbstractConfig implements IsProxyConfig {
             @JsonProperty("consumer") final Map<String, String> consumerConfig,
             @JsonProperty("queueUrl") final String queueUrl,
             @JsonProperty("visibilityTimeout") final StroomDuration visibilityTimeout,
-            @JsonProperty("waitTime") final StroomDuration waitTime) {
+            @JsonProperty("waitTime") final StroomDuration waitTime,
+            @JsonProperty("abandonedLeaseScanInterval") final StroomDuration abandonedLeaseScanInterval,
+            @JsonProperty("maxDeliveryAttempts") final Integer maxDeliveryAttempts) {
 
         this.type = Objects.requireNonNullElse(type, DEFAULT_TYPE);
         this.path = normaliseOptional(path);
@@ -101,12 +121,41 @@ public class QueueDefinition extends AbstractConfig implements IsProxyConfig {
         this.queueUrl = normaliseOptional(queueUrl);
         this.visibilityTimeout = visibilityTimeout;
         this.waitTime = waitTime;
+        this.abandonedLeaseScanInterval = Objects.requireNonNullElse(
+                abandonedLeaseScanInterval,
+                DEFAULT_ABANDONED_LEASE_SCAN_INTERVAL);
+        this.maxDeliveryAttempts = Objects.requireNonNullElse(
+                maxDeliveryAttempts,
+                DEFAULT_MAX_DELIVERY_ATTEMPTS);
     }
 
     @JsonPropertyDescription("The queue implementation type. Defaults to LOCAL_FILESYSTEM.")
     @JsonProperty
     public QueueType getType() {
         return type;
+    }
+
+    @JsonPropertyDescription(
+            "LOCAL_FILESYSTEM only. How often an idle queue checks for in-flight messages held by no live " +
+            "consumer and returns them to pending. A consumer whose acknowledge() or fail() throws leaves its " +
+            "message in-flight; without this it would wait for a proxy restart. Unlike an SQS visibility " +
+            "timeout this is not a guess about elapsed time - the queue reclaims only messages that no live " +
+            "consumer in this process holds - so it cannot take work from a consumer that is merely slow. " +
+            "Defaults to PT10S.")
+    @JsonProperty
+    public StroomDuration getAbandonedLeaseScanInterval() {
+        return abandonedLeaseScanInterval;
+    }
+
+    @JsonPropertyDescription(
+            "LOCAL_FILESYSTEM only. How many times a message may be delivered before it is moved to the queue's " +
+            "failed directory instead of being re-queued. A message whose file group has already been consumed - " +
+            "which at-least-once delivery makes possible - can never succeed, and without a limit it would be " +
+            "retried forever. Defaults to 100.")
+    @JsonProperty
+    @Min(1)
+    public int getMaxDeliveryAttempts() {
+        return maxDeliveryAttempts;
     }
 
     @JsonPropertyDescription(

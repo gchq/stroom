@@ -60,6 +60,8 @@ class TestKafkaReservedProperties {
                 consumerConfig,
                 null,
                 null,
+                null,
+                null,
                 null);
     }
 

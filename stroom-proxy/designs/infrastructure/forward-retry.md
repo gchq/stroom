@@ -120,6 +120,25 @@ Note that the age budget is measured from the first attempt, not the last, so a
 destination that is down for longer than `maxRetryAge` quarantines its backlog
 rather than retrying indefinitely.
 
+The budget is also **wall-clock**, not accumulated running time.
+`RetryState.getTimeSinceFirstAttempt()` compares `Instant.now()` against a
+`firstAttemptEpochMs` written into `retry.state`, so time passes while the proxy
+is stopped. Two consequences worth planning around:
+
+- A proxy shut down for longer than `maxRetryAge` — a long maintenance window, a
+  scaled-to-zero deployment — quarantines its entire retry backlog on the first
+  pass after restart, even though the destination may be healthy again. Drain
+  `02_retry` before a long outage, or raise `maxRetryAge` past the expected
+  window.
+- A backwards step in the host clock (NTP correction on a badly-skewed node)
+  makes `timeSinceFirstAttempt` negative, which reads as *within* budget and
+  extends the retry window. A large forwards step expires items early.
+
+This is a deliberate trade: an absolute timestamp is what makes the budget
+survive a restart at all, and tracking running time would need the proxy to
+persist its own uptime. It is recorded here so operators size `maxRetryAge`
+against outage length rather than against processing time.
+
 ## 6. Per-File-Group State
 
 Two sidecar files travel with the file group directory:

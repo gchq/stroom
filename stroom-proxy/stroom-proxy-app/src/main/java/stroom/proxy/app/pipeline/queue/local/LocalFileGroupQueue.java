@@ -23,6 +23,7 @@ import stroom.proxy.app.pipeline.queue.FileGroupQueueMessageCodec;
 import stroom.proxy.app.pipeline.queue.QueueType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
 
@@ -40,12 +41,15 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
@@ -83,6 +87,25 @@ public class LocalFileGroupQueue implements FileGroupQueue {
     private static final String MESSAGE_FILE_EXTENSION = ".json";
     private static final int SEQUENCE_WIDTH = 20;
 
+    /**
+     * How often an idle queue looks for leases abandoned by a consumer that never
+     * acknowledged or failed its item. Only runs when there is nothing pending,
+     * so it costs a directory scan on an otherwise idle queue.
+     */
+    private static final Duration DEFAULT_ABANDONED_LEASE_SCAN_INTERVAL = Duration.ofSeconds(10);
+
+    /**
+     * Message attribute carrying how many times this message has been delivered.
+     * <p>
+     * It travels in the message rather than in the file name so that re-queuing can
+     * allocate a fresh id, which is what stops a failing message from holding the
+     * head of the queue.
+     * </p>
+     */
+    static final String DELIVERY_ATTEMPTS_ATTRIBUTE = "queue.deliveryAttempts";
+
+    private static final int DEFAULT_MAX_DELIVERY_ATTEMPTS = 100;
+
     private final String name;
     private final Path root;
     private final Path pendingDir;
@@ -103,6 +126,24 @@ public class LocalFileGroupQueue implements FileGroupQueue {
      */
     private final AtomicLong sequence = new AtomicLong();
 
+    /**
+     * Ids of items currently leased to a live consumer in this process.
+     * <p>
+     * An id is added <em>before</em> the pending file is moved into
+     * {@code in-flight} and removed when the item is closed, so an in-flight file
+     * whose id is absent from this set is definitionally abandoned - no live
+     * consumer can still be holding it. That is what makes
+     * {@link #reclaimAbandonedLeases()} safe without a visibility timeout: the
+     * local queue is confined to one process, so it can know this exactly rather
+     * than having to guess from elapsed time the way SQS does.
+     * </p>
+     */
+    private final Set<String> activeLeases = ConcurrentHashMap.newKeySet();
+
+    private final Duration abandonedLeaseScanInterval;
+    private final int maxDeliveryAttempts;
+    private final AtomicLong lastAbandonedLeaseScanMs = new AtomicLong();
+
     public LocalFileGroupQueue(final String name,
                                final Path root) throws IOException {
         this(name, root, new FileGroupQueueMessageCodec());
@@ -111,6 +152,32 @@ public class LocalFileGroupQueue implements FileGroupQueue {
     public LocalFileGroupQueue(final String name,
                                final Path root,
                                final FileGroupQueueMessageCodec codec) throws IOException {
+        this(name, root, codec, DEFAULT_ABANDONED_LEASE_SCAN_INTERVAL, DEFAULT_MAX_DELIVERY_ATTEMPTS);
+    }
+
+    public LocalFileGroupQueue(final String name,
+                               final Path root,
+                               final FileGroupQueueMessageCodec codec,
+                               final Duration abandonedLeaseScanInterval) throws IOException {
+        this(name, root, codec, abandonedLeaseScanInterval, DEFAULT_MAX_DELIVERY_ATTEMPTS);
+    }
+
+    /**
+     * @param abandonedLeaseScanInterval Minimum gap between scans for abandoned
+     * leases. {@link Duration#ZERO} scans on every empty poll, which is what the
+     * tests want and no deployment does.
+     */
+    public LocalFileGroupQueue(final String name,
+                               final Path root,
+                               final FileGroupQueueMessageCodec codec,
+                               final Duration abandonedLeaseScanInterval,
+                               final int maxDeliveryAttempts) throws IOException {
+        if (maxDeliveryAttempts < 1) {
+            throw new IllegalArgumentException("maxDeliveryAttempts must be >= 1, got " + maxDeliveryAttempts);
+        }
+        this.maxDeliveryAttempts = maxDeliveryAttempts;
+        this.abandonedLeaseScanInterval =
+                Objects.requireNonNull(abandonedLeaseScanInterval, "abandonedLeaseScanInterval");
         this.name = requireNonBlank(name, "name");
         this.root = Objects.requireNonNull(root, "root")
                 .toAbsolutePath()
@@ -161,6 +228,13 @@ public class LocalFileGroupQueue implements FileGroupQueue {
                                                + "' does not match queue '" + name + "'");
         }
 
+        writePending(message);
+    }
+
+    /**
+     * Write a message into {@code pending/} under a freshly allocated id.
+     */
+    private void writePending(final FileGroupQueueMessage message) throws IOException {
         final String itemId = formatSequence(allocateSequence());
         final Path destination = pendingDir.resolve(itemId + MESSAGE_FILE_EXTENSION);
         final Path tempFile = Files.createTempFile(tempDir, itemId + "-", MESSAGE_FILE_EXTENSION + ".tmp");
@@ -185,11 +259,51 @@ public class LocalFileGroupQueue implements FileGroupQueue {
         }
     }
 
+    /**
+     * @return How many times the given message has already been delivered.
+     */
+    static int deliveryAttempts(final FileGroupQueueMessage message) {
+        final String raw = message.attributes().get(DELIVERY_ATTEMPTS_ATTRIBUTE);
+        if (raw == null) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(raw);
+        } catch (final NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private static FileGroupQueueMessage withDeliveryAttempts(final FileGroupQueueMessage message,
+                                                              final int attempts) {
+        final Map<String, String> attributes = new LinkedHashMap<>(message.attributes());
+        attributes.put(DELIVERY_ATTEMPTS_ATTRIBUTE, Integer.toString(attempts));
+
+        // Keep the messageId and createdTime, so a re-queued message stays traceable
+        // as the same message rather than looking like a new arrival.
+        return FileGroupQueueMessage.create(
+                message.messageId(),
+                message.queueName(),
+                message.fileGroupId(),
+                message.fileStoreLocation(),
+                message.producingStage(),
+                message.producerId(),
+                message.createdTime(),
+                message.traceId(),
+                attributes);
+    }
+
     @Override
     public Optional<FileGroupQueueItem> next() throws IOException {
         while (true) {
             final Optional<Path> optionalPendingFile = findNextPendingFile();
             if (optionalPendingFile.isEmpty()) {
+                // Nothing to do, so this is the cheapest moment to notice work that
+                // a consumer walked away from. Anything reclaimed lands in pending,
+                // so look again rather than reporting the queue empty when it is not.
+                if (maybeReclaimAbandonedLeases() > 0) {
+                    continue;
+                }
                 return Optional.empty();
             }
 
@@ -197,12 +311,28 @@ public class LocalFileGroupQueue implements FileGroupQueue {
             final String itemId = itemIdFromFile(pendingFile);
             final Path inFlightFile = inFlightDir.resolve(pendingFile.getFileName());
 
+            // Claim the lease before the file exists in in-flight, never after. A
+            // concurrent reclaim scan that saw the file first would otherwise take
+            // it back from under a consumer that is about to start work on it.
+            //
+            // Every racer claims, but only the one that wins the move owns the lease
+            // and may release it. A loser that released it would erase the winner's
+            // claim and hand a live item to the reclaim scan.
+            final boolean claimed = activeLeases.add(itemId);
+
             try {
                 moveAtomically(pendingFile, inFlightFile);
             } catch (final NoSuchFileException e) {
-                // Another local consumer in this JVM/process may have won the race.
+                // Another local consumer in this JVM/process won the race. Drop our
+                // own entry only when there is no in-flight file left for it to
+                // protect - that is, when the winner has already finished. Ids are
+                // never reused, so nothing can move into that name afterwards.
+                if (claimed && !Files.exists(inFlightFile)) {
+                    activeLeases.remove(itemId);
+                }
                 continue;
             } catch (final FileAlreadyExistsException e) {
+                // The in-flight file exists and belongs to somebody else's lease.
                 moveToFailed(pendingFile, "duplicate-pending", e);
                 continue;
             }
@@ -211,6 +341,7 @@ public class LocalFileGroupQueue implements FileGroupQueue {
             try {
                 message = codec.fromBytes(Files.readAllBytes(inFlightFile));
             } catch (final Exception e) {
+                activeLeases.remove(itemId);
                 moveToFailed(inFlightFile, "invalid-message", e);
                 throw new IOException("Unable to read queue message " + inFlightFile, e);
             }
@@ -379,6 +510,99 @@ public class LocalFileGroupQueue implements FileGroupQueue {
         }
     }
 
+    /**
+     * Scan for abandoned leases, at most once per configured interval.
+     *
+     * @return How many messages were reclaimed, or zero if the scan was skipped.
+     */
+    private int maybeReclaimAbandonedLeases() {
+        final long nowMs = System.currentTimeMillis();
+        final long lastMs = lastAbandonedLeaseScanMs.get();
+
+        if (nowMs - lastMs < abandonedLeaseScanInterval.toMillis()) {
+            return 0;
+        }
+        if (!lastAbandonedLeaseScanMs.compareAndSet(lastMs, nowMs)) {
+            // Another consumer thread is already scanning.
+            return 0;
+        }
+
+        try {
+            final int reclaimed = reclaimAbandonedLeases();
+            if (reclaimed > 0) {
+                LOGGER.warn(() -> LogUtil.message(
+                        "Queue {} reclaimed {} abandoned lease(s) - a consumer took these items " +
+                        "but never acknowledged or failed them",
+                        name,
+                        reclaimed));
+            }
+            return reclaimed;
+        } catch (final IOException e) {
+            // Reclaiming is opportunistic. Failing to do it now costs a delay, not
+            // correctness, and the next empty poll will try again.
+            LOGGER.debug(() -> LogUtil.message(
+                    "Queue {} could not scan for abandoned leases", name), e);
+            return 0;
+        }
+    }
+
+    /**
+     * Return in-flight messages held by no live consumer to the pending queue.
+     * <p>
+     * Before this existed, an item whose {@code acknowledge()} or {@code fail()}
+     * threw stayed in {@code in-flight} until the process restarted, because
+     * {@link #recoverInFlightMessages()} only runs at construction. The work was
+     * not lost, but it stopped, and nothing in the process would ever start it
+     * again - an operator had to notice and restart the proxy. SQS and Kafka do
+     * not have the problem because a visibility timeout or a rebalance redelivers
+     * the message on its own.
+     * </p>
+     * <p>
+     * This is not a visibility timeout. It reclaims an in-flight file only when
+     * no live item in this process holds its lease, which is exact rather than a
+     * guess about elapsed time, so it can never take work away from a consumer
+     * that is merely slow.
+     * </p>
+     *
+     * @return How many messages were returned to pending or quarantined.
+     */
+    int reclaimAbandonedLeases() throws IOException {
+        int reclaimed = 0;
+
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inFlightDir,
+                "*" + MESSAGE_FILE_EXTENSION)) {
+
+            for (final Path inFlightFile : stream) {
+                if (activeLeases.contains(itemIdFromFile(inFlightFile))) {
+                    continue;
+                }
+
+                final Path pendingFile = pendingDir.resolve(inFlightFile.getFileName());
+                try {
+                    if (Files.exists(pendingFile)) {
+                        moveToFailed(inFlightFile, "abandoned-duplicate", null);
+                    } else {
+                        moveAtomically(inFlightFile, pendingFile);
+                    }
+                    reclaimed++;
+                } catch (final NoSuchFileException e) {
+                    // The item completed between the scan and the move.
+                    LOGGER.debug(() -> LogUtil.message(
+                            "Queue {} lost a race reclaiming {}", name, inFlightFile), e);
+                }
+            }
+        }
+
+        return reclaimed;
+    }
+
+    /**
+     * @return Ids currently leased to a live consumer in this process.
+     */
+    int getActiveLeaseCount() {
+        return activeLeases.size();
+    }
+
     private void recoverInFlightMessages() throws IOException {
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inFlightDir, "*" + MESSAGE_FILE_EXTENSION)) {
             for (final Path inFlightFile : stream) {
@@ -537,6 +761,7 @@ public class LocalFileGroupQueue implements FileGroupQueue {
             metadata.put("queueType", QueueType.LOCAL_FILESYSTEM.name());
             metadata.put("itemId", itemId);
             metadata.put("state", completed ? "completed" : "in-flight");
+            metadata.put("deliveryAttempts", Integer.toString(deliveryAttempts(message)));
             metadata.put("inFlightPath", inFlightFile.toString());
             metadata.put("root", root.toString());
             return Map.copyOf(metadata);
@@ -552,6 +777,26 @@ public class LocalFileGroupQueue implements FileGroupQueue {
             completed = true;
         }
 
+        /**
+         * Return this message to the queue, or quarantine it if it has been tried
+         * too many times.
+         * <p>
+         * The message is re-queued under a <strong>new</strong> id, at the back.
+         * Returning it under its original id put it back at the head, because
+         * {@code findNextPendingFile()} always takes the lowest id - so a message
+         * that kept failing was handed straight back out, and every message behind
+         * it waited. One message the pipeline could not process was enough to stop
+         * a queue completely.
+         * </p>
+         * <p>
+         * Re-queuing needs a bound to go with it. At-least-once delivery means a
+         * message can legitimately reference a file group that an earlier duplicate
+         * already consumed; such a message can never succeed, and without a limit it
+         * would circulate forever. After {@code maxDeliveryAttempts} it goes to
+         * {@code failed/} with the last error beside it, which is a quarantine an
+         * operator can inspect and replay - not a deletion.
+         * </p>
+         */
         @Override
         public void fail(final Throwable error) throws IOException {
             if (completed) {
@@ -563,25 +808,37 @@ public class LocalFileGroupQueue implements FileGroupQueue {
                 return;
             }
 
-            final Path pendingFile = pendingDir.resolve(inFlightFile.getFileName());
-            if (Files.exists(pendingFile)) {
-                moveToFailed(inFlightFile, "fail-duplicate-pending", error);
-            } else {
-                final Path errorFile = inFlightFile.resolveSibling(inFlightFile.getFileName() + ".last-error.txt");
-                if (error != null) {
-                    Files.writeString(errorFile, stackTrace(error), StandardCharsets.UTF_8);
-                }
-                moveAtomically(inFlightFile, pendingFile);
-                Files.deleteIfExists(errorFile);
+            final int attempts = deliveryAttempts(message) + 1;
+
+            if (attempts >= maxDeliveryAttempts) {
+                LOGGER.error(() -> LogUtil.message(
+                        "Queue {} quarantining message {} (file group {}) after {} delivery attempts",
+                        name,
+                        message.messageId(),
+                        message.fileGroupId(),
+                        attempts));
+                moveToFailed(inFlightFile, "max-delivery-attempts", error);
+                completed = true;
+                return;
             }
+
+            // Write the replacement before removing the original: a crash in between
+            // costs a duplicate, which the pipeline tolerates, rather than the loss
+            // that the other order would risk.
+            writePending(withDeliveryAttempts(message, attempts));
+            Files.deleteIfExists(inFlightFile);
 
             completed = true;
         }
 
         @Override
         public void close() {
-            // Deliberately no-op. Callers must acknowledge() or fail(Throwable).
-            // Unacknowledged in-flight messages are recovered on queue restart.
+            // Callers must still acknowledge() or fail(Throwable); closing is not a
+            // substitute for either. Releasing the lease here is what lets the queue
+            // reclaim an item whose acknowledge() or fail() threw - the worker logs
+            // and rethrows in that case, leaving the message in in-flight with
+            // nobody left to finish it.
+            activeLeases.remove(itemId);
         }
     }
 }

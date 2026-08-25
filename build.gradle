@@ -276,7 +276,12 @@ subprojects {
     }
 
     test {
-        useJUnitPlatform()
+        // Tests tagged 'stress' run for minutes and thrash the disk on purpose, so
+        // they are not part of the normal build. Run them with the module's
+        // 'stressTest' task instead.
+        useJUnitPlatform {
+            excludeTags 'stress'
+        }
 
         // set heap size for the test JVM(s)
 //        minHeapSize = "128m"

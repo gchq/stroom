@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * Bridge between receive handlers and the reference-message queue pipeline.
@@ -227,8 +228,11 @@ public class ReceiveStagePublisher implements Consumer<Path> {
             return false;
         }
 
-        try {
-            final long distinctFeeds = Files.lines(entriesFile)
+        // Files.lines holds an open file handle until the stream is closed. This is
+        // called once per receive, so leaking it here exhausts the process's
+        // descriptors under sustained load and only ever recovers at GC.
+        try (final Stream<String> lines = Files.lines(entriesFile)) {
+            final long distinctFeeds = lines
                     .map(String::trim)
                     .filter(line -> !line.isEmpty())
                     .map(ReceiveStagePublisher::extractFeedFromEntry)
@@ -236,7 +240,7 @@ public class ReceiveStagePublisher implements Consumer<Path> {
                     .limit(2) // Only need to know if > 1.
                     .count();
             return distinctFeeds > 1;
-        } catch (final IOException e) {
+        } catch (final IOException | UncheckedIOException e) {
             LOGGER.warn(() -> LogUtil.message(
                     "Cannot read proxy.entries in {}, assuming no split required",
                     receivedDir), e);

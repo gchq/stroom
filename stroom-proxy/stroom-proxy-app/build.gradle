@@ -314,3 +314,45 @@ tasks.register('makeSendExecutable') {
 tasks.build.dependsOn copyFilesForProxyDockerBuild
 tasks.build.dependsOn shadowJar
 tasks.build.dependsOn buildDistribution
+
+// ---------------------------------------------------------------------------
+// Stress and fault-injection tests
+// ---------------------------------------------------------------------------
+// These live in src/test alongside everything else but are tagged 'stress' and
+// excluded from the 'test' task by the root build. They run for minutes, thrash
+// the disk and deliberately inject failures, so they are opt-in:
+//
+//     ./gradlew :stroom-proxy:stroom-proxy-app:stressTest
+//
+// The tests that prove those scenarios can actually fail
+// (TestStressHarnessDetectsRegressions) are NOT tagged, so they run on every
+// build. That is the point: the detection has to be defended even when the
+// stress run itself is not being executed.
+tasks.register('stressTest', Test) {
+    group = 'verification'
+    description = 'Runs the proxy pipeline stress and fault-injection scenarios (tagged "stress").'
+
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+    useJUnitPlatform {
+        includeTags 'stress'
+    }
+
+    // Load multiplier: -PstressScale=20 for a soak run. The scenarios assert the
+    // same invariants at every scale; only the counts change.
+    systemProperty 'stress.scale', (project.findProperty('stressScale') ?: '1')
+
+    // Each scenario owns a directory tree and saturates it. Running scenarios in
+    // parallel JVMs contends for the same disk and makes the timings meaningless.
+    maxParallelForks = 1
+
+    // A stress run is never up to date - the whole point is to run it again.
+    outputs.upToDateWhen { false }
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = false
+        exceptionFormat = 'full'
+    }
+}

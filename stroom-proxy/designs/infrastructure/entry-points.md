@@ -115,17 +115,38 @@ scheduled executor fires again next period. A scan that found nothing logs at
 each event through the pipeline, `EventStore` appends them to open store files
 per `FeedKey`, and rolls those files on age or size.
 
-`ProxyLifecycle` registers two frequency executors:
+`ProxyLifecycle` registers two executors, of deliberately different kinds:
 
-| Executor | Method | Period |
+| Executor | Method | Kind |
 |---|---|---|
-| `"Event Store - roll"` | `eventStore::roll` | `eventStoreConfig` roll settings |
-| `"Event Store - forward"` | `eventStore::forwardAll` | `eventStoreConfig` forward settings |
+| `"Event Store - roll"` | `eventStore::tryRoll` | frequency, every `rollFrequency` |
+| `"Event Store - forward"` | `eventStore::forwardNext` | parallel, one thread, re-invoked in a loop |
 
-`forwardAll()` walks rolled files, reconstructs an `AttributeMap` from the
-`FeedKey` (feed and type headers), and feeds each file through
+Rolling is periodic, so a frequency executor fits. Forwarding is not: it is a
+blocking consumer of the bounded `forwardQueue` that rolling feeds. Each
+`forwardNext()` call takes **one** file, forwards it, and returns, leaving the
+parallel executor to call it again. An earlier version registered a
+`forwardAll()` loop as a *frequency* executor, where the first invocation never
+returned and the configured frequency was silently ignored.
+
+Forwarding reconstructs an `AttributeMap` from the `FeedKey` (feed and type
+headers) and feeds the file through
 `receiverFactory.get(attributeMap).receive(...)` with `"event-store"` as the
 request URI. The file is deleted only if `receive()` returned without throwing.
+
+### Rolling must not block inside the appender map
+
+`stores` is a `ConcurrentHashMap<FeedKey, EventAppender>`, and `put`, `tryRoll`
+and `roll` all mutate it through `compute()`. Enqueuing a rolled file blocks
+once `forwardQueue` is full — that bound is the intended backpressure — so the
+enqueue happens *after* `compute()` returns, not inside the remapping function.
+`compute()` holds the bin lock for the duration of the function, so blocking
+there stalled every other feed hashing to the same bin, and `ConcurrentHashMap`
+documents that the function must be short and non-blocking. The pattern is to
+capture the rolled file in an `AtomicReference` inside `compute()` and enqueue
+it outside. `TestEventStoreRolling` pins this down by asserting a blocked
+writer's stack contains `LinkedBlockingQueue.put` but not
+`ConcurrentHashMap.compute`.
 
 Startup also processes files left behind by a previous run, which is the second
 reason this path elevates explicitly: at that point no request context exists at

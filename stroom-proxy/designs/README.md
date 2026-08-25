@@ -35,6 +35,9 @@ across many.
   forwarded file group, including the two queue tiers (`FileGroupQueue` between
   stages, `DirQueue` inside handlers), the on-disk layout, and where data can
   accumulate.
+- **[stress-testing.md](stress-testing.md)** — the fault-injection suite: what
+  it makes real, where it injects failures, the invariants it asserts, why a
+  stall is not a loss, and how the tests are proved capable of failing.
 - **[operations.md](operations.md)** — operator-facing: the supported use cases
   and how each maps onto stage enablement, queue and file store
   types, configuration reference, deployment examples, the worker thread model,

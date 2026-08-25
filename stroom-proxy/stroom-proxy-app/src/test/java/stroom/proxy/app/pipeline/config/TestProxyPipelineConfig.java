@@ -148,6 +148,8 @@ class TestProxyPipelineConfig extends StroomUnitTest {
                 consumerConfig,
                 null,
                 null,
+                null,
+                null,
                 null);
 
         assertThat(queueDefinition.getType()).isEqualTo(QueueType.KAFKA);
@@ -168,6 +170,8 @@ class TestProxyPipelineConfig extends StroomUnitTest {
                 null,
                 null,
                 null,
+                null,
+                null,
                 null).isKafkaConfigValid())
                 .isTrue();
 
@@ -176,6 +180,8 @@ class TestProxyPipelineConfig extends StroomUnitTest {
                 null,
                 null,
                 "localhost:9092",
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -192,6 +198,8 @@ class TestProxyPipelineConfig extends StroomUnitTest {
                 null,
                 "https://sqs.eu-west-2.amazonaws.com/123456789012/proxy",
                 null,
+                null,
+                null,
                 null).isSqsConfigValid())
                 .isTrue();
     }
@@ -201,6 +209,8 @@ class TestProxyPipelineConfig extends StroomUnitTest {
         final QueueDefinition queueDefinition = new QueueDefinition(
                 QueueType.LOCAL_FILESYSTEM,
                 "queues/pre-aggregate",
+                null,
+                null,
                 null,
                 null,
                 null,
