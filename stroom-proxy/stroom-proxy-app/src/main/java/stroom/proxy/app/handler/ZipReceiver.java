@@ -68,6 +68,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -515,7 +516,9 @@ public class ZipReceiver implements Receiver {
         final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
         // Read the entries from the staging zip and write them to the
         try (final ZipWriter zipWriter = new ZipWriter(zipFilePath, LocalByteBuffer.get())) {
+            final AtomicInteger consumedEntryCount = new AtomicInteger();
             ZipUtil.forEachEntry(stagingZipFilePath, (stagingZip, entry) -> {
+                consumedEntryCount.incrementAndGet();
                 checkZipEntry(entry);
                 final long size = cloneZipEntry(
                         defaultFeedKey,
@@ -529,14 +532,26 @@ public class ZipReceiver implements Receiver {
                         dataEntries);
                 totalUncompressedSize.addAndGet(size);
             });
-        } finally {
-            try {
-                Files.delete(stagingZipFilePath);
-            } catch (final IOException e) {
-                LOGGER.error("Error deleting stagingZipFilePath {}, msg: {}",
-                        stagingZipFilePath, LogUtil.exceptionMessage(e), e);
+
+            // ZipUtil.forEachEntry stops at the first entry whose data it cannot read - an encrypted
+            // entry, or one using an unsupported compression method - and does so silently. Everything
+            // downstream then behaved as though the zip simply held fewer entries, so an encrypted zip
+            // was discarded and answered 200 OK with a receipt id, and a partly-encrypted one was
+            // truncated with no log line at any level. pathList walks the central directory without
+            // that gate, so a shortfall means entries were skipped rather than absent.
+            final int presentEntryCount = ZipUtil.pathList(stagingZipFilePath, false).size();
+            if (consumedEntryCount.get() < presentEntryCount) {
+                throw new IOException(LogUtil.message(
+                        "Zip contains {} entries but only {} could be read. The remainder are encrypted "
+                        + "or use an unsupported compression method, so this data cannot be accepted.",
+                        presentEntryCount, consumedEntryCount.get()));
             }
         }
+        // Deliberately does NOT delete stagingZipFilePath. The stream entry point creates that file and
+        // already deletes it in its own finally; the Path entry point passes the CALLER's zip in here,
+        // and its javadoc promises the caller still owns the file afterwards. Deleting it here destroyed
+        // the caller's data on any failure after the clone began - including the ordinary "feed not
+        // allowed" reject - leaving ZipDirScanner with nothing to move to its failure directory.
 
         LOGGER.debug("cloneZipFileWithUpdateMeta() - START defaultFeedKey: '{}', " +
                      "stagingZipFilePath: {}, zipFilePath: {}, totalUncompressedSize: {}, duration: {}",

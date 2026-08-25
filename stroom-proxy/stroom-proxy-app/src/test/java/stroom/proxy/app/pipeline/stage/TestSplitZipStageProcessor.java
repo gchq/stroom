@@ -299,4 +299,39 @@ class TestSplitZipStageProcessor extends StroomUnitTest {
         public void close() {
         }
     }
+
+    /**
+     * Audit ledger C10. Nothing between the split and the delete required an output, and splitCount was
+     * read only by a DEBUG log, so a split that produced nothing deleted the input file group and
+     * acknowledged the message - destroying the data with no error at any level.
+     */
+    @Test
+    void testAZeroOutputSplitDoesNotDeleteItsInput() throws Exception {
+        final LocalFileStore inputStore = createFileStore(INPUT_STORE, "input-store-empty");
+        final LocalFileStore outputStore = createFileStore(OUTPUT_STORE, "output-store-empty");
+        final LocalFileGroupQueue outputQueue = createQueue("output-queue-empty");
+        final FileStoreRegistry registry = new FileStoreRegistry(List.of(inputStore));
+
+        final FileStoreLocation inputLocation = writeFileGroup(inputStore, "input-data");
+
+        // A split that yields nothing - e.g. an entries file that groups to no allowed feed.
+        final SplitZipStageProcessor.SplitFunction emptySplit = (sourceDir, outputParentDir) -> {
+        };
+
+        final SplitZipStageProcessor processor = new SplitZipStageProcessor(
+                registry, outputStore, outputQueue, "test-node", emptySplit,
+                getCurrentTestDir().resolve("split-tmp-empty"));
+
+        final FileGroupQueueItem item = createItem(outputQueue.getName(), inputLocation);
+
+        assertThatThrownBy(() -> processor.process(item))
+                .as("a split that produced nothing must not be treated as success")
+                .isInstanceOf(IOException.class);
+
+        assertThat(inputStore.resolve(inputLocation))
+                .as("the input file group must survive so the message can be retried")
+                .exists();
+        assertThat(drainQueue(outputQueue)).isEmpty();
+    }
+
 }

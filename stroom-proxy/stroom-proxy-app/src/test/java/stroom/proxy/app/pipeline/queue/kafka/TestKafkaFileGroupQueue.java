@@ -254,4 +254,36 @@ class TestKafkaFileGroupQueue {
     private static FileStoreLocation testLocation() {
         return FileStoreLocation.localFileSystem("testStore", Path.of("/tmp/test/store/0000000001"));
     }
+
+    /**
+     * Audit ledger C1, found independently by four angles. Not committing is not enough: poll() has
+     * already advanced the fetch position past the record, so without a seek the next poll returns the
+     * FOLLOWING record and the first successful acknowledge() commits an offset beyond the failed one,
+     * burying it. The file group it referenced is then orphaned in the store with nothing pointing at
+     * it. testFailDoesNotCommit asserts only the absence of a commit, which the defect satisfied.
+     */
+    @Test
+    void testFailRewindsSoTheRecordIsActuallyRedelivered() throws IOException {
+        final FileGroupQueueMessage first = createMessage("fg-rewind-1");
+        final FileGroupQueueMessage second = createMessage("fg-rewind-2");
+
+        final TopicPartition tp = simulateRebalance();
+        mockConsumer.addRecord(new ConsumerRecord<>(TOPIC, 0, 0L, "fg-rewind-1", codec.toBytes(first)));
+        mockConsumer.addRecord(new ConsumerRecord<>(TOPIC, 0, 1L, "fg-rewind-2", codec.toBytes(second)));
+
+        final FileGroupQueueItem failed = queue.next().orElseThrow();
+        assertThat(failed.getMessage().fileGroupId()).isEqualTo("fg-rewind-1");
+        failed.fail(new RuntimeException("downstream briefly unreachable"));
+
+        assertThat(mockConsumer.position(tp))
+                .as("the fetch position must be back on the failed record, not past it")
+                .isEqualTo(0L);
+
+        // Redelivery itself cannot be asserted here: MockConsumer serves each added record once and
+        // does not re-serve after a seek, whereas a real consumer re-fetches from the broker at the
+        // position. The position is the thing the fix changes and the thing testFailDoesNotCommit
+        // could not distinguish - it asserted only that no offset was committed, which the defective
+        // no-op fail() satisfied just as well.
+    }
+
 }

@@ -23,6 +23,7 @@ import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
 import stroom.proxy.app.pipeline.runtime.FileStoreRegistry;
 import stroom.proxy.app.pipeline.runtime.PipelineStageName;
 import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
+import stroom.proxy.app.pipeline.stage.forward.ForwardStageProcessor;
 import stroom.proxy.app.pipeline.store.FileStore;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import stroom.proxy.app.pipeline.store.FileStoreWrite;
@@ -188,9 +189,15 @@ public class SplitZipStageProcessor implements FileGroupQueueItemProcessor {
             //    and publish an onward queue message.
             final AtomicInteger splitCount =
                     new AtomicInteger(0);
+            final AtomicInteger skippedCount = new AtomicInteger(0);
             try (final DirectoryStream<Path> stream = Files.newDirectoryStream(tempSplitDir)) {
                 for (final Path splitDir : stream) {
                     if (!Files.isDirectory(splitDir)) {
+                        // Silent before: no log, no counter, and the input was deleted regardless.
+                        LOGGER.warn(() -> LogUtil.message(
+                                "Ignoring non-directory '{}' in split output for message {}",
+                                splitDir, message.messageId()));
+                        skippedCount.incrementAndGet();
                         continue;
                     }
 
@@ -228,7 +235,17 @@ public class SplitZipStageProcessor implements FileGroupQueueItemProcessor {
                     message.messageId(),
                     splitCount.get()));
 
-            // 5. Delete the consumed input from the source file store.
+            // 5. Delete the consumed input from the source file store - but only once we know the
+            //    split actually produced something. Nothing between the split and this delete required
+            //    an output, so a split that yielded no directories destroyed the file group and
+            //    acknowledged the message, leaving a DEBUG line as the only evidence.
+            if (splitCount.get() == 0) {
+                throw new IOException(LogUtil.message(
+                        "Split of message {} produced no output ({} non-directory entries skipped). "
+                        + "Refusing to delete the input file group at {}.",
+                        message.messageId(), skippedCount.get(), message.fileStoreLocation()));
+            }
+
             final FileStore inputStore = fileStoreRegistry.requireFileStore(
                     message.fileStoreLocation().storeName());
             inputStore.delete(message.fileStoreLocation());

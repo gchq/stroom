@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
@@ -208,6 +209,22 @@ public class PreAggregator {
                 Duration.ofSeconds(10).toMillis());
     }
 
+    /**
+     * @return the numeric part id encoded in a pre-aggregate part directory name, or 0 if the name is
+     * not one this class wrote. Used to rebuild the part counter from the highest surviving id.
+     */
+    private static long partIdOf(final Path partDir) {
+        final String name = partDir.getFileName().toString();
+        try {
+            return Long.parseLong(name);
+        } catch (final NumberFormatException e) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "Ignoring unexpected non-numeric part directory '{}' when rebuilding aggregate state",
+                    partDir));
+            return 0;
+        }
+    }
+
     private void initialiseAggregateStateMap() {
         LOGGER.debug("Initialising the state of existing pre-aggregates");
         // Read all the current aggregates and establish the aggregation state.
@@ -216,6 +233,7 @@ public class PreAggregator {
             // Look at each aggregate dir.
             stream.forEach(aggregateDir -> {
                 final AggregateState aggregateState = new AggregateState(aggregatorConfig, aggregateDir);
+                final AtomicLong highestPartId = new AtomicLong(0);
                 final AtomicReference<FeedKey> feedKeyRef = new AtomicReference<>();
                 // Intern the feedKeys in the entries to reduce mem use
                 final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
@@ -225,7 +243,13 @@ public class PreAggregator {
                     groupStream.forEach(groupDir -> {
                         final FileGroup fileGroup = new FileGroup(groupDir);
                         final Path entriesFile = fileGroup.getEntries();
-                        aggregateState.partCount++;
+                        // Track the highest id rather than counting survivors. Counting meant that a
+                        // gap - left by a kill part-way through deleting a closed aggregate in place -
+                        // rebuilt the counter onto an id that still existed, so the next part's
+                        // Files.move hit a non-empty directory, threw DirectoryNotEmptyException, and
+                        // was swallowed as an IOException while the stage acknowledged and deleted the
+                        // input. Taking the maximum can never collide with a surviving name.
+                        highestPartId.accumulateAndGet(partIdOf(groupDir), Math::max);
                         try (final BufferedReader bufferedReader = Files.newBufferedReader(entriesFile)) {
                             String line = bufferedReader.readLine();
                             while (line != null) {
@@ -254,6 +278,9 @@ public class PreAggregator {
                     LOGGER.error(e::getMessage, e);
                     throw new UncheckedIOException(e);
                 }
+
+                // The next part must be numbered above every id already on disk, gap or no gap.
+                aggregateState.partCount = highestPartId.get();
 
                 LOGGER.debug("Initialised aggregateState {}", aggregateState);
                 NullSafe.consume(feedKeyRef.get(), feedKey ->
@@ -431,12 +458,14 @@ public class PreAggregator {
                                               final Part part,
                                               final AggregatorConfig aggregatorConfig) throws IOException {
         final AggregateState aggregateState = getOrCreateAggregateState(feedKey, aggregatorConfig);
-        // This increments the partCount
-        aggregateState.addPart(part);
-        final long newPartCount = aggregateState.partCount;
+        final long newPartCount = aggregateState.partCount + 1;
         // destDir: /21_pre_aggregates/<feed key>/<part count>/
         final Path destDir = aggregateState.aggregateDir.resolve(StringIdUtil.idToString(newPartCount));
         Files.move(dir, destDir, StandardCopyOption.ATOMIC_MOVE);
+        // Record the part only once the move has succeeded. Incrementing first left the part, item and
+        // byte counts claiming a part directory that a failed move never created - the same part-index
+        // gap a crash mid-delete produces, reached without a crash.
+        aggregateState.addPart(part);
         LOGGER.debug(() -> LogUtil.message("addPartToAggregate() - feedKey: {}, dir: {}, part: {}, " +
                                            "destDir: {}, itemCount: {}, totalBytes: {}",
                 feedKey, dir, part, destDir, aggregateState.itemCount, aggregateState.totalBytes));

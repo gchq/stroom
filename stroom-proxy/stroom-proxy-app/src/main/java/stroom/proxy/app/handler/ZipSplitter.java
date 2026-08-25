@@ -192,6 +192,11 @@ public final class ZipSplitter {
                                         final FileGroup destFileGroup,
                                         final byte[] buffer) throws IOException {
         LOGGER.debug("writeZip() - START feedKey: {}, destFileGroup: {}", feedKey, destFileGroup);
+        // Work on a copy. addFeedAndType mutates in place and the caller passes the same instance for
+        // every feed group in the zip, so mutating it here leaked one group's Feed and Type into the
+        // per-entry .meta of every later group - data written under the wrong feed while the group meta
+        // and .entries file said otherwise.
+        final AttributeMap groupAttributeMap = new AttributeMap(attributeMap);
         final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
         try {
             // Write zip.
@@ -216,7 +221,7 @@ public final class ZipSplitter {
                                         zipEntryGroupIn.getMetaEntry(),
                                         baseNameOut,
                                         StroomZipFileType.META,
-                                        attributeMap));
+                                        groupAttributeMap));
                         zipEntryGroupOut.setContextEntry(
                                 addUnchangedEntry(sourceZip,
                                         destZipWriter,
@@ -238,8 +243,8 @@ public final class ZipSplitter {
             }
 
             // Write meta.
-            AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());
-            AttributeMapUtil.write(attributeMap, destFileGroup.getMeta());
+            AttributeMapUtil.addFeedAndType(groupAttributeMap, feedKey.feed(), feedKey.type());
+            AttributeMapUtil.write(groupAttributeMap, destFileGroup.getMeta());
             LOGGER.debug("writeZip() - FINISH feedKey: {}, destFileGroup: {}, count: {}, duration: {}",
                     feedKey, destFileGroup, count, timer);
 

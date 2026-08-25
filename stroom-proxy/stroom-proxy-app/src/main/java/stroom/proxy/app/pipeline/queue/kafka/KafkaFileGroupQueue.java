@@ -47,9 +47,9 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -296,7 +296,26 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
 
         // Process one record at a time to match the FileGroupQueue contract.
         final ConsumerRecord<String, byte[]> record = records.iterator().next();
-        final FileGroupQueueMessage message = codec.fromBytes(record.value());
+        final FileGroupQueueMessage message;
+        try {
+            message = codec.fromBytes(record.value());
+        } catch (final Exception e) {
+            // The decode happens before any FileGroupQueueItem exists, so neither fail() nor the
+            // worker's quarantine path can run. Previously this threw with the fetch position already
+            // advanced, so the record was skipped and then committed over by the next success - the
+            // file group it referenced stranded in the store with nothing pointing at it, silently.
+            // Commit past it deliberately and loudly instead, recording the coordinates and the raw
+            // payload so an operator can recover the reference by hand.
+            final TopicPartition tp = new TopicPartition(record.topic(), record.partition());
+            LOGGER.error(() -> LogUtil.message(
+                    "Undecodable message on queue '{}' at {}-{} offset {}. Skipping it; any file group "
+                    + "it referenced is now orphaned in its file store and needs manual attention. "
+                    + "Raw payload: {}",
+                    getName(), record.topic(), record.partition(), record.offset(),
+                    record.value() == null ? "null" : new String(record.value(), StandardCharsets.UTF_8)), e);
+            threadsConsumer.commitSync(Map.of(tp, new OffsetAndMetadata(record.offset() + 1)));
+            return Optional.empty();
+        }
 
         // The item carries the consumer that produced it so that acknowledge()
         // commits on the consumer that actually owns the partition.
@@ -521,14 +540,25 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
 
         @Override
         public void fail(final Throwable error) {
-            // Do not commit the offset. The message will be redelivered
-            // on the next poll (at-least-once semantics).
+            // Not committing is not enough. poll() has already advanced this consumer's fetch position
+            // past the record, so the next poll returns the FOLLOWING record and the first successful
+            // acknowledge() after this commits an offset beyond the one that failed - burying it. The
+            // seek puts the position back so the record really is redelivered, which is what this
+            // class's javadoc and queues.md have always claimed happens.
+            final TopicPartition tp = new TopicPartition(record.topic(), record.partition());
+            owningConsumer.seek(tp, record.offset());
             completed = true;
         }
 
         @Override
         public void close() {
-            // No per-item resources to release.
+            // No per-item resources to release, but an item closed without acknowledge() or fail()
+            // must not be dropped - the FileGroupQueueItem contract says closing is not a substitute
+            // for either. Rewind so the record is redelivered rather than skipped.
+            if (!completed) {
+                final TopicPartition tp = new TopicPartition(record.topic(), record.partition());
+                owningConsumer.seek(tp, record.offset());
+            }
         }
     }
 }

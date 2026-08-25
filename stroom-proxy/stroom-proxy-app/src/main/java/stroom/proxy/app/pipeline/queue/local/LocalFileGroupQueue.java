@@ -324,6 +324,19 @@ public class LocalFileGroupQueue implements FileGroupQueue {
             final boolean claimed = activeLeases.add(itemId);
 
             try {
+                // ATOMIC_MOVE silently clobbers its target on the Unix provider, so the
+                // FileAlreadyExistsException branch below can never fire there. Without this check the
+                // pending copy would destroy a live in-flight message belonging to another lease -
+                // orphaning that message's file group - instead of being quarantined. writePending
+                // guards the identical move the same way.
+                if (Files.exists(inFlightFile)) {
+                    throw new FileAlreadyExistsException(
+                            inFlightFile.toString(),
+                            null,
+                            "In-flight message already exists for id '" + itemId + "' on queue '" + name
+                            + "' - refusing to overwrite it");
+                }
+
                 moveAtomically(pendingFile, inFlightFile);
             } catch (final NoSuchFileException e) {
                 // Another local consumer in this JVM/process won the race. Drop our
@@ -335,7 +348,12 @@ public class LocalFileGroupQueue implements FileGroupQueue {
                 }
                 continue;
             } catch (final FileAlreadyExistsException e) {
-                // The in-flight file exists and belongs to somebody else's lease.
+                // The in-flight file exists and belongs to somebody else's lease. Deliberately do NOT
+                // release the lease here: activeLeases is keyed by item id, so removing it would strip
+                // the live holder's protection and let reclaimAbandonedLeases() redeliver work that is
+                // still being processed. (Audit M7 notes this branch leaks a claim; releasing it here
+                // is not the fix - TestLocalFileGroupQueueLeaseReclaim's concurrency test proves it
+                // redelivers live work.)
                 moveToFailed(pendingFile, "duplicate-pending", e);
                 continue;
             }

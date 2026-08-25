@@ -47,6 +47,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
 import java.util.Set;
@@ -100,6 +101,12 @@ public class S3FileStore implements FileStore {
 
     private static final String CACHE_DIR_NAME = "cache";
     private static final String STAGING_DIR_NAME = "staging";
+    /**
+     * Suffix for an in-progress cache download. A file carrying it is by definition incomplete, so it
+     * is never mistaken for a cache hit.
+     */
+    private static final String PART_SUFFIX = ".part";
+
     private static final int ID_WIDTH = 10;
 
     private final String name;
@@ -281,13 +288,23 @@ public class S3FileStore implements FileStore {
 
             final Path localFile = cacheDir.resolve(fileName);
             if (!Files.exists(localFile)) {
-                LOGGER.debug("Downloading s3://{}/{} -> {}", bucket, objectKey, localFile);
+                // Download to a .part sibling and rename on completion, so that presence at the cache
+                // path means the file is complete. Existence was previously the only validity test, so
+                // a file left short by a kill mid-getObject - the cache dir name is stable across
+                // restarts and is not partitioned by writerId - was reused as if whole for the life of
+                // the deployment. Downstream that is corruption rather than loss: validateFileGroup
+                // only asserts isRegularFile, so a truncated zip is forwarded and acknowledged, and the
+                // good copy in S3 is then deleted.
+                final Path partFile = cacheDir.resolve(fileName + PART_SUFFIX);
+                Files.deleteIfExists(partFile);
+                LOGGER.debug("Downloading s3://{}/{} -> {}", bucket, objectKey, partFile);
                 s3Client.getObject(
                         GetObjectRequest.builder()
                                 .bucket(bucket)
                                 .key(objectKey)
                                 .build(),
-                        localFile);
+                        partFile);
+                Files.move(partFile, localFile, StandardCopyOption.ATOMIC_MOVE);
             }
         }
 
