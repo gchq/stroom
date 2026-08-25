@@ -109,8 +109,6 @@ class TestLocalFileGroupQueueRetry extends StroomUnitTest {
             try (final FileGroupQueueItem item = queue.next().orElseThrow()) {
                 assertThat(LocalFileGroupQueue.deliveryAttempts(item.getMessage()))
                         .isEqualTo(expected - 1);
-                assertThat(item.getMetadata()).containsEntry(
-                        "deliveryAttempts", Integer.toString(expected - 1));
                 item.fail(new IllegalStateException("attempt " + expected));
             }
         }

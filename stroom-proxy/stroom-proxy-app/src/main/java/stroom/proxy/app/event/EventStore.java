@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 @Singleton
-public class EventStore implements EventConsumer, Managed {
+public class EventStore implements Managed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventStore.class);
     private static final String CACHE_NAME = "Event Store Open Appenders";
@@ -252,7 +252,6 @@ public class EventStore implements EventConsumer, Managed {
         }
     }
 
-    @Override
     public void consume(final AttributeMap attributeMap,
                         final UniqueId receiptId,
                         final String data) {

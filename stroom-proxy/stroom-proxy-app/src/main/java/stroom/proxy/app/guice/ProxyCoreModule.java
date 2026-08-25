@@ -61,6 +61,11 @@ import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactoryImpl;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.ReceiveAllAttributeMapFilter;
+import stroom.proxy.app.handler.ForwarderConfig;
+import stroom.proxy.app.handler.ForwardFileConfig;
+import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.InstantForwardFile;
+import stroom.proxy.app.handler.InstantForwardHttpPost;
 import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.receive.common.RequestHandler;
@@ -132,8 +137,39 @@ public class ProxyCoreModule extends AbstractModule {
     @Provides
     @Singleton
     ReceiverFactory provideReceiverFactory(
+            final ProxyConfig proxyConfig,
+            final Provider<InstantForwardHttpPost> instantForwardHttpPostProvider,
+            final Provider<InstantForwardFile> instantForwardFileProvider,
             final Provider<ProxyPipelineAssembler> pipelineAssemblerProvider) {
+
+        final List<ForwarderConfig> instantForwarders = proxyConfig.streamAllEnabledForwarders()
+                .filter(ForwarderConfig::isInstant)
+                .toList();
+
+        if (!instantForwarders.isEmpty()) {
+            // Instant forwarding deliberately bypasses the pipeline: data is relayed straight to the
+            // destination with no store write and no queue publish, and the sender is not told the
+            // receipt succeeded until the downstream has accepted it. The sender therefore owns the
+            // retry, which is the point of the mode - it is outside the pipeline's at-least-once
+            // guarantee by design. ProxyConfig.isInstantForwardingValid guarantees there is exactly
+            // one enabled forwarder when any of them is instant.
+            final ForwarderConfig forwarderConfig = instantForwarders.getFirst();
+            return switch (forwarderConfig) {
+                case final ForwardHttpPostConfig config -> instantForwardHttpPostProvider.get().get(config);
+                case final ForwardFileConfig config -> instantForwardFileProvider.get().get(config);
+            };
+        }
+
         return pipelineAssemblerProvider.get().getReceiverFactory();
+    }
+
+    /**
+     * @return True if any enabled forwarder is configured for instant forwarding, in which case the
+     * pipeline is not assembled or started at all - see {@link #provideReceiverFactory}.
+     */
+    public static boolean isInstantForwarding(final ProxyConfig proxyConfig) {
+        return proxyConfig.streamAllEnabledForwarders()
+                .anyMatch(ForwarderConfig::isInstant);
     }
 
     @SuppressWarnings("unused")

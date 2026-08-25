@@ -144,7 +144,6 @@ proxyConfig:
 
   # Do we want to aggregate before forwarding
   aggregator:
-    enabled: true
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1G"
     aggregationFrequency: 10s

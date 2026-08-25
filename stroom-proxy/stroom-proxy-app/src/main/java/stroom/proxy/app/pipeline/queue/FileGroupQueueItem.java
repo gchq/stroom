@@ -49,11 +49,6 @@ public interface FileGroupQueueItem extends AutoCloseable {
     FileGroupQueueMessage getMessage();
 
     /**
-     * @return Queue-implementation metadata associated with this item.
-     */
-    Map<String, String> getMetadata();
-
-    /**
      * Acknowledge successful processing of this item.
      * <p>
      * After this method succeeds, the queue implementation should not make this

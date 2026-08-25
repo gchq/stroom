@@ -244,45 +244,6 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
         return optHashedReceiveDataRules.orElse(null);
     }
 
-//    private HashedReceiveDataRules getRemoteHashedReceiveDataRules(
-//            final HashedReceiveDataRules currHashedReceiveDataRules) {
-//
-//        Optional<HashedReceiveDataRules> optHashedReceiveDataRules = Optional.empty();
-//
-//        final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
-//        final String url = contentSyncConfig.getReceiveDataRulesUrl();
-//        if (NullSafe.isNonBlankString(url)) {
-//            try {
-//                final WebTarget webTarget = jerseyClientFactory.createWebTarget(JerseyClientName.CONTENT_SYNC, url)
-//                        .path(GET_FEED_STATUS_PATH);
-//                try (Response response = getResponse(contentSyncConfig, webTarget)) {
-//                    final StatusType statusInfo = response.getStatusInfo();
-//                    if (statusInfo.getStatusCode() != Status.OK.getStatusCode()) {
-//                        LOGGER.error("Error fetching receive data rules using url '{}', got response {} - {}",
-//                                url, statusInfo.getStatusCode(), statusInfo.getReasonPhrase());
-//                    } else {
-//                        optHashedReceiveDataRules = Optional.ofNullable(
-//                                response.readEntity(HashedReceiveDataRules.class));
-//                        // Update our value on disk in so if proxy reboots and upstream is
-//                        // not available, we have the latest.
-//                        optHashedReceiveDataRules.ifPresent(this::writeToDisk);
-//                    }
-//                }
-//            } catch (Throwable e) {
-//                LOGGER.error("Error fetching receive data rules using url '{}': {}",
-//                        url, LogUtil.exceptionMessage(e), e);
-//            }
-//        }
-//
-//        // Couldn't get a value from the remote, so try to get one from disk if this is our first time
-//        if (optHashedReceiveDataRules.isEmpty()
-//            && isInitialised.compareAndSet(false, true)) {
-//            optHashedReceiveDataRules = readFromDisk();
-//        }
-//
-//        // Fall back on the last held value, which may be null if there is no file
-//        return optHashedReceiveDataRules.orElse(currHashedReceiveDataRules);
-//    }
 
     private Path getJsonFilePath() {
         final String contentDir = proxyConfigProvider.get().getContentDir();

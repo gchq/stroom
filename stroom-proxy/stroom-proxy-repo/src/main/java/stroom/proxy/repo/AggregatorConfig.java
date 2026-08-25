@@ -38,7 +38,6 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, IsProxyConfig {
 
-    public static final String PROP_NAME_ENABLED = "enabled";
     public static final String PROP_NAME_MAX_ITEMS_PER_AGGREGATE = "maxItemsPerAggregate";
     public static final String PROP_NAME_SPLIT_SOURCES = "splitSources";
 
@@ -48,14 +47,12 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
     protected static final StroomDuration DEFAULT_AGGREGATION_FREQUENCY = StroomDuration.ofMinutes(10);
     protected static final boolean DEFAULT_SPLIT_SOURCES = true;
 
-    private final boolean enabled;
     private final int maxItemsPerAggregate;
     private final long maxUncompressedByteSize;
     private final StroomDuration aggregationFrequency;
     private final boolean splitSources;
 
     public AggregatorConfig() {
-        enabled = DEFAULT_ENABLED;
         maxItemsPerAggregate = DEFAULT_MAX_ITEMS_PER_AGGREGATE;
         maxUncompressedByteSize = DEFAULT_MAX_UNCOMPRESSED_BYTES_SIZE;
         aggregationFrequency = DEFAULT_AGGREGATION_FREQUENCY;
@@ -64,13 +61,11 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public AggregatorConfig(@JsonProperty(PROP_NAME_ENABLED) final Boolean enabled,
-                            @JsonProperty(PROP_NAME_MAX_ITEMS_PER_AGGREGATE) final Integer maxItemsPerAggregate,
+    public AggregatorConfig(@JsonProperty(PROP_NAME_MAX_ITEMS_PER_AGGREGATE) final Integer maxItemsPerAggregate,
                             @JsonProperty("maxUncompressedByteSize") final String maxUncompressedByteSizeString,
                             @JsonProperty("aggregationFrequency") final StroomDuration aggregationFrequency,
                             @JsonProperty(PROP_NAME_SPLIT_SOURCES) final Boolean splitSources) {
 
-        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
         this.maxItemsPerAggregate = Objects.requireNonNullElse(maxItemsPerAggregate, DEFAULT_MAX_ITEMS_PER_AGGREGATE);
         this.maxUncompressedByteSize = NullSafe.getOrElse(
                 maxUncompressedByteSizeString,
@@ -80,23 +75,14 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
         this.splitSources = Objects.requireNonNullElse(splitSources, DEFAULT_SPLIT_SOURCES);
     }
 
-    private AggregatorConfig(final boolean enabled,
-                             final int maxItemsPerAggregate,
+    private AggregatorConfig(final int maxItemsPerAggregate,
                              final long maxUncompressedByteSize,
                              final StroomDuration aggregationFrequency,
                              final boolean splitSources) {
-        this.enabled = enabled;
         this.maxItemsPerAggregate = maxItemsPerAggregate;
         this.maxUncompressedByteSize = maxUncompressedByteSize;
         this.aggregationFrequency = aggregationFrequency;
         this.splitSources = splitSources;
-    }
-
-    @RequiresProxyRestart
-    @JsonPropertyDescription("If we are actually going to aggregate stored data or use it as is")
-    @JsonProperty
-    public boolean isEnabled() {
-        return enabled;
     }
 
     @Min(0)
@@ -148,8 +134,7 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
     }
 
     public Builder copy() {
-        return new Builder(this.enabled,
-                this.maxItemsPerAggregate,
+        return new Builder(this.maxItemsPerAggregate,
                 this.maxUncompressedByteSize,
                 this.aggregationFrequency,
                 splitSources);
@@ -164,16 +149,14 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
             return false;
         }
         final AggregatorConfig that = (AggregatorConfig) o;
-        return enabled == that.enabled
-               && maxItemsPerAggregate == that.maxItemsPerAggregate
+        return maxItemsPerAggregate == that.maxItemsPerAggregate
                && maxUncompressedByteSize == that.maxUncompressedByteSize
                && Objects.equals(aggregationFrequency, that.aggregationFrequency);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled,
-                maxItemsPerAggregate,
+        return Objects.hash(maxItemsPerAggregate,
                 maxUncompressedByteSize,
                 aggregationFrequency);
     }
@@ -181,20 +164,16 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
     @Override
     public String toString() {
         return "AggregatorConfig{" +
-               "enabled=" + enabled +
                ", maxItemsPerAggregate=" + maxItemsPerAggregate +
                ", maxUncompressedByteSize=" + maxUncompressedByteSize +
                ", aggregationFrequency=" + aggregationFrequency +
                '}';
     }
 
-
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
     public static class Builder {
 
-        private boolean enabled = DEFAULT_ENABLED;
         private int maxItemsPerAggregate = DEFAULT_MAX_ITEMS_PER_AGGREGATE;
         private Long maxUncompressedByteSize = DEFAULT_MAX_UNCOMPRESSED_BYTES_SIZE;
         private StroomDuration aggregationFrequency = DEFAULT_AGGREGATION_FREQUENCY;
@@ -203,21 +182,15 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
         private Builder() {
         }
 
-        private Builder(final boolean enabled,
+        private Builder(
                         final int maxItemsPerAggregate,
                         final Long maxUncompressedByteSize,
                         final StroomDuration aggregationFrequency,
                         final boolean splitSources) {
-            this.enabled = enabled;
             this.maxItemsPerAggregate = maxItemsPerAggregate;
             this.maxUncompressedByteSize = maxUncompressedByteSize;
             this.aggregationFrequency = aggregationFrequency;
             this.splitSources = splitSources;
-        }
-
-        public Builder withEnabled(final boolean enabled) {
-            this.enabled = enabled;
-            return this;
         }
 
         public Builder maxItemsPerAggregate(final int maxItemsPerAggregate) {
@@ -247,7 +220,6 @@ public class AggregatorConfig extends AbstractConfig implements IsStroomConfig, 
 
         public AggregatorConfig build() {
             return new AggregatorConfig(
-                    enabled,
                     maxItemsPerAggregate,
                     maxUncompressedByteSize,
                     aggregationFrequency,

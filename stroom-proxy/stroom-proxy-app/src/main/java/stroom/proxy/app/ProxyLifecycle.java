@@ -27,6 +27,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import io.dropwizard.lifecycle.Managed;
+import stroom.proxy.app.guice.ProxyCoreModule;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -36,6 +38,7 @@ public class ProxyLifecycle implements Managed {
 
     private final ProxyServices proxyServices;
     private final Provider<ProxyPipelineAssembler> pipelineAssemblerProvider;
+    private final boolean instantForwarding;
     private volatile ProxyPipelineLifecycle pipelineLifecycle;
 
     @Inject
@@ -47,6 +50,7 @@ public class ProxyLifecycle implements Managed {
                           final Provider<ProxyPipelineAssembler> pipelineAssemblerProvider) {
         this.proxyServices = proxyServices;
         this.pipelineAssemblerProvider = pipelineAssemblerProvider;
+        this.instantForwarding = ProxyCoreModule.isInstantForwarding(proxyConfig);
         final EventStoreConfig eventStoreConfig = proxyConfig.getEventStoreConfig();
         final DirScannerConfig dirScannerConfig = proxyConfig.getDirScannerConfig();
 
@@ -85,10 +89,16 @@ public class ProxyLifecycle implements Managed {
     public void start() throws Exception {
         // Start pipeline queue consumers first so they are ready to
         // process data before the frequency executors start feeding it.
-        LOGGER.info("Starting reference-message pipeline lifecycle...");
-        pipelineLifecycle = pipelineAssemblerProvider.get().getLifecycle();
-        pipelineLifecycle.start();
-        LOGGER.info("Reference-message pipeline lifecycle started");
+        if (instantForwarding) {
+            // Instant forwarding relays data straight to the destination during receipt, so there is
+            // nothing for the pipeline to do and no queue or store should be created for it.
+            LOGGER.info("Instant forwarding is configured - the reference-message pipeline is not started");
+        } else {
+            LOGGER.info("Starting reference-message pipeline lifecycle...");
+            pipelineLifecycle = pipelineAssemblerProvider.get().getLifecycle();
+            pipelineLifecycle.start();
+            LOGGER.info("Reference-message pipeline lifecycle started");
+        }
 
         proxyServices.start();
     }

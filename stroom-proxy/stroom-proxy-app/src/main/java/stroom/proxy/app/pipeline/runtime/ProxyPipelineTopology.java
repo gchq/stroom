@@ -51,16 +51,13 @@ import java.util.stream.Stream;
 class ProxyPipelineTopology {
 
     private final Map<PipelineStageName, PipelineStage> stages;
-    private final List<PipelineEdge> edges;
     private final Map<String, QueueDefinition> queues;
     private final Map<String, FileStoreDefinition> fileStores;
 
     public ProxyPipelineTopology(final Map<PipelineStageName, PipelineStage> stages,
-                                 final Collection<PipelineEdge> edges,
                                  final Map<String, QueueDefinition> queues,
                                  final Map<String, FileStoreDefinition> fileStores) {
         Objects.requireNonNull(stages, "stages");
-        Objects.requireNonNull(edges, "edges");
         Objects.requireNonNull(queues, "queues");
         Objects.requireNonNull(fileStores, "fileStores");
 
@@ -68,7 +65,6 @@ class ProxyPipelineTopology {
         stageMap.putAll(stages);
 
         this.stages = Collections.unmodifiableMap(stageMap);
-        this.edges = List.copyOf(edges);
         this.queues = Map.copyOf(queues);
         this.fileStores = Map.copyOf(fileStores);
     }
@@ -89,7 +85,6 @@ class ProxyPipelineTopology {
 
         return new ProxyPipelineTopology(
                 stages,
-                buildEdges(stages.values()),
                 nonNullPipelineConfig.getQueues(),
                 nonNullPipelineConfig.getFileStores());
     }
@@ -117,24 +112,6 @@ class ProxyPipelineTopology {
                 .orElse(false);
     }
 
-    public List<PipelineEdge> getEdges() {
-        return edges;
-    }
-
-    public Stream<PipelineEdge> streamEdges() {
-        return edges.stream();
-    }
-
-    public Stream<PipelineEdge> streamEdgesFrom(final PipelineStageName stageName) {
-        return streamEdges()
-                .filter(edge -> edge.sourceStage() == stageName);
-    }
-
-    public Stream<PipelineEdge> streamEdgesTo(final PipelineStageName stageName) {
-        return streamEdges()
-                .filter(edge -> edge.targetStage() == stageName);
-    }
-
     public Map<String, QueueDefinition> getQueues() {
         return queues;
     }
@@ -158,31 +135,5 @@ class ProxyPipelineTopology {
     public boolean hasFileStore(final String fileStoreName) {
         return fileStores.containsKey(fileStoreName);
     }
-
-    private static List<PipelineEdge> buildEdges(final Collection<PipelineStage> stages) {
-        final List<PipelineEdge> edges = new ArrayList<>();
-
-        for (final PipelineStage fromStage : stages) {
-            addEdgesForQueue(stages, edges, fromStage, fromStage.getOutputQueueOpt());
-            addEdgesForQueue(stages, edges, fromStage, fromStage.getSplitZipQueueOpt());
-        }
-
-        return edges;
-    }
-
-    private static void addEdgesForQueue(final Collection<PipelineStage> stages,
-                                         final List<PipelineEdge> edges,
-                                         final PipelineStage fromStage,
-                                         final Optional<String> optionalQueueName) {
-        optionalQueueName.ifPresent(queueName ->
-                stages.stream()
-                        .filter(toStage -> toStage.name() != fromStage.name())
-                        .filter(toStage -> toStage.getInputQueueOpt()
-                                .filter(queueName::equals)
-                                .isPresent())
-                        .map(toStage -> new PipelineEdge(fromStage.name(), toStage.name(), queueName))
-                        .forEach(edges::add));
-    }
-
 
 }

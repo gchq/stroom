@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
@@ -77,43 +76,4 @@ public class FileGroupQueueMessageCodec {
         return fromJson(new String(bytes, StandardCharsets.UTF_8));
     }
 
-    public String toJsonUnchecked(final FileGroupQueueMessage message) {
-        try {
-            return toJson(message);
-        } catch (final JsonProcessingException e) {
-            throw new IllegalArgumentException("Unable to serialise file group queue message", e);
-        } catch (final IOException e) {
-            throw new UncheckedIOException("Unable to serialise file group queue message", e);
-        }
-    }
-
-    public byte[] toBytesUnchecked(final FileGroupQueueMessage message) {
-        try {
-            return toBytes(message);
-        } catch (final JsonProcessingException e) {
-            throw new IllegalArgumentException("Unable to serialise file group queue message", e);
-        } catch (final IOException e) {
-            throw new UncheckedIOException("Unable to serialise file group queue message", e);
-        }
-    }
-
-    public FileGroupQueueMessage fromJsonUnchecked(final String json) {
-        try {
-            return fromJson(json);
-        } catch (final JsonProcessingException e) {
-            throw new IllegalArgumentException("Unable to deserialise file group queue message", e);
-        } catch (final IOException e) {
-            throw new UncheckedIOException("Unable to deserialise file group queue message", e);
-        }
-    }
-
-    public FileGroupQueueMessage fromBytesUnchecked(final byte[] bytes) {
-        try {
-            return fromBytes(bytes);
-        } catch (final JsonProcessingException e) {
-            throw new IllegalArgumentException("Unable to deserialise file group queue message", e);
-        } catch (final IOException e) {
-            throw new UncheckedIOException("Unable to deserialise file group queue message", e);
-        }
-    }
 }

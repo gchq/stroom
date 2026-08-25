@@ -257,14 +257,6 @@ class TestProxyPipelineRuntime extends StroomUnitTest {
         assertThat(runtime.getStage(PipelineStageName.FORWARD).orElseThrow().hasInputQueue()).isTrue();
         assertThat(runtime.getStage(PipelineStageName.FORWARD).orElseThrow().hasOutputQueue()).isFalse();
         assertThat(runtime.getStage(PipelineStageName.FORWARD).orElseThrow().hasFileStore()).isFalse();
-
-        assertThat(runtime.getTopology().getEdges())
-                .extracting(PipelineEdge::queueName)
-                .contains(
-                        ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
-                        ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
-                        ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE,
-                        ProxyPipelineConfig.FORWARDING_INPUT_QUEUE);
     }
 
     @Test

@@ -206,19 +206,6 @@ public abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest 
     }
 
     @Test
-    protected void contractItemMetadataContainsQueueName() throws IOException {
-        queue = createQueue(QUEUE_NAME);
-        final FileGroupQueueMessage message = createMessage("fg-meta-1");
-        queue.publish(message);
-        prepareForConsumption(queue, message);
-
-        try (final FileGroupQueueItem item = queue.next().orElseThrow()) {
-            assertThat(item.getMetadata())
-                    .containsEntry("queueName", QUEUE_NAME);
-        }
-    }
-
-    @Test
     protected void contractNameAndType() throws IOException {
         queue = createQueue(QUEUE_NAME);
         assertThat(queue.getName()).isEqualTo(QUEUE_NAME);

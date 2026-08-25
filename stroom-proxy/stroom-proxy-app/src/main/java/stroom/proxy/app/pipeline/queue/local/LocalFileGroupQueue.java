@@ -755,19 +755,6 @@ public class LocalFileGroupQueue implements FileGroupQueue {
         }
 
         @Override
-        public Map<String, String> getMetadata() {
-            final Map<String, String> metadata = new LinkedHashMap<>();
-            metadata.put("queueName", name);
-            metadata.put("queueType", QueueType.LOCAL_FILESYSTEM.name());
-            metadata.put("itemId", itemId);
-            metadata.put("state", completed ? "completed" : "in-flight");
-            metadata.put("deliveryAttempts", Integer.toString(deliveryAttempts(message)));
-            metadata.put("inFlightPath", inFlightFile.toString());
-            metadata.put("root", root.toString());
-            return Map.copyOf(metadata);
-        }
-
-        @Override
         public void acknowledge() throws IOException {
             if (completed) {
                 return;

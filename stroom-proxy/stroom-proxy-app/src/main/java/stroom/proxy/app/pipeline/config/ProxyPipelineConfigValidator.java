@@ -32,6 +32,8 @@ import stroom.proxy.app.pipeline.store.FileStoreType;
 import stroom.proxy.app.pipeline.store.s3.S3FileStore;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,7 +64,6 @@ public class ProxyPipelineConfigValidator {
     public static final String CODE_QUEUE_RESERVED_PROPERTY = "QUEUE_RESERVED_PROPERTY";
     public static final String CODE_STAGE_MISSING_INPUT_QUEUE = "STAGE_MISSING_INPUT_QUEUE";
     public static final String CODE_STAGE_MISSING_OUTPUT_QUEUE = "STAGE_MISSING_OUTPUT_QUEUE";
-    public static final String CODE_STAGE_MISSING_SPLIT_ZIP_QUEUE = "STAGE_MISSING_SPLIT_ZIP_QUEUE";
     public static final String CODE_STAGE_MISSING_FILE_STORE = "STAGE_MISSING_FILE_STORE";
     public static final String CODE_STAGE_UNKNOWN_INPUT_QUEUE = "STAGE_UNKNOWN_INPUT_QUEUE";
     public static final String CODE_STAGE_UNKNOWN_OUTPUT_QUEUE = "STAGE_UNKNOWN_OUTPUT_QUEUE";
@@ -70,8 +71,8 @@ public class ProxyPipelineConfigValidator {
     public static final String CODE_STAGE_UNKNOWN_FILE_STORE = "STAGE_UNKNOWN_FILE_STORE";
     public static final String CODE_STAGE_INVALID_THREADS = "STAGE_INVALID_THREADS";
     public static final String CODE_STAGE_DISABLED = "STAGE_DISABLED";
+    public static final String CODE_LOCAL_QUEUE_HAS_NO_CONSUMER = "LOCAL_QUEUE_HAS_NO_CONSUMER";
     public static final String CODE_STAGE_NOT_CONFIGURED = "STAGE_NOT_CONFIGURED";
-    public static final String CODE_LOCAL_QUEUE_PATH_BLANK = "LOCAL_QUEUE_PATH_BLANK";
     public static final String CODE_EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE =
             "EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE";
     public static final String CODE_S3_FILE_STORE_MISSING_BUCKET = "S3_FILE_STORE_MISSING_BUCKET";
@@ -98,6 +99,24 @@ public class ProxyPipelineConfigValidator {
 
     public void validateOrThrow(final ProxyPipelineConfig pipelineConfig) {
         validate(pipelineConfig).throwIfInvalid();
+    }
+
+    /**
+     * Deployment-shape checks, applied when a whole proxy pipeline is assembled for a running process.
+     * These are deliberately separate from {@link #validate(ProxyPipelineConfig)}, which answers whether
+     * the configuration is structurally valid - a partial pipeline built directly from config (as tests
+     * and embedded callers do) is structurally fine but is not a coherent deployment.
+     */
+    public PipelineValidationResult validateDeployment(final ProxyPipelineConfig pipelineConfig) {
+        final List<PipelineValidationIssue> issues = new ArrayList<>();
+        if (pipelineConfig != null) {
+            validateNoUndrainedLocalQueues(pipelineConfig, issues);
+        }
+        return PipelineValidationResult.of(issues);
+    }
+
+    public void validateDeploymentOrThrow(final ProxyPipelineConfig pipelineConfig) {
+        validateDeployment(pipelineConfig).throwIfInvalid();
     }
 
     private void validateQueueDefinitions(final Map<String, QueueDefinition> queues,
@@ -133,12 +152,8 @@ public class ProxyPipelineConfigValidator {
 
         switch (type) {
             case LOCAL_FILESYSTEM -> {
-                if (queueDefinition.getPath() != null && queueDefinition.getPath().isBlank()) {
-                    issues.add(PipelineValidationIssue.errorForQueue(
-                            queueName,
-                            CODE_LOCAL_QUEUE_PATH_BLANK,
-                            "Local filesystem queue path must not be blank if supplied"));
-                }
+                // Nothing to validate. QueueDefinition normalises a blank path to null on construction,
+                // so getPath() is either null or non-blank and there is no invalid value to detect here.
             }
             case KAFKA -> {
                 if (!queueDefinition.isKafkaConfigValid()) {
@@ -644,4 +659,82 @@ public class ProxyPipelineConfigValidator {
     private static boolean isBlank(final String value) {
         return value == null || value.isBlank();
     }
+
+    /**
+     * A local filesystem queue is single-process by contract, so anything published to one that no
+     * enabled stage in this process consumes is stranded until an operator intervenes. That is the
+     * failure mode you get by disabling the aggregating stages without also re-pointing the receive
+     * stage's output queue, and it is silent - the queue is not referenced by any enabled stage, so
+     * it does not appear in the health check, the metrics or the monitor.
+     * <p>
+     * External queues are exempt: an SQS or Kafka queue is expected to be drained by another node.
+     * </p>
+     */
+    private void validateNoUndrainedLocalQueues(final ProxyPipelineConfig pipelineConfig,
+                                                final List<PipelineValidationIssue> issues) {
+        final PipelineStagesConfig stages = pipelineConfig.getStages();
+        if (stages == null) {
+            return;
+        }
+
+        final Set<String> consumed = new HashSet<>();
+        addIfEnabled(consumed, stages.getSplitZip().isEnabled(), stages.getSplitZip().getInputQueue());
+        addIfEnabled(consumed, stages.getPreAggregate().isEnabled(), stages.getPreAggregate().getInputQueue());
+        addIfEnabled(consumed, stages.getAggregate().isEnabled(), stages.getAggregate().getInputQueue());
+        addIfEnabled(consumed, stages.getForward().isEnabled(), stages.getForward().getInputQueue());
+
+        final Map<String, String> published = new LinkedHashMap<>();
+        putIfEnabled(published, stages.getReceive().isEnabled(),
+                stages.getReceive().getOutputQueue(), PipelineStageName.RECEIVE);
+        putIfEnabled(published, stages.getReceive().isEnabled(),
+                stages.getReceive().getSplitZipQueue(), PipelineStageName.RECEIVE);
+        putIfEnabled(published, stages.getSplitZip().isEnabled(),
+                stages.getSplitZip().getOutputQueue(), PipelineStageName.SPLIT_ZIP);
+        putIfEnabled(published, stages.getPreAggregate().isEnabled(),
+                stages.getPreAggregate().getOutputQueue(), PipelineStageName.PRE_AGGREGATE);
+        putIfEnabled(published, stages.getAggregate().isEnabled(),
+                stages.getAggregate().getOutputQueue(), PipelineStageName.AGGREGATE);
+
+        published.forEach((queueName, publisher) -> {
+            if (consumed.contains(queueName)) {
+                return;
+            }
+            final Map<String, QueueDefinition> queues = pipelineConfig.getQueues();
+            final QueueDefinition definition = queues == null
+                    ? null
+                    : queues.get(queueName);
+            final QueueType type = definition == null
+                    ? QueueDefinition.DEFAULT_TYPE
+                    : Objects.requireNonNullElse(definition.getType(), QueueDefinition.DEFAULT_TYPE);
+            if (type != QueueType.LOCAL_FILESYSTEM) {
+                // Another node is expected to drain it.
+                return;
+            }
+            issues.add(PipelineValidationIssue.errorForQueue(
+                    queueName,
+                    CODE_LOCAL_QUEUE_HAS_NO_CONSUMER,
+                    "The " + publisher + " stage publishes to local queue '" + queueName
+                    + "' but no enabled stage consumes it, so data would be stranded there. "
+                    + "Enable a stage that consumes it, re-point the publishing stage's output "
+                    + "queue, or make the queue external so another node can drain it."));
+        });
+    }
+
+    private static void addIfEnabled(final Set<String> target,
+                                     final boolean enabled,
+                                     final String queueName) {
+        if (enabled && queueName != null) {
+            target.add(queueName);
+        }
+    }
+
+    private static void putIfEnabled(final Map<String, String> target,
+                                     final boolean enabled,
+                                     final String queueName,
+                                     final PipelineStageName publisher) {
+        if (enabled && queueName != null) {
+            target.putIfAbsent(queueName, publisher.getConfigName());
+        }
+    }
+
 }

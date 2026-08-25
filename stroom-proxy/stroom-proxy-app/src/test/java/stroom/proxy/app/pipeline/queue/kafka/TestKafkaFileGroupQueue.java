@@ -186,27 +186,6 @@ class TestKafkaFileGroupQueue {
     }
 
     @Test
-    void testItemMetadata() throws IOException {
-        final FileGroupQueueMessage message = createMessage("fg-6");
-        final byte[] value = codec.toBytes(message);
-
-        simulateRebalance();
-        mockConsumer.addRecord(new ConsumerRecord<>(TOPIC, 0, 0L, "fg-6", value));
-
-        final Optional<FileGroupQueueItem> result = queue.next();
-        assertThat(result).isPresent();
-
-        final Map<String, String> metadata = result.get().getMetadata();
-        assertThat(metadata).containsEntry("queueName", QUEUE_NAME);
-        assertThat(metadata).containsEntry("queueType", "KAFKA");
-        assertThat(metadata).containsEntry("topic", TOPIC);
-        assertThat(metadata).containsEntry("partition", "0");
-        assertThat(metadata).containsEntry("offset", "0");
-        assertThat(metadata).containsEntry("key", "fg-6");
-        assertThat(metadata).containsEntry("state", "in-flight");
-    }
-
-    @Test
     void testCloseClosesProducerAndConsumer() throws IOException {
         queue.close();
         assertThat(mockProducer.closed()).isTrue();

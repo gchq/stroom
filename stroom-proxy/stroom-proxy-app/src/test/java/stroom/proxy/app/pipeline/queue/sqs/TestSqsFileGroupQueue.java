@@ -200,24 +200,6 @@ class TestSqsFileGroupQueue {
     }
 
     @Test
-    void testItemMetadata() throws IOException {
-        final String receiptHandle = "receipt-meta";
-        final String sqsMessageId = "sqs-meta-id";
-        stubClient.enqueueReceiveMessage(sqsMessageId, receiptHandle,
-                codec.toJson(createMessage("fg-7")));
-
-        final Optional<FileGroupQueueItem> result = queue.next();
-        assertThat(result).isPresent();
-
-        final Map<String, String> metadata = result.get().getMetadata();
-        assertThat(metadata).containsEntry("queueName", QUEUE_NAME);
-        assertThat(metadata).containsEntry("queueType", "SQS");
-        assertThat(metadata).containsEntry("sqsMessageId", sqsMessageId);
-        assertThat(metadata).containsEntry("receiptHandle", receiptHandle);
-        assertThat(metadata).containsEntry("state", "in-flight");
-    }
-
-    @Test
     void testCloseClosesClient() {
         queue.close();
         assertThat(stubClient.closed).isTrue();

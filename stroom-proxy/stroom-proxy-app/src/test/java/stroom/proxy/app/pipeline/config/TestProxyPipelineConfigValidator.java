@@ -542,6 +542,100 @@ class TestProxyPipelineConfigValidator {
                 .hasMessageContaining(ProxyPipelineConfigValidator.CODE_STAGE_MISSING_FILE_STORE);
     }
 
+
+    // --- Deployment-shape checks (validateDeployment) -------------------------------------------
+    // These pin the guard that makes "turn aggregation off" fail loudly instead of stranding data
+    // on a queue nothing drains. See audit ledger H1/H18 and plan P10.1/P10.3.
+
+    @Test
+    void testDeploymentRejectsLocalQueueWithNoConsumer() {
+        // Aggregation switched off the naive way: the two aggregating stages are disabled but receive
+        // still publishes to preAggregateInput, so every file group would be stranded there.
+        final ProxyPipelineConfig config = new ProxyPipelineConfig(
+                defaultQueues(),
+                new PipelineStagesConfig(
+                        new ReceiveStageConfig(
+                                true,
+                                ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
+                                null,
+                                ProxyPipelineConfig.RECEIVE_STORE,
+                                new ReceiveStageThreadsConfig()),
+                        disabledSplitZipStage(),
+                        disabledPreAggregateStage(),
+                        disabledAggregateStage(),
+                        new ForwardStageConfig(true, ProxyPipelineConfig.FORWARDING_INPUT_QUEUE, null)),
+                defaultFileStores());
+
+        final PipelineValidationResult result = validator.validateDeployment(config);
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getErrors())
+                .extracting(PipelineValidationIssue::code)
+                .containsExactly(ProxyPipelineConfigValidator.CODE_LOCAL_QUEUE_HAS_NO_CONSUMER);
+    }
+
+    @Test
+    void testDeploymentAcceptsAggregationDisabledWhenReceiveTargetsTheForwardQueue() {
+        // The supported way to run without aggregation, and the replacement for the removed
+        // aggregator.enabled property: disable both aggregating stages AND re-point receive.
+        final ProxyPipelineConfig config = new ProxyPipelineConfig(
+                defaultQueues(),
+                new PipelineStagesConfig(
+                        new ReceiveStageConfig(
+                                true,
+                                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
+                                null,
+                                ProxyPipelineConfig.RECEIVE_STORE,
+                                new ReceiveStageThreadsConfig()),
+                        disabledSplitZipStage(),
+                        disabledPreAggregateStage(),
+                        disabledAggregateStage(),
+                        new ForwardStageConfig(true, ProxyPipelineConfig.FORWARDING_INPUT_QUEUE, null)),
+                defaultFileStores());
+
+        assertThat(validator.validateDeployment(config).isValid()).isTrue();
+        assertThat(validator.validate(config).isValid()).isTrue();
+    }
+
+    @Test
+    void testDeploymentAllowsAnExternalQueueWithNoLocalConsumer() {
+        // A receive-only node in a distributed deployment is legitimate: another process drains the
+        // queue, so the guard must only fire for local filesystem queues.
+        final Map<String, QueueDefinition> queues = Map.of(
+                ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE, new QueueDefinition(),
+                ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE, new QueueDefinition(
+                        QueueType.SQS,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        "https://sqs.example.invalid/queue/preAggregateInput",
+                        null,
+                        null,
+                        null,
+                        null),
+                ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE, new QueueDefinition(),
+                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE, new QueueDefinition());
+
+        final ProxyPipelineConfig config = new ProxyPipelineConfig(
+                queues,
+                new PipelineStagesConfig(
+                        new ReceiveStageConfig(
+                                true,
+                                ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE,
+                                null,
+                                ProxyPipelineConfig.RECEIVE_STORE,
+                                new ReceiveStageThreadsConfig()),
+                        disabledSplitZipStage(),
+                        disabledPreAggregateStage(),
+                        disabledAggregateStage(),
+                        disabledForwardStage()),
+                defaultFileStores());
+
+        assertThat(validator.validateDeployment(config).isValid()).isTrue();
+    }
+
     private static Map<String, QueueDefinition> defaultQueues() {
         return Map.of(
                 ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE, new QueueDefinition(),

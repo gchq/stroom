@@ -391,13 +391,6 @@ class TestFileGroupQueueWorker extends StroomUnitTest {
         }
 
         @Override
-        public Map<String, String> getMetadata() {
-            return Map.of(
-                    "itemId", id,
-                    "queueName", message.queueName());
-        }
-
-        @Override
         public void acknowledge() throws IOException {
             if (acknowledgeException != null) {
                 throw acknowledgeException;

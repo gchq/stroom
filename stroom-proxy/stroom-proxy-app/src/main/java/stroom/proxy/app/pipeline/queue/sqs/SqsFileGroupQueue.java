@@ -349,20 +349,6 @@ public class SqsFileGroupQueue implements FileGroupQueue {
         }
 
         @Override
-        public Map<String, String> getMetadata() {
-            final Map<String, String> metadata = new LinkedHashMap<>();
-            metadata.put("queueName", name);
-            metadata.put("queueType", QueueType.SQS.name());
-            metadata.put("sqsMessageId", sqsMessage.messageId());
-            metadata.put("receiptHandle", sqsMessage.receiptHandle());
-            metadata.put("state",
-                    completed
-                            ? "completed"
-                            : "in-flight");
-            return Map.copyOf(metadata);
-        }
-
-        @Override
         public void acknowledge() throws IOException {
             if (completed) {
                 return;

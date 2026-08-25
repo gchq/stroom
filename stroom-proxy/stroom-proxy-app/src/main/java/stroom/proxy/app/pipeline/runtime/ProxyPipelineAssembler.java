@@ -29,7 +29,9 @@ import stroom.proxy.app.handler.StoringReceiverFactory;
 import stroom.proxy.app.handler.ZipEntryGroup;
 import stroom.proxy.app.handler.ZipReceiver;
 import stroom.proxy.app.handler.ZipSplitter;
+import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
 import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfigValidator;
 import stroom.proxy.app.pipeline.queue.FileGroupQueue;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueItemProcessor;
 import stroom.proxy.app.pipeline.stage.aggregate.AggregateClosePublisher;
@@ -160,6 +162,16 @@ public class ProxyPipelineAssembler {
         //    a processor in the map. So we need to build processors first using
         //    the factories directly.
 
+        // Resolve every name this assembler wires from the stage's own configuration, falling back to
+        // the pipeline default when the operator has not named one. Previously the producing side used
+        // the ProxyPipelineConfig constants directly while the consuming side used the configured name,
+        // so a renamed queue or store left the two halves addressing different objects.
+        final PipelineStagesConfig stagesConfig = pipelineConfig.getStages();
+
+        // Deployment-shape check: refuse to start a process that would publish into a local queue no
+        // enabled stage drains. Structural validation happens inside ProxyPipelineRuntime.fromConfig.
+        new ProxyPipelineConfigValidator().validateDeploymentOrThrow(pipelineConfig);
+
         // Build file store registry from the factory (all configured stores).
         final FileStoreRegistry fileStoreRegistry = FileStoreRegistry.fromFactory(fileStoreFactory);
 
@@ -167,9 +179,11 @@ public class ProxyPipelineAssembler {
         // Wire the PreAggregator's destination to an AggregateClosePublisher
         // that publishes closed pre-aggregates to the aggregate input queue.
         final FileStore preAggregateStore = fileStoreFactory.getFileStore(
-                ProxyPipelineConfig.PRE_AGGREGATE_STORE);
+                orDefault(stagesConfig.getPreAggregate().getFileStore(),
+                        ProxyPipelineConfig.PRE_AGGREGATE_STORE));
         final FileGroupQueue aggregateInputQueue = queueFactory.getQueue(
-                ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE);
+                orDefault(stagesConfig.getPreAggregate().getOutputQueue(),
+                        ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE));
         final AggregateClosePublisher preAggregateClosePublisher = new AggregateClosePublisher(
                 preAggregateStore,
                 aggregateInputQueue,
@@ -185,9 +199,11 @@ public class ProxyPipelineAssembler {
         // Wire the Aggregator's destination to an AggregateClosePublisher
         // that publishes merged aggregates to the forwarding input queue.
         final FileStore aggregateStore = fileStoreFactory.getFileStore(
-                ProxyPipelineConfig.AGGREGATE_STORE);
+                orDefault(stagesConfig.getAggregate().getFileStore(),
+                        ProxyPipelineConfig.AGGREGATE_STORE));
         final FileGroupQueue forwardingInputQueue = queueFactory.getQueue(
-                ProxyPipelineConfig.FORWARDING_INPUT_QUEUE);
+                orDefault(stagesConfig.getAggregate().getOutputQueue(),
+                        ProxyPipelineConfig.FORWARDING_INPUT_QUEUE));
         final AggregateClosePublisher aggregateClosePublisher = new AggregateClosePublisher(
                 aggregateStore,
                 forwardingInputQueue,
@@ -213,15 +229,17 @@ public class ProxyPipelineAssembler {
         // parses them into feed-keyed entry groups, and delegates to the
         // well-tested ZipSplitter.splitZip() method.
         final FileStore splitStore = fileStoreFactory.getFileStore(
-                ProxyPipelineConfig.SPLIT_STORE);
-        final FileGroupQueue preAggregateInputQueue = queueFactory.getQueue(
-                ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE);
+                orDefault(stagesConfig.getSplitZip().getFileStore(),
+                        ProxyPipelineConfig.SPLIT_STORE));
+        final FileGroupQueue splitZipOutputQueue = queueFactory.getQueue(
+                orDefault(stagesConfig.getSplitZip().getOutputQueue(),
+                        ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE));
         stageProcessors.put(
                 PipelineStageName.SPLIT_ZIP,
                 new SplitZipStageProcessor(
                         fileStoreRegistry,
                         splitStore,
-                        preAggregateInputQueue,
+                        splitZipOutputQueue,
                         sourceNodeId,
                         (sourceDir, outputParentDir) -> {
                             final FileGroup fileGroup = new FileGroup(sourceDir);
@@ -249,14 +267,21 @@ public class ProxyPipelineAssembler {
 
         // 5. Wire the receive stage — ReceiveStagePublisher as destination on receivers.
         final FileStore receiveStore = fileStoreFactory.getFileStore(
-                ProxyPipelineConfig.RECEIVE_STORE);
+                orDefault(stagesConfig.getReceive().getFileStore(),
+                        ProxyPipelineConfig.RECEIVE_STORE));
+        final FileGroupQueue receiveOutputQueue = queueFactory.getQueue(
+                orDefault(stagesConfig.getReceive().getOutputQueue(),
+                        ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE));
         // Determine the split-zip queue for multi-feed routing.
         // If the split-zip stage is enabled, multi-feed file groups are routed to
         // the splitZipInput queue; single-feed file groups go directly to preAggregateInput.
-        final FileGroupQueue splitZipQueue = runtime
-                .getStage(PipelineStageName.SPLIT_ZIP)
-                .flatMap(ProxyPipelineRuntime.RuntimeStage::getInputQueue)
-                .orElse(null);
+        // The receive stage's own splitZipQueue setting decides where multi-feed groups go. It is
+        // deliberately independent of whether the split-zip stage runs in this process: in a split
+        // deployment receive runs here and split-zip runs elsewhere, consuming the same queue.
+        final String receiveSplitZipQueueName = stagesConfig.getReceive().getSplitZipQueue();
+        final FileGroupQueue splitZipQueue = receiveSplitZipQueueName == null
+                ? null
+                : queueFactory.getQueue(receiveSplitZipQueueName);
 
         final int maxConcurrentReceives = pipelineConfig
                 .getStages()
@@ -266,7 +291,7 @@ public class ProxyPipelineAssembler {
 
         final ReceiveStagePublisher receiveStagePublisher = new ReceiveStagePublisher(
                 receiveStore,
-                preAggregateInputQueue,
+                receiveOutputQueue,
                 splitZipQueue,
                 sourceNodeId,
                 maxConcurrentReceives);
@@ -308,4 +333,15 @@ public class ProxyPipelineAssembler {
     public ProxyPipelineRuntime getRuntime() {
         return runtime;
     }
+
+    /**
+     * @return {@code configured} when the operator named a queue or file store for this stage, otherwise
+     * the pipeline default. Stage config normalises a blank name to null.
+     */
+    private static String orDefault(final String configured, final String defaultName) {
+        return configured != null
+                ? configured
+                : defaultName;
+    }
+
 }

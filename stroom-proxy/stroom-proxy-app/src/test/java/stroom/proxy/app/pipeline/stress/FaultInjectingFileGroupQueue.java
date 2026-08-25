@@ -117,11 +117,6 @@ public class FaultInjectingFileGroupQueue implements FileGroupQueue {
         }
 
         @Override
-        public Map<String, String> getMetadata() {
-            return delegate.getMetadata();
-        }
-
-        @Override
         public void acknowledge() throws IOException {
             // Failing here leaves the item in-flight: the work is done but the
             // queue does not know it. Reopening the queue must recover it.

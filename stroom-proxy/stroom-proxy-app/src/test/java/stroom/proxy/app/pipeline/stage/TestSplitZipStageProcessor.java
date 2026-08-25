@@ -288,11 +288,6 @@ class TestSplitZipStageProcessor extends StroomUnitTest {
         }
 
         @Override
-        public Map<String, String> getMetadata() {
-            return Map.of();
-        }
-
-        @Override
         public void acknowledge() {
         }
 

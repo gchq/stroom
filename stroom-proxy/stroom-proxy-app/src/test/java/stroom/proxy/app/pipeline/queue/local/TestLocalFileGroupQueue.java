@@ -16,7 +16,6 @@
 
 package stroom.proxy.app.pipeline.queue.local;
 
-
 import stroom.proxy.app.pipeline.queue.AbstractFileGroupQueueContractTest;
 import stroom.proxy.app.pipeline.queue.FileGroupQueue;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
@@ -88,11 +87,6 @@ class TestLocalFileGroupQueue extends AbstractFileGroupQueueContractTest {
             assertThat(item.getMessage()).isEqualTo(message);
             assertThat(item.getMessage().fileStoreLocation()).isEqualTo(location);
             assertThat(item.getMessage().fileStoreLocation().uri()).isEqualTo(location.uri());
-            assertThat(item.getMetadata())
-                    .containsEntry("queueName", "preAggregateInput")
-                    .containsEntry("queueType", QueueType.LOCAL_FILESYSTEM.name())
-                    .containsEntry("itemId", "00000000000000000001")
-                    .containsEntry("state", "in-flight");
         }
 
         assertThat(fileGroupPath).exists().isDirectory();
@@ -114,8 +108,6 @@ class TestLocalFileGroupQueue extends AbstractFileGroupQueueContractTest {
         try (final FileGroupQueueItem item = queue.next().orElseThrow()) {
             item.acknowledge();
 
-            assertThat(item.getMetadata())
-                    .containsEntry("state", "completed");
         }
 
         assertThat(queue.getApproximatePendingCount()).isZero();

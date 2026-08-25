@@ -502,19 +502,6 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
         }
 
         @Override
-        public Map<String, String> getMetadata() {
-            final Map<String, String> metadata = new LinkedHashMap<>();
-            metadata.put("queueName", name);
-            metadata.put("queueType", QueueType.KAFKA.name());
-            metadata.put("topic", record.topic());
-            metadata.put("partition", Integer.toString(record.partition()));
-            metadata.put("offset", Long.toString(record.offset()));
-            metadata.put("key", record.key());
-            metadata.put("state", completed ? "completed" : "in-flight");
-            return Map.copyOf(metadata);
-        }
-
-        @Override
         public void acknowledge() throws IOException {
             if (completed) {
                 return;
