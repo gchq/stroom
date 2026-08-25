@@ -261,11 +261,8 @@ class TestSharedFileStoreMerge {
                 Map.of(StateType.STATE, holdingStrategy)
         );
 
-        // Run the merge
+        // merge() joins on every shard's future before returning, so the merge is complete here.
         mergeProcessor.merge();
-
-        // Give async executors a brief moment to complete the merge and exceed the 1-second sync check interval
-        Thread.sleep(1500);
 
         // 3. Verify files are copied back and cleaned up on shared store
         // The processing folder should now be empty or deleted (each merged batch folder is removed)
