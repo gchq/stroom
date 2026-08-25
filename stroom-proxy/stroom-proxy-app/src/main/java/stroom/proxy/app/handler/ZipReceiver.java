@@ -93,6 +93,14 @@ import java.util.stream.Collectors;
 @Singleton
 public class ZipReceiver implements Receiver {
 
+    /**
+     * A {@code .meta} entry is a header block, so this is deliberately generous. It exists to stop a
+     * hostile or corrupt entry being decompressed into the heap - the compressed request size cannot
+     * bound it, since DEFLATE reaches ratios of around 1000:1.
+     */
+    private static final ByteSize MAX_META_ENTRY_SIZE = ByteSize.ofMebibytes(1);
+
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZipReceiver.class);
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
 
@@ -633,8 +641,16 @@ public class ZipReceiver implements Receiver {
 
         return AttributeMapUtil.mergeAttributeMaps(
                 headerAttributeMap,
-                ThrowingConsumer.unchecked(entryAttributeMap ->
-                        AttributeMapUtil.read(zipFile.getInputStream(entry), entryAttributeMap)));
+                ThrowingConsumer.unchecked(entryAttributeMap -> {
+                    // AttributeMapUtil.read pulls the whole entry into a String, so an unbounded read
+                    // here turns a small compressed upload into an arbitrarily large heap allocation on
+                    // the request thread. maxRequestSize bounds the compressed request only, and
+                    // defaults to unlimited, so it cannot be relied on for this.
+                    try (final InputStream boundedInputStream = InputStreamUtils.getBoundedInputStream(
+                            zipFile.getInputStream(entry), MAX_META_ENTRY_SIZE)) {
+                        AttributeMapUtil.read(boundedInputStream, entryAttributeMap);
+                    }
+                }));
     }
 
     /**

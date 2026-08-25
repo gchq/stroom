@@ -140,7 +140,11 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                                         newDatedVerifiedApiKey);
                                 // Cache the outcome
                                 verifiedKeysMap.put(request, newDatedVerifiedApiKey);
-                                updateFile(verifiedApiKey, request);
+                                if (verifiedApiKey != null || isInFile(request)) {
+                                    // Only rewrite the persisted file when it actually changes. An
+                                    // unknown key that was never in the file needs no write.
+                                    updateFile(verifiedApiKey, request);
+                                }
                                 return Optional.ofNullable(verifiedApiKey)
                                         .map(VerifiedApiKey::getUserDesc);
                             } else {
@@ -177,8 +181,11 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
     }
 
     private boolean isTooOld(final DatedValue<VerifiedApiKey> datedVerifiedApiKey) {
+        // A negative verdict is cached too. Previously hasNullValue() made every negative entry
+        // permanently stale, so an unauthenticated caller sending well-formed but unknown keys forced
+        // one downstream verification and one full rewrite of the persisted key file per request, all
+        // serialised on this instance's monitor.
         final boolean isTooOld = datedVerifiedApiKey == null
-                                 || datedVerifiedApiKey.hasNullValue()
                                  || datedVerifiedApiKey.isOlderThan(
                 downstreamHostConfigProvider.get().getMaxCachedKeyAge().getDuration());
         LOGGER.debug(() -> LogUtil.message("isTooOld() - isTooOld: {}, age: {}, instant: {}",
@@ -228,6 +235,17 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
             LOGGER.debug("doVerifyApiKey() - Api key '{}' does not look like an API key", apiKey);
             return Optional.empty();
         }
+    }
+
+    /**
+     * @return true if the persisted key file currently holds an entry for this request, so that a
+     * null verdict only rewrites the file when it has something to remove.
+     */
+    private synchronized boolean isInFile(final VerifyApiKeyRequest request) {
+        return NullSafe.set(NullSafe.get(verifiedApiKeysFromFile, VerifiedApiKeys::getVerifiedApiKeys))
+                .stream()
+                .anyMatch(verifiedApiKey ->
+                        ApiKeyGenerator.prefixesMatch(request.getApiKey(), verifiedApiKey.getPrefix()));
     }
 
     private synchronized void updateFile(final VerifiedApiKey verifiedApiKey, final VerifyApiKeyRequest request) {

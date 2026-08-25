@@ -24,6 +24,8 @@ import java.util.Optional;
 
 public class ApiKeyUserIdentity implements UserIdentity {
 
+    private static final int API_KEY_PREFIX_LENGTH = 15;
+
     private final String apiKey;
     private final UserDesc userDesc;
 
@@ -57,10 +59,25 @@ public class ApiKeyUserIdentity implements UserIdentity {
 
     @Override
     public String toString() {
+        // Only ever render the non-secret prefix. This value reaches log messages and, via
+        // ProxySecurityContextImpl, the message of an AuthenticationException - which the exception
+        // mappers put in the HTTP response body, so a full key here goes back over the wire.
         return "ApiKeyUserIdentity{" +
-               "apiKey='" + apiKey + '\'' +
+               "apiKey='" + getApiKeyPrefix() + '\'' +
                ", userDesc=" + userDesc +
                '}';
+    }
+
+    /**
+     * @return the leading, non-secret portion of the API key, matching the truncation
+     * {@code VerifyApiKeyRequest.toString()} already applies.
+     */
+    private String getApiKeyPrefix() {
+        if (apiKey.length() < API_KEY_PREFIX_LENGTH) {
+            // Not a well-formed key, so show nothing rather than guess which part is safe.
+            return "****";
+        }
+        return apiKey.substring(0, API_KEY_PREFIX_LENGTH) + "...";
     }
 
     @Override

@@ -23,6 +23,7 @@ import stroom.receive.common.ReceiptIdGenerator;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -110,10 +111,15 @@ public class SqsConnector {
                             messageAttributes.forEach((k, v) -> attributeMap.put(k, v.stringValue()));
                         }
 
-                        // FALLBACK
                         if (!attributeMap.containsKey(StandardHeaderArguments.FEED)) {
-                            LOGGER.debug(() -> "Adding fallback feed TEST");
-                            attributeMap.putIfAbsent(StandardHeaderArguments.FEED, "TEST");
+                            // This used to fall back to a hard-coded feed named TEST and then delete the
+                            // message, so data arrived under the wrong feed and the evidence was gone.
+                            // Failing here leaves the message on the queue - the catch below logs and does
+                            // not delete - so it stays visible to an operator and to any redrive policy.
+                            throw new RuntimeException(LogUtil.message(
+                                    "SQS message {} has no '{}' attribute so its feed is unknown. "
+                                    + "Refusing to ingest it. The message has been left on queue {}.",
+                                    message.messageId(), StandardHeaderArguments.FEED, queueUrl));
                         }
 
                         final String sqsMessageId = message.messageId();

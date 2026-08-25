@@ -162,6 +162,20 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
     private String extractApiKey(final HttpServletRequest request) {
         return NullSafe.get(
                 request.getHeader(HttpHeaders.AUTHORIZATION),
-                header -> header.replace(JwtUtil.BEARER_PREFIX, ""));
+                ProxyUserIdentityFactory::stripBearerPrefix);
+    }
+
+    /**
+     * RFC 7235 makes the auth scheme case-insensitive, so {@code bearer} is as valid as
+     * {@code Bearer}. This also strips the scheme only where it appears as a prefix - the previous
+     * implementation used {@link String#replace} which is both case-sensitive and would have removed
+     * the text from anywhere in the credential.
+     */
+    static String stripBearerPrefix(final String authorizationHeader) {
+        final String trimmed = authorizationHeader.trim();
+        if (trimmed.regionMatches(true, 0, JwtUtil.BEARER_PREFIX, 0, JwtUtil.BEARER_PREFIX.length())) {
+            return trimmed.substring(JwtUtil.BEARER_PREFIX.length()).trim();
+        }
+        return trimmed;
     }
 }

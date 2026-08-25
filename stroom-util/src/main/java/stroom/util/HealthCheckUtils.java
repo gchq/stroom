@@ -124,16 +124,21 @@ public class HealthCheckUtils {
     }
 
     /**
-     * Replaces any values with '***' if the key is a string and contains 'password' or 'apikey' or 'token'
+     * Replaces any values with '***' if the key is a string and contains 'password' or 'secret';
+     * partially masks values whose key contains 'apikey', 'token' or 'accesskey'.
      */
     public static void maskPasswords(final Map<String, Object> map) {
         map.forEach((key, value) -> {
             if (value instanceof String) {
                 final String lowerKey = key.toLowerCase();
-                if (lowerKey.contains("password")) {
+                if (lowerKey.contains("password") || lowerKey.contains("secret")) {
+                    // 'secret' covers S3 secretAccessKey and OpenID clientSecret, which were being
+                    // rendered in clear text on the health check page.
                     LOGGER.debug("Masking entry with key {}", key);
                     map.put(key, "****");
-                } else if (lowerKey.contains("apikey") || lowerKey.contains("token")) {
+                } else if (lowerKey.contains("apikey")
+                           || lowerKey.contains("token")
+                           || lowerKey.contains("accesskey")) {
                     LOGGER.debug("Masking entry with key {}", key);
                     final String oldValue = (String) value;
                     if (oldValue.length() <= 8) {
