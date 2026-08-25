@@ -677,23 +677,38 @@ public class ProxyPipelineConfigValidator {
             return;
         }
 
+        // Resolve exactly as ProxyPipelineAssembler does. Comparing the raw configured names meant a
+        // config that omitted them - which is every config relying on defaults - was judged against
+        // nulls rather than against the queues the assembler really publishes to and consumes from.
         final Set<String> consumed = new HashSet<>();
-        addIfEnabled(consumed, stages.getSplitZip().isEnabled(), stages.getSplitZip().getInputQueue());
-        addIfEnabled(consumed, stages.getPreAggregate().isEnabled(), stages.getPreAggregate().getInputQueue());
-        addIfEnabled(consumed, stages.getAggregate().isEnabled(), stages.getAggregate().getInputQueue());
-        addIfEnabled(consumed, stages.getForward().isEnabled(), stages.getForward().getInputQueue());
+        addIfEnabled(consumed, stages.getSplitZip().isEnabled(),
+                orDefault(stages.getSplitZip().getInputQueue(), ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE));
+        addIfEnabled(consumed, stages.getPreAggregate().isEnabled(),
+                orDefault(stages.getPreAggregate().getInputQueue(),
+                        ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE));
+        addIfEnabled(consumed, stages.getAggregate().isEnabled(),
+                orDefault(stages.getAggregate().getInputQueue(), ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE));
+        addIfEnabled(consumed, stages.getForward().isEnabled(),
+                orDefault(stages.getForward().getInputQueue(), ProxyPipelineConfig.FORWARDING_INPUT_QUEUE));
 
         final Map<String, String> published = new LinkedHashMap<>();
         putIfEnabled(published, stages.getReceive().isEnabled(),
-                stages.getReceive().getOutputQueue(), PipelineStageName.RECEIVE);
+                orDefault(stages.getReceive().getOutputQueue(),
+                        ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE), PipelineStageName.RECEIVE);
         putIfEnabled(published, stages.getReceive().isEnabled(),
-                stages.getReceive().getSplitZipQueue(), PipelineStageName.RECEIVE);
+                orDefault(stages.getReceive().getSplitZipQueue(),
+                        stages.getSplitZip().isEnabled()
+                                ? ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE
+                                : null), PipelineStageName.RECEIVE);
         putIfEnabled(published, stages.getSplitZip().isEnabled(),
-                stages.getSplitZip().getOutputQueue(), PipelineStageName.SPLIT_ZIP);
+                orDefault(stages.getSplitZip().getOutputQueue(),
+                        ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE), PipelineStageName.SPLIT_ZIP);
         putIfEnabled(published, stages.getPreAggregate().isEnabled(),
-                stages.getPreAggregate().getOutputQueue(), PipelineStageName.PRE_AGGREGATE);
+                orDefault(stages.getPreAggregate().getOutputQueue(),
+                        ProxyPipelineConfig.AGGREGATE_INPUT_QUEUE), PipelineStageName.PRE_AGGREGATE);
         putIfEnabled(published, stages.getAggregate().isEnabled(),
-                stages.getAggregate().getOutputQueue(), PipelineStageName.AGGREGATE);
+                orDefault(stages.getAggregate().getOutputQueue(),
+                        ProxyPipelineConfig.FORWARDING_INPUT_QUEUE), PipelineStageName.AGGREGATE);
 
         published.forEach((queueName, publisher) -> {
             if (consumed.contains(queueName)) {
@@ -718,6 +733,12 @@ public class ProxyPipelineConfigValidator {
                     + "Enable a stage that consumes it, re-point the publishing stage's output "
                     + "queue, or make the queue external so another node can drain it."));
         });
+    }
+
+    private static String orDefault(final String configured, final String defaultName) {
+        return configured != null
+                ? configured
+                : defaultName;
     }
 
     private static void addIfEnabled(final Set<String> target,

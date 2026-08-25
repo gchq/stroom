@@ -131,8 +131,15 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                                 // Remove just in case
                                 verifiedKeysMap.remove(request);
                                 // Try to hit the downstream to verify it
-                                final VerifiedApiKey verifiedApiKey = doApiKeyVerification(request)
-                                        .orElse(null);
+                                final VerifiedApiKey verifiedApiKey;
+                                try {
+                                    verifiedApiKey = doApiKeyVerification(request).orElse(null);
+                                } catch (final DownstreamUnavailableException e) {
+                                    // Nothing authoritative to cache. Leave the map untouched so the
+                                    // next request retries once the back-off has elapsed.
+                                    LOGGER.debug(e::getMessage, e);
+                                    return Optional.empty();
+                                }
                                 final DatedValue<VerifiedApiKey> newDatedVerifiedApiKey = verifiedApiKey != null
                                         ? DatedValue.create(verifiedApiKey.getLastVerified(), verifiedApiKey)
                                         : DatedValue.create(null);
@@ -195,6 +202,17 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
         return isTooOld;
     }
 
+    /**
+     * Signals that the downstream could not be reached and no local verdict was available, so whether
+     * the key is valid is unknown. Distinct from an authoritative "no such key", which IS cached.
+     */
+    private static class DownstreamUnavailableException extends RuntimeException {
+
+        DownstreamUnavailableException(final String message, final Throwable cause) {
+            super(message, cause);
+        }
+    }
+
     private synchronized Optional<VerifiedApiKey> doApiKeyVerification(final VerifyApiKeyRequest request) {
         final String apiKey = request.getApiKey();
         // We can locally rule out any API keys that are invalid based on the format.
@@ -221,6 +239,15 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                     // See if we can verify based on what we had in the file.
                     verifiedApiKey = verifyLocally(request)
                             .orElse(null);
+                    if (verifiedApiKey == null) {
+                        // The downstream did not answer and we have nothing on disk, so we do not know
+                        // whether this key is valid. Say so rather than returning an empty Optional,
+                        // which the caller would cache as an authoritative "invalid" for
+                        // maxCachedKeyAge and go on rejecting a good key after the downstream recovers.
+                        throw new DownstreamUnavailableException(
+                                "Unable to verify API key - the downstream is unavailable and there is "
+                                + "no locally cached verdict for it", e);
+                    }
                 }
             } else {
                 LOGGER.debug(() -> LogUtil.message(

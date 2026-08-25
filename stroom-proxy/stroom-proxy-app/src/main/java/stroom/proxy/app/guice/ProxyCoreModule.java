@@ -77,6 +77,7 @@ import stroom.util.cert.CertificateExtractor;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.http.HttpClientFactory;
 import stroom.util.io.PathCreator;
+import stroom.util.logging.LogUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.BuildInfo;
 
@@ -153,6 +154,15 @@ public class ProxyCoreModule extends AbstractModule {
             // retry, which is the point of the mode - it is outside the pipeline's at-least-once
             // guarantee by design. ProxyConfig.isInstantForwardingValid guarantees there is exactly
             // one enabled forwarder when any of them is instant.
+            if (instantForwarders.size() != 1) {
+                // ProxyConfig.isInstantForwardingValid says the same thing, but validation can be
+                // bypassed with haltBootOnConfigValidationFailure: false, and silently forwarding to
+                // one of several configured destinations would lose the rest.
+                throw new RuntimeException(LogUtil.message(
+                        "Expecting exactly one enabled instant forwarder but found {}. Instant "
+                        + "forwarding cannot be combined with other forward destinations.",
+                        instantForwarders.size()));
+            }
             final ForwarderConfig forwarderConfig = instantForwarders.getFirst();
             return switch (forwarderConfig) {
                 case final ForwardHttpPostConfig config -> instantForwardHttpPostProvider.get().get(config);

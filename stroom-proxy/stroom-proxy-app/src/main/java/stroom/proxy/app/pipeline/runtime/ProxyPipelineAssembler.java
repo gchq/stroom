@@ -278,10 +278,21 @@ public class ProxyPipelineAssembler {
         // The receive stage's own splitZipQueue setting decides where multi-feed groups go. It is
         // deliberately independent of whether the split-zip stage runs in this process: in a split
         // deployment receive runs here and split-zip runs elsewhere, consuming the same queue.
-        final String receiveSplitZipQueueName = stagesConfig.getReceive().getSplitZipQueue();
-        final FileGroupQueue splitZipQueue = receiveSplitZipQueueName == null
+        // Defaulted like every other stage name. Leaving it undefaulted meant an omitted
+        // stages.receive.splitZipQueue silently disabled multi-feed splitting - and the validation rule
+        // that would have caught that was deleted in the same batch that made this field load-bearing.
+        // A configured name always wins - that is H2, and it is what makes the receive-here /
+        // split-there deployment work. Only the DEFAULT follows whether a split-zip stage exists: with
+        // no stage and no configured queue there is nothing to drain a split-zip queue, so publishing
+        // to one would strand every multi-feed group.
+        final String splitZipQueueName = orDefault(
+                stagesConfig.getReceive().getSplitZipQueue(),
+                stagesConfig.getSplitZip().isEnabled()
+                        ? ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE
+                        : null);
+        final FileGroupQueue splitZipQueue = splitZipQueueName == null
                 ? null
-                : queueFactory.getQueue(receiveSplitZipQueueName);
+                : queueFactory.getQueue(splitZipQueueName);
 
         final int maxConcurrentReceives = pipelineConfig
                 .getStages()

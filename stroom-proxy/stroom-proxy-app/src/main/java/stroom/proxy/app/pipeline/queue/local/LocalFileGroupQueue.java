@@ -50,6 +50,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
@@ -143,6 +144,7 @@ public class LocalFileGroupQueue implements FileGroupQueue {
     private final Duration abandonedLeaseScanInterval;
     private final int maxDeliveryAttempts;
     private final AtomicLong lastAbandonedLeaseScanMs = new AtomicLong();
+    private final AtomicBoolean scanInProgress = new AtomicBoolean();
 
     public LocalFileGroupQueue(final String name,
                                final Path root) throws IOException {
@@ -543,8 +545,13 @@ public class LocalFileGroupQueue implements FileGroupQueue {
         if (nowMs - lastMs < abandonedLeaseScanInterval.toMillis()) {
             return 0;
         }
-        if (!lastAbandonedLeaseScanMs.compareAndSet(lastMs, nowMs)) {
-            // Another consumer thread is already scanning.
+        // The timestamp CAS only decides which thread may START a scan at this instant; it does not
+        // stop a second scan beginning while the first is still running, and with an interval of zero
+        // every poll passes the check above. Two concurrent scans are not safe: reclaimAbandonedLeases
+        // tests activeLeases and then moves the in-flight file, and those are not atomic together, so
+        // the second scan can return a live consumer's item to pending and hand the same file group to
+        // two consumers at once. Serialise the scan itself.
+        if (!scanInProgress.compareAndSet(false, true)) {
             return 0;
         }
 
@@ -564,6 +571,10 @@ public class LocalFileGroupQueue implements FileGroupQueue {
             LOGGER.debug(() -> LogUtil.message(
                     "Queue {} could not scan for abandoned leases", name), e);
             return 0;
+        } finally {
+            // Stamp on completion, not on entry, so the interval measures the gap BETWEEN scans.
+            lastAbandonedLeaseScanMs.set(System.currentTimeMillis());
+            scanInProgress.set(false);
         }
     }
 

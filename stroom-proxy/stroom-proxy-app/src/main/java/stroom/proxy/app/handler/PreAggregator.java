@@ -234,6 +234,7 @@ public class PreAggregator {
             stream.forEach(aggregateDir -> {
                 final AggregateState aggregateState = new AggregateState(aggregatorConfig, aggregateDir);
                 final AtomicLong highestPartId = new AtomicLong(0);
+                final AtomicLong survivingPartCount = new AtomicLong(0);
                 final AtomicReference<FeedKey> feedKeyRef = new AtomicReference<>();
                 // Intern the feedKeys in the entries to reduce mem use
                 final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
@@ -250,6 +251,7 @@ public class PreAggregator {
                         // was swallowed as an IOException while the stage acknowledged and deleted the
                         // input. Taking the maximum can never collide with a surviving name.
                         highestPartId.accumulateAndGet(partIdOf(groupDir), Math::max);
+                        survivingPartCount.incrementAndGet();
                         try (final BufferedReader bufferedReader = Files.newBufferedReader(entriesFile)) {
                             String line = bufferedReader.readLine();
                             while (line != null) {
@@ -280,7 +282,11 @@ public class PreAggregator {
                 }
 
                 // The next part must be numbered above every id already on disk, gap or no gap.
-                aggregateState.partCount = highestPartId.get();
+                // Never below the number of surviving parts. partIdOf yields 0 for a directory name
+                // this class did not write, so taking the highest id alone would reset the counter to 0
+                // and send the next part straight back onto an existing directory - the very collision
+                // this rebuild exists to avoid.
+                aggregateState.partCount = Math.max(highestPartId.get(), survivingPartCount.get());
 
                 LOGGER.debug("Initialised aggregateState {}", aggregateState);
                 NullSafe.consume(feedKeyRef.get(), feedKey ->
