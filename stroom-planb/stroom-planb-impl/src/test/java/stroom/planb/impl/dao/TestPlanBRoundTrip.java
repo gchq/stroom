@@ -25,7 +25,7 @@ import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBDocStore;
-import stroom.planb.impl.dao.ShardWriters.ShardWriter;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.dao.histogram.HistogramDb;
 import stroom.planb.impl.dao.metric.MetricDb;
 import stroom.planb.impl.dao.rangestate.RangeStateDb;
@@ -37,17 +37,19 @@ import stroom.planb.impl.dao.temporalrangestate.TemporalRangeStateDb;
 import stroom.planb.impl.dao.temporalrangestate.TemporalRangeStateRequest;
 import stroom.planb.impl.dao.temporalstate.TemporalStateDb;
 import stroom.planb.impl.dao.temporalstate.TemporalStateRequest;
-import stroom.planb.impl.data.FileTransferClient;
-import stroom.planb.impl.data.FileTransferClientImpl;
 import stroom.planb.impl.data.MergeProcessor;
-import stroom.planb.impl.data.PartDestination;
-import stroom.planb.impl.data.RangeState;
-import stroom.planb.impl.data.Session;
-import stroom.planb.impl.data.ShardManager;
-import stroom.planb.impl.data.State;
-import stroom.planb.impl.data.TemporalRangeState;
-import stroom.planb.impl.data.TemporalState;
-import stroom.planb.impl.data.TemporalValue;
+import stroom.planb.impl.data.shard.ShardManager;
+import stroom.planb.impl.data.value.RangeState;
+import stroom.planb.impl.data.value.Session;
+import stroom.planb.impl.data.value.State;
+import stroom.planb.impl.data.value.TemporalRangeState;
+import stroom.planb.impl.data.value.TemporalState;
+import stroom.planb.impl.data.value.TemporalValue;
+import stroom.planb.impl.fs.SharedFileStorePartDestination;
+import stroom.planb.impl.rest.FileTransferClient;
+import stroom.planb.impl.rest.FileTransferClientImpl;
+import stroom.planb.impl.rest.PartDestination;
+import stroom.planb.impl.rest.RestPartDestination;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.keyprefix.Tag;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
@@ -55,6 +57,7 @@ import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HistogramSettings;
 import stroom.planb.shared.MetricSettings;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.RangeStateSettings;
 import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.StateSettings;
@@ -91,10 +94,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Joins up the whole Plan B write path against real components on disk, one store type at a time.
- * A pipeline stream writes rows through {@link ShardWriters}, the zip it produces is delivered by
- * the single node local branch of {@link FileTransferClientImpl}, {@link MergeProcessor} merges it
- * into the shard, and the values are read back through {@link ShardManager} the way a query reads
- * them.
+ * A pipeline stream writes rows through {@link PlanBStreamWriter}, the zip its
+ * {@link RestPartDestination} produces is delivered by the single node local branch of
+ * {@link FileTransferClientImpl}, {@link MergeProcessor} merges it into the shard, and the values
+ * are read back through {@link ShardManager} the way a query reads them.
  * <p>
  * The per store tests in this package write to an LMDB dir directly, so none of them would notice
  * a break in the steps between the writer and the shard. This test exists to notice.
@@ -111,8 +114,8 @@ class TestPlanBRoundTrip {
                 .build());
 
         try (final Node node = new Node(rootDir, List.of(doc))) {
-            try (final ShardWriter writer = node.createWriter()) {
-                writer.addState(resolve(writer, doc), new State(
+            try (final PlanBStreamWriter writer = node.createWriter()) {
+                writer.addState(node.resolve(doc), new State(
                         KeyPrefix.create("user1"),
                         ValString.create("london")));
             }
@@ -132,8 +135,8 @@ class TestPlanBRoundTrip {
                         .build());
 
         try (final Node node = new Node(rootDir, List.of(doc))) {
-            try (final ShardWriter writer = node.createWriter()) {
-                writer.addTemporalState(resolve(writer, doc), new TemporalState(
+            try (final PlanBStreamWriter writer = node.createWriter()) {
+                writer.addTemporalState(node.resolve(doc), new TemporalState(
                         new TemporalKey(KeyPrefix.create("user1"), REF_TIME),
                         ValString.create("london")));
             }
@@ -160,8 +163,8 @@ class TestPlanBRoundTrip {
                         .build());
 
         try (final Node node = new Node(rootDir, List.of(doc))) {
-            try (final ShardWriter writer = node.createWriter()) {
-                writer.addRangeState(resolve(writer, doc), new RangeState(
+            try (final PlanBStreamWriter writer = node.createWriter()) {
+                writer.addRangeState(node.resolve(doc), new RangeState(
                         new RangeState.Key(10, 30),
                         ValString.create("in range")));
             }
@@ -189,8 +192,8 @@ class TestPlanBRoundTrip {
                         .build());
 
         try (final Node node = new Node(rootDir, List.of(doc))) {
-            try (final ShardWriter writer = node.createWriter()) {
-                writer.addTemporalRangeState(resolve(writer, doc), new TemporalRangeState(
+            try (final PlanBStreamWriter writer = node.createWriter()) {
+                writer.addTemporalRangeState(node.resolve(doc), new TemporalRangeState(
                         new TemporalRangeState.Key(10, 30, REF_TIME),
                         ValString.create("in range")));
             }
@@ -216,8 +219,8 @@ class TestPlanBRoundTrip {
         final Instant end = REF_TIME.plusSeconds(60);
 
         try (final Node node = new Node(rootDir, List.of(doc))) {
-            try (final ShardWriter writer = node.createWriter()) {
-                writer.addSession(resolve(writer, doc), new Session(
+            try (final PlanBStreamWriter writer = node.createWriter()) {
+                writer.addSession(node.resolve(doc), new Session(
                         KeyPrefix.create("user1"),
                         REF_TIME,
                         end));
@@ -244,8 +247,8 @@ class TestPlanBRoundTrip {
                 .build());
 
         try (final Node node = new Node(rootDir, List.of(doc))) {
-            try (final ShardWriter writer = node.createWriter()) {
-                final PlanBDoc resolved = resolve(writer, doc);
+            try (final PlanBStreamWriter writer = node.createWriter()) {
+                final PlanBDocument resolved = node.resolve(doc);
                 for (int i = 0; i < 3; i++) {
                     writer.addHistogramValue(resolved, new TemporalValue(tagsKey(), 1L));
                 }
@@ -265,8 +268,8 @@ class TestPlanBRoundTrip {
                 .build());
 
         try (final Node node = new Node(rootDir, List.of(doc))) {
-            try (final ShardWriter writer = node.createWriter()) {
-                final PlanBDoc resolved = resolve(writer, doc);
+            try (final PlanBStreamWriter writer = node.createWriter()) {
+                final PlanBDocument resolved = node.resolve(doc);
                 writer.addMetricValue(resolved, new TemporalValue(tagsKey(), 5L));
                 writer.addMetricValue(resolved, new TemporalValue(tagsKey(), 7L));
             }
@@ -280,7 +283,7 @@ class TestPlanBRoundTrip {
 
     /**
      * One stream commonly writes to several Plan B stores. All of them must reach their own shard
-     * from the single zip the stream produces, and the writer dir must be left empty afterwards.
+     * from the parts the stream produces, and the writer dir must be left empty afterwards.
      */
     @Test
     void oneStreamFeedsManyStores(@TempDir final Path rootDir) throws IOException {
@@ -293,11 +296,11 @@ class TestPlanBRoundTrip {
                         .build());
 
         try (final Node node = new Node(rootDir, List.of(stateDoc, temporalDoc))) {
-            try (final ShardWriter writer = node.createWriter()) {
-                writer.addState(resolve(writer, stateDoc), new State(
+            try (final PlanBStreamWriter writer = node.createWriter()) {
+                writer.addState(node.resolve(stateDoc), new State(
                         KeyPrefix.create("user1"),
                         ValString.create("london")));
-                writer.addTemporalState(resolve(writer, temporalDoc), new TemporalState(
+                writer.addTemporalState(node.resolve(temporalDoc), new TemporalState(
                         new TemporalKey(KeyPrefix.create("user2"), REF_TIME),
                         ValString.create("paris")));
             }
@@ -331,15 +334,15 @@ class TestPlanBRoundTrip {
                 .build());
 
         try (final Node node = new Node(rootDir, List.of(doc))) {
-            try (final ShardWriter writer = node.createWriter()) {
-                writer.addState(resolve(writer, doc), new State(
+            try (final PlanBStreamWriter writer = node.createWriter()) {
+                writer.addState(node.resolve(doc), new State(
                         KeyPrefix.create("user1"),
                         ValString.create("london")));
             }
             node.merge();
 
-            try (final ShardWriter writer = node.createWriter()) {
-                writer.addState(resolve(writer, doc), new State(
+            try (final PlanBStreamWriter writer = node.createWriter()) {
+                writer.addState(node.resolve(doc), new State(
                         KeyPrefix.create("user1"),
                         ValString.create("paris")));
             }
@@ -363,8 +366,8 @@ class TestPlanBRoundTrip {
 
         try (final Node node = new Node(rootDir, List.of(doc))) {
             for (int stream = 0; stream < 2; stream++) {
-                try (final ShardWriter writer = node.createWriter()) {
-                    writer.addHistogramValue(resolve(writer, doc), new TemporalValue(tagsKey(), 1L));
+                try (final PlanBStreamWriter writer = node.createWriter()) {
+                    writer.addHistogramValue(node.resolve(doc), new TemporalValue(tagsKey(), 1L));
                 }
                 node.merge();
             }
@@ -372,14 +375,6 @@ class TestPlanBRoundTrip {
             final Long count = node.read(doc, db -> ((HistogramDb) db).get(tagsKey()));
             assertThat(count).isEqualTo(2L);
         }
-    }
-
-    private PlanBDoc resolve(final ShardWriter writer, final PlanBDoc doc) {
-        final Optional<PlanBDoc> resolved = writer.getDoc(doc.getName(), error -> {
-            throw new AssertionError("Could not resolve map '" + doc.getName() + "': " + error);
-        });
-        return resolved.orElseThrow(() ->
-                new AssertionError("No doc found for map '" + doc.getName() + "'"));
     }
 
     private PlanBDoc doc(final String name,
@@ -413,10 +408,11 @@ class TestPlanBRoundTrip {
      */
     private static final class Node implements AutoCloseable {
 
-        private final StatePaths statePaths;
+        private final PlanBPaths planBPaths;
         private final ShardManager shardManager;
         private final MergeProcessor mergeProcessor;
-        private final ShardWriters shardWriters;
+        private final PlanBStreamWriterFactory streamWriterFactory;
+        private final PlanBDocumentResolver docResolver;
         private final AtomicLong metaId = new AtomicLong();
 
         private Node(final Path rootDir, final List<PlanBDoc> docs) {
@@ -431,6 +427,7 @@ class TestPlanBRoundTrip {
             final PlanBDocStore docStore = Mockito.mock(PlanBDocStore.class);
             Mockito.when(docStore.readDocument(Mockito.any(DocRef.class)))
                     .thenAnswer(invocation -> byUuid.get(invocation.<DocRef>getArgument(0).getUuid()));
+            docResolver = new PlanBDocumentResolver(docCache);
 
             // Everything runs on the calling thread so that a merge has finished by the time the
             // test reads.
@@ -453,7 +450,7 @@ class TestPlanBRoundTrip {
             final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
             final ByteBuffers byteBuffers = new ByteBuffers(byteBufferFactory);
 
-            statePaths = new StatePaths(rootDir);
+            planBPaths = new PlanBPaths(rootDir);
             shardManager = new ShardManager(
                     byteBuffers,
                     byteBufferFactory,
@@ -461,12 +458,13 @@ class TestPlanBRoundTrip {
                     docStore,
                     nodeInfo,
                     () -> config,
-                    statePaths,
+                    planBPaths,
                     null,
                     new SimpleTaskContextFactory(),
-                    executorProvider);
+                    executorProvider,
+                    Map::of);
             final MergeProcessor processor = new MergeProcessor(
-                    statePaths,
+                    planBPaths,
                     new MockSecurityContext(),
                     new SimpleTaskContextFactory(),
                     shardManager,
@@ -475,7 +473,7 @@ class TestPlanBRoundTrip {
             mergeProcessor = processor;
             final PartDestination partDestination = new PartDestination(
                     new MockSecurityContext(),
-                    statePaths,
+                    planBPaths,
                     () -> processor);
             final FileTransferClient fileTransferClient = new FileTransferClientImpl(
                     () -> config,
@@ -486,16 +484,28 @@ class TestPlanBRoundTrip {
                     partDestination,
                     new MockSecurityContext(),
                     executorProvider);
-            shardWriters = new ShardWriters(
-                    docCache,
+            // The docs here configure no shared file store, so every part takes the REST
+            // destination and the shared store one is never asked to transfer anything.
+            streamWriterFactory = new PlanBStreamWriterFactory(
                     byteBuffers,
                     byteBufferFactory,
-                    statePaths,
-                    fileTransferClient);
+                    planBPaths,
+                    new DefaultBatchDestination(),
+                    new SharedFileStorePartDestination(),
+                    new RestPartDestination(fileTransferClient));
         }
 
-        private ShardWriter createWriter() {
-            return shardWriters.createWriter(Meta.builder().id(metaId.incrementAndGet()).build());
+        private PlanBDocument resolve(final PlanBDoc doc) {
+            final Optional<PlanBDocument> resolved = docResolver.resolve(doc.getName(), error -> {
+                throw new AssertionError("Could not resolve map '" + doc.getName() + "': " + error);
+            });
+            return resolved.orElseThrow(() ->
+                    new AssertionError("No doc found for map '" + doc.getName() + "'"));
+        }
+
+        private PlanBStreamWriter createWriter() {
+            return streamWriterFactory.createWriter(
+                    Meta.builder().id(metaId.incrementAndGet()).build());
         }
 
         private void merge() {
@@ -507,10 +517,10 @@ class TestPlanBRoundTrip {
         }
 
         private List<String> writerDirContents() throws IOException {
-            if (!Files.isDirectory(statePaths.getWriterDir())) {
+            if (!Files.isDirectory(planBPaths.getWriterDir())) {
                 return List.of();
             }
-            try (final Stream<Path> stream = Files.list(statePaths.getWriterDir())) {
+            try (final Stream<Path> stream = Files.list(planBPaths.getWriterDir())) {
                 return stream.map(path -> path.getFileName().toString()).toList();
             }
         }
