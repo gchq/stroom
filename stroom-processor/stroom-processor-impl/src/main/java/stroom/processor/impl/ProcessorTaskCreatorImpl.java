@@ -598,7 +598,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                             FeedDependencies::getFeedDependencies));
             if (maxCreateTime == null) {
                 // If we have a null create time from feed dependencies we might still want to delay processing.
-                if (minProcessingDelay != null || (maxProcessingDelay != null && maxProcessingDelay.getTime() > 0)) {
+                if ((minProcessingDelay != null && minProcessingDelay.getTime() > 0)
+                    || (maxProcessingDelay != null && maxProcessingDelay.getTime() > 0)) {
                     maxCreateTime = now;
                 }
             }
@@ -620,9 +621,15 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                     }
                 }
 
-                // Find the max stream id that belongs to a stream that has a create time less than or equal to the
-                // max effective time.
-                return Objects.requireNonNullElse(metaService.getMaxId(maxCreateTime.toEpochMilli()), 0L);
+                // Every stream is created with a create time of the moment it was created, so a cut off that
+                // isn't in the past excludes nothing and the answer is just the max id of all streams. That
+                // matters because the database can get the max id of all streams straight from the primary key,
+                // whereas finding the max id before a given time makes it scan every stream created before it.
+                if (maxCreateTime.isBefore(now)) {
+                    // Find the max stream id that belongs to a stream that has a create time less than or equal
+                    // to the max effective time.
+                    return Objects.requireNonNullElse(metaService.getMaxId(maxCreateTime.toEpochMilli()), 0L);
+                }
             }
         }
         return Objects.requireNonNullElse(metaService.getMaxId(), 0L);
