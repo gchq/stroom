@@ -695,11 +695,10 @@ public class ProxyPipelineConfigValidator {
         putIfEnabled(published, stages.getReceive().isEnabled(),
                 orDefault(stages.getReceive().getOutputQueue(),
                         ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE), PipelineStageName.RECEIVE);
+        // Must mirror ProxyPipelineAssembler.resolveReceiveSplitZipQueue exactly - if the two
+        // disagree, this guard rejects a configuration the assembler would have wired correctly.
         putIfEnabled(published, stages.getReceive().isEnabled(),
-                orDefault(stages.getReceive().getSplitZipQueue(),
-                        stages.getSplitZip().isEnabled()
-                                ? ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE
-                                : null), PipelineStageName.RECEIVE);
+                resolveReceiveSplitZipQueue(stages), PipelineStageName.RECEIVE);
         putIfEnabled(published, stages.getSplitZip().isEnabled(),
                 orDefault(stages.getSplitZip().getOutputQueue(),
                         ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE), PipelineStageName.SPLIT_ZIP);
@@ -733,6 +732,19 @@ public class ProxyPipelineConfigValidator {
                     + "Enable a stage that consumes it, re-point the publishing stage's output "
                     + "queue, or make the queue external so another node can drain it."));
         });
+    }
+
+    private static String resolveReceiveSplitZipQueue(final PipelineStagesConfig stages) {
+        final String configured = stages.getReceive().getSplitZipQueue();
+        if (configured == null) {
+            return null;
+        }
+        if (!ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE.equals(configured)) {
+            return configured;
+        }
+        return stages.getSplitZip().isEnabled()
+                ? configured
+                : null;
     }
 
     private static String orDefault(final String configured, final String defaultName) {

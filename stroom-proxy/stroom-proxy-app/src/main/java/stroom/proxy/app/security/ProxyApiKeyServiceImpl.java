@@ -255,6 +255,16 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                         earliestNextFetchTime, TimeUtils.durationUntil(earliestNextFetchTime)));
                 verifiedApiKey = verifyLocally(request)
                         .orElse(null);
+                if (verifiedApiKey == null) {
+                    // Same reasoning as the fault path above: we are inside the post-failure back-off,
+                    // so the downstream is known to be unavailable and we have nothing on disk. We do
+                    // not know whether this key is valid, and must not let the caller cache "no" as
+                    // authoritative for maxCachedKeyAge - that kept rejecting good keys for ten
+                    // minutes after the downstream recovered.
+                    throw new DownstreamUnavailableException(
+                            "Unable to verify API key - within the post-failure back-off and there is "
+                            + "no locally cached verdict for it", null);
+                }
             }
             return Optional.ofNullable(verifiedApiKey);
         } else {

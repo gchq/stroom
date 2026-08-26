@@ -111,10 +111,22 @@ public class PipelineStageRunner implements AutoCloseable {
             throw new IllegalArgumentException("threadCount must be >= 1, got " + threadCount);
         }
         this.threadCount = threadCount;
-        this.emptyPollBackoff = Objects.requireNonNull(emptyPollBackoff, "emptyPollBackoff");
-        this.errorBackoff = Objects.requireNonNull(errorBackoff, "errorBackoff");
-        this.failureBackoff = Objects.requireNonNull(failureBackoff, "failureBackoff");
-        this.maxFailureBackoff = Objects.requireNonNull(maxFailureBackoff, "maxFailureBackoff");
+        // Negative values are rejected here, not left to Thread.sleep. A negative backoff made
+        // sleepUninterruptibly throw IllegalArgumentException from inside a sibling catch clause,
+        // which no other clause caught - retiring the consumer thread while isRunning() still
+        // reported true. That was the second trigger for the silent-death defect.
+        this.emptyPollBackoff = requireNonNegative(emptyPollBackoff, "emptyPollBackoff");
+        this.errorBackoff = requireNonNegative(errorBackoff, "errorBackoff");
+        this.failureBackoff = requireNonNegative(failureBackoff, "failureBackoff");
+        this.maxFailureBackoff = requireNonNegative(maxFailureBackoff, "maxFailureBackoff");
+    }
+
+    private static Duration requireNonNegative(final Duration duration, final String name) {
+        Objects.requireNonNull(duration, name);
+        if (duration.isNegative()) {
+            throw new IllegalArgumentException(name + " must not be negative, got " + duration);
+        }
+        return duration;
     }
 
     /**

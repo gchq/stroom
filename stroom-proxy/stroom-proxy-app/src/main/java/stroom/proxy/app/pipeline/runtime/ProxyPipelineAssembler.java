@@ -285,11 +285,7 @@ public class ProxyPipelineAssembler {
         // split-there deployment work. Only the DEFAULT follows whether a split-zip stage exists: with
         // no stage and no configured queue there is nothing to drain a split-zip queue, so publishing
         // to one would strand every multi-feed group.
-        final String splitZipQueueName = orDefault(
-                stagesConfig.getReceive().getSplitZipQueue(),
-                stagesConfig.getSplitZip().isEnabled()
-                        ? ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE
-                        : null);
+        final String splitZipQueueName = resolveReceiveSplitZipQueue(stagesConfig);
         final FileGroupQueue splitZipQueue = splitZipQueueName == null
                 ? null
                 : queueFactory.getQueue(splitZipQueueName);
@@ -343,6 +339,38 @@ public class ProxyPipelineAssembler {
      */
     public ProxyPipelineRuntime getRuntime() {
         return runtime;
+    }
+
+    /**
+     * Decide where receive sends multi-feed groups.
+     * <p>
+     * This cannot be decided by whether the operator supplied the name, because it is never absent:
+     * {@code ProxyConfigurationSourceProvider} deep-merges the compile-time defaults into the YAML
+     * before it is parsed, so {@code stages.receive.splitZipQueue} always arrives populated (audit
+     * H55). Intent is therefore read from the combination:
+     * </p>
+     * <ul>
+     *   <li>a name that is NOT the pipeline default - the operator chose it, so split to it, whether
+     *       or not a split-zip stage runs in this process. That is the receive-here / split-there
+     *       deployment, and it is what H2 requires.</li>
+     *   <li>the default name with a split-zip stage enabled - split locally.</li>
+     *   <li>the default name with no split-zip stage - nothing would drain that queue, so do not
+     *       split. Without this, disabling split-zip stranded every multi-feed group.</li>
+     * </ul>
+     *
+     * @return the queue to send multi-feed groups to, or null for no splitting.
+     */
+    private static String resolveReceiveSplitZipQueue(final PipelineStagesConfig stagesConfig) {
+        final String configured = stagesConfig.getReceive().getSplitZipQueue();
+        if (configured == null) {
+            return null;
+        }
+        if (!ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE.equals(configured)) {
+            return configured;
+        }
+        return stagesConfig.getSplitZip().isEnabled()
+                ? configured
+                : null;
     }
 
     /**

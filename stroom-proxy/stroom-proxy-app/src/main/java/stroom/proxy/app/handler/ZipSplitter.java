@@ -21,6 +21,8 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKey;
+import stroom.receive.common.InputStreamUtils;
+import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
@@ -78,6 +80,12 @@ import java.util.stream.Collectors;
  * </p>
  */
 public final class ZipSplitter {
+
+    /**
+     * A {@code .meta} entry is a header block. Mirrors the bound applied on the receive path.
+     */
+    private static final ByteSize MAX_META_ENTRY_SIZE = ByteSize.ofMebibytes(1);
+
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZipSplitter.class);
 
@@ -283,8 +291,13 @@ public final class ZipSplitter {
         final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
         if (entry != null) {
             final ZipArchiveEntry zipEntry = zip.getEntry(entry.getName());
-            final InputStream inputStream = zip.getInputStream(zipEntry);
-            AttributeMapUtil.read(inputStream, entryAttributeMap);
+            // try-with-resources: this stream wraps an Inflater, and one was leaked per entry group
+            // on the split path. The read is bounded for the same reason as the receive path -
+            // AttributeMapUtil.read pulls the whole entry into a String.
+            try (final InputStream inputStream = InputStreamUtils.getBoundedInputStream(
+                    zip.getInputStream(zipEntry), MAX_META_ENTRY_SIZE)) {
+                AttributeMapUtil.read(inputStream, entryAttributeMap);
+            }
         }
 
         final byte[] bytes = AttributeMapUtil.toByteArray(entryAttributeMap);

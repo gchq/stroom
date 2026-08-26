@@ -577,14 +577,21 @@ class TestProxyPipelineConfigValidator {
     @Test
     void testDeploymentAcceptsAggregationDisabledWhenReceiveTargetsTheForwardQueue() {
         // The supported way to run without aggregation, and the replacement for the removed
-        // aggregator.enabled property: disable both aggregating stages AND re-point receive.
+        // aggregator.enabled property: disable the aggregating stages AND split-zip, and re-point
+        // receive at the forwarding queue.
+        //
+        // splitZipQueue is deliberately populated with the pipeline default here rather than left
+        // null, because that is what an operator's config actually looks like once
+        // ProxyConfigurationSourceProvider has deep-merged the compile-time defaults into it (audit
+        // H55). The previous version of this test passed null, which no YAML can produce, so it
+        // "pinned" a configuration nobody could write and missed that the recipe did not start.
         final ProxyPipelineConfig config = new ProxyPipelineConfig(
                 defaultQueues(),
                 new PipelineStagesConfig(
                         new ReceiveStageConfig(
                                 true,
                                 ProxyPipelineConfig.FORWARDING_INPUT_QUEUE,
-                                null,
+                                ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE,
                                 ProxyPipelineConfig.RECEIVE_STORE,
                                 new ReceiveStageThreadsConfig()),
                         disabledSplitZipStage(),
