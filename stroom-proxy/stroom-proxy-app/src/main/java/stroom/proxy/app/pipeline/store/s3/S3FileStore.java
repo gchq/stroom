@@ -50,6 +50,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
@@ -265,6 +266,17 @@ public class S3FileStore implements FileStore {
             throw new IOException("File store location bucket '" + locationBucket
                                   + "' does not match store bucket '" + bucket + "'");
         }
+        // The same two guards delete() now applies. Deliberately checked against the raw prefix here
+        // so that the cache id derivation below is unchanged and existing cache directories are not
+        // orphaned.
+        if (normaliseKeyPrefix(locationKeyPrefix).isEmpty()) {
+            throw new IOException("File store location '" + location.uri() + "' has no key prefix, "
+                                  + "which would address the whole of bucket '" + bucket + "'");
+        }
+        if (!normaliseKeyPrefix(locationKeyPrefix).startsWith(keyPrefix)) {
+            throw new IOException("File store location key '" + locationKeyPrefix + "' is outside this "
+                                  + "store's key prefix '" + keyPrefix + "'");
+        }
 
         // Download all objects under the key prefix to a local cache directory.
         // Use a hash of the key prefix for the local cache dir name.
@@ -315,14 +327,10 @@ public class S3FileStore implements FileStore {
     public void delete(final FileStoreLocation location) throws IOException {
         Objects.requireNonNull(location, "location");
 
-        if (!name.equals(location.storeName())) {
-            throw new IOException("File store location is for store '" + location.storeName()
-                                  + "' but this store is '" + name + "'");
-        }
-        if (!location.isS3()) {
-            throw new IOException("Unsupported file store location type: " + location.locationType());
-        }
-
+        validateLocation(location, "delete");
+        // Deliberately the RAW prefix, as before: the local cache id below is derived from it, so
+        // switching to the normalised form would compute a different cache directory and leave the
+        // real one behind.
         final String locationKeyPrefix = location.getS3KeyPrefix();
 
         // Delete all objects under the key prefix.
@@ -364,6 +372,21 @@ public class S3FileStore implements FileStore {
 
     private void uploadDirectory(final Path dir, final String targetKeyPrefix) throws IOException {
         final String normalisedPrefix = normaliseKeyPrefix(targetKeyPrefix);
+
+        try (final Stream<Path> nested = Files.list(dir)) {
+            final Optional<Path> firstDirectory = nested.filter(Files::isDirectory).findFirst();
+            if (firstDirectory.isPresent()) {
+                // Files.list is one level deep and the filter below drops directories, so a nested file
+                // group - which is exactly what the pre-aggregate stage writes - was uploaded as ZERO
+                // objects, reported as a successful commit, and its only other copy then deleted.
+                // Refuse loudly instead. This guard is deliberately independent of any validator rule
+                // banning S3 for a particular store, so that no future caller can hit it silently.
+                throw new IOException("Cannot commit '" + dir + "' to S3: it contains the subdirectory '"
+                                      + firstDirectory.get().getFileName() + "', and this store can only "
+                                      + "store a flat file group. Uploading it would silently discard "
+                                      + "the nested content.");
+            }
+        }
 
         try (final Stream<Path> files = Files.list(dir)) {
             files.filter(Files::isRegularFile)
@@ -443,6 +466,43 @@ public class S3FileStore implements FileStore {
                     "Unsupported credentialsType '" + type + "' for S3 file store '" + definition.getBucket()
                     + "'. Supported types are: " + String.join(", ", SUPPORTED_CREDENTIALS_TYPES));
         };
+    }
+
+    /**
+     * Validate a location before it is used to address objects. {@code resolve()} and {@code delete()}
+     * previously disagreed about what a valid location was: delete checked neither the bucket nor the
+     * key prefix, so a location carrying an empty key - which {@code FileStoreLocation.getS3KeyPrefix()}
+     * returns for a URI like {@code s3://bucket} - listed and deleted the ENTIRE bucket. Locations
+     * arrive from queue messages, and on the SQS and Kafka backends those originate in another process.
+     *
+     * @return the location's normalised key prefix, guaranteed non-empty and within this store.
+     */
+    private String validateLocation(final FileStoreLocation location, final String operation)
+            throws IOException {
+        if (!name.equals(location.storeName())) {
+            throw new IOException("File store location is for store '" + location.storeName()
+                                  + "' but this store is '" + name + "'");
+        }
+        if (!location.isS3()) {
+            throw new IOException("Unsupported file store location type: " + location.locationType());
+        }
+
+        final String locationBucket = location.getS3Bucket();
+        if (!bucket.equals(locationBucket)) {
+            throw new IOException("File store location bucket '" + locationBucket
+                                  + "' does not match store bucket '" + bucket + "' for " + operation);
+        }
+
+        final String normalised = normaliseKeyPrefix(location.getS3KeyPrefix());
+        if (normalised.isEmpty()) {
+            throw new IOException("File store location '" + location.uri() + "' has no key prefix, which "
+                                  + "would address the whole of bucket '" + bucket + "' for " + operation);
+        }
+        if (!normalised.startsWith(keyPrefix)) {
+            throw new IOException("File store location key '" + normalised + "' is outside this store's "
+                                  + "key prefix '" + keyPrefix + "' for " + operation);
+        }
+        return normalised;
     }
 
     private static String normaliseKeyPrefix(final String prefix) {
