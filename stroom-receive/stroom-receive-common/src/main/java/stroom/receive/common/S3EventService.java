@@ -46,14 +46,21 @@ import jakarta.inject.Singleton;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
+import software.amazon.awssdk.services.sqs.model.MessageSystemAttributeName;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 import tools.jackson.databind.JsonNode;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 /**
@@ -83,6 +90,10 @@ public class S3EventNotificationService {
     private static final String BUCKET_FIELD = "Bucket";
     private static final String RECORDS_FIELD = "Records";
 
+    /// Means we don't have to wait for the ScheduledTaskExecutor to call poll() again with its 10s latency,
+    /// while still allowing the job to be eventually disabled.
+    private static final Duration MAX_RE_POLL_DURATION = Duration.ofMinutes(5);
+
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final SqsClientFactory sqsClientFactory;
     private final ReceiptIdGenerator receiptIdGenerator;
@@ -91,6 +102,7 @@ public class S3EventNotificationService {
     private final S3ClientConfigService s3ClientConfigService;
     private final S3MetaKeysMapper s3MetaKeysMapper;
     private final CommonSecurityContext commonSecurityContext;
+    private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
 
     //    CachedValue<SqsClient, SqsConfig> cachedSqsClient;
     private volatile SqsConfig lastSqsConfig = null;
@@ -116,31 +128,34 @@ public class S3EventNotificationService {
         this.commonSecurityContext = commonSecurityContext;
     }
 
-    public void poll() {
-        final ClientState clientState = getSqsClient();
-        LOGGER.debug("poll() - clientState: {}", clientState);
-        poll(clientState);
-    }
+//    public void start() {
+//    }
+//
+//    public void stop() {
+//        shuttingDown.set(true);
+//    }
 
     /**
+     * This is the main entry point for REST based S3 event notifications.
+     *
      * @param s3Location The location of the object on s3
      * @param metaData   Any additional metadata to override the meta obtained from the S3 object.
      */
-    public void notify(final S3Location s3Location, final Map<String, String> metaData) {
+    public void notify(final S3Location s3Location, final String eTag, final Map<String, String> metaData) {
         Objects.requireNonNull(s3Location);
         LOGGER.debug("notify() - s3Location: {}, metaData: {}", s3Location, metaData);
         commonSecurityContext.secure(AppPermission.STROOM_PROXY, () -> {
             commonSecurityContext.asProcessingUser(() -> {
-                doNotify(s3Location, metaData);
+                doNotify(s3Location, eTag, metaData);
             });
         });
     }
 
-    private void doNotify(final S3Location s3Location, final Map<String, String> metaData) {
+    private void doNotify(final S3Location s3Location, final String eTag, final Map<String, String> metaData) {
         final AttributeMap attributeMap = new AttributeMap();
         addReceiptId(attributeMap);
 
-        addS3MetaAttributes(s3Location, attributeMap);
+        addS3MetaAttributes(s3Location, eTag, attributeMap);
         // Override the s3 metadata with any supplied meta.
         if (NullSafe.hasEntries(metaData)) {
             attributeMap.putAll(metaData);
@@ -151,6 +166,7 @@ public class S3EventNotificationService {
     }
 
     public void addS3MetaAttributes(final S3Location s3Location,
+                                    final String eTag,
                                     final AttributeMap attributeMap) {
         LOGGER.debug("addS3MetaAttributes() - s3Location: {}, attributeMap: {}",
                 s3Location, attributeMap);
@@ -165,8 +181,10 @@ public class S3EventNotificationService {
                 s3ClientConfig -> {
                     final S3ClientHelper s3ClientHelper = new S3ClientHelper(s3ClientConfig, s3ClientPool);
                     final S3ObjectInfo objectInfo = s3ClientHelper.getObjectInfo(
+                            s3Location.getRegionName(),
                             s3Location.getBucketName(),
-                            s3Location.getKey());
+                            s3Location.getKey(),
+                            eTag);
 
                     // Map any known keys back to their original form as some of our keys may not fit the
                     // key restrictions.
@@ -183,71 +201,178 @@ public class S3EventNotificationService {
                         s3Location.getRegionName(), s3Location.getBucketName(), s3Location.getKey()));
     }
 
-    private void poll(final ClientState clientState) {
+    public void poll() {
         try {
-//            if (queueUrl == null) {
-//                LOGGER.debug(() -> "Getting queue name");
-//                final String queueName = config.getQueueName();
-//                LOGGER.debug(() -> "Getting queue URL for queue: " + queueName);
-//                queueUrl = sqs.getQueueUrl(queueName).getQueueUrl();
-//            }
-            // TODO do we want the queueName or queueUrl in the config?
-            //  We can use sqsClient to derive the latter from the former.
-            final SqsConfig sqsConfig = clientState.config;
-            final SqsClient sqsClient = clientState.sqsClient;
-            final String queueUrl = sqsConfig.getQueueUrl();
-            LOGGER.debug(() -> LogUtil.message("poll() - queueName, {}", queueUrl));
+            final ClientState clientState = getSqsClient();
+            if (clientState != null) {
+                final SqsConfig sqsConfig = clientState.config;
+                final SqsClient sqsClient = clientState.sqsClient;
+                final String queueUrl = sqsConfig.getQueueUrl();
+                final String deadLetterQueueUrl = sqsConfig.getDeadLetterQueueUrl();
+                LOGGER.debug(() -> LogUtil.message("poll() - queueUrl: {}, deadLetterQueueUrl: {}",
+                        queueUrl, deadLetterQueueUrl));
 
-            List<Message> messages;
-            do {
-                // receive messages from the queue
-                LOGGER.debug(() -> "Getting messages");
-                // long polling and wait for waitTimeSeconds before timed out
-                final ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
-                        .queueUrl(queueUrl)
-                        .waitTimeSeconds((int) sqsConfig.getPollFrequency().getDuration().toSeconds())
-                        .messageAttributeNames("All") // Message attribute wildcard.
-                        .build();
-
-                messages = sqsClient.receiveMessage(receiveMessageRequest)
-                        .messages();
-
-                // delete messages from the queue
-                for (final Message message : messages) {
+                List<Message> messages;
+                // This allows polling to eventually stop if the job is disabled.
+                final Instant endTime = Instant.now().plus(sqsConfig.getRePollDuration());
+                do {
                     try {
-                        final AttributeMap attributeMap = new AttributeMap();
-                        addReceiptId(attributeMap);
-                        addSqsMessageId(attributeMap, message);
-
-                        // TODO:
-                        //  * It is agreed that stroom will not duplicate the data on S3, so will
-                        //    just create the meta rec in the db along with s3 location to read from there.
-                        //  * Don't need to worry about any auth filtering beyond authenticating to the SQS itself.
-                        //  * Add in logging to receive log.
-                        //  * S3 is read only from stroom's POV, so we need a isReadOnly method on the Store api.
-                        final S3CreateEvent s3CreateEvent = convertMessage(message.body(), attributeMap);
-
-                        // Consumer is responsible for doing attributeMap filtering as they need
-                        // to deal with accept/drop/reject
-                        s3EventConsumer.accept(s3CreateEvent);
-
-                        // Now delete the msg we have consumed
-                        final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
+                        // receive messages from the queue
+                        LOGGER.debug("Getting messages from queue: {}, endTime: {}", queueUrl, endTime);
+                        // long polling and wait for waitTimeSeconds before timed out
+                        final ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
                                 .queueUrl(queueUrl)
-                                .receiptHandle(message.receiptHandle())
+                                .waitTimeSeconds((int) sqsConfig.getPollMaxWaitTime().toSeconds())
+                                .messageAttributeNames("All") // Message attribute wildcard.
+                                .visibilityTimeout((int) sqsConfig.getVisibilityTimeout().toSeconds())
+                                .maxNumberOfMessages(sqsConfig.getMaxNumberOfMessages())
+                                .messageSystemAttributeNames(
+                                        MessageSystemAttributeName.SENT_TIMESTAMP,
+                                        MessageSystemAttributeName.SENDER_ID)
                                 .build();
-                        sqsClient.deleteMessage(deleteMessageRequest);
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e::getMessage, e);
+
+                        final ReceiveMessageResponse receiveMessageResponse = sqsClient.receiveMessage(
+                                receiveMessageRequest);
+                        messages = receiveMessageResponse.messages();
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("poll() - messages: {}, queueUrl: {}", messages.size(), queueUrl);
+                        }
+
+                        // delete messages from the queue
+                        for (final Message message : messages) {
+                            handleSqsMessage(message, queueUrl, sqsClient, deadLetterQueueUrl);
+                            // Any messages already handled will have been deleted from the queue.
+                            // The rest will eventually become visible on the queue again, so avilable
+                            // for polling when we restart.
+                            if (Thread.currentThread().isInterrupted() || shuttingDown.get()) {
+                                break;
+                            }
+                        }
+                    } catch (final Throwable e) {
+                        LOGGER.error("Error polling SQS queue {}. Swallowing error - {}",
+                                queueUrl, LogUtil.exceptionMessage(e), e);
                     }
-                    if (Thread.currentThread().isInterrupted()) {
-                        LOGGER.info("Thread interrupted, stopping polling");
-                        break;
-                    }
-                }
-            } while (!messages.isEmpty());
+                    // Keep looping if we consumed messages quickly. This tries to avoid pauses.
+                } while (shouldContinuePolling(endTime));
+            } else {
+                LOGGER.warn("SQS has not been configured. Nothing to do.");
+            }
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
+        }
+    }
+
+    private boolean shouldContinuePolling(final Instant endTime) {
+        if (Instant.now().isAfter(endTime)) {
+            LOGGER.debug("shouldContinuePolling() - endTime {} reached", endTime);
+            return false;
+        }
+        if (Thread.currentThread().isInterrupted()) {
+            LOGGER.debug("shouldContinuePolling() - Thread interrupted");
+            return false;
+        }
+        if (shuttingDown.get()) {
+            LOGGER.debug("shouldContinuePolling() - Shutting down");
+            return false;
+        }
+        return true;
+    }
+
+    private void handleSqsMessage(final Message message,
+                                  final String queueUrl,
+                                  final SqsClient sqsClient,
+                                  final String deadLetterQueueUrl) {
+        try {
+            final AttributeMap attributeMap = new AttributeMap();
+            addReceiptId(attributeMap);
+            addSqsMessageId(attributeMap, message);
+
+            final S3CreateEvent s3CreateEvent = convertMessage(message.body(), attributeMap);
+
+            // Consumer is responsible for doing attributeMap filtering as they need
+            // to deal with accept/drop/reject
+            s3EventConsumer.accept(s3CreateEvent);
+
+            // RECEIVE or DROP so delete the message
+            deleteSqsMessage(message, queueUrl, sqsClient);
+        } catch (final RuntimeException e) {
+            handleMessageFailure(message, queueUrl, sqsClient, deadLetterQueueUrl, e);
+        }
+    }
+
+    private static void handleMessageFailure(final Message message,
+                                             final String queueUrl,
+                                             final SqsClient sqsClient,
+                                             final String deadLetterQueueUrl,
+                                             final RuntimeException e) {
+        if (NullSafe.isNonBlankString(deadLetterQueueUrl)) {
+            LOGGER.error(LogUtil.message("Error processing message - queueUrl: {}, " +
+                                         "moving it to deadLetterQueueUrl: {} - {}",
+                    queueUrl, deadLetterQueueUrl, LogUtil.exceptionMessage(e)), e);
+            try {
+                // Manually 'move' the message to the dead letter queue
+                reSendSqsMessage(message, deadLetterQueueUrl, sqsClient);
+                deleteSqsMessage(message, queueUrl, sqsClient);
+            } catch (final Exception ex) {
+                // If something goes wrong, the message will remain in the main queue and eventually
+                // become visible again, so will get re-received under the redrive policy.
+                LOGGER.error(LogUtil.message(
+                        "Error moving message to dead letter queue - deadLetterQueueUrl: {} - {}",
+                        deadLetterQueueUrl, LogUtil.exceptionMessage(e)), e);
+            }
+        } else {
+            LOGGER.error(LogUtil.message("Error processing message - queueUrl: {} - {}",
+                    queueUrl, LogUtil.exceptionMessage(e)), e);
+        }
+    }
+
+    private static void reSendSqsMessage(final Message message,
+                                         final String queueUrl,
+                                         final SqsClient sqsClient) {
+        try {
+            // Capture the original message attributes as they will get lost on re-send
+            final Map<String, MessageAttributeValue> messageAttributes = message.messageAttributes();
+            final String originalMessageId = message.messageId();
+            messageAttributes.put("OriginalMessageId", MessageAttributeValue.builder()
+                    .stringValue(originalMessageId)
+                    .build());
+            if (NullSafe.hasEntries(messageAttributes)) {
+                final MessageAttributeValue originalSentTime = messageAttributes.get(
+                        MessageSystemAttributeName.SENT_TIMESTAMP.toString());
+                final MessageAttributeValue originalSenderId = messageAttributes.get(
+                        MessageSystemAttributeName.SENDER_ID.toString());
+                messageAttributes.put("Original" + MessageSystemAttributeName.SENT_TIMESTAMP, originalSentTime);
+                messageAttributes.put("Original" + MessageSystemAttributeName.SENDER_ID, originalSenderId);
+            }
+
+            final SendMessageRequest sendMessageRequest = SendMessageRequest.builder()
+                    .queueUrl(queueUrl)
+                    .messageBody(message.body())
+                    .messageAttributes(messageAttributes)
+                    .build();
+            final SendMessageResponse sendMessageResponse = sqsClient.sendMessage(sendMessageRequest);
+            LOGGER.debug("reSendSqsMessage() - Success - message: {}, sendMessageResponse: {}, queueUrl: {}",
+                    message, sendMessageResponse, queueUrl);
+        } catch (final RuntimeException e) {
+            throw new RuntimeException(LogUtil.message("Error sending message to SQS - queueUrl: {} - {}",
+                    queueUrl, LogUtil.exceptionMessage(e)), e);
+        }
+    }
+
+    private static void deleteSqsMessage(final Message message,
+                                         final String queueUrl,
+                                         final SqsClient sqsClient) {
+        final String receiptHandle = message.receiptHandle();
+        try {
+            final DeleteMessageRequest deleteMessageRequest = DeleteMessageRequest.builder()
+                    .queueUrl(queueUrl)
+                    .receiptHandle(receiptHandle)
+                    .build();
+            sqsClient.deleteMessage(deleteMessageRequest);
+        } catch (final RuntimeException e) {
+            LOGGER.error("Error deleting sqs messageId: {}, receiptHandle: {}, queueUrl: {}",
+                    message.messageId(), receiptHandle, queueUrl, e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -323,6 +448,7 @@ public class S3EventNotificationService {
                         final JsonNode objectNode = getNode(s3Node, "object");
                         final String objectKey = getNodeAsString(objectNode, "key");
                         final long objectSize = getNodeAsLong(objectNode, "size");
+                        final String eTag = getNodeAsString(objectNode, "eTag");
 
                         attributeMap.put(StandardHeaderArguments.CONTENT_LENGTH, String.valueOf(objectSize));
 
@@ -333,7 +459,7 @@ public class S3EventNotificationService {
                                 bucketArn, objectKey, objectSize, attributeMap);
 
                         final S3Location s3Location = new S3Location(awsRegion, bucketName, objectKey);
-                        addS3MetaAttributes(s3Location, attributeMap);
+                        addS3MetaAttributes(s3Location, eTag, attributeMap);
 //                        addS3MetaAttributes(s3Location, attributeMap);
                         s3CreateEvent = new S3CreateEvent(s3Location, attributeMap);
                     } else {
@@ -345,7 +471,8 @@ public class S3EventNotificationService {
             }
         } catch (final Exception e) {
             throw new IllegalStateException(LogUtil.message(
-                    "Error parsing message body - {}, messageBody:\n{}", LogUtil.exceptionMessage(e), messageBody), e);
+                    "Error parsing SQS message body - {}, messageBody:\n{}",
+                    LogUtil.exceptionMessage(e), messageBody), e);
         }
         return s3CreateEvent;
     }
@@ -420,8 +547,8 @@ public class S3EventNotificationService {
     }
 
     private ClientState getSqsClient() {
-        // Intentionally use instance equality as the provider will return a different instance
-        // if the config has changed.
+        // Intentionally use instance equality as the object is large, and the provider will
+        // return a different instance if the config has changed.
         if (receiveDataConfigProvider.get().getSqs() != lastSqsConfig) {
             synchronized (this) {
                 final SqsConfig newSqsConfig = receiveDataConfigProvider.get().getSqs();
