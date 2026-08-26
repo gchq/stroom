@@ -556,11 +556,13 @@ public class S3Manager {
 
     public S3ObjectInfo getObjectInfo(final Meta meta,
                                       final String keyNamePattern,
+                                      final String expectedEtag,
                                       final TimeBasis timeBasis) {
         Objects.requireNonNull(meta);
         final String bucketName = createBucketName(getBucketNamePattern(), meta, timeBasis);
         final String key = createKey(keyNamePattern, meta, timeBasis);
-        return s3ClientHelper.getObjectInfo(bucketName, key);
+        final String region = getRegion();
+        return s3ClientHelper.getObjectInfo(region, bucketName, key, expectedEtag);
 
 //        final HeadObjectRequest request = HeadObjectRequest.builder()
 //                .bucket(bucketName)

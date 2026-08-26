@@ -30,6 +30,7 @@ public class MetaProperties {
     private final Long createMs;
     private final Long effectiveMs;
     private final Long statusMs;
+    private final boolean readOnly;
 
     public MetaProperties(final Long parentId,
                           final String typeName,
@@ -40,7 +41,8 @@ public class MetaProperties {
                           final Long processorTaskId,
                           final Long createMs,
                           final Long effectiveMs,
-                          final Long statusMs) {
+                          final Long statusMs,
+                          final boolean readOnly) {
         this.parentId = parentId;
         this.typeName = typeName;
         this.feedName = feedName;
@@ -51,6 +53,7 @@ public class MetaProperties {
         this.createMs = createMs;
         this.effectiveMs = effectiveMs;
         this.statusMs = statusMs;
+        this.readOnly = readOnly;
     }
 
     public Long getParentId() {
@@ -93,6 +96,10 @@ public class MetaProperties {
         return statusMs;
     }
 
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -114,6 +121,7 @@ public class MetaProperties {
                ", createMs=" + createMs +
                ", effectiveMs=" + effectiveMs +
                ", statusMs=" + statusMs +
+               ", readOnly=" + readOnly +
                '}';
     }
 
@@ -132,6 +140,7 @@ public class MetaProperties {
         private Long createMs;
         private Long effectiveMs;
         private Long statusMs;
+        private boolean readOnly = false;
 
         private Builder() {
         }
@@ -147,6 +156,7 @@ public class MetaProperties {
             this.createMs = metaProperties.createMs;
             this.effectiveMs = metaProperties.effectiveMs;
             this.statusMs = metaProperties.statusMs;
+            this.readOnly = metaProperties.readOnly;
         }
 
         /**
@@ -224,6 +234,11 @@ public class MetaProperties {
             return this;
         }
 
+        public Builder readOnly(final boolean readOnly) {
+            this.readOnly = readOnly;
+            return this;
+        }
+
         public MetaProperties build() {
             // When were we created
             final long timeMs = createMs != null
@@ -242,7 +257,8 @@ public class MetaProperties {
                     effectiveMs != null
                             ? effectiveMs
                             : timeMs, // Ensure an effective time
-                    statusMs);
+                    statusMs,
+                    readOnly);
         }
     }
 }

@@ -116,9 +116,9 @@ public final class S3Location implements HasDisplayValue {
     @Override
     public String toString() {
         return "S3Location[" +
-               "regionName=" + regionName + ", " +
-               "bucketName=" + bucketName + ", " +
-               "key=" + key + ']';
+               "regionName='" + regionName + "', " +
+               "bucketName='" + bucketName + "', " +
+               "key='" + key + "']";
     }
 
     @JsonIgnore

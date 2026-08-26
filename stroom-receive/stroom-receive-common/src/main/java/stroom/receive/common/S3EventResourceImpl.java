@@ -29,7 +29,7 @@ import jakarta.inject.Provider;
 import java.util.Objects;
 
 /**
- * This is an alternative mechanism to {@link S3EventNotificationService} for notifying
+ * This is an alternative mechanism to {@link S3EventService} for notifying
  * Stroom of the presence of a file on S3 that needs to be turned into a Stroom Stream.
  * <p>
  * Mainly here to aid testing, but may be useful as an additional method.
@@ -39,10 +39,10 @@ public class S3EventResourceImpl implements S3EventResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3EventResourceImpl.class);
 
-    private final Provider<S3EventNotificationService> s3EventNotificationServiceProvider;
+    private final Provider<S3EventService> s3EventNotificationServiceProvider;
 
     @Inject
-    S3EventResourceImpl(final Provider<S3EventNotificationService> s3EventNotificationServiceProvider) {
+    S3EventResourceImpl(final Provider<S3EventService> s3EventNotificationServiceProvider) {
         this.s3EventNotificationServiceProvider = s3EventNotificationServiceProvider;
     }
 
@@ -54,6 +54,6 @@ public class S3EventResourceImpl implements S3EventResource {
         // TODO Allow calls only from proxy at the moment. May want to open it up for
         //  other people to use.
         s3EventNotificationServiceProvider.get()
-                .notify(request.getS3Location(), request.getMetaData());
+                .notify(request.getS3Location(), request.getETag(), request.getMetaData());
     }
 }

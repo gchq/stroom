@@ -333,14 +333,20 @@ public class S3ClientHelper {
         }
     }
 
-    public S3ObjectInfo getObjectInfo(final String bucketName,
-                                      final String key) {
+    public S3ObjectInfo getObjectInfo(final String regionName,
+                                      final String bucketName,
+                                      final String key,
+                                      final String expectedETag) {
         NullSafe.requireNonBlankString(key, () -> "key must not be blank");
         NullSafe.requireNonBlankString(bucketName, () -> "bucketName must not be blank");
-        final HeadObjectRequest request = HeadObjectRequest.builder()
+        HeadObjectRequest.Builder builder = HeadObjectRequest.builder()
                 .bucket(bucketName)
-                .key(key)
-                .build();
+                .key(key);
+        if (expectedETag != null) {
+            builder = builder.ifMatch(expectedETag);
+        }
+
+        final HeadObjectRequest request = builder.build();
 
         logRequest("HEAD: ", bucketName, key, request);
 
@@ -355,11 +361,14 @@ public class S3ClientHelper {
                     k ->
                             CIKey.of(S3Util.removeAwsPrefix(k)));
 
+            final String eTag = headObjectResponse.eTag();
             final long contentLength = NullSafe.getLong(headObjectResponse.contentLength());
 
             return new S3ObjectInfo(
+                    regionName,
                     bucketName,
                     key,
+                    eTag,
                     contentLength,
                     NullSafe.getInt(headObjectResponse.tagCount()),
                     s3Metadata);
@@ -753,6 +762,7 @@ public class S3ClientHelper {
      *
      * @param bucketName    S3 bucket name.
      * @param key           S3 object key.
+     * @param eTag          The eTag of the object.
      * @param contentLength Size of the object in bytes.
      * @param tagCount      The number of tags on the object.
      * @param s3Metadata    The Metadata for the S3 object.
@@ -760,8 +770,10 @@ public class S3ClientHelper {
      *                      Caller is resposible for namespacing entries if different types are used.
      */
     public record S3ObjectInfo(
+            String regionName,
             String bucketName,
             String key,
+            String eTag,
             long contentLength,
             int tagCount,
             Map<CIKey, String> s3Metadata) {

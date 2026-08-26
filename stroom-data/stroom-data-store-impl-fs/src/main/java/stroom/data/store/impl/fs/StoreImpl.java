@@ -91,8 +91,9 @@ public class StoreImpl implements Store, AttributeMapFactory {
                         or near full.""");
             }
 
+            final MetaProperties effectiveMetaProperties = setReadOnlyState(metaProperties, volume);
             // First time call (no file yet exists)
-            final Meta meta = metaService.create(metaProperties);
+            final Meta meta = metaService.create(effectiveMetaProperties);
             final DataVolume dataVolume = dataVolumeService.createDataVolume(meta.getId(), volume);
             final StreamStore streamStore = getStreamStore(dataVolume.volume().getVolumeType());
             // Delegate to the appropriate store
@@ -119,20 +120,35 @@ public class StoreImpl implements Store, AttributeMapFactory {
                         "No S3 volume found with region '{}' and bucket: '{}'",
                         s3Location.getRegionName(), s3Location.getBucketName())));
 
+        final MetaProperties effectiveMetaProperties = setReadOnlyState(metaProperties, volume);
         // Create in UNLOCKED state as the stream's data already exists
-        final Meta meta = metaService.create(metaProperties, Status.UNLOCKED);
+        final Meta meta = metaService.create(effectiveMetaProperties, Status.UNLOCKED);
         final long metaId = meta.getId();
         // Create the link between the meta and the S3 location
         dataVolumeService.createS3LocationDataVolume(
                 metaId, volume, Set.of(s3Location), true);
 
         LOGGER.debug(
-                "addExistingS3Source() - Created stream {}, metaProperties: {}, s3Location: {}, volume: {}, meta: {}",
+                "addExistingS3Source() - Created stream {}, effectiveMetaProperties: {}, " +
+                "s3Location: {}, volume: {}, meta: {}",
                 metaId,
-                metaProperties,
+                effectiveMetaProperties,
                 s3Location,
                 volume,
                 meta);
+    }
+
+    private MetaProperties setReadOnlyState(final MetaProperties metaProperties,
+                                            final FsVolume fsVolume) {
+        final boolean currVal = metaProperties.isReadOnly();
+        final boolean newVal = fsVolume.getVolumeType().isReadOnly();
+        if (currVal != newVal) {
+            return metaProperties.copy()
+                    .readOnly(newVal)
+                    .build();
+        } else {
+            return metaProperties;
+        }
     }
 
     @Override

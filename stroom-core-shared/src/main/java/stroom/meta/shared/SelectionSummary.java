@@ -158,8 +158,8 @@ public class SelectionSummary {
         return ageRange;
     }
 
-    public Long getReadOnlyCount() {
-        return readOnlyCount;
+    public long getReadOnlyCount() {
+        return NullSafe.getLong(readOnlyCount);
     }
 
     @Override

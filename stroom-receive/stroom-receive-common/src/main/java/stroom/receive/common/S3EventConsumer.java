@@ -18,7 +18,7 @@ package stroom.receive.common;
 
 
 /**
- * Consumes S3 put events, i.e. as captured by {@link S3EventNotificationService}.
+ * Consumes S3 put events, i.e. as captured by {@link S3EventService}.
  * <p>
  * It is the responsibility of the implementation to perform attribute map filtering.
  * </p>
@@ -26,5 +26,10 @@ package stroom.receive.common;
 @FunctionalInterface
 public interface S3EventConsumer {
 
-    void accept(S3CreateEvent s3CreateEvent);
+    /// Implementations should perform attribute map filtering and handle the event.
+    /// Both RECEIVE and DROP outcomes should return without exception.
+    /// A REJECT outcome should throw a {@link StroomStreamException}
+    ///
+    /// @param s3CreateEvent The S3 file to process
+    void accept(S3CreateEvent s3CreateEvent) throws StroomStreamException;
 }

@@ -67,12 +67,16 @@ public interface S3EventResource extends RestResource {
         @JsonProperty
         private final S3Location s3Location;
         @JsonProperty
+        private final String eTag;
+        @JsonProperty
         private final Map<String, String> metaData;
 
         @JsonCreator
         public S3EventNotificationRequest(@JsonProperty("s3Location") final S3Location s3Location,
+                                          @JsonProperty("eTag") final String eTag,
                                           @JsonProperty("metaData") final Map<String, String> metaData) {
             this.s3Location = s3Location;
+            this.eTag = eTag;
             this.metaData = metaData;
         }
 
@@ -91,11 +95,16 @@ public interface S3EventResource extends RestResource {
             return metaData;
         }
 
+        public String getETag() {
+            return eTag;
+        }
+
         @Override
         public String toString() {
             return "S3EventRequest{" +
                    "s3Location=" + s3Location +
                    ", metaData=" + metaData +
+                   ", eTag=" + eTag +
                    '}';
         }
     }

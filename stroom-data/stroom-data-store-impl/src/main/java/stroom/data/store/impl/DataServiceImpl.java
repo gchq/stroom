@@ -423,6 +423,10 @@ class DataServiceImpl implements DataService {
                 entries.add(new Entry("Volume Group", grpName)));
         NullSafe.consume(dataVolume, DataVolume::getVolumeType, FsVolumeType::getDisplayValue, typeName ->
                 entries.add(new Entry("Volume Type", typeName)));
+        entries.add(new DataInfoSection.Entry("Read-Only Data",
+                (meta.isReadOnly()
+                        ? "Yes"
+                        : "No")));
 
         return entries;
     }

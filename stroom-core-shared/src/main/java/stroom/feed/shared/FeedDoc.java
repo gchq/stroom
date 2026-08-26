@@ -210,6 +210,10 @@ public class FeedDoc extends AbstractDoc {
         return volumeGroup;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum FeedStatus implements HasDisplayValue, HasPrimitiveValue {
         RECEIVE("Receive", 1),
         REJECT("Reject", 2),

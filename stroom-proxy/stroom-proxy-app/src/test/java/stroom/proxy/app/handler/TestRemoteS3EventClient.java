@@ -79,7 +79,7 @@ class TestRemoteS3EventClient {
     void testSendNotification() {
         final S3Location s3Location = new S3Location("region", "bucket", "key");
         final S3EventNotificationRequest request = new S3EventNotificationRequest(
-                s3Location, Map.of("meta", "value"));
+                s3Location, "my-E-tag", Map.of("meta", "value"));
 
         final String expectedUrl = "http://localhost:8080" + ResourcePaths.buildAuthenticatedApiPath(
                 "/s3event/v1", "/notify");

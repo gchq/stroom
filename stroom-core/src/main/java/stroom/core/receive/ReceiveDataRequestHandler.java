@@ -16,7 +16,6 @@
 
 package stroom.core.receive;
 
-import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
@@ -78,9 +77,6 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private final RequestAuthenticator requestAuthenticator;
     private final CertificateExtractor certificateExtractor;
     private final ReceiptIdGenerator receiptIdGenerator;
-    private final ContentAutoCreationService contentAutoCreationService;
-    private final FeedProperties feedProperties;
-    private final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider;
     private final ReceiveDataConfig receiveDataConfig;
 
     @Inject
@@ -91,9 +87,6 @@ class ReceiveDataRequestHandler implements RequestHandler {
                                      final RequestAuthenticator requestAuthenticator,
                                      final CertificateExtractor certificateExtractor,
                                      final ReceiptIdGenerator receiptIdGenerator,
-                                     final ContentAutoCreationService contentAutoCreationService,
-                                     final FeedProperties feedProperties,
-                                     final Provider<AutoContentCreationConfig> autoContentCreationConfigProvider,
                                      final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         this.securityContext = securityContext;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
@@ -102,9 +95,6 @@ class ReceiveDataRequestHandler implements RequestHandler {
         this.requestAuthenticator = requestAuthenticator;
         this.certificateExtractor = certificateExtractor;
         this.receiptIdGenerator = receiptIdGenerator;
-        this.contentAutoCreationService = contentAutoCreationService;
-        this.feedProperties = feedProperties;
-        this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
         this.receiveDataConfig = receiveDataConfigProvider.get();
     }
 

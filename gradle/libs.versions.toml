@@ -3,7 +3,7 @@
 eventLogging = "5.0-beta.31_schema-v4.0-beta.3"
 
 # ------------3rd-party------------
-aws = "2.46.16"
+aws = "2.54.0"
 commons-io = "2.21.0"
 dropwizard = "5.0.2" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "9.4.2"
@@ -34,6 +34,7 @@ aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.47.0" }
 aws-s3-transfer-manager = { module = "software.amazon.awssdk:s3-transfer-manager" } # version controlled by AWS BOM
 aws-sqs = { module = "software.amazon.awssdk:sqs" } # version controlled by AWS BOM
 aws-sts = { module = "software.amazon.awssdk:sts" } # version controlled by AWS BOM
+aws-apache-client = { module = "software.amazon.awssdk:apache-client" } # version controlled by AWS BOM
 bcrypt = { module = "de.svenkubiak:jBCrypt", version = "0.4.3" }
 bouncy-castle = { module = "org.bouncycastle:bcprov-jdk18on", version = "1.78.1" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine" } # version controlled by dropwizard-dependencies

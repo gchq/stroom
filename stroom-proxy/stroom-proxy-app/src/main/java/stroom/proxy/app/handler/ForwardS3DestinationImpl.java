@@ -38,6 +38,8 @@ import stroom.util.shared.string.CIKey;
 import stroom.util.shared.string.CIKeys;
 import stroom.util.string.TemplateUtil.Template;
 
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -115,14 +117,16 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
             s3MetaData.put(CIKeys.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
             try {
+                final String eTag;
                 try {
-                    s3ClientHelper.upload(
+                    final PutObjectResponse putObjectResponse = s3ClientHelper.upload(
                             bucketName,
                             key,
                             s3Tags,
                             s3MetaData,
                             DEFAULT_UPLOAD_PROPERTIES,
                             zipFile);
+                    eTag = putObjectResponse.eTag();
                 } catch (final Exception e) {
                     throw new RuntimeException(LogUtil.message(
                             "Error uploading file {} to S3, bucketName: {}, key: {} - {}",
@@ -137,7 +141,8 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
                             forwardS3Config.getClientConfig().getRegion(),
                             bucketName,
                             key);
-                    final S3EventNotificationRequest request = new S3EventNotificationRequest(s3Location, attributeMap);
+                    final S3EventNotificationRequest request = new S3EventNotificationRequest(
+                            s3Location, eTag, attributeMap);
                     remoteS3EventClient.sendNotification(request);
                 }
 

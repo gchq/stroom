@@ -18,12 +18,14 @@ package stroom.aws.sqs;
 
 
 import stroom.aws.common.AwsCredentialsHelper;
+import stroom.util.http.HttpClientConfiguration;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.SqsClientBuilder;
 
 import java.util.Objects;
 
@@ -36,10 +38,16 @@ public class SqsClientFactory {
 
         final AwsCredentialsProvider awsCredentialsProvider = createCredentialsProvider(sqsConfig);
 
-        final SqsClient sqsClient = SqsClient.builder()
+        final SqsClientBuilder sqsClientBuilder = SqsClient.builder()
                 .credentialsProvider(awsCredentialsProvider)
-                .region(Region.of(sqsConfig.getAwsRegionName()))
-                .build();
+                .region(Region.of(sqsConfig.getAwsRegionName()));
+
+        final HttpClientConfiguration httpClientConfig = sqsConfig.getHttpClient();
+        if (httpClientConfig != null) {
+            // TODO
+        }
+
+        final SqsClient sqsClient = sqsClientBuilder.build();
 
         LOGGER.debug("createSqsClient() - sqsConfig: {}", sqsClient);
         return sqsClient;

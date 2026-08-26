@@ -54,7 +54,6 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 import tools.jackson.databind.JsonNode;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -77,9 +76,9 @@ import java.util.regex.Pattern;
  * </p>
  */
 @Singleton
-public class S3EventNotificationService {
+public class S3EventService {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3EventNotificationService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3EventService.class);
     private static final Pattern DOT_DELIMITER_PATTERN = Pattern.compile("\\.");
     private static final String EXPECTED_EVENT_MAJOR_VERSION = "2";
     private static final String SUPPORTED_EVENT_NAME_PREFIX = "ObjectCreated:";
@@ -89,10 +88,6 @@ public class S3EventNotificationService {
     private static final String TIME_FIELD = "Time";
     private static final String BUCKET_FIELD = "Bucket";
     private static final String RECORDS_FIELD = "Records";
-
-    /// Means we don't have to wait for the ScheduledTaskExecutor to call poll() again with its 10s latency,
-    /// while still allowing the job to be eventually disabled.
-    private static final Duration MAX_RE_POLL_DURATION = Duration.ofMinutes(5);
 
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final SqsClientFactory sqsClientFactory;
@@ -109,7 +104,7 @@ public class S3EventNotificationService {
     private volatile ClientState sqsClientState;
 
     @Inject
-    public S3EventNotificationService(
+    public S3EventService(
             final Provider<ReceiveDataConfig> receiveDataConfigProvider,
             final SqsClientFactory sqsClientFactory,
             final ReceiptIdGenerator receiptIdGenerator,

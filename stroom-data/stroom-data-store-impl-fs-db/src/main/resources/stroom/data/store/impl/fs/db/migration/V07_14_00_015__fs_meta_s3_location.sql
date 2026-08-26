@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS fs_meta_s3_location (
     PRIMARY KEY (id),
 
     -- Indexing the region+bucket+key results in an index key that is too big as it has to assume
-    -- the F s3_key is 4 bytes/char. Thus, we index the hash instead, which is much smaller and almost
+    -- the s3_key is 4 bytes/char. Thus, we index the hash instead, which is much smaller and almost
     -- unique.
     UNIQUE KEY `fs_meta_s3_location_meta_s3_hash_idx` (meta_id, s3_hash)
     ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;

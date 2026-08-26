@@ -17,8 +17,12 @@
 package stroom.app.guice;
 
 import stroom.index.lucene.LuceneModule;
+import stroom.job.api.ScheduledJobsBinder;
+import stroom.receive.common.S3EventService;
+import stroom.util.RunnableWrapper;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public class CoreModule extends AbstractModule {
 
@@ -142,5 +146,28 @@ public class CoreModule extends AbstractModule {
         install(new stroom.task.impl.TaskModule());
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
         install(new stroom.view.impl.ViewModule());
+
+        // We have to define this here rather than in RemoteFeedModule as that is common to
+        // both stroom and proxy.
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(S3EventNotificationsRunnable.class, builder -> builder
+                        .name("S3 Event Notifications Poll")
+                        .description("Polls an AWS SQS for S3 event notifications.")
+                        .frequencySchedule("1s") // Essentially to run continuously
+                        .enabled(false)
+                        .enabledOnBootstrap(false)
+                        .advanced(true));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class S3EventNotificationsRunnable extends RunnableWrapper {
+
+        @Inject
+        S3EventNotificationsRunnable(final S3EventService executor) {
+            super(executor::poll);
+        }
     }
 }

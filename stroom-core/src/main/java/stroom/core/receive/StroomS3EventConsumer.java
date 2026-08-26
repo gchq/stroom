@@ -33,6 +33,7 @@ import stroom.receive.common.StreamFactory;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -74,21 +75,21 @@ public class StroomS3EventConsumer implements S3EventConsumer {
                 LOGGER.debug("handleEvent() - Dropping s3CreateEvent: {}", s3CreateEvent);
             }
         } catch (final StroomStreamException e) {
-            // TODO rejection has no concept when consuming s3 events as there is nobody to send the rejection to
-            LOGGER.debug("handleEvent() - Rejecting s3CreateEvent: {}", s3CreateEvent);
+            LOGGER.debug("handleEvent() - 'Rejecting' s3CreateEvent: {}", s3CreateEvent);
+            throw e;
         }
     }
 
     private void receiveEvent(final S3Location s3Location, final AttributeMap attributeMap) {
         // Get the effective time if one has been provided.
-        String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
-        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+        String typeName = NullSafe.string(attributeMap.get(StandardHeaderArguments.TYPE));
+        final String feedName = NullSafe.string(attributeMap.get(StandardHeaderArguments.FEED));
         final Long effectiveMs = StreamFactory.getReferenceEffectiveTime(attributeMap, true);
         LOGGER.debug("receiveEvent() - feedName: '{}', typeName: '{}', effectiveMs: {}, s3Location: {}",
                 feedName, typeName, effectiveMs, s3Location);
 
-        if (typeName == null || typeName.isEmpty()) {
-            // If no type name is supplied then get the default for the feed.
+        if (typeName.isBlank()) {
+            // If no type name is supplied, then get the default for the feed.
             typeName = feedProperties.getStreamTypeName(feedName);
         }
 
@@ -106,9 +107,4 @@ public class StroomS3EventConsumer implements S3EventConsumer {
         // Don't need a target as the data is on S3 and staying put for stroom to read from it.
         store.addExistingS3Source(metaProperties, s3Location);
     }
-
-
-    // --------------------------------------------------------------------------------
-
-
 }

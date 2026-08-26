@@ -42,8 +42,6 @@ import stroom.meta.impl.db.MetaDbConnProvider;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
-import stroom.meta.impl.db.jooq.tables.MetaVal;
-import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -60,6 +58,7 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValBoolean;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
@@ -91,7 +90,6 @@ import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.InsertOnDuplicateStep;
-import org.jooq.InsertValuesStep10;
 import org.jooq.Name;
 import org.jooq.OrderField;
 import org.jooq.Record;
@@ -188,6 +186,7 @@ public class MetaDaoImpl implements MetaDao {
             .statusMs(record.get(META_M.STATUS_TIME))
             .createMs(record.get(META_M.CREATE_TIME))
             .effectiveMs(record.get(META_M.EFFECTIVE_TIME))
+            .readOnly(record.get(META_M.IS_READ_ONLY))
             .build();
 
     private static final Function<Record, Meta> RECORD_TO_PARENT_META_MAPPER = record -> Meta.builder()
@@ -203,6 +202,7 @@ public class MetaDaoImpl implements MetaDao {
             .statusMs(record.get(parent.STATUS_TIME))
             .createMs(record.get(parent.CREATE_TIME))
             .effectiveMs(record.get(parent.EFFECTIVE_TIME))
+            .readOnly(record.get(parent.IS_READ_ONLY))
             .build();
 
     private static final byte STATUS_ID_UNLOCKED = Status.UNLOCKED.getPrimitiveValue();
@@ -262,6 +262,7 @@ public class MetaDaoImpl implements MetaDao {
         expressionMapper.map(MetaFields.META_PROCESSOR_TASK_ID, META_M.PROCESSOR_TASK_ID, Long::valueOf);
         expressionMapper.multiMap(MetaFields.FEED, META_M.FEED_ID, this::getFeedIds, true);
         expressionMapper.multiMap(MetaFields.TYPE, META_M.TYPE_ID, this::getTypeIds);
+        expressionMapper.map(MetaFields.READ_ONLY, META_M.IS_READ_ONLY, Boolean::valueOf);
         // Get a uuid for the selected pipe doc
         expressionMapper.map(MetaFields.PIPELINE, META_PROCESSOR_P.PIPELINE_UUID, value -> value, false);
         // Get 0-many uuids for a pipe name (partial/wild-carded)
@@ -290,6 +291,7 @@ public class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.ID, META_M.ID, ValLong::create);
         valueMapper.map(MetaFields.FEED, META_FEED_F.NAME, ValString::create);
         valueMapper.map(MetaFields.TYPE, META_TYPE_T.NAME, ValString::create);
+        valueMapper.map(MetaFields.READ_ONLY, META_M.IS_READ_ONLY, ValBoolean::create);
         valueMapper.map(MetaFields.PIPELINE, META_PROCESSOR_P.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(MetaFields.PIPELINE_NAME, META_PROCESSOR_P.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(MetaFields.PARENT_ID, META_M.PARENT_ID, ValLong::create);
@@ -390,7 +392,8 @@ public class MetaDaoImpl implements MetaDao {
                                 META.TYPE_ID,
                                 META.PROCESSOR_ID,
                                 META.PROCESSOR_FILTER_ID,
-                                META.PROCESSOR_TASK_ID)
+                                META.PROCESSOR_TASK_ID,
+                                META.IS_READ_ONLY)
                         .values(
                                 metaProperties.getCreateMs(),
                                 metaProperties.getEffectiveMs(),
@@ -401,7 +404,8 @@ public class MetaDaoImpl implements MetaDao {
                                 typeId,
                                 processorId,
                                 metaProperties.getProcessorFilterId(),
-                                metaProperties.getProcessorTaskId())
+                                metaProperties.getProcessorTaskId(),
+                                metaProperties.isReadOnly())
                         .returning(META.ID)
                         .fetchOne())
                 .getId();
@@ -420,6 +424,7 @@ public class MetaDaoImpl implements MetaDao {
                 .statusMs(metaProperties.getStatusMs())
                 .createMs(metaProperties.getCreateMs())
                 .effectiveMs(metaProperties.getEffectiveMs())
+                .readOnly(metaProperties.isReadOnly())
                 .build();
     }
 
@@ -460,18 +465,8 @@ public class MetaDaoImpl implements MetaDao {
                 .batch(
                         BatchingIterator.batchedStreamOf(metaPropertiesList, MAX_VALUES_PER_INSERT)
                                 .map(metaPropertiesBatch -> {
-                                    final InsertValuesStep10<
-                                            MetaRecord,
-                                            Long,
-                                            Long,
-                                            Long,
-                                            Byte,
-                                            Long,
-                                            Integer,
-                                            Integer,
-                                            Integer,
-                                            Integer,
-                                            Long> insertStep = context
+                                    //noinspection VariableTypeCanBeExplicit // var is justified with 11 types
+                                    var insertStep = context
                                             .insertInto(META,
                                                     META.CREATE_TIME,
                                                     META.EFFECTIVE_TIME,
@@ -482,26 +477,23 @@ public class MetaDaoImpl implements MetaDao {
                                                     META.TYPE_ID,
                                                     META.PROCESSOR_ID,
                                                     META.PROCESSOR_FILTER_ID,
-                                                    META.PROCESSOR_TASK_ID);
+                                                    META.PROCESSOR_TASK_ID,
+                                                    META.IS_READ_ONLY);
 
-                                    metaPropertiesBatch.forEach(metaProperties ->
-                                            insertStep.values(
-                                                    metaProperties.getCreateMs(),
-                                                    metaProperties.getEffectiveMs(),
-                                                    metaProperties.getParentId(),
-                                                    statusId,
-                                                    metaProperties.getStatusMs(),
-                                                    metaProperties.getFeedName() == null
-                                                            ? null
-                                                            : feedIds.get(metaProperties.getFeedName()),
-                                                    metaProperties.getTypeName() == null
-                                                            ? null
-                                                            : typeIds.get(metaProperties.getTypeName()),
-                                                    metaProperties.getProcessorUuid() == null
-                                                            ? null
-                                                            : processorIds.get(metaProperties.getProcessorUuid()),
-                                                    metaProperties.getProcessorFilterId(),
-                                                    metaProperties.getProcessorTaskId()));
+                                    for (final MetaProperties metaProperties : metaPropertiesBatch) {
+                                        insertStep = insertStep.values(
+                                                metaProperties.getCreateMs(),
+                                                metaProperties.getEffectiveMs(),
+                                                metaProperties.getParentId(),
+                                                statusId,
+                                                metaProperties.getStatusMs(),
+                                                NullSafe.get(metaProperties.getFeedName(), feedIds::get),
+                                                NullSafe.get(metaProperties.getTypeName(), typeIds::get),
+                                                NullSafe.get(metaProperties.getProcessorUuid(), processorIds::get),
+                                                metaProperties.getProcessorFilterId(),
+                                                metaProperties.getProcessorTaskId(),
+                                                metaProperties.isReadOnly());
+                                    }
                                     return insertStep;
                                 })
                                 .collect(Collectors.toList()))
@@ -1652,7 +1644,11 @@ public class MetaDaoImpl implements MetaDao {
                                                         DSL.groupConcatDistinct(META_M.STATUS)
                                                                 .separator(GROUP_CONCAT_DELIMITER),
                                                         DSL.min(META_M.CREATE_TIME),
-                                                        DSL.max(META_M.CREATE_TIME)
+                                                        DSL.max(META_M.CREATE_TIME),
+                                                        DSL.sum(DSL.if_(
+                                                                META_M.IS_READ_ONLY.eq(true),
+                                                                1,
+                                                                0))
                                                 )
                                                 .from(META_M)
                                                 .straightJoin(META_FEED_F).on(META_M.FEED_ID.eq(META_FEED_F.ID))
@@ -1679,7 +1675,10 @@ public class MetaDaoImpl implements MetaDao {
                             NullSafe.getInt(record.get(6, Integer.class)),
                             NullSafe.getInt(record.get(7, Integer.class)),
                             distinctStatuses,
-                            new Range<>((Long) record.get(9), (Long) record.get(10)));
+                            new Range<>(
+                                    (Long) record.get(9),
+                                    (Long) record.get(10)),
+                            NullSafe.getLong(record.get(11, Long.class)));
                 })
                 .orElse(null);
     }

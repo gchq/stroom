@@ -1,24 +1,7 @@
-/*
- * Copyright 2016-2025 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.job.impl;
 
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.job.api.ScheduledJob;
-import stroom.job.impl.db.jooq.tables.Job;
 import stroom.job.shared.JobNode;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
@@ -189,7 +172,7 @@ class ScheduledTaskExecutor {
                         } else {
                             unManagedTaskCount++;
                         }
-                        final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
+                        final Runnable runnable = taskContextFactory.context(taskName, ignored -> {
                             try {
                                 // Run the task
                                 LOGGER.logDurationIfDebugEnabled(
@@ -202,7 +185,7 @@ class ScheduledTaskExecutor {
 
                         CompletableFuture
                                 .runAsync(runnable, executor)
-                                .whenComplete((r, t) ->
+                                .whenComplete((ignoredResult, ignoredThrowable) ->
                                         function.getRunning().set(false));
                     } else {
                         LOGGER.trace(() -> LogUtil.message(
@@ -318,7 +301,8 @@ class ScheduledTaskExecutor {
     }
 
     private AtomicBoolean getRunningState(final ScheduledJob scheduledJob) {
-        return runningMapOfScheduledJobs.computeIfAbsent(scheduledJob, k -> new AtomicBoolean(false));
+        return runningMapOfScheduledJobs.computeIfAbsent(scheduledJob, ignored ->
+                new AtomicBoolean(false));
     }
 
 
