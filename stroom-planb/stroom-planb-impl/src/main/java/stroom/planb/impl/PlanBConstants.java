@@ -16,6 +16,8 @@
 
 package stroom.planb.impl;
 
+import java.util.List;
+
 public final class PlanBConstants {
 
     public static final String WRITER_DIR_NAME = "writer";
@@ -30,6 +32,10 @@ public final class PlanBConstants {
     public static final String ARCHIVE_LOCAL_DIR_NAME = "archive_local";
     public static final String PROCESSING_DIR_NAME = "processing";
     public static final String TRASH_DIR_NAME = "trash";
+    public static final String ARCHIVE_DIR_NAME = "archive";
+
+    public static final List<String> STAGE_DIR_NAMES = List.of(
+            HOLDING_DIR_NAME, PROCESSING_DIR_NAME, ARCHIVE_DIR_NAME);
 
     public static final String TMP_DIR_SUFFIX = ".tmp";
     public static final String TMP_DIR_PREFIX = ".tmp_";
@@ -46,7 +52,6 @@ public final class PlanBConstants {
     public static final String VERSION_FILE_NAME = ".version";
     public static final String FAILED_FILE_NAME = ".failed";
     public static final String RETENTION_LAST_FILE_NAME = ".retention.last";
-    public static final String ARCHIVE_DIR_NAME = "archive";
     public static final String COMPACTION_LAST_FILE_NAME = ".compaction.last";
 
     private PlanBConstants() {}

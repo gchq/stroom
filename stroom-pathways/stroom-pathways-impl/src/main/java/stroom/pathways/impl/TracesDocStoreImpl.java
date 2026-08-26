@@ -27,6 +27,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.pathways.shared.TracesDoc;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
+import stroom.planb.impl.fs.SharedFileStoreTrash;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -40,9 +41,7 @@ import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -130,47 +129,12 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
         }
     }
 
-    private static final List<String> SHARD_SUBDIRS =
-            List.of(PlanBConstants.HOLDING_DIR_NAME, PlanBConstants.PROCESSING_DIR_NAME,
-                    PlanBConstants.ARCHIVE_DIR_NAME);
-
-    /**
-     * Atomically renames the holding, processing and archive directories for the given doc into
-     * a {@code trash/} staging area under the same shared path root. The
-     * housekeeping job ({@link stroom.planb.impl.fs.SharedFileStoreCleaner}) drains the
-     * trash on its next run.
-     */
     private void trashSharedData(final TracesDoc doc) {
-        final String sharedPathStr = doc.getSharedPath();
-        if (sharedPathStr == null || sharedPathStr.isBlank()) {
+        if (doc.getSharedPath() == null || doc.getSharedPath().isBlank()) {
             return;
         }
-        final Path sharedRoot = Path.of(sharedPathStr);
-        final String trashEntryName = doc.getUuid() + "-" + System.currentTimeMillis();
-        final Path trashEntry = sharedRoot
-                .resolve(PlanBConstants.TRASH_DIR_NAME)
-                .resolve(trashEntryName);
-
-        for (final String subdir : SHARD_SUBDIRS) {
-            final Path src = sharedRoot.resolve(subdir).resolve(doc.getUuid());
-            if (!Files.exists(src)) {
-                continue;
-            }
-            final Path dest = trashEntry.resolve(subdir);
-            try {
-                Files.createDirectories(dest.getParent());
-                Files.move(src, dest, StandardCopyOption.ATOMIC_MOVE);
-                LOGGER.info("Moved deleted doc shard data to trash: {} -> {}", src, dest);
-            } catch (final NoSuchFileException e) {
-                // Already moved (e.g. by a concurrent operation) — safe to ignore.
-            } catch (final IOException e) {
-                LOGGER.warn(() -> "Could not move shard data to trash for doc " +
-                        doc.getUuid() + ": " + e.getMessage() +
-                        " — housekeeping job will clean it up as an orphan");
-            }
-        }
+        SharedFileStoreTrash.trashDoc(Path.of(doc.getSharedPath()), doc.getUuid());
     }
-
 
     // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
@@ -263,8 +227,10 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
         }
         try {
             final Path sharedRoot = Path.of(sharedPathStr);
-            return Files.exists(sharedRoot.resolve(PlanBConstants.PROCESSING_DIR_NAME).resolve(doc.getUuid()))
-                    || Files.exists(sharedRoot.resolve(PlanBConstants.HOLDING_DIR_NAME).resolve(doc.getUuid()));
+            // Every stage: a store whose data has all been published to archive buckets still holds
+            // data, and changing its shard count would leave those buckets unreachable.
+            return PlanBConstants.STAGE_DIR_NAMES.stream()
+                    .anyMatch(stage -> Files.exists(sharedRoot.resolve(stage).resolve(doc.getUuid())));
         } catch (final Exception e) {
             return false;
         }
@@ -343,13 +309,19 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
     // SharedFileStoreDocStore
     // -------------------------------------------------------------------------
 
+    /**
+     * Throws rather than skipping a listed document it cannot read:
+     * {@link stroom.planb.impl.fs.SharedFileStoreCleaner} trashes whatever is missing from this
+     * answer, so a short list costs data. A document deleted
+     * between the list and the read costs one housekeeping run, and is an orphan by the next one.
+     */
     @Override
     public Map<Path, Set<String>> getLiveSharedPathData() {
         final Map<Path, Set<String>> result = new HashMap<>();
         for (final DocRef docRef : store.list()) {
             final TracesDoc doc = store.readDocument(docRef);
             if (doc == null) {
-                continue;
+                throw new EntityServiceException("Could not read listed trace store " + docRef);
             }
             final String sharedPathStr = doc.getSharedPath();
             if (sharedPathStr == null || sharedPathStr.isBlank()) {

@@ -208,4 +208,32 @@ class TestPlanBDocStore {
                 .isInstanceOf(EntityServiceException.class)
                 .hasMessageContaining("Cannot change shard count: data has already been written");
     }
+
+    @Test
+    void testWriteDocument_changeShardCount_withSharedData_archiveOnly() throws IOException {
+        final Path sharedPath = tempDir.resolve("shared");
+        final String uuid = "test-uuid";
+
+        final PlanBDoc oldDoc = doc(uuid, 5, sharedPath.toString());
+        final PlanBDoc newDoc = doc(uuid, 6, sharedPath.toString());
+
+        // Data only ever archived — no holding or processing dir remains.
+        Files.createDirectories(sharedPath.resolve(PlanBConstants.ARCHIVE_DIR_NAME).resolve(uuid));
+
+        when(store.readDocument(any())).thenReturn(oldDoc);
+
+        assertThatThrownBy(() -> storeImpl.writeDocument(newDoc))
+                .isInstanceOf(EntityServiceException.class)
+                .hasMessageContaining("Cannot change shard count: data has already been written");
+    }
+
+    private static PlanBDoc doc(final String uuid, final int shardCount, final String sharedPath) {
+        return PlanBDoc.builder()
+                .uuid(uuid)
+                .name("test_name")
+                .settings(new TraceSettings.Builder()
+                        .sharedFileStore(new SharedFileStoreSettings(shardCount, sharedPath))
+                        .build())
+                .build();
+    }
 }

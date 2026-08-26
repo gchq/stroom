@@ -248,12 +248,15 @@ public class PlanBDocStoreImpl
         }
         // 1. Check shared storage
         final String sharedPathStr = doc.getSharedPath();
-        if (sharedPathStr != null && !sharedPathStr.isBlank()) {
+        if (NullSafe.isNonBlankString(sharedPathStr)) {
             try {
                 final Path sharedRoot = Path.of(sharedPathStr);
-                if (Files.exists(sharedRoot.resolve(PlanBConstants.PROCESSING_DIR_NAME).resolve(doc.getUuid())) ||
-                    Files.exists(sharedRoot.resolve(PlanBConstants.HOLDING_DIR_NAME).resolve(doc.getUuid()))) {
-                    return true;
+                // Every stage: data that has all been published to archive buckets still counts, and
+                // changing the shard count would leave those buckets unreachable.
+                for (final String stage : PlanBConstants.STAGE_DIR_NAMES) {
+                    if (Files.exists(sharedRoot.resolve(stage).resolve(doc.getUuid()))) {
+                        return true;
+                    }
                 }
             } catch (final Exception e) {
                 // Ignore
