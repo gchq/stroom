@@ -80,12 +80,23 @@ public class InstantForwardFile {
         receivingDirProvider = new NumberedDirProvider(receivingDir);
     }
 
-    public ReceiverFactory get(final ForwardFileConfig forwardFileConfig) {
+    /**
+     * @return the forward destination this instant forwarder relays to. Exposed so that the directory
+     * ingest route (ZipDirScanner) can hand whole file groups to the SAME destination instance - two
+     * ForwardFileDestinationImpl instances on one directory would each allocate output ids from disk
+     * and collide.
+     */
+    public ForwardDestination createDestination(final ForwardFileConfig forwardFileConfig) {
+        return forwardFileDestinationFactory.create(forwardFileConfig);
+    }
+
+    public ReceiverFactory get(final ForwardFileConfig forwardFileConfig,
+                               final ForwardDestination forwardDestination) {
         LOGGER.info("Creating instant file forward destination to {}",
                 forwardFileConfig.getPath());
         final InstantForwardFileReceiver instantForwardFileReceiver = new InstantForwardFileReceiver(
                 receivingDirProvider,
-                forwardFileDestinationFactory.create(forwardFileConfig),
+                forwardDestination,
                 logStream);
         return new InstantForwardFileReceiverFactory(
                 attributeMapFilterFactory.create(),

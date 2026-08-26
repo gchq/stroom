@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -320,16 +321,20 @@ class TestLocalFileGroupQueueLeaseReclaim extends StroomUnitTest {
                 .as("and the queue still has work, so an empty poll never happens")
                 .isEqualTo(1);
 
-        final FileGroupQueueItem reclaimed = queue.next().orElseThrow();
+        // Both are delivered. Order is deliberately not asserted: a reclaimed item is re-queued under
+        // a NEW id at the back of the queue with its delivery-attempt count incremented, per
+        // queues.md 2.7, so it follows the work that was already pending rather than jumping the
+        // queue. What matters is that the abandoned item is recovered at all while the queue is busy.
+        final List<String> delivered = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            final FileGroupQueueItem item = queue.next().orElseThrow();
+            delivered.add(item.getMessage().fileGroupId());
+            item.acknowledge();
+        }
 
-        assertThat(reclaimed.getMessage().fileGroupId())
+        assertThat(delivered)
                 .as("the abandoned item is recovered rather than stranded behind the backlog")
-                .isEqualTo("fg-1");
-        reclaimed.acknowledge();
-
-        final FileGroupQueueItem remaining = queue.next().orElseThrow();
-        assertThat(remaining.getMessage().fileGroupId()).isEqualTo("fg-2");
-        remaining.acknowledge();
+                .containsExactlyInAnyOrder("fg-1", "fg-2");
 
         assertThat(queue.getApproximateInFlightCount()).isZero();
         assertThat(queue.getApproximatePendingCount()).isZero();

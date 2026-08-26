@@ -61,6 +61,8 @@ import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactoryImpl;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.ReceiveAllAttributeMapFilter;
+import stroom.proxy.app.handler.ForwardDestination;
+import stroom.proxy.app.handler.ForwardHttpPostDestinationFactory;
 import stroom.proxy.app.handler.ForwarderConfig;
 import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
@@ -141,6 +143,9 @@ public class ProxyCoreModule extends AbstractModule {
             final ProxyConfig proxyConfig,
             final Provider<InstantForwardHttpPost> instantForwardHttpPostProvider,
             final Provider<InstantForwardFile> instantForwardFileProvider,
+            final Provider<ForwardHttpPostDestinationFactory> forwardHttpPostDestinationFactoryProvider,
+            final Provider<SimpleReceiver> simpleReceiverProvider,
+            final Provider<ZipReceiver> zipReceiverProvider,
             final Provider<ProxyPipelineAssembler> pipelineAssemblerProvider) {
 
         final List<ForwarderConfig> instantForwarders = proxyConfig.streamAllEnabledForwarders()
@@ -165,12 +170,40 @@ public class ProxyCoreModule extends AbstractModule {
             }
             final ForwarderConfig forwarderConfig = instantForwarders.getFirst();
             return switch (forwarderConfig) {
-                case final ForwardHttpPostConfig config -> instantForwardHttpPostProvider.get().get(config);
-                case final ForwardFileConfig config -> instantForwardFileProvider.get().get(config);
+                case final ForwardHttpPostConfig config -> {
+                    // The HTTP instant receiver POSTs the request stream directly and never writes to
+                    // disk. The directory ingest route needs a destination that can take a whole file
+                    // group, so it gets its own - HTTP forwarding holds no per-directory state, so a
+                    // second instance is harmless.
+                    wireDirectoryIngest(simpleReceiverProvider, zipReceiverProvider,
+                            forwardHttpPostDestinationFactoryProvider.get().create(config));
+                    yield instantForwardHttpPostProvider.get().get(config);
+                }
+                case final ForwardFileConfig config -> {
+                    final InstantForwardFile instantForwardFile = instantForwardFileProvider.get();
+                    // One destination instance, shared by both ingest routes.
+                    final ForwardDestination destination = instantForwardFile.createDestination(config);
+                    wireDirectoryIngest(simpleReceiverProvider, zipReceiverProvider, destination);
+                    yield instantForwardFile.get(config, destination);
+                }
             };
         }
 
         return pipelineAssemblerProvider.get().getReceiverFactory();
+    }
+
+    /**
+     * Instant forwarding skips pipeline assembly, so nothing else sets the receivers' destination - but
+     * ZipDirScanner is enabled by default and calls ZipReceiver.receive(Path, ...) directly. Without
+     * this every scanned zip NPEs into the failure directory and leaks its receiving clone. This has
+     * been true since before the pipeline existed; the historical instant branch never wired them
+     * either.
+     */
+    private static void wireDirectoryIngest(final Provider<SimpleReceiver> simpleReceiverProvider,
+                                            final Provider<ZipReceiver> zipReceiverProvider,
+                                            final ForwardDestination destination) {
+        simpleReceiverProvider.get().setDestination(destination::add);
+        zipReceiverProvider.get().setDestination(destination::add);
     }
 
     /**

@@ -18,6 +18,8 @@ package stroom.proxy.app.pipeline.monitor;
 
 
 import stroom.proxy.app.pipeline.queue.FileGroupQueue;
+import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.guice.ProxyCoreModule;
 import stroom.proxy.app.pipeline.runtime.ProxyPipelineAssembler;
 import stroom.proxy.app.pipeline.runtime.ProxyPipelineRuntime;
 import stroom.proxy.app.pipeline.store.FileStore;
@@ -45,14 +47,23 @@ public class PipelineHealthChecks implements HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineHealthChecks.class);
 
     private final Provider<ProxyPipelineAssembler> assemblerProvider;
+    private final boolean instantForwarding;
 
     @Inject
-    public PipelineHealthChecks(final Provider<ProxyPipelineAssembler> assemblerProvider) {
+    public PipelineHealthChecks(final ProxyConfig proxyConfig,
+                                final Provider<ProxyPipelineAssembler> assemblerProvider) {
+        this.instantForwarding = ProxyCoreModule.isInstantForwarding(proxyConfig);
         this.assemblerProvider = assemblerProvider;
     }
 
     @Override
     public HealthCheck.Result getHealth() {
+        if (instantForwarding) {
+            // Do NOT call the assembler here. Instant forwarding bypasses the pipeline, and asking for
+            // the assembler would build every queue and file store - which nothing then starts, uses
+            // or closes.
+            return HealthCheck.Result.healthy("Pipeline not in use - instant forwarding is configured");
+        }
         try {
             final ProxyPipelineRuntime runtime = assemblerProvider.get().getRuntime();
             return checkRuntime(runtime);

@@ -156,9 +156,11 @@ public class PreAggregator {
                             // with the rest of the recovery.
                             recoveryFailureCount.incrementAndGet();
                             LOGGER.error(() -> LogUtil.message(
-                                    "Unable to recover split file group '{}' on start-up: {}. "
-                                    + "It has been left in place; the remaining groups will still be "
-                                    + "recovered.", dir, LogUtil.exceptionMessage(e)), e);
+                                    "Unable to recover split file group '{}' on start-up: {}. The "
+                                    + "remaining groups will still be recovered. NOTE: addDir may have "
+                                    + "partially consumed this group before failing, so inspect it "
+                                    + "rather than assuming it is intact.",
+                                    dir, LogUtil.exceptionMessage(e)), e);
                         }
                     });
                 } catch (final IOException e) {

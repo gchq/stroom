@@ -19,8 +19,12 @@ package stroom.proxy.app.guice;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ForwardDestination;
+import stroom.proxy.app.handler.ForwardHttpPostDestinationFactory;
 import stroom.proxy.app.handler.InstantForwardFile;
 import stroom.proxy.app.handler.InstantForwardHttpPost;
+import stroom.proxy.app.handler.SimpleReceiver;
+import stroom.proxy.app.handler.ZipReceiver;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.app.pipeline.runtime.ProxyPipelineAssembler;
 
@@ -59,11 +63,25 @@ class TestInstantForwardingWiring {
 
         assertThat(ProxyCoreModule.isInstantForwarding(proxyConfig)).isTrue();
 
+        final ForwardDestination destination = Mockito.mock(ForwardDestination.class);
+        final ForwardHttpPostDestinationFactory destinationFactory =
+                Mockito.mock(ForwardHttpPostDestinationFactory.class);
+        Mockito.when(destinationFactory.create(Mockito.any())).thenReturn(destination);
+        final SimpleReceiver simpleReceiver = Mockito.mock(SimpleReceiver.class);
+        final ZipReceiver zipReceiver = Mockito.mock(ZipReceiver.class);
+
         final ReceiverFactory receiverFactory = new ProxyCoreModule().provideReceiverFactory(
                 proxyConfig,
                 () -> instantForwardHttpPost,
                 failingProvider(),
+                () -> destinationFactory,
+                () -> simpleReceiver,
+                () -> zipReceiver,
                 failingProvider());
+
+        // The directory ingest route must be wired too - ZipDirScanner calls the receivers directly.
+        Mockito.verify(simpleReceiver).setDestination(Mockito.any());
+        Mockito.verify(zipReceiver).setDestination(Mockito.any());
 
         assertThat(receiverFactory).isSameAs(instantReceiverFactory);
     }
@@ -71,8 +89,11 @@ class TestInstantForwardingWiring {
     @Test
     void testInstantFileForwarderBypassesThePipeline() {
         final ReceiverFactory instantReceiverFactory = Mockito.mock(ReceiverFactory.class);
+        final ForwardDestination destination = Mockito.mock(ForwardDestination.class);
         final InstantForwardFile instantForwardFile = Mockito.mock(InstantForwardFile.class);
-        Mockito.when(instantForwardFile.get(Mockito.any(ForwardFileConfig.class)))
+        Mockito.when(instantForwardFile.createDestination(Mockito.any(ForwardFileConfig.class)))
+                .thenReturn(destination);
+        Mockito.when(instantForwardFile.get(Mockito.any(ForwardFileConfig.class), Mockito.any()))
                 .thenReturn(instantReceiverFactory);
 
         final ProxyConfig proxyConfig = ProxyConfig.builder()
@@ -86,11 +107,22 @@ class TestInstantForwardingWiring {
 
         assertThat(ProxyCoreModule.isInstantForwarding(proxyConfig)).isTrue();
 
+        final SimpleReceiver simpleReceiver = Mockito.mock(SimpleReceiver.class);
+        final ZipReceiver zipReceiver = Mockito.mock(ZipReceiver.class);
+
         final ReceiverFactory receiverFactory = new ProxyCoreModule().provideReceiverFactory(
                 proxyConfig,
                 failingProvider(),
                 () -> instantForwardFile,
+                failingProvider(),
+                () -> simpleReceiver,
+                () -> zipReceiver,
                 failingProvider());
+
+        // The file forwarder must share ONE destination between both ingest routes.
+        Mockito.verify(instantForwardFile).createDestination(Mockito.any(ForwardFileConfig.class));
+        Mockito.verify(simpleReceiver).setDestination(Mockito.any());
+        Mockito.verify(zipReceiver).setDestination(Mockito.any());
 
         assertThat(receiverFactory).isSameAs(instantReceiverFactory);
     }
@@ -114,6 +146,9 @@ class TestInstantForwardingWiring {
 
         final ReceiverFactory receiverFactory = new ProxyCoreModule().provideReceiverFactory(
                 proxyConfig,
+                failingProvider(),
+                failingProvider(),
+                failingProvider(),
                 failingProvider(),
                 failingProvider(),
                 () -> assembler);

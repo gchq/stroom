@@ -20,6 +20,8 @@ package stroom.proxy.app.pipeline.monitor;
 import stroom.proxy.app.pipeline.queue.local.LocalFileGroupQueue;
 import stroom.proxy.app.pipeline.queue.sqs.SqsFileGroupQueue;
 import stroom.proxy.app.pipeline.queue.sqs.SqsHeartbeatCounters;
+import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.guice.ProxyCoreModule;
 import stroom.proxy.app.pipeline.runtime.ProxyPipelineAssembler;
 import stroom.proxy.app.pipeline.runtime.ProxyPipelineRuntime;
 import stroom.proxy.app.pipeline.stage.FileGroupQueueWorker;
@@ -47,9 +49,12 @@ public class PipelineMonitorProvider {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PipelineMonitorProvider.class);
 
     private final Provider<ProxyPipelineAssembler> assemblerProvider;
+    private final boolean instantForwarding;
 
     @Inject
-    public PipelineMonitorProvider(final Provider<ProxyPipelineAssembler> assemblerProvider) {
+    public PipelineMonitorProvider(final ProxyConfig proxyConfig,
+                                   final Provider<ProxyPipelineAssembler> assemblerProvider) {
+        this.instantForwarding = ProxyCoreModule.isInstantForwarding(proxyConfig);
         this.assemblerProvider = assemblerProvider;
     }
 
@@ -58,6 +63,11 @@ public class PipelineMonitorProvider {
      */
     public PipelineMonitorSnapshot snapshot() {
         try {
+            if (instantForwarding) {
+                // Same reason as PipelineHealthChecks: asking for the assembler in instant mode builds
+                // a pipeline nothing uses.
+                return new PipelineMonitorSnapshot(List.of(), List.of(), List.of());
+            }
             final ProxyPipelineRuntime runtime = assemblerProvider.get().getRuntime();
             return buildSnapshot(runtime);
         } catch (final Exception e) {

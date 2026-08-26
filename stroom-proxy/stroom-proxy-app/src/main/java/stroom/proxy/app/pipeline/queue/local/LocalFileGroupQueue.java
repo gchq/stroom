@@ -613,7 +613,9 @@ public class LocalFileGroupQueue implements FileGroupQueue {
                 try {
                     if (Files.exists(pendingFile)) {
                         moveToFailed(inFlightFile, "abandoned-duplicate", null);
-                    } else {
+                    } else if (!requeueWithIncrementedAttempts(inFlightFile)) {
+                        // Could not read or rewrite the message, so fall back to returning it as-is
+                        // rather than losing it. It keeps its old attempt count.
                         moveAtomically(inFlightFile, pendingFile);
                     }
                     reclaimed++;
@@ -626,6 +628,37 @@ public class LocalFileGroupQueue implements FileGroupQueue {
         }
 
         return reclaimed;
+    }
+
+    /**
+     * Return an abandoned in-flight message to pending with its delivery-attempt count incremented, and
+     * quarantine it once the bound is reached.
+     * <p>
+     * Without the increment an item that abandons its own lease - one killed by an {@link Error}, which
+     * the worker does not catch - cycles abandon → reclaim → abandon indefinitely, re-running its side
+     * effects each time and never reaching {@code maxDeliveryAttempts}. That was survivable while the
+     * scan only ran on an empty poll; it is not now the scan runs on every poll.
+     * </p>
+     *
+     * @return true if the message was re-queued or quarantined here, false if the caller should fall
+     * back to a plain move.
+     */
+    private boolean requeueWithIncrementedAttempts(final Path inFlightFile) {
+        try {
+            final FileGroupQueueMessage message = codec.fromBytes(Files.readAllBytes(inFlightFile));
+            final int attempts = deliveryAttempts(message) + 1;
+            if (attempts >= maxDeliveryAttempts) {
+                moveToFailed(inFlightFile, "max-delivery-attempts", null);
+            } else {
+                writePending(withDeliveryAttempts(message, attempts));
+                Files.deleteIfExists(inFlightFile);
+            }
+            return true;
+        } catch (final Exception e) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Queue {} could not increment delivery attempts for {}", name, inFlightFile), e);
+            return false;
+        }
     }
 
     /**

@@ -313,7 +313,17 @@ public class KafkaFileGroupQueue implements FileGroupQueue {
                     + "Raw payload: {}",
                     getName(), record.topic(), record.partition(), record.offset(),
                     record.value() == null ? "null" : new String(record.value(), StandardCharsets.UTF_8)), e);
-            threadsConsumer.commitSync(Map.of(tp, new OffsetAndMetadata(record.offset() + 1)));
+            try {
+                threadsConsumer.commitSync(Map.of(tp, new OffsetAndMetadata(record.offset() + 1)));
+            } catch (final Exception commitFailure) {
+                // If the commit fails the record stays uncommitted and will be re-polled, which is
+                // preferable to silently advancing. Surface it as an IOException so the stage backs off
+                // rather than letting an unchecked throw escape and put us back where we started.
+                commitFailure.addSuppressed(e);
+                throw new IOException(LogUtil.message(
+                        "Undecodable message on queue '{}' at {}-{} offset {} could not be committed past",
+                        getName(), record.topic(), record.partition(), record.offset()), commitFailure);
+            }
             return Optional.empty();
         }
 
