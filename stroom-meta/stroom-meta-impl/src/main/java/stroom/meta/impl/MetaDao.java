@@ -44,11 +44,16 @@ public interface MetaDao {
     Long getMaxId();
 
     /**
-     * Get the current maximum id of any data with a create time less than or equal to the supplied time.
+     * Get the current maximum id of any data with an id greater than or equal to the supplied id and a create
+     * time less than or equal to the supplied time.
      *
-     * @return The maximum id of any data item or null if there is no data.
+     * @param minId           The lowest id to consider. Bounding the search matters because the database finds
+     *                        the maximum id by working back down from the highest id there is, so without a
+     *                        lower bound it reads the whole table when nothing matches.
+     * @param maxCreateTimeMs The latest create time to consider.
+     * @return The maximum id of any matching data item or null if there is none.
      */
-    Long getMaxId(long maxCreateTimeMs);
+    Long getMaxId(long minId, long maxCreateTimeMs);
 
     Meta create(MetaProperties metaProperties);
 

@@ -158,6 +158,11 @@ public class MetaDaoImpl implements MetaDao {
 
     private static final int FIND_RECORD_LIMIT = 1000000;
 
+    /**
+     * The name MySQL gives the primary key index, for use in index hints.
+     */
+    private static final String PRIMARY_KEY_INDEX = "PRIMARY";
+
     static final stroom.meta.impl.db.jooq.tables.Meta META_M = META.as("m");
     static final MetaFeed META_FEED_F = META_FEED.as("f");
     static final MetaType META_TYPE_T = META_TYPE.as("t");
@@ -351,11 +356,19 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     @Override
-    public Long getMaxId(final long maxCreateTimeMs) {
+    public Long getMaxId(final long minId, final long maxCreateTimeMs) {
+        // Walk back down the primary key and stop at the first row created at or before the supplied time.
+        // `max(id)` would read every row created at or before that time instead, which is most of the table
+        // for a recent time, so it gets slower as the table grows. Ids and create times rise together, so the
+        // row we want is normally within a few rows of the end. The index hint is needed because MySQL will
+        // otherwise use a create time index and sort all the matching rows to satisfy the `order by`.
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                        .select(DSL.max(META_M.ID))
-                        .from(META_M)
-                        .where(META_M.CREATE_TIME.le(maxCreateTimeMs))
+                        .select(META_M.ID)
+                        .from(META_M.useIndex(PRIMARY_KEY_INDEX))
+                        .where(META_M.ID.ge(minId))
+                        .and(META_M.CREATE_TIME.le(maxCreateTimeMs))
+                        .orderBy(META_M.ID.desc())
+                        .limit(1)
                         .fetchOptional())
                 .map(Record1::value1)
                 .orElse(null);

@@ -89,8 +89,11 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public Long getMaxId(final long maxCreateTimeMs) {
-        return getMaxId();
+    public Long getMaxId(final long minId, final long maxCreateTimeMs) {
+        final Long maxId = getMaxId();
+        return maxId != null && maxId >= minId
+                ? maxId
+                : null;
     }
 
     @Override

@@ -547,7 +547,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         LOGGER.debug("createTasksFromCriteria() - requiredTasks: {}, filter: {}", maxTasks, filter);
 
         // This will contain locked and unlocked streams
-        final long maxMetaId = getMaxMetaId(filter);
+        final long maxMetaId = getMaxMetaId(filter, tracker.getMinMetaId());
 
         final DurationTimer durationTimer = DurationTimer.start();
         final List<Meta> metaList = runSelectMetaQuery(
@@ -584,7 +584,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         totalTasksCreated.add(createdTasks);
     }
 
-    private long getMaxMetaId(final ProcessorFilter filter) {
+    private long getMaxMetaId(final ProcessorFilter filter, final long minMetaId) {
         // Determine the max effective time for all feed dependencies.
         final Instant now = Instant.now();
         final FeedDependencies feedDependencies =
@@ -627,8 +627,14 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 // whereas finding the max id before a given time makes it scan every stream created before it.
                 if (maxCreateTime.isBefore(now)) {
                     // Find the max stream id that belongs to a stream that has a create time less than or equal
-                    // to the max effective time.
-                    return Objects.requireNonNullElse(metaService.getMaxId(maxCreateTime.toEpochMilli()), 0L);
+                    // to the max effective time. We have already created tasks for everything below the
+                    // tracker's position, so that is as far back as we need to look. If nothing that far back
+                    // was created early enough then report the id below the tracker, which leaves the tracker
+                    // where it is rather than winding it back to the last stream we can process.
+                    final Long maxId = metaService.getMaxId(minMetaId, maxCreateTime.toEpochMilli());
+                    return maxId != null
+                            ? maxId
+                            : minMetaId - 1;
                 }
             }
         }
