@@ -95,7 +95,6 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Record11;
-import org.jooq.Record12;
 import org.jooq.Record2;
 import org.jooq.Record4;
 import org.jooq.Result;
@@ -1502,19 +1501,8 @@ public class MetaDaoImpl implements MetaDao {
         return JooqUtil.contextResult(
                         metaDbConnProvider,
                         context -> {
-                            final SelectWithTiesAfterOffsetStep<Record12<
-                                    Long,
-                                    String,
-                                    String,
-                                    String,
-                                    String,
-                                    Long,
-                                    Byte,
-                                    Long,
-                                    Long,
-                                    Long,
-                                    Integer,
-                                    Long>> select = metaExpressionMapper.addJoins(
+                            //noinspection VariableTypeCanBeExplicit // 13 generic types justifies var
+                            final var select = metaExpressionMapper.addJoins(
                                             context
                                                     .selectDistinct(
                                                             META_M.ID,
@@ -1528,7 +1516,8 @@ public class MetaDaoImpl implements MetaDao {
                                                             META_M.CREATE_TIME,
                                                             META_M.EFFECTIVE_TIME,
                                                             META_M.PROCESSOR_FILTER_ID,
-                                                            META_M.PROCESSOR_TASK_ID
+                                                            META_M.PROCESSOR_TASK_ID,
+                                                            META_M.IS_READ_ONLY
                                                     )
                                                     .from(META_M)
                                                     .straightJoin(META_FEED_F).on(META_M.FEED_ID.eq(META_FEED_F.ID))
@@ -1587,7 +1576,8 @@ public class MetaDaoImpl implements MetaDao {
                                                         parent.CREATE_TIME,
                                                         parent.EFFECTIVE_TIME,
                                                         parent.PROCESSOR_FILTER_ID,
-                                                        parent.PROCESSOR_TASK_ID
+                                                        parent.PROCESSOR_TASK_ID,
+                                                        parent.IS_READ_ONLY
                                                 )
                                                 .from(META_M)
                                                 .straightJoin(META_FEED_F).on(META_M.FEED_ID.eq(META_FEED_F.ID))

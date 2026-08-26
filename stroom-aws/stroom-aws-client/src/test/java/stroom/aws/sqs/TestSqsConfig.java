@@ -22,11 +22,15 @@ import stroom.aws.common.shared.AwsAssumeRoleRequest;
 import stroom.aws.common.shared.AwsBasicCredentials;
 import stroom.test.common.TestUtil;
 import stroom.util.http.HttpClientConfiguration;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.StroomDuration;
 
 import org.junit.jupiter.api.Test;
 
 class TestSqsConfig {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSqsConfig.class);
 
     @Test
     void testSerde() {
@@ -57,9 +61,12 @@ class TestSqsConfig {
                 .queueUrl("queueURL")
                 .visibilityTimeout(StroomDuration.ofSeconds(20))
                 .maxNumberOfMessages(30)
-                .pollFrequency(StroomDuration.ofSeconds(10))
+                .pollMaxWaitTime(StroomDuration.ofSeconds(10))
+                .deadLetterQueueUrl("DLQ")
                 .build();
 
-        TestUtil.testSerialisation(sqsConfig, SqsConfig.class);
+        final SqsConfig sqsConfig2 = TestUtil.testSerialisation(sqsConfig, SqsConfig.class);
+
+        LOGGER.info("sqsConfig2: {}", sqsConfig2);
     }
 }

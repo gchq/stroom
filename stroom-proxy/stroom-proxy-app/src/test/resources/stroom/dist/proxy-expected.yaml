@@ -163,7 +163,9 @@ proxyConfig:
     - "Test Events"
     - "Test Reference"
     receiptCheckMode: "FEED_STATUS"
-    sqs: null
+    s3Event:
+      rePollDuration: "PT5M"
+      sqs: null
     x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"

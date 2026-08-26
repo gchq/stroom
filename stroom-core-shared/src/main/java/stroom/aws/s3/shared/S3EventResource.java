@@ -67,16 +67,16 @@ public interface S3EventResource extends RestResource {
         @JsonProperty
         private final S3Location s3Location;
         @JsonProperty
-        private final String eTag;
+        private final String entityTag; // Not called eTag as that causes issues with Jackson ser/deser
         @JsonProperty
         private final Map<String, String> metaData;
 
         @JsonCreator
         public S3EventNotificationRequest(@JsonProperty("s3Location") final S3Location s3Location,
-                                          @JsonProperty("eTag") final String eTag,
+                                          @JsonProperty("entityTag") final String entityTag,
                                           @JsonProperty("metaData") final Map<String, String> metaData) {
             this.s3Location = s3Location;
-            this.eTag = eTag;
+            this.entityTag = entityTag;
             this.metaData = metaData;
         }
 
@@ -95,8 +95,9 @@ public interface S3EventResource extends RestResource {
             return metaData;
         }
 
-        public String getETag() {
-            return eTag;
+        /// @return The S3 ETag or entity tag.
+        public String getEntityTag() {
+            return entityTag;
         }
 
         @Override
@@ -104,7 +105,7 @@ public interface S3EventResource extends RestResource {
             return "S3EventRequest{" +
                    "s3Location=" + s3Location +
                    ", metaData=" + metaData +
-                   ", eTag=" + eTag +
+                   ", entityTag=" + entityTag +
                    '}';
         }
     }

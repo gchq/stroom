@@ -100,7 +100,7 @@ public class S3EventService {
     private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
 
     //    CachedValue<SqsClient, SqsConfig> cachedSqsClient;
-    private volatile SqsConfig lastSqsConfig = null;
+    private volatile S3EventConfig lastS3EventConfig = null;
     private volatile ClientState sqsClientState;
 
     @Inject
@@ -136,7 +136,7 @@ public class S3EventService {
      * @param s3Location The location of the object on s3
      * @param metaData   Any additional metadata to override the meta obtained from the S3 object.
      */
-    public void notify(final S3Location s3Location, final String eTag, final Map<String, String> metaData) {
+    public void handleEvent(final S3Location s3Location, final String eTag, final Map<String, String> metaData) {
         Objects.requireNonNull(s3Location);
         LOGGER.debug("notify() - s3Location: {}, metaData: {}", s3Location, metaData);
         commonSecurityContext.secure(AppPermission.STROOM_PROXY, () -> {
@@ -196,81 +196,66 @@ public class S3EventService {
                         s3Location.getRegionName(), s3Location.getBucketName(), s3Location.getKey()));
     }
 
-    public void poll() {
+    /// Do a single poll for a batch of messages from the SQS queue.
+    /// Errors are logged. Rejected/failed messages are sent to the dead letter queue.
+    ///
+    /// @param terminationChecker This is used to check if processing should be cleanly terminated mid-batch.
+    public void poll(final TerminationChecker terminationChecker) {
         try {
             final ClientState clientState = getSqsClient();
             if (clientState != null) {
-                final SqsConfig sqsConfig = clientState.config;
+                final S3EventConfig s3EventConfig = clientState.config;
+                final SqsConfig sqsConfig = s3EventConfig.getSqs();
                 final SqsClient sqsClient = clientState.sqsClient;
                 final String queueUrl = sqsConfig.getQueueUrl();
                 final String deadLetterQueueUrl = sqsConfig.getDeadLetterQueueUrl();
                 LOGGER.debug(() -> LogUtil.message("poll() - queueUrl: {}, deadLetterQueueUrl: {}",
                         queueUrl, deadLetterQueueUrl));
 
-                List<Message> messages;
+                final List<Message> messages;
                 // This allows polling to eventually stop if the job is disabled.
-                final Instant endTime = Instant.now().plus(sqsConfig.getRePollDuration());
-                do {
-                    try {
-                        // receive messages from the queue
-                        LOGGER.debug("Getting messages from queue: {}, endTime: {}", queueUrl, endTime);
-                        // long polling and wait for waitTimeSeconds before timed out
-                        final ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
-                                .queueUrl(queueUrl)
-                                .waitTimeSeconds((int) sqsConfig.getPollMaxWaitTime().toSeconds())
-                                .messageAttributeNames("All") // Message attribute wildcard.
-                                .visibilityTimeout((int) sqsConfig.getVisibilityTimeout().toSeconds())
-                                .maxNumberOfMessages(sqsConfig.getMaxNumberOfMessages())
-                                .messageSystemAttributeNames(
-                                        MessageSystemAttributeName.SENT_TIMESTAMP,
-                                        MessageSystemAttributeName.SENDER_ID)
-                                .build();
+                try {
+                    // receive messages from the queue
+                    LOGGER.debug("Getting messages from queue: {}", queueUrl);
+                    // long polling and wait for waitTimeSeconds before timed out
+                    final ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
+                            .queueUrl(queueUrl)
+                            .waitTimeSeconds((int) sqsConfig.getPollMaxWaitTime().toSeconds())
+                            .messageAttributeNames("All") // Message attribute wildcard.
+                            .visibilityTimeout((int) sqsConfig.getVisibilityTimeout().toSeconds())
+                            .maxNumberOfMessages(sqsConfig.getMaxNumberOfMessages())
+                            .messageSystemAttributeNames(
+                                    MessageSystemAttributeName.SENT_TIMESTAMP,
+                                    MessageSystemAttributeName.SENDER_ID)
+                            .build();
 
-                        final ReceiveMessageResponse receiveMessageResponse = sqsClient.receiveMessage(
-                                receiveMessageRequest);
-                        messages = receiveMessageResponse.messages();
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("poll() - messages: {}, queueUrl: {}", messages.size(), queueUrl);
-                        }
-
-                        // delete messages from the queue
-                        for (final Message message : messages) {
-                            handleSqsMessage(message, queueUrl, sqsClient, deadLetterQueueUrl);
-                            // Any messages already handled will have been deleted from the queue.
-                            // The rest will eventually become visible on the queue again, so avilable
-                            // for polling when we restart.
-                            if (Thread.currentThread().isInterrupted() || shuttingDown.get()) {
-                                break;
-                            }
-                        }
-                    } catch (final Throwable e) {
-                        LOGGER.error("Error polling SQS queue {}. Swallowing error - {}",
-                                queueUrl, LogUtil.exceptionMessage(e), e);
+                    final ReceiveMessageResponse receiveMessageResponse = sqsClient.receiveMessage(
+                            receiveMessageRequest);
+                    messages = receiveMessageResponse.messages();
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("poll() - messages: {}, queueUrl: {}", messages.size(), queueUrl);
                     }
-                    // Keep looping if we consumed messages quickly. This tries to avoid pauses.
-                } while (shouldContinuePolling(endTime));
+
+                    // delete messages from the queue
+                    for (final Message message : messages) {
+                        handleSqsMessage(message, queueUrl, sqsClient, deadLetterQueueUrl);
+                        // Any messages already handled will have been deleted from the queue.
+                        // The rest will eventually become visible on the queue again, so available
+                        // for polling when we restart.
+                        if (NullSafe.test(terminationChecker, TerminationChecker::isTerminated)) {
+                            break;
+                        }
+                    }
+                } catch (final Throwable e) {
+                    LOGGER.error("Error polling SQS queue {}. Swallowing error - {}",
+                            queueUrl, LogUtil.exceptionMessage(e), e);
+                }
             } else {
                 LOGGER.warn("SQS has not been configured. Nothing to do.");
             }
         } catch (final Exception e) {
             LOGGER.error(e::getMessage, e);
         }
-    }
-
-    private boolean shouldContinuePolling(final Instant endTime) {
-        if (Instant.now().isAfter(endTime)) {
-            LOGGER.debug("shouldContinuePolling() - endTime {} reached", endTime);
-            return false;
-        }
-        if (Thread.currentThread().isInterrupted()) {
-            LOGGER.debug("shouldContinuePolling() - Thread interrupted");
-            return false;
-        }
-        if (shuttingDown.get()) {
-            LOGGER.debug("shouldContinuePolling() - Shutting down");
-            return false;
-        }
-        return true;
     }
 
     private void handleSqsMessage(final Message message,
@@ -544,21 +529,21 @@ public class S3EventService {
     private ClientState getSqsClient() {
         // Intentionally use instance equality as the object is large, and the provider will
         // return a different instance if the config has changed.
-        if (receiveDataConfigProvider.get().getSqs() != lastSqsConfig) {
+        if (receiveDataConfigProvider.get().getS3Event() != lastS3EventConfig) {
             synchronized (this) {
-                final SqsConfig newSqsConfig = receiveDataConfigProvider.get().getSqs();
-                if (newSqsConfig != null) {
-                    if (newSqsConfig != lastSqsConfig) {
+                final S3EventConfig newS3EventConfig = receiveDataConfigProvider.get().getS3Event();
+                if (newS3EventConfig != null && newS3EventConfig.getSqs() != null) {
+                    if (newS3EventConfig != lastS3EventConfig) {
                         final ClientState oldClientState = sqsClientState;
                         closeClient(oldClientState);
-                        final SqsClient sqsClient = sqsClientFactory.createSqsClient(newSqsConfig);
-                        sqsClientState = new ClientState(sqsClient, newSqsConfig);
-                        lastSqsConfig = newSqsConfig;
+                        final SqsClient sqsClient = sqsClientFactory.createSqsClient(newS3EventConfig.getSqs());
+                        sqsClientState = new ClientState(sqsClient, newS3EventConfig);
+                        lastS3EventConfig = newS3EventConfig;
                         LOGGER.debug(() -> LogUtil.message("getClients() - sqsClientState: {}", sqsClientState));
                     }
                 } else {
                     sqsClientState = null;
-                    lastSqsConfig = null;
+                    lastS3EventConfig = null;
                 }
             }
         }
@@ -579,11 +564,21 @@ public class S3EventService {
     // --------------------------------------------------------------------------------
 
 
-    private record ClientState(SqsClient sqsClient, SqsConfig config) {
+    private record ClientState(SqsClient sqsClient, S3EventConfig config) {
 
         private ClientState {
             Objects.requireNonNull(sqsClient);
             Objects.requireNonNull(config);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @FunctionalInterface
+    public interface TerminationChecker {
+
+        boolean isTerminated();
     }
 }

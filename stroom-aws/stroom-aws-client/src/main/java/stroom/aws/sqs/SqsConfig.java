@@ -42,7 +42,6 @@ public class SqsConfig
         implements IsStroomConfig, IsProxyConfig, IsAtomicConfig {
 
     public static final StroomDuration DEFAULT_POLL_MAX_WAIT_TIME = StroomDuration.ofSeconds(10);
-    public static final StroomDuration DEFAULT_RE_POLL_DURATION = StroomDuration.ofMinutes(5);
     public static final StroomDuration DEFAULT_VISIBILITY_TIMEOUT = StroomDuration.ofMinutes(3);
     public static final int DEFAULT_MAX_NUMBER_OF_MESSAGES = 1_000;
 
@@ -52,16 +51,12 @@ public class SqsConfig
     private final AwsAssumeRole assumeRole;
     @JsonProperty
     private final String awsRegionName;
-    //    @JsonProperty
-//    private final String awsProfileName;
     @JsonProperty
     private final String queueUrl;
     @JsonProperty
     private final String deadLetterQueueUrl;
     @JsonProperty
     private final StroomDuration pollMaxWaitTime;
-    @JsonProperty
-    private final StroomDuration rePollDuration;
     @JsonProperty
     private final StroomDuration visibilityTimeout;
     @JsonProperty
@@ -73,14 +68,12 @@ public class SqsConfig
         credentials = null;
         assumeRole = null;
         awsRegionName = null;
-//        awsProfileName = null;
         queueUrl = null;
         deadLetterQueueUrl = null;
         pollMaxWaitTime = DEFAULT_POLL_MAX_WAIT_TIME;
-        rePollDuration = DEFAULT_RE_POLL_DURATION;
-        httpClient = createDefaultHttpClientConfiguration();
         visibilityTimeout = DEFAULT_VISIBILITY_TIMEOUT;
         maxNumberOfMessages = DEFAULT_MAX_NUMBER_OF_MESSAGES;
+        httpClient = createDefaultHttpClientConfiguration();
     }
 
     @SuppressWarnings("unused")
@@ -88,22 +81,18 @@ public class SqsConfig
     public SqsConfig(@JsonProperty("credentials") final AwsCredentials credentials,
                      @JsonProperty("assumeRole") final AwsAssumeRole assumeRole,
                      @JsonProperty("awsRegionName") final String awsRegionName,
-//                     @JsonProperty("awsProfileName") final String awsProfileName,
                      @JsonProperty("queueUrl") final String queueUrl,
                      @JsonProperty("deadLetterQueueUrl") final String deadLetterQueueUrl,
                      @JsonProperty("pollMaxWaitTime") final StroomDuration pollMaxWaitTime,
-                     @JsonProperty("rePollDuration") final StroomDuration rePollDuration,
                      @JsonProperty("visibilityTimeout") final StroomDuration visibilityTimeout,
                      @JsonProperty("maxNumberOfMessages") final Integer maxNumberOfMessages,
                      @JsonProperty("httpClient") final HttpClientConfiguration httpClient) {
         this.credentials = credentials;
         this.assumeRole = assumeRole;
         this.awsRegionName = awsRegionName;
-//        this.awsProfileName = awsProfileName;
         this.queueUrl = queueUrl;
         this.deadLetterQueueUrl = deadLetterQueueUrl;
         this.pollMaxWaitTime = Objects.requireNonNullElse(pollMaxWaitTime, DEFAULT_POLL_MAX_WAIT_TIME);
-        this.rePollDuration = Objects.requireNonNullElse(rePollDuration, DEFAULT_RE_POLL_DURATION);
         this.visibilityTimeout = Objects.requireNonNullElse(visibilityTimeout, DEFAULT_VISIBILITY_TIMEOUT);
         this.maxNumberOfMessages = Objects.requireNonNullElse(maxNumberOfMessages, DEFAULT_MAX_NUMBER_OF_MESSAGES);
         this.httpClient = Objects.requireNonNullElseGet(httpClient, this::createDefaultHttpClientConfiguration);
@@ -135,11 +124,6 @@ public class SqsConfig
         return awsRegionName;
     }
 
-//    @JsonProperty
-//    public String getAwsProfileName() {
-//        return awsProfileName;
-//    }
-
     @NotBlank
     @JsonPropertyDescription("The URL of the SQS queue to poll.")
     @JsonProperty
@@ -165,20 +149,12 @@ public class SqsConfig
     }
 
     @JsonPropertyDescription(
-            "This is the time to keep polling for. Once reached polling will stop and will begin again " +
-            "at the next scheduled execution time for the job.")
-    @JsonProperty
-    public StroomDuration getRePollDuration() {
-        return rePollDuration;
-    }
-
-    @JsonPropertyDescription(
             "The time that a received message will be made invisible on the queue to prevent it from being " +
             "processed by another node. Processed messages are deleted from the queue, so this duration should " +
             "be longer than the time it takes to process a message.")
     @JsonProperty
     public StroomDuration getVisibilityTimeout() {
-        return pollMaxWaitTime;
+        return visibilityTimeout;
     }
 
     @JsonPropertyDescription(
@@ -217,20 +193,20 @@ public class SqsConfig
                 sqsConfig.awsRegionName) && Objects.equals(queueUrl,
                 sqsConfig.queueUrl) && Objects.equals(deadLetterQueueUrl,
                 sqsConfig.deadLetterQueueUrl) && Objects.equals(pollMaxWaitTime,
-                sqsConfig.pollMaxWaitTime) && Objects.equals(rePollDuration,
-                sqsConfig.rePollDuration) && Objects.equals(visibilityTimeout,
-                sqsConfig.visibilityTimeout) && Objects.equals(httpClient, sqsConfig.httpClient);
+                sqsConfig.pollMaxWaitTime)
+               && Objects.equals(visibilityTimeout, sqsConfig.visibilityTimeout)
+               && Objects.equals(httpClient, sqsConfig.httpClient);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(credentials,
+        return Objects.hash(
+                credentials,
                 assumeRole,
                 awsRegionName,
                 queueUrl,
                 deadLetterQueueUrl,
                 pollMaxWaitTime,
-                rePollDuration,
                 visibilityTimeout,
                 maxNumberOfMessages,
                 httpClient);
@@ -245,7 +221,6 @@ public class SqsConfig
                ", queueUrl='" + queueUrl + '\'' +
                ", deadLetterQueueUrl='" + deadLetterQueueUrl + '\'' +
                ", pollMaxWaitTime=" + pollMaxWaitTime +
-               ", rePollDuration=" + rePollDuration +
                ", visibilityTimeout=" + visibilityTimeout +
                ", maxNumberOfMessages=" + maxNumberOfMessages +
                ", httpClient=" + httpClient +
@@ -261,11 +236,9 @@ public class SqsConfig
         private AwsCredentials credentials;
         private AwsAssumeRole assumeRole;
         private String awsRegionName;
-        private String awsProfileName;
         private String queueUrl;
         private String deadLetterQueueUrl;
-        private StroomDuration pollFrequency = DEFAULT_POLL_MAX_WAIT_TIME;
-        private StroomDuration rePollDuration = DEFAULT_RE_POLL_DURATION;
+        private StroomDuration pollMaxWaitTime = DEFAULT_POLL_MAX_WAIT_TIME;
         private StroomDuration visibilityTimeout = DEFAULT_VISIBILITY_TIMEOUT;
         private int maxNumberOfMessages = DEFAULT_MAX_NUMBER_OF_MESSAGES;
         private HttpClientConfiguration httpClient;
@@ -279,8 +252,7 @@ public class SqsConfig
             this.awsRegionName = sqsConfig.awsRegionName;
             this.queueUrl = sqsConfig.queueUrl;
             this.deadLetterQueueUrl = sqsConfig.deadLetterQueueUrl;
-            this.pollFrequency = sqsConfig.pollMaxWaitTime;
-            this.rePollDuration = sqsConfig.rePollDuration;
+            this.pollMaxWaitTime = sqsConfig.pollMaxWaitTime;
             this.visibilityTimeout = sqsConfig.visibilityTimeout;
             this.maxNumberOfMessages = sqsConfig.maxNumberOfMessages;
             this.httpClient = sqsConfig.httpClient;
@@ -311,13 +283,8 @@ public class SqsConfig
             return this;
         }
 
-        public Builder pollFrequency(final StroomDuration pollFrequency) {
-            this.pollFrequency = pollFrequency;
-            return this;
-        }
-
-        public Builder rePollDuration(final StroomDuration rePollDuration) {
-            this.rePollDuration = rePollDuration;
+        public Builder pollMaxWaitTime(final StroomDuration pollMaxWaitTime) {
+            this.pollMaxWaitTime = pollMaxWaitTime;
             return this;
         }
 
@@ -341,11 +308,9 @@ public class SqsConfig
                     credentials,
                     assumeRole,
                     awsRegionName,
-//                    awsProfileName,
                     queueUrl,
                     deadLetterQueueUrl,
-                    pollFrequency,
-                    rePollDuration,
+                    pollMaxWaitTime,
                     visibilityTimeout,
                     maxNumberOfMessages,
                     httpClient);

@@ -33,7 +33,8 @@ dependencies {
     implementation libs.aws.s3.transfer.manager
     implementation libs.aws.sqs
     implementation libs.aws.sts
-    implementation libs.aws.apache.client
+    implementation libs.aws.apache5.client
+    implementation libs.dropwizard.client
     implementation libs.guice
     implementation libs.jackson.annotations
     implementation libs.jakarta.inject

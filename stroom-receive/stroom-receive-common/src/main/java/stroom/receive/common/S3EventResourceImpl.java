@@ -51,9 +51,8 @@ public class S3EventResourceImpl implements S3EventResource {
     public void notify(final S3EventNotificationRequest request) {
         LOGGER.debug("notify() - request: {}", request);
         Objects.requireNonNull(request);
-        // TODO Allow calls only from proxy at the moment. May want to open it up for
-        //  other people to use.
+        // TODO this only support stroom at the moment
         s3EventNotificationServiceProvider.get()
-                .notify(request.getS3Location(), request.getETag(), request.getMetaData());
+                .handleEvent(request.getS3Location(), request.getEntityTag(), request.getMetaData());
     }
 }

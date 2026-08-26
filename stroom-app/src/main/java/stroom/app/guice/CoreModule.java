@@ -16,9 +16,9 @@
 
 package stroom.app.guice;
 
+import stroom.data.store.impl.S3EventPollManager;
 import stroom.index.lucene.LuceneModule;
 import stroom.job.api.ScheduledJobsBinder;
-import stroom.receive.common.S3EventService;
 import stroom.util.RunnableWrapper;
 
 import com.google.inject.AbstractModule;
@@ -166,8 +166,8 @@ public class CoreModule extends AbstractModule {
     private static class S3EventNotificationsRunnable extends RunnableWrapper {
 
         @Inject
-        S3EventNotificationsRunnable(final S3EventService executor) {
-            super(executor::poll);
+        S3EventNotificationsRunnable(final S3EventPollManager s3EventPollManager) {
+            super(s3EventPollManager::poll);
         }
     }
 }
