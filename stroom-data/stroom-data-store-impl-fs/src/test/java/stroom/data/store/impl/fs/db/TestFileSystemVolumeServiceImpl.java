@@ -92,6 +92,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 //    //    private final SecurityContext securityContext = new MockSecurityContext();
     /// /    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
     private FsVolumeService volumeService = null;
+    private FsVolumeGroupService volumeGroupService = null;
 
     @TempDir
     static Path tempDir;
@@ -118,7 +119,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 
         final FsVolumeDao fsVolumeDao = new FsVolumeDaoImpl(fsDataStoreDbConnProvider);
         final FsVolumeGroupDao fsVolumeGroupDao = new FsVolumeGroupDaoImpl(fsDataStoreDbConnProvider);
-        final FsVolumeGroupService fsVolumeGroupService = new FsVolumeGroupServiceImpl(
+        volumeGroupService = new FsVolumeGroupServiceImpl(
                 fsVolumeGroupDao,
                 securityContext,
                 FsVolumeConfig::new,
@@ -127,7 +128,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         volumeService = new FsVolumeServiceImpl(
                 fsVolumeDao,
-                fsVolumeGroupService,
+                volumeGroupService,
                 fsVolumeStateDao,
                 securityContext,
                 FsVolumeConfig::new,
@@ -161,9 +162,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
                 .isZero();
 
         // Create
-        final FsVolumeGroup volumeGroup = FsVolumeGroup.builder()
-                .name("My volume")
-                .build();
+        final FsVolumeGroup volumeGroup = volumeGroupService.create("My Volume");
         final FsVolume public1a = FsVolume.create(
                 volumeGroup,
                 FileUtil.getCanonicalPath(tempDir.resolve("PUBLIC_1A")),
