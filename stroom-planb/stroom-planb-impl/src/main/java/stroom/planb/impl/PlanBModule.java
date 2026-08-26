@@ -139,7 +139,7 @@ public class PlanBModule extends AbstractModule {
                         .advanced(true));
 
         ScheduledJobsBinder.create(binder())
-                .bindJobTo(SharedFileStoreMergeRunnable.class, builder -> builder
+                .bindJobTo(PlanBSharedFileStoreMergeRunnable.class, builder -> builder
                         .name("Plan B Shared FS Merge")
                         .description("Distributed merge of Plan B batches on the shared file store")
                         .cronSchedule(CronExpressions.EVERY_MINUTE.getExpression())
@@ -149,7 +149,7 @@ public class PlanBModule extends AbstractModule {
 
         bind(SharedFileStoreCleaner.class).asEagerSingleton();
         ScheduledJobsBinder.create(binder())
-                .bindJobTo(ShardHousekeepingRunnable.class, builder -> builder
+                .bindJobTo(PlanBSharedFileStoreHousekeepingRunnable.class, builder -> builder
                         .name("Plan B Shared FS Housekeeping")
                         .description("Detects orphaned directories on the shared file store and "
                                 + "moves them to trash, then empties trash entries from previous runs.")
@@ -192,18 +192,18 @@ public class PlanBModule extends AbstractModule {
         }
     }
 
-    private static class SharedFileStoreMergeRunnable extends RunnableWrapper {
+    private static class PlanBSharedFileStoreMergeRunnable extends RunnableWrapper {
 
         @Inject
-        SharedFileStoreMergeRunnable(final SharedFileStoreMergeProcessor mergeProcessor) {
+        PlanBSharedFileStoreMergeRunnable(final SharedFileStoreMergeProcessor mergeProcessor) {
             super(mergeProcessor::merge);
         }
     }
 
-    private static class ShardHousekeepingRunnable extends RunnableWrapper {
+    private static class PlanBSharedFileStoreHousekeepingRunnable extends RunnableWrapper {
 
         @Inject
-        ShardHousekeepingRunnable(final SharedFileStoreCleaner executor) {
+        PlanBSharedFileStoreHousekeepingRunnable(final SharedFileStoreCleaner executor) {
             super(executor::exec);
         }
     }
