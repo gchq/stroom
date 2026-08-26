@@ -52,6 +52,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Condition;
 import java.util.stream.Stream;
 
 /**
@@ -144,6 +146,10 @@ public class LocalFileGroupQueue implements FileGroupQueue {
     private final Duration abandonedLeaseScanInterval;
     private final int maxDeliveryAttempts;
     private final AtomicLong lastAbandonedLeaseScanMs = new AtomicLong();
+    private final ReentrantLock workLock = new ReentrantLock();
+    private final Condition workAvailable = workLock.newCondition();
+    /** Bumped whenever something lands in pending/, so a waiter cannot miss a publish. */
+    private final AtomicLong publishCounter = new AtomicLong();
     private final AtomicBoolean scanInProgress = new AtomicBoolean();
 
     public LocalFileGroupQueue(final String name,
@@ -256,6 +262,7 @@ public class LocalFileGroupQueue implements FileGroupQueue {
             }
 
             moveAtomically(tempFile, destination);
+            signalWork();
         } finally {
             Files.deleteIfExists(tempFile);
         }
@@ -297,6 +304,73 @@ public class LocalFileGroupQueue implements FileGroupQueue {
 
     @Override
     public Optional<FileGroupQueueItem> next() throws IOException {
+        return next(Duration.ZERO);
+    }
+
+    @Override
+    public Optional<FileGroupQueueItem> next(final Duration maxWait) throws IOException {
+        final long deadlineNanos = System.nanoTime() + Math.max(0L, maxWait.toNanos());
+        while (true) {
+            // Read the publish counter BEFORE looking, so a publish that lands between the look and
+            // the wait cannot be missed - awaitWork returns immediately if the counter has moved.
+            final long seen = publishCounter.get();
+
+            final Optional<FileGroupQueueItem> item = tryTakeNext();
+            if (item.isPresent()) {
+                return item;
+            }
+            if (!awaitWork(seen, deadlineNanos)) {
+                return Optional.empty();
+            }
+        }
+    }
+
+    /**
+     * Wait for a publish, or for the deadline.
+     *
+     * @return true if there may now be work, false if the deadline passed or the thread was
+     * interrupted.
+     */
+    private boolean awaitWork(final long seen, final long deadlineNanos) {
+        long remaining = deadlineNanos - System.nanoTime();
+        if (remaining <= 0) {
+            return false;
+        }
+        workLock.lock();
+        try {
+            while (publishCounter.get() == seen) {
+                remaining = deadlineNanos - System.nanoTime();
+                if (remaining <= 0) {
+                    return false;
+                }
+                if (workAvailable.awaitNanos(remaining) <= 0 && publishCounter.get() == seen) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        } finally {
+            workLock.unlock();
+        }
+    }
+
+    /**
+     * Wake any consumer waiting in {@link #next(Duration)}. Called whenever something lands in
+     * {@code pending/} - a publish, a failed item being re-queued, or a reclaimed lease.
+     */
+    private void signalWork() {
+        publishCounter.incrementAndGet();
+        workLock.lock();
+        try {
+            workAvailable.signalAll();
+        } finally {
+            workLock.unlock();
+        }
+    }
+
+    private Optional<FileGroupQueueItem> tryTakeNext() throws IOException {
         while (true) {
             // Reclaim before looking for work, not only when the queue looks empty. Driving the scan
             // off an empty poll meant a queue that always had something pending never ran it at all,
@@ -617,6 +691,9 @@ public class LocalFileGroupQueue implements FileGroupQueue {
                         // Could not read or rewrite the message, so fall back to returning it as-is
                         // rather than losing it. It keeps its old attempt count.
                         moveAtomically(inFlightFile, pendingFile);
+                        // requeueWithIncrementedAttempts signals via writePending; this path must too,
+                        // or a reclaimed item would sit in pending until the next waiter times out.
+                        signalWork();
                     }
                     reclaimed++;
                 } catch (final NoSuchFileException e) {

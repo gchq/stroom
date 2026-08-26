@@ -392,4 +392,36 @@ class TestParallelExecutor {
         }
     }
 
+
+    /**
+     * A single-threaded executor - "Event Store - forward" is one - loses its entire capability if the
+     * worker dies. runTask() caught Exception and run()'s outer handlers catch
+     * UncheckedInterruptedException and RuntimeException outside the while loop, so an Error was caught
+     * nowhere and ended the worker with no signal: isStopped, isPaused and the semaphore all keep
+     * reporting a full complement.
+     */
+    @Test
+    void testAnErrorFromTheTaskDoesNotKillTheWorker() throws Exception {
+        final AtomicInteger runs = new AtomicInteger();
+        final CountDownLatch ranAfterTheError = new CountDownLatch(1);
+
+        final Supplier<Runnable> taskSupplier = () -> () -> {
+            if (runs.incrementAndGet() == 1) {
+                throw new OutOfMemoryError("simulated");
+            }
+            ranAfterTheError.countDown();
+        };
+
+        final ParallelExecutor parallelExecutor = new ParallelExecutor("test-thread", taskSupplier, 1);
+        try {
+            parallelExecutor.start();
+
+            assertThat(ranAfterTheError.await(10, TimeUnit.SECONDS))
+                    .as("the worker must survive an Error and go on running tasks")
+                    .isTrue();
+        } finally {
+            parallelExecutor.stop();
+        }
+    }
+
 }

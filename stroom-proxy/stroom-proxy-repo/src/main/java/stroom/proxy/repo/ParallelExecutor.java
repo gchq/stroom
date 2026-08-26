@@ -257,8 +257,13 @@ public class ParallelExecutor implements Managed {
             // Swallow the exception to keep this thread running
             LOGGER.debug("Parallel executor interrupted: '{}' task: {}",
                     threadNamePrefix, LogUtil.exceptionMessage(e), e);
-        } catch (final Exception e) {
-            // Swallow the exception to keep this thread running
+        } catch (final Throwable e) {
+            // Throwable, not Exception. run()'s outer handlers catch UncheckedInterruptedException and
+            // RuntimeException and sit OUTSIDE the while loop, so an Error - an OutOfMemoryError
+            // forwarding a large file, say - is caught nowhere and ends this worker. Nothing resubmits
+            // it, the throwable lands in a Future nobody reads, and isStopped, isPaused and the
+            // semaphore all continue to report a full complement. For a single-threaded executor such
+            // as "Event Store - forward" that silently removes the whole capability.
             LOGGER.error("Error running parallel executor '{}' task: {}",
                     threadNamePrefix, LogUtil.exceptionMessage(e), e);
         }

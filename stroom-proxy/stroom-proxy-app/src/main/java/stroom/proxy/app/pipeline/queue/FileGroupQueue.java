@@ -21,6 +21,7 @@ import stroom.proxy.app.pipeline.store.FileStore;
 import com.codahale.metrics.health.HealthCheck;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Optional;
 
 /**
@@ -58,6 +59,23 @@ public interface FileGroupQueue extends AutoCloseable {
      * @throws IOException If the queue cannot be read.
      */
     Optional<FileGroupQueueItem> next() throws IOException;
+
+    /**
+     * As {@link #next()}, but may wait up to {@code maxWait} for an item to become available rather
+     * than returning empty immediately.
+     * <p>
+     * Consumers are meant to wait for work, not poll for it. The remote backends already do: Kafka
+     * polls the broker and SQS long-polls. The default here preserves the old non-waiting behaviour
+     * for any implementation that has nothing to wait on.
+     * </p>
+     *
+     * @param maxWait The longest to wait for an item before returning empty.
+     * @return The next leased queue item, or empty if none became available within {@code maxWait}.
+     * @throws IOException If the queue cannot be read.
+     */
+    default Optional<FileGroupQueueItem> next(final Duration maxWait) throws IOException {
+        return next();
+    }
 
     /**
      * Close any transport resources held by the queue implementation.

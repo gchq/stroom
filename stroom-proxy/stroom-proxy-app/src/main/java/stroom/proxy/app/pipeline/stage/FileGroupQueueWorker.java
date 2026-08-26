@@ -57,6 +57,12 @@ public class FileGroupQueueWorker {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FileGroupQueueWorker.class);
 
+    /**
+     * How long a consumer waits for work before reporting an empty poll. Only a backstop - a
+     * publish wakes the waiter immediately - so it governs idle wake-ups, not latency.
+     */
+    private static final Duration POLL_WAIT = Duration.ofSeconds(1);
+
     private final FileGroupQueue queue;
     private final FileGroupQueueItemProcessor processor;
     private final FileGroupQueueWorkerCounters counters;
@@ -98,7 +104,8 @@ public class FileGroupQueueWorker {
         final Instant startTime = Instant.now();
         counters.incrementPollCount();
 
-        final Optional<FileGroupQueueItem> optionalItem = queue.next();
+        // Wait for work rather than returning empty and letting the runner sleep on a timer.
+        final Optional<FileGroupQueueItem> optionalItem = queue.next(POLL_WAIT);
         if (optionalItem.isEmpty()) {
             counters.incrementEmptyPollCount();
             return FileGroupQueueWorkerResult.noItem(
