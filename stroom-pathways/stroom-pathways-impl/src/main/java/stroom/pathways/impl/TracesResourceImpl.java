@@ -18,14 +18,14 @@ package stroom.pathways.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.FindTracesWithHistogramCriteria;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
-import stroom.pathways.shared.TraceHistogram;
-import stroom.pathways.shared.TraceHistogramRequest;
 import stroom.pathways.shared.TraceOverview;
 import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TracesResource;
+import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.TracesStore;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
@@ -65,7 +65,7 @@ public class TracesResourceImpl implements TracesResource {
     }
 
     @Override
-    public TraceHistogram getTraceHistogram(final TraceHistogramRequest request) {
-        return tracesStoreProvider.get().getTraceHistogram(request);
+    public TracesResultPage findTracesWithHistogram(final FindTracesWithHistogramCriteria criteria) {
+        return tracesStoreProvider.get().findTracesWithHistogram(criteria);
     }
 }

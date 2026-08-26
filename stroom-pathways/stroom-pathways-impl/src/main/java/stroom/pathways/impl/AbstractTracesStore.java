@@ -20,7 +20,6 @@ import stroom.docref.DocRef;
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.TraceHistogram;
-import stroom.pathways.shared.TraceHistogramRequest;
 import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TraceSpanRow;
 import stroom.pathways.shared.TracesStore;
@@ -359,17 +358,19 @@ abstract class AbstractTracesStore implements TracesStore {
         return DateExpressionParser.getTimeFilter(timeRange, DateTimeSettings.builder().build());
     }
 
-    // Resolves the histogram window + equal-bucket layout for a request, or an unavailable spec when the
-    // range is unbounded or wider than maxWindowMs (so a wide/all-time range never scans).
-    protected HistogramSpec histogramSpec(final TraceHistogramRequest request, final PlanBDocument doc) {
+    // Resolves the histogram window + equal-bucket layout, or an unavailable spec when the range is
+    // unbounded or wider than maxWindowMs (so a wide/all-time range never scans).
+    protected HistogramSpec histogramSpec(final TimeRange timeRange,
+                                          final int bucketCount,
+                                          final PlanBDocument doc) {
         final long maxWindowMs = maxWindowMs(doc);
-        final TimeFilter timeFilter = resolveTimeFilter(request.getTimeRange());
+        final TimeFilter timeFilter = resolveTimeFilter(timeRange);
         if (timeFilter == null || timeFilter.getTo() - timeFilter.getFrom() > maxWindowMs) {
             return new HistogramSpec(false, maxWindowMs, null, 0L, 0L, 0L, 0);
         }
         final long fromMs = timeFilter.getFrom();
         final long toMs = timeFilter.getTo();
-        final int requestedBuckets = Math.max(1, request.getBucketCount());
+        final int requestedBuckets = Math.max(1, bucketCount);
         final long span = Math.max(1L, toMs - fromMs);
         final long bucketWidthMs = Math.max(1L, (span + requestedBuckets - 1) / requestedBuckets);
         final int nBuckets = (int) Math.min(

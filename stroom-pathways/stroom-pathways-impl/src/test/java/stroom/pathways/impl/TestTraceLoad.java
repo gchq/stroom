@@ -20,15 +20,15 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.FindTracesWithHistogramCriteria;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
-import stroom.pathways.shared.TraceHistogram;
-import stroom.pathways.shared.TraceHistogramRequest;
 import stroom.pathways.shared.TraceOverview;
 import stroom.pathways.shared.TracePersistence;
 import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TraceWriter;
+import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
@@ -80,8 +80,9 @@ public class TestTraceLoad {
                 }
 
                 @Override
-                public TraceHistogram getTraceHistogram(final TraceHistogramRequest request) {
-                    return TraceHistogram.unavailable(0L);
+                public TracesResultPage findTracesWithHistogram(
+                        final FindTracesWithHistogramCriteria criteria) {
+                    return traceDb.findTraces(criteria.getCriteria());
                 }
 
                 @Override

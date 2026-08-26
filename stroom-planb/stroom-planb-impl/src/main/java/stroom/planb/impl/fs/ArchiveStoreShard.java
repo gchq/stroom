@@ -137,8 +137,9 @@ public class ArchiveStoreShard extends AbstractStoreShard {
     /**
      * Copies the bucket's {@code data.mdb} down and opens it read-only when the local copy is absent or
      * its {@code .version} differs from the bucket's. Throttled to at most once per
-     * {@link #SYNC_CHECK_INTERVAL_MS}. The swap runs under {@code exclusiveReadLock} so no in-flight
-     * reader sees a half-open env.
+     * {@link #SYNC_CHECK_INTERVAL_MS}, measured from the end of the last sync so that a reader arriving
+     * while one is in progress waits for it on {@code syncLock} rather than reading the copy being
+     * replaced. The swap runs under {@code exclusiveReadLock} so no in-flight reader sees a half-open env.
      */
     private void syncFromArchiveIfRequired() {
         final long now = System.currentTimeMillis();
@@ -160,8 +161,19 @@ public class ArchiveStoreShard extends AbstractStoreShard {
         if (db != null && now - lastSyncCheckTimeMs < SYNC_CHECK_INTERVAL_MS) {
             return;
         }
-        lastSyncCheckTimeMs = now;
 
+        try {
+            syncFromArchive();
+        } finally {
+            // Stamped once the copy and swap are done rather than before they start. Both the traces
+            // list and its histogram query the same bucket at the same moment, and stamping up front
+            // let whichever arrived second skip the interval check and read the copy that the first
+            // one was still replacing.
+            lastSyncCheckTimeMs = System.currentTimeMillis();
+        }
+    }
+
+    private void syncFromArchive() {
         final Path sharedDataFile = archiveBucketDir.resolve(PlanBConstants.DATA_FILE_NAME);
         final Path sharedVersionFile = archiveBucketDir.resolve(PlanBConstants.VERSION_FILE_NAME);
         final Path localVersionFile = shardDir.resolve(PlanBConstants.VERSION_FILE_NAME);

@@ -17,16 +17,17 @@
 package stroom.pathways.impl;
 
 import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.FindTracesWithHistogramCriteria;
 import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.TraceHistogram;
-import stroom.pathways.shared.TraceHistogramRequest;
 import stroom.pathways.shared.TraceOverview;
 import stroom.pathways.shared.TracePersistence;
 import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TraceSpanRow;
 import stroom.pathways.shared.TraceWriter;
+import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
@@ -123,9 +124,12 @@ public class TracePersistenceMemory implements TracePersistence {
         return new TraceOverview(spans);
     }
 
+    // No time index to count over in memory, so the page comes back with the histogram marked
+    // unavailable rather than with counts of zero.
     @Override
-    public TraceHistogram getTraceHistogram(final TraceHistogramRequest request) {
-        return TraceHistogram.unavailable(0L);
+    public TracesResultPage findTracesWithHistogram(final FindTracesWithHistogramCriteria criteria) {
+        final ResultPage<TraceRoot> page = findTraces(criteria.getCriteria());
+        return new TracesResultPage(page.getValues(), page.getPageResponse(), TraceHistogram.unavailable(0L));
     }
 
     // Flattens a trace to pre-order (tree) order, tagging each span with its depth. Roots are spans

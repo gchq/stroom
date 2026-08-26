@@ -24,8 +24,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.pathways.shared.FindTraceCriteria;
-import stroom.pathways.shared.TraceHistogram;
-import stroom.pathways.shared.TraceHistogramRequest;
+import stroom.pathways.shared.FindTracesWithHistogramCriteria;
 import stroom.pathways.shared.TracesResource;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.otel.trace.TraceRoot;
@@ -167,7 +166,6 @@ public class TracesListPresenter
 
         }));
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
-        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> refreshHistogram()));
     }
 
     public MultiSelectionModelImpl<TraceRoot> getSelectionModel() {
@@ -381,7 +379,6 @@ public class TracesListPresenter
 
 
     public void refresh() {
-        refreshHistogram();
         if (dataProvider == null) {
             dataProvider = new RestDataProvider<TraceRoot, ResultPage<TraceRoot>>(getEventBus()) {
                 @Override
@@ -389,22 +386,34 @@ public class TracesListPresenter
                                     final Consumer<ResultPage<TraceRoot>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
                     if (dataSourceRef == null) {
+                        histogramWidget.setData(null);
                         dataConsumer.accept(ResultPage.empty());
                     } else {
-                        final FindTraceCriteria criteria = new FindTraceCriteria(
-                                CriteriaUtil.createPageRequest(range),
-                                CriteriaUtil.createSortList(dataGrid.getColumnSortList()),
-                                dataSourceRef,
-                                filter,
-                                pathway,
-                                SimpleDuration.ZERO,
-                                timeRange);
+                        // The histogram rides back on the page so the bars and the rows are counted
+                        // from one read of the store rather than from two requests that can see
+                        // different data.
+                        final FindTracesWithHistogramCriteria criteria =
+                                new FindTracesWithHistogramCriteria(new FindTraceCriteria(
+                                        CriteriaUtil.createPageRequest(range),
+                                        CriteriaUtil.createSortList(dataGrid.getColumnSortList()),
+                                        dataSourceRef,
+                                        filter,
+                                        pathway,
+                                        SimpleDuration.ZERO,
+                                        timeRange),
+                                        HISTOGRAM_BUCKETS);
 
                         restFactory
                                 .create(TRACES_RESOURCE)
-                                .method(res -> res.findTraces(criteria))
-                                .onSuccess(dataConsumer)
-                                .onFailure(errorHandler)
+                                .method(res -> res.findTracesWithHistogram(criteria))
+                                .onSuccess(page -> {
+                                    histogramWidget.setData(page.getHistogram());
+                                    dataConsumer.accept(page);
+                                })
+                                .onFailure(error -> {
+                                    histogramWidget.setData(null);
+                                    errorHandler.onError(error);
+                                })
                                 .taskMonitorFactory(pagerView)
                                 .exec();
                     }
@@ -415,22 +424,6 @@ public class TracesListPresenter
         } else {
             dataProvider.refresh();
         }
-    }
-
-    private void refreshHistogram() {
-        if (dataSourceRef == null) {
-            histogramWidget.setData(null);
-            return;
-        }
-        final TraceHistogramRequest request = new TraceHistogramRequest(
-                dataSourceRef, filter, timeRange, HISTOGRAM_BUCKETS);
-        restFactory
-                .create(TRACES_RESOURCE)
-                .method(res -> res.getTraceHistogram(request))
-                .onSuccess(histogramWidget::setData)
-                .onFailure(error -> histogramWidget.setData(null))
-                .taskMonitorFactory(pagerView)
-                .exec();
     }
 
     public void setDataSourceRef(final DocRef dataSourceRef) {

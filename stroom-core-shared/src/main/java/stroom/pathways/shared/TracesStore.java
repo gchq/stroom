@@ -30,5 +30,5 @@ public interface TracesStore {
 
     TraceOverview getTraceOverview(GetTraceOverviewRequest request);
 
-    TraceHistogram getTraceHistogram(TraceHistogramRequest request);
+    TracesResultPage findTracesWithHistogram(FindTracesWithHistogramCriteria criteria);
 }

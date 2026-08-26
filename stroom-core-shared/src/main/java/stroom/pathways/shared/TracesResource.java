@@ -43,7 +43,7 @@ public interface TracesResource extends RestResource, DirectRestService {
     String FIND_TRACE_SUB_PATH = "/findTrace";
     String GET_SPANS_SUB_PATH = "/getSpans";
     String GET_TRACE_OVERVIEW_SUB_PATH = "/getTraceOverview";
-    String GET_TRACE_HISTOGRAM_SUB_PATH = "/getTraceHistogram";
+    String FIND_TRACES_WITH_HISTOGRAM_SUB_PATH = "/findTracesWithHistogram";
 
     @POST
     @Path(FIND_TRACES_SUB_PATH)
@@ -78,10 +78,10 @@ public interface TracesResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) GetTraceOverviewRequest request);
 
     @POST
-    @Path(GET_TRACE_HISTOGRAM_SUB_PATH)
+    @Path(FIND_TRACES_WITH_HISTOGRAM_SUB_PATH)
     @Operation(
-            summary = "Get a time histogram of trace counts over the window",
-            operationId = "getTraceHistogram")
-    TraceHistogram getTraceHistogram(
-            @Parameter(description = "request", required = true) TraceHistogramRequest request);
+            summary = "Find traces and a histogram of the same window from one read",
+            operationId = "findTracesWithHistogram")
+    TracesResultPage findTracesWithHistogram(
+            @Parameter(description = "criteria", required = true) FindTracesWithHistogramCriteria criteria);
 }
