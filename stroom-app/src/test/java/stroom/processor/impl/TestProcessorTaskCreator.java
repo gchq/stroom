@@ -41,6 +41,8 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
@@ -48,6 +50,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -232,6 +235,80 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
 
         // Ensure a task was created.
         assertThat(taskCount()).isEqualTo(1);
+    }
+
+    @Test
+    void testMinProcessingDelay() {
+        // Ensure we can create tasks immediately after changes.
+        processorConfig.setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
+
+        final DocRef pipeline = DocRef
+                .builder()
+                .type(PipelineDoc.TYPE)
+                .uuid(UUID.randomUUID().toString())
+                .name("test")
+                .build();
+        final String eventFeed = FileSystemTestUtil.getUniqueTestString();
+        final Instant now = Instant.now();
+
+        // A stream old enough to get past a one day processing delay.
+        commonTestScenarioCreator.createSample2LineRawFile(
+                eventFeed,
+                StreamTypeNames.RAW_EVENTS,
+                now.minus(Duration.ofDays(2)));
+
+        final FeedDependencies feedDependencies = FeedDependencies
+                .builder()
+                .minProcessingDelay(SimpleDuration.builder()
+                        .time(1)
+                        .timeUnit(TimeUnit.DAYS)
+                        .build())
+                .build();
+        final QueryData findStreamQueryData = QueryData.builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(ExpressionOperator.builder()
+                        .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .build())
+                .feedDependencies(feedDependencies)
+                .build();
+        final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                .builder()
+                .processorType(ProcessorType.PIPELINE)
+                .pipeline(pipeline)
+                .queryData(findStreamQueryData)
+                .autoPriority(true)
+                .enabled(true)
+                .minMetaCreateTimeMs(0L)
+                .maxMetaCreateTimeMs(Long.MAX_VALUE)
+                .build();
+        final ProcessorFilter filter = processorFilterService.create(request);
+
+        // The old enough stream gets a task.
+        createTasks(filter);
+        assertThat(taskCount()).isEqualTo(1);
+
+        final long minMetaIdAfterProcessing = getMinMetaId(filter);
+        assertThat(minMetaIdAfterProcessing).isGreaterThan(0L);
+
+        // Now add a stream that is too new to get past the delay.
+        commonTestScenarioCreator.createSample2LineRawFile(
+                eventFeed,
+                StreamTypeNames.RAW_EVENTS,
+                now);
+
+        createTasks(filter);
+
+        // No task for the stream we aren't allowed to process yet, and the tracker stays where it is. Winding
+        // it back would make us create tasks for every stream all over again.
+        assertThat(taskCount()).isEqualTo(1);
+        assertThat(getMinMetaId(filter)).isEqualTo(minMetaIdAfterProcessing);
+    }
+
+    private long getMinMetaId(final ProcessorFilter filter) {
+        return processorFilterService.fetch(filter.getId())
+                .orElseThrow()
+                .getProcessorFilterTracker()
+                .getMinMetaId();
     }
 
     private void createTasks(final ProcessorFilter filter) {
