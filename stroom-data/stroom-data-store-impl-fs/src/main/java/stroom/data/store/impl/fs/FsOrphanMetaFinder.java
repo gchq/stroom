@@ -71,7 +71,7 @@ class FsOrphanMetaFinder {
 
     public FsOrphanMetaFinderProgress scan(final Consumer<SimpleMeta> orphanConsumer,
                                            final TaskContext taskContext) {
-        final long maxId = metaService.getMaxId();
+        final long maxId = metaService.getMaxId().orElse(0L);
 
         final int batchSize = fsVolumeConfigProvider.get().getFindOrphanedMetaBatchSize();
         final FsOrphanMetaFinderProgress progress = new FsOrphanMetaFinderProgress(
@@ -119,7 +119,7 @@ class FsOrphanMetaFinder {
         }
 
         final long result;
-        if (metaList.size() > 0) {
+        if (!metaList.isEmpty()) {
 
             final Map<Long, SimpleMeta> metaIdToMetaMap = metaList.stream()
                     .collect(Collectors.toMap(SimpleMeta::getId, Function.identity()));

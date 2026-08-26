@@ -35,6 +35,7 @@ import stroom.util.time.TimePeriod;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface MetaService {
@@ -42,9 +43,9 @@ public interface MetaService {
     /**
      * Get the current maximum id of any data.
      *
-     * @return The maximum id of any data item or null if there is no data.
+     * @return The maximum id of any data item or an empty optional if there is no data.
      */
-    Long getMaxId();
+    Optional<Long> getMaxId();
 
     /**
      * Get the current maximum id of any data with an id greater than or equal to the supplied id and a create
@@ -54,9 +55,9 @@ public interface MetaService {
      *                        the maximum id by working back down from the highest id there is, so without a
      *                        lower bound it reads the whole table when nothing matches.
      * @param maxCreateTimeMs The latest create time to consider.
-     * @return The maximum id of any matching data item or null if there is none.
+     * @return The maximum id of any matching data item or an empty optional if there is none.
      */
-    Long getMaxId(long minId, long maxCreateTimeMs);
+    Optional<Long> getMaxId(long minId, long maxCreateTimeMs);
 
     /**
      * Create meta data with the supplied properties.
@@ -177,7 +178,7 @@ public interface MetaService {
      * Return true if the passed meta type name is a 'raw' type, i.e. used for receipt of
      * raw data.
      */
-    default boolean isRaw(String typeName) {
+    default boolean isRaw(final String typeName) {
         return typeName != null
                && getRawTypes().contains(typeName);
     }

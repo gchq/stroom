@@ -250,7 +250,7 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
 
     private void runSelectMetaQuery(final ExpressionOperator expression,
                                     final int expected) {
-        final long maxId = metaService.getMaxId();
+        final long maxId = metaService.getMaxId().orElse(0L);
         assertThat(processorTaskCreator.runSelectMetaQuery(expression,
                 0,
                 maxId,

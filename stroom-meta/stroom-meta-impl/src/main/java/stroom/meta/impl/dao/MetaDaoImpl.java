@@ -346,17 +346,16 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     @Override
-    public Long getMaxId() {
+    public Optional<Long> getMaxId() {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                         .select(DSL.max(META_M.ID))
                         .from(META_M)
                         .fetchOptional())
-                .map(Record1::value1)
-                .orElse(null);
+                .map(Record1::value1);
     }
 
     @Override
-    public Long getMaxId(final long minId, final long maxCreateTimeMs) {
+    public Optional<Long> getMaxId(final long minId, final long maxCreateTimeMs) {
         // Walk back down the primary key and stop at the first row created at or before the supplied time.
         // `max(id)` would read every row created at or before that time instead, which is most of the table
         // for a recent time, so it gets slower as the table grows. Ids and create times rise together, so the
@@ -370,8 +369,7 @@ public class MetaDaoImpl implements MetaDao {
                         .orderBy(META_M.ID.desc())
                         .limit(1)
                         .fetchOptional())
-                .map(Record1::value1)
-                .orElse(null);
+                .map(Record1::value1);
     }
 
     @Override
