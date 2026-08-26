@@ -20,6 +20,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.impl.fs.FsFeedPathDao;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.mock.MockFsTypePaths;
 import stroom.meta.shared.Meta;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -55,7 +56,12 @@ class TestFileSystemUtil {
     Path tempDir;
 
     private FsVolume buildTestVolume() {
-        return FsVolume.builder().path(FileUtil.getCanonicalPath(tempDir)).build();
+        return FsVolume.builder()
+                .path(FileUtil.getCanonicalPath(tempDir))
+                .volumeGroup(FsVolumeGroup.builder()
+                        .name("test-grp")
+                        .build())
+                .build();
     }
 
     @Test

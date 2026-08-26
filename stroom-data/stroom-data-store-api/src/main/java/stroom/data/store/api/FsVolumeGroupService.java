@@ -46,10 +46,12 @@ public interface FsVolumeGroupService {
 
     void ensureDefaultVolumes();
 
+    /// @return The default volume group if the default volume group name has been configured.
     default Optional<FsVolumeGroup> getOrCreateDefaultVolumeGroup() {
         return getDefaultVolumeGroupName()
                 .map(this::getOrCreate);
     }
 
+    /// @return The default volume group name if it has been configured.
     Optional<String> getDefaultVolumeGroupName();
 }

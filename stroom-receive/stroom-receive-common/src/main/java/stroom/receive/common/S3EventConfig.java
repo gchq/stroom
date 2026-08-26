@@ -60,6 +60,7 @@ public class S3EventConfig extends AbstractConfig implements IsStroomConfig, IsP
         return rePollDuration;
     }
 
+    @JsonPropertyDescription("The configuration for the AWS SQS queue that will be used to receive S3 events.")
     @JsonProperty
     public SqsConfig getSqs() {
         return sqs;

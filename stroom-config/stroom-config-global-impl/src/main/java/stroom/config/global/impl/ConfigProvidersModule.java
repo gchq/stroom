@@ -612,6 +612,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.receive.common.S3EventConfig getS3EventConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.receive.common.S3EventConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.receive.rules.impl.StroomReceiptPolicyConfig getStroomReceiptPolicyConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(

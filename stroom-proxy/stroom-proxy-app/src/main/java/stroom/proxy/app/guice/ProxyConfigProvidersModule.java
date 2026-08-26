@@ -161,6 +161,15 @@ public class ProxyConfigProvidersModule extends AbstractModule {
                 stroom.receive.common.ReceiveDataConfig.class);
     }
 
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.receive.common.S3EventConfig getS3EventConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.receive.common.S3EventConfig.class);
+    }
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
