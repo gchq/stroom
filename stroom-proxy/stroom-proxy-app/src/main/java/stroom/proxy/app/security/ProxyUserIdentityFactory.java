@@ -151,7 +151,10 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
             final Optional<UserIdentity> optIdentity = optUserDesc.map(userDesc ->
                     new ApiKeyUserIdentity(apiKey, userDesc));
 
-            LOGGER.debug("fetchApiKeyUserIdentity() - Returning {} for apiKey: {}", optIdentity, apiKey);
+            // Never log the whole key. ApiKeyUserIdentity.toString() truncates, but this site
+            // interpolated the raw value directly, which the toString fix did not cover.
+            LOGGER.debug("fetchApiKeyUserIdentity() - Returning {} for apiKey: {}",
+                    optIdentity, NullSafe.subString(apiKey, 0, 15));
             return optIdentity;
         } else {
             LOGGER.debug("fetchApiKeyUserIdentity() - No API key in request");
