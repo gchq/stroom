@@ -150,9 +150,9 @@ public class PlanBModule extends AbstractModule {
         bind(SharedFileStoreCleaner.class).asEagerSingleton();
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ShardHousekeepingRunnable.class, builder -> builder
-                        .name("Plan B Shard Housekeeping")
-                        .description("Detects orphaned shard directories on the shared filesystem and "
-                                + "moves them to trash, then drains trash entries from previous runs.")
+                        .name("Plan B Shared FS Housekeeping")
+                        .description("Detects orphaned directories on the shared file store and "
+                                + "moves them to trash, then empties trash entries from previous runs.")
                         .cronSchedule(CronExpressions.EVERY_HOUR.getExpression())
                         .advanced(true));
 
