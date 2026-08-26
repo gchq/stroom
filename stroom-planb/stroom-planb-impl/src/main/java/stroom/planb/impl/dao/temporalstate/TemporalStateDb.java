@@ -413,7 +413,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
                 deleteState(writer, lastState);
                 changeCount++;
 
-                // Insert the new session.
+                // Insert the new state.
                 insert(writer, newState);
             }
 

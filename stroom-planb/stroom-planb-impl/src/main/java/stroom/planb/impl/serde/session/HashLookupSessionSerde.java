@@ -112,7 +112,8 @@ public class HashLookupSessionSerde implements SessionSerde {
         });
 
         return ValSerdeUtil.write(session.getPrefix().getVal(), byteBuffers, valueByteBuffer -> {
-            // We are going to store as a lookup so take off the variable type prefix.
+            // The lookup is keyed on the session key alone, so take off the start/end times written
+            // as the suffix above.
             final ByteBuffer slice = valueByteBuffer.slice(0,
                     valueByteBuffer.remaining() - timeLength);
             return hashLookupDb.get(txn, slice, optionalIdByteBuffer ->

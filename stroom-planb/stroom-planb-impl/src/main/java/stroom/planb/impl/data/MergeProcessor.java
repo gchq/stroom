@@ -141,9 +141,11 @@ public class MergeProcessor {
     }
 
     public void merge() {
-        // One shot recreation of dir queues for all doc dirs currently in the merging dir, resuming merges
+        // One shot recreation of dir queues from every subdirectory of the merging dir, resuming merges
         // for data that was queued but not merged when the process last stopped. After boot, new queue dirs
         // are only ever created via getOrCreateDirQueue so there is no point re-listing. See gh-5696.
+        // Each name is read as a doc uuid, so anything else left here — e.g. a holding shard's
+        // <uuid>_<shardIndex> working copy — becomes a queue that no merge will ever drain.
         if (resumedQueues.compareAndSet(false, true)) {
             try (final Stream<Path> stream = Files.list(mergingDir)) {
                 stream.forEach(path -> {

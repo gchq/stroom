@@ -70,11 +70,11 @@ public class TraceProcessor {
                 if (!processed) {
                     final Optional<Trace> optTrace = traceFunction.apply(traceId);
                     if (optTrace.isEmpty()) {
-                        // No usable trace in shard (either no spans, or spans but no root span).
-                        // Likely caused by a processing-queue purge or partial data loss.
-                        // Mark as processed so it is skipped on future ticks.
-                        LOGGER.warn("Skipping incomplete trace root {} in shard (no spans or no root " +
-                                        "span found); marking as processed to suppress future re-scans",
+                        // findTrace returns empty only when the bucket holds no span at all for this
+                        // trace — a trace with spans but no root span still comes back. Mark as
+                        // processed so it is skipped on future ticks.
+                        LOGGER.warn("Skipping trace root {} as the bucket holds no spans for it; " +
+                                        "marking as processed to suppress future re-scans",
                                 HexStringUtil.encode(traceId));
                         processingStatus.insert(writer, keyByteBuffer, PROCESSED);
                         writer.tryCommit();

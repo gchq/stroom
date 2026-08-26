@@ -187,7 +187,8 @@ public class ShardManager {
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
             shardMap.values().forEach(shard -> {
                 final PlanBDocument doc = shard.getDoc();
-                // The merge cycle maintains shared-file-store shards, under a cluster lock.
+                // Never taken today: createShard rejects a shared-file-store doc, so shardMap cannot
+                // hold one. Those shards are maintained by the merge cycle under a cluster lock.
                 if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
                     return;
                 }
@@ -423,17 +424,18 @@ public class ShardManager {
     }
 
     /**
-     * Deletes local shared-file-store shard generation dirs under {@code shards/<uuid>_<idx>/} that no
-     * live {@link shardMap} instance owns — crash / failed-delete orphans. Safe because those copies
-     * are always re-syncable from the shared store. Never touches flat {@code shards/<uuid>} dirs
-     * (RestStoreShard) whose local copy is the authoritative data. On {@code startup} everything
-     * non-live is reaped (nothing is serving yet); otherwise only dirs older than
-     * {@code minTimeToKeepStoreShardEnv}, so a just-created instance not yet visible in the map is not
-     * swept out from under a concurrent {@code get()}.
+     * Deletes {@code <identity>/<generation>} dirs that no live shard instance owns — crash /
+     * failed-delete orphans. In practice that means the cached archive buckets under
+     * {@code archive_cache/}: the {@code shards/} root holds only flat {@code shards/<uuid>} dirs
+     * (RestStoreShard), whose local copy is the authoritative data and which the {@code data.mdb}
+     * check below skips. Safe for a generation dir because its contents are always re-syncable from
+     * the shared store. On {@code startup} everything non-live is reaped (nothing is serving yet);
+     * otherwise only dirs older than {@code minTimeToKeepStoreShardEnv}, so a just-created instance
+     * not yet visible in its map is not swept out from under a concurrent {@code get()}.
      */
     private void sweepOrphanGenerationDirs(final boolean startup) {
-        // Live shards (shards/) and cached archive buckets (archive_cache/) both use the
-        // <identity>/<generation> layout, so the same sweep handles both roots.
+        // Both roots are swept the same way: archive_cache/ is where the <identity>/<generation>
+        // layout is used, and shards/ is included so a stray generation dir there cannot accumulate.
         sweepGenerationDirs(planBPaths.getShardDir(), collectLiveGenerationDirs(shardMap), startup);
         sweepGenerationDirs(planBPaths.getArchiveCacheDir(), collectLiveGenerationDirs(archiveShardMap),
                 startup);

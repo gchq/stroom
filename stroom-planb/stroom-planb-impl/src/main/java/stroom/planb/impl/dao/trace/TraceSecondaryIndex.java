@@ -31,14 +31,19 @@ import java.util.function.BiFunction;
 /**
  * Single source of truth for the trace-root secondary sort indexes.
  *
- * <p>Each constant bundles the four things that must stay in lock-step for a
- * sortable trace-root column:
+ * <p>Each constant bundles the four things a sortable trace-root column needs:
  * <ul>
  *   <li>the {@link TraceRootField} id carried by the query criteria sort,</li>
  *   <li>the LMDB DBI name that backs the index,</li>
  *   <li>the {@code key(root, traceId)} byte-layout used to write/scan the index, and</li>
  *   <li>the {@link Comparator} used to merge results across shards.</li>
  * </ul>
+ *
+ * <p>The key and the comparator order a page the same way in the ordinary case, but they are not
+ * identical orderings. {@link #START_TIME} keys a null start time as {@code (0,0)}, which sorts
+ * first, while its comparator is {@code nullsLast}; {@link #OPERATION} truncates the name in the
+ * key (see {@link #operationKey}) while its comparator compares the whole string. Either can put a
+ * row in a different place in the merged page than the per-bucket scan did.
  *
  * <p>Adding a new sortable field is therefore a single new enum constant — no edits
  * to the index write/delete/update paths in {@link TraceDb} (which iterate

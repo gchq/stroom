@@ -149,7 +149,10 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             "lookup-keyToUid", "lookup-uidToKey", "lookup-info",
             "lookup-hash");
 
-    /** Number of bytes used for the traceId suffix appended to every secondary-index key. */
+    /**
+     * Length of a raw trace id. It leads every span key and merge-time key, and is the suffix
+     * appended to every secondary-index key.
+     */
     private static final int TRACE_ID_BYTES = 16;
 
     /** Span-key layout (see {@link stroom.planb.impl.serde.trace.SpanKeySerde}):
@@ -196,9 +199,9 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
     /** Interns span names so an unbounded name never lands raw in a length-capped LMDB key. */
     private final LookupSerde lookupSerde;
-    // Typed reference to the same object as valueSerde, held so that
-    // publish / runRetention can call readInsertTime() without
-    // going through the UID lookup table.
+    // Typed reference to the same object as valueSerde, held for the two reads Serde does not offer:
+    // runRetention's readInsertTime(), which decodes the insert time from raw bytes without touching
+    // the UID lookup table, and merge's readSummary().
     private final SpanValueSerde spanValueSerde;
     private final UsedLookupsRecorder keyRecorder;
     private final UsedLookupsRecorder valueRecorder;
@@ -234,11 +237,16 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
      */
     private final Dbi<ByteBuffer> traceStatsDbi;
     /**
-     * Distinct service-name set per trace: {@code traceId[16] ∥ internedName → ∅}. Lets a
+     * Distinct span-name set per trace: {@code traceId[16] ∥ internedName → ∅}. Lets a
      * genuinely-new name be detected (via {@link PutFlags#MDB_NOOVERWRITE}) so the cumulative
      * {@code serviceCount} in {@link TraceStats} is exact. The name goes through
      * {@link #lookupSerde} so an unbounded one cannot exceed the LMDB key limit — see
      * {@link #recordNewSpan}.
+     *
+     * <p>Note what is counted is the OpenTelemetry span name, taken from {@code SpanValue.getName()}
+     * by both {@link #insert} and {@link #merge}. A span carries no service name here, so the
+     * {@code trace-service-names} DBI, {@code serviceCount} and the UI's "Services" column all
+     * report a distinct-span-name count.
      */
     private final Dbi<ByteBuffer> traceServiceNamesDbi;
     private final TraceStatsSerde traceStatsSerde;
@@ -300,9 +308,9 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
 
         // One DBI per secondary sort index, keyed by the index definition — but only for a store that is
         // actually queried. They exist solely to serve sorted/filtered findTraces, so in a store that is
-        // only ever written and merged (a holding-area shard, a stream writer env, a publish delta)
-        // maintaining them is pure write amplification. Left empty there, which makes the write helpers
-        // no-ops; see hasSecondaryIndexes on TraceDb.create for why this must be consistent per env.
+        // only ever written and merged (a holding-area shard, a stream writer env) maintaining them is
+        // pure write amplification. Left empty there, which makes the write helpers no-ops; see
+        // hasSecondaryIndexes on TraceDb.create for why this must be consistent per env.
         final Map<TraceSecondaryIndex, Dbi<ByteBuffer>> indexDbis =
                 new EnumMap<>(TraceSecondaryIndex.class);
         if (hasSecondaryIndexes) {
@@ -543,11 +551,11 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         final boolean isRootSpan = NullSafe.isEmptyString(kv.key().getParentSpanId());
 
         if (isRootSpan) {
-            // Root span: (re)derive depth, services, name and totalSpans from the span
-            // set seen so far via the bounded streaming aggregate computation — it walks
-            // the span index without materialising the whole trace, so it never OOMs on a
-            // large/open-ended trace.  Also writes the trace-roots-merge-time entry that
-            // drives the PathwaysProcessor grace-period clock.
+            // Root span: rebuild the stored root from the root span plus the per-trace stats
+            // counters, so services and totalSpans cost no per-span rescan however large the
+            // trace grows. Only depth walks the span index, and only when buildRootFromStats
+            // decides it is due. Also writes the trace-roots-merge-time entry that drives the
+            // PathwaysProcessor grace-period clock.
             try {
                 // The root span is in the store — either just written, or already there and the
                 // write rejected as a duplicate. Empty means no live span at all; skip defensively.
@@ -1134,9 +1142,9 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         });
     }
 
-    // Remove what stageSpans copied: every non-root span, plus the root-side rows of a retired trace. A
-    // retained span records its lookups so the deleteUnused below only drops entries nothing references.
-    // Returns the number of rows removed.
+    // Remove what stageSpans copied: every span of a staged trace, the root span included, plus the
+    // root-side rows of a retired trace. A retained span records its lookups so the deleteUnused below
+    // only drops entries nothing references. Returns the number of rows removed.
     //
     // Iteration reads from readTxn while mutations go through writer.
     private long purgeStaged(final PublishSelection selection) {
@@ -1216,7 +1224,7 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     }
 
     // Fail loudly rather than with an NPE if a sorted/indexed read is ever attempted against a store
-    // opened without the secondary indexes (a holding-area shard, writer env or publish delta).
+    // opened without the secondary indexes (a holding-area shard or a stream writer env).
     private void requireSecondaryIndexes(final String operation) {
         if (secondaryIndexDbis.isEmpty()) {
             throw new IllegalStateException("Cannot " + operation
@@ -1329,7 +1337,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         }
     }
 
-    // Both envs must already have the DBI open, i.e. the owning TraceDb must have been constructed.
+    // Opens the named DBI on both envs, creating it where absent, so a target that has never held one
+    // still receives the copy.
     private static void copyNamedDbi(final String name,
                                      final PlanBEnv srcEnv,
                                      final PlanBEnv dstEnv) {
@@ -1403,8 +1412,8 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
             //    trailing leaked spans inflate) — this bounds a leaky/never-ending trace rather
             //    than keeping its root live forever; late spans that then arrive become orphans.
             //  - Orphan root (synthesized, no root span): there is no root end to age by, so it is
-            //    removed once the trace goes quiet (lastActivityMs < cutoff). That co-expires with
-            //    the insert-time span sweep above and clears the lingering trace-stats.
+            //    removed once the insert-time span sweep above has taken its last live span. That
+            //    stops the root outliving its spans and clears the lingering trace-stats.
             LmdbIterable.iterate(readTxn, traceRootsDbi, (key, val) -> {
                 final TraceRoot value = traceRootValueSerde.read(val.duplicate());
                 final byte[] traceIdBytes = new byte[key.remaining()];
@@ -1827,12 +1836,12 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
     // Lazy, streaming trace traversal
     //
     // Walk a trace top-down straight off the span index
-    // (traceId ∥ parentSpanId ∥ spanId) instead of materialising the whole Trace
-    // in memory. A node's children are the prefix scan (traceId ∥ thisSpanId); the
-    // root is (traceId ∥ 0*8). Peak memory for a top-down consumer is its working
-    // set (depth + per-node sibling width), never O(total spans). Reusable by the
-    // aggregate computation below now, and by pathways / the UI later. All methods
-    // run against a caller-supplied txn.
+    // (traceId ∥ parentSpanId ∥ startTime ∥ spanId) instead of materialising the
+    // whole Trace in memory. A node's children are the prefix scan
+    // (traceId ∥ thisSpanId); the root is (traceId ∥ 0*8). Peak memory for a
+    // top-down consumer is its working set (depth + per-node sibling width), never
+    // O(total spans). Used by the depth walk below and, through getSpanPage, by the
+    // UI's paged waterfall. All methods run against a caller-supplied txn.
     // ------------------------------------------------------------------------
 
     /**
@@ -2292,7 +2301,9 @@ public class TraceDb extends AbstractDb<SpanKey, SpanValue> {
         });
     }
 
-    // Depth by iterative pre-order walk, for a trace deep enough that descend()'s recursion is a risk.
+    // Depth by iterative pre-order walk. Chosen over descend() once a trace passes LARGE_TRACE_SPANS,
+    // since span count is all we know up front and a trace that large could be deep enough for
+    // descend()'s recursion to overflow the stack.
     private int walkDepth(final Txn<ByteBuffer> txn, final byte[] traceIdBytes) {
         final ChildCursor cursor = new SingleStoreChildCursor(this, txn, traceIdBytes);
         final List<byte[]> path = new ArrayList<>();

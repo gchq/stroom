@@ -37,7 +37,8 @@ public class PlanBPaths {
     private final Path stagingDir;
     // After staging decompress the zip files and queue the individual parts for merging.
     private final Path unzipDir;
-    // During the merging process shards are decompressed to the merging dir.
+    // Unzipped parts are moved from the unzip dir to a per-doc queue under the merging dir, where they
+    // wait to be merged. This is the only copy of queued data, so its contents must survive a restart.
     private final Path mergingDir;
     // Active shards end up in the shard directory.
     private final Path shardDir;

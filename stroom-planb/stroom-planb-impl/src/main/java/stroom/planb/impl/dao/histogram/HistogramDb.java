@@ -140,7 +140,8 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                 readOnly,
                 hashClashCommitRunnable);
         try {
-            // Rows will store hour precision.
+            // The zone the key's coarse time is bucketed in, so a day or hour row lines up with the
+            // user's calendar rather than UTC.
             final ZoneId zoneId = UserTimeZoneUtil.getZoneId(settings.getKeySchema().getTimeZone(), null);
 
             // The key time is always a coarse grained time with rows having multiple values.

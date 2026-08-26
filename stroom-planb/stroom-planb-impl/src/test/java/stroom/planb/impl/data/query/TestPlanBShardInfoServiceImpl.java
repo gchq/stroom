@@ -94,8 +94,8 @@ class TestPlanBShardInfoServiceImpl {
     }
 
     /**
-     * Without the VIEW check any user able to query this datasource saw every shard's name, size
-     * and settings.
+     * Without the VIEW check any user able to query this datasource would see every shard's name,
+     * size and settings.
      */
     @Test
     void shardsTheUserCannotViewAreOmitted(@TempDir final Path tempDir) throws IOException {

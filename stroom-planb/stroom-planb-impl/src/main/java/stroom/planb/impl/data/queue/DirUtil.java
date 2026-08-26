@@ -190,7 +190,7 @@ public class DirUtil {
      *     <li>{@code .../2/}</li>
      *     <li>{@code .../2/333/}</li>
      *     <li>{@code .../2/333/555}</li>
-     *     <li>{@code .../2/333/333555777}</li>
+     *     <li>{@code .../2/333/555/333555777}</li>
      * </ul>
      *
      * @return True if the path conforms to the expected dir structure.
@@ -255,10 +255,11 @@ public class DirUtil {
     }
 
     /**
-     * Get the min id of any numerically named file found in the supplied dir.
+     * Get the lowest id held under the supplied root, by descending the depth and branch dirs to the
+     * first leaf dir.
      *
-     * @param parentDir The parent dir to look at.
-     * @return The min id of all files found in a dir or 0 if non found.
+     * @param parentDir The root dir to look under, i.e. the one holding the depth dirs.
+     * @return The lowest id found, or 0 if the root holds no leaf dir.
      */
     public static long getMinDirId(final Path parentDir) {
         return LOGGER.logDurationIfDebugEnabled(
@@ -269,10 +270,11 @@ public class DirUtil {
     }
 
     /**
-     * Get the max id of any numerically named file found in the supplied dir.
+     * Get the highest id held under the supplied root, by descending the depth and branch dirs in
+     * reverse to the last leaf dir.
      *
-     * @param parentDir The parent dir to look at.
-     * @return The max id of all files found in a dir or 0 if non found.
+     * @param parentDir The root dir to look under, i.e. the one holding the depth dirs.
+     * @return The highest id found, or 0 if the root holds no leaf dir.
      */
     public static long getMaxDirId(final Path parentDir) {
         return LOGGER.logDurationIfDebugEnabled(

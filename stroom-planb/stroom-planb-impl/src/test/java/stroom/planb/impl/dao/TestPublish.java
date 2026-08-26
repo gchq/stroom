@@ -87,7 +87,7 @@ class TestPublish {
     /**
      * Every span of a trace goes to the bucket for its ROOT's start time, whatever the span's own
      * timestamps. Here the root starts 2024-01-10 and a child arrives 2024-01-12: one bucket, both spans.
-     * Previously the child was bucketed by its own insert time and the trace was split across two.
+     * Bucketing the child by its own insert time instead would split the trace across two.
      */
     @Test
     void wholeTraceGoesToTheRootStartBucket(@TempDir final Path tempDir) throws IOException {
@@ -189,7 +189,8 @@ class TestPublish {
         }
         assertThat(listSubDirs(firstArchive)).as("first pass stages the trace").hasSize(1);
 
-        // The root is younger than the cut-off so it is still held, which is the case that used to re-stage.
+        // The root is younger than the cut-off so it is still held — the case a staging decision based on
+        // the root alone would re-stage.
         try (final TraceDb db = TraceDb.create(dbDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, doc, false)) {
             db.publish(CUTOFF, secondArchive);
         }
@@ -456,9 +457,9 @@ class TestPublish {
     }
 
     /**
-     * The bug the wait fixes. A child arriving first synthesizes a root starting on 2024-03-20; the real root
-     * starts half an hour earlier, on 2024-03-19. Had the child been staged on the first cycle it would have
-     * been deleted locally, leaving the root span alone to reach the 2024-03-19 bucket — one trace reported
+     * Why the wait matters. A child arriving first synthesizes a root starting on 2024-03-20; the real root
+     * starts half an hour earlier, on 2024-03-19. Were the child staged on the first cycle it would be
+     * deleted locally, leaving the root span alone to reach the 2024-03-19 bucket — one trace reported
      * two ways depending on which bucket a query opened.
      */
     @Test
@@ -522,11 +523,11 @@ class TestPublish {
     // -----------------------------------------------------------------------
 
     /**
-     * Regression guard for silent data loss on repeated publishing: when a bucket for a
+     * Guards against silent data loss on repeated publishing: when a bucket for a
      * date already exists on the shared store, a second archive batch for that same date
-     * must be <em>merged</em> into it, not overwrite it. Previously {@code pushArchive}
-     * raw-copied the new batch's {@code data.mdb} over the existing one, discarding every
-     * trace archived by earlier runs for that date.
+     * must be <em>merged</em> into it, not overwrite it. Raw-copying the new batch's
+     * {@code data.mdb} over the existing one would discard every trace archived by
+     * earlier runs for that date.
      */
     @Test
     void pushArchive_mergesRepeatedBatchesForSameDay_ratherThanOverwriting(
@@ -553,7 +554,7 @@ class TestPublish {
         publisher.pushArchive(doc, 0, new StagedArchive(dayLabel, batch1));
         publisher.pushArchive(doc, 0, new StagedArchive(dayLabel, batch2)); // must MERGE
 
-        // The shared bucket must contain BOTH traces — previously only TRACE_B survived.
+        // The shared bucket must contain BOTH traces — an overwrite would leave only TRACE_B.
         final Path bucket = shared
                 .resolve(PlanBConstants.ARCHIVE_DIR_NAME)
                 .resolve(doc.getUuid())
@@ -570,11 +571,11 @@ class TestPublish {
     // -----------------------------------------------------------------------
 
     /**
-     * Archiving a trace with a large span count must not buffer all its spans in heap
-     * (the previous implementation collected every archived span's raw bytes into a map,
-     * which OOMs on a large/open-ended trace). This archives a many-thousand-span trace
-     * and asserts the whole trace is streamed into the archive intact and removed from
-     * the live shard — exercising the streaming write path at scale.
+     * Archiving a trace with a large span count must not buffer all its spans in heap —
+     * collecting every archived span's raw bytes before writing would OOM on a large or
+     * open-ended trace. This archives a many-thousand-span trace and asserts the whole
+     * trace is streamed into the archive intact and removed from the live shard,
+     * exercising the streaming write path at scale.
      */
     @Test
     void archivesLargeTraceByStreaming_notBuffering(@TempDir final Path tempDir) throws IOException {
@@ -625,10 +626,10 @@ class TestPublish {
     // -----------------------------------------------------------------------
 
     /**
-     * Regression guard for the "Depth = 1" bug: a trace root's derived fields
-     * (depth/services/totalSpans) must be recomputed over the fully-merged span set at
-     * {@code mergeComplete()}, not left at the value computed from the single batch that
-     * carried the root span. Verified regardless of the order batches are merged in.
+     * A trace root's derived fields (depth/services/totalSpans) must be recomputed over the
+     * fully-merged span set at {@code mergeComplete()}, not left at the value computed from the
+     * single batch that carried the root span — which for a root-only batch reports depth 1
+     * however deep the trace really is. Verified regardless of the order batches are merged in.
      */
     @Test
     void mergeComplete_recomputesRootDepthOverFullyMergedTrace(@TempDir final Path tempDir)

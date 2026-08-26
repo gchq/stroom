@@ -43,7 +43,7 @@ import java.util.UUID;
  * writer directory: any data left from a previous run was never successfully
  * sent, so it is safe to discard.
  *
- * <p>Orphaned {@code .tmp_} directories on the shared filesystem are cleaned
+ * <p>Orphaned {@code .tmp}-suffixed batch directories on the shared filesystem are cleaned
  * up separately by {@link stroom.planb.impl.fs.SharedFileStoreCleaner#startup()}.
  */
 @Singleton

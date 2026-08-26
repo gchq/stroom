@@ -22,9 +22,10 @@ import java.io.IOException;
  * Transfers a completed batch from the local writer directory to its final
  * destination(s) and cleans up the writer directory on success.
  *
- * <p>Implementations must be thread-safe: the singleton {@link PlanBStreamWriterFactory}
- * may call {@link #publish} from multiple pipeline threads concurrently.
- * Thread-safety is natural because each {@link WrittenBatch} has its own writerDir.
+ * <p>Implementations must be thread-safe: one implementation is shared by every
+ * {@link PlanBStreamWriter}, each of which calls {@link #publish} from its own pipeline thread
+ * when the stream ends. Thread-safety is natural because each {@link WrittenBatch} has its own
+ * writerDir.
  */
 public interface BatchDestination {
     void publish(WrittenBatch batch) throws IOException;

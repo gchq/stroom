@@ -34,9 +34,12 @@ public final class TraceRootField {
     public static final String TRACE_START = "Trace Start";
     /** Root operation's own duration ({@code rootEndTime - startTime}, {@code trace-roots-duration} index). */
     public static final String DURATION    = "Root Duration";
-    /** Whole-trace span — start to the last span's end ({@code endTime - startTime}. */
+    /** Whole-trace span — start to the last span's end ({@code endTime - startTime}). */
     public static final String TOTAL_DURATION = "Trace Duration";
-    /** Service-count column ({@code trace-roots-services} index). */
+    /**
+     * "Services" column ({@code trace-roots-services} index). Sorts on the trace's distinct
+     * span-name count — see {@code TraceDb.traceServiceNamesDbi}.
+     */
     public static final String SERVICES    = "Services";
     /** Span depth column ({@code trace-roots-depth} index). */
     public static final String DEPTH       = "Depth";

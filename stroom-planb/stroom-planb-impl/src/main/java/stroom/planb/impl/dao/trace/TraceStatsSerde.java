@@ -65,8 +65,8 @@ public class TraceStatsSerde {
             final long lastActivityMs = input.readLong();
             final int depth = input.readInt();
             final long spanCountAtLastDepth = input.readLong();
-            // Trailing fields appended after the fact (unversioned serde) — tolerate legacy shorter
-            // values that predate hasError / truncated.
+            // The layout carries no version, so these two trailing flags are read only if the value is
+            // long enough to hold them; a shorter value yields false for both rather than throwing.
             final boolean hasError = (input.limit() - input.position()) >= 1 && input.readBoolean();
             final boolean truncated = (input.limit() - input.position()) >= 1 && input.readBoolean();
             return new TraceStats(spanCount, serviceCount, maxEnd, lastActivityMs, depth,

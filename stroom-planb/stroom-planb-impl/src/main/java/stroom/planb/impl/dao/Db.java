@@ -53,11 +53,15 @@ public interface Db<K, V> extends AutoCloseable {
                        boolean useStateTime);
 
     /**
-     * Moves records older than {@code publishBefore} out of this store and into subdirectories of
-     * {@code bucketBaseDir}, one per bucket, so that queries can read them. How records are grouped
-     * into buckets, and how a bucket subdirectory is named, is up to the implementation — a store
-     * type need not bucket by time, or at all. Returns 0 for a store type that does not publish
-     * this way.
+     * Moves records out of this store and into subdirectories of {@code bucketBaseDir}, one per
+     * bucket, so that queries can read them. How records are grouped into buckets, how a bucket
+     * subdirectory is named, and what {@code publishBefore} decides are all up to the
+     * implementation — a store type need not bucket by time, or at all, and need not restrict
+     * itself to records older than the cut-off. {@code TraceDb}, for instance, moves every span of
+     * a trace it selects and uses {@code publishBefore} only to decide when the trace's root
+     * retires. Returns 0 for a store type that does not publish this way.
+     *
+     * @return the number of rows removed from this store
      */
     default long publish(final Instant publishBefore,
                          final Path bucketBaseDir) {
@@ -94,9 +98,9 @@ public interface Db<K, V> extends AutoCloseable {
     String getInfoString();
 
     /**
-     * @return The id that uniquely identifies this LMDB instance. Minted once when the instance is first
-     * created and carried wherever the instance is copied, so it identifies a merge source across replays.
-     * Null only for a read only instance created before instance ids were introduced.
+     * @return The id that uniquely identifies this LMDB instance. Minted on the first writable open and
+     * carried wherever the instance is copied, so it identifies a merge source across replays. Null only
+     * when the env was opened read only and holds no id, since a read only open cannot mint one.
      */
     String getInstanceUuid();
 

@@ -28,11 +28,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Regression tests for the SIGSEGV (SEGV_MAPERR) crash caused by the merge
- * StoreShard and the long-lived query StoreShard sharing the same local LMDB
- * directory (and therefore the same {@code lock.mdb}).
+ * Guards the directory separation that keeps a merge-cycle holding shard and a long-lived query
+ * shard off the same local LMDB directory, and therefore off the same {@code lock.mdb}. Sharing one
+ * crashes the JVM with SIGSEGV (SEGV_MAPERR).
  *
- * <h2>Root cause</h2>
+ * <h2>Why sharing crashes</h2>
  * LMDB's {@code lock.mdb} contains {@code PTHREAD_MUTEX_ROBUST |
  * PTHREAD_PROCESS_SHARED} pthread mutexes. glibc records the mmap'd address
  * of each acquired mutex in the owning thread's {@code robust_list}. When the
@@ -42,11 +42,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code pthread_mutex_lock} tries to update the old (now-unmapped) list
  * entry and crashes with {@code SIGSEGV / SEGV_MAPERR}.
  *
- * <h2>Fix</h2>
- * {@link ShardManager#createStoreShard} now uses {@code planBPaths.getMergingDir()}
- * as the base for the holding shard's working directory rather than
- * {@code planBPaths.getShardDir()}. The two environments therefore never
- * share a directory and consequently never share {@code lock.mdb}.
+ * <h2>What keeps them apart</h2>
+ * {@code HoldingAreaMergeStrategy.mergeShard} builds its {@code HoldingShard} under
+ * {@code planBPaths.getMergingDir()}, while {@code RestStoreShard} lives under
+ * {@code planBPaths.getShardDir()}. The two environments therefore never share a directory and
+ * consequently never share {@code lock.mdb}.
+ *
+ * <p>These tests assert only that those two roots, and the constants behind them, are distinct —
+ * they compare paths and do not construct a shard.
  */
 class TestHoldingShardIsolation {
 
@@ -54,11 +57,9 @@ class TestHoldingShardIsolation {
      * The core invariant: the merge base directory ({@code mergingDir}) must
      * be a different path from the long-lived query shard directory ({@code shardDir}).
      *
-     * <p>{@link ShardManager#createStoreShard} passes {@code planBPaths.getMergingDir()}
-     * as {@code shardBaseDir} to the {@link StoreShard} 7-arg constructor. The resulting
-     * shard dir is {@code mergingDir/<uuid>_<shardIndex>}.  The query shard (created via
-     * the public 6-arg constructor) resolves to {@code shardDir/<uuid>_<shardIndex>}.
-     * They must be distinct to prevent sharing {@code lock.mdb}.
+     * <p>A holding shard resolves to {@code mergingDir/<uuid>_<shardIndex>}; a query shard
+     * resolves under {@code shardDir}. They must be distinct to prevent sharing
+     * {@code lock.mdb}.
      */
     @Test
     void mergingDir_and_shardDir_areDistinctPaths(@TempDir final Path tempDir) {
@@ -70,10 +71,9 @@ class TestHoldingShardIsolation {
     }
 
     /**
-     * For a given doc UUID and shard index, the path computed by
-     * {@link ShardManager#createStoreShard} (using {@code mergingDir}) must
-     * not equal the path that the query {@link StoreShard} (using {@code shardDir})
-     * would compute — even though both use the same {@code <uuid>_<index>} suffix.
+     * For a given doc UUID and shard index, the holding shard's path (under {@code mergingDir})
+     * must not equal the query shard's path (under {@code shardDir}) — even though both use the
+     * same {@code <uuid>_<index>} suffix.
      */
     @Test
     void mergeShardPath_doesNotConflictWithQueryShardPath(@TempDir final Path tempDir) {

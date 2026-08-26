@@ -178,10 +178,10 @@ public class ArchiveStoreShard extends AbstractStoreShard {
 
             String sharedVersion = readVersionIfPresent(sharedVersionFile);
             if (sharedVersion == null) {
-                // .version absent or vanished mid-read: either a legacy bucket without one, or a bucket
-                // being republished (its .version briefly gone during pushArchive's rename-swap). If we
-                // already have a local copy, keep serving it and re-check next interval; otherwise fall
-                // through and sync (the data copy below is guarded against the same transient absence).
+                // No .version file at all: either retention deleted the bucket since the locator listed
+                // it, or a crash left its first push unversioned (see publishBucketData). A republish
+                // does NOT cause this — it rewrites .version in place. If we already have a local copy,
+                // keep serving it and re-check next interval; otherwise sync on the data file alone.
                 if (db != null) {
                     return;
                 }
@@ -224,9 +224,10 @@ public class ArchiveStoreShard extends AbstractStoreShard {
             FileUtil.deleteDir(syncTmpDir);
 
         } catch (final NoSuchFileException e) {
-            // The bucket was republished mid-sync (a file briefly absent during pushArchive's
-            // rename-swap). Keep serving any current local copy; only surface a failure if we have no
-            // copy yet (the caller treats a failed archive read as a miss).
+            // A file we were part way through reading has gone: retention can delete the whole bucket
+            // dir at any point, and on a store with no atomic move data.mdb is briefly absent while
+            // publishBucketData replaces it. Keep serving any current local copy; only surface a
+            // failure if we have no copy yet (the caller treats a failed archive read as a miss).
             if (db == null) {
                 throw new UncheckedIOException(e);
             }
@@ -239,9 +240,9 @@ public class ArchiveStoreShard extends AbstractStoreShard {
         }
     }
 
-    // Reads the bucket version file, tolerating a concurrent republish: readers hold no cluster lock, so a
-    // pushArchive rename-swap can move/replace .version between checks; returns null if the file is absent or
-    // vanishes mid-read (treated as "no readable version right now").
+    // Reads the bucket version file. Returns null if it is absent or vanishes mid-read, i.e. the bucket has
+    // been deleted (treated as "no readable version right now"). A republish rewrites .version in place, so
+    // it shows up here as a short or empty read rather than an absent file.
     private static String readVersionIfPresent(final Path versionFile) throws IOException {
         try {
             return Files.readString(versionFile).trim();

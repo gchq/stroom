@@ -83,7 +83,7 @@ public class VariableSessionSerde implements SessionSerde {
                 yield ValSerdeUtil.read(keySlice);
             }
             case UID_LOOKUP -> {
-                // Read via UI lookup.
+                // Read via UID lookup.
                 final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, keySlice);
                 yield ValSerdeUtil.read(valueByteBuffer);
             }

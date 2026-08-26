@@ -407,7 +407,9 @@ class TestSnapshotShard {
 
     @Test
     void testRetryLogicWithTryAgainException() {
-        // Given: A snapshot that throws TryAgainException a few times then succeeds
+        // Given: a fetch that always succeeds. Nothing here throws TryAgainException, so despite the
+        // method name this only covers the ordinary getInfo path — testGuardPreventsUseAfterDestroy
+        // covers TryAgainException itself.
         when(fileTransferClient.fetchSnapshot(any(), any(), any()))
                 .thenReturn(Instant.now());
 
@@ -485,9 +487,6 @@ class TestSnapshotShard {
 
         // Then: Should return true
         assertThat(deleted).isTrue();
-
-        // And subsequent access should fail or create new instance
-        // (behaviour depends on implementation)
     }
 
     @Test

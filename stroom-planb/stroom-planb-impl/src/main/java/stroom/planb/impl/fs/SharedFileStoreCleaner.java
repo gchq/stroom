@@ -59,11 +59,13 @@ import java.util.stream.Stream;
  * <p>Safe to run concurrently across multiple cluster nodes. If a previous
  * execution is still running on this node the new trigger is skipped.</p>
  *
- * <p>On startup, {@link #startup()} removes orphaned {@code .tmp_} directories
- * from the shared {@code processing/} area that were left by a previous JVM
- * crash. Only directories older than {@link #ORPHANED_TMP_AGE} are deleted, to
- * avoid racing with a concurrently-starting peer node whose push may have just
- * created a {@code .tmp_} directory.
+ * <p>On startup, {@link #startup()} removes orphaned batch directories whose name ends
+ * {@code .tmp} from the shared {@code processing/} area — the half-written state
+ * {@link SharedFileStoreWriter#copyToSharedStore} leaves if the JVM dies before its rename. Only
+ * directories older than {@link #ORPHANED_TMP_AGE} are deleted, to avoid racing with a
+ * concurrently-starting peer node whose write may have just created one. The {@code .tmp_}-prefixed
+ * dirs left by a whole-shard push are a different marker, recovered by
+ * {@link SharedFileStorePublisher#recoverOrphaned} instead.
  */
 @Singleton
 public class SharedFileStoreCleaner {
@@ -79,7 +81,7 @@ public class SharedFileStoreCleaner {
     static final Duration ORPHAN_GRACE_PERIOD = Duration.ofHours(1);
 
     /**
-     * Minimum age of a {@code .tmp_} directory in the shared store's
+     * Minimum age of a {@code .tmp}-suffixed batch directory in the shared store's
      * {@code processing/} area before it is considered an orphan left by a
      * previous JVM crash and eligible for deletion at startup.
      */
@@ -109,12 +111,12 @@ public class SharedFileStoreCleaner {
     }
 
     /**
-     * Startup lifecycle hook — removes orphaned {@code .tmp_} directories from
+     * Startup lifecycle hook — removes orphaned {@code .tmp}-suffixed batch directories from
      * the shared filesystem's {@code processing/} area.
      *
      * <p>Only directories older than {@link #ORPHANED_TMP_AGE} are removed.
-     * This avoids a race with a concurrently-starting peer node whose push
-     * operation may have just created a {@code .tmp_} directory.
+     * This avoids a race with a concurrently-starting peer node whose write
+     * may have just created one.
      */
     public void startup() {
         LOGGER.info("Starting PlanB shared filesystem tmp cleanup");

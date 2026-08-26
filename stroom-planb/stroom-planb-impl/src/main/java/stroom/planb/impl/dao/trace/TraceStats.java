@@ -24,12 +24,15 @@ import stroom.pathways.shared.otel.trace.NanoTime;
  *
  * <ul>
  *   <li>{@code spanCount} / {@code serviceCount} — cumulative (total ever ingested); monotonic,
- *       not decremented when spans age out under retention.</li>
+ *       not decremented when spans age out under retention. Despite the name,
+ *       {@code serviceCount} counts distinct span names — see {@code TraceDb.traceServiceNamesDbi}.</li>
  *   <li>{@code maxEnd} / {@code lastActivityMs} — running max span end time and max span insert
  *       (receipt) time.</li>
- *   <li>{@code depth} — last computed longest-path depth; recomputed by the bounded DFS only when
- *       never computed or {@code spanCount} has grown to {@code >= 2 * spanCountAtLastDepth}
- *       (depth is stable, so it stays off the per-cycle hot path).</li>
+ *   <li>{@code depth} — last computed longest-path depth. Recomputed by the bounded DFS when never
+ *       computed, on every cycle while the trace is small enough that the DFS is cheap, and
+ *       thereafter only once {@code spanCount} has grown to {@code >= 2 * spanCountAtLastDepth} —
+ *       so it stays off the per-cycle hot path for the large, continuously-growing traces. See
+ *       {@code TraceDb.DEPTH_EXACT_SPAN_THRESHOLD}.</li>
  *   <li>{@code hasError} — monotonic OR flag: set once any span reports an error status; never
  *       cleared (a trace that ever errored stays flagged even if that span later ages out).</li>
  *   <li>{@code truncated} — monotonic OR flag: set once a span has been rejected because the trace

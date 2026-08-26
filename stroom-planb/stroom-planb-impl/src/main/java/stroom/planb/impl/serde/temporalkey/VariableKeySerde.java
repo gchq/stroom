@@ -94,7 +94,7 @@ public class VariableKeySerde implements TemporalKeySerde {
                     yield ValSerdeUtil.read(nameSlice);
                 }
                 case UID_LOOKUP -> {
-                    // Read via UI lookup.
+                    // Read via UID lookup.
                     final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, nameSlice);
                     yield ValSerdeUtil.read(valueByteBuffer);
                 }

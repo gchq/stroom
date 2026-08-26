@@ -73,7 +73,7 @@ import java.util.function.Predicate;
  * <p><b>Reads archive buckets only.</b> The holding-area shards are never queried: they hold each trace's
  * root purely as an accumulator for late spans, while the bucket — labelled by the root's start time —
  * is the queryable copy. Because a trace's root therefore lives in exactly one bucket, per-bucket totals
- * sum to an exact count, and none of the shard/archive reconciliation this class used to need survives.
+ * sum to an exact count with no reconciliation between shard and archive.
  *
  * <p>Long scans are cancellable: each operation runs inside a {@link TaskContext} and each per-bucket task
  * is a {@link TaskContextFactory#childContextResult child context}, so terminating the query interrupts
@@ -120,8 +120,7 @@ class SharedFileTracesStore extends AbstractTracesStore {
         final long toMs = request.getStartTimeMs() != null ? request.getStartTimeMs() : Long.MAX_VALUE;
         final int shardIndex = archiveShardIndex(doc, request.getTraceId());
 
-        // Normally one bucket; still unioned so data left split by the older insert-time bucketing reads
-        // whole.
+        // Normally one bucket; still unioned so a trace whose spans are split across buckets reads whole.
         final List<Trace> sources = new ArrayList<>();
         for (final ArchiveShardRef ref : relevantArchiveShards(doc, request.getTraceId(), fromMs, toMs)) {
             final Trace archived = getTraceFromArchive(ref, shardIndex, traceIdBytes, doc);
@@ -266,15 +265,16 @@ class SharedFileTracesStore extends AbstractTracesStore {
         }
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        // A trace's root now lives in exactly one bucket, so summing per-bucket totals is exact and the
-        // old distinct-count repair pass is gone.
+        // A trace's root lives in exactly one bucket, so summing per-bucket totals is exact and needs
+        // no distinct-count repair pass.
         return mergeAndPaginate(futures, criteria);
     }
 
     /**
      * Collects results from the completed per-bucket futures, merges all {@link TraceRoot} values, sorts
-     * by {@code startTime} descending (most recent first) with {@code traceId} as a stable tiebreaker,
-     * then applies the caller's page request.
+     * them with {@link #buildMergeComparator} — the criteria's own sort column and direction, defaulting
+     * to {@code startTime} descending, always with {@code traceId} as a stable tiebreaker — then applies
+     * the caller's page request.
      */
     private TracesResultPage mergeAndPaginate(
             final List<CompletableFuture<TracesResultPage>> futures,
@@ -308,12 +308,12 @@ class SharedFileTracesStore extends AbstractTracesStore {
             }
         }
 
-        // Dedupe by traceId across buckets. Current routing puts a trace's whole root in one bucket, so
-        // this normally finds nothing — but data left split by the older insert-time bucketing can still
-        // show a traceId twice, as the real-root row in the root's start-time bucket AND a synthesized
-        // orphan row in whichever bucket its stray spans landed. Keep one row per traceId, preferring
-        // the real root (see preferred(...)). Done on the full collected set (not post-pagination)
-        // because the two rows carry different start times and so sort to non-adjacent positions.
+        // Dedupe by traceId across buckets. A trace's whole root goes to one bucket, so this normally
+        // finds nothing — but a trace can still show up twice when its spans are split across buckets,
+        // as the real-root row in the root's start-time bucket AND a synthesized orphan row in whichever
+        // bucket its stray spans landed. Keep one row per traceId, preferring the real root (see
+        // preferred(...)). Done on the full collected set (not post-pagination) because the two rows
+        // carry different start times and so sort to non-adjacent positions.
         final Map<String, TraceRoot> byTraceId = new LinkedHashMap<>();
         for (final TraceRoot root : allTraceRoots) {
             byTraceId.merge(root.getTraceId(), root, SharedFileTracesStore::preferred);

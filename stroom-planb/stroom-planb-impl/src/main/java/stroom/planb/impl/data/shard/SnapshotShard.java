@@ -502,8 +502,8 @@ class SnapshotShard implements Shard {
      * is in flight; otherwise the guard defers them to the thread of the last reader to
      * finish, so the env may still be open when this returns. Callers must not assume the
      * dir has gone (e.g. by deleting a parent dir) on return. Nothing needs that today:
-     * fetched snapshot dirs left behind are swept by {@link #deleteFetchedSnapshots} at
-     * next startup.
+     * fetched snapshot dirs left behind are swept by
+     * {@link ShardManager#deleteFetchedSnapshots} at next startup.
      */
     @Override
     public boolean delete() {
@@ -562,7 +562,8 @@ class SnapshotShard implements Shard {
                     ? null
                     : Instant.now();
 
-            // Begin life in use. The guard ensures delete() only runs when all readers have finished.
+            // The guard ensures delete() only runs once destroy() has been called and every reader
+            // that acquired it has finished.
             guard = new StripedGuard(this::delete, 64);
         }
 

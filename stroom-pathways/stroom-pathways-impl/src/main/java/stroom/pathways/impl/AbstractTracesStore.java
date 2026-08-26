@@ -133,8 +133,8 @@ abstract class AbstractTracesStore implements TracesStore {
      * since the last publish run.
      *
      * <p>Normally there is exactly one bucket, because a trace's spans are all archived to its root's
-     * start-time bucket. Several are still merged when they occur, which covers data left split by the
-     * older insert-time bucketing.
+     * start-time bucket. Several are still merged when they occur, which covers a trace whose late
+     * spans were bucketed under a synthesized orphan root.
      */
     protected TraceSpanPage archiveSpanPage(final GetSpansRequest request,
                                             final List<ArchiveShardRef> refs,
@@ -217,8 +217,8 @@ abstract class AbstractTracesStore implements TracesStore {
             more = page.more();
             next = page.nextCursor();
         }
-        // The merged (split) path always exposes a resume cursor so next/prev stay cheap after any page;
-        // the offset path leaves it null (the client uses offsets there).
+        // A page with more rows to come exposes a resume cursor, so next/prev stay cheap after any page,
+        // including one reached by offset — archiveSpanPage passes sequential true on every path.
         final String nextCursor = (sequential && more) ? encodeCursor(next) : null;
         return new TraceSpanPage(rows, more, nextCursor, totalSpans);
     }
@@ -296,8 +296,8 @@ abstract class AbstractTracesStore implements TracesStore {
         return "|gs=" + groupSelection.getExpandedDepth() + ";o=" + open + ";c=" + closed;
     }
 
-    // Merges the spans of several partial Traces for the same traceId (shard fragment + archive
-    // buckets) into one, de-duplicating by spanId. Each source's parentSpanIdMap keying is preserved,
+    // Merges the spans of several partial Traces for the same traceId (one per contributing archive
+    // bucket) into one, de-duplicating by spanId. Each source's parentSpanIdMap keying is preserved,
     // so the root resolves normally if its span is present. Returns null if there are no spans anywhere.
     protected Trace mergeTraces(final String traceId, final List<Trace> sources) {
         final Map<String, List<Span>> merged = new HashMap<>();

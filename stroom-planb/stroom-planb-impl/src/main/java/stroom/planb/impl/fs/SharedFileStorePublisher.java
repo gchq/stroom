@@ -54,8 +54,8 @@ import java.util.stream.Stream;
  *
  * <p>{@link #recoverOrphaned} undoes the partial state left by an interrupted
  * push and must be called at the start of each lock cycle, before the shard is
- * opened, so that {@code syncFromSharedStoreIfRequired} sees a consistent
- * directory. Note it only ever scans the directory it is handed, which is the tree a store type
+ * opened, so that the copy down to local disk — {@code HoldingShard}'s constructor — sees a
+ * consistent directory. Note it only ever scans the directory it is handed, which is the tree a store type
  * publishes whole shards to — never {@code archive/}, which is why {@link #pushArchive} uses a
  * different, recovery-free protocol.
  *
@@ -105,9 +105,9 @@ public class SharedFileStorePublisher {
               final int shardIndex) throws IOException {
         final Path sharedShardDir = sharedDocDir.resolve(PlanBConstants.formatShardIndex(shardIndex));
 
-        // Named from the canonical dir's own file name, not from shardIndex — recoverOrphaned matches on
-        // the same derivation, and formatting the index independently at each site is how the two came to
-        // disagree before.
+        // Named from the canonical dir's own file name, not by formatting shardIndex again here, because
+        // recoverOrphaned builds its match prefix the same way. Both must agree or an interrupted push
+        // leaves a temp dir nothing recognises.
         final Path sharedTempDir = sharedShardDir.resolveSibling(
                 PlanBConstants.TMP_DIR_PREFIX + sharedShardDir.getFileName() + "_"
                         + System.currentTimeMillis() + "_" + UUID.randomUUID());

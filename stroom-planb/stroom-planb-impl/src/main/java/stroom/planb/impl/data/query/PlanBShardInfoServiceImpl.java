@@ -333,7 +333,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
                     try {
                         final String uuid = shard.getFileName().toString();
                         // Same VIEW check as the snapshot branch. Without it any user able to
-                        // query this datasource saw every shard's name, size and settings.
+                        // query this datasource sees every shard's name, size and settings.
                         if (!securityContext.isAdmin() &&
                             !securityContext.hasDocumentPermission(
                                     DocRef.builder().type(PlanBDoc.TYPE).uuid(uuid).build(),

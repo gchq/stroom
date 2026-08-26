@@ -227,8 +227,9 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
      * name one. {@code SharedFileTracesStore} is the sole reader and has no fallback to resolve a
      * document without a path or shards, so this is the boundary that keeps one out of the store.
      *
-     * <p>Note {@code createDocument} and {@code importDocument} delegate straight to the underlying
-     * docstore and so bypass this.
+     * <p>Called from {@link #writeDocument} and {@link #importDocument}. Note {@code createDocument}
+     * delegates straight to the underlying docstore and so bypasses this, which is why a newly created
+     * document has no shared path until it is first saved.
      */
     private void validateSettings(final TracesDoc document) {
         final String error = AbstractPlanBSettings.validationError(document.getSettings());

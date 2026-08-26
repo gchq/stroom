@@ -458,28 +458,6 @@ public class TestTraceDb {
                           final Function<Integer, SpanValue> valueFunction) {
         try (final TraceDb db = TraceDb.create(tempDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, getDoc(settings), false)) {
             assertThat(db.count()).isEqualTo(166);
-//            final SpanKey key = keyFunction.apply(0);
-//            final SpanValue expectedVal = valueFunction.apply(0);
-//            final SpanValue value = db.get(key);
-//            assertThat(value).isNotNull();
-//            assertThat(value).isEqualTo(expectedVal);
-
-//            final FieldIndex fieldIndex = new FieldIndex();
-//            fieldIndex.create(TraceFields.KEY);
-//            fieldIndex.create(TraceFields.VALUE_TYPE);
-//            fieldIndex.create(TraceFields.VALUE);
-//            final List<SpanValue[]> results = new ArrayList<>();
-//            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
-//            db.search(
-//                    new ExpressionCriteria(ExpressionOperator.builder().build()),
-//                    fieldIndex,
-//                    null,
-//                    expressionPredicateFactory,
-//                    results::add);
-//            assertThat(results.size()).isEqualTo(1);
-//            assertThat(results.getFirst()[0]).isEqualTo(key.getVal());
-//            assertThat(results.getFirst()[1].toString()).isEqualTo(expectedVal.type().toString());
-//            assertThat(results.getFirst()[2]).isEqualTo(expectedVal);
 
             // Test deleting data.
             db.runRetention(Instant.now(), false);

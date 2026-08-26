@@ -92,7 +92,7 @@ public class PlanBDocStoreImpl
                         .stateType(StateType.TEMPORAL_STATE)
                         .build());
 
-        // Double-check the feed wasn't created elsewhere at the same time.
+        // Double-check no state store with this name was created elsewhere at the same time.
         if (checkDuplicateName(name, created)) {
             // Delete the newly created document as the key is duplicated. getStore() is the
             // deliberately unchecked handle, which is what undoing our own create needs: the document

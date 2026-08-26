@@ -75,11 +75,6 @@ public class PathwaysProcessor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PathwaysProcessor.class);
 
-    /**
-     * Traces whose root-span merge time is older than this threshold are
-     * considered complete and eligible for pathways processing.
-     */
-
     private final PathwaysStore pathwaysStore;
     private final MessageReceiverFactory messageReceiverFactory;
     private final ByteBuffers byteBuffers;

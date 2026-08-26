@@ -26,9 +26,10 @@ import java.nio.file.Path;
  *
  * <p>Each part carries a reference to its {@link PartDestination} — the
  * transfer strategy selected at write time based on the document's
- * configuration. Adding a new destination type (e.g. S3) requires only a new
- * {@link PartDestination} implementation and a routing decision in
- * {@link PlanBStreamWriter#getWriter}; no other classes need to change.
+ * configuration. Adding a new destination type (e.g. S3) needs a new
+ * {@link PartDestination} implementation, a constructor parameter on
+ * {@link PlanBStreamWriter} to inject it, and a branch where that writer chooses between
+ * destinations; nothing downstream of here changes.
  *
  * @param localWriterDir   Absolute path to the local LMDB writer directory.
  * @param doc              The PlanB document this part belongs to.

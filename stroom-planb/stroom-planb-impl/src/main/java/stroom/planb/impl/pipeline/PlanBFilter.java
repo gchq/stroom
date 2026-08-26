@@ -355,14 +355,14 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     /**
-     * This method looks for a post processing function. If it finds one it does
-     * not output the element. Instead it stores data about the function and
-     * sets a flag so that the function can be performed when the corresponding
-     * end element is reached.
+     * Notes which element we have entered so that {@link #endElement} knows what the content
+     * captured in between belongs to. A {@code <trace>} hands its span elements to a
+     * {@link SpanHandler}; inside {@code <value>} the element is instead serialised to
+     * FastInfoset as XML content. Every element is forwarded to the next filter either way.
      *
      * @param uri       The element's Namespace URI, or the empty string.
-     * @param localName The element's local key, or the empty string.
-     * @param qName     The element's qualified (prefixed) key, or the empty string.
+     * @param localName The element's local name, or the empty string.
+     * @param qName     The element's qualified (prefixed) name, or the empty string.
      * @param atts      The element's attributes.
      * @throws SAXException The client may throw an exception during processing.
      * @see AbstractXMLFilter#startElement(String,
@@ -464,14 +464,14 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     /**
-     * This method applies a post processing function if we are currently within
-     * a function element. At this stage we should have details of the function
-     * to apply from the corresponding start element and content to apply it to
-     * from the characters event.
+     * Consumes the content captured since the matching start element. A field element such as
+     * {@code <map>} or {@code <key>} is recorded for the record being built; a record element such
+     * as {@code <state>} or {@code <trace>} writes that record to its Plan B store and resets the
+     * per-record state.
      *
      * @param uri       The element's Namespace URI, or the empty string.
-     * @param localName The element's local key, or the empty string.
-     * @param qName     The element's qualified (prefixed) key, or the empty string.
+     * @param localName The element's local name, or the empty string.
+     * @param qName     The element's qualified (prefixed) name, or the empty string.
      * @throws SAXException The client may throw an exception during processing.
      * @see AbstractXMLFilter#endElement(String,
      *      String, String)

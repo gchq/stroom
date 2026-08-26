@@ -50,7 +50,7 @@ public class ArchiveShardLocator {
     /**
      * Lists archive shard directories for the given shard index that:
      * <ol>
-     *   <li>Have a {@code .complete} sentinel (are fully written and safe to read)</li>
+     *   <li>Have a {@code .version} marker (are fully written and safe to read)</li>
      *   <li>Cover a time bucket that overlaps {@code [filterFromMs, filterToMs]}</li>
      * </ol>
      *
