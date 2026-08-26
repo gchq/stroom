@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayInputStream;
@@ -165,15 +166,25 @@ class TestStoreImpl {
             final FsVolume fsVolume = mock(FsVolume.class);
             final Meta meta = mock(Meta.class);
 
-            when(mockFsVolumeService.getS3Volume(s3Location)).thenReturn(Optional.of(fsVolume));
-            when(mockMetaService.create(metaProperties, Status.UNLOCKED)).thenReturn(meta);
-            when(meta.getId()).thenReturn(1L);
+            when(mockFsVolumeService.getS3Volume(s3Location))
+                    .thenReturn(Optional.of(fsVolume));
+            when(mockMetaService.create(Mockito.any(MetaProperties.class), Mockito.eq(Status.UNLOCKED)))
+                    .thenReturn(meta);
+            when(meta.getId())
+                    .thenReturn(1L);
+            when(fsVolume.getVolumeType())
+                    .thenReturn(FsVolumeType.S3_V1_READ_ONLY);
 
             // When
             storeImpl.addExistingS3Source(metaProperties, s3Location);
 
             // Then
-            verify(mockDataVolumeService).createS3LocationDataVolume(1L, fsVolume, Set.of(s3Location), true);
+            verify(mockDataVolumeService)
+                    .createS3LocationDataVolume(
+                            1L,
+                            fsVolume,
+                            Set.of(s3Location),
+                            true);
         }
 
         @Test
