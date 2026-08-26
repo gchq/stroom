@@ -16,6 +16,7 @@
 
 package stroom.proxy.app.pipeline.stage.receive;
 
+import stroom.proxy.app.handler.ZipEntryGroup;
 import stroom.proxy.app.pipeline.queue.FileGroupQueue;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
 import stroom.proxy.app.pipeline.runtime.PipelineStageName;
@@ -215,11 +216,23 @@ public class ReceiveStagePublisher implements Consumer<Path> {
     }
 
     /**
-     * Check whether the received file group contains entries from more than
-     * one feed. If so it needs splitting before aggregation.
+     * Check whether the received file group contains entries from more than one feed and type. If so
+     * it needs splitting before aggregation.
      * <p>
-     * The check reads {@code proxy.entries} and counts distinct feed values.
+     * The unit counted is the {@link stroom.proxy.repo.FeedKey} - feed <em>and</em> type - because that
+     * is what {@link stroom.proxy.app.handler.ZipSplitter} groups by, so this predicate is true exactly
+     * when the splitter would produce more than one output.
+     * </p>
+     * <p>
+     * The check reads {@code proxy.entries} and counts distinct feed keys.
      * If the entries file is missing or unreadable, no splitting is assumed.
+     * </p>
+     * <p>
+     * {@code proxy.entries} holds one JSON-serialised {@link ZipEntryGroup} per line. It is read with
+     * {@link ZipEntryGroup#read(Path)}, which owns that format. A previous hand-rolled parse split each
+     * line on its first colon, which for JSON is always the one after {@code "feedName"} - so every
+     * line yielded the same value, the distinct count was always 1, and multi-feed zips were never
+     * split.
      * </p>
      */
     private boolean requiresSplitting(final Path receivedDir) {
@@ -228,37 +241,21 @@ public class ReceiveStagePublisher implements Consumer<Path> {
             return false;
         }
 
-        // Files.lines holds an open file handle until the stream is closed. This is
-        // called once per receive, so leaking it here exhausts the process's
-        // descriptors under sustained load and only ever recovers at GC.
-        try (final Stream<String> lines = Files.lines(entriesFile)) {
-            final long distinctFeeds = lines
-                    .map(String::trim)
-                    .filter(line -> !line.isEmpty())
-                    .map(ReceiveStagePublisher::extractFeedFromEntry)
+        try {
+            final long distinctFeedKeys = ZipEntryGroup.read(entriesFile)
+                    .stream()
+                    .map(ZipEntryGroup::getFeedKey)
                     .distinct()
                     .limit(2) // Only need to know if > 1.
                     .count();
-            return distinctFeeds > 1;
-        } catch (final IOException | UncheckedIOException e) {
+            return distinctFeedKeys > 1;
+        } catch (final RuntimeException e) {
+            // ZipEntryGroup.read wraps I/O and parse failures as unchecked.
             LOGGER.warn(() -> LogUtil.message(
                     "Cannot read proxy.entries in {}, assuming no split required",
                     receivedDir), e);
             return false;
         }
-    }
-
-    /**
-     * Extract the feed name from a proxy.entries line. The entries file
-     * format is typically {@code feed:type} or just {@code feed}. This
-     * method returns the feed portion.
-     */
-    private static String extractFeedFromEntry(final String entryLine) {
-        final int colonIndex = entryLine.indexOf(':');
-        if (colonIndex >= 0) {
-            return entryLine.substring(0, colonIndex);
-        }
-        return entryLine;
     }
 
     private static void copyDirectoryContents(final Path source,

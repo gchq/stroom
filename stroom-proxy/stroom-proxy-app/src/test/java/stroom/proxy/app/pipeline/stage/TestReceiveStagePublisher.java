@@ -16,17 +16,20 @@
 
 package stroom.proxy.app.pipeline.stage;
 
+import stroom.proxy.app.handler.ZipEntryGroup;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
 import stroom.proxy.app.pipeline.queue.local.LocalFileGroupQueue;
 import stroom.proxy.app.pipeline.stage.receive.ReceiveStagePublisher;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
 import stroom.proxy.app.pipeline.store.local.LocalFileStore;
+import stroom.proxy.repo.FeedKey;
 import stroom.test.common.util.test.StroomUnitTest;
 
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -180,7 +183,7 @@ class TestReceiveStagePublisher extends StroomUnitTest {
 
         // Create a file group with entries from two different feeds.
         final Path receivedDir = createMultiFeedFileGroup("received-multi-feed",
-                "FEED_A:Raw Events\nFEED_B:Raw Events");
+                entriesFor(FeedKey.of("FEED_A", "Raw Events"), FeedKey.of("FEED_B", "Raw Events")));
 
         publisher.accept(receivedDir);
 
@@ -203,7 +206,7 @@ class TestReceiveStagePublisher extends StroomUnitTest {
 
         // Create a file group with entries from a single feed.
         final Path receivedDir = createMultiFeedFileGroup("received-single-feed",
-                "FEED_A:Raw Events\nFEED_A:Raw Events");
+                entriesFor(FeedKey.of("FEED_A", "Raw Events"), FeedKey.of("FEED_A", "Raw Events")));
 
         publisher.accept(receivedDir);
 
@@ -225,7 +228,7 @@ class TestReceiveStagePublisher extends StroomUnitTest {
                 fileStore, outputQueue, null, "test-node");
 
         final Path receivedDir = createMultiFeedFileGroup("received-nosplit",
-                "FEED_A:Raw Events\nFEED_B:Raw Events");
+                entriesFor(FeedKey.of("FEED_A", "Raw Events"), FeedKey.of("FEED_B", "Raw Events")));
 
         publisher.accept(receivedDir);
 
@@ -265,6 +268,20 @@ class TestReceiveStagePublisher extends StroomUnitTest {
         Files.writeString(dir.resolve("proxy.zip"), "zip-content");
         Files.writeString(dir.resolve("proxy.entries"), "entries-content");
         return dir;
+    }
+
+    /**
+     * Serialise a {@code proxy.entries} file with {@link ZipEntryGroup#write(java.io.Writer)}, the same
+     * writer the receive stage uses. These tests previously hand-wrote {@code FEED_A:Raw Events} lines,
+     * a format the proxy has never produced, and so passed against a router that could not in fact
+     * detect a multi-feed zip.
+     */
+    private static String entriesFor(final FeedKey... feedKeys) throws IOException {
+        final StringWriter writer = new StringWriter();
+        for (final FeedKey feedKey : feedKeys) {
+            new ZipEntryGroup(feedKey).write(writer);
+        }
+        return writer.toString();
     }
 
     private Path createMultiFeedFileGroup(final String name,

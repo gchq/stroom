@@ -88,7 +88,7 @@ sequenceDiagram
 
 1. **Copy to file store** — Opens a new `FileStoreWrite`, copies all files from the temporary receive directory (`proxy.meta`, `proxy.zip`, `proxy.entries`) into the write path, then commits. For a local store the commit is a single atomic move from the staging area into the stable store; there is no marker file, so the file group becomes visible complete or not at all. See [infrastructure/file-stores.md](../infrastructure/file-stores.md).
 
-2. **Route decision** — Inspects `proxy.entries` to count distinct feeds. If more than one feed is present and a `splitZipQueue` is configured, the file group is routed to `splitZipQueue`. Otherwise it goes to the primary `outputQueue`.
+2. **Route decision** — Inspects `proxy.entries` to count distinct feed keys (feed *and* type). If more than one is present and a `splitZipQueue` is configured, the file group is routed to `splitZipQueue`. Otherwise it goes to the primary `outputQueue`.
 
 3. **Publish message** — Creates a `FileGroupQueueMessage` with a new UUID `fileGroupId`, the committed `FileStoreLocation`, and the `receive` producing stage name.
 
@@ -100,12 +100,22 @@ sequenceDiagram
 flowchart TD
     A[Received file group] --> B{splitZipQueue configured?}
     B -->|No| E[Publish to outputQueue]
-    B -->|Yes| C{proxy.entries has >1 distinct feed?}
+    B -->|Yes| C{proxy.entries has >1 distinct feed key?}
     C -->|No| E
     C -->|Yes| D[Publish to splitZipQueue]
 ```
 
-The `requiresSplitting()` method reads `proxy.entries` line by line. Each line has format `feed:type` or just `feed`. It extracts the feed portion (before the first colon), counts distinct values using `.distinct().limit(2).count()`, and returns `true` if the count exceeds 1.
+The `requiresSplitting()` method reads `proxy.entries` with `ZipEntryGroup.read()`, counts distinct `FeedKey` values using `.distinct().limit(2).count()`, and returns `true` if the count exceeds 1.
+
+`proxy.entries` holds one JSON-serialised `ZipEntryGroup` per line — for example
+`{"feedName":"FEED_A","typeName":"Raw Events","dataEntry":{...}}` — written by `ZipEntryGroup.write()`.
+This document previously described the format as `feed:type`, which the proxy has never written; the
+router was implemented to that description and split each line on its first colon, which in JSON is
+always the one after `"feedName"`. Every line therefore yielded the same value, the distinct count was
+always 1, and multi-feed zips were never split.
+
+The unit counted is the `FeedKey` — feed *and* type — because that is what `ZipSplitter` groups by, so
+the predicate is true exactly when the splitter would produce more than one output.
 
 If `proxy.entries` is missing or unreadable, splitting is assumed not required (defensive fallback).
 
