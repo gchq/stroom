@@ -91,7 +91,12 @@ public class MockMetaService implements MetaService, Clearable {
 
     @Override
     public Optional<Long> getMaxId(final long minId, final long maxCreateTimeMs) {
-        return getMaxId().filter(maxId -> maxId >= minId);
+        return metaMap.values()
+                .stream()
+                .filter(meta -> meta.getId() >= minId
+                                && meta.getCreateMs() <= maxCreateTimeMs)
+                .map(Meta::getId)
+                .max(Long::compare);
     }
 
     @Override

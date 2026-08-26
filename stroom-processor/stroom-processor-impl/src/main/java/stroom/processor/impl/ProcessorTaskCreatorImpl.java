@@ -548,6 +548,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         LOGGER.debug("createTasksFromCriteria() - requiredTasks: {}, filter: {}", maxTasks, filter);
 
         // This will contain locked and unlocked streams
+        final DurationTimer maxMetaIdDurationTimer = DurationTimer.start();
         final Optional<Long> maxMetaId = getMaxMetaId(filter, tracker.getMinMetaId());
 
         final List<Meta> metaList;
@@ -564,8 +565,12 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                     maxTasks);
             filterProgressMonitor.logPhase(Phase.FIND_META_FOR_FILTER, durationTimer, metaList.size());
         } else {
-            // There is no stream we are allowed to process yet, so there is nothing to look for. We still let
-            // the tracker know we polled and found nothing, it just doesn't move on to a new stream id.
+            // There is no stream we are allowed to process yet, so there is nothing to look for. Report the
+            // wait so that a filter held up by a processing delay or a feed dependency shows in the progress
+            // report as waiting, rather than not appearing to do anything at all.
+            filterProgressMonitor.logPhase(Phase.WAIT_FOR_READY_STREAMS, maxMetaIdDurationTimer, 0);
+            // We still let the tracker know we polled and found nothing, it just doesn't move on to a new
+            // stream id.
             metaList = Collections.emptyList();
         }
 
