@@ -125,7 +125,7 @@ public class SharedFileStoreMergeProcessor {
 
     public void merge() {
         securityContext.asProcessingUser(() -> {
-            LOGGER.info("Starting Plan B Shared FS Merge");
+            LOGGER.debug("Starting Plan B Shared FS Merge");
 
             final TaskContext taskContext = taskContextFactory.current();
             final List<PlanBDocument> planBDocs = planBDocCache.getAll();
@@ -141,7 +141,7 @@ public class SharedFileStoreMergeProcessor {
                 }
             }
 
-            LOGGER.info("Finished Plan B Shared FS Merge");
+            LOGGER.debug("Finished Plan B Shared FS Merge");
         });
     }
 
@@ -210,15 +210,15 @@ public class SharedFileStoreMergeProcessor {
         LOGGER.debug(() -> "Attempting to acquire lock " + lockName);
         clusterLockService.tryLock(lockName, () -> {
             try {
-                LOGGER.info("Acquired lock {}, starting merge/maintenance", lockName);
+                LOGGER.debug("Acquired lock {}, starting merge/maintenance", lockName);
 
                 // Re-check now the lock is held: another node may have run retention since the
                 // pre-lock check.
                 final boolean retentionDue = retentionDue(doc, shardIndex);
                 if (retentionDue) {
                     final SimpleDuration interval = checkInterval(doc);
-                    LOGGER.info("Running retention for {} (every {}, next due {})",
-                            lockName, interval, SimpleDurationUtil.plus(Instant.now(), interval));
+                    LOGGER.debug(() -> LogUtil.message("Running retention for {} (every {}, next due {})",
+                            lockName, interval, SimpleDurationUtil.plus(Instant.now(), interval)));
                 }
 
                 final MergeContext ctx = new MergeContext(doc, shardIndex, lockName, retentionDue);
@@ -242,7 +242,7 @@ public class SharedFileStoreMergeProcessor {
                                     completeBatchDirs.size()),
                             result.firstFailure());
                 } else {
-                    LOGGER.info("Successfully completed merge/maintenance for {}", lockName);
+                    LOGGER.debug("Successfully completed merge/maintenance for {}", lockName);
                 }
             } catch (final IOException e) {
                 LOGGER.error("Error during merge/maintenance for {}", lockName, e);
@@ -311,7 +311,7 @@ public class SharedFileStoreMergeProcessor {
                 }
 
                 if (retentionBefore.isAfter(bucketEnd)) {
-                    LOGGER.info("Deleting expired archive shard {} for {}", dateLabel, ctx.lockName());
+                    LOGGER.debug("Deleting expired archive shard {} for {}", dateLabel, ctx.lockName());
                     FileUtil.deleteDir(dateDir);
                 }
             }

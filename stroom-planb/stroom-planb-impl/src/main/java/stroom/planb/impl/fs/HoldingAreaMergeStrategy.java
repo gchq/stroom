@@ -190,7 +190,7 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
     // Copies a batch directory to a local temp location, merges it into the shard, and cleans up
     // the temp copy.
     private void mergeSingleBatch(final HoldingShard shard, final Path batchDir) throws IOException {
-        LOGGER.info("Merging batch {}", batchDir);
+        LOGGER.debug("Merging batch {}", batchDir);
         final Path localTempBatchDir = Files.createTempDirectory("planb_merge_");
         try {
             // Copy the batch's data.mdb from the (shared) batch dir down to local disk.
@@ -210,7 +210,7 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
     boolean sweep(final MergeContext ctx, final HoldingShard shard) {
         final long deleted = shard.runRetention(ctx.doc());
         if (deleted > 0) {
-            LOGGER.info("Deleted {} records from holding shard for {}", deleted, ctx.lockName());
+            LOGGER.debug("Deleted {} records from holding shard for {}", deleted, ctx.lockName());
         } else {
             LOGGER.debug(() -> "No records to delete from holding shard for " + ctx.lockName());
         }
@@ -232,7 +232,7 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
                 return false;
             }
             localArchive.pushAll(ctx, localArchiveBase);
-            LOGGER.info("Published {} row(s) for {}", count, ctx.lockName());
+            LOGGER.debug("Published {} row(s) for {}", count, ctx.lockName());
 
             compactIfDue(ctx, shard, holdingArea);
             return true;
@@ -256,7 +256,7 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
                 && !Instant.now().isAfter(SimpleDurationUtil.plus(lastCompact, interval))) {
             return;
         }
-        LOGGER.info("Compacting holding shard for {} (every {})", ctx.lockName(), interval);
+        LOGGER.debug("Compacting holding shard for {} (every {})", ctx.lockName(), interval);
         shard.compact();
         COMPACT_MARKER.recordRun(holdingDocDir(ctx.doc()), ctx.shardIndex());
     }

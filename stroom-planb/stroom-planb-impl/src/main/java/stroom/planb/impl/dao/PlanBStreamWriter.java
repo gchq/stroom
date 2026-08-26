@@ -270,7 +270,7 @@ public class PlanBStreamWriter implements AutoCloseable {
      */
     @Override
     public void close() {
-        LOGGER.info(() -> LogUtil.message(
+        LOGGER.debug(() -> LogUtil.message(
                 "Plan B finished processing for meta {}", meta.getId()));
         final WrittenBatch batch = drain();
         try {

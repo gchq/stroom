@@ -195,7 +195,7 @@ public class ArchiveStoreShard extends AbstractStoreShard {
                 return; // local copy is current
             }
 
-            LOGGER.info(() -> "Syncing archive bucket " + archiveBucketDir + " to local copy " + shardDir);
+            LOGGER.debug(() -> "Syncing archive bucket " + archiveBucketDir + " to local copy " + shardDir);
 
             final Path syncTmpDir = shardDir.resolve("sync_tmp");
             FileUtil.deleteDir(syncTmpDir);

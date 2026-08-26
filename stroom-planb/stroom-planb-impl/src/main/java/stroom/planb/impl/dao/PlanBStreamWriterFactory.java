@@ -75,7 +75,7 @@ public class PlanBStreamWriterFactory {
         // Clear the local writer directory: any data remaining here was never
         // successfully published, so it is safe to discard.
         if (Files.isDirectory(planBPaths.getWriterDir())) {
-            LOGGER.info("Clearing writer directory: {}", planBPaths.getWriterDir());
+            LOGGER.debug("Clearing writer directory: {}", planBPaths.getWriterDir());
             FileUtil.deleteDir(planBPaths.getWriterDir());
         }
     }

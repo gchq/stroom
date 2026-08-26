@@ -17,7 +17,6 @@
 package stroom.cluster.lock.impl.dao;
 
 import stroom.cluster.lock.impl.db.ClusterLockDbConnProvider;
-import stroom.cluster.lock.impl.db.jooq.tables.ClusterLock;
 import stroom.cluster.lock.impl.db.jooq.tables.records.ClusterLockRecord;
 import stroom.db.util.JooqUtil;
 import stroom.node.api.NodeInfo;
@@ -38,7 +37,6 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -200,7 +198,7 @@ class DbClusterLock implements Clearable {
             if (holdExecutionTime.getDurationMs() > 60000) {
                 LOGGER.warn("Released lock '{}' - held for a long duration of {}", lockName, holdExecutionTime);
             } else {
-                LOGGER.info("Released lock '{}' - held for {}", lockName, holdExecutionTime);
+                LOGGER.debug("Released lock '{}' - held for {}", lockName, holdExecutionTime);
             }
 
             LOGGER.debug("lock({}) - <<< {}", lockName, logExecutionTime);

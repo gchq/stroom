@@ -102,13 +102,13 @@ public class LocalArchive {
             return 0;
         }
 
-        LOGGER.info("Pushing {} date shard(s) for {}", archiveShards.size(), ctx.lockName());
+        LOGGER.debug("Pushing {} date shard(s) for {}", archiveShards.size(), ctx.lockName());
 
         IOException firstFailure = null;
         for (final StagedArchive archiveShard : archiveShards) {
             try {
                 publisher.pushArchive(ctx.doc(), ctx.shardIndex(), archiveShard);
-                LOGGER.info("Pushed archive shard {} for {}",
+                LOGGER.debug("Pushed archive shard {} for {}",
                         archiveShard.dateLabel(), ctx.lockName());
             } catch (final IOException e) {
                 LOGGER.error("Failed to push archive shard {} for {} — the merged shard will not be " +

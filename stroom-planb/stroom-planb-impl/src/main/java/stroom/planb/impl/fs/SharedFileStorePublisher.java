@@ -201,7 +201,7 @@ public class SharedFileStorePublisher {
                     && Files.exists(existingData)) {
                 // Seed the local env with the existing bucket, copied DOWN, so the new batch unions
                 // with it rather than replacing it.
-                LOGGER.info("Merging new archive batch into existing archive shard {}", archiveShardDir);
+                LOGGER.debug("Merging new archive batch into existing archive shard {}", archiveShardDir);
                 Files.copy(existingData, localData, StandardCopyOption.REPLACE_EXISTING);
             }
 

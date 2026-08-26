@@ -31,10 +31,8 @@ import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.RetentionSettings;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
-import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.time.SimpleDurationUtil;
@@ -434,7 +432,7 @@ public abstract class AbstractStoreShard implements Shard {
     protected void open() {
         if (db == null) {
             if (Files.exists(shardDir)) {
-                LOGGER.info(() -> "Opening local shard for '" + doc.asDocRef() + "' (shardIndex: " + shardIndex + ")");
+                LOGGER.debug(() -> "Opening local shard for '" + doc.asDocRef() + "' (shardIndex: " + shardIndex + ")");
                 db = PlanBDb.open(doc, shardDir, byteBuffers, byteBufferFactory,
                         isReadOnly(), withSecondaryIndexes());
             } else {

@@ -65,7 +65,7 @@ public final class SharedFileStoreTrash {
             try {
                 Files.createDirectories(trashEntry);
                 Files.move(src, trashEntry.resolve(stage), StandardCopyOption.ATOMIC_MOVE);
-                LOGGER.info("Moved {} data for doc {} to trash: {}", stage, docUuid, trashEntry);
+                LOGGER.debug("Moved {} data for doc {} to trash: {}", stage, docUuid, trashEntry);
             } catch (final NoSuchFileException e) {
                 // Another node moved it between the check and the rename.
                 LOGGER.debug(() -> "Already moved by another node: " + src);

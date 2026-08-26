@@ -476,7 +476,7 @@ public class ShardManager {
                         if (!startup && !isOlderThan(genDir, cutoff)) {
                             return;
                         }
-                        LOGGER.info(() -> "Sweeping orphaned local shard generation dir: " + genDir);
+                        LOGGER.debug(() -> "Sweeping orphaned local shard generation dir: " + genDir);
                         FileUtil.deleteDir(genDir);
                     });
                 } catch (final IOException e) {

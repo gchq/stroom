@@ -119,7 +119,7 @@ public class SharedFileStoreCleaner {
      * may have just created one.
      */
     public void startup() {
-        LOGGER.info("Starting PlanB shared filesystem tmp cleanup");
+        LOGGER.debug("Starting PlanB shared filesystem tmp cleanup");
         final Instant cutoff = Instant.now().minus(ORPHANED_TMP_AGE);
 
         // Only the set of roots is used here, not document liveness, so a failed enumeration costs a
@@ -129,7 +129,7 @@ public class SharedFileStoreCleaner {
         liveUuidsBySharedPath.ifPresent(map -> map.keySet()
                 .forEach(sharedRoot -> cleanupOrphanedTmpDirs(sharedRoot, cutoff)));
 
-        LOGGER.info("Completed PlanB shared filesystem tmp cleanup");
+        LOGGER.debug("Completed PlanB shared filesystem tmp cleanup");
     }
 
     // Live UUIDs of every registered document store, grouped by shared root. Empty means a store failed
@@ -170,7 +170,7 @@ public class SharedFileStoreCleaner {
                                             .endsWith(PlanBConstants.TMP_DIR_SUFFIX))
                                     .filter(p -> isOlderThan(p, cutoff))
                                     .forEach(p -> {
-                                        LOGGER.info("Deleting orphaned tmp directory: {}", p);
+                                        LOGGER.debug("Deleting orphaned tmp directory: {}", p);
                                         FileUtil.deleteDir(p);
                                     });
                         } catch (final IOException e) {
@@ -187,7 +187,7 @@ public class SharedFileStoreCleaner {
     }
 
     private void housekeep() {
-        LOGGER.info("Starting PlanB shard housekeeping");
+        LOGGER.debug("Starting PlanB shard housekeeping");
 
         final Optional<Map<Path, Set<String>>> liveUuidsBySharedPath = collectLiveUuids();
         if (liveUuidsBySharedPath.isEmpty()) {
@@ -202,7 +202,7 @@ public class SharedFileStoreCleaner {
             housekeepSharedPath(entry.getKey(), entry.getValue());
         }
 
-        LOGGER.info("Completed PlanB shard housekeeping");
+        LOGGER.debug("Completed PlanB shard housekeeping");
     }
 
     private void housekeepSharedPath(final Path sharedRoot, final Set<String> liveUuids) {
@@ -272,7 +272,7 @@ public class SharedFileStoreCleaner {
 
         try (final var stream = Files.list(trashDir)) {
             stream.forEach(entry -> {
-                LOGGER.info("Draining trash entry: {}", entry);
+                LOGGER.debug("Draining trash entry: {}", entry);
                 if (!FileUtil.deleteDir(entry)) {
                     LOGGER.warn(() -> "Could not fully delete trash entry: " + entry);
                 }
