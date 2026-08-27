@@ -47,6 +47,8 @@ public class TraceHistogram {
     private final long maxWindowMs;
     @JsonProperty
     private final List<Long> counts;
+    @JsonProperty
+    private final boolean drillable;
 
     @JsonCreator
     public TraceHistogram(@JsonProperty("available") final boolean available,
@@ -54,17 +56,19 @@ public class TraceHistogram {
                           @JsonProperty("toMs") final long toMs,
                           @JsonProperty("bucketWidthMs") final long bucketWidthMs,
                           @JsonProperty("maxWindowMs") final long maxWindowMs,
-                          @JsonProperty("counts") final List<Long> counts) {
+                          @JsonProperty("counts") final List<Long> counts,
+                          @JsonProperty("drillable") final boolean drillable) {
         this.available = available;
         this.fromMs = fromMs;
         this.toMs = toMs;
         this.bucketWidthMs = bucketWidthMs;
         this.maxWindowMs = maxWindowMs;
         this.counts = counts;
+        this.drillable = drillable;
     }
 
     public static TraceHistogram unavailable(final long maxWindowMs) {
-        return new TraceHistogram(false, 0L, 0L, 0L, maxWindowMs, null);
+        return new TraceHistogram(false, 0L, 0L, 0L, maxWindowMs, null, false);
     }
 
     public boolean isAvailable() {
@@ -91,6 +95,15 @@ public class TraceHistogram {
         return counts;
     }
 
+    /**
+     * Whether clicking a bucket should narrow the time range to it. False at the narrowest bucket
+     * width the server will use, where the narrowed range would come back as a single bucket and the
+     * click would achieve nothing.
+     */
+    public boolean isDrillable() {
+        return drillable;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -105,12 +118,13 @@ public class TraceHistogram {
                toMs == that.toMs &&
                bucketWidthMs == that.bucketWidthMs &&
                maxWindowMs == that.maxWindowMs &&
+               drillable == that.drillable &&
                Objects.equals(counts, that.counts);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(available, fromMs, toMs, bucketWidthMs, maxWindowMs, counts);
+        return Objects.hash(available, fromMs, toMs, bucketWidthMs, maxWindowMs, counts, drillable);
     }
 
     @Override

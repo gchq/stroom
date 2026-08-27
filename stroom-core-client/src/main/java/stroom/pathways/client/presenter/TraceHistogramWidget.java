@@ -31,6 +31,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 /**
@@ -40,17 +41,14 @@ import java.util.function.BiConsumer;
  */
 public class TraceHistogramWidget extends Composite {
 
-    private static final long MIN_BUCKET_WIDTH_MS = 2L;
-
     private final HTML panel = new HTML();
     private final DateTimeFormatter dateTimeFormatter;
-    private final int bucketCount;
     private TraceHistogram data;
+    private boolean rendered;
     private BiConsumer<Long, Long> zoomHandler;
 
-    public TraceHistogramWidget(final DateTimeFormatter dateTimeFormatter, final int bucketCount) {
+    public TraceHistogramWidget(final DateTimeFormatter dateTimeFormatter) {
         this.dateTimeFormatter = dateTimeFormatter;
-        this.bucketCount = bucketCount;
         panel.addStyleName("trace-histogram");
         initWidget(panel);
 
@@ -73,9 +71,10 @@ public class TraceHistogramWidget extends Composite {
         });
     }
 
+    // The server says whether a bucket is worth narrowing to; at its narrowest bucket width the
+    // narrowed range comes back as a single bucket, so the click is refused rather than wasted.
     private boolean drillable() {
-        return data != null
-                && (data.getBucketWidthMs() + bucketCount - 1) / bucketCount >= MIN_BUCKET_WIDTH_MS;
+        return data != null && data.isDrillable();
     }
 
     public void setZoomHandler(final BiConsumer<Long, Long> zoomHandler) {
@@ -83,7 +82,14 @@ public class TraceHistogramWidget extends Composite {
     }
 
     public void setData(final TraceHistogram data) {
+        // The same histogram draws the same HTML, so skip the repaint. The list re-fetches its
+        // histogram on every page turn and it almost always comes back unchanged, the window being a
+        // property of the query rather than of the page.
+        if (rendered && Objects.equals(this.data, data)) {
+            return;
+        }
         this.data = data;
+        this.rendered = true;
         render();
     }
 

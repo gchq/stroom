@@ -358,33 +358,84 @@ abstract class AbstractTracesStore implements TracesStore {
         return DateExpressionParser.getTimeFilter(timeRange, DateTimeSettings.builder().build());
     }
 
+    // Bucket widths the histogram may use, narrowest first. The width is chosen from this ladder
+    // rather than by dividing the window, because a relative range like day() to now() grows by a
+    // millisecond every millisecond: a derived width would grow with it, every bucket edge would
+    // creep, and traces near an edge would move between buckets on each request with no new data.
+    // A ladder width only changes when the window crosses a rung, so the same data gives the same
+    // histogram.
+    private static final long[] BUCKET_WIDTHS_MS = {
+            100L,
+            500L,
+            1_000L,
+            5_000L,
+            10_000L,
+            30_000L,
+            60_000L,
+            5L * 60_000,
+            10L * 60_000,
+            15L * 60_000,
+            30L * 60_000,
+            60L * 60_000,
+            3L * 60 * 60_000,
+            6L * 60 * 60_000,
+            12L * 60 * 60_000,
+            24L * 60 * 60_000,
+    };
+
     // Resolves the histogram window + equal-bucket layout, or an unavailable spec when the range is
     // unbounded or wider than maxWindowMs (so a wide/all-time range never scans).
-    protected HistogramSpec histogramSpec(final TimeRange timeRange,
-                                          final int bucketCount,
-                                          final PlanBDocument doc) {
+    protected static HistogramSpec histogramSpec(final TimeRange timeRange,
+                                                 final int bucketCount,
+                                                 final PlanBDocument doc) {
         final long maxWindowMs = maxWindowMs(doc);
         final TimeFilter timeFilter = resolveTimeFilter(timeRange);
+        // Judged on the window as asked for, before it is rounded out to whole buckets, so rounding
+        // can never carry a request over the limit.
         if (timeFilter == null || timeFilter.getTo() - timeFilter.getFrom() > maxWindowMs) {
             return new HistogramSpec(false, maxWindowMs, null, 0L, 0L, 0L, 0);
         }
-        final long fromMs = timeFilter.getFrom();
-        final long toMs = timeFilter.getTo();
         final int requestedBuckets = Math.max(1, bucketCount);
-        final long span = Math.max(1L, toMs - fromMs);
-        final long bucketWidthMs = Math.max(1L, (span + requestedBuckets - 1) / requestedBuckets);
-        final int nBuckets = (int) Math.min(
-                (long) requestedBuckets, (span + bucketWidthMs - 1) / bucketWidthMs);
-        return new HistogramSpec(true, maxWindowMs, timeFilter, fromMs, toMs, bucketWidthMs, nBuckets);
+        final long fromMs = timeFilter.getFrom();
+        final long span = Math.max(1L, timeFilter.getTo() - fromMs);
+        final long bucketWidthMs = bucketWidth(span, requestedBuckets);
+        // Enough whole buckets to reach the requested end, so the axis ends on or after it. Ending it
+        // early would leave the newest traces out of the histogram while the list still listed them.
+        final int nBuckets = (int) Math.max(1L, (span + bucketWidthMs - 1) / bucketWidthMs);
+        final long toMs = fromMs + (long) nBuckets * bucketWidthMs;
+        // Layout and scan range are not the same window. The layout (origin, width, bucket count) is
+        // rounded out so the axis holds still between requests; the scan stays on the window as asked
+        // for, which is the one the traces list uses. Handing the rounded end to TraceDb.histogram
+        // instead would count traces past the requested end - its scan bound is inclusive and
+        // addToBucket folds anything beyond the last edge into the final bucket - so on a range that
+        // ends in the past the last bar would gain traces the list leaves out. fromMs is not rounded,
+        // so this filter already carries the bucket origin the layout is built from.
+        return new HistogramSpec(true, maxWindowMs, timeFilter,
+                fromMs, toMs, bucketWidthMs, nBuckets);
     }
 
-    protected TraceHistogram assembleHistogram(final HistogramSpec spec, final long[] totals) {
+    // Narrowest ladder width that fits the span into requestedBuckets, else the widest on offer.
+    private static long bucketWidth(final long span, final int requestedBuckets) {
+        final long minWidth = (span + requestedBuckets - 1) / requestedBuckets;
+        for (final long width : BUCKET_WIDTHS_MS) {
+            if (width >= minWidth) {
+                return width;
+            }
+        }
+        return BUCKET_WIDTHS_MS[BUCKET_WIDTHS_MS.length - 1];
+    }
+
+    protected static TraceHistogram assembleHistogram(final HistogramSpec spec, final long[] totals) {
         final List<Long> counts = new ArrayList<>(spec.nBuckets());
         for (int b = 0; b < spec.nBuckets(); b++) {
             counts.add(totals[b]);
         }
+        // Already on the narrowest rung, so narrowing the range to one bucket would only come back as
+        // that same single bucket. The client decides nothing here; it is told.
+        final boolean drillable = spec.bucketWidthMs() > BUCKET_WIDTHS_MS[0];
         return new TraceHistogram(
-                true, spec.fromMs(), spec.toMs(), spec.bucketWidthMs(), spec.maxWindowMs(), counts);
+                true, spec.fromMs(), spec.toMs(), spec.bucketWidthMs(), spec.maxWindowMs(),
+                counts, drillable);
     }
 
     protected record HistogramSpec(boolean available,
