@@ -56,7 +56,7 @@ public class TestFsVolume {
      */
     @Test
     public void testJsonBindings() {
-        final var fsVolume = JsonUtil.readValue(TEST_JSON, FsVolume.class);
+        final FsVolume fsVolume = JsonUtil.readValue(TEST_JSON, FsVolume.class);
         Assertions.assertThat(fsVolume)
                 .isNotNull();
         Assertions.assertThat(fsVolume.getVolumeState())
