@@ -122,7 +122,8 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
         // 3. Clean up cluster merge locks.
         if (docRef != null && docRef.getUuid() != null) {
             try {
-                clusterLockServiceProvider.get().deleteLocks("planb-merge-" + docRef.getUuid() + "-");
+                clusterLockServiceProvider.get()
+                        .deleteLocks(PlanBConstants.getMergeLockPrefix(docRef.getUuid()));
             } catch (final Exception e) {
                 // Ignore lock deletion failures to avoid failing the document delete itself.
             }
