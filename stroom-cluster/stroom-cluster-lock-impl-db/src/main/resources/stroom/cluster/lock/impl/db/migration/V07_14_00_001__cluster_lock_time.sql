@@ -17,9 +17,34 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
---
--- Alter table cluster_lock to add lock_time_ms
---
-ALTER TABLE cluster_lock ADD COLUMN lock_time_ms bigint DEFAULT NULL;
+DROP PROCEDURE IF EXISTS V07_14_00_001__cluster_lock_time;
+
+DELIMITER $$
+
+CREATE PROCEDURE V07_14_00_001__cluster_lock_time ()
+BEGIN
+    DECLARE object_count integer;
+
+    SELECT COUNT(1)
+    INTO object_count
+    FROM information_schema.columns
+    WHERE table_schema = database()
+    AND table_name = 'cluster_lock'
+    AND column_name = 'lock_time_ms';
+
+    IF object_count = 0 THEN
+        -- When the lock was taken, as epoch millis, refreshed each time the holder extends its lease
+        -- and cleared when the lock is released. NULL means the lock is free.
+        ALTER TABLE cluster_lock ADD COLUMN lock_time_ms bigint DEFAULT NULL;
+    END IF;
+END $$
+
+DELIMITER ;
+
+CALL V07_14_00_001__cluster_lock_time;
+
+DROP PROCEDURE IF EXISTS V07_14_00_001__cluster_lock_time;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:
