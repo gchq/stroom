@@ -278,7 +278,7 @@ public class ZipReceiver implements Receiver {
             // A DROP verdict means discard, so if the policy refused any feed its entries leave the
             // zip here, at the point the decision was made.
             if (allowedEntries.size() < receiveResult.feedGroups.size()) {
-                removeDroppedEntries(fileGroup.getZip(), allowedEntries);
+                removeDroppedEntries(fileGroup.getZip(), allowedEntries, receiveResult.feedGroups);
             }
 
             // Write out the allowed entries — these are used downstream by the
@@ -356,24 +356,43 @@ public class ZipReceiver implements Receiver {
      * defence rather than the sole enforcement of a policy decision.
      * </p>
      * <p>
+     * Only entries belonging to a dropped feed are removed. Everything else is kept, including entries
+     * that belong to no {@link ZipEntryGroup} at all - directory entries, and manifest/meta/context
+     * entries with no matching data entry, which {@code receiveZipStream} warns about as "Unused" and
+     * leaves out of the feed groups. An earlier version of this method kept only what the entries file
+     * named, which deleted both. Nothing told us to discard those, so the predicate is "drop only what
+     * was dropped", never "keep only what was named".
+     * </p>
+     * <p>
      * The rewrite goes to a part file and is moved into place atomically, so a crash part-way through
      * cannot leave a truncated zip; on any failure the unfiltered zip is left exactly as it was.
      * </p>
+     *
+     * @param allowedEntries The feed groups the receipt policy allowed.
+     * @param allFeedGroups  Every feed group found in the zip, allowed or not.
      */
     private static void removeDroppedEntries(final Path zipFilePath,
-                                             final Map<FeedKey, List<ZipEntryGroup>> allowedEntries)
+                                             final Map<FeedKey, List<ZipEntryGroup>> allowedEntries,
+                                             final Map<FeedKey, List<ZipEntryGroup>> allFeedGroups)
             throws IOException {
 
         final Set<String> allowedNames = new HashSet<>();
         allowedEntries.values()
                 .stream()
                 .flatMap(List::stream)
-                .forEach(zipEntryGroup -> {
-                    addEntryName(allowedNames, zipEntryGroup.getManifestEntry());
-                    addEntryName(allowedNames, zipEntryGroup.getMetaEntry());
-                    addEntryName(allowedNames, zipEntryGroup.getContextEntry());
-                    addEntryName(allowedNames, zipEntryGroup.getDataEntry());
-                });
+                .forEach(zipEntryGroup -> addEntryNames(allowedNames, zipEntryGroup));
+
+        final Set<String> droppedNames = new HashSet<>();
+        allFeedGroups.forEach((feedKey, zipEntryGroups) -> {
+            if (!allowedEntries.containsKey(feedKey)) {
+                zipEntryGroups.forEach(zipEntryGroup -> addEntryNames(droppedNames, zipEntryGroup));
+            }
+        });
+
+        // Filtering can only match on name, so a name used by both an allowed and a dropped feed
+        // cannot be told apart here. Keep it: retaining data we were told to drop is a policy fault
+        // to be found and fixed, whereas deleting data we were not told to drop is unrecoverable.
+        droppedNames.removeAll(allowedNames);
 
         final Path partFile = zipFilePath.resolveSibling(
                 zipFilePath.getFileName().toString() + FILTER_PART_SUFFIX);
@@ -389,13 +408,13 @@ public class ZipReceiver implements Receiver {
                     // Filtering must not newly reject data the proxy has taken responsibility for.
                     final ZipWriter zipWriter = new ZipWriter(partFile, LocalByteBuffer.get())) {
 
-                // Iterate the zip rather than looking each allowed name up with getEntry(). Duplicate
-                // entry names resolve to a single entry under lookup, so the other would be silently
-                // discarded here - see M26. Iteration copies whatever is physically present.
+                // Iterate the zip rather than looking each dropped name up with getEntry(). Duplicate
+                // entry names resolve to a single entry under lookup, so the other would be missed
+                // here - see M26. Iteration sees whatever is physically present.
                 final Enumeration<ZipArchiveEntry> entries = sourceZip.getEntriesInPhysicalOrder();
                 while (entries.hasMoreElements()) {
                     final ZipArchiveEntry entry = entries.nextElement();
-                    if (allowedNames.contains(entry.getName())) {
+                    if (!droppedNames.contains(entry.getName())) {
                         // Raw, so the entry is neither inflated nor recompressed on the way across.
                         zipWriter.writeRawStream(entry, sourceZip.getRawInputStream(entry));
                         kept++;
@@ -410,8 +429,8 @@ public class ZipReceiver implements Receiver {
             // duplicate names contribute more physical entries than distinct names.
             if (kept < allowedNames.size()) {
                 throw new IOException(LogUtil.message(
-                        "Filtering dropped feeds from {} kept {} of the {} entries named by the entries "
-                        + "file. Refusing to replace the zip with an incomplete one.",
+                        "Filtering dropped feeds from {} kept {} entries, fewer than the {} the entries "
+                        + "file names. Refusing to replace the zip with an incomplete one.",
                         zipFilePath, kept, allowedNames.size()));
             }
 
@@ -435,6 +454,13 @@ public class ZipReceiver implements Receiver {
                 "removeDroppedEntries() - {} kept {} entries, removed {} belonging to dropped feeds, "
                 + "duration: {}",
                 zipFilePath, keptCount, droppedCount, timer));
+    }
+
+    private static void addEntryNames(final Set<String> names, final ZipEntryGroup zipEntryGroup) {
+        addEntryName(names, zipEntryGroup.getManifestEntry());
+        addEntryName(names, zipEntryGroup.getMetaEntry());
+        addEntryName(names, zipEntryGroup.getContextEntry());
+        addEntryName(names, zipEntryGroup.getDataEntry());
     }
 
     private static void addEntryName(final Set<String> names, final Entry entry) {

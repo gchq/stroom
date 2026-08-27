@@ -36,7 +36,10 @@ import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.zip.ZipUtil;
 
+import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +55,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -75,6 +79,8 @@ public class TestZipReceiver extends StroomUnitTest {
     public static final FeedKey FEED_KEY_2_1 = new FeedKey(FEED_2, TYPE_1);
     public static final FeedKey FEED_KEY_2_2 = new FeedKey(FEED_2, TYPE_2);
     public static final int ZIP_ENTRY_COUNT_PER_FEED_KEY = 2;
+    private static final String UNGROUPED_DIR_ENTRY = "somedir/";
+    private static final String UNGROUPED_CONTEXT_ENTRY = "9999.ctx";
 
     @Mock
     private AttributeMapFilterFactory mockAttributeMapFilterFactory;
@@ -394,7 +400,7 @@ public class TestZipReceiver extends StroomUnitTest {
      * dropped data, and carried it downstream.
      */
     @Test
-    void test_theEntriesFileDescribesTheWholeZipWhenAFeedIsDropped() throws IOException {
+    void testTheEntriesFileDescribesTheWholeZipWhenAFeedIsDropped() throws IOException {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("Foo", "Bar");
         final FeedKey allowedFeedKey = FEED_KEY_1_1;
@@ -428,6 +434,56 @@ public class TestZipReceiver extends StroomUnitTest {
                 .containsExactly(allowedFeedKey.feed());
         assertThat(feedsInZip)
                 .isEqualTo(feedsInEntriesFile);
+    }
+
+    /**
+     * Dropping a feed must remove that feed's entries and nothing else. Not every entry in the zip
+     * belongs to a {@link ZipEntryGroup}: directory entries never do, and a manifest/meta/context with
+     * no matching data entry is warned about as "Unused" and left out of the feed groups. Filtering to
+     * an allow-list of the names the entries file holds therefore deleted both, which no policy asked
+     * for. This pins the predicate as "drop only what was dropped".
+     */
+    @Test
+    void testDropRemovesOnlyTheDroppedFeedsEntries() throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+        final FeedKey allowedFeedKey = FEED_KEY_1_1;
+        final FeedKey droppedFeedKey = FEED_KEY_2_2;
+        final FileGroup fileGroup = createZip(attributeMap, Set.of(allowedFeedKey, droppedFeedKey));
+
+        // Add entries that belong to no feed group: a directory, and a context with no data entry.
+        final Path augmentedZip = fileGroup.getZip().resolveSibling("augmented.zip");
+        try (final ZipFile in = ZipUtil.createZipFile(fileGroup.getZip());
+                final ZipWriter out = new ZipWriter(augmentedZip, LocalByteBuffer.get())) {
+            final Enumeration<ZipArchiveEntry> sourceEntries = in.getEntriesInPhysicalOrder();
+            while (sourceEntries.hasMoreElements()) {
+                final ZipArchiveEntry sourceEntry = sourceEntries.nextElement();
+                out.writeRawStream(sourceEntry, in.getRawInputStream(sourceEntry));
+            }
+            out.writeDir(UNGROUPED_DIR_ENTRY);
+            out.writeString(UNGROUPED_CONTEXT_ENTRY, "orphan-context");
+        }
+
+        final List<Path> destinationPaths = doReceive(
+                augmentedZip,
+                attributeMap,
+                attrMap ->
+                        allowedFeedKey.feed()
+                                .equals(attrMap.get(StandardHeaderArguments.FEED)));
+
+        assertThat(destinationPaths)
+                .hasSize(1);
+
+        final List<String> entryNames = new ArrayList<>();
+        ZipUtil.forEachEntry(new FileGroup(destinationPaths.getFirst()).getZip(),
+                (zipFile, entry) -> entryNames.add(entry.getName()));
+
+        // The entries belonging to no feed group survive...
+        assertThat(entryNames)
+                .contains(UNGROUPED_DIR_ENTRY, UNGROUPED_CONTEXT_ENTRY);
+
+        // ...and only the allowed feed's data remains, so the drop itself still happened.
+        assertThat(entryNames.stream().filter(name -> name.endsWith(".dat")).count())
+                .isEqualTo(ZIP_ENTRY_COUNT_PER_FEED_KEY);
     }
 
     @Test
