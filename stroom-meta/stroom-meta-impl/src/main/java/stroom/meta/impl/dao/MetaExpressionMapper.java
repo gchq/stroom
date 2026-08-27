@@ -22,7 +22,6 @@ import stroom.db.util.TermHandlerFactory;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.query.api.ExpressionItem;
-import stroom.query.api.ExpressionTerm;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.NullSafe;
 
@@ -76,11 +75,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
                         }
                     });
 
-            final MetaTermHandler handler = new MetaTermHandler(
-                    createKeyField(id),
-                    id,
-                    termHandler);
-            expressionMapper.addHandler(dataSourceField, handler);
+            expressionMapper.addHandler(dataSourceField, termHandler);
         }
     }
 
@@ -144,31 +139,8 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
                 .field(MetaVal.META_VAL.VAL);
     }
 
-    private Field<Integer> createKeyField(final int valKeyId) {
-        return getAliasedMetaValTable(valKeyId)
-                .field(MetaVal.META_VAL.META_KEY_ID);
-    }
-
     @Override
     public Condition apply(final ExpressionItem expressionItem) {
         return expressionMapper.apply(expressionItem);
-    }
-
-    static class MetaTermHandler implements Function<ExpressionTerm, Condition> {
-
-        private final Field<Integer> keyField;
-        private final Integer id;
-        private final TermHandler<Long> valueHandler;
-
-        MetaTermHandler(final Field<Integer> keyField, final Integer id, final TermHandler<Long> valueHandler) {
-            this.keyField = keyField;
-            this.valueHandler = valueHandler;
-            this.id = id;
-        }
-
-        @Override
-        public Condition apply(final ExpressionTerm term) {
-            return keyField.equal(id).and(valueHandler.apply(term));
-        }
     }
 }
