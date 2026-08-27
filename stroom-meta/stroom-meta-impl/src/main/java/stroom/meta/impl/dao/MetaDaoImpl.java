@@ -583,8 +583,8 @@ public class MetaDaoImpl implements MetaDao {
         final Select<Record1<Long>> select;
         // One big batch should be more efficient as long as it only locks the rows being changed
         // and no others. If it does lock other rows then smaller batches may be needed.
-        // No `distinct`. Every table `buildMeteWithOptionalJoins` joins to is joined on its primary key, so
-        // each meta appears once and the ids are unique already.
+        // Every table `buildMeteWithOptionalJoins` joins to is joined on its primary key, so each meta
+        // appears once and the ids are unique.
         if (batchSize <= 0) {
             // 0 == one big batch
             select = DSL.select(META_M.ID)
@@ -1529,10 +1529,8 @@ public class MetaDaoImpl implements MetaDao {
                                     Long,
                                     Integer,
                                     Long>> select = metaExpressionMapper.addJoins(
-                                            // No `distinct`. Each meta joins to at most one row of every
-                                            // other table, so the results are unique already, and de-duping
-                                            // makes the database materialise the whole result set before it
-                                            // can apply the limit.
+                                            // Each meta joins to at most one row of every other table,
+                                            // so the results are unique.
                                             context
                                                     .select(
                                                             META_M.ID,
@@ -1593,8 +1591,7 @@ public class MetaDaoImpl implements MetaDao {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
                         metaExpressionMapper.addJoins(
                                         (context
-                                                // No `distinct`. The `group by parent.id` below already
-                                                // gives one row per parent.
+                                                // The `group by parent.id` below gives one row per parent.
                                                 .select(
                                                         parent.ID,
                                                         PARENT_FEED.NAME,
@@ -1651,10 +1648,9 @@ public class MetaDaoImpl implements MetaDao {
                         metaExpressionMapper.addJoins(
                                         context
                                                 .select(
-                                                        // Each meta appears once, so counting them is the
-                                                        // same as counting the distinct ids. The counts
-                                                        // below still need to be distinct as many metas
-                                                        // share a feed, type, processor and status.
+                                                        // The counts below need to be distinct as many
+                                                        // metas share a feed, type, processor and status,
+                                                        // but each meta appears once.
                                                         DSL.count(),
                                                         DSL.countDistinct(META_FEED_F.NAME),
                                                         DSL.groupConcatDistinct(META_FEED_F.NAME)
@@ -1903,7 +1899,7 @@ public class MetaDaoImpl implements MetaDao {
 
         return JooqUtil.contextResult(metaDbConnProvider,
                         context -> {
-                            // No `distinct`. The `group by` below already gives one row per uuid.
+                            // The `group by` below gives one row per uuid.
                             SelectJoinStep<Record1<String>> select = context
                                     .select(META_PROCESSOR_P.PROCESSOR_UUID)
                                     .from(META_M);

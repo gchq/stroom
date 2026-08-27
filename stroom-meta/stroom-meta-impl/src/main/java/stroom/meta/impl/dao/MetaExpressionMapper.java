@@ -95,8 +95,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
         for (final Integer keyId : usedValKeys) {
             final MetaVal metaVal = getAliasedMetaValTable(keyId);
 
-            // Constrain the join to the one key the alias is for. Joining on the meta id alone matches every
-            // value the meta has, so each alias multiplies the rows by the number of values on the meta.
+            // Constrain the join to the one key the alias is for, so it contributes at most one row.
             query = query.leftOuterJoin(metaVal)
                     .on(metaIdField.eq(metaVal.META_ID)
                             .and(metaVal.META_KEY_ID.eq(keyId))); //Join on meta_val
@@ -120,8 +119,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
         for (final Integer keyId : usedValKeys) {
             final MetaVal metaVal = getAliasedMetaValTable(keyId);
 
-            // Constrain the join to the one key the alias is for. Joining on the meta id alone matches every
-            // value the meta has, so each alias multiplies the rows by the number of values on the meta.
+            // Constrain the join to the one key the alias is for, so it contributes at most one row.
             fromPart = fromPart.leftOuterJoin(metaVal)
                     .on(metaIdField.eq(metaVal.META_ID)
                             .and(metaVal.META_KEY_ID.eq(keyId))); //Join on meta_val

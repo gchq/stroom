@@ -1251,7 +1251,7 @@ class TestMetaDaoImpl {
             metaDao.create(createRawProperties(TEST3_FEED_NAME, baseTime.minus(Duration.ofDays(dayOffset))));
         }
 
-        // Whatever the cut off, the new query must agree with the aggregate it replaced.
+        // Whatever the cut off, the result must match the equivalent `max(id)` aggregate.
         for (long dayOffset = 12; dayOffset >= 0; dayOffset--) {
             final long cutOff = baseTime.minus(Duration.ofDays(dayOffset)).toEpochMilli();
             final long expected = getMaxIdViaAggregate(cutOff);
@@ -1274,7 +1274,7 @@ class TestMetaDaoImpl {
                 .hasValue(maxId);
 
         // Once the bound is above every row there is nothing left to find, which is how a caught up filter
-        // tells that it has nothing to do rather than being handed a lower id and winding itself back.
+        // tells that it has nothing to do.
         assertThat(metaDao.getMaxId(maxId + 1, cutOff))
                 .isEmpty();
     }
