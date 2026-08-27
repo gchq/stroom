@@ -42,7 +42,6 @@ import stroom.meta.impl.db.MetaDbConnProvider;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
-import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -1528,8 +1527,12 @@ public class MetaDaoImpl implements MetaDao {
                                     Long,
                                     Integer,
                                     Long>> select = metaExpressionMapper.addJoins(
+                                            // No `distinct`. Each meta joins to at most one row of every
+                                            // other table, so the results are unique already, and de-duping
+                                            // makes the database materialise the whole result set before it
+                                            // can apply the limit.
                                             context
-                                                    .selectDistinct(
+                                                    .select(
                                                             META_M.ID,
                                                             META_FEED_F.NAME,
                                                             META_TYPE_T.NAME,
