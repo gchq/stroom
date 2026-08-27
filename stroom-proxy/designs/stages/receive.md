@@ -117,6 +117,15 @@ always 1, and multi-feed zips were never split.
 The unit counted is the `FeedKey` — feed *and* type — because that is what `ZipSplitter` groups by, so
 the predicate is true exactly when the splitter would produce more than one output.
 
+**This depends on an invariant `ZipReceiver` maintains: `proxy.entries` describes the whole of
+`proxy.zip`.** A feed the receipt policy gives a `DROP` verdict has its entries removed from the zip by
+`ZipReceiver.removeDroppedEntries()`, at the point the decision is made. They used to be left in the zip
+on the understanding that `SplitZipStageProcessor` would filter them out later — but the dropped feed
+was already absent from `proxy.entries`, so a two-feed zip with one feed dropped counted as one feed
+here, skipped the splitter entirely, and was forwarded downstream carrying the data the policy had
+refused. The splitter's own filtering is now a second line of defence rather than the sole enforcement
+of a policy decision.
+
 If `proxy.entries` is missing or unreadable, splitting is assumed not required (defensive fallback).
 
 ## 6. Error Handling

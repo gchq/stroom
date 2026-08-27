@@ -60,14 +60,18 @@ import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -81,10 +85,14 @@ import java.util.stream.Collectors;
  * files with the headers. All other entries are unchanged. In the process it records what
  * entries are in the zip and what feed/type they belong to.
  * 3. It tries to match all data entries to associated meta data.
- * 4. It finds all unique feeds and checks the status for each feed. An entries file is created containing
- * a line for all allowed entries in the zip, which will be used by {@link ZipSplitter} to split the zips.
- * 5. If the zip contains multiple feedKeys or is not in proper proxy zip format it passes
- * it to the ZipSplitter, else if passed it to the destination.
+ * 4. It finds all unique feeds and checks the status for each feed. If the receipt policy dropped any
+ * feed, that feed's entries are removed from the zip - a drop means discard, and it happens here where
+ * the decision is made rather than being left to a later stage that may not run. An entries file is
+ * then created containing a line for all remaining entries in the zip, so it always describes the whole
+ * of the zip beside it.
+ * 5. It passes the received directory to the destination. Where that destination is the pipeline's
+ * ReceiveStagePublisher, the publisher reads the entries file and routes a zip holding more than one
+ * feed key to the split-zip queue, and anything else straight to the primary output queue.
  * </p><p>
  * Along with the final zip files there will be associated meta files written to use for forwarding.
  * There will also be an entries file that tells us the size of each file set. The entries file has a JSON string
@@ -101,6 +109,11 @@ public class ZipReceiver implements Receiver {
      */
     private static final ByteSize MAX_META_ENTRY_SIZE = ByteSize.ofMebibytes(1);
 
+
+    /**
+     * Suffix for the part file {@link #removeDroppedEntries} writes before moving it over the zip.
+     */
+    private static final String FILTER_PART_SUFFIX = ".filtering";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZipReceiver.class);
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
@@ -262,6 +275,12 @@ public class ZipReceiver implements Receiver {
 
         // Only keep data for allowed feeds.
         if (!allowedEntries.isEmpty()) {
+            // A DROP verdict means discard, so if the policy refused any feed its entries leave the
+            // zip here, at the point the decision was made.
+            if (allowedEntries.size() < receiveResult.feedGroups.size()) {
+                removeDroppedEntries(fileGroup.getZip(), allowedEntries);
+            }
+
             // Write out the allowed entries — these are used downstream by the
             // SplitZipStageProcessor to know which zip entries belong to which feed
             // and should be kept vs dropped.
@@ -319,6 +338,109 @@ public class ZipReceiver implements Receiver {
             }
         });
         return allowed;
+    }
+
+    /**
+     * Remove from {@code proxy.zip} the entries belonging to feeds the receipt policy dropped.
+     * <p>
+     * {@link stroom.receive.rules.shared.ReceiveAction#DROP} means discard, so the data has to
+     * actually go. It used to be left in the zip on the understanding that {@link ZipSplitter} would
+     * filter it out later - but the split only runs when {@code proxy.entries} names more than one
+     * feed, and the dropped feed has by then already been filtered out of that file. A two-feed zip
+     * with one feed dropped therefore looked single-feed, skipped the splitter entirely, and was
+     * forwarded downstream complete with the data the policy had refused.
+     * </p>
+     * <p>
+     * Filtering here restores the invariant the routing decision depends on: {@code proxy.entries}
+     * describes the whole of {@code proxy.zip}. The splitter's own filtering becomes a second line of
+     * defence rather than the sole enforcement of a policy decision.
+     * </p>
+     * <p>
+     * The rewrite goes to a part file and is moved into place atomically, so a crash part-way through
+     * cannot leave a truncated zip; on any failure the unfiltered zip is left exactly as it was.
+     * </p>
+     */
+    private static void removeDroppedEntries(final Path zipFilePath,
+                                             final Map<FeedKey, List<ZipEntryGroup>> allowedEntries)
+            throws IOException {
+
+        final Set<String> allowedNames = new HashSet<>();
+        allowedEntries.values()
+                .stream()
+                .flatMap(List::stream)
+                .forEach(zipEntryGroup -> {
+                    addEntryName(allowedNames, zipEntryGroup.getManifestEntry());
+                    addEntryName(allowedNames, zipEntryGroup.getMetaEntry());
+                    addEntryName(allowedNames, zipEntryGroup.getContextEntry());
+                    addEntryName(allowedNames, zipEntryGroup.getDataEntry());
+                });
+
+        final Path partFile = zipFilePath.resolveSibling(
+                zipFilePath.getFileName().toString() + FILTER_PART_SUFFIX);
+        final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
+        int kept = 0;
+        int dropped = 0;
+
+        try {
+            try (final ZipFile sourceZip = ZipUtil.createZipFile(zipFilePath);
+                    // Deliberately ZipWriter and not ProxyZipWriter. This zip has already been
+                    // accepted - possibly as a non-standard one, which handleReceiveResult routes for
+                    // splitting - and ProxyZipWriter.close() throws on anything its validator dislikes.
+                    // Filtering must not newly reject data the proxy has taken responsibility for.
+                    final ZipWriter zipWriter = new ZipWriter(partFile, LocalByteBuffer.get())) {
+
+                // Iterate the zip rather than looking each allowed name up with getEntry(). Duplicate
+                // entry names resolve to a single entry under lookup, so the other would be silently
+                // discarded here - see M26. Iteration copies whatever is physically present.
+                final Enumeration<ZipArchiveEntry> entries = sourceZip.getEntriesInPhysicalOrder();
+                while (entries.hasMoreElements()) {
+                    final ZipArchiveEntry entry = entries.nextElement();
+                    if (allowedNames.contains(entry.getName())) {
+                        // Raw, so the entry is neither inflated nor recompressed on the way across.
+                        zipWriter.writeRawStream(entry, sourceZip.getRawInputStream(entry));
+                        kept++;
+                    } else {
+                        dropped++;
+                    }
+                }
+            }
+
+            // Keeping fewer than the entries file names means an allowed entry was not in the zip, so
+            // the replacement would be missing data nobody asked us to drop. Keeping more is fine:
+            // duplicate names contribute more physical entries than distinct names.
+            if (kept < allowedNames.size()) {
+                throw new IOException(LogUtil.message(
+                        "Filtering dropped feeds from {} kept {} of the {} entries named by the entries "
+                        + "file. Refusing to replace the zip with an incomplete one.",
+                        zipFilePath, kept, allowedNames.size()));
+            }
+
+            Files.move(partFile,
+                    zipFilePath,
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE);
+
+        } catch (final IOException | RuntimeException e) {
+            try {
+                Files.deleteIfExists(partFile);
+            } catch (final IOException suppressed) {
+                e.addSuppressed(suppressed);
+            }
+            throw e;
+        }
+
+        final int keptCount = kept;
+        final int droppedCount = dropped;
+        LOGGER.debug(() -> LogUtil.message(
+                "removeDroppedEntries() - {} kept {} entries, removed {} belonging to dropped feeds, "
+                + "duration: {}",
+                zipFilePath, keptCount, droppedCount, timer));
+    }
+
+    private static void addEntryName(final Set<String> names, final Entry entry) {
+        if (entry != null) {
+            names.add(entry.getName());
+        }
     }
 
     private static void writeZipEntryGroups(final Path entriesFile,

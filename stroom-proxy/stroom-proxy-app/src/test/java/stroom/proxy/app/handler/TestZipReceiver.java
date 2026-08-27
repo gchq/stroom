@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -309,10 +310,12 @@ public class TestZipReceiver extends StroomUnitTest {
         final FileGroup outputFileGroup = new FileGroup(destPath);
 
         final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(outputFileGroup.getZip());
-        // The dropped entries are still in the zip at this point, SplitZipStageProcessor will remove them,
-        // but they won't be in the entries file.
+        // The dropped feed's entries are gone from the zip, not merely absent from the entries file.
+        // They used to be left here for SplitZipStageProcessor to remove, but with one feed dropped
+        // the entries file names a single feed, so the group is never routed for splitting and the
+        // dropped data went downstream.
         assertThat(proxyZipSnapshot.getItemGroups())
-                .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY * feedKeys.size());
+                .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY);
 
         final List<ZipEntryGroup> entries = ZipEntryGroup.read(outputFileGroup.getEntries());
         assertThat(entries)
@@ -362,10 +365,10 @@ public class TestZipReceiver extends StroomUnitTest {
         final FileGroup outputFileGroup = new FileGroup(destPath);
 
         final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(outputFileGroup.getZip());
-        // The dropped entries are still in the zip at this point, SplitZipStageProcessor will remove them,
-        // but they won't be in the entries file.
+        // The dropped feed's entries are gone from the zip; the two allowed feeds remain and are still
+        // routed for splitting, where SplitZipStageProcessor separates them.
         assertThat(proxyZipSnapshot.getItemGroups())
-                .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY * feedKeys.size());
+                .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY * allowedFeedKeys.size());
 
         final List<ZipEntryGroup> entries = ZipEntryGroup.read(outputFileGroup.getEntries());
         assertThat(entries)
@@ -381,6 +384,50 @@ public class TestZipReceiver extends StroomUnitTest {
                 .isNull();
         assertThat(meta.get(StandardHeaderArguments.TYPE))
                 .isNull();
+    }
+
+    /**
+     * The routing decision downstream reads {@code proxy.entries} and splits only when it names more
+     * than one feed key. That is safe only if the entries file describes the whole zip - and it did
+     * not. A dropped feed was filtered out of the entries file but left in the zip, so a two-feed zip
+     * with one feed dropped looked single-feed, skipped the splitter that was supposed to remove the
+     * dropped data, and carried it downstream.
+     */
+    @Test
+    void test_theEntriesFileDescribesTheWholeZipWhenAFeedIsDropped() throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("Foo", "Bar");
+        final FeedKey allowedFeedKey = FEED_KEY_1_1;
+        final FeedKey droppedFeedKey = FEED_KEY_2_2;
+
+        final FileGroup fileGroup = createZip(attributeMap, Set.of(allowedFeedKey, droppedFeedKey));
+
+        final List<Path> destinationPaths = doReceive(
+                fileGroup.getZip(),
+                attributeMap,
+                attrMap ->
+                        allowedFeedKey.feed()
+                                .equals(attrMap.get(StandardHeaderArguments.FEED)));
+
+        assertThat(destinationPaths)
+                .hasSize(1);
+        final FileGroup outputFileGroup = new FileGroup(destinationPaths.getFirst());
+
+        final Set<String> feedsInZip = ProxyZipSnapshot.of(outputFileGroup.getZip())
+                .getItemGroups()
+                .stream()
+                .map(itemGroup -> itemGroup.meta().content().get(StandardHeaderArguments.FEED))
+                .collect(Collectors.toSet());
+
+        final Set<String> feedsInEntriesFile = ZipEntryGroup.read(outputFileGroup.getEntries())
+                .stream()
+                .map(zipEntryGroup -> zipEntryGroup.getFeedKey().feed())
+                .collect(Collectors.toSet());
+
+        assertThat(feedsInZip)
+                .containsExactly(allowedFeedKey.feed());
+        assertThat(feedsInZip)
+                .isEqualTo(feedsInEntriesFile);
     }
 
     @Test
