@@ -155,7 +155,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                 .processor(processor)
                 .queryData(request.getQueryData())
                 .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
-                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs())
+                .maxTaskCreationDelay(request.getMaxTaskCreationDelay());
         setRunAs(request, builder);
         return create(builder.build());
     }
@@ -208,6 +209,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                 .queryData(queryData)
                 .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
                 .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs())
+                .maxTaskCreationDelay(request.getMaxTaskCreationDelay())
                 .stampAudit(securityContext);
         setRunAs(request, builder);
         if (processorFilterDocRef != null) {

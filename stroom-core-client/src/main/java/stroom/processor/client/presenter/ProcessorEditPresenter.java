@@ -42,6 +42,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.FindUserContext;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -114,6 +115,7 @@ public class ProcessorEditPresenter
                       final Long maxMetaCreateTimeMs,
                       final Integer maxProcessingTasks,
                       final String profileName,
+                      final SimpleDuration maxTaskCreationDelay,
                       final boolean export) {
 
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
@@ -125,6 +127,7 @@ public class ProcessorEditPresenter
         getView().setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
         getView().setMaxProcessingTasks(maxProcessingTasks);
         getView().getProfile().setValue(profileName);
+        getView().setMaxTaskCreationDelay(maxTaskCreationDelay);
         getView().setExport(export);
     }
 
@@ -183,6 +186,7 @@ public class ProcessorEditPresenter
         final QueryData queryData = getOrCreateQueryData(filter, defaultExpression);
         final List<QueryField> fields = MetaFields.getProcessorFilterFields();
         final boolean export = NullSafe.getOrElse(filter, ProcessorFilter::isExport, false);
+        final SimpleDuration maxTaskCreationDelay = NullSafe.get(filter, ProcessorFilter::getMaxTaskCreationDelay);
         feedDependencies = NullSafe.get(queryData, QueryData::getFeedDependencies);
         read(
                 queryData.getExpression(),
@@ -192,6 +196,7 @@ public class ProcessorEditPresenter
                 maxMetaCreateTimeMs,
                 maxProcessingTasks,
                 profileName,
+                maxTaskCreationDelay,
                 export);
 
         // Show the processor creation dialog.
@@ -412,6 +417,9 @@ public class ProcessorEditPresenter
                                          final String profileName,
                                          final boolean export,
                                          final HidePopupRequestEvent event) {
+        // Not threaded through the validation callbacks like the rest as the popup is still
+        // showing while they run, so the view is still the source of truth.
+        final SimpleDuration maxTaskCreationDelay = getView().getMaxTaskCreationDelay();
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
             final ProcessorFilter updated = filter.copy()
@@ -420,6 +428,7 @@ public class ProcessorEditPresenter
                     .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
                     .maxProcessingTasks(maxProcessingTasks)
                     .profileName(profileName)
+                    .maxTaskCreationDelay(maxTaskCreationDelay)
                     .export(export)
                     .runAsUser(userRefSelectionBoxPresenter.getSelected())
                     .build();
@@ -446,6 +455,7 @@ public class ProcessorEditPresenter
                     .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
                     .maxProcessingTasks(maxProcessingTasks)
                     .profileName(profileName)
+                    .maxTaskCreationDelay(maxTaskCreationDelay)
                     .runAsUser(userRefSelectionBoxPresenter.getSelected())
                     .build();
             restFactory
@@ -478,6 +488,10 @@ public class ProcessorEditPresenter
         void setMaxProcessingTasks(Integer maxProcessingTasks);
 
         SelectionBox<String> getProfile();
+
+        SimpleDuration getMaxTaskCreationDelay();
+
+        void setMaxTaskCreationDelay(SimpleDuration maxTaskCreationDelay);
 
         boolean isExport();
 

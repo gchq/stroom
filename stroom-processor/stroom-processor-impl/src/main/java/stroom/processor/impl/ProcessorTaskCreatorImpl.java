@@ -29,6 +29,7 @@ import stroom.processor.impl.ProcessorProfileCache.ProfileResult;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.impl.ProgressMonitor.SkipReason;
+import stroom.processor.impl.TaskCreationBudgets.Budget;
 import stroom.processor.shared.FeedDependencies;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.Processor;
@@ -67,7 +68,6 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.SimpleDurationUtil;
-import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -80,6 +80,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -113,6 +114,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     private final SecurityContext securityContext;
     private final ClusterLockService clusterLockService;
     private final ProcessorProfileCache processorProfileCache;
+    private final FilterFetchBackoff filterFetchBackoff;
 
     /**
      * Our filter cache
@@ -131,7 +133,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                              final SecurityContext securityContext,
                              final ClusterLockService clusterLockService,
                              final PrioritisedFilters prioritisedFilters,
-                             final ProcessorProfileCache processorProfileCache) {
+                             final ProcessorProfileCache processorProfileCache,
+                             final FilterFetchBackoff filterFetchBackoff) {
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.executorProvider = executorProvider;
@@ -144,6 +147,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         this.clusterLockService = clusterLockService;
         this.prioritisedFilters = prioritisedFilters;
         this.processorProfileCache = processorProfileCache;
+        this.filterFetchBackoff = filterFetchBackoff;
     }
 
     @Override
@@ -163,17 +167,15 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             LOGGER.debug("Locking cluster to create tasks");
             clusterLockService.tryLock(LOCK_NAME, () -> {
 
-                final LongAdder totalTasksCreated = new LongAdder();
                 final TaskContext taskContext = taskContextFactory.current();
-                createNewTasks(taskContext, totalTasksCreated);
+                createNewTasks(taskContext);
             });
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
 
-    private void createNewTasks(final TaskContext parentTaskContext,
-                                final LongAdder totalTasksCreated) {
+    private void createNewTasks(final TaskContext parentTaskContext) {
         final DurationTimer timer = DurationTimer.start();
         LOGGER.trace("createNewTasks() - Starting");
         info(parentTaskContext, () -> "Starting");
@@ -185,6 +187,17 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
         parentTaskContext.info(() -> "Creating tasks for " + filters.size() + " filters");
 
+        // Don't remember filters we are no longer considering, e.g. disabled or deleted ones. The
+        // queue fill prunes too, but only on the master node, and creation runs on whichever node
+        // wins the cluster lock.
+        filterFetchBackoff.retainAll(filters);
+
+        // Each processing profile gets its own budget for how many tasks to create, as do the
+        // filters that have no profile, so that a busy profile can't use up the whole run and
+        // leave another profile's nodes with nothing they are allowed to process.
+        final TaskCreationBudgets budgets = new TaskCreationBudgets(
+                filters, processorConfig.getTasksToCreate());
+
         try {
             final LinkedBlockingQueue<ProcessorFilter> filterQueue = new LinkedBlockingQueue<>(filters);
             final AtomicInteger filterCount = new AtomicInteger();
@@ -192,36 +205,55 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             // Now execute all the runnable items.
             final Executor executor = executorProvider.get(THREAD_POOL);
             final int threadCount = Math.min(filters.size(), processorConfig.getTaskCreationThreadCount());
-            final int tasksToCreate = processorConfig.getTasksToCreate();
             LOGGER.trace(() -> LogUtil.message(
-                    "createNewTasks() - filterQueue.size: {}, threadCount: {}, tasksToCreate: {}",
-                    filterQueue.size(), threadCount, tasksToCreate));
+                    "createNewTasks() - filterQueue.size: {}, threadCount: {}, budgets: {}",
+                    filterQueue.size(), threadCount, budgets));
 
             final CompletableFuture<?>[] futures = new CompletableFuture[threadCount];
             for (int i = 0; i < threadCount; i++) {
                 final int threadNo = i + 1;
                 futures[i] = CompletableFuture.runAsync(() -> {
                     while (true) {
-                        // With >1 thread running, we may create a lot more tasks than tasksToCreate, but
-                        // that is accepted and while not ideal, is not a significant problem
-                        final int remaining = tasksToCreate - totalTasksCreated.intValue();
-                        if (remaining <= 0) {
-                            LOGGER.trace(() -> LogUtil.message(
-                                    "createNewTasks() - No tasks remaining, filterQueue.size: {}, " +
-                                    "totalTasksCreated: {}",
-                                    filterQueue.size(), totalTasksCreated));
+                        if (Thread.currentThread().isInterrupted()) {
+                            LOGGER.trace("createNewTasks() - Interrupted, filterQueue.size: {}",
+                                    filterQueue.size());
                             break;
                         }
                         final ProcessorFilter filter = filterQueue.poll();
                         if (filter == null) {
-                            LOGGER.trace("createNewTasks() - Queue empty, remaining: {}, totalTasksCreated: {}",
-                                    remaining, totalTasksCreated);
+                            LOGGER.trace("createNewTasks() - Queue empty");
                             break;
                         }
-                        if (Thread.currentThread().isInterrupted()) {
-                            LOGGER.trace("createNewTasks() - Interrupted, remaining: {}, totalTasksCreated: {}",
-                                    remaining, totalTasksCreated);
-                            break;
+
+                        final Budget budget = budgets.getBudget(filter);
+                        final int remaining = budget.remaining();
+                        if (remaining <= 0) {
+                            // Skip this filter rather than stopping altogether, as filters for other
+                            // profiles may still need tasks creating for nodes that can't process
+                            // anything this profile creates. Only stop once every profile has had
+                            // its fill, so we don't needlessly walk the rest of the filters.
+                            progressMonitor.logSkippedFilter(filter, SkipReason.BUDGET_REACHED);
+                            if (budgets.isEverySpent()) {
+                                LOGGER.trace(() -> LogUtil.message(
+                                        "createNewTasks() - All budgets spent, filterQueue.size: {}, budgets: {}",
+                                        filterQueue.size(), budgets));
+                                break;
+                            }
+                            continue;
+                        }
+
+                        // The filter list is cached with its trackers attached, so we can tell that
+                        // a filter is still backing off from polls that created nothing without the
+                        // database fetch that createTasksForFilter does. The cached tracker can be a
+                        // few seconds out of date, which at worst delays a filter coming out of
+                        // backoff by one run, so the authoritative check still happens against the
+                        // freshly loaded filter.
+                        if (!FilterPollBackoff.isPollDue(filter,
+                                filter.getProcessorFilterTracker(),
+                                processorConfig,
+                                System.currentTimeMillis())) {
+                            progressMonitor.logSkippedFilter(filter, SkipReason.ZERO_TASKS_ON_LAST_POLL);
+                            continue;
                         }
 
                         try {
@@ -232,7 +264,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                     filterCount,
                                     filter,
                                     remaining,
-                                    totalTasksCreated,
+                                    budget.getUsed(),
                                     processorConfig);
                         } catch (final RuntimeException e) {
                             progressMonitor.logErroredFilter(filter, e);
@@ -250,10 +282,11 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
         info(parentTaskContext, () -> "Finished");
 
+        progressMonitor.addSummaryLine(budgets.describe());
         progressMonitor.report("CREATE NEW TASKS", null);
 
         LOGGER.trace("createNewTasks() - Finished, totalTasksCreated: {}, duration: {}",
-                totalTasksCreated, timer);
+                budgets.getTotalUsed(), timer);
     }
 
     private void createTasksForFilter(final TaskContext parentTaskContext,
@@ -262,15 +295,15 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                       final AtomicInteger filterCount,
                                       final ProcessorFilter filter,
                                       final int remaining,
-                                      final LongAdder totalTasksCreated,
+                                      final LongAdder budgetUsed,
                                       final ProcessorConfig processorConfig) {
         // Set the current user to be the one who created the filter so that only streams that
         // the user has access to are processed.
         final UserRef runAs = getFilterRunAs(filter);
         LOGGER.trace(() -> LogUtil.message(
                 "createTasksForFilter() - filters.size: {}, filterCount: {}, remaining: {}, " +
-                "totalTasksCreated: {}, runAs: {}, filter: {}",
-                filters.size(), filterCount, remaining, totalTasksCreated, runAs, filter.getFilterInfo()));
+                "budgetUsed: {}, runAs: {}, filter: {}",
+                filters.size(), filterCount, remaining, budgetUsed, runAs, filter.getFilterInfo()));
 
         securityContext.asUser(runAs, () ->
                 taskContextFactory.childContext(
@@ -290,7 +323,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                     filter,
                                     progressMonitor,
                                     remaining,
-                                    totalTasksCreated,
+                                    budgetUsed,
                                     processorConfig);
                         }).run());
     }
@@ -318,7 +351,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                      final ProcessorFilter filter,
                                      final ProgressMonitor progressMonitor,
                                      final int remaining,
-                                     final LongAdder totalTasksCreated,
+                                     final LongAdder budgetUsed,
                                      final ProcessorConfig processorConfig) {
         try {
             // The filter might have been deleted since we found it.
@@ -336,6 +369,10 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         if (tracker.getLastPollTaskCount() != null && tracker.getLastPollTaskCount() > 0) {
                             tracker.setLastPollMs(System.currentTimeMillis());
                             tracker.setLastPollTaskCount(0);
+                            // This isn't a poll that found nothing, it is a filter that has
+                            // finished, so don't let it look like the start of a run of non
+                            // producing polls if the tracker ever comes back to life.
+                            tracker.setNextPollMs(null);
                             updateTracker(tracker, null);
                         }
                         final SkipReason skipReason = ProcessorFilterTrackerStatus.COMPLETE.equals(tracker.getStatus())
@@ -351,7 +388,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                 loadedFilter,
                                 progressMonitor,
                                 remaining,
-                                totalTasksCreated,
+                                budgetUsed,
                                 processorConfig);
                     }
                 } else {
@@ -374,27 +411,21 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     private boolean checkTrackerTaskCount(final ProcessorFilter filter,
                                           final ProcessorFilterTracker tracker,
                                           final ProcessorConfig processorConfig) {
-        final Integer lastPollTaskCount = tracker.getLastPollTaskCount();
-        final Long lastPollMs = tracker.getLastPollMs();
-        final StroomDuration skipNonProducingFiltersDuration = processorConfig.getSkipNonProducingFiltersDuration();
-
-        if (lastPollTaskCount == null
-            || lastPollTaskCount > 0
-            || lastPollMs == null
-            || skipNonProducingFiltersDuration == null) {
+        final long nowMs = System.currentTimeMillis();
+        if (FilterPollBackoff.isPollDue(filter, tracker, processorConfig, nowMs)) {
             return true;
         } else {
-            final long timeSinceLastPollMs = System.currentTimeMillis() - lastPollMs;
-            final long skipNonProducingFiltersDurationMs = skipNonProducingFiltersDuration.toMillis();
-            if (timeSinceLastPollMs > skipNonProducingFiltersDurationMs) {
-                return true;
-            } else {
-                LOGGER.debug(() -> LogUtil.message(
-                        "checkTrackerTaskCount() - Skipping filter with no tasks on last poll, " +
-                        "timeSinceLastPollMs: {}, skipNonProducingFiltersDurationMs: {}, filter: {}",
-                        timeSinceLastPollMs, skipNonProducingFiltersDuration, filter.getFilterInfo()));
-                return false;
-            }
+            LOGGER.debug(() -> LogUtil.message(
+                    "checkTrackerTaskCount() - Skipping filter with no tasks on last poll, " +
+                    "lastPollMs: {}, nextPollMs: {}, timeUntilNextPollMs: {}, filter: {}",
+                    tracker.getLastPollMs(),
+                    tracker.getNextPollMs(),
+                    FilterPollBackoff.getDueMs(
+                            tracker,
+                            tracker.getLastPollMs(),
+                            processorConfig.getSkipNonProducingFiltersDuration().toMillis()) - nowMs,
+                    filter.getFilterInfo()));
+            return false;
         }
     }
 
@@ -402,7 +433,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                         final ProcessorFilter filter,
                                         final ProgressMonitor progressMonitor,
                                         final int remaining,
-                                        final LongAdder totalTasksCreated,
+                                        final LongAdder budgetUsed,
                                         final ProcessorConfig processorConfig) {
         LOGGER.trace(() -> LogUtil.message("doCreateTasksForFilter() - remaining: {}, filter: {}",
                 remaining, filter.getFilterInfo()));
@@ -412,7 +443,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
         if (checkTrackerTaskCount(filter, tracker, processorConfig)) {
             final int currentCreatedTasks = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.CREATED);
-            totalTasksCreated.add(currentCreatedTasks);
+            budgetUsed.add(currentCreatedTasks);
 
             int maxTasks = remaining - currentCreatedTasks;
 
@@ -479,7 +510,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                 maxTasks,
                                 tracker,
                                 taskContext,
-                                totalTasksCreated);
+                                budgetUsed);
                     } else {
                         // Create tasks from a standard stream filter criteria.
                         createTasksFromCriteria(
@@ -490,7 +521,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                 maxTasks,
                                 tracker,
                                 taskContext,
-                                totalTasksCreated);
+                                budgetUsed);
                     }
                 } catch (final RuntimeException e) {
                     filterProgressMonitor.logException(e);
@@ -540,7 +571,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                          final int maxTasks,
                                          final ProcessorFilterTracker tracker,
                                          final TaskContext taskContext,
-                                         final LongAdder totalTasksCreated) {
+                                         final LongAdder budgetUsed) {
         if (termCount(queryData) == 0) {
             throw new RuntimeException("Attempting to create tasks with an unconstrained filter " + filter);
         }
@@ -549,7 +580,22 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
         // This will contain locked and unlocked streams
         final DurationTimer maxMetaIdDurationTimer = DurationTimer.start();
-        final Optional<Long> maxMetaId = getMaxMetaId(filter, tracker.getMinMetaId());
+        final Optional<Long> currentMaxMetaId = getMaxMetaId(filter, tracker.getMinMetaId());
+
+        final Optional<Long> maxMetaId;
+        if (currentMaxMetaId.isPresent()) {
+            final OptionalLong effectiveMaxMetaId = getEffectiveMaxMetaId(
+                    filter, tracker, filterProgressMonitor, currentMaxMetaId.get());
+            if (effectiveMaxMetaId.isEmpty()) {
+                // We have only just established the max meta id for this filter, so wait for the next poll.
+                return;
+            }
+            maxMetaId = Optional.of(effectiveMaxMetaId.getAsLong());
+        } else {
+            // There is no stream we are allowed to process yet, so there is no max to lag and nothing to
+            // look for. We carry on so that the tracker still records that this poll found nothing.
+            maxMetaId = Optional.empty();
+        }
 
         final List<Meta> metaList;
         if (maxMetaId.isPresent()) {
@@ -580,7 +626,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             map.put(meta, null);
         }
 
-        final int createdTasks = processorTaskDao.createNewTasks(
+        final int createdTasks = createTasks(
                 filter,
                 tracker,
                 filterProgressMonitor,
@@ -594,7 +640,89 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 LogUtil.message("createTasks() - Created {} tasks for filter {}",
                         createdTasks,
                         filter.getFilterInfo()));
-        totalTasksCreated.add(createdTasks);
+        budgetUsed.add(createdTasks);
+    }
+
+    /**
+     * Create tasks for a filter and, if any were created, tell the queue fill that this filter now
+     * has something to queue.
+     * <p>
+     * Task creation runs on whichever node wins the cluster lock, so the queue fill only hears about
+     * it when that node is also the master node that fills the queue, which is always the case on a
+     * single node install. It is a best effort shortcut rather than the mechanism; when creation
+     * happens elsewhere {@link ProcessorConfig#getSkipEmptyFilterFetchDuration()} bounds how long
+     * the new tasks sit unqueued.
+     * </p>
+     */
+    private int createTasks(final ProcessorFilter filter,
+                            final ProcessorFilterTracker tracker,
+                            final FilterProgressMonitor filterProgressMonitor,
+                            final long metaQueryTime,
+                            final Map<Meta, InclusiveRanges> metaMap,
+                            final Long maxMetaId,
+                            final boolean reachedLimit) {
+        final int createdTasks = processorTaskDao.createNewTasks(
+                filter,
+                tracker,
+                filterProgressMonitor,
+                metaQueryTime,
+                metaMap,
+                maxMetaId,
+                reachedLimit);
+
+        if (createdTasks > 0) {
+            // This must happen AFTER createNewTasks() has committed: the backoff pairs a fill's
+            // empty fetch with the creation version it read beforehand, so recording the creation
+            // while the tasks were still invisible would let a concurrent fill find nothing, match
+            // the already incremented version and back the filter off just as the tasks appear.
+            filterFetchBackoff.recordTasksCreated(filter);
+        }
+
+        return createdTasks;
+    }
+
+    /**
+     * Get the max meta id to bound task creation with. The DB allocates meta ids at insert time but only
+     * makes the rows visible at commit time, so the current max id can sit above a meta that is still in
+     * flight. If we bound task creation with the current max then the tracker moves past the in flight
+     * meta and it is silently never processed, so instead we bound with the max id seen on the previous
+     * poll, by which time anything below it will have committed or rolled back.
+     *
+     * @param currentMaxMetaId The max meta id as at this poll.
+     * @return The max meta id to use, or empty if this poll must be abandoned because we have only just
+     * established the tracker state that subsequent polls will use.
+     */
+    private OptionalLong getEffectiveMaxMetaId(final ProcessorFilter filter,
+                                               final ProcessorFilterTracker tracker,
+                                               final FilterProgressMonitor filterProgressMonitor,
+                                               final long currentMaxMetaId) {
+        if (!processorConfigProvider.get().isUseMaxMetaIdFromPreviousPoll()) {
+            return OptionalLong.of(currentMaxMetaId);
+        }
+
+        final Long prevMaxMetaId = tracker.getPrevMaxMetaId();
+        tracker.setPrevMaxMetaId(currentMaxMetaId);
+
+        if (prevMaxMetaId == null) {
+            // There is no previous max id to bound task creation with, e.g. this is the first poll for a
+            // new filter, or the first poll after an upgrade or a tracker reset. Record the current max
+            // for the next poll to use and create nothing this time round. We can't fall back to the
+            // current max as that is exactly the unsafe read we are avoiding, and we can't bound with
+            // zero as createNewTasks() would then wind the tracker back to the start of the meta table.
+            LOGGER.debug(() -> LogUtil.message(
+                    "getEffectiveMaxMetaId() - Establishing max meta id {} for filter: {}",
+                    currentMaxMetaId, filter.getFilterInfo()));
+            updateTracker(tracker, filterProgressMonitor);
+            return OptionalLong.empty();
+        }
+
+        // The current max can be lower than the previous one, e.g. feed dependencies can move the
+        // effective max backwards, so bound with whichever of the two allows the least.
+        final long maxMetaId = Math.min(prevMaxMetaId, currentMaxMetaId);
+        LOGGER.trace(() -> LogUtil.message(
+                "getEffectiveMaxMetaId() - maxMetaId: {}, prevMaxMetaId: {}, currentMaxMetaId: {}, filter: {}",
+                maxMetaId, prevMaxMetaId, currentMaxMetaId, filter.getFilterInfo()));
+        return OptionalLong.of(maxMetaId);
     }
 
     /**
@@ -660,10 +788,9 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                             final int maxTasks,
                                             final ProcessorFilterTracker tracker,
                                             final TaskContext taskContext,
-                                            final LongAdder totalTasksCreated) {
+                                            final LongAdder budgetUsed) {
         final AtomicInteger totalTasks = new AtomicInteger();
         final EventRef minEvent = new EventRef(tracker.getMinMetaId(), tracker.getMinEventId());
-        final EventRef maxEvent = new EventRef(Long.MAX_VALUE, 0L);
         long maxStreams = maxTasks;
         LOGGER.debug("Creating search query tasks maxStreams: {}, filer: {}", maxStreams, filter);
         long maxEvents = 1000000;
@@ -731,7 +858,21 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 .params(getParams(queryData))
                 .build();
 
-        final Optional<Long> maxMetaId = metaService.getMaxId();
+        final OptionalLong optMaxMetaId = getEffectiveMaxMetaId(
+                filter,
+                tracker,
+                filterProgressMonitor,
+                metaService.getMaxId().orElse(0L));
+        if (optMaxMetaId.isEmpty()) {
+            // We have only just established the max meta id for this filter, so wait for the next poll.
+            return;
+        }
+        final long maxMetaId = optMaxMetaId.getAsLong();
+
+        // Bound the search with the same max meta id that the tracker will be moved on to. Without this the
+        // search would find events in streams above the max and the tracker would jump to the last of those,
+        // skipping any meta in between that was still in flight when we read the max.
+        final EventRef maxEvent = new EventRef(maxMetaId, Long.MAX_VALUE);
 
         final BiConsumer<EventRefs, Throwable> consumer = (eventRefs, throwable) -> {
             LOGGER.debug(() -> LogUtil.message(
@@ -763,16 +904,16 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                             durationTimer,
                             map.size());
 
-                    final int createdTasks = processorTaskDao.createNewTasks(
+                    final int createdTasks = createTasks(
                             filter,
                             tracker,
                             filterProgressMonitor,
                             streamQueryTime,
                             map,
-                            maxMetaId.orElse(null),
+                            maxMetaId,
                             reachedLimit);
                     totalTasks.addAndGet(createdTasks);
-                    totalTasksCreated.add(createdTasks);
+                    budgetUsed.add(createdTasks);
 
                     info(taskContext, () ->
                             LogUtil.message("createTasks() - Created {} tasks for filter {}",

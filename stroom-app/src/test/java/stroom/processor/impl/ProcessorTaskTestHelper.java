@@ -47,6 +47,9 @@ public class ProcessorTaskTestHelper {
 
     public void createAndQueueTasks() {
         processorConfigProvider.get().setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
+        // Tests add data then create tasks in one go, so they can't afford to spend a poll establishing
+        // the max meta id. See TestProcessorTaskCreator for coverage of the lagged behaviour itself.
+        processorConfigProvider.get().setUseMaxMetaIdFromPreviousPoll(false);
         prioritisedFilters.clear();
         processorTaskCreator.exec();
         processorTaskQueueManager.exec();

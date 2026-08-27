@@ -37,6 +37,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -50,9 +51,13 @@ public class ProgressMonitor {
 
     private final List<FilterProgressMonitor> filterProgressMonitorList = Collections.synchronizedList(
             new ArrayList<>());
-    //    private final Map<SkipReason, List<ProcessorFilter>> skippedFiltersList = new ConcurrentHashMap<>();
-    private final List<SkippedFilter> skippedFilters = Collections.synchronizedList(new ArrayList<>());
+    // Counted by reason rather than recorded per filter. A run can skip every filter it doesn't
+    // need to look at, e.g. all the filters of a processing profile that already has enough tasks,
+    // so listing them individually would mean thousands of records and report lines per run.
+    private final Map<SkipReason, LongAdder> skippedFilterCounts = new ConcurrentHashMap<>();
     private final List<ErroredFilter> erroredFilters = Collections.synchronizedList(new ArrayList<>());
+
+    private final List<String> summaryLines = Collections.synchronizedList(new ArrayList<>());
 
     private final int totalFilterCount;
     private final DurationTimer totalDuration;
@@ -60,6 +65,13 @@ public class ProgressMonitor {
     public ProgressMonitor(final int totalFilterCount) {
         this.totalDuration = DurationTimer.start();
         this.totalFilterCount = totalFilterCount;
+    }
+
+    /**
+     * Adds a caller supplied line to the summary section of the report.
+     */
+    public void addSummaryLine(final String line) {
+        summaryLines.add(line);
     }
 
     public void report(final String title,
@@ -114,7 +126,7 @@ public class ProgressMonitor {
             sb.append(" filters");
             sb.append("\n");
             sb.append("Skipped: ");
-            sb.append(skippedFilters.size());
+            sb.append(getSkippedFilterCount());
             sb.append("\n");
             sb.append("Errored: ");
             sb.append(erroredFiltersCount);
@@ -122,6 +134,10 @@ public class ProgressMonitor {
             sb.append("Total time: ");
             sb.append(totalDuration.get());
             sb.append("\n");
+            summaryLines.forEach(line -> {
+                sb.append(line);
+                sb.append("\n");
+            });
             if (queueProcessTasksState != null) {
                 queueProcessTasksState.report(sb);
             } else {
@@ -162,7 +178,7 @@ public class ProgressMonitor {
 
     private void addDetail(final StringBuilder sb, final boolean showPhaseDetail) {
         synchronized (filterProgressMonitorList) {
-            if (!filterProgressMonitorList.isEmpty() || !skippedFilters.isEmpty() || !erroredFilters.isEmpty()) {
+            if (!filterProgressMonitorList.isEmpty() || !skippedFilterCounts.isEmpty() || !erroredFilters.isEmpty()) {
                 sb.append("\n\nDETAIL");
                 for (final FilterProgressMonitor filterProgressMonitor : filterProgressMonitorList) {
                     final ProcessorFilter filter = filterProgressMonitor.filter;
@@ -194,14 +210,19 @@ public class ProgressMonitor {
                     }
                 }
 
-                skippedFilters.forEach(skippedFilter -> {
+                if (!skippedFilterCounts.isEmpty()) {
                     sb.append("\n---\n");
-                    sb.append("Filter (");
-                    appendFilter(sb, skippedFilter.filter);
-                    sb.append(")\n");
-                    sb.append("Skipped due to: ");
-                    sb.append(skippedFilter.skipReason.getDisplayValue());
-                });
+                    sb.append("Skipped filters");
+                    skippedFilterCounts.entrySet()
+                            .stream()
+                            .sorted(Entry.comparingByKey())
+                            .forEach(entry -> {
+                                sb.append("\n");
+                                sb.append(entry.getKey().getDisplayValue());
+                                sb.append(": ");
+                                sb.append(entry.getValue().sum());
+                            });
+                }
 
                 erroredFilters.forEach(erroredFilter -> {
                     sb.append("\n---\n");
@@ -261,7 +282,7 @@ public class ProgressMonitor {
         try {
             Objects.requireNonNull(filter);
             Objects.requireNonNull(reason);
-            skippedFilters.add(new SkippedFilter(filter, reason));
+            skippedFilterCounts.computeIfAbsent(reason, k -> new LongAdder()).increment();
         } catch (final Exception e) {
             LOGGER.error("Error logging a skipped filter {} - {}",
                     NullSafe.get(filter, ProcessorFilter::getFilterInfo),
@@ -269,6 +290,13 @@ public class ProgressMonitor {
                     e);
             // Swallow so progress monitoring doesn't halt processing
         }
+    }
+
+    public long getSkippedFilterCount() {
+        return skippedFilterCounts.values()
+                .stream()
+                .mapToLong(LongAdder::sum)
+                .sum();
     }
 
     public void logErroredFilter(final ProcessorFilter filter,
@@ -454,7 +482,19 @@ public class ProgressMonitor {
         /**
          * The tracker is in a error state
          */
-        TRACKER_ERROR("The tracker is in a error state");
+        TRACKER_ERROR("The tracker is in a error state"),
+        /**
+         * The task creation budget for this filter's processing profile has been used up
+         */
+        BUDGET_REACHED("Task creation budget reached for this filter's processing profile"),
+        /**
+         * Enough tasks are already queued for this filter's processing profile
+         */
+        QUEUE_FULL_FOR_PROFILE("Enough tasks already queued for this filter's processing profile"),
+        /**
+         * The last look for created tasks for this filter found none
+         */
+        NO_TASKS_ON_LAST_FETCH("No created tasks found for this filter when we last looked");
 
         private final String displayValue;
 
@@ -471,17 +511,6 @@ public class ProgressMonitor {
     // --------------------------------------------------------------------------------
 
 
-    private record SkippedFilter(ProcessorFilter filter,
-                                 SkipReason skipReason) {
-
-        private SkippedFilter {
-            Objects.requireNonNull(filter);
-            Objects.requireNonNull(skipReason);
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
 
 
     private record ErroredFilter(ProcessorFilter filter,

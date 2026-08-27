@@ -26,6 +26,7 @@ import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -126,6 +127,15 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
     @JsonProperty
     private final Long maxMetaCreateTimeMs;
 
+    /**
+     * How long this filter will wait, at most, before task creation polls it again after polls
+     * that created no tasks. Overrides the cluster wide skipNonProducingFiltersMaxDuration
+     * property so that latency sensitive filters, e.g. those raising alerts from infrequent data,
+     * can be polled more eagerly than the rest. Null means use the cluster wide property.
+     */
+    @JsonProperty
+    private final SimpleDuration maxTaskCreationDelay;
+
     @JsonCreator
     public ProcessorFilter(@JsonProperty("id") final Integer id,
                            @JsonProperty("version") final Integer version,
@@ -150,7 +160,8 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                            @JsonProperty("pipelineName") final String pipelineName,
                            @JsonProperty("runAsUser") final UserRef runAsUser,
                            @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
-                           @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs) {
+                           @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
+                           @JsonProperty("maxTaskCreationDelay") final SimpleDuration maxTaskCreationDelay) {
 
         this.id = id;
         this.version = version;
@@ -185,6 +196,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
         this.runAsUser = runAsUser;
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
+        this.maxTaskCreationDelay = maxTaskCreationDelay;
     }
 
     @Override
@@ -234,6 +246,13 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
 
     public String getProfileName() {
         return profileName;
+    }
+
+    /**
+     * Null means use the cluster wide skipNonProducingFiltersMaxDuration property.
+     */
+    public SimpleDuration getMaxTaskCreationDelay() {
+        return maxTaskCreationDelay;
     }
 
     @JsonIgnore
@@ -383,6 +402,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                ", export=" + export +
                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
+               ", maxTaskCreationDelay=" + maxTaskCreationDelay +
                '}';
     }
 
@@ -443,6 +463,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
         private boolean export;
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
+        private SimpleDuration maxTaskCreationDelay;
 
         public Builder() {
 
@@ -475,6 +496,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
             this.export = filter.export;
             this.minMetaCreateTimeMs = filter.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = filter.maxMetaCreateTimeMs;
+            this.maxTaskCreationDelay = filter.maxTaskCreationDelay;
         }
 
         public Builder id(final Integer id) {
@@ -592,6 +614,14 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
             return self();
         }
 
+        /**
+         * Null means use the cluster wide skipNonProducingFiltersMaxDuration property.
+         */
+        public Builder maxTaskCreationDelay(final SimpleDuration maxTaskCreationDelay) {
+            this.maxTaskCreationDelay = maxTaskCreationDelay;
+            return self();
+        }
+
         protected Builder self() {
             return this;
         }
@@ -621,7 +651,8 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                     pipelineName,
                     runAsUser,
                     minMetaCreateTimeMs,
-                    maxMetaCreateTimeMs);
+                    maxMetaCreateTimeMs,
+                    maxTaskCreationDelay);
         }
     }
 }

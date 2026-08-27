@@ -30,15 +30,13 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.ExistingCreatedTask;
+import stroom.processor.impl.FilterPollBackoff;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorFilterCache;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.impl.db.ProcessorDbConnProvider;
-import stroom.processor.impl.db.jooq.tables.Processor;
-import stroom.processor.impl.db.jooq.tables.ProcessorFeed;
-import stroom.processor.impl.db.jooq.tables.ProcessorNode;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -508,7 +506,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     // Only create tasks for streams with an id greater
                     // than the current max stream id in future as we didn't manage
                     // to create any tasks.
-                    if (maxMetaId != null) {
+                    // Never move the tracker backwards. The max meta id can be lower than where the
+                    // tracker has already got to, e.g. feed dependencies can move the effective max
+                    // backwards, and re-scanning meta we have already created tasks for would create
+                    // duplicate tasks as there is no unique constraint on (filter, meta).
+                    if (maxMetaId != null && maxMetaId + 1 > tracker.getMinMetaId()) {
                         tracker.setMinMetaId(maxMetaId + 1);
                         tracker.setMinEventId(0L);
                     }
@@ -529,6 +531,15 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     }
                 }
 
+                // Work out when to poll this filter again before we overwrite the state that the
+                // calculation is derived from. Filters that keep creating nothing get polled
+                // progressively less often.
+                tracker.setNextPollMs(FilterPollBackoff.calculateNextPollMs(
+                        filter,
+                        tracker,
+                        processorConfigProvider.get(),
+                        statusTimeMs,
+                        creationState.totalTasksCreated));
                 tracker.setLastPollMs(statusTimeMs);
                 tracker.setLastPollTaskCount(creationState.totalTasksCreated);
                 tracker.setStatus(ProcessorFilterTrackerStatus.CREATED);

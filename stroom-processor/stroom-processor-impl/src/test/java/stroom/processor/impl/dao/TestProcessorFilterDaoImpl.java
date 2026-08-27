@@ -22,6 +22,8 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.TaskStatus;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
@@ -235,5 +237,43 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
                 .isEqualTo(processorFilterTracker2.getId());
         assertThat(processorFilterTracker1.getStatus())
                 .isEqualTo(processorFilterTracker2.getStatus());
+    }
+
+    @Test
+    void maxTaskCreationDelayRoundTrips() {
+        final Processor processor = createProcessor();
+        final ProcessorFilter created = createProcessorFilter(processor);
+        assertThat(created.getMaxTaskCreationDelay())
+                .describedAs("Defaults to the cluster wide maximum")
+                .isNull();
+
+        final SimpleDuration delay = new SimpleDuration(30, TimeUnit.SECONDS);
+        processorFilterDao.update(created.copy().maxTaskCreationDelay(delay).build());
+        assertThat(processorFilterDao.fetch(created.getId()).orElseThrow().getMaxTaskCreationDelay())
+                .isEqualTo(delay);
+
+        final ProcessorFilter withDelay = processorFilterDao.fetch(created.getId()).orElseThrow();
+        processorFilterDao.update(withDelay.copy().maxTaskCreationDelay(null).build());
+        assertThat(processorFilterDao.fetch(created.getId()).orElseThrow().getMaxTaskCreationDelay())
+                .describedAs("Can be cleared again")
+                .isNull();
+    }
+
+    @Test
+    void nextPollMsRoundTrips() {
+        final Processor processor = createProcessor();
+        final ProcessorFilter created = createProcessorFilter(processor);
+        final ProcessorFilterTracker tracker = created.getProcessorFilterTracker();
+        assertThat(tracker.getNextPollMs())
+                .describedAs("A new filter is due a poll straight away")
+                .isNull();
+
+        tracker.setNextPollMs(1234L);
+        processorFilterTrackerDao.update(tracker);
+        assertThat(processorFilterDao.fetch(created.getId())
+                .orElseThrow()
+                .getProcessorFilterTracker()
+                .getNextPollMs())
+                .isEqualTo(1234L);
     }
 }

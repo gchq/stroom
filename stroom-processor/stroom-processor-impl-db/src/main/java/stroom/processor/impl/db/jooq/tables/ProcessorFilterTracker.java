@@ -118,6 +118,16 @@ public class ProcessorFilterTracker extends TableImpl<ProcessorFilterTrackerReco
      */
     public final TableField<ProcessorFilterTrackerRecord, Byte> STATUS = createField(DSL.name("status"), SQLDataType.TINYINT.nullable(false).defaultValue(DSL.inline("0", SQLDataType.TINYINT)), this, "");
 
+    /**
+     * The column <code>stroom.processor_filter_tracker.prev_max_meta_id</code>.
+     */
+    public final TableField<ProcessorFilterTrackerRecord, Long> PREV_MAX_META_ID = createField(DSL.name("prev_max_meta_id"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>stroom.processor_filter_tracker.next_poll_ms</code>.
+     */
+    public final TableField<ProcessorFilterTrackerRecord, Long> NEXT_POLL_MS = createField(DSL.name("next_poll_ms"), SQLDataType.BIGINT, this, "");
+
     private ProcessorFilterTracker(Name alias, Table<ProcessorFilterTrackerRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

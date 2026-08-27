@@ -40,6 +40,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.time.SimpleDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -202,6 +203,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS,
                         PROCESSOR_FILTER.MAX_PROCESSING_TASKS,
                         PROCESSOR_FILTER.PROFILE_NAME,
+                        PROCESSOR_FILTER.MAX_TASK_CREATION_DELAY,
                         PROCESSOR_FILTER.RUN_AS_USER_UUID)
                 .values(1,
                         filter.getCreateTimeMs(),
@@ -221,6 +223,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         filter.getMaxMetaCreateTimeMs(),
                         filter.getMaxProcessingTasks(),
                         filter.getProfileName(),
+                        NullSafe.get(filter.getMaxTaskCreationDelay(), SimpleDuration::toString),
                         NullSafe.get(filter.getRunAsUser(), UserRef::getUuid))
                 .returning(PROCESSOR_FILTER.ID)
                 .fetchOne(PROCESSOR_FILTER.ID);
@@ -245,6 +248,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .set(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS, filter.getMaxMetaCreateTimeMs())
                 .set(PROCESSOR_FILTER.MAX_PROCESSING_TASKS, filter.getMaxProcessingTasks())
                 .set(PROCESSOR_FILTER.PROFILE_NAME, filter.getProfileName())
+                .set(PROCESSOR_FILTER.MAX_TASK_CREATION_DELAY,
+                        NullSafe.get(filter.getMaxTaskCreationDelay(), SimpleDuration::toString))
                 .set(PROCESSOR_FILTER.RUN_AS_USER_UUID, NullSafe.get(filter.getRunAsUser(), UserRef::getUuid))
                 .where(PROCESSOR_FILTER.ID.eq(filter.getId()))
                 .and(PROCESSOR_FILTER.VERSION.eq(filter.getVersion()))

@@ -11892,6 +11892,8 @@ components:
         maxProcessingTasks:
           type: integer
           format: int32
+        maxTaskCreationDelay:
+          $ref: "#/components/schemas/SimpleDuration"
         minMetaCreateTimeMs:
           type: integer
           format: int64
@@ -17332,6 +17334,8 @@ components:
         maxProcessingTasks:
           type: integer
           format: int32
+        maxTaskCreationDelay:
+          $ref: "#/components/schemas/SimpleDuration"
         minMetaCreateTimeMs:
           type: integer
           format: int64
@@ -17412,6 +17416,12 @@ components:
           type: integer
           format: int64
         minMetaId:
+          type: integer
+          format: int64
+        nextPollMs:
+          type: integer
+          format: int64
+        prevMaxMetaId:
           type: integer
           format: int64
         status:

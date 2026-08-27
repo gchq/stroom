@@ -835,9 +835,12 @@ appConfig:
       refreshAfterWrite: "PT10S"
       statisticsMode: "INTERNAL"
     queueSize: 1000
+    skipEmptyFilterFetchDuration: "PT10S"
     skipNonProducingFiltersDuration: "PT10S"
+    skipNonProducingFiltersMaxDuration: "PT1M"
     taskCreationThreadCount: 5
     tasksToCreate: 1000
+    useMaxMetaIdFromPreviousPoll: true
     waitToQueueTasksDuration: "PT10S"
   properties:
     db:

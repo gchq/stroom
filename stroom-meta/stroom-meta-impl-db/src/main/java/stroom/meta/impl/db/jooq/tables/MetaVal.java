@@ -129,6 +129,11 @@ public class MetaVal extends TableImpl<MetaValRecord> {
     }
 
     @Override
+    public List<UniqueKey<MetaValRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_META_VAL_META_VAL_META_ID_META_KEY_ID);
+    }
+
+    @Override
     public MetaVal as(String alias) {
         return new MetaVal(DSL.name(alias), this);
     }
