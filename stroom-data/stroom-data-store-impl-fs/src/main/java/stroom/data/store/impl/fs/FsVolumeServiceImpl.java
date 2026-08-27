@@ -607,7 +607,7 @@ public class FsVolumeServiceImpl implements FsVolumeService {
         final FindFsVolumeCriteria findVolumeCriteria = FindFsVolumeCriteria.matchAll();
         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, false, false);
         final List<FsVolume> dbVolumes = find(findVolumeCriteria).getValues();
-        final Map<Integer, String> groupNameMap = fsVolumeGroupService
+        final Map<Integer, String> groupIdToNameMap = fsVolumeGroupService
                 .getAll()
                 .stream()
                 .collect(Collectors.toMap(FsVolumeGroup::getId, FsVolumeGroup::getName));
@@ -625,22 +625,31 @@ public class FsVolumeServiceImpl implements FsVolumeService {
             || isForcedRefresh
             || optMinUpdateTimeEpochMs.get() < updateTimeCutOffEpochMs) {
             for (final FsVolume volume : dbVolumes) {
-                taskContextFactory.current().info(() -> "Refreshing volume '" + getAbsVolumePath(volume) + "'");
-                // Update the volume state and save in the DB.
-                final FsVolume updated = updateVolumeState(volume);
+                final FsVolumeType volumeType = volume.getVolumeType();
 
-                // Record some statistics for the use of this volume.
-                recordStats(updated);
-                final String groupName = groupNameMap.get(updated.getVolumeGroupId());
-                groupNameToVolumesMap.computeIfAbsent(groupName, ignored -> new ArrayList<>())
-                        .add(updated);
+                if (FsVolumeType.STANDARD == volumeType) {
+                    taskContextFactory.current().info(() -> "Refreshing volume '" + getAbsVolumePath(volume) + "'");
+                    // Update the volume state and save in the DB.
+                    final FsVolume updated = updateVolumeState(volume);
+
+                    // Record some statistics for the use of this volume.
+                    recordStats(updated);
+                    final String groupName = groupIdToNameMap.get(updated.getVolumeGroupId());
+                    groupNameToVolumesMap.computeIfAbsent(groupName, ignored -> new ArrayList<>())
+                            .add(updated);
+                } else {
+                    // We would have to make a LOT of api calls to get all size stats for S3 vols.
+                    // Could maybe look into using
+                    // https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-inventory.html
+                    LOGGER.debug("Can't capture stats for volume type {}", volumeType);
+                }
             }
         } else {
             LOGGER.debug(() -> LogUtil.message("Not updating state for vols {}, with min update time {}",
                     dbVolumes,
                     optMinUpdateTimeEpochMs.map(DateUtil::createNormalDateTimeString)));
             for (final FsVolume volume : dbVolumes) {
-                final String groupName = groupNameMap.get(volume.getVolumeGroupId());
+                final String groupName = groupIdToNameMap.get(volume.getVolumeGroupId());
                 groupNameToVolumesMap.computeIfAbsent(groupName, k -> new ArrayList<>()).add(volume);
             }
         }
@@ -697,7 +706,10 @@ public class FsVolumeServiceImpl implements FsVolumeService {
         final Path absPath = getAbsVolumePath(volume);
 
         try {
-            FsVolumeState volumeState = volume.getVolumeState().copy().updateTimeMs(System.currentTimeMillis()).build();
+            FsVolumeState volumeState = volume.getVolumeState()
+                    .copy()
+                    .updateTimeMs(System.currentTimeMillis())
+                    .build();
 
             // Ensure the path exists
             if (Files.isDirectory(absPath)) {
@@ -710,7 +722,8 @@ public class FsVolumeServiceImpl implements FsVolumeService {
             }
 
             volumeState = saveVolumeState(volumeState);
-            builder.volumeState(volumeState).build();
+            builder.volumeState(volumeState)
+                    .build();
 
             LOGGER.debug("updateVolumeState() exit {}", volume);
 

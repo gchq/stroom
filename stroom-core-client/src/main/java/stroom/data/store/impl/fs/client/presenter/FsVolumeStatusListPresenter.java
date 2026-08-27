@@ -148,7 +148,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                 DataGridUtil.headingBuilder("Type")
                         .withToolTip("The type of file system in use. Either Standard or S3.")
                         .build(),
-                90);
+                150);
 
         // Status.
         dataGrid.addResizableColumn(

@@ -4,23 +4,81 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
+
         <form:FormGroup identity="fsVolumeType" label="Volume Type">
+            <form:HelpHTML>
+                <p>The type of volume to store data in.</p>
+                <ul>
+                    <li>
+                        <strong>Standard</strong>
+                        - Store data on the local/remote file system at the specified path.
+                    </li>
+                    <li>
+                        <strong>S3 v1</strong>
+                        - Store data in an S3-compatible object storage service
+                        using the configuration provided in the S3 Configuration section below.
+                        Data is stored in S3 as a single Zip file.
+                    </li>
+                    <li>
+                        <strong>S3 v1 (Read only)</strong>
+                        - Store data in an S3-compatible object storage service
+                        using the configuration provided in the S3 Configuration section below.
+                        Data is stored in S3 as a single Zip file.
+                        This volume is intended for use when Stroom-Proxy creates the files on S3.
+                        The files are read only from Stroom's perspective, it CANNOT delete the files,
+                        only the stream metadata.
+                    </li>
+                    <li>
+                        <strong>S3 v2 (Experimental)</strong>
+                        - Store data in an S3-compatible object storage service
+                        using the configuration provided in the S3 Configuration section below.
+                        Data is stored in S3 as one or more ZStandard compressed files.
+                        <strong>WARNING</strong> This is an experimental feature and is not suitable for production use.
+                    </li>
+                </ul>
+            </form:HelpHTML>
             <l:SelectionBox ui:field="volumeType" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="fsVolumePath" label="Path">
+        <form:FormGroup identity="fsVolumePath"
+                        label="Path"
+                        helpText="The directory path to store the data in. Not applicable to S3 volumes.">
             <g:TextBox ui:field="path" addStyleNames="w-100"/>
         </form:FormGroup>
+
         <form:FormGroup identity="fsVolumeStatus" label="Status">
+            <form:HelpHTML>
+                <p>The status of the volume controlling how it can be used.</p>
+                <ul>
+                    <li>
+                        <strong>Active</strong>
+                        - The volume is active and can be used for reading and writing data.
+                    </li>
+                    <li>
+                        <strong>Inactive</strong>
+                        - The volume will no longer be written to, but can be used for reading data.
+                    </li>
+                    <li>
+                        <strong>Closed</strong>
+                        - The data has been removed and the volume is closed. No more data can be written to it.
+                    </li>
+                </ul>
+            </form:HelpHTML>
             <l:SelectionBox ui:field="status" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="fsVolumeLimit" label="Limit">
+
+        <form:FormGroup identity="fsVolumeLimit"
+                        label="Limit"
+                        helpText="The maximum amount of data that can be stored on this volume.
+                        Not applicable to S3 based volumes.">
             <g:TextBox ui:field="byteLimit" addStyleNames="w-100"/>
         </form:FormGroup>
+
         <form:FormGroup identity="fsVolumeConfig"
                         label="S3 Configuration"
-                        addStyleNames="default-min-sizes flex-grow-1">
+                        addStyleNames="default-min-sizes flex-grow-1"
+                        helpText="The JSON configuration for the S3 volume.">
             <g:ResizeLayoutPanel ui:field="configEditorContainer"
                                  addStyleNames="dock-max form-control-border"/>
         </form:FormGroup>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

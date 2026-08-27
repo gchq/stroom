@@ -30,7 +30,7 @@ BEGIN
     FROM information_schema.columns
     WHERE table_schema = database()
       AND table_name = 'meta'
-      AND column_name = 'read_only';
+      AND column_name = 'is_read_only';
 
     IF object_count = 0 THEN
         -- Column to indicate that the data associated with this meta record is outside the control
