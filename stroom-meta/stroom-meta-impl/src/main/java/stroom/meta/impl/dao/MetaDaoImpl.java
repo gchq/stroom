@@ -583,13 +583,15 @@ public class MetaDaoImpl implements MetaDao {
         final Select<Record1<Long>> select;
         // One big batch should be more efficient as long as it only locks the rows being changed
         // and no others. If it does lock other rows then smaller batches may be needed.
+        // No `distinct`. Every table `buildMeteWithOptionalJoins` joins to is joined on its primary key, so
+        // each meta appears once and the ids are unique already.
         if (batchSize <= 0) {
             // 0 == one big batch
-            select = DSL.selectDistinct(META_M.ID)
+            select = DSL.select(META_M.ID)
                     .from(metaWithJoins)
                     .where(conditions);
         } else {
-            select = DSL.selectDistinct(META_M.ID)
+            select = DSL.select(META_M.ID)
                     .from(metaWithJoins)
                     .where(conditions)
                     .limit(batchSize);
@@ -1591,7 +1593,9 @@ public class MetaDaoImpl implements MetaDao {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
                         metaExpressionMapper.addJoins(
                                         (context
-                                                .selectDistinct(
+                                                // No `distinct`. The `group by parent.id` below already
+                                                // gives one row per parent.
+                                                .select(
                                                         parent.ID,
                                                         PARENT_FEED.NAME,
                                                         PARENT_TYPE.NAME,
@@ -1647,7 +1651,11 @@ public class MetaDaoImpl implements MetaDao {
                         metaExpressionMapper.addJoins(
                                         context
                                                 .select(
-                                                        DSL.countDistinct(META_M.ID),
+                                                        // Each meta appears once, so counting them is the
+                                                        // same as counting the distinct ids. The counts
+                                                        // below still need to be distinct as many metas
+                                                        // share a feed, type, processor and status.
+                                                        DSL.count(),
                                                         DSL.countDistinct(META_FEED_F.NAME),
                                                         DSL.groupConcatDistinct(META_FEED_F.NAME)
                                                                 .separator(GROUP_CONCAT_DELIMITER),
@@ -1895,8 +1903,9 @@ public class MetaDaoImpl implements MetaDao {
 
         return JooqUtil.contextResult(metaDbConnProvider,
                         context -> {
+                            // No `distinct`. The `group by` below already gives one row per uuid.
                             SelectJoinStep<Record1<String>> select = context
-                                    .selectDistinct(META_PROCESSOR_P.PROCESSOR_UUID)
+                                    .select(META_PROCESSOR_P.PROCESSOR_UUID)
                                     .from(META_M);
 
                             select = select
