@@ -160,8 +160,14 @@ public abstract class AbstractMetaListPresenter
                     // in same order. It has to be appended to the list actually sent, AFTER the user's
                     // own sorts, so that it only ever breaks ties: two rows with an equal Create Time
                     // would otherwise be free to swap between pages.
+                    // Break the ties in the same direction as the sort we are breaking them for. Either
+                    // direction gives us the total order we need, but an index can only provide rows in its
+                    // own order or the exact reverse of it, so mixing the directions means the database has
+                    // to sort the whole result set to answer what is usually just the first page of it.
                     if (!CriteriaUtil.hasSortColumn(columnSortList, MetaFields.FIELD_ID)) {
-                        sortList.add(new CriteriaFieldSort(MetaFields.FIELD_ID, false, false));
+                        final boolean isDescending = !sortList.isEmpty()
+                                                     && sortList.get(sortList.size() - 1).isDesc();
+                        sortList.add(new CriteriaFieldSort(MetaFields.FIELD_ID, isDescending, false));
                     }
                     criteria.setSortList(sortList);
                     restFactory
