@@ -81,9 +81,18 @@ public class TraceProcessor {
                     } else {
                         final Trace trace = optTrace.get();
                         LOGGER.debug(() -> "\n" + trace.toString());
-                        buildPathways(writer, trace, doc, messageReceiver, pathwaysDb);
-                        processingStatus.insert(writer, keyByteBuffer, PROCESSED);
-                        writer.tryCommit();
+                        if (trace.root() == null) {
+                            // A pathway is keyed on the root span's name, and this trace has no root
+                            // span. Left unmarked rather than marked processed, because the root may
+                            // still arrive: nothing offers a trace for processing until it has one, so
+                            // leaving the marker off costs nothing and keeps the trace eligible.
+                            messageReceiver.log(Severity.WARNING, () -> "Skipping trace "
+                                    + HexStringUtil.encode(traceId) + " as it has no root span");
+                        } else {
+                            buildPathways(writer, trace, doc, messageReceiver, pathwaysDb);
+                            processingStatus.insert(writer, keyByteBuffer, PROCESSED);
+                            writer.tryCommit();
+                        }
                     }
                 }
                 return null;
