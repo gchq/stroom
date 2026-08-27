@@ -79,6 +79,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -547,19 +548,31 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         LOGGER.debug("createTasksFromCriteria() - requiredTasks: {}, filter: {}", maxTasks, filter);
 
         // This will contain locked and unlocked streams
-        final long maxMetaId = getMaxMetaId(filter);
+        final DurationTimer maxMetaIdDurationTimer = DurationTimer.start();
+        final Optional<Long> maxMetaId = getMaxMetaId(filter, tracker.getMinMetaId());
 
-        final DurationTimer durationTimer = DurationTimer.start();
-        final List<Meta> metaList = runSelectMetaQuery(
-                queryData.getExpression(),
-                tracker.getMinMetaId(),
-                maxMetaId,
-                filter.getMinMetaCreateTimeMs(),
-                filter.getMaxMetaCreateTimeMs(),
-                filter.getPipeline(),
-                filter.isReprocess(),
-                maxTasks);
-        filterProgressMonitor.logPhase(Phase.FIND_META_FOR_FILTER, durationTimer, metaList.size());
+        final List<Meta> metaList;
+        if (maxMetaId.isPresent()) {
+            final DurationTimer durationTimer = DurationTimer.start();
+            metaList = runSelectMetaQuery(
+                    queryData.getExpression(),
+                    tracker.getMinMetaId(),
+                    maxMetaId.get(),
+                    filter.getMinMetaCreateTimeMs(),
+                    filter.getMaxMetaCreateTimeMs(),
+                    filter.getPipeline(),
+                    filter.isReprocess(),
+                    maxTasks);
+            filterProgressMonitor.logPhase(Phase.FIND_META_FOR_FILTER, durationTimer, metaList.size());
+        } else {
+            // There is no stream we are allowed to process yet, so there is nothing to look for. Report the
+            // wait so that a filter held up by a processing delay or a feed dependency shows in the progress
+            // report as waiting, rather than not appearing to do anything at all.
+            filterProgressMonitor.logPhase(Phase.WAIT_FOR_READY_STREAMS, maxMetaIdDurationTimer, 0);
+            // We still let the tracker know we polled and found nothing, it just doesn't move on to a new
+            // stream id.
+            metaList = Collections.emptyList();
+        }
 
         // Just create regular stream processing tasks.
         final Map<Meta, InclusiveRanges> map = new HashMap<>();
@@ -573,7 +586,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 filterProgressMonitor,
                 streamQueryTime,
                 map,
-                maxMetaId,
+                maxMetaId.orElse(null),
                 false);
         filterProgressMonitor.add(createdTasks);
 
@@ -584,7 +597,11 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         totalTasksCreated.add(createdTasks);
     }
 
-    private long getMaxMetaId(final ProcessorFilter filter) {
+    /**
+     * @return The highest stream id we are allowed to create tasks up to, or an empty optional if there is no
+     * stream we are allowed to process yet, i.e. everything at or above the tracker is too new to process.
+     */
+    private Optional<Long> getMaxMetaId(final ProcessorFilter filter, final long minMetaId) {
         // Determine the max effective time for all feed dependencies.
         final Instant now = Instant.now();
         final FeedDependencies feedDependencies =
@@ -598,7 +615,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                             FeedDependencies::getFeedDependencies));
             if (maxCreateTime == null) {
                 // If we have a null create time from feed dependencies we might still want to delay processing.
-                if (minProcessingDelay != null || (maxProcessingDelay != null && maxProcessingDelay.getTime() > 0)) {
+                if ((minProcessingDelay != null && minProcessingDelay.getTime() > 0)
+                    || (maxProcessingDelay != null && maxProcessingDelay.getTime() > 0)) {
                     maxCreateTime = now;
                 }
             }
@@ -620,12 +638,19 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                     }
                 }
 
-                // Find the max stream id that belongs to a stream that has a create time less than or equal to the
-                // max effective time.
-                return Objects.requireNonNullElse(metaService.getMaxId(maxCreateTime.toEpochMilli()), 0L);
+                // Every stream is created with a create time of the moment it was created, so a cut off that
+                // isn't in the past excludes nothing and the answer is just the max id of all streams. That
+                // matters because the database can get the max id of all streams straight from the primary key,
+                // whereas finding the max id before a given time makes it scan every stream created before it.
+                if (maxCreateTime.isBefore(now)) {
+                    // Find the max stream id that belongs to a stream that has a create time less than or
+                    // equal to the max effective time. We have already created tasks for everything below the
+                    // tracker's position, so that is as far back as we need to look.
+                    return metaService.getMaxId(minMetaId, maxCreateTime.toEpochMilli());
+                }
             }
         }
-        return Objects.requireNonNullElse(metaService.getMaxId(), 0L);
+        return metaService.getMaxId();
     }
 
     private void createTasksFromSearchQuery(final ProcessorFilter filter,
@@ -706,7 +731,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 .params(getParams(queryData))
                 .build();
 
-        final Long maxMetaId = metaService.getMaxId();
+        final Optional<Long> maxMetaId = metaService.getMaxId();
 
         final BiConsumer<EventRefs, Throwable> consumer = (eventRefs, throwable) -> {
             LOGGER.debug(() -> LogUtil.message(
@@ -744,7 +769,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                             filterProgressMonitor,
                             streamQueryTime,
                             map,
-                            maxMetaId,
+                            maxMetaId.orElse(null),
                             reachedLimit);
                     totalTasks.addAndGet(createdTasks);
                     totalTasksCreated.add(createdTasks);

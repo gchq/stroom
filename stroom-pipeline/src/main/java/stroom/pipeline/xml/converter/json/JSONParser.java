@@ -24,6 +24,7 @@ import stroom.util.shared.NullSafe;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -44,6 +45,7 @@ import java.io.StringWriter;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 public class JSONParser extends AbstractParser {
 
@@ -62,6 +64,8 @@ public class JSONParser extends AbstractParser {
 
     private static final Attributes EMPTY_ATTS = new AttributesImpl();
     private static final Map<JSONFactoryConfig, JsonMapper> JSON_MAPPER_MAP = new ConcurrentHashMap<>();
+    private static final Pattern SOURCE_PATTERN = Pattern.compile(
+            "\\[Source: [^\\[\\]]*; (?=(?:line: |byte offset: |char offset: ))");
 
     private final JSONFactoryConfig config;
     private final boolean addRoot;
@@ -115,14 +119,15 @@ public class JSONParser extends AbstractParser {
             final LocatorImpl locator;
             if (tokenStreamLocation != null) {
                 locator = new LocatorImpl();
-                locator.setLineNumber(e.getLocation().getLineNr());
-                locator.setColumnNumber(e.getLocation().getColumnNr());
+                locator.setLineNumber(tokenStreamLocation.getLineNr());
+                locator.setColumnNumber(tokenStreamLocation.getColumnNr());
             } else {
                 locator = null;
             }
-            getErrorHandler().fatalError(new SAXParseException(e.getMessage(), locator));
+            // Use the original message as the location is reported separately via the locator.
+            fatalError(new SAXParseException(tidyMessage(e.getOriginalMessage()), locator));
         } catch (final RuntimeException e) {
-            getErrorHandler().fatalError(new SAXParseException(e.getMessage(), null));
+            fatalError(new SAXParseException(e.getMessage(), null));
         } finally {
             endDocument();
         }
@@ -162,6 +167,39 @@ public class JSONParser extends AbstractParser {
                 .configure(JsonReadFeature.ALLOW_MISSING_VALUES, config.allowMissingValues())
                 .configure(JsonReadFeature.ALLOW_TRAILING_COMMA, config.allowTrailingComma())
                 .build();
+    }
+
+    /**
+     * Jackson embeds a description of the source in its messages, e.g.
+     * <pre>[Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); byte offset: #UNKNOWN]</pre>
+     * which means nothing to a user, so strip it out leaving just the location.
+     */
+    static String tidyMessage(final String message) {
+        if (message == null) {
+            return null;
+        }
+        return SOURCE_PATTERN.matcher(message).replaceAll("[");
+    }
+
+    private void fatalError(final SAXParseException e) throws SAXException {
+        final ErrorHandler errorHandler = getErrorHandler();
+        if (errorHandler == null) {
+            // Nothing to report the error to so throw it, else the caller would just get an NPE
+            // and no indication of what was wrong with the JSON.
+            throw e;
+        }
+        errorHandler.fatalError(e);
+    }
+
+    private void warning(final SAXParseException e) throws SAXException {
+        final ErrorHandler errorHandler = getErrorHandler();
+        if (errorHandler == null) {
+            // Nothing to report the warning to, but unlike a fatal error the parse has succeeded,
+            // so just log it rather than failing a parse that is otherwise fine.
+            LOGGER.warn(e::getMessage);
+        } else {
+            errorHandler.warning(e);
+        }
     }
 
     private void startDocument() throws SAXException {
@@ -232,7 +270,7 @@ public class JSONParser extends AbstractParser {
                     return locator2;
                 });
 
-                getErrorHandler().warning(new SAXParseException(LogUtil.message(
+                warning(new SAXParseException(LogUtil.message(
                         "String value truncated to length {}, original length: {}",
                         truncatingStringWriter.getWrittenCount(),
                         truncatingStringWriter.getConsumedCount()),

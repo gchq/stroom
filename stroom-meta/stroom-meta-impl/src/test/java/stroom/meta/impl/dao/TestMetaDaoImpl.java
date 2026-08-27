@@ -94,6 +94,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1200,6 +1201,97 @@ class TestMetaDaoImpl {
 
     void dumpMetaTable() {
         dumpMetaTable(metaDbConnProvider);
+    }
+
+    @Test
+    void testGetMaxId() {
+        final long expected = getMaxIdViaAggregate(Long.MAX_VALUE);
+
+        assertThat(metaDao.getMaxId())
+                .hasValue(expected);
+    }
+
+    @Test
+    void testGetMaxId_noData() {
+        cleanup.cleanup();
+
+        assertThat(metaDao.getMaxId())
+                .isEmpty();
+    }
+
+    @Test
+    void testGetMaxId_beforeCutOff() {
+        final Instant baseTime = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        // Ten more streams, each a day older than the last, so ids ascend as create times descend.
+        final List<Meta> metas = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            metas.add(metaDao.create(createRawProperties(TEST3_FEED_NAME, baseTime.minus(Duration.ofDays(i)))));
+        }
+
+        // The newest of the ten is the only one at or before its own create time that is also the highest id
+        // created at or before it, as everything after it in id order is older.
+        final Meta newest = metas.getFirst();
+
+        assertThat(metaDao.getMaxId(0, newest.getCreateMs()))
+                .hasValue(metas.getLast().getId());
+
+        // A cut off before all of the ten falls back to the streams created by populateDb().
+        assertThat(metaDao.getMaxId(0, baseTime.minus(Duration.ofDays(20)).toEpochMilli()))
+                .isEmpty();
+    }
+
+    @Test
+    void testGetMaxId_beforeCutOffMatchesAggregate() {
+        // Deliberately interleave create times so that ids and create times are not in ascending lockstep,
+        // which is what makes `order by id desc limit 1` a valid substitute for `max(id)` rather than a guess.
+        final Instant baseTime = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        final long[] dayOffsets = new long[]{5, 1, 9, 3, 7, 0, 8, 2, 6, 4};
+        for (final long dayOffset : dayOffsets) {
+            metaDao.create(createRawProperties(TEST3_FEED_NAME, baseTime.minus(Duration.ofDays(dayOffset))));
+        }
+
+        // Whatever the cut off, the new query must agree with the aggregate it replaced.
+        for (long dayOffset = 12; dayOffset >= 0; dayOffset--) {
+            final long cutOff = baseTime.minus(Duration.ofDays(dayOffset)).toEpochMilli();
+            final long expected = getMaxIdViaAggregate(cutOff);
+
+            assertThat(metaDao.getMaxId(0, cutOff))
+                    .describedAs("cut off %s days before base time", dayOffset)
+                    .isEqualTo(expected == 0
+                            ? Optional.empty()
+                            : Optional.of(expected));
+        }
+    }
+
+    @Test
+    void testGetMaxId_minIdBound() {
+        final long maxId = metaDao.getMaxId().orElseThrow();
+        final long cutOff = Long.MAX_VALUE;
+
+        // The bound must not exclude the row we are looking for.
+        assertThat(metaDao.getMaxId(maxId, cutOff))
+                .hasValue(maxId);
+
+        // Once the bound is above every row there is nothing left to find, which is how a caught up filter
+        // tells that it has nothing to do rather than being handed a lower id and winding itself back.
+        assertThat(metaDao.getMaxId(maxId + 1, cutOff))
+                .isEmpty();
+    }
+
+    /**
+     * The `max(id)` aggregate that {@link MetaDaoImpl#getMaxId(long, long)} replaced, so that the replacement
+     * can be checked against it.
+     *
+     * @return The max id at or before the cut off, or 0 if there is none.
+     */
+    private long getMaxIdViaAggregate(final long maxCreateTimeMs) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                        .select(DSL.max(META_M.ID))
+                        .from(META_M)
+                        .where(META_M.CREATE_TIME.le(maxCreateTimeMs))
+                        .fetchOptional())
+                .map(Record1::value1)
+                .orElse(0L);
     }
 
     private MetaProperties createRawProperties(final String feedName) {
