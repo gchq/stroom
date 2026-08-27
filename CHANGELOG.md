@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.13] - 2026-08-27
+
+* Bug : Stop creation of content templates and data retention docs when they are just being fetched.
+
+* Bug : Fix error when trying to edit content templates, data retention rules and data receipt rules.
+
+* Bug **#5738** : Improve the error message produced by the `json-to-xml` XSLT function and the `JSONParser` pipeline element when the JSON is invalid.
+
+* Bug **#5742** : Fix meta DB performance issues.
+
+* Bug **#5745** : Fix meta find query performance.
+
+
 ## [v7.13-beta.12] - 2026-08-18
 
 * Bug **#5730** : Fix doc create permission bug.
@@ -2494,7 +2507,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.13...HEAD
+[v7.13-beta.13]: https://github.com/gchq/stroom/compare/v7.13-beta.12...v7.13-beta.13
 [v7.13-beta.12]: https://github.com/gchq/stroom/compare/v7.13-beta.11...v7.13-beta.12
 [v7.13-beta.11]: https://github.com/gchq/stroom/compare/v7.13-beta.10...v7.13-beta.11
 [v7.13-beta.10]: https://github.com/gchq/stroom/compare/v7.13-beta.9...v7.13-beta.10
