@@ -88,6 +88,8 @@ public class AskStroomAiPresenter
     private static final SafeHtml SUMMARY = SafeHtmlUtils.fromSafeConstant("summary");
     private static final SafeHtml DETAILS = SafeHtmlUtils.fromSafeConstant("details");
     private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
+    private static final String WORKING_MESSAGE_ID = "ai-working-message";
+    private static final String WORKING_TEXT_ID = "ai-working-text";
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
@@ -106,6 +108,12 @@ public class AskStroomAiPresenter
 
     private boolean showing;
     private boolean docked;
+    /**
+     * True while a request is with the server. Polling continues for as long as this is set, since a
+     * poll can otherwise outrun the work and conclude it has finished before it has started.
+     */
+    private boolean requestInFlight;
+    private boolean polling;
     private DockBehaviour currentDockBehaviour;
 
     @Inject
@@ -415,14 +423,22 @@ public class AskStroomAiPresenter
                     currentChat, config, data, message);
             // Clear context so follow-up messages don't re-attach the same data.
             this.data = null;
+            requestInFlight = true;
             askStroomAiClient.sendMessage(request,
                     response -> {
-                        // Poll to get the properly typed, persisted messages.
-                        pollForNewMessages();
+                        requestInFlight = false;
+                        // Poll to get the properly typed, persisted messages. Also picks up a partial
+                        // answer, where the user cancelled part way through.
+                        startPolling();
                         maybeGenerateTitle(message);
-                    }, error ->
-                            showError(error, "Stroom AI request failed", () ->
-                                    getView().setSendButtonLoadingState(false)), getView());
+                    }, error -> {
+                        requestInFlight = false;
+                        showError(error, "Stroom AI request failed", () ->
+                                getView().setSendButtonLoadingState(false));
+                    }, getView());
+            // Poll while the request runs, so progress is seen as it happens rather than all at once
+            // when the request returns.
+            startPolling();
         }, getView()));
     }
 
@@ -452,8 +468,16 @@ public class AskStroomAiPresenter
      * Poll for new messages since lastSeenMessageId. Renders any new messages
      * with type-aware formatting and updates the lastSeenMessageId.
      */
+    private void startPolling() {
+        if (!polling) {
+            polling = true;
+            pollForNewMessages();
+        }
+    }
+
     private void pollForNewMessages() {
         if (currentChat == null) {
+            polling = false;
             return;
         }
         askStroomAiClient.pollMessages(currentChat.getId(), lastSeenMessageId, response -> {
@@ -475,7 +499,10 @@ public class AskStroomAiPresenter
             // Update attachment status elements in-place.
             updateAttachmentStatuses(response.getAttachments());
 
-            if (!response.isComplete()) {
+            // Show what the server is currently doing, and take the line away when it is done.
+            updateWorkingMessage(response.getWorkingMessage());
+
+            if (requestInFlight || !response.isComplete()) {
                 // If the conversation is still in-flight, schedule another poll after 1s.
                 new com.google.gwt.user.client.Timer() {
                     @Override
@@ -484,10 +511,12 @@ public class AskStroomAiPresenter
                     }
                 }.schedule(1000);
             } else {
+                polling = false;
                 getView().setSendButtonLoadingState(false);
             }
         }, error -> {
             // Clear loading state on poll failure so the UI doesn't get stuck.
+            polling = false;
             getView().setSendButtonLoadingState(false);
         }, getView());
     }
@@ -521,8 +550,7 @@ public class AskStroomAiPresenter
                         timeMs, nowMs, false, messageId, false);
                 break;
             case WORKING:
-                appendDetailsElement(hb, "ai-message ai-message--working",
-                        SvgImage.INFO, "Working...", msg.getMessage(), timeMs, nowMs);
+                appendWorkingMessage(hb, msg, timeMs, nowMs);
                 break;
             case THINKING:
                 appendDetailsElement(hb, "ai-message ai-message--thinking",
@@ -665,6 +693,56 @@ public class AskStroomAiPresenter
                 timestamp(footer, timeMs, nowMs);
             }, Attribute.className("ai-message-footer"));
         }, Attribute.className("ai-message ai-message--data"));
+    }
+
+    /**
+     * Renders the WORKING message with stable DOM ids, so that polling can update the progress text
+     * where it stands rather than appending a new line every time it changes. The text is in the
+     * summary because that is the part that is visible without expanding it.
+     */
+    private void appendWorkingMessage(final HtmlBuilder hb,
+                                      final AiChatMessage msg,
+                                      final long timeMs,
+                                      final long nowMs) {
+        hb.elem(details -> {
+            details.elem(summary -> {
+                button(summary, SvgImage.INFO, iconButtonClassName("ai-message-summary-icon"));
+                summary.span(text -> text.append(workingText(msg)), new Attribute("id", WORKING_TEXT_ID));
+            }, SUMMARY, Attribute.className("ai-message-header"));
+
+            details.div(footer ->
+                    timestamp(footer, timeMs, nowMs), Attribute.className("ai-message-footer"));
+        }, DETAILS, Attribute.className("ai-message ai-message--working"),
+                new Attribute("id", WORKING_MESSAGE_ID));
+    }
+
+    /**
+     * Adds, updates or removes the progress line to match what the server says it is doing.
+     */
+    private void updateWorkingMessage(final AiChatMessage workingMessage) {
+        final Document doc = Document.get();
+        final Element existing = doc.getElementById(WORKING_MESSAGE_ID);
+
+        if (workingMessage == null) {
+            // Nothing is being worked on, so the progress line has served its purpose.
+            if (existing != null) {
+                existing.removeFromParent();
+            }
+        } else if (existing == null) {
+            final HtmlBuilder hb = new HtmlBuilder();
+            appendWorkingMessage(hb, workingMessage,
+                    workingMessage.getCreateTimeMs(), System.currentTimeMillis());
+            appendToContainer(hb);
+        } else {
+            final Element text = doc.getElementById(WORKING_TEXT_ID);
+            if (text != null) {
+                text.setInnerText(workingText(workingMessage));
+            }
+        }
+    }
+
+    private String workingText(final AiChatMessage msg) {
+        return NullSafe.getOrElse(msg, AiChatMessage::getMessage, "Working...");
     }
 
     private void appendStatus(final HtmlBuilder hb, final SvgImage icon, final String text) {

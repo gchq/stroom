@@ -473,6 +473,12 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    public Optional<AiChatMessage> getWorkingMessage(final int chatId) {
+        verifyOwnership(chatId);
+        return aiDao.getWorkingMessage(chatId);
+    }
+
+    @Override
     public AiChatMessage storeMessage(final int chatId,
                                       final AiMessageType messageType,
                                       final Integer attachmentId,

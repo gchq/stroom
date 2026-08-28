@@ -73,6 +73,7 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -92,13 +93,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 
+/**
+ * Singleton because cancellation is tracked in {@link #cancellationFlags}, which is state shared
+ * between the request processing a question and the request asking to stop it. Without a single
+ * instance the stop request looks up an empty map and does nothing.
+ */
+@Singleton
 public class AskStroomAIService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AskStroomAIService.class);
@@ -114,6 +124,13 @@ public class AskStroomAIService {
      * Polling interval (ms) when waiting for attachments.
      */
     private static final long ATTACHMENT_POLL_INTERVAL_MS = 1_000;
+
+    /**
+     * How long a cancelled run waits for batches that are already in flight before giving up on them.
+     * The user is not blocked while this happens, so a batch that is nearly done is worth having, but a
+     * stop still has to mean something when the model has stopped responding.
+     */
+    private static final long CANCELLED_HARVEST_GRACE_MS = 30_000;
 
     /**
      * How many summaries are merged in one call. Merging in chunks keeps the merge input bounded no
@@ -532,6 +549,11 @@ public class AskStroomAIService {
                 chatId, AiMessageType.WORKING, "Working...");
         final int workingMessageId = workingMsg.getId();
 
+        // Registered for the whole question rather than just for batch analysis, so that a stop issued
+        // while waiting for attachments, or between retries, is seen at all.
+        final AtomicBoolean cancelled = new AtomicBoolean(false);
+        registerCancellation(chatId, cancelled);
+
         try {
             // Wait for any DOWNLOADING attachments to become READY.
             LOGGER.logDurationIfDebugEnabled(
@@ -573,6 +595,11 @@ public class AskStroomAIService {
 
             // Progressive-trim retry loop.
             for (int attempt = 1; ; attempt++) {
+                if (cancelled.get()) {
+                    LOGGER.info(() -> "processQuestion: cancelled before attempt for chatId=" + chatId);
+                    return "Analysis was cancelled before a response was produced.";
+                }
+
                 final int currentAttempt = attempt;
                 final int currentMaxHistory = maxHistory;
                 final String currentSummary = contextSummary;
@@ -729,6 +756,7 @@ public class AskStroomAIService {
                 }
             }
         } finally {
+            deregisterCancellation(chatId);
             // Always clean up the WORKING message when processing is done.
             try {
                 aiService.deleteMessage(workingMessageId);
@@ -915,8 +943,10 @@ public class AskStroomAIService {
                                           final int chatId,
                                           final int workingMessageId,
                                           final StringBuilder debugLog) {
-        final AtomicBoolean cancelled = new AtomicBoolean(false);
-        registerCancellation(chatId, cancelled);
+        // Shares the flag registered for the whole question, so a stop issued before batch analysis
+        // started is not lost.
+        final AtomicBoolean cancelled = cancellationFlags.computeIfAbsent(
+                chatId, k -> new AtomicBoolean(false));
 
         try {
             final TableAnalysisConfig tableAnalysisConfig = getTableAnalysisConfig(request.getConfig());
@@ -929,21 +959,30 @@ public class AskStroomAIService {
             // Build batches from markdown files on disk.
             final List<String> batches = new ArrayList<>();
             boolean anyTruncated = false;
+            int unreadableAttachments = 0;
             for (final AiChatAttachment attachment : attachments) {
                 final Path mdFile = attachmentFileStore.getAttachmentFile(attachment.getId());
-                if (!Files.exists(mdFile)) {
-                    throw new RuntimeException(
-                            "Attachment data file not found for attachment " + attachment.getId()
-                            + ". Data may have been cleaned up.");
-                }
-                batches.addAll(buildBatchesFromMarkdown(mdFile, tableAnalysisConfig));
-                if (attachment.isTruncated()) {
-                    anyTruncated = true;
+                try {
+                    if (!Files.exists(mdFile)) {
+                        throw new RuntimeException("Attachment data file not found. "
+                                                   + "Data may have been cleaned up.");
+                    }
+                    batches.addAll(buildBatchesFromMarkdown(mdFile, tableAnalysisConfig));
+                    if (attachment.isTruncated()) {
+                        anyTruncated = true;
+                    }
+                } catch (final RuntimeException e) {
+                    // One attachment we cannot read should not cost the user the analysis of the rest.
+                    unreadableAttachments++;
+                    LOGGER.warn(() -> "Skipping unreadable attachment " + attachment.getId()
+                                      + " for chatId=" + chatId, e);
                 }
             }
 
             if (batches.isEmpty()) {
-                return "No data available for analysis.";
+                return unreadableAttachments > 0
+                        ? "The attached data could not be read. It may have been cleaned up."
+                        : "No data available for analysis.";
             }
 
             final boolean truncatedData = anyTruncated;
@@ -1047,10 +1086,22 @@ public class AskStroomAIService {
                 }, executor));
             }
 
-            // Collect results, handling per-batch failures gracefully.
+            // Once cancelled, give the batches already in flight a short while to land before taking
+            // stock. What the user stopped is the work still queued behind them.
+            if (cancelled.get() && futures.stream().anyMatch(future -> !future.isDone())) {
+                aiService.updateMessageText(workingMessageId,
+                        "Cancelled - waiting briefly for batches already in progress...");
+                awaitInFlightBatches(futures, chatId);
+            }
+
+            // Collect results, handling per-batch failures gracefully. Anything still unfinished after
+            // the grace period above is left behind rather than waited on.
             final List<String> summaries = new ArrayList<>();
             int failedBatches = 0;
             for (final CompletableFuture<String> future : futures) {
+                if (cancelled.get() && !future.isDone()) {
+                    continue;
+                }
                 try {
                     final String result = future.join();
                     if (result != null && !result.isEmpty()) {
@@ -1076,13 +1127,27 @@ public class AskStroomAIService {
                                + (summaries.size() > 1
                     ? " -> merging"
                     : " -> single result"));
-            final String merged = summaries.size() == 1
-                    ? summaries.getFirst()
-                    : mergeAllSummaries(chatModel, summaries, tableAnalysisConfig, debugLog);
+            // A stop means "stop working through the data", not "hand me the fragments". Merging what
+            // was found is the answer the user is waiting for, and its cost is set by how much was
+            // produced before the stop, not by how much data is left. If it fails, mergeAllSummaries
+            // keeps the summaries rather than losing them.
+            final String merged;
+            if (summaries.size() == 1) {
+                merged = summaries.getFirst();
+            } else {
+                if (cancelled.get()) {
+                    aiService.updateMessageText(workingMessageId,
+                            "Cancelled - summarising the " + summaries.size()
+                            + " batch(es) completed so far...");
+                }
+                merged = mergeAllSummaries(chatModel, summaries, tableAnalysisConfig, debugLog);
+            }
 
-            return merged + describeCoverage(summaries.size(), totalBatches, failedBatches, cancelled.get());
+            return merged + describeCoverage(summaries.size(), totalBatches, failedBatches,
+                    unreadableAttachments, cancelled.get());
         } finally {
-            deregisterCancellation(chatId);
+            // The cancellation flag belongs to the question as a whole, so it is not removed here.
+            LOGGER.debug(() -> "analyseWithAttachments: done for chatId=" + chatId);
         }
     }
 
@@ -1139,32 +1204,63 @@ public class AskStroomAIService {
     }
 
     /**
+     * Waits a bounded time for batches that are already in flight, so that a cancelled run reports what
+     * they found rather than discarding work that was nearly done.
+     */
+    private void awaitInFlightBatches(final List<CompletableFuture<String>> futures, final int chatId) {
+        try {
+            CompletableFuture
+                    .allOf(futures.toArray(new CompletableFuture[0]))
+                    .get(CANCELLED_HARVEST_GRACE_MS, TimeUnit.MILLISECONDS);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (final TimeoutException e) {
+            LOGGER.debug(() -> "awaitInFlightBatches: batches still running after the grace period "
+                               + "for chatId=" + chatId + ", continuing without them");
+        } catch (final ExecutionException e) {
+            // A batch that failed is accounted for when the results are collected.
+            LOGGER.debug(() -> "awaitInFlightBatches: a batch failed for chatId=" + chatId, e);
+        }
+    }
+
+    /**
      * Says how much of the data the answer actually covers, when it does not cover all of it. A partial
      * answer is worth having, but only if the reader knows it is partial.
      */
     String describeCoverage(final int contributed,
                             final int totalBatches,
                             final int failedBatches,
+                            final int unreadableAttachments,
                             final boolean cancelled) {
-        if (contributed >= totalBatches) {
-            return "";
+        final List<String> notes = new ArrayList<>();
+
+        if (contributed < totalBatches) {
+            final StringBuilder sb = new StringBuilder("this answer covers ")
+                    .append(contributed)
+                    .append(" of ")
+                    .append(totalBatches)
+                    .append(" batches of the data");
+            if (cancelled) {
+                sb.append(", as the analysis was cancelled before the rest were processed");
+            } else if (failedBatches > 0) {
+                sb.append(", as ")
+                        .append(failedBatches)
+                        .append(failedBatches == 1
+                                ? " batch failed"
+                                : " batches failed");
+            }
+            notes.add(sb.toString());
         }
 
-        final StringBuilder sb = new StringBuilder("\n\n---\n*Note: this answer covers ")
-                .append(contributed)
-                .append(" of ")
-                .append(totalBatches)
-                .append(" batches of the data");
-        if (cancelled) {
-            sb.append(", as the analysis was cancelled before the rest were processed");
-        } else if (failedBatches > 0) {
-            sb.append(", as ")
-                    .append(failedBatches)
-                    .append(failedBatches == 1
-                            ? " batch failed"
-                            : " batches failed");
+        if (unreadableAttachments > 0) {
+            notes.add(unreadableAttachments == 1
+                    ? "1 attachment could not be read and is not included"
+                    : unreadableAttachments + " attachments could not be read and are not included");
         }
-        return sb.append(".*").toString();
+
+        return notes.isEmpty()
+                ? ""
+                : "\n\n---\n*Note: " + String.join(". ", notes) + ".*";
     }
 
     /**
@@ -1731,19 +1827,27 @@ public class AskStroomAIService {
     }
 
     public AiChatPollResponse pollMessages(final int chatId, final AiChatPollRequest request) {
-        final List<AiChatMessage> newMessages = aiService.getMessagesSince(
-                chatId, request.getLastSeenMessageId());
         final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
 
-        // Conversation is complete if there are no WORKING messages among the new messages
-        // AND all attachments have finished downloading.
-        final boolean workingComplete = newMessages.stream()
-                .noneMatch(msg -> msg.getMessageType() == AiMessageType.WORKING);
+        // The WORKING message is updated in place as processing advances, so it is reported as it
+        // stands rather than as one of the new messages - once the client had seen it, it would never
+        // be sent again, and its progress would never be seen.
+        final AiChatMessage workingMessage = aiService.getWorkingMessage(chatId).orElse(null);
+        final List<AiChatMessage> newMessages = aiService
+                .getMessagesSince(chatId, request.getLastSeenMessageId())
+                .stream()
+                .filter(msg -> msg.getMessageType() != AiMessageType.WORKING)
+                .toList();
+
+        // The conversation is complete when nothing is working on it and all attachments have
+        // finished downloading. Asking whether a WORKING message is in place says that; asking
+        // whether one happens to be among the new messages does not, as a client that has already
+        // seen it would be told the work had finished.
         final boolean attachmentsComplete = attachments.stream()
                 .noneMatch(a -> a.getStatus() == AiAttachmentStatus.PENDING
                                 || a.getStatus() == AiAttachmentStatus.DOWNLOADING);
-        final boolean complete = workingComplete && attachmentsComplete;
-        return new AiChatPollResponse(newMessages, attachments, complete);
+        final boolean complete = workingMessage == null && attachmentsComplete;
+        return new AiChatPollResponse(newMessages, attachments, workingMessage, complete);
     }
 
     // ---------------------------------------------------------------------

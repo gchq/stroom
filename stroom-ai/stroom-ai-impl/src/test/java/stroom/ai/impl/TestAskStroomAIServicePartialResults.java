@@ -116,12 +116,23 @@ class TestAskStroomAIServicePartialResults {
 
     @Test
     void coverageIsOnlyNotedWhenIncomplete() {
-        assertThat(service.describeCoverage(4, 4, 0, false)).isEmpty();
-        assertThat(service.describeCoverage(3, 4, 1, false))
+        assertThat(service.describeCoverage(4, 4, 0, 0, false)).isEmpty();
+        assertThat(service.describeCoverage(3, 4, 1, 0, false))
                 .contains("3 of 4 batches")
                 .contains("1 batch failed");
-        assertThat(service.describeCoverage(2, 4, 2, false)).contains("2 batches failed");
-        assertThat(service.describeCoverage(1, 4, 0, true)).contains("cancelled");
+        assertThat(service.describeCoverage(2, 4, 2, 0, false)).contains("2 batches failed");
+        assertThat(service.describeCoverage(1, 4, 0, 0, true)).contains("cancelled");
+    }
+
+    @Test
+    void unreadableAttachmentsAreNotedEvenWhenEveryBatchRan() {
+        // Batches are only built from the attachments that could be read, so the batch count alone
+        // would say the answer was complete.
+        assertThat(service.describeCoverage(4, 4, 0, 1, false))
+                .contains("1 attachment could not be read");
+        assertThat(service.describeCoverage(3, 4, 1, 2, false))
+                .contains("3 of 4 batches")
+                .contains("2 attachments could not be read");
     }
 
     private List<String> summaries(final int count) {

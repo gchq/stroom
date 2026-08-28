@@ -77,6 +77,11 @@ public interface AiService {
 
     List<AiChatMessage> getMessagesSince(int chatId, int lastSeenMessageId);
 
+    /**
+     * @return The chat's WORKING message if one is in place, i.e. if a question is being processed.
+     */
+    Optional<AiChatMessage> getWorkingMessage(int chatId);
+
     void updateMessageText(int messageId, String message);
 
     void deleteMessage(int messageId);
