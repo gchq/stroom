@@ -132,12 +132,6 @@ public class AskStroomAIService {
      */
     private static final long CANCELLED_HARVEST_GRACE_MS = 30_000;
 
-    /**
-     * How many summaries are merged in one call. Merging in chunks keeps the merge input bounded no
-     * matter how many batches the data was split into.
-     */
-    private static final int MAX_SUMMARIES_PER_MERGE = 10;
-
     private final AiService aiService;
     private final AiAttachmentFileStore attachmentFileStore;
     private final DashboardService dashboardService;
@@ -544,6 +538,10 @@ public class AskStroomAIService {
                 AskStroomAIConfig::isEnableDebugDetail,
                 AskStroomAIConfig.DEFAULT_ENABLE_DEBUG_DETAIL);
 
+        // Clear anything left behind by a previous question that did not get to clean up after
+        // itself, or the chat would look like it was working forever.
+        aiService.deleteWorkingMessages(chatId);
+
         // Create a single WORKING message that will be updated in place.
         final AiChatMessage workingMsg = aiService.storeMessage(
                 chatId, AiMessageType.WORKING, "Working...");
@@ -636,10 +634,7 @@ public class AskStroomAIService {
                         if (debugLog != null) {
                             storeDebugDetail(chatId, debugLog.toString());
                         }
-                        return result + "\n\n---\n*Note: The attached data was too large "
-                               + "for full analysis in a single call. Results were produced "
-                               + "using batch processing and may not capture cross-row "
-                               + "patterns or cross-table comparisons as effectively.*";
+                        return result;
                     }
                 }
 
@@ -708,10 +703,7 @@ public class AskStroomAIService {
                             if (debugLog != null) {
                                 storeDebugDetail(chatId, debugLog.toString());
                             }
-                            return result + "\n\n---\n*Note: The attached data was too large "
-                                   + "for full analysis in a single call. Results were produced "
-                                   + "using batch processing and may not capture cross-row "
-                                   + "patterns or cross-table comparisons as effectively.*";
+                            return result;
                         }
                         // No attachments and still overflowing. There is no partial answer to give
                         // here - nothing has been produced yet - so at least say what was tried.
@@ -948,207 +940,214 @@ public class AskStroomAIService {
         final AtomicBoolean cancelled = cancellationFlags.computeIfAbsent(
                 chatId, k -> new AtomicBoolean(false));
 
-        try {
-            final TableAnalysisConfig tableAnalysisConfig = getTableAnalysisConfig(request.getConfig());
-            final String conversationContext = buildConversationSummary(chatId);
+        final TableAnalysisConfig tableAnalysisConfig = getTableAnalysisConfig(request.getConfig());
+        final String conversationContext = buildConversationSummary(chatId);
 
-            LOGGER.debug(() -> "analyseWithAttachments: chatId=" + chatId
-                               + " attachments=" + attachments.size()
-                               + " maxParallel=" + tableAnalysisConfig.getMaxParallelBatches());
+        LOGGER.debug(() -> "analyseWithAttachments: chatId=" + chatId
+                           + " attachments=" + attachments.size()
+                           + " maxParallel=" + tableAnalysisConfig.getMaxParallelBatches());
 
-            // Build batches from markdown files on disk.
-            final List<String> batches = new ArrayList<>();
-            boolean anyTruncated = false;
-            int unreadableAttachments = 0;
-            for (final AiChatAttachment attachment : attachments) {
-                final Path mdFile = attachmentFileStore.getAttachmentFile(attachment.getId());
-                try {
-                    if (!Files.exists(mdFile)) {
-                        throw new RuntimeException("Attachment data file not found. "
-                                                   + "Data may have been cleaned up.");
-                    }
-                    batches.addAll(buildBatchesFromMarkdown(mdFile, tableAnalysisConfig));
-                    if (attachment.isTruncated()) {
-                        anyTruncated = true;
-                    }
-                } catch (final RuntimeException e) {
-                    // One attachment we cannot read should not cost the user the analysis of the rest.
-                    unreadableAttachments++;
-                    LOGGER.warn(() -> "Skipping unreadable attachment " + attachment.getId()
-                                      + " for chatId=" + chatId, e);
+        // Build batches from markdown files on disk.
+        final List<String> batches = new ArrayList<>();
+        boolean anyTruncated = false;
+        int unreadableAttachments = 0;
+        for (final AiChatAttachment attachment : attachments) {
+            final Path mdFile = attachmentFileStore.getAttachmentFile(attachment.getId());
+            try {
+                if (!Files.exists(mdFile)) {
+                    throw new RuntimeException("Attachment data file not found. "
+                                               + "Data may have been cleaned up.");
                 }
-            }
-
-            if (batches.isEmpty()) {
-                return unreadableAttachments > 0
-                        ? "The attached data could not be read. It may have been cleaned up."
-                        : "No data available for analysis.";
-            }
-
-            final boolean truncatedData = anyTruncated;
-            LOGGER.debug(() -> "analyseWithAttachments: chatId=" + chatId
-                               + " batches=" + batches.size() + " anyTruncated=" + truncatedData);
-
-            // Include truncation note in the user query if applicable.
-            final String userQuery = anyTruncated
-                    ? request.getMessage() + "\n\nNote: this data is truncated to the first "
-                      + tableAnalysisConfig.getMaxTotalRows()
-                      + " rows of a larger result set."
-                    : request.getMessage();
-
-            final int totalBatches = batches.size();
-            aiService.updateMessageText(workingMessageId,
-                    "Analysing " + totalBatches + " batch(es) across "
-                    + attachments.size() + " attachment(s)...");
-
-            // Process batches in parallel with bounded concurrency.
-            final Executor executor = executorProvider.get();
-            final int maxParallel = tableAnalysisConfig.getMaxParallelBatches();
-            final Semaphore semaphore = new Semaphore(maxParallel);
-
-            final String systemPrompt = tableAnalysisConfig.getTableQuerySystemPrompt() != null
-                    ? tableAnalysisConfig.getTableQuerySystemPrompt()
-                    : TableAnalysisConfig.DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
-            final String userPromptTemplate = tableAnalysisConfig.getTableQueryUserPrompt() != null
-                    ? tableAnalysisConfig.getTableQueryUserPrompt()
-                    : TableAnalysisConfig.DEFAULT_TABLE_QUERY_USER_PROMPT;
-
-            if (debugLog != null) {
-                debugLog
-                        .append("### Batch Fallback (")
-                        .append(totalBatches)
-                        .append(" batches)\n\n");
-            }
-
-            final List<CompletableFuture<String>> futures = new ArrayList<>();
-            for (int i = 0; i < totalBatches; i++) {
-                if (cancelled.get()) {
-                    final int batchIdx = i;
-                    LOGGER.debug(() -> "analyseWithAttachments: cancelled for chatId=" + chatId
-                                       + " at batch " + batchIdx + "/" + totalBatches);
-                    break;
+                batches.addAll(buildBatchesFromMarkdown(mdFile, tableAnalysisConfig));
+                if (attachment.isTruncated()) {
+                    anyTruncated = true;
                 }
-                final String batch = batches.get(i);
-                final int batchNum = i + 1;
-                futures.add(CompletableFuture.supplyAsync(() -> {
-                    try {
-                        semaphore.acquire();
-                    } catch (final InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException("Interrupted waiting for batch slot", e);
-                    }
-                    try {
-                        if (cancelled.get()) {
-                            return null;
-                        }
-                        aiService.updateMessageText(workingMessageId,
-                                "Analysing batch " + batchNum + " of " + totalBatches + "...");
-
-                        final String userPrompt = userPromptTemplate
-                                .replace("{{query}}", userQuery)
-                                .replace("{{table}}", batch)
-                                .replace("{{context}}", conversationContext);
-
-                        LOGGER.trace(() -> "Batch " + batchNum + "/" + totalBatches
-                                           + " prompt (chatId=" + chatId + "):\n" + userPrompt);
-
-                        final List<ChatMessage> messages = List.of(
-                                new SystemMessage(systemPrompt),
-                                new UserMessage(userPrompt));
-
-                        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
-                                () -> chatModel.chat(messages),
-                                r -> "Batch " + batchNum + "/" + totalBatches
-                                     + " chatId=" + chatId
-                                     + " responseLength=" + r.aiMessage().text().length());
-                        LOGGER.trace(() -> "Batch " + batchNum + "/" + totalBatches
-                                           + " response:\n" + response.aiMessage().text());
-
-                        final String responseText = response.aiMessage().text();
-
-                        // Capture batch debug detail (synchronized on debugLog).
-                        if (debugLog != null) {
-                            synchronized (debugLog) {
-                                debugLog
-                                        .append("#### Batch ")
-                                        .append(batchNum)
-                                        .append("/")
-                                        .append(totalBatches)
-                                        .append("\n\n")
-                                        .append(formatMessagesAsDebugDetail(messages, responseText));
-                            }
-                        }
-
-                        return responseText;
-                    } finally {
-                        semaphore.release();
-                    }
-                }, executor));
+            } catch (final RuntimeException e) {
+                // One attachment we cannot read should not cost the user the analysis of the rest.
+                unreadableAttachments++;
+                LOGGER.warn(() -> "Skipping unreadable attachment " + attachment.getId()
+                                  + " for chatId=" + chatId, e);
             }
-
-            // Once cancelled, give the batches already in flight a short while to land before taking
-            // stock. What the user stopped is the work still queued behind them.
-            if (cancelled.get() && futures.stream().anyMatch(future -> !future.isDone())) {
-                aiService.updateMessageText(workingMessageId,
-                        "Cancelled - waiting briefly for batches already in progress...");
-                awaitInFlightBatches(futures, chatId);
-            }
-
-            // Collect results, handling per-batch failures gracefully. Anything still unfinished after
-            // the grace period above is left behind rather than waited on.
-            final List<String> summaries = new ArrayList<>();
-            int failedBatches = 0;
-            for (final CompletableFuture<String> future : futures) {
-                if (cancelled.get() && !future.isDone()) {
-                    continue;
-                }
-                try {
-                    final String result = future.join();
-                    if (result != null && !result.isEmpty()) {
-                        summaries.add(result);
-                    }
-                } catch (final Exception e) {
-                    failedBatches++;
-                    LOGGER.debug(() -> "Batch processing failed", e);
-                    // Continue collecting results from other batches.
-                }
-            }
-
-            if (summaries.isEmpty()) {
-                if (cancelled.get()) {
-                    return "Analysis was cancelled before any results were produced.";
-                }
-                return "No results could be extracted from the data.";
-            }
-
-            // Merge summaries.
-            LOGGER.debug(() -> "analyseWithAttachments: chatId=" + chatId
-                               + " summaries=" + summaries.size()
-                               + (summaries.size() > 1
-                    ? " -> merging"
-                    : " -> single result"));
-            // A stop means "stop working through the data", not "hand me the fragments". Merging what
-            // was found is the answer the user is waiting for, and its cost is set by how much was
-            // produced before the stop, not by how much data is left. If it fails, mergeAllSummaries
-            // keeps the summaries rather than losing them.
-            final String merged;
-            if (summaries.size() == 1) {
-                merged = summaries.getFirst();
-            } else {
-                if (cancelled.get()) {
-                    aiService.updateMessageText(workingMessageId,
-                            "Cancelled - summarising the " + summaries.size()
-                            + " batch(es) completed so far...");
-                }
-                merged = mergeAllSummaries(chatModel, summaries, tableAnalysisConfig, debugLog);
-            }
-
-            return merged + describeCoverage(summaries.size(), totalBatches, failedBatches,
-                    unreadableAttachments, cancelled.get());
-        } finally {
-            // The cancellation flag belongs to the question as a whole, so it is not removed here.
-            LOGGER.debug(() -> "analyseWithAttachments: done for chatId=" + chatId);
         }
+
+        if (batches.isEmpty()) {
+            return unreadableAttachments > 0
+                    ? "The attached data could not be read. It may have been cleaned up."
+                    : "No data available for analysis.";
+        }
+
+        final boolean truncatedData = anyTruncated;
+        LOGGER.debug(() -> "analyseWithAttachments: chatId=" + chatId
+                           + " batches=" + batches.size() + " anyTruncated=" + truncatedData);
+
+        // Include truncation note in the user query if applicable.
+        final String userQuery = anyTruncated
+                ? request.getMessage() + "\n\nNote: this data is truncated to the first "
+                  + tableAnalysisConfig.getMaxTotalRows()
+                  + " rows of a larger result set."
+                : request.getMessage();
+
+        final int totalBatches = batches.size();
+        aiService.updateMessageText(workingMessageId,
+                "Analysing " + totalBatches + " batch(es) across "
+                + attachments.size() + " attachment(s)...");
+
+        // Process batches in parallel with bounded concurrency.
+        final Executor executor = executorProvider.get();
+        final int maxParallel = tableAnalysisConfig.getMaxParallelBatches();
+        final Semaphore semaphore = new Semaphore(maxParallel);
+
+        final String systemPrompt = tableAnalysisConfig.getTableQuerySystemPrompt() != null
+                ? tableAnalysisConfig.getTableQuerySystemPrompt()
+                : TableAnalysisConfig.DEFAULT_TABLE_QUERY_SYSTEM_PROMPT;
+        final String userPromptTemplate = tableAnalysisConfig.getTableQueryUserPrompt() != null
+                ? tableAnalysisConfig.getTableQueryUserPrompt()
+                : TableAnalysisConfig.DEFAULT_TABLE_QUERY_USER_PROMPT;
+
+        if (debugLog != null) {
+            debugLog
+                    .append("### Batch Fallback (")
+                    .append(totalBatches)
+                    .append(" batches)\n\n");
+        }
+
+        final List<CompletableFuture<String>> futures = new ArrayList<>();
+        for (int i = 0; i < totalBatches; i++) {
+            if (cancelled.get()) {
+                final int batchIdx = i;
+                LOGGER.debug(() -> "analyseWithAttachments: cancelled for chatId=" + chatId
+                                   + " at batch " + batchIdx + "/" + totalBatches);
+                break;
+            }
+            final String batch = batches.get(i);
+            final int batchNum = i + 1;
+            futures.add(CompletableFuture.supplyAsync(() -> {
+                try {
+                    semaphore.acquire();
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Interrupted waiting for batch slot", e);
+                }
+                try {
+                    if (cancelled.get()) {
+                        return null;
+                    }
+                    aiService.updateMessageText(workingMessageId,
+                            "Analysing batch " + batchNum + " of " + totalBatches + "...");
+
+                    final String userPrompt = userPromptTemplate
+                            .replace("{{query}}", userQuery)
+                            .replace("{{table}}", batch)
+                            .replace("{{context}}", conversationContext);
+
+                    LOGGER.trace(() -> "Batch " + batchNum + "/" + totalBatches
+                                       + " prompt (chatId=" + chatId + "):\n" + userPrompt);
+
+                    final List<ChatMessage> messages = List.of(
+                            new SystemMessage(systemPrompt),
+                            new UserMessage(userPrompt));
+
+                    final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
+                            () -> chatModel.chat(messages),
+                            r -> "Batch " + batchNum + "/" + totalBatches
+                                 + " chatId=" + chatId
+                                 + " responseLength=" + r.aiMessage().text().length());
+                    LOGGER.trace(() -> "Batch " + batchNum + "/" + totalBatches
+                                       + " response:\n" + response.aiMessage().text());
+
+                    final String responseText = response.aiMessage().text();
+
+                    // Capture batch debug detail (synchronized on debugLog).
+                    if (debugLog != null) {
+                        synchronized (debugLog) {
+                            debugLog
+                                    .append("#### Batch ")
+                                    .append(batchNum)
+                                    .append("/")
+                                    .append(totalBatches)
+                                    .append("\n\n")
+                                    .append(formatMessagesAsDebugDetail(messages, responseText));
+                        }
+                    }
+
+                    return responseText;
+                } finally {
+                    semaphore.release();
+                }
+            }, executor));
+        }
+
+        // Once cancelled, give the batches already in flight a short while to land before taking
+        // stock. What the user stopped is the work still queued behind them.
+        if (cancelled.get() && futures.stream().anyMatch(future -> !future.isDone())) {
+            aiService.updateMessageText(workingMessageId,
+                    "Cancelled - waiting briefly for batches already in progress...");
+            awaitInFlightBatches(futures, chatId);
+        }
+
+        // Collect results, handling per-batch failures gracefully. Anything still unfinished after
+        // the grace period above is left behind rather than waited on.
+        final List<String> summaries = new ArrayList<>();
+        int failedBatches = 0;
+        for (final CompletableFuture<String> future : futures) {
+            if (cancelled.get() && !future.isDone()) {
+                continue;
+            }
+            try {
+                final String result = future.join();
+                if (result != null && !result.isEmpty()) {
+                    summaries.add(result);
+                } else if (result != null) {
+                    // Answered, but with nothing. That is a batch that did not contribute.
+                    failedBatches++;
+                }
+            } catch (final Exception e) {
+                failedBatches++;
+                LOGGER.debug(() -> "Batch processing failed", e);
+                // Continue collecting results from other batches.
+            }
+        }
+
+        if (summaries.isEmpty()) {
+            if (cancelled.get()) {
+                return "Analysis was cancelled before any results were produced.";
+            }
+            return "No results could be extracted from the data.";
+        }
+
+        // Merge summaries.
+        LOGGER.debug(() -> "analyseWithAttachments: chatId=" + chatId
+                           + " summaries=" + summaries.size()
+                           + (summaries.size() > 1
+                ? " -> merging"
+                : " -> single result"));
+        // Everything the reader needs to know about this answer, said once at the end of it.
+        final AnswerNotes notes = new AnswerNotes()
+                .add("The attached data was too large to analyse in a single call, so it was "
+                     + "processed in batches, which may not capture cross-row patterns or "
+                     + "cross-table comparisons as well");
+
+        // A stop means "stop working through the data", not "hand me the fragments". Merging what
+        // was found is the answer the user is waiting for, and its cost is set by how much was
+        // produced before the stop, not by how much data is left. If a merge fails, SummaryMerger
+        // keeps the summaries rather than losing them.
+        final String merged;
+        if (summaries.size() == 1) {
+            merged = summaries.getFirst();
+        } else {
+            if (cancelled.get()) {
+                aiService.updateMessageText(workingMessageId,
+                        "Cancelled - summarising the " + summaries.size()
+                        + " batch(es) completed so far...");
+            }
+            merged = new SummaryMerger(chatModel, tableAnalysisConfig, debugLog,
+                    this::formatMessagesAsDebugDetail)
+                    .merge(summaries, notes);
+        }
+
+        notes.coverage(summaries.size(), totalBatches, failedBatches,
+                unreadableAttachments, cancelled.get());
+        return notes.appendTo(merged);
     }
 
     /**
@@ -1221,157 +1220,6 @@ public class AskStroomAIService {
             // A batch that failed is accounted for when the results are collected.
             LOGGER.debug(() -> "awaitInFlightBatches: a batch failed for chatId=" + chatId, e);
         }
-    }
-
-    /**
-     * Says how much of the data the answer actually covers, when it does not cover all of it. A partial
-     * answer is worth having, but only if the reader knows it is partial.
-     */
-    String describeCoverage(final int contributed,
-                            final int totalBatches,
-                            final int failedBatches,
-                            final int unreadableAttachments,
-                            final boolean cancelled) {
-        final List<String> notes = new ArrayList<>();
-
-        if (contributed < totalBatches) {
-            final StringBuilder sb = new StringBuilder("this answer covers ")
-                    .append(contributed)
-                    .append(" of ")
-                    .append(totalBatches)
-                    .append(" batches of the data");
-            if (cancelled) {
-                sb.append(", as the analysis was cancelled before the rest were processed");
-            } else if (failedBatches > 0) {
-                sb.append(", as ")
-                        .append(failedBatches)
-                        .append(failedBatches == 1
-                                ? " batch failed"
-                                : " batches failed");
-            }
-            notes.add(sb.toString());
-        }
-
-        if (unreadableAttachments > 0) {
-            notes.add(unreadableAttachments == 1
-                    ? "1 attachment could not be read and is not included"
-                    : unreadableAttachments + " attachments could not be read and are not included");
-        }
-
-        return notes.isEmpty()
-                ? ""
-                : "\n\n---\n*Note: " + String.join(". ", notes) + ".*";
-    }
-
-    /**
-     * Merges N summaries into a single unified summary.
-     * <p>
-     * The summaries are merged a chunk at a time rather than all in one call, because the one call that
-     * has to hold every summary is the one most likely to exceed the context window - and that is the
-     * call whose failure would otherwise throw away every batch result behind it. A merge is only ever
-     * an improvement on its input, so where one fails its inputs are carried forward as they are. The
-     * caller always gets everything that was produced, condensed as far as the model managed.
-     * </p>
-     */
-    String mergeAllSummaries(final ChatModel chatModel,
-                             final List<String> summaries,
-                             final TableAnalysisConfig config,
-                             final StringBuilder debugLog) {
-        LOGGER.debug(() -> "mergeAllSummaries: merging " + summaries.size() + " summaries");
-
-        List<String> current = summaries;
-        boolean degraded = false;
-
-        while (current.size() > 1) {
-            final List<String> merged = new ArrayList<>();
-            for (int i = 0; i < current.size(); i += MAX_SUMMARIES_PER_MERGE) {
-                final List<String> chunk = current.subList(
-                        i, Math.min(i + MAX_SUMMARIES_PER_MERGE, current.size()));
-                if (chunk.size() == 1) {
-                    merged.add(chunk.getFirst());
-                } else {
-                    try {
-                        merged.add(mergeChunk(chatModel, chunk, config, debugLog));
-                    } catch (final RuntimeException e) {
-                        // Keep the summaries rather than lose them. They are still an answer, just a
-                        // longer and more repetitive one than the merged version would have been.
-                        LOGGER.warn(() -> "Failed to merge " + chunk.size()
-                                          + " summaries, keeping them unmerged", e);
-                        degraded = true;
-                        merged.addAll(chunk);
-                    }
-                }
-            }
-
-            if (merged.size() >= current.size()) {
-                // No progress, so another round would not make any either.
-                current = merged;
-                break;
-            }
-            current = merged;
-        }
-
-        final String result = current.size() == 1
-                ? current.getFirst()
-                : joinSummaries(current);
-
-        return degraded
-                ? result + "\n\n---\n*Note: these results could not be condensed into a single summary, "
-                           + "so they are shown as they were produced.*"
-                : result;
-    }
-
-    /**
-     * Merges one chunk of summaries with a single LLM call.
-     */
-    private String mergeChunk(final ChatModel chatModel,
-                              final List<String> summaries,
-                              final TableAnalysisConfig config,
-                              final StringBuilder debugLog) {
-        final String mergePromptTemplate = config.getMultiSummaryMergePrompt() != null
-                ? config.getMultiSummaryMergePrompt()
-                : TableAnalysisConfig.DEFAULT_MULTI_SUMMARY_MERGE_PROMPT;
-        final String mergePrompt = mergePromptTemplate
-                .replace("{{summaries}}", joinSummaries(summaries));
-
-        LOGGER.trace(() -> "mergeChunk prompt:\n" + mergePrompt);
-
-        final List<ChatMessage> messages = List.of(
-                new SystemMessage("You merge partial answers into a unified, concise summary."),
-                new UserMessage(mergePrompt));
-
-        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
-                () -> chatModel.chat(messages),
-                r -> "mergeChunk: summaries=" + summaries.size()
-                     + " responseLength=" + r.aiMessage().text().length());
-        LOGGER.trace(() -> "mergeChunk response:\n" + response.aiMessage().text());
-
-        final String responseText = response.aiMessage().text();
-
-        if (debugLog != null) {
-            synchronized (debugLog) {
-                debugLog
-                        .append("#### Merge Step (")
-                        .append(summaries.size())
-                        .append(" summaries)\n\n")
-                        .append(formatMessagesAsDebugDetail(messages, responseText));
-            }
-        }
-
-        return responseText;
-    }
-
-    private String joinSummaries(final List<String> summaries) {
-        final StringBuilder combined = new StringBuilder();
-        for (int i = 0; i < summaries.size(); i++) {
-            combined
-                    .append("--- Summary ")
-                    .append(i + 1)
-                    .append(" ---\n")
-                    .append(summaries.get(i))
-                    .append("\n\n");
-        }
-        return combined.toString();
     }
 
     /**

@@ -210,6 +210,11 @@ public class MockAiService implements AiService {
     }
 
     @Override
+    public void deleteWorkingMessages(final int chatId) {
+        aiService.deleteWorkingMessages(chatId);
+    }
+
+    @Override
     public void verifyOwnership(final int chatId) {
 
     }

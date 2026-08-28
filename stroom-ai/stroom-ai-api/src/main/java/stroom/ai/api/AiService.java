@@ -82,6 +82,12 @@ public interface AiService {
      */
     Optional<AiChatMessage> getWorkingMessage(int chatId);
 
+    /**
+     * Removes every WORKING message for the chat, including any left behind by a server that stopped
+     * mid-question.
+     */
+    void deleteWorkingMessages(int chatId);
+
     void updateMessageText(int messageId, String message);
 
     void deleteMessage(int messageId);

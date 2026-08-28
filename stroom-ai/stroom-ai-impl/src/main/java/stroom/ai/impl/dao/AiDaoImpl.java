@@ -284,6 +284,15 @@ public class AiDaoImpl implements AiDao {
     }
 
     @Override
+    public void deleteWorkingMessages(final int chatId) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .deleteFrom(AI_CHAT_MESSAGE)
+                .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.eq((int) AiMessageType.WORKING.getPrimitiveValue()))
+                .execute());
+    }
+
+    @Override
     public void updateMessageText(final int messageId, final String message) {
         JooqUtil.context(aiDbConnProvider, context -> context
                 .update(AI_CHAT_MESSAGE)

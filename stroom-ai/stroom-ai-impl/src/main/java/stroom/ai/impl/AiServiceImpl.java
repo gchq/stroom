@@ -478,6 +478,12 @@ public class AiServiceImpl implements AiService {
         return aiDao.getWorkingMessage(chatId);
     }
 
+    // No ownership check — internal-only, called either side of processing a question.
+    @Override
+    public void deleteWorkingMessages(final int chatId) {
+        aiDao.deleteWorkingMessages(chatId);
+    }
+
     @Override
     public AiChatMessage storeMessage(final int chatId,
                                       final AiMessageType messageType,

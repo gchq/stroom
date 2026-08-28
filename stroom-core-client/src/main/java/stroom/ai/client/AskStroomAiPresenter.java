@@ -18,6 +18,7 @@ package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiProxy;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
@@ -480,8 +481,18 @@ public class AskStroomAiPresenter
             polling = false;
             return;
         }
-        askStroomAiClient.pollMessages(currentChat.getId(), lastSeenMessageId, response -> {
-            if (response.getNewMessages() != null && !response.getNewMessages().isEmpty()) {
+        final int chatId = currentChat.getId();
+        askStroomAiClient.pollMessages(chatId, lastSeenMessageId, response -> {
+            if (currentChat == null || currentChat.getId() != chatId) {
+                // The user has moved to another chat since this poll was sent. Rendering the reply
+                // now would put one chat's messages into another's.
+                polling = false;
+                return;
+            }
+
+            final boolean hasNewMessages = response.getNewMessages() != null
+                                           && !response.getNewMessages().isEmpty();
+            if (hasNewMessages) {
                 final long nowMs = System.currentTimeMillis();
                 final HtmlBuilder hb = new HtmlBuilder();
                 for (final AiChatMessage msg : response.getNewMessages()) {
@@ -502,7 +513,11 @@ public class AskStroomAiPresenter
             // Show what the server is currently doing, and take the line away when it is done.
             updateWorkingMessage(response.getWorkingMessage());
 
-            if (requestInFlight || !response.isComplete()) {
+            // Keep polling while this client is waiting on a request, while data is still coming
+            // down, or while messages are still arriving. A WORKING message on its own is not reason
+            // enough: one can be left behind by a server that stopped mid-question, and polling for
+            // that would never end.
+            if (requestInFlight || hasNewMessages || isDownloading(response.getAttachments())) {
                 // If the conversation is still in-flight, schedule another poll after 1s.
                 new com.google.gwt.user.client.Timer() {
                     @Override
@@ -748,6 +763,21 @@ public class AskStroomAiPresenter
     private void appendStatus(final HtmlBuilder hb, final SvgImage icon, final String text) {
         button(hb, icon, iconButtonClassName("ai-attachment-status-icon"));
         hb.div(status -> status.append(text), Attribute.className("ai-attachment-status-text"));
+    }
+
+    /**
+     * @return True if any attachment is still being fetched, so there is more to come.
+     */
+    private boolean isDownloading(final java.util.List<AiChatAttachment> attachments) {
+        if (attachments != null) {
+            for (final AiChatAttachment attachment : attachments) {
+                if (attachment.getStatus() == AiAttachmentStatus.PENDING
+                    || attachment.getStatus() == AiAttachmentStatus.DOWNLOADING) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

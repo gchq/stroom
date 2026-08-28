@@ -33,30 +33,25 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Covers what happens to results that have already been produced when the merge step hits a limit. The
+ * Covers what happens to results that have already been produced when the merge hits a limit. The
  * point of batch analysis is that an answer survives being assembled from parts, so no failure in the
  * assembly should lose a part.
  */
-class TestAskStroomAIServicePartialResults {
+class TestSummaryMerger {
 
-    private final AskStroomAIService service = new AskStroomAIService(
-            null, null, null, null, null, null, null, null, null, null, null);
     private final TableAnalysisConfig config = new TableAnalysisConfig();
 
     @Test
     void mergeFailure_keepsEverySummary() {
         final List<String> summaries = summaries(3);
+        final AnswerNotes notes = new AnswerNotes();
 
-        final String result = service.mergeAllSummaries(
-                chatModel(prompt -> {
-                    throw new RuntimeException("maximum context length exceeded");
-                }),
-                summaries,
-                config,
-                null);
+        final String result = merger(prompt -> {
+            throw new RuntimeException("maximum context length exceeded");
+        }).merge(summaries, notes);
 
         assertThat(result).contains(summaries);
-        assertThat(result).contains("could not be condensed into a single summary");
+        assertThat(notes.appendTo("")).contains("could not be condensed into a single summary");
     }
 
     @Test
@@ -64,16 +59,12 @@ class TestAskStroomAIServicePartialResults {
         // 12 summaries is a chunk of 10 and a chunk of 2. Fail only the larger one.
         final List<String> summaries = summaries(12);
 
-        final String result = service.mergeAllSummaries(
-                chatModel(prompt -> {
-                    if (prompt.contains("finding 10")) {
-                        throw new RuntimeException("maximum context length exceeded");
-                    }
-                    return "MERGED";
-                }),
-                summaries,
-                config,
-                null);
+        final String result = merger(prompt -> {
+            if (prompt.contains("finding 10")) {
+                throw new RuntimeException("maximum context length exceeded");
+            }
+            return "MERGED";
+        }).merge(summaries, new AnswerNotes());
 
         // The chunk that could not be merged is kept as it was, the other is represented by its merge.
         assertThat(result).contains(summaries.subList(0, 10));
@@ -86,15 +77,11 @@ class TestAskStroomAIServicePartialResults {
         final AtomicInteger calls = new AtomicInteger();
         final AtomicInteger mostSummariesInOneCall = new AtomicInteger();
 
-        final String result = service.mergeAllSummaries(
-                chatModel(prompt -> {
-                    calls.incrementAndGet();
-                    mostSummariesInOneCall.accumulateAndGet(count(prompt, "--- Summary "), Math::max);
-                    return "MERGED";
-                }),
-                summaries(25),
-                config,
-                null);
+        final String result = merger(prompt -> {
+            calls.incrementAndGet();
+            mostSummariesInOneCall.accumulateAndGet(count(prompt, "--- Summary "), Math::max);
+            return "MERGED";
+        }).merge(summaries(25), new AnswerNotes());
 
         assertThat(result).isEqualTo("MERGED");
         assertThat(mostSummariesInOneCall).hasValueLessThanOrEqualTo(10);
@@ -103,42 +90,24 @@ class TestAskStroomAIServicePartialResults {
 
     @Test
     void singleSummary_isReturnedAsIs() {
-        final String result = service.mergeAllSummaries(
-                chatModel(prompt -> {
-                    throw new AssertionError("The model should not be called to merge one summary");
-                }),
-                List.of("only one"),
-                config,
-                null);
+        final AnswerNotes notes = new AnswerNotes();
+
+        final String result = merger(prompt -> {
+            throw new AssertionError("The model should not be called to merge one summary");
+        }).merge(List.of("only one"), notes);
 
         assertThat(result).isEqualTo("only one");
-    }
-
-    @Test
-    void coverageIsOnlyNotedWhenIncomplete() {
-        assertThat(service.describeCoverage(4, 4, 0, 0, false)).isEmpty();
-        assertThat(service.describeCoverage(3, 4, 1, 0, false))
-                .contains("3 of 4 batches")
-                .contains("1 batch failed");
-        assertThat(service.describeCoverage(2, 4, 2, 0, false)).contains("2 batches failed");
-        assertThat(service.describeCoverage(1, 4, 0, 0, true)).contains("cancelled");
-    }
-
-    @Test
-    void unreadableAttachmentsAreNotedEvenWhenEveryBatchRan() {
-        // Batches are only built from the attachments that could be read, so the batch count alone
-        // would say the answer was complete.
-        assertThat(service.describeCoverage(4, 4, 0, 1, false))
-                .contains("1 attachment could not be read");
-        assertThat(service.describeCoverage(3, 4, 1, 2, false))
-                .contains("3 of 4 batches")
-                .contains("2 attachments could not be read");
+        assertThat(notes.appendTo("body")).isEqualTo("body");
     }
 
     private List<String> summaries(final int count) {
         return IntStream.rangeClosed(1, count)
                 .mapToObj(i -> "finding " + i)
                 .toList();
+    }
+
+    private SummaryMerger merger(final Function<String, String> answer) {
+        return new SummaryMerger(chatModel(answer), config, null, (messages, response) -> "");
     }
 
     /**
