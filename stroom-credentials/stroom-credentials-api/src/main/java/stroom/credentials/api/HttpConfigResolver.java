@@ -68,6 +68,7 @@ public class HttpConfigResolver {
                         SimpleDurationUtil.convertToStroomDuration(config.getConnectionRequestTimeout()))
                 .timeToLive(SimpleDurationUtil.convertToStroomDuration(config.getTimeToLive()))
                 .cookiesEnabled(config.isCookiesEnabled())
+                .followRedirects(config.isFollowRedirects())
                 .maxConnections(config.getMaxConnections())
                 .maxConnectionsPerRoute(config.getMaxConnectionsPerRoute())
                 .keepAlive(SimpleDurationUtil.convertToStroomDuration(config.getKeepAlive()))
