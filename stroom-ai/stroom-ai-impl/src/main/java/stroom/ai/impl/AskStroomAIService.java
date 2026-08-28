@@ -115,6 +115,12 @@ public class AskStroomAIService {
      */
     private static final long ATTACHMENT_POLL_INTERVAL_MS = 1_000;
 
+    /**
+     * How many summaries are merged in one call. Merging in chunks keeps the merge input bounded no
+     * matter how many batches the data was split into.
+     */
+    private static final int MAX_SUMMARIES_PER_MERGE = 10;
+
     private final AiService aiService;
     private final AiAttachmentFileStore attachmentFileStore;
     private final DashboardService dashboardService;
@@ -680,8 +686,13 @@ public class AskStroomAIService {
                                    + "using batch processing and may not capture cross-row "
                                    + "patterns or cross-table comparisons as effectively.*";
                         }
-                        // No attachments and still overflowing — nothing we can do.
-                        throw e;
+                        // No attachments and still overflowing. There is no partial answer to give
+                        // here - nothing has been produced yet - so at least say what was tried.
+                        throw new RuntimeException(
+                                "The question is too large for the model's context window, even with all "
+                                + "earlier conversation history removed. Try a shorter question, start a "
+                                + "new chat, or raise 'Max Context Window Tokens' on the model document. "
+                                + "The model said: " + e.getMessage(), e);
                     }
 
                     // Summarise the messages being dropped before trimming.
@@ -1038,6 +1049,7 @@ public class AskStroomAIService {
 
             // Collect results, handling per-batch failures gracefully.
             final List<String> summaries = new ArrayList<>();
+            int failedBatches = 0;
             for (final CompletableFuture<String> future : futures) {
                 try {
                     final String result = future.join();
@@ -1045,6 +1057,7 @@ public class AskStroomAIService {
                         summaries.add(result);
                     }
                 } catch (final Exception e) {
+                    failedBatches++;
                     LOGGER.debug(() -> "Batch processing failed", e);
                     // Continue collecting results from other batches.
                 }
@@ -1063,11 +1076,11 @@ public class AskStroomAIService {
                                + (summaries.size() > 1
                     ? " -> merging"
                     : " -> single result"));
-            if (summaries.size() == 1) {
-                return summaries.getFirst();
-            }
-            return mergeAllSummaries(
-                    chatModel, summaries, tableAnalysisConfig, debugLog);
+            final String merged = summaries.size() == 1
+                    ? summaries.getFirst()
+                    : mergeAllSummaries(chatModel, summaries, tableAnalysisConfig, debugLog);
+
+            return merged + describeCoverage(summaries.size(), totalBatches, failedBatches, cancelled.get());
         } finally {
             deregisterCancellation(chatId);
         }
@@ -1126,14 +1139,133 @@ public class AskStroomAIService {
     }
 
     /**
-     * Merges N summaries into a single unified summary using a single LLM call.
+     * Says how much of the data the answer actually covers, when it does not cover all of it. A partial
+     * answer is worth having, but only if the reader knows it is partial.
      */
-    private String mergeAllSummaries(final ChatModel chatModel,
-                                     final List<String> summaries,
-                                     final TableAnalysisConfig config,
-                                     final StringBuilder debugLog) {
+    String describeCoverage(final int contributed,
+                            final int totalBatches,
+                            final int failedBatches,
+                            final boolean cancelled) {
+        if (contributed >= totalBatches) {
+            return "";
+        }
+
+        final StringBuilder sb = new StringBuilder("\n\n---\n*Note: this answer covers ")
+                .append(contributed)
+                .append(" of ")
+                .append(totalBatches)
+                .append(" batches of the data");
+        if (cancelled) {
+            sb.append(", as the analysis was cancelled before the rest were processed");
+        } else if (failedBatches > 0) {
+            sb.append(", as ")
+                    .append(failedBatches)
+                    .append(failedBatches == 1
+                            ? " batch failed"
+                            : " batches failed");
+        }
+        return sb.append(".*").toString();
+    }
+
+    /**
+     * Merges N summaries into a single unified summary.
+     * <p>
+     * The summaries are merged a chunk at a time rather than all in one call, because the one call that
+     * has to hold every summary is the one most likely to exceed the context window - and that is the
+     * call whose failure would otherwise throw away every batch result behind it. A merge is only ever
+     * an improvement on its input, so where one fails its inputs are carried forward as they are. The
+     * caller always gets everything that was produced, condensed as far as the model managed.
+     * </p>
+     */
+    String mergeAllSummaries(final ChatModel chatModel,
+                             final List<String> summaries,
+                             final TableAnalysisConfig config,
+                             final StringBuilder debugLog) {
         LOGGER.debug(() -> "mergeAllSummaries: merging " + summaries.size() + " summaries");
 
+        List<String> current = summaries;
+        boolean degraded = false;
+
+        while (current.size() > 1) {
+            final List<String> merged = new ArrayList<>();
+            for (int i = 0; i < current.size(); i += MAX_SUMMARIES_PER_MERGE) {
+                final List<String> chunk = current.subList(
+                        i, Math.min(i + MAX_SUMMARIES_PER_MERGE, current.size()));
+                if (chunk.size() == 1) {
+                    merged.add(chunk.getFirst());
+                } else {
+                    try {
+                        merged.add(mergeChunk(chatModel, chunk, config, debugLog));
+                    } catch (final RuntimeException e) {
+                        // Keep the summaries rather than lose them. They are still an answer, just a
+                        // longer and more repetitive one than the merged version would have been.
+                        LOGGER.warn(() -> "Failed to merge " + chunk.size()
+                                          + " summaries, keeping them unmerged", e);
+                        degraded = true;
+                        merged.addAll(chunk);
+                    }
+                }
+            }
+
+            if (merged.size() >= current.size()) {
+                // No progress, so another round would not make any either.
+                current = merged;
+                break;
+            }
+            current = merged;
+        }
+
+        final String result = current.size() == 1
+                ? current.getFirst()
+                : joinSummaries(current);
+
+        return degraded
+                ? result + "\n\n---\n*Note: these results could not be condensed into a single summary, "
+                           + "so they are shown as they were produced.*"
+                : result;
+    }
+
+    /**
+     * Merges one chunk of summaries with a single LLM call.
+     */
+    private String mergeChunk(final ChatModel chatModel,
+                              final List<String> summaries,
+                              final TableAnalysisConfig config,
+                              final StringBuilder debugLog) {
+        final String mergePromptTemplate = config.getMultiSummaryMergePrompt() != null
+                ? config.getMultiSummaryMergePrompt()
+                : TableAnalysisConfig.DEFAULT_MULTI_SUMMARY_MERGE_PROMPT;
+        final String mergePrompt = mergePromptTemplate
+                .replace("{{summaries}}", joinSummaries(summaries));
+
+        LOGGER.trace(() -> "mergeChunk prompt:\n" + mergePrompt);
+
+        final List<ChatMessage> messages = List.of(
+                new SystemMessage("You merge partial answers into a unified, concise summary."),
+                new UserMessage(mergePrompt));
+
+        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
+                () -> chatModel.chat(messages),
+                r -> "mergeChunk: summaries=" + summaries.size()
+                     + " responseLength=" + r.aiMessage().text().length());
+        LOGGER.trace(() -> "mergeChunk response:\n" + response.aiMessage().text());
+
+        final String responseText = response.aiMessage().text();
+
+        if (debugLog != null) {
+            synchronized (debugLog) {
+                debugLog
+                        .append("#### Merge Step (")
+                        .append(summaries.size())
+                        .append(" summaries)\n\n")
+                        .append(formatMessagesAsDebugDetail(messages, responseText));
+            }
+        }
+
+        return responseText;
+    }
+
+    private String joinSummaries(final List<String> summaries) {
         final StringBuilder combined = new StringBuilder();
         for (int i = 0; i < summaries.size(); i++) {
             combined
@@ -1143,33 +1275,7 @@ public class AskStroomAIService {
                     .append(summaries.get(i))
                     .append("\n\n");
         }
-
-        final String mergePromptTemplate = config.getMultiSummaryMergePrompt() != null
-                ? config.getMultiSummaryMergePrompt()
-                : TableAnalysisConfig.DEFAULT_MULTI_SUMMARY_MERGE_PROMPT;
-        final String mergePrompt = mergePromptTemplate
-                .replace("{{summaries}}", combined.toString());
-
-        LOGGER.trace(() -> "mergeAllSummaries prompt:\n" + mergePrompt);
-
-        final List<ChatMessage> messages = List.of(
-                new SystemMessage("You merge partial answers into a unified, concise summary."),
-                new UserMessage(mergePrompt));
-
-        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
-                () -> chatModel.chat(messages),
-                r -> "mergeAllSummaries: responseLength=" + r.aiMessage().text().length());
-        LOGGER.trace(() -> "mergeAllSummaries response:\n" + response.aiMessage().text());
-
-        final String responseText = response.aiMessage().text();
-
-        if (debugLog != null) {
-            debugLog
-                    .append("#### Merge Step\n\n")
-                    .append(formatMessagesAsDebugDetail(messages, responseText));
-        }
-
-        return responseText;
+        return combined.toString();
     }
 
     /**
@@ -1672,12 +1778,11 @@ public class AskStroomAIService {
         return true;
     }
 
-    private Boolean setDefaultModel(final DocRef modelRef) {
+    private void setDefaultModel(final DocRef modelRef) {
         globalConfigProvider.get().setDocRef(getDefaultConfig(), AskStroomAIConfig.PROP_NAME_MODEL_REF, modelRef);
-        return true;
     }
 
-    private Boolean setDefaultTableAnalysisConfig(final TableAnalysisConfig config) {
+    private void setDefaultTableAnalysisConfig(final TableAnalysisConfig config) {
         final TableAnalysisConfig defaultTableAnalysisConfig = tableAnalysisConfigProvider.get();
         globalConfigProvider.get().setInt(defaultTableAnalysisConfig,
                 TableAnalysisConfig.PROP_NAME_MAXIMUM_BATCH_SIZE,
@@ -1697,7 +1802,6 @@ public class AskStroomAIService {
         globalConfigProvider.get().setString(defaultTableAnalysisConfig,
                 TableAnalysisConfig.PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT,
                 config.getMultiSummaryMergePrompt());
-        return true;
     }
 
     // ---------------------------------------------------------------------
