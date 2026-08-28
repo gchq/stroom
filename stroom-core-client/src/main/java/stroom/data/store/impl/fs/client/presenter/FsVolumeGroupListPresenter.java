@@ -20,33 +20,35 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
+import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.util.client.DataGridUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
             GWT.create(FsVolumeGroupResource.class);
 
-    private final MyDataGrid<FsVolumeGroup> dataGrid;
-    private final MultiSelectionModelImpl<FsVolumeGroup> selectionModel;
-    private final RestDataProvider<FsVolumeGroup, ResultPage<FsVolumeGroup>> dataProvider;
+    private final MyDataGrid<FsVolumeGroupRow> dataGrid;
+    private final MultiSelectionModelImpl<FsVolumeGroupRow> selectionModel;
+    private final RestDataProvider<FsVolumeGroupRow, ResultPage<FsVolumeGroupRow>> dataProvider;
 
     @Inject
     public FsVolumeGroupListPresenter(final EventBus eventBus,
@@ -63,15 +65,16 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
         initTableColumns();
 
         final ExpressionCriteria criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<FsVolumeGroup, ResultPage<FsVolumeGroup>>(eventBus) {
+        dataProvider = new RestDataProvider<FsVolumeGroupRow, ResultPage<FsVolumeGroupRow>>(eventBus) {
             @Override
             protected void exec(final Range range,
-                                final Consumer<ResultPage<FsVolumeGroup>> dataConsumer,
+                                final Consumer<ResultPage<FsVolumeGroupRow>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
                         .create(FS_VOLUME_GROUP_RESOURCE)
-                        .method(res -> res.find(criteria))
+                        .method(resource ->
+                                resource.findExtended(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(errorHandler)
                         .taskMonitorFactory(view)
@@ -86,16 +89,47 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
      */
     private void initTableColumns() {
         // Name.
-        final Column<FsVolumeGroup, String> volumeColumn = new Column<FsVolumeGroup, String>(new TextCell()) {
-            @Override
-            public String getValue(final FsVolumeGroup volume) {
-                return volume.getName();
-            }
-        };
-        dataGrid.addResizableColumn(volumeColumn, "Name", 400);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(
+                                (FsVolumeGroupRow row1) -> row1.getGroup().getName())
+                        .build(),
+                DataGridUtil.headingBuilder("Group Name")
+                        .withToolTip("The name of the Volume Group.")
+                        .build(),
+                400);
+
+        // Types
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(this::getVolumeTypesStr)
+                        .build(),
+                DataGridUtil.headingBuilder("Volume Type(s)")
+                        .withToolTip("The types of Volumes inside this Volume Group.")
+                        .build(),
+                250);
+
+        // Count
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(
+                                (FsVolumeGroupRow row) -> Integer.toString(row.getVolumeCount()))
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Volume Count")
+                        .withToolTip("The number of Volumes inside this Volume Group.")
+                        .build(),
+                150);
     }
 
-    public MultiSelectionModel<FsVolumeGroup> getSelectionModel() {
+    private String getVolumeTypesStr(final FsVolumeGroupRow row) {
+        return NullSafe.getOrElse(
+                row,
+                FsVolumeGroupRow::getVolumeTypes,
+                types -> types.stream()
+                        .map(FsVolumeType::getDisplayValue)
+                        .collect(Collectors.joining(", ")),
+                "");
+    }
+
+    public MultiSelectionModel<FsVolumeGroupRow> getSelectionModel() {
         return selectionModel;
     }
 

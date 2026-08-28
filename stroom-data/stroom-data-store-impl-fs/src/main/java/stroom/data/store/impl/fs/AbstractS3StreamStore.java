@@ -23,6 +23,7 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.Severity;
 
 import java.util.Objects;
 
@@ -38,8 +39,19 @@ public abstract class AbstractS3StreamStore implements StreamStore {
     public ValidationResult validateVolume(final FsVolume volume) {
         Objects.requireNonNull(volume);
         ValidationResult validationResult = ValidationResult.ok();
-        validationResult = validationResult.errorIfNull(
-                "S3 Client Configuration must be provided",
+
+        validationResult = validationResult.validate(
+                Severity.ERROR,
+                "Path is not supported for an S3 based Volume",
+                () -> NullSafe.isBlankString(volume.getPath()));
+
+        validationResult = validationResult.validate(
+                Severity.ERROR,
+                "Limit is not supported for an S3 based Volume",
+                () -> volume.getByteLimit() == null);
+
+        validationResult = validationResult.errorIfBlank(
+                "S3 Client Configuration must be provided as a JSON object",
                 volume.getS3ClientConfigData());
 
         return validationResult;

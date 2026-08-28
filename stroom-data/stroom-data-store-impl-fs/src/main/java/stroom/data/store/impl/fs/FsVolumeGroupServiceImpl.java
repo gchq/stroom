@@ -18,6 +18,8 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.entityevent.EntityAction;
@@ -28,6 +30,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -75,6 +78,12 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     public List<FsVolumeGroup> getAll() {
         ensureDefaultVolumes();
         return securityContext.secureResult(volumeGroupDao::getAll);
+    }
+
+    @Override
+    public ResultPage<FsVolumeGroupRow> findExtended(final ExpressionCriteria criteria) {
+        ensureDefaultVolumes();
+        return securityContext.secureResult(() -> volumeGroupDao.findExtended(criteria));
     }
 
     @Override

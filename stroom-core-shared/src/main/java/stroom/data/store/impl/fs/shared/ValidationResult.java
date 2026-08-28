@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -68,6 +69,9 @@ public class ValidationResult {
         return validate(Severity.ERROR, message, test);
     }
 
+    /// @param severity The severity of this validation test.
+    /// @param message  The message to display if the validation fails.
+    /// @param test     Should return true if the validation passes, false if it fails.
     public ValidationResult validate(final Severity severity, final String message, final BooleanSupplier test) {
         if (isOk() && test != null) {
             final boolean didPass = test.getAsBoolean();
@@ -86,6 +90,18 @@ public class ValidationResult {
     public ValidationResult errorIfNull(final String message, final Object object) {
         if (isOk()) {
             if (object == null) {
+                return new ValidationResult(Severity.ERROR, message);
+            } else {
+                return this;
+            }
+        } else {
+            return this;
+        }
+    }
+
+    public ValidationResult errorIfBlank(final String message, final String value) {
+        if (isOk()) {
+            if (NullSafe.isBlankString(value)) {
                 return new ValidationResult(Severity.ERROR, message);
             } else {
                 return this;

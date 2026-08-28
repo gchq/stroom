@@ -21,10 +21,12 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.grid.client.WrapperView;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
+import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 
 import com.google.gwt.core.client.GWT;
@@ -93,8 +95,9 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void edit() {
-        final FsVolumeGroup volume = volumeStatusListPresenter.getSelectionModel().getSelected();
-        if (volume != null) {
+        final FsVolumeGroupRow selected = volumeStatusListPresenter.getSelectionModel().getSelected();
+        if (selected != null) {
+            final FsVolumeGroup volume = selected.getGroup();
             restFactory
                     .create(FS_VOLUME_GROUP_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
@@ -114,8 +117,8 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void delete() {
-        final List<FsVolumeGroup> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
-        if (list != null && list.size() > 0) {
+        final List<FsVolumeGroupRow> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
+        if (NullSafe.hasItems(list)) {
             String message = "Are you sure you want to delete the selected volume group?";
             if (list.size() > 1) {
                 message = "Are you sure you want to delete the selected volume groups?";
@@ -124,7 +127,8 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
                     result -> {
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
-                            for (final FsVolumeGroup volume : list) {
+                            for (final FsVolumeGroupRow row : list) {
+                                final FsVolumeGroup volume = row.getGroup();
                                 restFactory
                                         .create(FS_VOLUME_GROUP_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
