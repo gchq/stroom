@@ -297,7 +297,7 @@ public class UserPreferences {
             dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
             timeZone = UserTimeZone.builder().use(Use.UTC).build();
             enableTransparency = true;
-            askStroomAiConfig = new AskStroomAiConfig(); // TODO: Use configured defaults
+            askStroomAiConfig = new AskStroomAiConfig();
         }
 
         private Builder(final UserPreferences userPreferences) {
