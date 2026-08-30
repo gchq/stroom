@@ -5,7 +5,7 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
-import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
@@ -14,7 +14,10 @@ import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.ui.config.shared.UserPreferences;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 
@@ -31,18 +34,28 @@ public class AskStroomAiClient {
     private static final AskStroomAiResource RESOURCE = GWT.create(AskStroomAiResource.class);
 
     private final RestFactory restFactory;
-    private AskStroomAIConfig config;
+    private final UserPreferencesManager userPreferencesManager;
 
     @Inject
-    public AskStroomAiClient(final RestFactory restFactory) {
+    public AskStroomAiClient(final RestFactory restFactory,
+                             final UserPreferencesManager userPreferencesManager) {
         this.restFactory = restFactory;
+        this.userPreferencesManager = userPreferencesManager;
     }
 
-    public void setConfig(final AskStroomAIConfig config) {
-        this.config = config;
+    public void setConfig(final AskStroomAiConfig config) {
+        final UserPreferences currentPrefs = userPreferencesManager.getCurrentUserPreferences();
+        final UserPreferences newPrefs = currentPrefs.copy()
+                .askStroomAiConfig(config)
+                .build();
+        userPreferencesManager.setCurrentPreferences(newPrefs);
+        userPreferencesManager.update(newPrefs, result -> {
+        }, null);
     }
 
-    void getConfig(final Consumer<AskStroomAIConfig> consumer, final TaskMonitorFactory taskMonitorFactory) {
+    void getConfig(final Consumer<AskStroomAiConfig> consumer, final TaskMonitorFactory taskMonitorFactory) {
+        final AskStroomAiConfig config = NullSafe.get(userPreferencesManager.getCurrentUserPreferences(),
+                UserPreferences::getAskStroomAiConfig);
         if (config != null) {
             consumer.accept(config);
         } else {
@@ -50,9 +63,6 @@ public class AskStroomAiClient {
                     .create(RESOURCE)
                     .method(AskStroomAiResource::getDefaultConfig)
                     .onSuccess(conf -> {
-                        if (config == null) {
-                            config = conf;
-                        }
                         consumer.accept(config);
                     })
                     .taskMonitorFactory(taskMonitorFactory)
@@ -60,7 +70,17 @@ public class AskStroomAiClient {
         }
     }
 
-    void setDefaultAskStroomAIConfig(final AskStroomAIConfig config,
+    void getDefaultConfig(final Consumer<AskStroomAiConfig> consumer,
+                          final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(AskStroomAiResource::getDefaultConfig)
+                .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    void setDefaultAskStroomAIConfig(final AskStroomAiConfig config,
                                      final Consumer<Boolean> consumer,
                                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory

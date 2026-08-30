@@ -27,7 +27,7 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiMessageType;
-import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResponse;
@@ -122,7 +122,7 @@ public class AskStroomAIService {
     private final OpenAIModelStore openAIModelStore;
     private final ResourceStore resourceStore;
     private final ExecutorProvider executorProvider;
-    private final Provider<AskStroomAIConfig> defaultConfigProvider;
+    private final Provider<AskStroomAiConfig> defaultConfigProvider;
     private final Provider<GlobalConfig> globalConfigProvider;
     private final Provider<TableAnalysisConfig> tableAnalysisConfigProvider;
     private final ConcurrentHashMap<Integer, AtomicBoolean> cancellationFlags = new ConcurrentHashMap<>();
@@ -136,7 +136,7 @@ public class AskStroomAIService {
                               final OpenAIModelStore openAIModelStore,
                               final ResourceStore resourceStore,
                               final ExecutorProvider executorProvider,
-                              final Provider<AskStroomAIConfig> defaultConfigProvider,
+                              final Provider<AskStroomAiConfig> defaultConfigProvider,
                               final Provider<GlobalConfig> globalConfigProvider,
                               final Provider<TableAnalysisConfig> tableAnalysisConfigProvider,
                               final TaskContextFactory taskContextFactory) {
@@ -227,7 +227,7 @@ public class AskStroomAIService {
      */
     private void createAttachment(final int chatId,
                                   final AskStroomAiContext context,
-                                  final AskStroomAIConfig config) {
+                                  final AskStroomAiConfig config) {
         final AiAttachmentType attachmentType = switch (context) {
             case final DashboardTableContext dashboardTableContext -> AiAttachmentType.DASHBOARD;
             case final QueryTableContext queryTableContext -> AiAttachmentType.QUERY;
@@ -328,7 +328,7 @@ public class AskStroomAIService {
     private void submitAsyncDownload(final int attachmentId,
                                      final int chatId,
                                      final AskStroomAiContext context,
-                                     final AskStroomAIConfig config) {
+                                     final AskStroomAiConfig config) {
         final Runnable runnable = taskContextFactory.context(
                 "Download search results for AI analysis",
                 taskContext -> {
@@ -512,14 +512,14 @@ public class AskStroomAIService {
 
         LOGGER.debug(() -> "processQuestion: chatId=" + chatId);
 
-        final AskStroomAIConfig config = request.getConfig();
+        final AskStroomAiConfig config = request.getConfig();
         final OpenAIModelDoc modelDoc = getModelDoc(config);
         final ChatModel chatModel = getChatModel(modelDoc);
         final int maxContextTokens = modelDoc.getMaxContextWindowTokens();
         final boolean debugEnabled = NullSafe.getOrElse(
                 defaultConfigProvider.get(),
-                AskStroomAIConfig::isEnableDebugDetail,
-                AskStroomAIConfig.DEFAULT_ENABLE_DEBUG_DETAIL);
+                AskStroomAiConfig::isEnableDebugDetail,
+                AskStroomAiConfig.DEFAULT_ENABLE_DEBUG_DETAIL);
 
         // Create a single WORKING message that will be updated in place.
         final AiChatMessage workingMsg = aiService.storeMessage(
@@ -554,8 +554,8 @@ public class AskStroomAIService {
 
             final int safetyCap = NullSafe.getOrElse(
                     defaultConfigProvider.get(),
-                    AskStroomAIConfig::getMaxHistorySafetyCapMessages,
-                    AskStroomAIConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES);
+                    AskStroomAiConfig::getMaxHistorySafetyCapMessages,
+                    AskStroomAiConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES);
             int maxHistory = Math.min(safetyCap, relevantHistory.size());
             String contextSummary = null;
             boolean wasTrimmed = false;
@@ -746,8 +746,8 @@ public class AskStroomAIService {
         // System message.
         messages.add(new SystemMessage(NullSafe.getOrElse(
                 defaultConfigProvider.get(),
-                AskStroomAIConfig::getChatSystemPrompt,
-                AskStroomAIConfig.DEFAULT_CHAT_SYSTEM_PROMPT)));
+                AskStroomAiConfig::getChatSystemPrompt,
+                AskStroomAiConfig.DEFAULT_CHAT_SYSTEM_PROMPT)));
 
         // If we have a summary of earlier (trimmed) conversation, inject it.
         if (contextSummary != null && !contextSummary.isBlank()) {
@@ -845,7 +845,7 @@ public class AskStroomAIService {
     private String summariseDroppedMessages(final ChatModel chatModel,
                                             final String existingSummary,
                                             final List<AiChatMessage> droppedMessages,
-                                            final AskStroomAIConfig config) {
+                                            final AskStroomAiConfig config) {
         final StringBuilder input = new StringBuilder();
         if (existingSummary != null && !existingSummary.isBlank()) {
             input
@@ -877,8 +877,8 @@ public class AskStroomAIService {
 
         final String systemPrompt = NullSafe.getOrElse(
                 config,
-                AskStroomAIConfig::getHistorySummaryPrompt,
-                AskStroomAIConfig.DEFAULT_HISTORY_SUMMARY_PROMPT);
+                AskStroomAiConfig::getHistorySummaryPrompt,
+                AskStroomAiConfig.DEFAULT_HISTORY_SUMMARY_PROMPT);
 
         final List<ChatMessage> messages = List.of(
                 new SystemMessage(systemPrompt),
@@ -1367,8 +1367,8 @@ public class AskStroomAIService {
     private void waitForAttachments(final int chatId, final int workingMessageId) {
         final long timeoutMs = NullSafe.getOrElse(
                 defaultConfigProvider.get(),
-                AskStroomAIConfig::getAttachmentDownloadTimeoutMs,
-                AskStroomAIConfig.DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS);
+                AskStroomAiConfig::getAttachmentDownloadTimeoutMs,
+                AskStroomAiConfig.DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS);
         final long deadline = System.currentTimeMillis() + timeoutMs;
 
         LOGGER.debug(() -> "waitForAttachments: chatId=" + chatId + " timeoutMs=" + timeoutMs);
@@ -1432,8 +1432,8 @@ public class AskStroomAIService {
         // Take last N messages for context.
         final int maxHistory = NullSafe.getOrElse(
                 defaultConfigProvider.get(),
-                AskStroomAIConfig::getMaxHistorySafetyCapMessages,
-                AskStroomAIConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES);
+                AskStroomAiConfig::getMaxHistorySafetyCapMessages,
+                AskStroomAiConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES);
         final int startIdx = Math.max(0, relevantMessages.size() - maxHistory);
 
         final StringBuilder sb = new StringBuilder();
@@ -1454,7 +1454,7 @@ public class AskStroomAIService {
         return sb.toString();
     }
 
-    private OpenAIModelDoc getModelDoc(final AskStroomAIConfig config) {
+    private OpenAIModelDoc getModelDoc(final AskStroomAiConfig config) {
         if (config == null || config.getModelRef() == null) {
             throw new RuntimeException("No model specified");
         }
@@ -1482,10 +1482,10 @@ public class AskStroomAIService {
         return aiService.getChatModel(openAIModelDoc);
     }
 
-    private TableAnalysisConfig getTableAnalysisConfig(final AskStroomAIConfig config) {
+    private TableAnalysisConfig getTableAnalysisConfig(final AskStroomAiConfig config) {
         return NullSafe.getOrElse(
                 config,
-                AskStroomAIConfig::getTableAnalysis,
+                AskStroomAiConfig::getTableAnalysis,
                 new TableAnalysisConfig());
     }
 
@@ -1644,36 +1644,38 @@ public class AskStroomAIService {
     // Config methods
     // ---------------------------------------------------------------------
 
-    public AskStroomAIConfig getDefaultConfig() {
+    public AskStroomAiConfig getDefaultConfig() {
         return defaultConfigProvider.get();
     }
 
-    public Boolean setDefaultAskStroomAIConfig(final AskStroomAIConfig config) {
-        setDefaultModel(config.getModelRef());
+    public Boolean setDefaultAskStroomAIConfig(final AskStroomAiConfig config) {
         setDefaultTableAnalysisConfig(config.getTableAnalysis());
 
-        // Persist chat/attachment config fields.
-        final AskStroomAIConfig currentConfig = getDefaultConfig();
+        final AskStroomAiConfig currentConfig = getDefaultConfig();
+        globalConfigProvider.get().setDocRef(currentConfig,
+                AskStroomAiConfig.PROP_NAME_MODEL_REF,
+                config.getModelRef());
         globalConfigProvider.get().setString(currentConfig,
-                AskStroomAIConfig.PROP_NAME_CHAT_SYSTEM_PROMPT,
+                AskStroomAiConfig.PROP_NAME_DOCK_TYPE,
+                config.getDockType().toString());
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAiConfig.PROP_NAME_DOCK_LOCATION,
+                config.getDockLocation().toString());
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAiConfig.PROP_NAME_CHAT_SYSTEM_PROMPT,
                 config.getChatSystemPrompt());
         globalConfigProvider.get().setString(currentConfig,
-                AskStroomAIConfig.PROP_NAME_HISTORY_SUMMARY_PROMPT,
+                AskStroomAiConfig.PROP_NAME_HISTORY_SUMMARY_PROMPT,
                 config.getHistorySummaryPrompt());
         globalConfigProvider.get().setInt(currentConfig,
-                AskStroomAIConfig.PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES,
+                AskStroomAiConfig.PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES,
                 config.getMaxHistorySafetyCapMessages());
         globalConfigProvider.get().setString(currentConfig,
-                AskStroomAIConfig.PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS,
+                AskStroomAiConfig.PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS,
                 String.valueOf(config.getAttachmentDownloadTimeoutMs()));
         globalConfigProvider.get().setString(currentConfig,
-                AskStroomAIConfig.PROP_NAME_ENABLE_DEBUG_DETAIL,
+                AskStroomAiConfig.PROP_NAME_ENABLE_DEBUG_DETAIL,
                 String.valueOf(config.isEnableDebugDetail()));
-        return true;
-    }
-
-    private Boolean setDefaultModel(final DocRef modelRef) {
-        globalConfigProvider.get().setDocRef(getDefaultConfig(), AskStroomAIConfig.PROP_NAME_MODEL_REF, modelRef);
         return true;
     }
 

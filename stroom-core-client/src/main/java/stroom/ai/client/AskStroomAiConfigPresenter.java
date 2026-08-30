@@ -18,7 +18,7 @@ package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
-import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.alert.client.event.AlertEvent;
 import stroom.security.client.api.ClientSecurityContext;
@@ -98,8 +98,8 @@ public class AskStroomAiConfigPresenter
 
     // ---------------------------------------------------------------------
 
-    public void show(final AskStroomAIConfig currentConfig,
-                     final Consumer<AskStroomAIConfig> configConsumer,
+    public void show(final AskStroomAiConfig currentConfig,
+                     final Consumer<AskStroomAiConfig> configConsumer,
                      final DockBehaviour snapshotDockBehaviour,
                      final Consumer<DockBehaviour> dockBehaviourConsumer) {
 
@@ -107,8 +107,10 @@ public class AskStroomAiConfigPresenter
         generalPresenter.setDockBehaviourChangeHandler(dockBehaviourConsumer);
 
         final boolean isAdmin = clientSecurityContext.hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION);
-        getView().allowSetDefault(isAdmin);
-        getView().setOnSetDefault(isAdmin ? this::onSetDefault : null);
+        getView().setRestoreFromDefaults(this::onRestoreFromDefaults);
+        getView().allowSetDefaults(isAdmin);
+        getView().setOnSetDefaults(isAdmin ? this::onSetDefaults
+                : null);
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -120,7 +122,7 @@ public class AskStroomAiConfigPresenter
                 })
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final AskStroomAIConfig config = write();
+                        final AskStroomAiConfig config = write();
                         dockBehaviourConsumer.accept(generalPresenter.getDockBehaviour());
                         configConsumer.accept(config);
                     } else {
@@ -135,14 +137,20 @@ public class AskStroomAiConfigPresenter
 
     // ---------------------------------------------------------------------
 
-    private void onSetDefault(final TaskMonitorFactory taskMonitorFactory) {
-        final AskStroomAIConfig config = write();
+    private void onRestoreFromDefaults(final TaskMonitorFactory taskMonitorFactory) {
+        askStroomAiClient.getDefaultConfig(config -> {
+            read(config, new DockBehaviour(config.getDockType(), config.getDockLocation()));
+        }, taskMonitorFactory);
+    }
+
+    private void onSetDefaults(final TaskMonitorFactory taskMonitorFactory) {
+        final AskStroomAiConfig config = write();
         askStroomAiClient.setDefaultAskStroomAIConfig(config, success ->
                 AlertEvent.fireInfo(AskStroomAiConfigPresenter.this, "Default config updated", null),
                 taskMonitorFactory);
     }
 
-    private void read(final AskStroomAIConfig config,
+    private void read(final AskStroomAiConfig config,
                       final DockBehaviour dockBehaviour) {
         generalPresenter.read(config, dockBehaviour);
         final TableAnalysisConfig tableConfig = config != null
@@ -153,8 +161,8 @@ public class AskStroomAiConfigPresenter
                 config);
     }
 
-    private AskStroomAIConfig write() {
-        final AskStroomAIConfig.Builder builder = AskStroomAIConfig.builder();
+    private AskStroomAiConfig write() {
+        final AskStroomAiConfig.Builder builder = AskStroomAiConfig.builder();
         generalPresenter.write(builder);
         builder.tableAnalysisConfig(tableAnalysisPresenter.write());
         builder.attachmentDownloadTimeoutMs(tableAnalysisPresenter.getAttachmentDownloadTimeoutMs());
@@ -170,8 +178,10 @@ public class AskStroomAiConfigPresenter
 
         LayerContainer getLayerContainer();
 
-        void allowSetDefault(boolean allow);
+        void setRestoreFromDefaults(Consumer<TaskMonitorFactory> handler);
 
-        void setOnSetDefault(Consumer<TaskMonitorFactory> handler);
+        void allowSetDefaults(boolean allow);
+
+        void setOnSetDefaults(Consumer<TaskMonitorFactory> handler);
     }
 }

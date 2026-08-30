@@ -9,8 +9,11 @@
         </g:FlowPanel>
         <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max"/>
         <g:FlowPanel styleName="dock-min">
-            <b:Button ui:field="setDefault"
-                      text="Set As Default For All Users"
+            <b:Button ui:field="restoreFromDefaults"
+                      text="Restore From Defaults"
+                      addStyleNames="allow-focus"/>
+            <b:Button ui:field="setDefaults"
+                      text="Set As Default"
                       addStyleNames="allow-focus"/>
         </g:FlowPanel>
     </g:FlowPanel>

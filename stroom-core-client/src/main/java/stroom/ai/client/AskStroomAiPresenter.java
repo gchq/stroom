@@ -22,7 +22,9 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
-import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiConfig;
+import stroom.ai.shared.AskStroomAiConfig.DockLocation;
+import stroom.ai.shared.AskStroomAiConfig.DockType;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
@@ -34,7 +36,6 @@ import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestError;
-import stroom.docref.HasDisplayValue;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.main.client.event.DockEvent;
@@ -304,7 +305,7 @@ public class AskStroomAiPresenter
         }, this);
     }
 
-    private void updateConfig(final AskStroomAIConfig config) {
+    private void updateConfig(final AskStroomAiConfig config) {
         askStroomAiClient.setConfig(config);
         readModel();
     }
@@ -317,8 +318,7 @@ public class AskStroomAiPresenter
 
     private void writeModel() {
         askStroomAiClient.getConfig(config -> {
-            final AskStroomAIConfig newConfig = config
-                    .copy()
+            final AskStroomAiConfig newConfig = config.copy()
                     .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
                     .build();
             askStroomAiClient.setConfig(newConfig);
@@ -955,38 +955,36 @@ public class AskStroomAiPresenter
     // ---- Dock preference helpers ----
 
     private DockBehaviour loadDockBehaviourFromPrefs() {
-        final UserPreferences prefs = userPreferencesManager.getCurrentUserPreferences();
-        if (prefs != null) {
-            final DockType type = parseDockType(prefs.getAiDockType());
-            final DockLocation location = parseDockLocation(prefs.getAiDockLocation());
+        final UserPreferences currentPrefs = userPreferencesManager.getCurrentUserPreferences();
+        final AskStroomAiConfig currentConfig = NullSafe.get(currentPrefs, UserPreferences::getAskStroomAiConfig);
+        if (currentConfig != null) {
+            final DockType type = currentConfig.getDockType();
+            final DockLocation location = currentConfig.getDockLocation();
             return new DockBehaviour(type, location);
+        } else {
+            return new DockBehaviour(DockType.DIALOG, DockLocation.RIGHT);
         }
-        return new DockBehaviour(DockType.DIALOG, DockLocation.RIGHT);
     }
 
     private void saveDockBehaviourToPrefs(final DockBehaviour behaviour) {
         final UserPreferences currentPrefs = userPreferencesManager.getCurrentUserPreferences();
-        if (currentPrefs != null) {
-            final UserPreferences newPrefs = currentPrefs.copy()
-                    .aiDockType(behaviour.getDockType().name())
-                    .aiDockLocation(behaviour.getDockLocation().name())
-                    .build();
-            userPreferencesManager.setCurrentPreferences(newPrefs);
-            userPreferencesManager.update(newPrefs, result -> {
-            }, this);
-        }
+        final AskStroomAiConfig currentConfig = NullSafe.getOrElse(currentPrefs,
+                UserPreferences::getAskStroomAiConfig, new AskStroomAiConfig());
+        final AskStroomAiConfig newConfig = currentConfig.copy()
+                .dockType(behaviour.getDockType())
+                .dockLocation(behaviour.getDockLocation())
+                .build();
+        askStroomAiClient.setConfig(newConfig);
     }
 
     private void saveDockSizeToPrefs(final int size) {
         final UserPreferences currentPrefs = userPreferencesManager.getCurrentUserPreferences();
-        if (currentPrefs != null) {
-            final UserPreferences newPrefs = currentPrefs.copy()
-                    .aiDockSize(size)
-                    .build();
-            userPreferencesManager.setCurrentPreferences(newPrefs);
-            userPreferencesManager.update(newPrefs, result -> {
-            }, this);
-        }
+        final AskStroomAiConfig currentConfig = NullSafe.getOrElse(currentPrefs,
+                UserPreferences::getAskStroomAiConfig, new AskStroomAiConfig());
+        final AskStroomAiConfig newConfig = currentConfig.copy()
+                .dockSize(size)
+                .build();
+        askStroomAiClient.setConfig(newConfig);
     }
 
     private Size getDockSize() {
@@ -998,8 +996,9 @@ public class AskStroomAiPresenter
         } else {
             defaultSize = DEFAULT_DOCK_HEIGHT;
         }
-        final int size = (prefs != null && prefs.getAiDockSize() != null)
-                ? prefs.getAiDockSize()
+        final AskStroomAiConfig askStroomAiConfig = NullSafe.get(prefs, UserPreferences::getAskStroomAiConfig);
+        final int size = (prefs != null && askStroomAiConfig != null && askStroomAiConfig.getDockSize() != null)
+                ? askStroomAiConfig.getDockSize()
                 : defaultSize;
         return new Size.Builder()
                 .width(size)
@@ -1020,28 +1019,6 @@ public class AskStroomAiPresenter
                 })
                 .onHide(e -> showing = false)
                 .fire();
-    }
-
-    private static DockType parseDockType(final String value) {
-        if (value != null) {
-            try {
-                return DockType.valueOf(value);
-            } catch (final IllegalArgumentException e) {
-                // Ignore invalid values.
-            }
-        }
-        return DockType.DIALOG;
-    }
-
-    private static DockLocation parseDockLocation(final String value) {
-        if (value != null) {
-            try {
-                return DockLocation.valueOf(value);
-            } catch (final IllegalArgumentException e) {
-                // Ignore invalid values.
-            }
-        }
-        return DockLocation.RIGHT;
     }
 
     public static class DockBehaviour {
@@ -1076,42 +1053,6 @@ public class AskStroomAiPresenter
         @Override
         public int hashCode() {
             return Objects.hash(dockType, dockLocation);
-        }
-    }
-
-    public enum DockType implements HasDisplayValue {
-        DIALOG("Dialog"),
-        TAB("Tab"),
-        FLOAT("Float"),
-        DOCK("Dock");
-
-        private final String displayValue;
-
-        DockType(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-    }
-
-    public enum DockLocation implements HasDisplayValue {
-        TOP("Top"),
-        LEFT("Left"),
-        BOTTOM("Bottom"),
-        RIGHT("Right");
-
-        private final String displayValue;
-
-        DockLocation(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
         }
     }
 }
