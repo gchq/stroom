@@ -17,6 +17,7 @@
 package stroom.ai.shared;
 
 import stroom.docref.DocRef;
+import stroom.docref.HasDisplayValue;
 import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -32,17 +33,23 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({
-        AskStroomAIConfig.PROP_NAME_MODEL_REF,
-        AskStroomAIConfig.PROP_NAME_TABLE_SUMMARY,
-        AskStroomAIConfig.PROP_NAME_CHAT_SYSTEM_PROMPT,
-        AskStroomAIConfig.PROP_NAME_HISTORY_SUMMARY_PROMPT,
-        AskStroomAIConfig.PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES,
-        AskStroomAIConfig.PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS,
-        AskStroomAIConfig.PROP_NAME_ENABLE_DEBUG_DETAIL
+        AskStroomAiConfig.PROP_NAME_MODEL_REF,
+        AskStroomAiConfig.PROP_NAME_DOCK_TYPE,
+        AskStroomAiConfig.PROP_NAME_DOCK_LOCATION,
+        AskStroomAiConfig.PROP_NAME_DOCK_SIZE,
+        AskStroomAiConfig.PROP_NAME_TABLE_SUMMARY,
+        AskStroomAiConfig.PROP_NAME_CHAT_SYSTEM_PROMPT,
+        AskStroomAiConfig.PROP_NAME_HISTORY_SUMMARY_PROMPT,
+        AskStroomAiConfig.PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES,
+        AskStroomAiConfig.PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS,
+        AskStroomAiConfig.PROP_NAME_ENABLE_DEBUG_DETAIL
 })
-public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig {
+public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_MODEL_REF = "modelRef";
+    public static final String PROP_NAME_DOCK_TYPE = "dockType";
+    public static final String PROP_NAME_DOCK_LOCATION = "dockLocation";
+    public static final String PROP_NAME_DOCK_SIZE = "dockSize";
     public static final String PROP_NAME_TABLE_SUMMARY = "tableAnalysis";
     public static final String PROP_NAME_CHAT_SYSTEM_PROMPT = "chatSystemPrompt";
     public static final String PROP_NAME_HISTORY_SUMMARY_PROMPT = "historySummaryPrompt";
@@ -50,6 +57,9 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     public static final String PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS = "attachmentDownloadTimeoutMs";
     public static final String PROP_NAME_ENABLE_DEBUG_DETAIL = "enableDebugDetail";
 
+    public static final DockType DEFAULT_DOCK_TYPE = DockType.DOCK;
+    public static final DockLocation DEFAULT_DOCK_LOCATION = DockLocation.RIGHT;
+    public static final Integer DEFAULT_DOCK_SIZE = 300;
     public static final String DEFAULT_CHAT_SYSTEM_PROMPT = """
             You are a helpful data analysis assistant within the Stroom data platform. \
             When table data is attached to the conversation, it appears as markdown \
@@ -69,6 +79,12 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
 
     @JsonProperty(PROP_NAME_MODEL_REF)
     private final DocRef modelRef;
+    @JsonProperty(PROP_NAME_DOCK_TYPE)
+    private final DockType dockType;
+    @JsonProperty(PROP_NAME_DOCK_LOCATION)
+    private final DockLocation dockLocation;
+    @JsonProperty(PROP_NAME_DOCK_SIZE)
+    private final Integer dockSize;
     @JsonProperty(PROP_NAME_TABLE_SUMMARY)
     private final TableAnalysisConfig tableAnalysis;
     @JsonProperty(PROP_NAME_CHAT_SYSTEM_PROMPT)
@@ -82,8 +98,11 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL)
     private final boolean enableDebugDetail;
 
-    public AskStroomAIConfig() {
+    public AskStroomAiConfig() {
         modelRef = null;
+        dockType = DEFAULT_DOCK_TYPE;
+        dockLocation = DEFAULT_DOCK_LOCATION;
+        dockSize = DEFAULT_DOCK_SIZE;
         tableAnalysis = new TableAnalysisConfig();
         chatSystemPrompt = DEFAULT_CHAT_SYSTEM_PROMPT;
         historySummaryPrompt = DEFAULT_HISTORY_SUMMARY_PROMPT;
@@ -93,8 +112,11 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     }
 
     @JsonCreator
-    public AskStroomAIConfig(
+    public AskStroomAiConfig(
             @JsonProperty(PROP_NAME_MODEL_REF) final DocRef modelRef,
+            @JsonProperty(PROP_NAME_DOCK_TYPE) final DockType dockType,
+            @JsonProperty(PROP_NAME_DOCK_LOCATION) final DockLocation dockLocation,
+            @JsonProperty(PROP_NAME_DOCK_SIZE) final Integer dockSize,
             @JsonProperty(PROP_NAME_TABLE_SUMMARY) final TableAnalysisConfig tableAnalysis,
             @JsonProperty(PROP_NAME_CHAT_SYSTEM_PROMPT) final String chatSystemPrompt,
             @JsonProperty(PROP_NAME_HISTORY_SUMMARY_PROMPT) final String historySummaryPrompt,
@@ -102,6 +124,9 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS) final Long attachmentDownloadTimeoutMs,
             @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL) final Boolean enableDebugDetail) {
         this.modelRef = modelRef;
+        this.dockType = dockType;
+        this.dockLocation = dockLocation;
+        this.dockSize = dockSize;
         this.tableAnalysis = tableAnalysis;
         this.chatSystemPrompt = chatSystemPrompt;
         this.historySummaryPrompt = historySummaryPrompt;
@@ -116,6 +141,21 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     @JsonPropertyDescription("The model to use.")
     public DocRef getModelRef() {
         return modelRef;
+    }
+
+    @JsonPropertyDescription("AI panel dock type.")
+    public DockType getDockType() {
+        return dockType;
+    }
+
+    @JsonPropertyDescription("AI panel dock location.")
+    public DockLocation getDockLocation() {
+        return dockLocation;
+    }
+
+    @JsonPropertyDescription("AI panel dock size in pixels.")
+    public Integer getDockSize() {
+        return dockSize;
     }
 
     @JsonPropertyDescription("Settings to use for table summarisation.")
@@ -156,6 +196,9 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
     public String toString() {
         return "AskStroomAIConfig{" +
                "modelRef='" + modelRef + "'" +
+               ", dockType='" + dockType + "'" +
+               ", dockLocation='" + dockLocation + "'" +
+               ", dockSize=" + dockSize +
                ", tableAnalysisConfig=" + tableAnalysis +
                ", chatSystemPrompt='" + chatSystemPrompt + "'" +
                ", historySummaryPrompt='" + historySummaryPrompt + "'" +
@@ -173,9 +216,12 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
         return new Builder();
     }
 
-    public static class Builder extends AbstractBuilder<AskStroomAIConfig, AskStroomAIConfig.Builder> {
+    public static class Builder extends AbstractBuilder<AskStroomAiConfig, AskStroomAiConfig.Builder> {
 
         private DocRef modelRef;
+        private DockType dockType;
+        private DockLocation dockLocation;
+        private Integer dockSize;
         private TableAnalysisConfig tableAnalysisConfig;
         private String chatSystemPrompt;
         private String historySummaryPrompt;
@@ -185,6 +231,9 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
 
         private Builder() {
             modelRef = null;
+            dockType = DEFAULT_DOCK_TYPE;
+            dockLocation = DEFAULT_DOCK_LOCATION;
+            dockSize = DEFAULT_DOCK_SIZE;
             tableAnalysisConfig = new TableAnalysisConfig();
             chatSystemPrompt = DEFAULT_CHAT_SYSTEM_PROMPT;
             historySummaryPrompt = DEFAULT_HISTORY_SUMMARY_PROMPT;
@@ -193,18 +242,36 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             enableDebugDetail = DEFAULT_ENABLE_DEBUG_DETAIL;
         }
 
-        private Builder(final AskStroomAIConfig askStroomAIConfig) {
-            modelRef = askStroomAIConfig.modelRef;
-            tableAnalysisConfig = askStroomAIConfig.tableAnalysis;
-            chatSystemPrompt = askStroomAIConfig.chatSystemPrompt;
-            historySummaryPrompt = askStroomAIConfig.historySummaryPrompt;
-            maxHistorySafetyCapMessages = askStroomAIConfig.maxHistorySafetyCapMessages;
-            attachmentDownloadTimeoutMs = askStroomAIConfig.attachmentDownloadTimeoutMs;
-            enableDebugDetail = askStroomAIConfig.enableDebugDetail;
+        private Builder(final AskStroomAiConfig askStroomAiConfig) {
+            modelRef = askStroomAiConfig.modelRef;
+            dockType = askStroomAiConfig.dockType;
+            dockLocation = askStroomAiConfig.dockLocation;
+            dockSize = askStroomAiConfig.dockSize;
+            tableAnalysisConfig = askStroomAiConfig.tableAnalysis;
+            chatSystemPrompt = askStroomAiConfig.chatSystemPrompt;
+            historySummaryPrompt = askStroomAiConfig.historySummaryPrompt;
+            maxHistorySafetyCapMessages = askStroomAiConfig.maxHistorySafetyCapMessages;
+            attachmentDownloadTimeoutMs = askStroomAiConfig.attachmentDownloadTimeoutMs;
+            enableDebugDetail = askStroomAiConfig.enableDebugDetail;
         }
 
         public Builder modelRef(final DocRef modelRef) {
             this.modelRef = modelRef;
+            return self();
+        }
+
+        public Builder dockType(final DockType dockType) {
+            this.dockType = dockType;
+            return self();
+        }
+
+        public Builder dockLocation(final DockLocation dockLocation) {
+            this.dockLocation = dockLocation;
+            return self();
+        }
+
+        public Builder dockSize(final Integer dockSize) {
+            this.dockSize = dockSize;
             return self();
         }
 
@@ -243,10 +310,49 @@ public class AskStroomAIConfig extends AbstractConfig implements IsStroomConfig 
             return this;
         }
 
-        public AskStroomAIConfig build() {
-            return new AskStroomAIConfig(modelRef, tableAnalysisConfig, chatSystemPrompt,
+        public AskStroomAiConfig build() {
+            return new AskStroomAiConfig(
+                    modelRef,
+                    dockType, dockLocation, dockSize,
+                    tableAnalysisConfig, chatSystemPrompt,
                     historySummaryPrompt, maxHistorySafetyCapMessages, attachmentDownloadTimeoutMs,
                     enableDebugDetail);
+        }
+    }
+
+    public enum DockType implements HasDisplayValue {
+        DIALOG("Dialog"),
+        TAB("Tab"),
+        FLOAT("Float"),
+        DOCK("Dock");
+
+        private final String displayValue;
+
+        DockType(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
+    }
+
+    public enum DockLocation implements HasDisplayValue {
+        TOP("Top"),
+        LEFT("Left"),
+        BOTTOM("Bottom"),
+        RIGHT("Right");
+
+        private final String displayValue;
+
+        DockLocation(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
         }
     }
 }

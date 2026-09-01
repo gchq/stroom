@@ -713,7 +713,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AskStroomAIConfig"
+                  "$ref" : "#/components/schemas/AskStroomAiConfig"
                 }
               }
             },
@@ -831,7 +831,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/AskStroomAIConfig"
+                "$ref" : "#/components/schemas/AskStroomAiConfig"
               }
             }
           },
@@ -14775,6 +14775,9 @@
             "items" : {
               "$ref" : "#/components/schemas/AiChatMessage"
             }
+          },
+          "workingMessage" : {
+            "$ref" : "#/components/schemas/AiChatMessage"
           }
         }
       },
@@ -15296,7 +15299,7 @@
           }
         }
       },
-      "AskStroomAIConfig" : {
+      "AskStroomAiConfig" : {
         "type" : "object",
         "properties" : {
           "attachmentDownloadTimeoutMs" : {
@@ -15305,6 +15308,18 @@
           },
           "chatSystemPrompt" : {
             "type" : "string"
+          },
+          "dockLocation" : {
+            "type" : "string",
+            "enum" : [ "TOP", "LEFT", "BOTTOM", "RIGHT" ]
+          },
+          "dockSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "dockType" : {
+            "type" : "string",
+            "enum" : [ "DIALOG", "TAB", "FLOAT", "DOCK" ]
           },
           "enableDebugDetail" : {
             "type" : "boolean"
@@ -15351,7 +15366,7 @@
             "$ref" : "#/components/schemas/AiChat"
           },
           "config" : {
-            "$ref" : "#/components/schemas/AskStroomAIConfig"
+            "$ref" : "#/components/schemas/AskStroomAiConfig"
           },
           "context" : {
             "$ref" : "#/components/schemas/AskStroomAiContext"
@@ -20903,6 +20918,9 @@
             "$ref" : "#/components/schemas/SimpleDuration"
           },
           "cookiesEnabled" : {
+            "type" : "boolean"
+          },
+          "followRedirects" : {
             "type" : "boolean"
           },
           "keepAlive" : {
@@ -29019,15 +29037,8 @@
       "UserPreferences" : {
         "type" : "object",
         "properties" : {
-          "aiDockLocation" : {
-            "type" : "string"
-          },
-          "aiDockSize" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "aiDockType" : {
-            "type" : "string"
+          "askStroomAiConfig" : {
+            "$ref" : "#/components/schemas/AskStroomAiConfig"
           },
           "dateTimePattern" : {
             "type" : "string",
