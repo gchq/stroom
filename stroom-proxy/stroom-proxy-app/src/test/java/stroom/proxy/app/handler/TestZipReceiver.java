@@ -61,6 +61,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -241,6 +242,46 @@ public class TestZipReceiver extends StroomUnitTest {
 
         // All rejected so nothing passed along
 
+    }
+
+    /**
+     * Rejection is the routine path, and it used to leave the receiving directory behind for good:
+     * the work that raises it ran outside the only catch that cleaned up, and what it raises is a
+     * {@link RuntimeException} that the enclosing {@code catch (IOException)} could not see either.
+     */
+    @Test
+    void testARejectedFeedDoesNotLeaveTheReceivingDirBehind() throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("Foo", "Bar");
+        final Set<FeedKey> feedKeys = Set.of(FEED_KEY_1_1, FEED_KEY_2_2);
+        final FileGroup fileGroup = createZip(attributeMap, feedKeys);
+
+        Assertions.assertThatThrownBy(
+                        () -> doReceive(
+                                fileGroup.getZip(),
+                                attributeMap,
+                                attrMap -> {
+                                    if (FEED_1.equals(attrMap.get(StandardHeaderArguments.FEED))) {
+                                        throw new StroomStreamException(
+                                                StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA, attributeMap);
+                                    }
+                                    return true;
+                                }))
+                .isInstanceOf(StroomStreamException.class);
+
+        assertThat(listReceivingDirs())
+                .as("A rejected post must not strand its receiving directory")
+                .isEmpty();
+    }
+
+    private List<Path> listReceivingDirs() throws IOException {
+        final Path receivingBase = dataDir.resolve(DirNames.RECEIVING_ZIP);
+        if (!Files.isDirectory(receivingBase)) {
+            return List.of();
+        }
+        try (final Stream<Path> stream = Files.list(receivingBase)) {
+            return stream.toList();
+        }
     }
 
     @Test

@@ -192,7 +192,26 @@ public class ZipReceiver implements Receiver {
                 throw StroomStreamException.create(e, attributeMap);
             }
 
-            handleReceiveResult(attributeMap, receiveResult, destFileGroup, receivingDir, destZipFile);
+            final boolean readyForHandoff;
+            try {
+                readyForHandoff = prepareReceiveResult(
+                        attributeMap, receiveResult, destFileGroup, receivingDir, destZipFile);
+            } catch (final RuntimeException e) {
+                // Includes the routine rejection: filterAllowedEntries throws when the receipt policy
+                // refuses a feed. Nothing has taken the receiving dir yet, so it is still ours to remove.
+                LOGGER.debug(() -> LogUtil.exceptionMessage(e), e);
+                deleteDir(receivingDir);
+                throw e;
+            } catch (final IOException e) {
+                LOGGER.debug(() -> LogUtil.exceptionMessage(e), e);
+                deleteDir(receivingDir);
+                throw StroomStreamException.create(e, attributeMap);
+            }
+
+            // Past this point the destination owns the receiving dir, so it must not be deleted here.
+            if (readyForHandoff) {
+                destination.accept(receivingDir);
+            }
         } catch (final IOException e) {
             throw StroomStreamException.create(e, attributeMap);
         }
@@ -242,7 +261,26 @@ public class ZipReceiver implements Receiver {
                 throw StroomStreamException.create(e, attributeMap);
             }
 
-            handleReceiveResult(attributeMap, receiveResult, destFileGroup, receivingDir, destZipFile);
+            final boolean readyForHandoff;
+            try {
+                readyForHandoff = prepareReceiveResult(
+                        attributeMap, receiveResult, destFileGroup, receivingDir, destZipFile);
+            } catch (final RuntimeException e) {
+                // Includes the routine rejection: filterAllowedEntries throws when the receipt policy
+                // refuses a feed. Nothing has taken the receiving dir yet, so it is still ours to remove.
+                LOGGER.debug(() -> LogUtil.exceptionMessage(e), e);
+                deleteDir(receivingDir);
+                throw e;
+            } catch (final IOException e) {
+                LOGGER.debug(() -> LogUtil.exceptionMessage(e), e);
+                deleteDir(receivingDir);
+                throw StroomStreamException.create(e, attributeMap);
+            }
+
+            // Past this point the destination owns the receiving dir, so it must not be deleted here.
+            if (readyForHandoff) {
+                destination.accept(receivingDir);
+            }
         } catch (final IOException e) {
             throw StroomStreamException.create(e, attributeMap);
         }
@@ -259,11 +297,20 @@ public class ZipReceiver implements Receiver {
                 duration.toMillis());
     }
 
-    private void handleReceiveResult(final AttributeMap attributeMap,
-                                     final ReceiveResult receiveResult,
-                                     final FileGroup fileGroup,
-                                     final Path receivingDir,
-                                     final Path sourceZip) throws IOException {
+    /**
+     * Prepares the receiving directory for handoff, but does not hand it off. The handoff is the
+     * caller's, so that every failure in here happens while the directory is still ours to clean up -
+     * this method's failures include the routine rejection raised by {@link #filterAllowedEntries},
+     * and previously left the directory behind for good.
+     *
+     * @return true when the receiving directory is ready to be passed to the destination, false when
+     * the receipt policy dropped every feed and the directory has already been removed.
+     */
+    private boolean prepareReceiveResult(final AttributeMap attributeMap,
+                                         final ReceiveResult receiveResult,
+                                         final FileGroup fileGroup,
+                                         final Path receivingDir,
+                                         final Path sourceZip) throws IOException {
         if (LOGGER.isDebugEnabled() && receiveResult.feedGroups.size() > 1) {
             // Log if we received a multi feed zip.
             logFeedGroupsToDebug(receiveResult);
@@ -301,7 +348,6 @@ public class ZipReceiver implements Receiver {
                 AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
 
                 LOGGER.debug("Pass {} with feedKey: {} to destination {}", receivingDir, feedKey, destination);
-                destination.accept(receivingDir);
             } else {
                 // Multi-feed or non-standard zip format — can't add a single feed/type to
                 // the top-level meta. The downstream SplitZipStageProcessor will split
@@ -310,13 +356,14 @@ public class ZipReceiver implements Receiver {
                 LOGGER.debug(() ->
                         LogUtil.message("Pass {} to destination for splitting, isValid: {}, feedGroupCount: {}",
                                 receivingDir, receiveResult.valid, feedGroupCount));
-                destination.accept(receivingDir);
             }
+            return true;
         } else {
             LOGGER.debug("No allowed feedKeys, all are dropped");
             // Delete the source zip.
             Files.delete(sourceZip);
             deleteDir(receivingDir);
+            return false;
         }
     }
 
@@ -403,7 +450,7 @@ public class ZipReceiver implements Receiver {
         try {
             try (final ZipFile sourceZip = ZipUtil.createZipFile(zipFilePath);
                     // Deliberately ZipWriter and not ProxyZipWriter. This zip has already been
-                    // accepted - possibly as a non-standard one, which handleReceiveResult routes for
+                    // accepted - possibly as a non-standard one, which prepareReceiveResult routes for
                     // splitting - and ProxyZipWriter.close() throws on anything its validator dislikes.
                     // Filtering must not newly reject data the proxy has taken responsibility for.
                     final ZipWriter zipWriter = new ZipWriter(partFile, LocalByteBuffer.get())) {
