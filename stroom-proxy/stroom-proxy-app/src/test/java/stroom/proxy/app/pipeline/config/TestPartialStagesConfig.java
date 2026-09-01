@@ -62,12 +62,21 @@ class TestPartialStagesConfig {
                 """));
     }
 
+    /**
+     * An empty {@code pipeline} block states nothing about stages, and nothing is no longer read as
+     * everything. The merge used to fill this in from the compile-time default, which is why an
+     * operator who wrote a partial block silently got all five stages.
+     */
     @Test
-    void testEmptyPipelineBlockEnablesEverything() throws Exception {
-        assertAllStagesEnabled(stagesFrom("""
+    void testEmptyPipelineBlockConfiguresNoStages() throws Exception {
+        final PipelineStagesConfig stages = stagesFrom("""
                 proxyConfig:
                   pipeline: {}
-                """));
+                """);
+
+        assertThat(stages.getConfiguredStages()).isEmpty();
+        assertThat(stages.getReceive().isEnabled()).as("receive").isFalse();
+        assertThat(stages.getForward().isEnabled()).as("forward").isFalse();
     }
 
     @Test
@@ -152,7 +161,7 @@ class TestPartialStagesConfig {
     }
 
     @Test
-    void testListedStageWithoutEnabledDefaultsToEnabled() throws Exception {
+    void testListedStageWithoutEnabledIsRecordedAsUnstated() throws Exception {
         final PipelineStagesConfig stages = stagesFrom("""
                 proxyConfig:
                   pipeline:
@@ -173,8 +182,14 @@ class TestPartialStagesConfig {
                         enabled: false
                 """);
 
-        // Naming a stage means you want it; disabling is the explicit act.
-        assertThat(stages.getReceive().isEnabled()).isTrue();
+        // Naming a stage no longer means you want it: a block written to tune one setting used to
+        // switch the stage on as a side effect. Absence of `enabled` is now recorded as unstated, and
+        // the validator rejects it; the fallback is disabled so a bypassed validation idles.
+        assertThat(stages.getReceive().isEnabledSpecified())
+                .as("receive did not say whether it is enabled")
+                .isFalse();
+        assertThat(stages.getReceive().isEnabled()).isFalse();
+        // The rest of the stage's settings are still read.
         assertThat(stages.getReceive().getThreads().getMaxConcurrentReceives()).isEqualTo(20);
     }
 

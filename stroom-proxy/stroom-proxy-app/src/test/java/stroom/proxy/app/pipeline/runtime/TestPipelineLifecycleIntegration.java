@@ -202,25 +202,40 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
     // Config auto-wiring tests
     // -------------------------------------------------------------------------
 
+    /**
+     * A null {@code stages} block is the operator saying nothing, and nothing is no longer read as
+     * "everything". It resolves to a stage set that is configured-empty and wholly disabled, so the
+     * validator reports the silence and a process that somehow skipped validation sits idle rather
+     * than running work nobody asked for.
+     */
     @Test
-    void testDefaultFullPipelineStagesAreUsedWhenNoStages() {
-        // Simulate: no stages in YAML (stages == null)
+    void testAnAbsentStagesBlockConfiguresNothing() {
         final ProxyPipelineConfig config = new ProxyPipelineConfig(null, null, null);
 
-        // All 5 stages should be enabled
-        assertThat(config.getStages().getReceive().isEnabled()).isTrue();
-        assertThat(config.getStages().getSplitZip().isEnabled()).isTrue();
-        assertThat(config.getStages().getPreAggregate().isEnabled()).isTrue();
-        assertThat(config.getStages().getAggregate().isEnabled()).isTrue();
-        assertThat(config.getStages().getForward().isEnabled()).isTrue();
+        assertThat(config.getStages().getConfiguredStages())
+                .as("nothing was stated, so nothing is configured")
+                .isEmpty();
+        assertThat(config.getStages().getReceive().isEnabled()).isFalse();
+        assertThat(config.getStages().getSplitZip().isEnabled()).isFalse();
+        assertThat(config.getStages().getPreAggregate().isEnabled()).isFalse();
+        assertThat(config.getStages().getAggregate().isEnabled()).isFalse();
+        assertThat(config.getStages().getForward().isEnabled()).isFalse();
+    }
 
-        // Stages should be wired to standard queues
+    /**
+     * The programmatic no-arg default is still the standard full pipeline. That is a convenience for
+     * tests and embedded callers and is deliberately not the same thing as an absent YAML block.
+     */
+    @Test
+    void testTheNoArgConstructorStillGivesTheFullPipeline() {
+        final ProxyPipelineConfig config = new ProxyPipelineConfig();
+
+        assertThat(config.getStages().getConfiguredStages())
+                .hasSize(PipelineStageName.values().length);
+        assertThat(config.getStages().getReceive().isEnabled()).isTrue();
+        assertThat(config.getStages().getForward().isEnabled()).isTrue();
         assertThat(config.getStages().getReceive().getOutputQueue())
                 .isEqualTo(ProxyPipelineConfig.PRE_AGGREGATE_INPUT_QUEUE);
-        assertThat(config.getStages().getReceive().getSplitZipQueue())
-                .isEqualTo(ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE);
-        assertThat(config.getStages().getSplitZip().getInputQueue())
-                .isEqualTo(ProxyPipelineConfig.SPLIT_ZIP_INPUT_QUEUE);
         assertThat(config.getStages().getForward().getInputQueue())
                 .isEqualTo(ProxyPipelineConfig.FORWARDING_INPUT_QUEUE);
     }
@@ -319,9 +334,9 @@ class TestPipelineLifecycleIntegration extends StroomUnitTest {
         final ProxyPipelineLifecycle lifecycle;
 
         RuntimeTestHarness(final Path testDir) {
-            // Use the new defaultFullPipelineStages() config auto-wiring
-            final ProxyPipelineConfig config = new ProxyPipelineConfig(
-                    null, null, null);
+            // The full pipeline, stated. Passing null stages now means "nothing configured", so this
+            // has to say what it wants rather than rely on a default reading of silence.
+            final ProxyPipelineConfig config = new ProxyPipelineConfig();
 
             final PathCreator pathCreator = new TestPathCreator(testDir);
 

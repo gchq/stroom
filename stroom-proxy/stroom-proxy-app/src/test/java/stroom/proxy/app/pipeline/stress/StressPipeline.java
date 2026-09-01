@@ -146,7 +146,8 @@ public final class StressPipeline implements AutoCloseable {
         this.root = Objects.requireNonNull(root, "root");
         this.faultPolicy = Objects.requireNonNull(faultPolicy, "faultPolicy");
         this.consumerThreads = consumerThreads;
-        this.config = new ProxyPipelineConfig(eagerReclaimQueues(), null, null);
+        this.config = new ProxyPipelineConfig(
+                eagerReclaimQueues(), ProxyPipelineConfig.defaultFullPipelineStages(), null);
         // The real path creator, rooted at the test directory, so relative store and
         // queue paths resolve exactly as they do in a deployment.
         this.pathCreator = new SimplePathCreator(() -> root, () -> root.resolve("temp"));

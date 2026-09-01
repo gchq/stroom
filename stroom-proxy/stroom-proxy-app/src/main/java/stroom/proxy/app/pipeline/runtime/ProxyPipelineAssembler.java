@@ -31,6 +31,7 @@ import stroom.proxy.app.handler.ZipReceiver;
 import stroom.proxy.app.handler.ZipSplitter;
 import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
 import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.config.PipelineValidationResult;
 import stroom.proxy.app.pipeline.config.ProxyPipelineConfigValidator;
 import stroom.proxy.app.pipeline.queue.FileGroupQueue;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueItemProcessor;
@@ -169,8 +170,17 @@ public class ProxyPipelineAssembler {
         final PipelineStagesConfig stagesConfig = pipelineConfig.getStages();
 
         // Deployment-shape check: refuse to start a process that would publish into a local queue no
-        // enabled stage drains. Structural validation happens inside ProxyPipelineRuntime.fromConfig.
-        new ProxyPipelineConfigValidator().validateDeploymentOrThrow(pipelineConfig);
+        // enabled stage drains, and refuse one that has not said which stages it runs. Structural
+        // validation happens inside ProxyPipelineRuntime.fromConfig.
+        final PipelineValidationResult validationResult =
+                new ProxyPipelineConfigValidator().validateDeployment(pipelineConfig);
+        // H56: these were computed and discarded, though operations.md, the deployment examples and
+        // the validator's own javadoc all say they appear at startup. They are how an operator sees
+        // which stages this process is actually running, so they matter most on the change that made
+        // an unstated stage set an error.
+        validationResult.getWarnings().forEach(warning ->
+                LOGGER.warn(() -> LogUtil.message("Pipeline configuration: {}", warning)));
+        validationResult.throwIfInvalid();
 
         // Build file store registry from the factory (all configured stores).
         final FileStoreRegistry fileStoreRegistry = FileStoreRegistry.fromFactory(fileStoreFactory);

@@ -118,6 +118,35 @@ jerseyClients:
 
 proxyConfig:
 
+  # Every stage must be listed and must say whether it is enabled. Omitting the block, or omitting
+  # `enabled` on a stage, is a startup error rather than a default - what this process runs is
+  # exactly what is written here. This is the standard full pipeline.
+  pipeline:
+    stages:
+      receive:
+        enabled: true
+        fileStore: receiveStore
+        outputQueue: preAggregateInput
+        splitZipQueue: splitZipInput
+      splitZip:
+        enabled: true
+        inputQueue: splitZipInput
+        fileStore: splitStore
+        outputQueue: preAggregateInput
+      preAggregate:
+        enabled: true
+        inputQueue: preAggregateInput
+        fileStore: preAggregateStore
+        outputQueue: aggregateInput
+      aggregate:
+        enabled: true
+        inputQueue: aggregateInput
+        fileStore: aggregateStore
+        outputQueue: forwardingInput
+      forward:
+        enabled: true
+        inputQueue: forwardingInput
+
   path:
     # Versioned dirs for dev to allow running multiple proxy instances
     home: "${STROOM_PROXY_HOME:-~/.stroom-proxy-local/v7}"

@@ -72,6 +72,7 @@ public class ProxyPipelineConfigValidator {
     public static final String CODE_STAGE_INVALID_THREADS = "STAGE_INVALID_THREADS";
     public static final String CODE_STAGE_DISABLED = "STAGE_DISABLED";
     public static final String CODE_LOCAL_QUEUE_HAS_NO_CONSUMER = "LOCAL_QUEUE_HAS_NO_CONSUMER";
+    public static final String CODE_STAGE_ENABLED_NOT_STATED = "STAGE_ENABLED_NOT_STATED";
     public static final String CODE_STAGE_NOT_CONFIGURED = "STAGE_NOT_CONFIGURED";
     public static final String CODE_EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE =
             "EXTERNAL_QUEUE_REQUIRES_SHARED_FILE_STORE";
@@ -110,6 +111,11 @@ public class ProxyPipelineConfigValidator {
     public PipelineValidationResult validateDeployment(final ProxyPipelineConfig pipelineConfig) {
         final List<PipelineValidationIssue> issues = new ArrayList<>();
         if (pipelineConfig != null) {
+            // A running process must have been told what to run. These two are deliberately here and
+            // not in validate(): a partial pipeline built directly from config is structurally fine,
+            // but a deployment with an unstated stage set is not.
+            validateStagesAreFullySpecified(pipelineConfig.getStages(), issues);
+            validateStagesStateEnabled(pipelineConfig.getStages(), issues);
             validateNoUndrainedLocalQueues(pipelineConfig, issues);
         }
         return PipelineValidationResult.of(issues);
@@ -325,10 +331,43 @@ public class ProxyPipelineConfigValidator {
                         stageName,
                         CODE_STAGE_NOT_CONFIGURED,
                         "Stage '" + stageName.getConfigName() + "' is missing from the 'stages' "
-                        + "block. When 'stages' is specified it must list all "
-                        + PipelineStageName.values().length + " stages, each with an explicit "
-                        + "'enabled'. Omit the 'stages' block entirely to get the standard "
-                        + "full pipeline."));
+                        + "block. Every one of the " + PipelineStageName.values().length + " stages "
+                        + "must be listed, each stating 'enabled' explicitly, so that what this "
+                        + "process runs is exactly what was written down."));
+            }
+        }
+    }
+
+    /**
+     * Require every named stage to say whether it is enabled.
+     * <p>
+     * Omitting {@code enabled} used to mean "run this stage", so a block written to tune one setting
+     * silently switched the stage on. There is no reading of an absent {@code enabled} that is right
+     * more than half the time, so it is an error.
+     * </p>
+     */
+    private void validateStagesStateEnabled(final PipelineStagesConfig stages,
+                                            final List<PipelineValidationIssue> issues) {
+        final Set<PipelineStageName> configured = stages.getConfiguredStages();
+
+        record Stage(PipelineStageName name, boolean specified) {
+
+        }
+        final List<Stage> checks = List.of(
+                new Stage(PipelineStageName.RECEIVE, stages.getReceive().isEnabledSpecified()),
+                new Stage(PipelineStageName.SPLIT_ZIP, stages.getSplitZip().isEnabledSpecified()),
+                new Stage(PipelineStageName.PRE_AGGREGATE, stages.getPreAggregate().isEnabledSpecified()),
+                new Stage(PipelineStageName.AGGREGATE, stages.getAggregate().isEnabledSpecified()),
+                new Stage(PipelineStageName.FORWARD, stages.getForward().isEnabledSpecified()));
+
+        for (final Stage stage : checks) {
+            // Only complain about a stage that is actually present; a missing one is already an error.
+            if (configured.contains(stage.name()) && !stage.specified()) {
+                issues.add(PipelineValidationIssue.errorForStage(
+                        stage.name(),
+                        CODE_STAGE_ENABLED_NOT_STATED,
+                        "Stage '" + stage.name().getConfigName() + "' does not say whether it is "
+                        + "enabled. Every stage must state 'enabled' explicitly."));
             }
         }
     }
@@ -401,7 +440,8 @@ public class ProxyPipelineConfigValidator {
             return;
         }
 
-        validateRequiredInputQueue(pipelineConfig, PipelineStageName.SPLIT_ZIP, stage.getInputQueue(), issues);
+        validateRequiredInputQueue(pipelineConfig, PipelineStageName.SPLIT_ZIP,
+                stage.getInputQueue(), issues);
         validateRequiredOutputQueue(
                 pipelineConfig,
                 PipelineStageName.SPLIT_ZIP,
@@ -424,7 +464,8 @@ public class ProxyPipelineConfigValidator {
             return;
         }
 
-        validateRequiredInputQueue(pipelineConfig, PipelineStageName.PRE_AGGREGATE, stage.getInputQueue(), issues);
+        validateRequiredInputQueue(pipelineConfig, PipelineStageName.PRE_AGGREGATE,
+                stage.getInputQueue(), issues);
         validateRequiredOutputQueue(
                 pipelineConfig,
                 PipelineStageName.PRE_AGGREGATE,
@@ -448,7 +489,8 @@ public class ProxyPipelineConfigValidator {
             return;
         }
 
-        validateRequiredInputQueue(pipelineConfig, PipelineStageName.AGGREGATE, stage.getInputQueue(), issues);
+        validateRequiredInputQueue(pipelineConfig, PipelineStageName.AGGREGATE,
+                stage.getInputQueue(), issues);
         validateRequiredOutputQueue(
                 pipelineConfig,
                 PipelineStageName.AGGREGATE,
@@ -471,7 +513,8 @@ public class ProxyPipelineConfigValidator {
             return;
         }
 
-        validateRequiredInputQueue(pipelineConfig, PipelineStageName.FORWARD, stage.getInputQueue(), issues);
+        validateRequiredInputQueue(pipelineConfig, PipelineStageName.FORWARD,
+                stage.getInputQueue(), issues);
         validateConsumerThreads(PipelineStageName.FORWARD, stage.getThreads(), issues);
     }
 

@@ -123,6 +123,14 @@ public class PipelineStagesConfig extends AbstractConfig implements IsProxyConfi
     }
 
     /**
+     * @return An instance with no stage configured, so every stage reads as disabled. Used where a
+     * {@code stages} block is absent, so that nothing dereferences null before validation reports it.
+     */
+    public static PipelineStagesConfig unconfigured() {
+        return new PipelineStagesConfig(null, null, null, null, null);
+    }
+
+    /**
      * @return The stages that were explicitly present in configuration. Anything
      * absent from this set was defaulted, and validation will reject it.
      */

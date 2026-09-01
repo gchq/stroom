@@ -22,6 +22,7 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -42,6 +43,8 @@ import java.util.Objects;
 public class AggregateStageConfig extends AbstractConfig implements IsProxyConfig {
 
     private final boolean enabled;
+    @JsonIgnore
+    private final boolean enabledSpecified;
     private final String inputQueue;
     private final String outputQueue;
     private final String fileStore;
@@ -59,9 +62,12 @@ public class AggregateStageConfig extends AbstractConfig implements IsProxyConfi
             @JsonProperty("fileStore") final String fileStore,
             @JsonProperty("threads") final ConsumerStageThreadsConfig threads) {
 
-        // Omitting `enabled` means "run this stage", matching the behaviour when no
-        // stages block is supplied at all. Disabling a stage must be explicit.
-        this.enabled = Objects.requireNonNullElse(enabled, true);
+        // `enabled` must be stated explicitly - the validator rejects a stage without it.
+        // The fallback is disabled rather than enabled so that if validation is ever
+        // bypassed the failure mode is an idle process, not one silently doing work it
+        // was not asked to do.
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.enabledSpecified = enabled != null;
         this.inputQueue = normaliseOptional(inputQueue);
         this.outputQueue = normaliseOptional(outputQueue);
         this.fileStore = normaliseOptional(fileStore);
@@ -72,6 +78,16 @@ public class AggregateStageConfig extends AbstractConfig implements IsProxyConfi
     @JsonPropertyDescription("Whether the aggregate stage is enabled on this proxy process.")
     public boolean isEnabled() {
         return enabled;
+    }
+
+    /**
+     * @return true if {@code enabled} was present in configuration. Absence is a validation
+     * error rather than a default, so that a stage block never means something the operator
+     * did not write.
+     */
+    @JsonIgnore
+    public boolean isEnabledSpecified() {
+        return enabledSpecified;
     }
 
     @JsonProperty

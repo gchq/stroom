@@ -16,6 +16,7 @@
 
 package stroom.proxy.app;
 
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathCreator;
@@ -122,13 +123,24 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
             throw new RuntimeException("No config node found at " + PROXY_CONFIG_JSON_POINTER);
         }
 
+        // The pipeline's `stages` block is deliberately excluded from the merge. Everything else
+        // benefits from having compile-time defaults filled in, but for `stages` the merge destroyed
+        // the only signal that mattered: with the default tree carrying all five stages, an operator
+        // who named one stage got all five, silently, and the validator could not tell the difference
+        // between a stage they wrote and one the merge supplied.
+        final JsonNode defaultsToMerge = objectMapper.valueToTree(defaultConfig);
+        final JsonNode defaultPipelineNode = defaultsToMerge.get(ProxyConfig.PROP_NAME_PIPELINE);
+        if (defaultPipelineNode instanceof final ObjectNode defaultPipelineObject) {
+            defaultPipelineObject.remove(ProxyPipelineConfig.PROP_NAME_STAGES);
+        }
+
         // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
         YamlV2Util.mergeYamlNodeTrees(
                 objectMapper,
                 objectMapper2 ->
                         proxyConfigNode,
                 objectMapper2 ->
-                        objectMapper.valueToTree(defaultConfig));
+                        defaultsToMerge);
     }
 
 //    private void dumpYamlDiff(final String path,

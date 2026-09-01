@@ -53,12 +53,20 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
     public static final String PRE_AGGREGATE_STORE = "preAggregateStore";
     public static final String AGGREGATE_STORE = "aggregateStore";
 
+    public static final String PROP_NAME_STAGES = "stages";
+
     private final Map<String, QueueDefinition> queues;
     private final PipelineStagesConfig stages;
     private final Map<String, FileStoreDefinition> fileStores;
 
+    /**
+     * The programmatic default is the standard full pipeline. That is a convenience for tests and
+     * embedded callers, <strong>not</strong> a reading of an absent {@code stages} block - see the
+     * {@link JsonCreator} constructor, which keeps a null block null so the operator's silence is
+     * still visible to validation.
+     */
     public ProxyPipelineConfig() {
-        this(null, null, null);
+        this(null, defaultFullPipelineStages(), null);
     }
 
 
@@ -71,11 +79,16 @@ public class ProxyPipelineConfig extends AbstractConfig implements IsProxyConfig
         this.queues = queues == null || queues.isEmpty()
                 ? defaultQueues()
                 : new TreeMap<>(queues);
-        // When no explicit stages block is provided, automatically wire
-        // all 5 stages with standard queue/store references.
-        this.stages = stages == null
-                ? defaultFullPipelineStages()
-                : stages;
+        // No stages block means nothing is stated, not "everything". Substituting a fully wired
+        // pipeline here is what made the merge problem invisible: the guard requiring every stage to
+        // be named could never fire, because by this point they were all present. The field stays
+        // null so the operator's silence survives as far as validation.
+        // Non-null, because the config tree walkers (AbstractConfigUtil.mutateBranch, and the
+        // injectable-config provider) dereference every branch. The "was it stated" signal lives in
+        // getConfiguredStages(), which stays empty here, so validation still sees the silence.
+        this.stages = stages != null
+                ? stages
+                : PipelineStagesConfig.unconfigured();
         this.fileStores = fileStores == null || fileStores.isEmpty()
                 ? defaultFileStores()
                 : new TreeMap<>(fileStores);
