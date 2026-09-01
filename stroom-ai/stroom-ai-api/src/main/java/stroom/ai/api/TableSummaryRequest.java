@@ -17,6 +17,7 @@
 package stroom.ai.api;
 
 import stroom.ai.shared.TableAnalysisConfig;
+import stroom.docref.DocRef;
 
 import dev.langchain4j.model.chat.ChatModel;
 
@@ -35,6 +36,7 @@ public class TableSummaryRequest {
 
     private final List<TableSource> sources;
     private final ChatModel chatModel;
+    private final DocRef modelRef;
     private final TableAnalysisConfig config;
     private final String query;
     private final String context;
@@ -43,13 +45,21 @@ public class TableSummaryRequest {
 
     private TableSummaryRequest(final List<TableSource> sources,
                                 final ChatModel chatModel,
+                                final DocRef modelRef,
                                 final TableAnalysisConfig config,
                                 final String query,
                                 final String context,
                                 final TableSummaryProgressListener progressListener,
                                 final BooleanSupplier cancelled) {
         this.sources = Objects.requireNonNull(sources, "No sources supplied");
-        this.chatModel = Objects.requireNonNull(chatModel, "No chat model supplied");
+        if (chatModel == null && modelRef == null) {
+            throw new IllegalArgumentException("No model supplied - set either a chat model or a model ref");
+        }
+        if (chatModel != null && modelRef != null) {
+            throw new IllegalArgumentException("Set either a chat model or a model ref, not both");
+        }
+        this.chatModel = chatModel;
+        this.modelRef = modelRef;
         this.config = Objects.requireNonNull(config, "No table analysis config supplied");
         this.query = Objects.requireNonNull(query, "No query supplied");
         this.context = context;
@@ -61,8 +71,19 @@ public class TableSummaryRequest {
         return sources;
     }
 
+    /**
+     * @return The model to ask, already built, or null if {@link #getModelRef()} says which one to build.
+     */
     public ChatModel getChatModel() {
         return chatModel;
+    }
+
+    /**
+     * @return Which model to ask, for a caller that has no reason to build one itself, or null if
+     * {@link #getChatModel()} supplies one. Resolving it also checks the caller's permission to use it.
+     */
+    public DocRef getModelRef() {
+        return modelRef;
     }
 
     public TableAnalysisConfig getConfig() {
@@ -99,6 +120,7 @@ public class TableSummaryRequest {
     public String toString() {
         return "TableSummaryRequest{" +
                "sources=" + sources.size() +
+               ", modelRef=" + modelRef +
                ", queryLength=" + query.length() +
                ", config=" + config +
                '}';
@@ -116,6 +138,7 @@ public class TableSummaryRequest {
 
         private List<TableSource> sources;
         private ChatModel chatModel;
+        private DocRef modelRef;
         private TableAnalysisConfig config;
         private String query;
         private String context;
@@ -135,8 +158,19 @@ public class TableSummaryRequest {
             return this;
         }
 
+        /**
+         * The model to ask. Use this where you have already built one; otherwise use {@link #modelRef}.
+         */
         public Builder chatModel(final ChatModel chatModel) {
             this.chatModel = chatModel;
+            return this;
+        }
+
+        /**
+         * Which model to ask, leaving it to be read and built for you. Use this or {@link #chatModel}.
+         */
+        public Builder modelRef(final DocRef modelRef) {
+            this.modelRef = modelRef;
             return this;
         }
 
@@ -167,7 +201,7 @@ public class TableSummaryRequest {
 
         public TableSummaryRequest build() {
             return new TableSummaryRequest(
-                    sources, chatModel, config, query, context, progressListener, cancelled);
+                    sources, chatModel, modelRef, config, query, context, progressListener, cancelled);
         }
     }
 }

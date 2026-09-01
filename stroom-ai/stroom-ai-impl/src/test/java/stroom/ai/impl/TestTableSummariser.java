@@ -19,6 +19,7 @@ package stroom.ai.impl;
 import stroom.ai.api.TableSource;
 import stroom.ai.api.TableSummaryProgressListener;
 import stroom.ai.api.TableSummaryRequest;
+import stroom.ai.api.TableSummaryResult;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.shared.ThreadPool;
@@ -71,7 +72,7 @@ class TestTableSummariser {
         public Executor get(final ThreadPool threadPool) {
             return get();
         }
-    });
+    }, () -> null);
 
     // -----------------------------------------------------------------------------------------------
     // Batching
@@ -115,10 +116,11 @@ class TestTableSummariser {
 
     @Test
     void oneBatch_isAnsweredWithoutMergingOrNotes() {
-        final String result = summarise(table(2), prompt -> "THE ANSWER");
+        final TableSummaryResult result = summarise(table(2), prompt -> "THE ANSWER");
 
         // Nothing was lost, so there is nothing to tell the reader and no merge to do.
-        assertThat(result).isEqualTo("THE ANSWER");
+        assertThat(result.text()).isEqualTo("THE ANSWER");
+        assertThat(result.summarised()).isTrue();
     }
 
     @Test
@@ -139,7 +141,7 @@ class TestTableSummariser {
 
     @Test
     void failedBatch_costsItsOwnRowsAndIsDeclared() {
-        final String result = summarise(table(5), prompt -> {
+        final TableSummaryResult result = summarise(table(5), prompt -> {
             if (prompt.contains("row3")) {
                 throw new RuntimeException("model said no");
             }
@@ -148,8 +150,10 @@ class TestTableSummariser {
                     : "a finding";
         });
 
-        assertThat(result).contains("MERGED");
-        assertThat(result).contains("This answer covers 2 of 3 batches of the data, as 1 batch failed");
+        // Some batches contributed, so this is still a summary - it just says what it does not cover.
+        assertThat(result.summarised()).isTrue();
+        assertThat(result.text()).contains("MERGED");
+        assertThat(result.text()).contains("This answer covers 2 of 3 batches of the data, as 1 batch failed");
     }
 
     @Test
@@ -166,20 +170,23 @@ class TestTableSummariser {
 
     @Test
     void noData_saysSoRatherThanAnsweringEmpty() {
-        final String result = summarise(table(0), prompt -> {
+        final TableSummaryResult result = summarise(table(0), prompt -> {
             throw new AssertionError("The model should not be called when there is no data");
         });
 
-        assertThat(result).isEqualTo("No data available for analysis.");
+        // Said, but not as a summary - a caller decorating a report must not present this as one.
+        assertThat(result.summarised()).isFalse();
+        assertThat(result.text()).isEqualTo("No data available for analysis.");
     }
 
     @Test
     void sourceThatCannotBeRead_isReportedRatherThanFailingTheCall() {
-        final String result = summarise(tempDir.resolve("gone.md"), prompt -> {
+        final TableSummaryResult result = summarise(tempDir.resolve("gone.md"), prompt -> {
             throw new AssertionError("The model should not be called when there is no data");
         });
 
-        assertThat(result).isEqualTo("The attached data could not be read. It may have been cleaned up.");
+        assertThat(result.summarised()).isFalse();
+        assertThat(result.text()).isEqualTo("The data could not be read. It may have been cleaned up.");
     }
 
     @Test
@@ -192,15 +199,16 @@ class TestTableSummariser {
                 .cancelled(() -> true)
                 .build();
 
-        assertThat(summariser.summarise(request))
-                .isEqualTo("Analysis was cancelled before any results were produced.");
+        final TableSummaryResult result = summariser.summarise(request);
+        assertThat(result.summarised()).isFalse();
+        assertThat(result.text()).isEqualTo("Analysis was cancelled before any results were produced.");
     }
 
     @Test
     void notesTheCallerSeeds_areKeptAlongsideTheCoverageNote() {
         final AnswerNotes notes = new AnswerNotes().add("Something the caller knows");
 
-        final String result = summariser.summarise(
+        final TableSummaryResult result = summariser.summarise(
                 request(new TableSource("test", table(5), false), prompt -> {
                     if (prompt.contains("row3")) {
                         throw new RuntimeException("model said no");
@@ -211,8 +219,8 @@ class TestTableSummariser {
                 null,
                 null);
 
-        assertThat(result).contains("Something the caller knows");
-        assertThat(result).contains("This answer covers 2 of 3 batches");
+        assertThat(result.text()).contains("Something the caller knows");
+        assertThat(result.text()).contains("This answer covers 2 of 3 batches");
     }
 
     @Test
@@ -248,7 +256,7 @@ class TestTableSummariser {
     void cancellingPartWayThrough_stillAnswersFromWhatWasFound() {
         final AtomicBoolean cancelled = new AtomicBoolean();
 
-        final String result = summariser.summarise(
+        final TableSummaryResult result = summariser.summarise(
                 request(new TableSource("test", table(5), false), prompt -> {
                     // Stop after the first batch, as a user pressing stop would.
                     cancelled.set(true);
@@ -257,14 +265,15 @@ class TestTableSummariser {
                         .cancelled(cancelled::get)
                         .build());
 
-        assertThat(result).contains("a finding");
-        assertThat(result).contains("This answer covers 1 of 3 batches of the data, "
-                                    + "as the analysis was cancelled before the rest were processed");
+        assertThat(result.summarised()).isTrue();
+        assertThat(result.text()).contains("a finding");
+        assertThat(result.text()).contains("This answer covers 1 of 3 batches of the data, "
+                                           + "as the analysis was cancelled before the rest were processed");
     }
 
     // -----------------------------------------------------------------------------------------------
 
-    private String summarise(final Path markdownFile, final Function<String, String> answer) {
+    private TableSummaryResult summarise(final Path markdownFile, final Function<String, String> answer) {
         return summariser.summarise(request(new TableSource("test", markdownFile, false), answer).build());
     }
 

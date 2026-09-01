@@ -16,10 +16,12 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.api.AiService;
 import stroom.ai.api.TableSource;
 import stroom.ai.api.TableSummariser;
 import stroom.ai.api.TableSummaryProgressListener;
 import stroom.ai.api.TableSummaryRequest;
+import stroom.ai.api.TableSummaryResult;
 import stroom.ai.impl.SummaryMerger.DebugFormatter;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.task.api.ExecutorProvider;
@@ -32,6 +34,7 @@ import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.BufferedReader;
@@ -62,14 +65,17 @@ public class TableSummariserImpl implements TableSummariser {
     private static final long CANCELLED_HARVEST_GRACE_MS = 30_000;
 
     private final ExecutorProvider executorProvider;
+    private final Provider<AiService> aiServiceProvider;
 
     @Inject
-    TableSummariserImpl(final ExecutorProvider executorProvider) {
+    TableSummariserImpl(final ExecutorProvider executorProvider,
+                        final Provider<AiService> aiServiceProvider) {
         this.executorProvider = executorProvider;
+        this.aiServiceProvider = aiServiceProvider;
     }
 
     @Override
-    public String summarise(final TableSummaryRequest request) {
+    public TableSummaryResult summarise(final TableSummaryRequest request) {
         return summarise(request, new AnswerNotes(), null, null);
     }
 
@@ -82,14 +88,13 @@ public class TableSummariserImpl implements TableSummariser {
      * @param debugLog       Where to record each call, or null if the caller is not keeping debug detail.
      * @param debugFormatter Renders a call and its response for that record. Required if debugLog is set.
      */
-    String summarise(final TableSummaryRequest request,
-                     final AnswerNotes notes,
-                     final StringBuilder debugLog,
-                     final DebugFormatter debugFormatter) {
+    TableSummaryResult summarise(final TableSummaryRequest request,
+                                 final AnswerNotes notes,
+                                 final StringBuilder debugLog,
+                                 final DebugFormatter debugFormatter) {
         final BooleanSupplier cancelled = request.getCancelled();
         final TableAnalysisConfig tableAnalysisConfig = request.getConfig();
         final TableSummaryProgressListener progressListener = request.getProgressListener();
-        final ChatModel chatModel = request.getChatModel();
         final List<TableSource> sources = request.getSources();
 
         LOGGER.debug(() -> "summarise: sources=" + sources.size()
@@ -117,9 +122,9 @@ public class TableSummariserImpl implements TableSummariser {
         }
 
         if (batches.isEmpty()) {
-            return unreadableSources > 0
-                    ? "The attached data could not be read. It may have been cleaned up."
-                    : "No data available for analysis.";
+            return TableSummaryResult.notSummarised(unreadableSources > 0
+                    ? "The data could not be read. It may have been cleaned up."
+                    : "No data available for analysis.");
         }
 
         final boolean truncatedData = anyTruncated;
@@ -134,6 +139,13 @@ public class TableSummariserImpl implements TableSummariser {
 
         final int totalBatches = batches.size();
         progressListener.onBatchesBuilt(totalBatches, sources.size());
+
+        // Resolved here rather than up front so that a request with nothing to summarise does not read a
+        // model document it is not going to use. Reading it also checks permission to use it.
+        final ChatModel chatModel = request.getChatModel() != null
+                ? request.getChatModel()
+                : aiServiceProvider.get().getChatModel(
+                        aiServiceProvider.get().getOpenAIModelDoc(request.getModelRef()));
 
         // Process batches in parallel with bounded concurrency.
         final Executor executor = executorProvider.get();
@@ -252,9 +264,10 @@ public class TableSummariserImpl implements TableSummariser {
 
         if (summaries.isEmpty()) {
             if (cancelled.getAsBoolean()) {
-                return "Analysis was cancelled before any results were produced.";
+                return TableSummaryResult.notSummarised(
+                        "Analysis was cancelled before any results were produced.");
             }
-            return "No results could be extracted from the data.";
+            return TableSummaryResult.notSummarised("No results could be extracted from the data.");
         }
 
         // Merge summaries.
@@ -280,7 +293,7 @@ public class TableSummariserImpl implements TableSummariser {
 
         notes.coverage(summaries.size(), totalBatches, failedBatches,
                 unreadableSources, cancelled.getAsBoolean());
-        return notes.appendTo(merged);
+        return TableSummaryResult.summarised(notes.appendTo(merged));
     }
 
     /**

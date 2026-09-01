@@ -27,8 +27,9 @@ package stroom.ai.api;
 public interface TableSummariser {
 
     /**
-     * @return The summary, never null. Where nothing could be summarised - no data, or no batch produced
-     * anything - the return says so rather than being empty.
+     * @return Never null. Where nothing could be summarised - no data, or no batch produced anything - the
+     * result says so rather than being empty, and reports it as not summarised so that a caller decorating
+     * a document knows there is nothing worth adding.
      */
-    String summarise(TableSummaryRequest request);
+    TableSummaryResult summarise(TableSummaryRequest request);
 }

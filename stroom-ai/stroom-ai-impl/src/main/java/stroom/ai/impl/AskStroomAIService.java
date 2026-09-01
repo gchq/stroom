@@ -978,8 +978,10 @@ public class AskStroomAIService {
                      + "processed in batches, which may not capture cross-row patterns or "
                      + "cross-table comparisons as well");
 
-        return tableSummariser.summarise(
-                summaryRequest, notes, debugLog, this::formatMessagesAsDebugDetail);
+        // The chat shows whatever came back, summary or not, as that is the answer to the question.
+        return tableSummariser
+                .summarise(summaryRequest, notes, debugLog, this::formatMessagesAsDebugDetail)
+                .text();
     }
 
     /**

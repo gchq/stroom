@@ -103,9 +103,18 @@ public class EmailSender {
                 effectiveExecutionTime);
 
         final EmailContent renderedEmail = ruleEmailTemplatingService.renderEmail(emailDestination, context);
-        final List<AttachmentResource> attachmentResources = List.of(new AttachmentResource(
+
+        final List<AttachmentResource> attachmentResources = new ArrayList<>();
+        attachmentResources.add(new AttachmentResource(
                 file.getFileName().toString(),
                 new FileDataSource(file.toFile())));
+        // A summary that could not go inside the report travels beside it, as its own attachment rather
+        // than as an archive the recipient has to unpack.
+        if (reportFile.summaryFile() != null) {
+            attachmentResources.add(new AttachmentResource(
+                    reportFile.summaryFile().getFileName().toString(),
+                    new FileDataSource(reportFile.summaryFile().toFile())));
+        }
         if (LOGGER.isTraceEnabled()) {
             logContentsOfFile(file);
         }
@@ -135,6 +144,10 @@ public class EmailSender {
         context.put("rowCount", reportFile.rowCount());
         context.put("fileType", reportFile.fileType().name());
         context.put("fileName", reportFile.file().getFileName().toString());
+        // Always present, so that a template using it renders whether or not there was a summary to make.
+        // Jinjava is configured to fail on unknown tokens, so the key has to be here even when the value
+        // is not.
+        context.put("aiSummary", Objects.requireNonNullElse(reportFile.aiSummary(), ""));
         LOGGER.debug("createTemplateContext() - {}", context);
         return Collections.unmodifiableMap(context);
     }
