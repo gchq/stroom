@@ -271,6 +271,28 @@ public class AiDaoImpl implements AiDao {
     }
 
     @Override
+    public Optional<AiChatMessage> getWorkingMessage(final int chatId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select()
+                        .from(AI_CHAT_MESSAGE)
+                        .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                        .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.eq((int) AiMessageType.WORKING.getPrimitiveValue()))
+                        .orderBy(AI_CHAT_MESSAGE.ID.desc())
+                        .limit(1)
+                        .fetchOptional())
+                .map(RECORD_TO_AI_CHAT_MESSAGE::apply);
+    }
+
+    @Override
+    public void deleteWorkingMessages(final int chatId) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .deleteFrom(AI_CHAT_MESSAGE)
+                .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.eq((int) AiMessageType.WORKING.getPrimitiveValue()))
+                .execute());
+    }
+
+    @Override
     public void updateMessageText(final int messageId, final String message) {
         JooqUtil.context(aiDbConnProvider, context -> context
                 .update(AI_CHAT_MESSAGE)

@@ -91,6 +91,7 @@ public class HttpClientConfigPresenter
             getView().setConnectionRequestTimeout(config.getConnectionRequestTimeout());
             getView().setTimeToLive(config.getTimeToLive());
             getView().setCookiesEnabled(config.isCookiesEnabled());
+            getView().setFollowRedirects(config.isFollowRedirects());
             getView().setMaxConnections(config.getMaxConnections());
             getView().setMaxConnectionsPerRoute(config.getMaxConnectionsPerRoute());
             getView().setKeepAlive(config.getKeepAlive());
@@ -108,6 +109,7 @@ public class HttpClientConfigPresenter
                 .connectionRequestTimeout(getView().getConnectionRequestTimeout())
                 .timeToLive(getView().getTimeToLive())
                 .cookiesEnabled(getView().isCookiesEnabled())
+                .followRedirects(getView().isFollowRedirects())
                 .maxConnections(getView().getMaxConnections())
                 .maxConnectionsPerRoute(getView().getMaxConnectionsPerRoute())
                 .keepAlive(getView().getKeepAlive())
@@ -139,6 +141,10 @@ public class HttpClientConfigPresenter
         void setCookiesEnabled(boolean cookiesEnabled);
 
         boolean isCookiesEnabled();
+
+        void setFollowRedirects(boolean followRedirects);
+
+        boolean isFollowRedirects();
 
         void setMaxConnections(int maxConnections);
 

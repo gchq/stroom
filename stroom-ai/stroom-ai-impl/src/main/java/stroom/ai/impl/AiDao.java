@@ -33,6 +33,18 @@ public interface AiDao {
 
     List<AiChatMessage> getMessagesSince(int chatId, int lastSeenMessageId);
 
+    /**
+     * @return The chat's WORKING message if one is in place, i.e. if a question is being processed.
+     */
+    Optional<AiChatMessage> getWorkingMessage(int chatId);
+
+    /**
+     * Removes every WORKING message for the chat. A server that stopped mid-question leaves one
+     * behind, and a chat that appears to be working forever is one that can never be polled to a
+     * conclusion.
+     */
+    void deleteWorkingMessages(int chatId);
+
     void updateMessageText(int messageId, String message);
 
     void deleteMessage(int messageId);
