@@ -14775,6 +14775,9 @@
             "items" : {
               "$ref" : "#/components/schemas/AiChatMessage"
             }
+          },
+          "workingMessage" : {
+            "$ref" : "#/components/schemas/AiChatMessage"
           }
         }
       },
@@ -20900,6 +20903,9 @@
             "$ref" : "#/components/schemas/SimpleDuration"
           },
           "cookiesEnabled" : {
+            "type" : "boolean"
+          },
+          "followRedirects" : {
             "type" : "boolean"
           },
           "keepAlive" : {

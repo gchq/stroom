@@ -10202,6 +10202,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AiChatMessage"
+        workingMessage:
+          $ref: "#/components/schemas/AiChatMessage"
     AnalyticDataShard:
       type: object
       properties:
@@ -15194,6 +15196,8 @@ components:
         connectionTimeout:
           $ref: "#/components/schemas/SimpleDuration"
         cookiesEnabled:
+          type: boolean
+        followRedirects:
           type: boolean
         keepAlive:
           $ref: "#/components/schemas/SimpleDuration"
