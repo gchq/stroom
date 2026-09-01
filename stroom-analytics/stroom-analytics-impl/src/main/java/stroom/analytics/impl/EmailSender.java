@@ -103,18 +103,7 @@ public class EmailSender {
                 effectiveExecutionTime);
 
         final EmailContent renderedEmail = ruleEmailTemplatingService.renderEmail(emailDestination, context);
-
-        final List<AttachmentResource> attachmentResources = new ArrayList<>();
-        attachmentResources.add(new AttachmentResource(
-                file.getFileName().toString(),
-                new FileDataSource(file.toFile())));
-        // A summary that could not go inside the report travels beside it, as its own attachment rather
-        // than as an archive the recipient has to unpack.
-        if (reportFile.summaryFile() != null) {
-            attachmentResources.add(new AttachmentResource(
-                    reportFile.summaryFile().getFileName().toString(),
-                    new FileDataSource(reportFile.summaryFile().toFile())));
-        }
+        final List<AttachmentResource> attachmentResources = createAttachments(reportFile);
         if (LOGGER.isTraceEnabled()) {
             logContentsOfFile(file);
         }
@@ -131,7 +120,24 @@ public class EmailSender {
         }
     }
 
-    private static @NonNull Map<String, Object> createTemplateContext(final ReportDoc reportDoc,
+    /**
+     * @return The report, and its summary too where the summary could not go inside the report. Separate
+     * attachments rather than an archive, so the recipient does not have to unpack anything.
+     */
+    static List<AttachmentResource> createAttachments(final ReportFile reportFile) {
+        final List<AttachmentResource> attachmentResources = new ArrayList<>();
+        attachmentResources.add(new AttachmentResource(
+                reportFile.file().getFileName().toString(),
+                new FileDataSource(reportFile.file().toFile())));
+        if (reportFile.summaryFile() != null) {
+            attachmentResources.add(new AttachmentResource(
+                    reportFile.summaryFile().getFileName().toString(),
+                    new FileDataSource(reportFile.summaryFile().toFile())));
+        }
+        return attachmentResources;
+    }
+
+    static @NonNull Map<String, Object> createTemplateContext(final ReportDoc reportDoc,
                                                                       final ReportFile reportFile,
                                                                       final Instant executionTime,
                                                                       final Instant effectiveExecutionTime) {

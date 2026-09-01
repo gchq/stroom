@@ -373,9 +373,19 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
         if (aiSummary != null
             && (DownloadSearchResultFileType.CSV.equals(fileType)
                 || DownloadSearchResultFileType.TSV.equals(fileType))) {
-            summaryFile = tempDirProvider.get().resolve(
+            final Path candidate = tempDirProvider.get().resolve(
                     getFileName(reportDoc.getName() + "_" + dateTime + " summary", "md"));
-            Files.writeString(summaryFile, aiSummary);
+            try {
+                Files.writeString(candidate, aiSummary);
+                summaryFile = candidate;
+            } catch (final IOException e) {
+                // As with the summary itself, a companion that cannot be written costs the summary and
+                // not the report. Throwing here would also strand the report file, which is only cleaned
+                // up once this method has returned it.
+                LOGGER.warn(() -> "Unable to write the AI summary file for report '" + reportDoc.getName()
+                                  + "', sending the report without it - " + LogUtil.exceptionMessage(e), e);
+                deleteTempFile(candidate);
+            }
         }
 
         return new ReportFile(file, fileType, totalRowCount, aiSummary, summaryFile);

@@ -23,7 +23,6 @@ import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -129,7 +128,7 @@ public class ReportSettingsViewImpl extends ViewWithUiHandlers<ChangeUiHandlers>
     }
 
     @UiHandler("aiSummaryPrompt")
-    public void onAiSummaryPrompt(final KeyUpEvent event) {
+    public void onAiSummaryPrompt(final ValueChangeEvent<String> event) {
         getUiHandlers().onChange();
     }
 
