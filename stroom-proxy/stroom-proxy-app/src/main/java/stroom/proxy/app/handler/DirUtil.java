@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -649,9 +650,11 @@ public class DirUtil {
     }
 
     /**
-     * Suffix for the staging directory {@link #moveDirAcrossFileStores} builds on the target's
-     * filesystem before renaming it into place.
+     * Name parts for the staging directory {@link #moveDirAcrossFileStores} builds on the target's
+     * filesystem before renaming it into place. Dot-prefixed so it does not read as a published file
+     * group to whatever consumes the destination, and never numeric, so {@link #getMaxDirId} ignores it.
      */
+    static final String CROSS_DEVICE_PREFIX = ".";
     static final String CROSS_DEVICE_SUFFIX = ".xdev";
 
     /**
@@ -685,13 +688,40 @@ public class DirUtil {
     }
 
     /**
+     * A staging path beside {@code target}, unique to this attempt.
+     * <p>
+     * It must not be derived from the target alone. Commit ids are handed out from a counter that is
+     * reloaded from disk by scanning for the highest <em>numeric</em> directory name, and a file group
+     * being copied here is not yet numeric - so two movers can legitimately be given the same target,
+     * and a shared staging path would let one delete or merge into the other's half-copied tree. A
+     * unique name reduces that back to a losing {@code ATOMIC_MOVE}, which fails cleanly and is
+     * retried under a fresh id.
+     * </p>
+     * <p>Package private so the uniqueness can be asserted directly.</p>
+     */
+    /**
+     * @return true if {@code path} is a staging directory left by an interrupted
+     * {@link #moveDirAcrossFileStores}. Such a directory holds a partially copied tree whose source
+     * still exists, so it is residue rather than data: anything scanning a directory that a
+     * {@link #moveDir} target lives in must skip it rather than adopt it as a file group.
+     */
+    static boolean isStagingDir(final Path path) {
+        return path != null && path.getFileName().toString().endsWith(CROSS_DEVICE_SUFFIX);
+    }
+
+    static Path stagingPathFor(final Path target) {
+        return target.resolveSibling(
+                CROSS_DEVICE_PREFIX + target.getFileName() + "." + UUID.randomUUID() + CROSS_DEVICE_SUFFIX);
+    }
+
+    /**
      * The cross-filesystem half of {@link #moveDir}, called directly by
      * {@link ForwardFileDestinationImpl} when the operator has already declared that the destination
      * cannot do an atomic move, so there is no point provoking the exception on every file group.
      * Package private so it can also be exercised without needing two filesystems to hand.
      */
     static void moveDirAcrossFileStores(final Path source, final Path target) throws IOException {
-        final Path staging = target.resolveSibling(target.getFileName().toString() + CROSS_DEVICE_SUFFIX);
+        final Path staging = stagingPathFor(target);
 
         // ATOMIC_MOVE fails when the target's parent is absent, and the two paths of this method must
         // agree. copyRecursively would otherwise conjure the parent, so a layout mistake would surface
@@ -705,10 +735,6 @@ public class DirUtil {
         }
 
         try {
-            if (Files.exists(staging)) {
-                // A previous attempt was interrupted after creating it. Its content is unreferenced.
-                FileUtil.deleteDir(staging);
-            }
             copyRecursively(source, staging);
 
             // Beside the target, so this rename is within one filesystem and is atomic.

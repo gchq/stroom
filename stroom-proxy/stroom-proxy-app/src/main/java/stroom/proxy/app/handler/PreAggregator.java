@@ -50,7 +50,6 @@ import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -140,7 +139,9 @@ public class PreAggregator {
         final AtomicInteger recoveryFailureCount = new AtomicInteger();
         final AtomicInteger delCount = new AtomicInteger();
         try (final Stream<Path> stream = Files.list(stagedSplittingDir)) {
-            stream.forEach(splitGroup -> {
+            // A staging dir here is a partially copied tree left by a kill inside the move below,
+            // and its source still exists. Adopting it would recover a truncated file group.
+            stream.filter(path -> !DirUtil.isStagingDir(path)).forEach(splitGroup -> {
                 final AtomicInteger splitGroupItemCount = new AtomicInteger();
                 try (final Stream<Path> fileGroupStream = Files.list(splitGroup)) {
                     fileGroupStream.forEach(dir -> {
@@ -242,8 +243,9 @@ public class PreAggregator {
                 final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
                 // Now examine each file group to read state.
                 try (final Stream<Path> groupStream = Files.list(aggregateDir)) {
-                    // Now read the entries.
-                    groupStream.forEach(groupDir -> {
+                    // Now read the entries, skipping any staging residue - it is a partial copy whose
+                    // source survives, and its name would not parse as a part id.
+                    groupStream.filter(path -> !DirUtil.isStagingDir(path)).forEach(groupDir -> {
                         final FileGroup fileGroup = new FileGroup(groupDir);
                         final Path entriesFile = fileGroup.getEntries();
                         // Track the highest id rather than counting survivors. Counting meant that a

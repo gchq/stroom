@@ -308,4 +308,34 @@ public class TestPreAggregator extends StroomUnitTest {
                 .isInstanceOf(UncheckedIOException.class);
     }
 
+    /**
+     * A kill inside the cross-filesystem move that publishes into {@code 23_split_output} leaves a
+     * staging directory holding a partially copied tree. Its source still exists, so it is residue,
+     * not data - the start-up recovery scan must not reach into it. It used to, because a staging
+     * directory is structurally indistinguishable from a real split group.
+     */
+    @Test
+    void testStagingResidueInTheSplitOutputIsNotTouchedByRecovery() throws IOException {
+        final Path dataDir = Files.createTempDirectory("data");
+        final DataDirProvider dataDirProvider = () -> dataDir;
+        final CleanupDirQueue cleanupDirQueue = new CleanupDirQueue(dataDirProvider);
+        final ProxyConfig proxyConfig = getProxyConfig(false);
+
+        final Path splitOutputDir = dataDir.resolve(DirNames.PRE_AGGREGATE_SPLIT_OUTPUT);
+        Files.createDirectories(splitOutputDir);
+        final Path staging = DirUtil.stagingPathFor(splitOutputDir.resolve("splitGroup"));
+        Files.createDirectories(staging);
+
+        // The constructor runs the recovery scan.
+        new PreAggregator(
+                cleanupDirQueue,
+                dataDirProvider,
+                proxyServices,
+                proxyConfig::getAggregatorConfig, new MockMetrics());
+
+        assertThat(staging)
+                .as("recovery must leave staging residue alone rather than treat it as a split group")
+                .exists();
+    }
+
 }

@@ -23,6 +23,8 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -49,9 +51,9 @@ class TestDirUtilMoveDir {
         assertThat(source)
                 .doesNotExist();
 
-        // The staging dir the fallback builds beside the target must not be left behind.
-        assertThat(target.resolveSibling(target.getFileName().toString() + DirUtil.CROSS_DEVICE_SUFFIX))
-                .doesNotExist();
+        // No staging dir may be left behind, whatever it was called.
+        assertThat(stagingResidueIn(tempDir))
+                .isEmpty();
     }
 
     @Test
@@ -78,8 +80,7 @@ class TestDirUtilMoveDir {
         writeTree(source);
 
         // Simulate a previous attempt interrupted after it had copied part of the tree.
-        final Path staging = target.resolveSibling(
-                target.getFileName().toString() + DirUtil.CROSS_DEVICE_SUFFIX);
+        final Path staging = DirUtil.stagingPathFor(target);
         Files.createDirectories(staging);
         Files.writeString(staging.resolve("stale.txt"), "from an earlier attempt");
 
@@ -88,6 +89,58 @@ class TestDirUtilMoveDir {
         assertTreeAt(target);
         assertThat(target.resolve("stale.txt"))
                 .doesNotExist();
+
+        // It is orphaned rather than adopted: this attempt staged elsewhere and never touched it.
+        // Nothing reclaims it, which is the cost of the uniqueness the test below requires.
+        assertThat(staging.resolve("stale.txt"))
+                .exists();
+    }
+
+    /**
+     * Two movers can legitimately be handed the same target - see the test below for why - so the
+     * staging path must not be derived from the target alone. When it was, the second mover deleted
+     * or merged into the first's half-copied tree.
+     */
+    @Test
+    void testTheStagingPathIsUniqueToEachAttempt(@TempDir final Path tempDir) {
+        final Path target = tempDir.resolve("group").resolve("0000000005");
+
+        final Path first = DirUtil.stagingPathFor(target);
+        final Path second = DirUtil.stagingPathFor(target);
+
+        assertThat(first)
+                .isNotEqualTo(second);
+        // Beside the target, so the rename that publishes it stays within one filesystem.
+        assertThat(first.getParent())
+                .isEqualTo(target.getParent());
+        assertThat(first.getFileName().toString())
+                .startsWith(DirUtil.CROSS_DEVICE_PREFIX)
+                .endsWith(DirUtil.CROSS_DEVICE_SUFFIX);
+    }
+
+    /**
+     * Why two movers can be handed the same target: commit ids come from a counter reloaded by
+     * scanning for the highest numeric directory name, and a file group still in staging is not
+     * numeric, so it does not raise the count.
+     */
+    @Test
+    void testTheCommitIdScanCannotSeeAStagingDir(@TempDir final Path tempDir) throws IOException {
+        for (int id = 1; id <= 4; id++) {
+            Files.createDirectories(DirUtil.createPath(tempDir, id));
+        }
+        final Path fifth = DirUtil.createPath(tempDir, 5);
+        Files.createDirectories(DirUtil.stagingPathFor(fifth));
+
+        assertThat(DirUtil.getMaxDirId(tempDir))
+                .isEqualTo(4L);
+    }
+
+    private static List<Path> stagingResidueIn(final Path dir) throws IOException {
+        try (final Stream<Path> stream = Files.walk(dir)) {
+            return stream
+                    .filter(path -> path.getFileName().toString().endsWith(DirUtil.CROSS_DEVICE_SUFFIX))
+                    .toList();
+        }
     }
 
     @Test
