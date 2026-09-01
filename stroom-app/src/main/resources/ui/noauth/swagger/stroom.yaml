@@ -497,7 +497,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AskStroomAIConfig"
+                $ref: "#/components/schemas/AskStroomAiConfig"
           description: default response
       summary: Get the default config to use for asking questions
       tags:
@@ -579,7 +579,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AskStroomAIConfig"
+              $ref: "#/components/schemas/AskStroomAiConfig"
         description: config
         required: true
       responses:
@@ -2543,9 +2543,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/DataGenDoc"
           description: default response
-      summary: Fetch an analytic rule doc by its UUID
+      summary: Fetch a data gen doc by its UUID
       tags:
-      - Queries
+      - Data Generators
     put:
       operationId: updateDataGen
       parameters:
@@ -2568,9 +2568,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/DataGenDoc"
           description: default response
-      summary: Update an analytic rule doc
+      summary: Update a data gen doc
       tags:
-      - Queries
+      - Data Generators
   /dbStatus/v1:
     get:
       operationId: getDbSystemTableStatus
@@ -10202,6 +10202,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AiChatMessage"
+        workingMessage:
+          $ref: "#/components/schemas/AiChatMessage"
     AnalyticDataShard:
       type: object
       properties:
@@ -10744,7 +10746,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AnyValue"
-    AskStroomAIConfig:
+    AskStroomAiConfig:
       type: object
       properties:
         attachmentDownloadTimeoutMs:
@@ -10752,6 +10754,23 @@ components:
           format: int64
         chatSystemPrompt:
           type: string
+        dockLocation:
+          type: string
+          enum:
+          - TOP
+          - LEFT
+          - BOTTOM
+          - RIGHT
+        dockSize:
+          type: integer
+          format: int32
+        dockType:
+          type: string
+          enum:
+          - DIALOG
+          - TAB
+          - FLOAT
+          - DOCK
         enableDebugDetail:
           type: boolean
         historySummaryPrompt:
@@ -10784,7 +10803,7 @@ components:
         aiChat:
           $ref: "#/components/schemas/AiChat"
         config:
-          $ref: "#/components/schemas/AskStroomAIConfig"
+          $ref: "#/components/schemas/AskStroomAiConfig"
         context:
           $ref: "#/components/schemas/AskStroomAiContext"
         message:
@@ -15196,6 +15215,8 @@ components:
         connectionTimeout:
           $ref: "#/components/schemas/SimpleDuration"
         cookiesEnabled:
+          type: boolean
+        followRedirects:
           type: boolean
         keepAlive:
           $ref: "#/components/schemas/SimpleDuration"
@@ -19622,6 +19643,10 @@ components:
           type: boolean
         formatOutput:
           type: boolean
+        hasOutput:
+          type: boolean
+        indicativeCounts:
+          type: boolean
         indicators:
           $ref: "#/components/schemas/Indicators"
         input:
@@ -21558,13 +21583,8 @@ components:
     UserPreferences:
       type: object
       properties:
-        aiDockLocation:
-          type: string
-        aiDockSize:
-          type: integer
-          format: int32
-        aiDockType:
-          type: string
+        askStroomAiConfig:
+          $ref: "#/components/schemas/AskStroomAiConfig"
         dateTimePattern:
           type: string
           description: A date time formatting pattern string conforming to the specification

@@ -76,6 +76,7 @@ proxyConfig:
       connectionRequestTimeout: "PT3M"
       connectionTimeout: "PT3M"
       cookiesEnabled: false
+      followRedirects: true
       keepAlive: "PT0S"
       maxConnections: 1024
       maxConnectionsPerRoute: 1024

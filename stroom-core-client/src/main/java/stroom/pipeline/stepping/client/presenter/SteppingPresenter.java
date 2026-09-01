@@ -133,6 +133,10 @@ public class SteppingPresenter
     private final InlineSvgToggleButton toggleLogPaneButton;
     private boolean foundRecord;
     private boolean busyTranslating;
+    // Whether the in-flight step is answering an applied step filter. A filtered step is a scan - the
+    // server materialises and tests records until one matches - so the progress message says "Searching"
+    // rather than "Stepping" to set the expectation of a wait proportional to where the next match is.
+    private boolean searching;
     private SteppingResult lastFoundResult;
     private SteppingResult currentResult;
     private final ButtonPanel leftButtons;
@@ -553,7 +557,7 @@ public class SteppingPresenter
             if (stepData != null) {
                 final SharedElementData elementData = stepData.getElementData(elementId.getId());
                 if (elementData != null) {
-                    final Indicators indicators = elementData.getIndicators();
+                    final Indicators indicators = displayIndicators(elementId, elementData);
 
                     // Update the error indicators for all panes
                     elementPresenter.setIndicators(indicators);
@@ -574,6 +578,28 @@ public class SteppingPresenter
         });
     }
 
+    /**
+     * The indicators to display for an element's panes: the ones its run raised, plus a note when the
+     * served record's counts are indicative - the record was produced on its own, so counting elements
+     * never saw the records before it (see {@link SharedElementData#isIndicativeCounts()}). The note has no
+     * location, so it appears in the element's console rather than as an editor gutter marker.
+     */
+    private Indicators displayIndicators(final ElementId elementId, final SharedElementData elementData) {
+        final Indicators indicators = elementData.getIndicators();
+        if (!elementData.isIndicativeCounts()) {
+            return indicators;
+        }
+        final Indicators combined = new Indicators();
+        if (indicators != null) {
+            combined.addAll(indicators);
+        }
+        combined.add(new StoredError(Severity.INFO, null, elementId,
+                "Counts are indicative: this record was produced on its own, so counting elements "
+                + "(e.g. the EventId added by IdEnrichmentFilter) did not see the records before it. "
+                + "Stepping from the start of the stream gives exact counts."));
+        return combined;
+    }
+
     private void clearIndicators(final ElementPresenter elementPresenter,
                                  final ElementId elementId) {
         elementPresenter.clearAllIndicators();
@@ -587,7 +613,7 @@ public class SteppingPresenter
         if (stepData != null) {
             final SharedElementData elementData = NullSafe.get(elementId, ElementId::getId, stepData::getElementData);
             if (elementData != null) {
-                final Indicators indicators = elementData.getIndicators();
+                final Indicators indicators = displayIndicators(elementId, elementData);
                 updateToggleConsoleBtnVisibility(indicators, elementId);
             } else {
                 updateToggleConsoleBtnVisibility(null, elementId);
@@ -722,6 +748,12 @@ public class SteppingPresenter
 
         requestBuilder.childStreamType(childStreamType);
 
+        // A stepping session is scoped to the stream selection it was created with, so this starts a new
+        // one. Dropping the id also lets the server release the old session's captured data rather than
+        // holding it until the idle reap.
+        terminate();
+        requestBuilder.sessionUuid(null);
+
         if (stepType != null) {
             step(stepType, new StepLocation(
                     meta.getId(),
@@ -833,8 +865,11 @@ public class SteppingPresenter
             stepMessage.setVisible(true);
             terminateButton.setEnabled(true);
 
-            // Set a null session UUID as this is a new stepping session.
-            requestBuilder.sessionUuid(null);
+            // Keep the session UUID from previous steps. The server holds the stepping session - the data it
+            // has already captured for this stream selection - against that id, so preserving it across
+            // FIRST/FORWARD/BACKWARD/LAST/REFRESH is what lets each step be served from what was captured
+            // instead of running the pipeline again. It is cleared only when the selection changes (see
+            // beginStepping/setExpression); the server issues a new id if it no longer knows this one.
 
             final PipelineData pipelineData = pipelineModel.diff();
             pipelineDoc = pipelineDoc.copy().pipelineData(pipelineData).build();
@@ -869,7 +904,10 @@ public class SteppingPresenter
             requestBuilder.timeout(40L);
             requestBuilder.code(codeMap);
             requestBuilder.stepType(stepType);
-            requestBuilder.stepFilterMap(pipelineModel.getStepFilterMap());
+            final Map<String, SteppingFilterSettings> stepFilterMap = pipelineModel.getStepFilterMap();
+            requestBuilder.stepFilterMap(stepFilterMap);
+            searching = stepFilterMap != null && stepFilterMap.values().stream()
+                    .anyMatch(settings -> settings != null && settings.isFilterApplied());
 
             if (StepType.REFRESH.equals(stepType)) {
                 elementPresenterMap.values().stream()
@@ -886,12 +924,18 @@ public class SteppingPresenter
                 .create(STEPPING_RESOURCE)
                 .method(res -> res.step(requestBuilder.build()))
                 .onSuccess(response -> {
+                    // Adopt the session id whether or not this step finished. A step that resolves on its
+                    // first poll would otherwise leave us with no id, so the next press would start a new
+                    // server session and re-capture the stream from scratch.
+                    requestBuilder.sessionUuid(response.getSessionUuid());
+
                     if (!response.isComplete()) {
                         if (busyTranslating) {
                             final StepLocation progressLocation = response.getProgressLocation();
-                            stepMessage.getElement().setInnerHTML("Stepping... " +
+                            stepMessage.getElement().setInnerHTML((searching
+                                                                          ? "Searching... "
+                                                                          : "Stepping... ") +
                                                                   getStepLocationText(progressLocation));
-                            requestBuilder.sessionUuid(response.getSessionUuid());
                             poll();
                         } else {
                             stop();
