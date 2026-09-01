@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,8 +139,10 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public int countTasksForFilter(final int filterId, final String nodeName, final TaskStatus status) {
-        return 0;
+    public FilterTaskCounts countTasksForFilter(final int filterId,
+                                                final String nodeName,
+                                                final TaskStatus status) {
+        return new FilterTaskCounts(0, 0);
     }
 
     @Override

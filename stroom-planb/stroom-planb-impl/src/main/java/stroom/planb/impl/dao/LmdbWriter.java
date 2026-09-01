@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,23 @@ public class LmdbWriter implements AutoCloseable {
         } finally {
             dbCommitLock.unlock();
         }
+    }
+
+    /**
+     * Discard the current write transaction without committing it. {@link #close()} commits whatever is in
+     * the transaction, even when the work that wrote it failed part way through, so writers that must not
+     * publish partial work, e.g. additive merges, call this when that work throws. After an abort the
+     * writer can still be closed normally and a subsequent {@link #getWriteTxn()} starts a new transaction.
+     */
+    public void abort() {
+        if (writeTxn != null) {
+            try {
+                writeTxn.close();
+            } finally {
+                writeTxn = null;
+            }
+        }
+        changeCount = 0;
     }
 
     @Override

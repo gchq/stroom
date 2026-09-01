@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,12 @@ import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.data.TracesRemoteQueryResourceImpl;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
-import stroom.planb.impl.pipeline.StateFetcherImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.api.QueryNodeResolver;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
-import stroom.query.language.functions.StateFetcher;
 import stroom.query.language.functions.StateProvider;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
@@ -58,8 +56,9 @@ public class PlanBModule extends AbstractModule {
         install(new PlanBElementModule());
 
         bind(PlanBLookup.class).to(PlanBLookupImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
-        bind(StateFetcher.class).to(StateFetcherImpl.class);
+        // A single StateProvider binding, deliberately, so a second provider is a duplicate binding error
+        // at startup rather than a silent precedence problem. See gh-5692.
+        bind(StateProvider.class).to(StateProviderImpl.class);
 
         // Caches
         bind(PlanBDocCache.class).to(PlanBDocCacheImpl.class);

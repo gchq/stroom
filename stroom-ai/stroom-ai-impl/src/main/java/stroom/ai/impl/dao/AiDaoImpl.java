@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -268,6 +268,28 @@ public class AiDaoImpl implements AiDao {
                         .orderBy(AI_CHAT_MESSAGE.CREATE_TIME_MS.asc())
                         .fetch())
                 .map(RECORD_TO_AI_CHAT_MESSAGE::apply);
+    }
+
+    @Override
+    public Optional<AiChatMessage> getWorkingMessage(final int chatId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select()
+                        .from(AI_CHAT_MESSAGE)
+                        .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                        .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.eq((int) AiMessageType.WORKING.getPrimitiveValue()))
+                        .orderBy(AI_CHAT_MESSAGE.ID.desc())
+                        .limit(1)
+                        .fetchOptional())
+                .map(RECORD_TO_AI_CHAT_MESSAGE::apply);
+    }
+
+    @Override
+    public void deleteWorkingMessages(final int chatId) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .deleteFrom(AI_CHAT_MESSAGE)
+                .where(AI_CHAT_MESSAGE.FK_AI_CHAT_ID.eq(chatId))
+                .and(AI_CHAT_MESSAGE.MESSAGE_TYPE.eq((int) AiMessageType.WORKING.getPrimitiveValue()))
+                .execute());
     }
 
     @Override

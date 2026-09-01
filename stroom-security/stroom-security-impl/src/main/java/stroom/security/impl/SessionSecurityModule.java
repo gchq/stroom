@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.security.impl;
 
+import stroom.security.api.UserSessionEvictor;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.ServletBinder;
 
@@ -28,6 +29,7 @@ public class SessionSecurityModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(SessionListService.class).to(SessionListListener.class);
+        bind(UserSessionEvictor.class).to(SessionListListener.class);
 
         GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
                 .addBinding(SessionListListener.class);

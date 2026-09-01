@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package stroom.search.solr.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
@@ -175,7 +174,6 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
         addBooleanColumn("Term Payloads", SolrIndexField::isTermPayloads);
         addBooleanColumn("Sort Missing First", SolrIndexField::isSortMissingFirst);
         addBooleanColumn("Sort Missing Last", SolrIndexField::isSortMissingLast);
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addStringColumn(final String name, final Function<SolrIndexField, String> function) {

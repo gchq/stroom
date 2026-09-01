@@ -23,5 +23,6 @@ dependencies {
     implementation libs.dropwizard.validation
     implementation libs.jose4j
 
+    testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }

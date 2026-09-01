@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,6 +191,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             }
             case final AddAllPermissionsFrom req -> {
                 Objects.requireNonNull(req.getSourceDocRef(), "Null sourceDocRef");
+                // Copying a source doc's permissions exposes them on the destination (which the caller can
+                // then read), so require permission to read the source's permissions too.
+                checkGetPermission(req.getSourceDocRef());
                 documentPermissionDao.addDocumentPermissions(
                         req.getSourceDocRef().getUuid(),
                         docRef.getUuid());
@@ -204,6 +207,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             }
             case final SetAllPermissionsFrom req -> {
                 Objects.requireNonNull(req.getSourceDocRef(), "Null sourceDocRef");
+                // Copying a source doc's permissions exposes them on the destination (which the caller can
+                // then read), so require permission to read the source's permissions too.
+                checkGetPermission(req.getSourceDocRef());
                 documentPermissionDao.setDocumentPermissions(
                         req.getSourceDocRef().getUuid(),
                         docRef.getUuid());

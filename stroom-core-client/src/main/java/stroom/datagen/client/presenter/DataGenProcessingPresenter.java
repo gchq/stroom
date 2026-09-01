@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,14 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
+/**
+ * The Execution tab, which hosts the scheduling editor shared with analytics.
+ * <p>
+ * A generator's schedule is stored against the doc rather than in it, and
+ * {@link ScheduledProcessingPresenter} saves it separately. That is why {@link #onWrite} returns the
+ * doc untouched: this tab has nothing of its own to contribute to it.
+ * </p>
+ */
 public class DataGenProcessingPresenter
         extends DocPresenter<DataGenProcessingView, DataGenDoc> {
 

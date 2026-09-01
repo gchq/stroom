@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,10 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
+/**
+ * Editor for a data generator, presenting Settings (destination feed and template), Execution
+ * (schedule), Documentation and Permissions as tabs.
+ */
 public class DataGenPresenter
         extends DocTabPresenter<LinkTabPanelView, DataGenDoc> {
 
@@ -54,7 +58,7 @@ public class DataGenPresenter
 
         addTab(SETTINGS, new DocTabProvider<>(dataGenSettingsPresenterProvider::get));
         addTab(EXECUTION, new DocTabProvider<>(() -> dataGenProcessingPresenter));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<DataGenDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,

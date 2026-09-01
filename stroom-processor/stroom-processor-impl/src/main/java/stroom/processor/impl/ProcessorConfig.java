@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     private static final boolean DEFAULT_CREATE_TASKS_BEYOND_PROCESS_LIMIT = true;
     private static final int DEFAULT_TASK_CREATION_THREAD_COUNT = 5;
     private static final int DEFAULT_DATABASE_MULTI_INSERT_MAX_BATCH_SIZE = 500;
+    private static final boolean DEFAULT_USE_MAX_META_ID_FROM_PREVIOUS_POLL = true;
 
     private final ProcessorDbConfig dbConfig;
     private final boolean assignTasks;
@@ -65,6 +66,9 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
 
     private final StroomDuration waitToQueueTasksDuration;
     private StroomDuration skipNonProducingFiltersDuration;
+    private StroomDuration skipNonProducingFiltersMaxDuration;
+    private StroomDuration skipEmptyFilterFetchDuration;
+    private boolean useMaxMetaIdFromPreviousPoll;
 
     public ProcessorConfig() {
         dbConfig = new ProcessorDbConfig();
@@ -102,6 +106,9 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         disownDeadTasksAfter = StroomDuration.ofMinutes(10);
         waitToQueueTasksDuration = StroomDuration.ofSeconds(10);
         skipNonProducingFiltersDuration = StroomDuration.ofSeconds(10);
+        skipNonProducingFiltersMaxDuration = StroomDuration.ofMinutes(1);
+        skipEmptyFilterFetchDuration = StroomDuration.ofSeconds(10);
+        useMaxMetaIdFromPreviousPoll = DEFAULT_USE_MAX_META_ID_FROM_PREVIOUS_POLL;
     }
 
     @SuppressWarnings("unused")
@@ -124,7 +131,13 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter,
                            @JsonProperty("waitToQueueTasksDuration") final StroomDuration waitToQueueTasksDuration,
                            @JsonProperty("skipNonProducingFiltersDuration") final StroomDuration
-                                   skipNonProducingFiltersDuration) {
+                                   skipNonProducingFiltersDuration,
+                           @JsonProperty("skipNonProducingFiltersMaxDuration") final StroomDuration
+                                   skipNonProducingFiltersMaxDuration,
+                           @JsonProperty("skipEmptyFilterFetchDuration") final StroomDuration
+                                   skipEmptyFilterFetchDuration,
+                           @JsonProperty("useMaxMetaIdFromPreviousPoll")
+                               final Boolean useMaxMetaIdFromPreviousPoll) {
         this.dbConfig = dbConfig;
         this.assignTasks =
                 Objects.requireNonNullElse(assignTasks, DEFAULT_ASSIGN_TASKS);
@@ -150,6 +163,10 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.disownDeadTasksAfter = disownDeadTasksAfter;
         this.waitToQueueTasksDuration = waitToQueueTasksDuration;
         this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
+        this.skipNonProducingFiltersMaxDuration = skipNonProducingFiltersMaxDuration;
+        this.skipEmptyFilterFetchDuration = skipEmptyFilterFetchDuration;
+        this.useMaxMetaIdFromPreviousPoll = Objects.requireNonNullElse(
+                useMaxMetaIdFromPreviousPoll, DEFAULT_USE_MAX_META_ID_FROM_PREVIOUS_POLL);
     }
 
     @Override
@@ -180,13 +197,25 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     @Min(1)
     @JsonPropertyDescription("The number of tasks to attempt to queue from filters considered in priority order. " +
                              "Note that this number will be exceeded if we have currently queued tasks from lower " +
-                             "priority filters.")
+                             "priority filters. This is a cluster wide total shared by all nodes, so it should " +
+                             "comfortably exceed the number of tasks all nodes will ask for at once, i.e. the " +
+                             "number of nodes multiplied by their Data Processing job task limit. Note also that " +
+                             "no further filters of a processing profile are considered once half this number is " +
+                             "already queued for that profile. It is applied separately to each processing " +
+                             "profile, and to the filters that have no profile, so that a busy profile can't fill " +
+                             "the queue and leave the nodes of another profile asking for work that is never " +
+                             "queued. The total number of queued tasks therefore grows with the number of " +
+                             "profiles in use.")
     public int getQueueSize() {
         return queueSize;
     }
 
     @Min(1)
-    @JsonPropertyDescription("How many tasks should we try to create in the DB ready to be queued." +
+    @JsonPropertyDescription("How many tasks should we try to create in the DB ready to be queued. " +
+                             "This is applied separately to each processing profile, and to the filters that have " +
+                             "no profile, so that a busy profile can't use up a whole task creation run and leave " +
+                             "the nodes of another profile with nothing they are allowed to process. The total " +
+                             "number of tasks created in a run therefore grows with the number of profiles in use. " +
                              "Note that the number of tasks created may be greater than this number as each task " +
                              "creation thread will " +
                              "try and create the same number of tasks.")
@@ -247,13 +276,59 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     }
 
     @JsonPropertyDescription("How long should we wait before retrying task creation for previously non producing " +
-                             "filters.")
+                             "filters. This is also the amount by which the wait increases after each successive " +
+                             "poll that creates no tasks, up to skipNonProducingFiltersMaxDuration.")
     public StroomDuration getSkipNonProducingFiltersDuration() {
         return skipNonProducingFiltersDuration;
     }
 
     public void setSkipNonProducingFiltersDuration(final StroomDuration skipNonProducingFiltersDuration) {
         this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
+    }
+
+    @JsonPropertyDescription("The longest we will wait before retrying task creation for a filter that keeps " +
+                             "creating no tasks. The wait starts at skipNonProducingFiltersDuration and grows by " +
+                             "that amount after each successive non producing poll until it reaches this value. " +
+                             "This bounds how long a filter that suddenly receives data will wait for its first " +
+                             "task, so raising it reduces the cost of polling idle filters at the expense of " +
+                             "latency. Individual filters can override this with their own maximum task creation " +
+                             "delay. Set to zero to poll non producing filters on every run.")
+    public StroomDuration getSkipNonProducingFiltersMaxDuration() {
+        return skipNonProducingFiltersMaxDuration;
+    }
+
+    public void setSkipNonProducingFiltersMaxDuration(final StroomDuration skipNonProducingFiltersMaxDuration) {
+        this.skipNonProducingFiltersMaxDuration = skipNonProducingFiltersMaxDuration;
+    }
+
+    @JsonPropertyDescription("How long to leave a filter alone after looking for created tasks to queue for it " +
+                             "and finding none. The queue is filled after every task assignment, and a fill only " +
+                             "stops early once every processing profile has enough tasks queued, which a profile " +
+                             "with nothing to do never does, so without this every fill would query for every " +
+                             "filter that has no work. This bounds how long tasks created for an idle filter wait " +
+                             "before being queued. Set to zero to look for tasks for every filter on every fill.")
+    public StroomDuration getSkipEmptyFilterFetchDuration() {
+        return skipEmptyFilterFetchDuration;
+    }
+
+    public void setSkipEmptyFilterFetchDuration(final StroomDuration skipEmptyFilterFetchDuration) {
+        this.skipEmptyFilterFetchDuration = skipEmptyFilterFetchDuration;
+    }
+
+    @JsonPropertyDescription("Should task creation be bounded by the max meta id seen on the previous poll " +
+                             "rather than the current max meta id? The database allocates meta ids at insert " +
+                             "time but only makes the rows visible at commit time, so a max id read now may " +
+                             "sit above a meta that is still in flight. Using the previous poll's value gives " +
+                             "such a meta a full poll interval to become visible before task creation moves " +
+                             "past it, at the cost of up to one poll interval of extra latency before a new " +
+                             "stream gets a task. Setting this to false bounds task creation with the current " +
+                             "max meta id instead, which risks a stream silently never being processed.")
+    public boolean isUseMaxMetaIdFromPreviousPoll() {
+        return useMaxMetaIdFromPreviousPoll;
+    }
+
+    public void setUseMaxMetaIdFromPreviousPoll(final boolean useMaxMetaIdFromPreviousPoll) {
+        this.useMaxMetaIdFromPreviousPoll = useMaxMetaIdFromPreviousPoll;
     }
 
     @Override
@@ -275,6 +350,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                ", disownDeadTasksAfter=" + disownDeadTasksAfter +
                ", waitToQueueTasksDuration=" + waitToQueueTasksDuration +
                ", skipNonProducingFiltersDuration=" + skipNonProducingFiltersDuration +
+               ", useMaxMetaIdFromPreviousPoll=" + useMaxMetaIdFromPreviousPoll +
                '}';
     }
 }

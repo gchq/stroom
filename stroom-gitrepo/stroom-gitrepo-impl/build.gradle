@@ -30,11 +30,14 @@ dependencies {
     implementation project(':stroom-gitrepo:stroom-gitrepo-impl-db')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.guice
     implementation libs.jakarta.validation.api
+    implementation libs.http.client
+    implementation libs.jgit
     implementation libs.jgitssh
     implementation libs.jooq
     implementation libs.restygwt

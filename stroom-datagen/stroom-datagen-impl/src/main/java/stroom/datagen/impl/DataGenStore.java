@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,13 @@ import stroom.docstore.api.DocumentStore;
 
 import java.util.List;
 
+/**
+ * Document store for {@link DataGenDoc}.
+ */
 public interface DataGenStore extends DocumentStore<DataGenDoc> {
 
+    /**
+     * @return Every data generator the current user is permitted to read.
+     */
     List<DocRef> list();
 }

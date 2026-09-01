@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.credentials.impl.dao;
 
 import stroom.credentials.api.StoredSecret;
@@ -107,6 +123,40 @@ public class TestCredentialDaoImpl {
         assertThat(listOfAT.size()).isEqualTo(0);
         final ResultPage<CredentialWithPerms> listOfPC = find(CredentialType.SSH_KEY);
         assertThat(listOfPC.size()).isEqualTo(0);
+    }
+
+    /**
+     * The quick filter queries on a debounce as the user types, so partially typed input is an
+     * expected transient state. It must match no rows rather than propagate a parse error.
+     */
+    @Test
+    void testFind_partiallyTypedFilterDoesNotThrow() {
+        final Credential credential = createCred("dummy", "Test creds", System.currentTimeMillis());
+        credentialsDao.putStoredSecret(
+                new StoredSecret(credential, new UsernamePasswordSecret("username", "password"), null),
+                false);
+
+        // Sanity check - the row is findable with no filter, so an empty result below means the
+        // filter excluded it rather than there being nothing to find.
+        assertThat(findByFilter(null).size()).isEqualTo(1);
+        assertThat(findByFilter("Test").size()).isEqualTo(1);
+
+        // An incomplete field qualifier, as typed on the way to something valid.
+        assertThat(findByFilter("foo:").size()).isEqualTo(0);
+        assertThat(findByFilter("foo:bar").size()).isEqualTo(0);
+        // Unbalanced quote, likewise.
+        assertThat(findByFilter("\"Test").size()).isEqualTo(0);
+    }
+
+    private ResultPage<CredentialWithPerms> findByFilter(final String filter) {
+        final FindCredentialRequest request = new FindCredentialRequest(
+                PageRequest.unlimited(),
+                null,
+                filter,
+                null,
+                null);
+        return credentialsDao.findCredentialsWithPermissions(request, cred ->
+                new CredentialWithPerms(cred, true, true));
     }
 
     private Credential createCred(final String uuid,

@@ -34,6 +34,8 @@ dependencies {
     implementation libs.jaxb.api
     implementation libs.slf4j.api
 
+    // Java migrations use JAXB to read legacy XML, so they need an impl at runtime
+    runtimeOnly libs.jaxb.impl
     runtimeOnly libs.mysql.connector.java
 
     testImplementation libs.bundles.common.test.implementation

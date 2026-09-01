@@ -4,6 +4,13 @@
 package stroom.docstore.impl.db.jooq;
 
 
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+import org.jooq.impl.QOM.ForeignKeyRule;
+
 import stroom.docstore.impl.db.jooq.tables.Doc;
 import stroom.docstore.impl.db.jooq.tables.DocAudit;
 import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
@@ -16,13 +23,6 @@ import stroom.docstore.impl.db.jooq.tables.records.DocDataRecord;
 import stroom.docstore.impl.db.jooq.tables.records.DocDataSnapshotRecord;
 import stroom.docstore.impl.db.jooq.tables.records.DocDependencyRecord;
 import stroom.docstore.impl.db.jooq.tables.records.DocRecord;
-
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
-import org.jooq.impl.QOM.ForeignKeyRule;
 
 
 /**

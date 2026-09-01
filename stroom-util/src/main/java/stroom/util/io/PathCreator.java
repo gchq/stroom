@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,10 @@ public interface PathCreator {
 
     String replaceAll(String path);
 
+    /**
+     * Replacements depend on the implementation of the PathCreator used. It may be a no-op.
+     * The implementation may also depend on being in a pipeline scope to work fully.
+     */
     String replaceContextVars(String path);
 
     @Override

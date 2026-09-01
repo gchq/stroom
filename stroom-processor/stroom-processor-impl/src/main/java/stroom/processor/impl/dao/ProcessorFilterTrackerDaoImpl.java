@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,8 +70,15 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
 
     @Override
     public int update(final ProcessorFilterTracker processorFilterTracker) {
-        return JooqUtil.contextResult(processorDbConnProvider, context ->
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context ->
                 update(context, processorFilterTracker));
+
+        // Keep the supplied tracker in step with the DB so that it can be updated again without falling foul
+        // of the optimistic locking on version. Only done here, and not in the context variant below, as that
+        // may be part of a wider transaction that could still roll back.
+        processorFilterTracker.setVersion(processorFilterTracker.getVersion() + 1);
+
+        return count;
     }
 
     public int update(final DSLContext context,
@@ -93,6 +100,8 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
                 .set(PROCESSOR_FILTER_TRACKER.MESSAGE, processorFilterTracker.getMessage())
                 .set(PROCESSOR_FILTER_TRACKER.META_COUNT, processorFilterTracker.getMetaCount())
                 .set(PROCESSOR_FILTER_TRACKER.EVENT_COUNT, processorFilterTracker.getEventCount())
+                .set(PROCESSOR_FILTER_TRACKER.PREV_MAX_META_ID, processorFilterTracker.getPrevMaxMetaId())
+                .set(PROCESSOR_FILTER_TRACKER.NEXT_POLL_MS, processorFilterTracker.getNextPollMs())
                 .where(PROCESSOR_FILTER_TRACKER.ID.eq(processorFilterTracker.getId()))
                 .and(PROCESSOR_FILTER_TRACKER.VERSION.eq(processorFilterTracker.getVersion()))
                 .execute();

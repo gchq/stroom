@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,9 @@ public class LogoutPlugin extends Plugin {
                 new IconMenuItem.Builder()
                         .priority(40)
                         .icon(SvgImage.LOGOUT)
-                        .text("Logout")
+                        .text("Sign Out")
                         .command(() ->
-                                ConfirmEvent.fire(LogoutPlugin.this, "Are you sure you want to logout?", result -> {
+                                ConfirmEvent.fire(LogoutPlugin.this, "Are you sure you want to sign out?", result -> {
                                     if (result) {
                                         RequestLogoutEvent.fire(LogoutPlugin.this);
                                     }

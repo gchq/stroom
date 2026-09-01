@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.StoreFactory;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.security.api.SecurityContext;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -35,9 +36,11 @@ public class ElasticIndexStoreImpl
     @Inject
     public ElasticIndexStoreImpl(
             final StoreFactory storeFactory,
+            final SecurityContext securityContext,
             final ElasticIndexService elasticIndexService,
             final ElasticIndexSerialiser serialiser) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 ElasticIndexDoc.TYPE,
                 ElasticIndexDoc::builder,
@@ -45,15 +48,18 @@ public class ElasticIndexStoreImpl
         this.elasticIndexService = elasticIndexService;
     }
 
+    // super, not getStore(), in both: the base applies this type's VIEW and EDIT checks, and
+    // getStore() is the deliberately unchecked handle.
+
     @Override
     public ElasticIndexDoc readDocument(final DocRef docRef) {
-        final ElasticIndexDoc doc = getStore().readDocument(docRef);
+        final ElasticIndexDoc doc = super.readDocument(docRef);
         return doc.copy().fields(elasticIndexService.getFields(doc)).build();
     }
 
     @Override
     public ElasticIndexDoc writeDocument(final ElasticIndexDoc document) {
-        return getStore().writeDocument(document.copy().fields(elasticIndexService.getFields(document)).build());
+        return super.writeDocument(document.copy().fields(elasticIndexService.getFields(document)).build());
     }
 
     @Override

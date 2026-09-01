@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -446,6 +446,11 @@ class ExplorerServiceImpl
 
         for (final DocRef favDocRef : explorerFavService.get().getUserFavourites()) {
             final ExplorerNode treeModelNode = treeModel.getNode(favDocRef.getUuid());
+            if (treeModelNode == null) {
+                // The favourite refers to a node that isn't in the tree model so there is nothing to show.
+                LOGGER.debug("No tree model node for favourite: {}", favDocRef);
+                continue;
+            }
             final ExplorerNode childNode = treeModelNode.copy()
                     .rootNodeUuid(favRootNode)
                     .depth(1)
@@ -1011,7 +1016,7 @@ class ExplorerServiceImpl
                         PermissionInheritance.DESTINATION);
             } else {
                 // One node found
-                childNode = childNodes.get(0);
+                childNode = childNodes.getFirst();
             }
             parentNode.set(childNode);
         });

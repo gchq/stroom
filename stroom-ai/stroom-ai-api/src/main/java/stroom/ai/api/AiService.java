@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,17 @@ public interface AiService {
     List<AiChatMessage> getMessages(int chatId);
 
     List<AiChatMessage> getMessagesSince(int chatId, int lastSeenMessageId);
+
+    /**
+     * @return The chat's WORKING message if one is in place, i.e. if a question is being processed.
+     */
+    Optional<AiChatMessage> getWorkingMessage(int chatId);
+
+    /**
+     * Removes every WORKING message for the chat, including any left behind by a server that stopped
+     * mid-question.
+     */
+    void deleteWorkingMessages(int chatId);
 
     void updateMessageText(int messageId, String message);
 

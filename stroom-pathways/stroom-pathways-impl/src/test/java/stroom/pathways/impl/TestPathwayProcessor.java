@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,21 +87,23 @@ public class TestPathwayProcessor {
                 }
             };
 
-            // Load pathways DB for doc
-            final PathwaysDb pathwaysDb = PathwaysDb
-                    .create(pathwaysDir, BYTE_BUFFERS, false);
+            // Load pathways DB for doc. Try-with-resources so its env is closed before JUnit
+            // deletes the @TempDir.
+            try (final PathwaysDb pathwaysDb = PathwaysDb
+                    .create(pathwaysDir, BYTE_BUFFERS, false)) {
 
-            // Insert traces
-            new TraceLoader().load(tracesStore);
+                // Insert traces
+                new TraceLoader().load(tracesStore);
 
-            // Build and test pathways
-            testPathways(pathwaysDb, traceDb);
+                // Build and test pathways
+                testPathways(pathwaysDb, traceDb);
 
-            // Insert one more trace
-            new TraceLoader().addOneMore(tracesStore);
+                // Insert one more trace
+                new TraceLoader().addOneMore(tracesStore);
 
-            // Build and test more pathways
-            testPathways(pathwaysDb, traceDb);
+                // Build and test more pathways
+                testPathways(pathwaysDb, traceDb);
+            }
         }
     }
 

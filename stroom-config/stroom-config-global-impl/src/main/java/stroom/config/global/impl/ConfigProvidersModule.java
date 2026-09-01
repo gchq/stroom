@@ -1,5 +1,7 @@
 package stroom.config.global.impl;
 
+import stroom.ai.shared.AskStroomAiConfig;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -36,10 +38,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.ai.shared.AskStroomAIConfig getAskStroomAIConfig(
+    AskStroomAiConfig getAskStroomAIConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.ai.shared.AskStroomAIConfig.class);
+                AskStroomAiConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -787,6 +789,33 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.security.impl.AuthorisationConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.security.impl.CsrfConfig getCsrfConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.security.impl.CsrfConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.security.impl.EdgeAuthenticationConfig getEdgeAuthenticationConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.security.impl.EdgeAuthenticationConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.security.impl.EdgeLogoutConfig getEdgeLogoutConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.security.impl.EdgeLogoutConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

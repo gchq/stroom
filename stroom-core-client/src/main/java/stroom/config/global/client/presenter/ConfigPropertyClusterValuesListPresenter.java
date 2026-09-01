@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.config.global.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.entity.client.presenter.TreeRowHandler;
@@ -117,7 +116,6 @@ public class ConfigPropertyClusterValuesListPresenter
         dataGrid.addResizableColumn(buildNodeCountColumn(), "Count", 50);
         dataGrid.addResizableColumn(buildBasicColumn(ClusterValuesRow::getSource), "Source", 75);
         dataGrid.addResizableColumn(buildBasicColumn(ClusterValuesRow::getNodeName), "Node", 250);
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private Column<ClusterValuesRow, String> buildNodeCountColumn() {

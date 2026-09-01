@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.dropwizard.common;
 
+import stroom.util.http.ConfiguredRedirectStrategy;
 import stroom.util.http.HttpClientConfigConverter;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientFactory;
@@ -47,8 +48,14 @@ public class DropwizardHttpClientFactory implements HttpClientFactory {
         if (configuration == null) {
             configuration = new io.dropwizard.client.HttpClientConfiguration();
         }
+        // The redirect policy has no counterpart in the Dropwizard configuration, so it is applied here
+        // rather than being carried by the conversion above.
+        final boolean followRedirects = httpClientConfiguration == null
+                ? HttpClientConfiguration.DEFAULT_FOLLOW_REDIRECTS
+                : httpClientConfiguration.isFollowRedirects();
         return new HttpClientBuilder(environment)
                 .using(configuration)
+                .using(new ConfiguredRedirectStrategy(followRedirects))
                 .build(name);
     }
 }

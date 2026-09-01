@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package stroom.aws.s3.shared;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -34,6 +36,17 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @Type(value = AwsSystemPropertyCredentials.class, name = "system"),
         @Type(value = AwsWebCredentials.class, name = "web")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "anonymous", schema = AwsAnonymousCredentials.class),
+                @DiscriminatorMapping(value = "basic", schema = AwsBasicCredentials.class),
+                @DiscriminatorMapping(value = "default", schema = AwsDefaultCredentials.class),
+                @DiscriminatorMapping(value = "environment", schema = AwsEnvironmentVariableCredentials.class),
+                @DiscriminatorMapping(value = "profile", schema = AwsProfileCredentials.class),
+                @DiscriminatorMapping(value = "session", schema = AwsSessionCredentials.class),
+                @DiscriminatorMapping(value = "system", schema = AwsSystemPropertyCredentials.class),
+                @DiscriminatorMapping(value = "web", schema = AwsWebCredentials.class)})
 public sealed interface AwsCredentials permits
         AwsAnonymousCredentials,
         AwsBasicCredentials,

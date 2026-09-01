@@ -19,7 +19,12 @@
 # ------------------------------------------------------
 # Script to return an access token to stdout.
 # Requires Stroom to be running as it uses Stroom's
-# AuthProxy endpoint to get the token from the IDP
+# AuthProxy endpoint to broker a client-credentials token
+# from the identity provider.
+# Only works when Stroom is configured to use an EXTERNAL
+# identity provider. When Stroom is its own identity
+# provider (INTERNAL_IDP), authenticate with an API key
+# instead.
 # ------------------------------------------------------
 
 set -e
@@ -122,7 +127,7 @@ main() {
     --header "Content-Type: application/json" \
     --request POST \
     --data "${req_json}" \
-    "${SCHEME}://${HOST}:${PORT}/api/authproxy/v1/noauth/fetchClientCredsToken"
+    "${SCHEME}://${HOST}:${PORT}/api/authproxy/v1/fetchClientCredsToken"
 
 
 

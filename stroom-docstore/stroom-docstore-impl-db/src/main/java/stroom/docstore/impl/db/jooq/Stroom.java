@@ -4,20 +4,20 @@
 package stroom.docstore.impl.db.jooq;
 
 
-import stroom.docstore.impl.db.jooq.tables.Doc;
-import stroom.docstore.impl.db.jooq.tables.DocAudit;
-import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
-import stroom.docstore.impl.db.jooq.tables.DocData;
-import stroom.docstore.impl.db.jooq.tables.DocDataSnapshot;
-import stroom.docstore.impl.db.jooq.tables.DocDependency;
+import java.util.Arrays;
+import java.util.List;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SchemaImpl;
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.docstore.impl.db.jooq.tables.Doc;
+import stroom.docstore.impl.db.jooq.tables.DocAudit;
+import stroom.docstore.impl.db.jooq.tables.DocAuditDataSnapshot;
+import stroom.docstore.impl.db.jooq.tables.DocData;
+import stroom.docstore.impl.db.jooq.tables.DocDataSnapshot;
+import stroom.docstore.impl.db.jooq.tables.DocDependency;
 
 
 /**

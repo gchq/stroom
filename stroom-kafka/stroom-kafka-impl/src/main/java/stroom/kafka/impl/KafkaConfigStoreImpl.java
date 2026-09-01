@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
 import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.security.api.SecurityContext;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -34,9 +35,11 @@ class KafkaConfigStoreImpl
 
     @Inject
     KafkaConfigStoreImpl(final StoreFactory storeFactory,
+                         final SecurityContext securityContext,
                          final Provider<KafkaConfig> kafkaConfigProvider,
                          final KafkaConfigSerialiser serialiser) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 KafkaConfigDoc.TYPE,
                 KafkaConfigDoc::builder,

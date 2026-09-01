@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,6 @@ public class OpenIdClientDaoImpl implements OpenIdClientDao {
                         .set(OauthClient.OAUTH_CLIENT.NAME, client.getName())
                         .set(OauthClient.OAUTH_CLIENT.CLIENT_ID, client.getClientId())
                         .set(OauthClient.OAUTH_CLIENT.CLIENT_SECRET, client.getClientSecret())
-                        .set(OauthClient.OAUTH_CLIENT.URI_PATTERN, client.getUriPattern())
                         .execute()));
     }
 
@@ -67,8 +66,7 @@ public class OpenIdClientDaoImpl implements OpenIdClientDao {
                         .fetchOptional())
                 .map(record -> new OpenIdClient(record.getName(),
                         record.getClientId(),
-                        record.getClientSecret(),
-                        record.getUriPattern()));
+                        record.getClientSecret()));
     }
 
     @Override
@@ -79,7 +77,6 @@ public class OpenIdClientDaoImpl implements OpenIdClientDao {
                         .fetchOptional())
                 .map(record -> new OpenIdClient(record.getName(),
                         record.getClientId(),
-                        record.getClientSecret(),
-                        record.getUriPattern()));
+                        record.getClientSecret()));
     }
 }

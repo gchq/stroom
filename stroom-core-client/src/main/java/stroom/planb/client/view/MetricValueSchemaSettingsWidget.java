@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,6 +84,11 @@ public class MetricValueSchemaSettingsWidget
 
     public void onReadOnly(final boolean readOnly) {
         maxValue.setEnabled(!readOnly);
+        storeLatestValue.setEnabled(!readOnly);
+        storeMin.setEnabled(!readOnly);
+        storeMax.setEnabled(!readOnly);
+        storeCount.setEnabled(!readOnly);
+        storeSum.setEnabled(!readOnly);
     }
 
     @UiHandler("maxValue")

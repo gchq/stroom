@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import stroom.util.shared.NullSafe;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import tools.jackson.databind.ObjectMapper;
 
@@ -93,5 +94,21 @@ class TestStroomOpenIdConfig extends AbstractValidatorTest {
 
         Assertions.assertThat(abstractOpenIdConfig3)
                 .isEqualTo(stroomOpenIdConfig);
+    }
+
+    @Test
+    void externalModeRequiresSomethingToValidateAudienceAgainst() {
+        // Fail closed: audience validation (on by default) must not be silently no-op'd because there is
+        // nothing to validate against. A default (internal) config is fine.
+        Assertions.assertThat(new StroomOpenIdConfig().isAudienceValidationConfigured()).isTrue();
+
+        // External + validateAudience (default true) + no allowedAudiences + no clientId -> misconfigured.
+        final StroomOpenIdConfig badConfig = new StroomOpenIdConfig()
+                .withIdentityProviderType(IdpType.EXTERNAL_IDP);
+        Assertions.assertThat(badConfig.isAudienceValidationConfigured()).isFalse();
+
+        // And the constraint fires through the validator (the @ValidationMethod is inherited from the base).
+        Assertions.assertThat(validate(badConfig))
+                .anyMatch(violation -> violation.getMessage().contains("allowedAudiences or clientId"));
     }
 }

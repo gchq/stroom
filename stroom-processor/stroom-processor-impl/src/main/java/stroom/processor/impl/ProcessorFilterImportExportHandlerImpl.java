@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,6 +212,7 @@ public class ProcessorFilterImportExportHandlerImpl
                             .export(processorFilter.isExport())
                             .minMetaCreateTimeMs(minMetaCreateTimeMs)
                             .maxMetaCreateTimeMs(processorFilter.getMaxMetaCreateTimeMs())
+                            .maxTaskCreationDelay(processorFilter.getMaxTaskCreationDelay())
                             .build();
 
                     processorFilterService.importFilter(
@@ -238,6 +239,7 @@ public class ProcessorFilterImportExportHandlerImpl
                         ProcessorFilter::getPipelineName,
                         ProcessorFilter::getPriority,
                         ProcessorFilter::getMaxProcessingTasks,
+                        ProcessorFilter::getMaxTaskCreationDelay,
                         ProcessorFilter::isReprocess,
                         ProcessorFilter::isEnabled,
                         ProcessorFilter::getFilterInfo));

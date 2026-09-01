@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,8 @@ class AccessCodeCache {
     }
 
     Optional<AccessCodeRequest> getAndRemove(final String code) {
-        final Optional<AccessCodeRequest> optionalAccessCodeRequest = cache.getIfPresent(code);
-        cache.remove(code);
-        return optionalAccessCodeRequest;
+        // Atomic get-and-remove, so two concurrent redemptions of the same code cannot both retrieve it.
+        return cache.getAndRemove(code);
     }
 
     void put(final String code, final AccessCodeRequest accessCodeRequest) {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.ai.impl;
 
 import stroom.ai.shared.AiAttachmentStatus;
@@ -32,6 +48,18 @@ public interface AiDao {
     List<AiChatMessage> getMessages(int chatId);
 
     List<AiChatMessage> getMessagesSince(int chatId, int lastSeenMessageId);
+
+    /**
+     * @return The chat's WORKING message if one is in place, i.e. if a question is being processed.
+     */
+    Optional<AiChatMessage> getWorkingMessage(int chatId);
+
+    /**
+     * Removes every WORKING message for the chat. A server that stopped mid-question leaves one
+     * behind, and a chat that appears to be working forever is one that can never be polled to a
+     * conclusion.
+     */
+    void deleteWorkingMessages(int chatId);
 
     void updateMessageText(int messageId, String message);
 

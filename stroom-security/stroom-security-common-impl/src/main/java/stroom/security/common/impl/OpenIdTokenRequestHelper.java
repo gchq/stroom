@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ public class OpenIdTokenRequestHelper {
     private String grantType = null;
     private String redirectUri = null;
     private String refreshToken = null;
+    private String codeVerifier = null;
     private List<String> scopes = null;
     private ClientCredentials clientCredentials = null;
 
@@ -103,6 +104,11 @@ public class OpenIdTokenRequestHelper {
 
     public OpenIdTokenRequestHelper withRefreshToken(final String refreshToken) {
         this.refreshToken = refreshToken;
+        return this;
+    }
+
+    public OpenIdTokenRequestHelper withCodeVerifier(final String codeVerifier) {
+        this.codeVerifier = codeVerifier;
         return this;
     }
 
@@ -200,6 +206,7 @@ public class OpenIdTokenRequestHelper {
         mapAddFunc.accept(OpenId.GRANT_TYPE, grantType);
         mapAddFunc.accept(OpenId.REDIRECT_URI, redirectUri);
         mapAddFunc.accept(OpenId.REFRESH_TOKEN, refreshToken);
+        mapAddFunc.accept(OpenId.CODE_VERIFIER, codeVerifier);
         mapAddFunc.accept(OpenId.SCOPE, getScopesAsString());
 
         // application/x-www-form-urlencoded in, application/json out

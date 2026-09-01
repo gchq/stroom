@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.query.shared.QueryTablePreferencesUtil;
 import stroom.ui.config.shared.ReportUiDefaultConfig;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
@@ -163,7 +164,14 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
                 DateTimeSettings.builder().referenceTime(effectiveExecutionTime.toEpochMilli()).build(),
                 false);
         final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
-        final SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
+
+        SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
+
+        // Apply the table preferences the user set against the report in the UI, e.g. hidden columns, formats
+        // and sorts. These cannot be expressed in StroomQL so they are held against the doc and must be merged
+        // in here, before the result store is created, so that the store and the written output agree.
+        mappedRequest = QueryTablePreferencesUtil.applyTablePreferences(mappedRequest,
+                doc.getQueryTablePreferences());
 
         // Fix table result requests.
         final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();

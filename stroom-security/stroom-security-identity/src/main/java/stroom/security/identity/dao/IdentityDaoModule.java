@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.security.identity.account.AccountDao;
 import stroom.security.identity.openid.OpenIdClientDao;
 import stroom.security.identity.token.JwkDao;
 import stroom.security.identity.token.KeyTypeDao;
+import stroom.security.identity.token.OAuthTokenDao;
 
 import com.google.inject.AbstractModule;
 
@@ -32,6 +33,7 @@ public class IdentityDaoModule extends AbstractModule {
         bind(AccountDao.class).to(AccountDaoImpl.class);
         bind(JwkDao.class).to(JwkDaoImpl.class);
         bind(KeyTypeDao.class).to(KeyTypeDaoImpl.class);
+        bind(OAuthTokenDao.class).to(OAuthTokenDaoImpl.class);
         bind(OpenIdClientDao.class).to(OpenIdClientDaoImpl.class);
     }
 }

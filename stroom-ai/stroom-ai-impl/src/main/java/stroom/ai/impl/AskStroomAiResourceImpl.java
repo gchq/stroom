@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
-import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
@@ -147,7 +147,7 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                 .withValue(NullSafe.get(
                         request,
                         AskStroomAiRequest::getConfig,
-                        AskStroomAIConfig::getModelRef,
+                        AskStroomAiConfig::getModelRef,
                         DocRef::getName))
                 .build());
 
@@ -248,13 +248,13 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
-    public AskStroomAIConfig getDefaultConfig() {
+    public AskStroomAiConfig getDefaultConfig() {
         return askStroomAIServiceProvider.get().getDefaultConfig();
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public Boolean setDefaultAskStroomAIConfig(final AskStroomAIConfig config) {
+    public Boolean setDefaultAskStroomAIConfig(final AskStroomAiConfig config) {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "setDefaultAskStroomAIConfig"))
                 .withDescription("Update default AI configuration")
@@ -263,12 +263,12 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                                 .addObject(OtherObject.builder()
                                         .withType("AskStroomAIConfig")
                                         .withName(NullSafe.get(config,
-                                                AskStroomAIConfig::getModelRef,
+                                                AskStroomAiConfig::getModelRef,
                                                 DocRef::getName))
                                         .addData(Data.builder()
                                                 .withName("Model")
                                                 .withValue(NullSafe.get(config,
-                                                        AskStroomAIConfig::getModelRef,
+                                                        AskStroomAiConfig::getModelRef,
                                                         DocRef::getName))
                                                 .build())
                                         .build())

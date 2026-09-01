@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,21 @@ public final class CriteriaUtil {
         criteria.setPageRequest(createPageRequest(range));
     }
 
+    /**
+     * Apply the grid's sorts to {@code criteria}, <b>leaving any sorts the criteria already carries
+     * untouched when the grid has none of its own</b>.
+     * <p>
+     * The grid contributes nothing until the user clicks a column heading, so replacing the list
+     * unconditionally discarded the default sort several presenters seed in their constructor — the
+     * grid then opened in whatever order the server happened to return. Presenters that seed nothing
+     * are unaffected: an empty list replacing an empty list.
+     */
     public static void setSortList(final BaseCriteria criteria,
                                    final ColumnSortList columnSortList) {
-        criteria.setSortList(createSortList(columnSortList));
+        final List<CriteriaFieldSort> sortList = createSortList(columnSortList);
+        if (!sortList.isEmpty()) {
+            criteria.setSortList(sortList);
+        }
     }
 
     public static PageRequest createPageRequest(final Range range) {
@@ -55,8 +67,7 @@ public final class CriteriaUtil {
                 final ColumnSortInfo columnSortInfo = columnSortList.get(i);
                 final Column<?, ?> column = columnSortInfo.getColumn();
 
-                if (column instanceof OrderByColumn<?, ?>) {
-                    final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) column;
+                if (column instanceof final OrderByColumn<?, ?> orderByColumn) {
                     final String dataStoreName = orderByColumn.getField();
                     if (dataStoreName != null) {
                         criteriaSortList.add(new CriteriaFieldSort(

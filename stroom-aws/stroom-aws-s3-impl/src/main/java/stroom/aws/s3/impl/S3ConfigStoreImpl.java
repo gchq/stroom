@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.aws.s3.shared.S3ConfigDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
+import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
 
 import jakarta.inject.Inject;
@@ -36,9 +37,11 @@ class S3ConfigStoreImpl
 
     @Inject
     S3ConfigStoreImpl(final StoreFactory storeFactory,
+                      final SecurityContext securityContext,
                       final Provider<S3Config> s3ConfigProvider,
                       final S3ConfigSerialiser serialiser) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 S3ConfigDoc.TYPE,
                 S3ConfigDoc::builder,

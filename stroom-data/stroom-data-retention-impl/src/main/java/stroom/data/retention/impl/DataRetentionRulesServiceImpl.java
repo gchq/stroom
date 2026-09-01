@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Singleton
 class DataRetentionRulesServiceImpl
@@ -53,10 +54,11 @@ class DataRetentionRulesServiceImpl
 
     @Inject
     DataRetentionRulesServiceImpl(final StoreFactory storeFactory,
-                                  final Serialiser2Factory serialiser2Factory,
                                   final SecurityContext securityContext,
+                                  final Serialiser2Factory serialiser2Factory,
                                   final ClusterLockService clusterLockService) {
         super(storeFactory,
+                securityContext,
                 serialiser2Factory.createSerialiser(
                         DataRetentionRules.class),
                 DataRetentionRules.TYPE,
@@ -90,22 +92,35 @@ class DataRetentionRulesServiceImpl
 
     @Override
     public DataRetentionRules writeDocument(final DataRetentionRules document) {
-        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
-        // access it via the proc user (so long as use has MANAGE_POLICIES_PERMISSION)
+        // Authorised by the APPLICATION permission, not by a document permission.
         return securityContext.secureResult(AppPermission.MANAGE_POLICIES_PERMISSION,
-                () -> securityContext.asProcessingUserResult(() -> getStore().writeDocument(document)));
+                () -> getStore().writeDocument(document));
+    }
 
+    /**
+     * The data retention rules are not an explorer document and no user will ever hold a document
+     * permission on them, so a document check has nothing to consult. Authority comes from
+     * {@link AppPermission#MANAGE_POLICIES_PERMISSION}, checked at the entry points above.
+     * <p>
+     * Saying so here keeps the write running as the real user, so the audit trail names whoever
+     * changed the retention policy.
+     */
+    @Override
+    protected boolean isDocumentPermissionCheckRequired() {
+        return false;
     }
 
     @Override
     public DataRetentionRules getOrCreate() {
-        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
-        // access it via the proc user.
-        return securityContext.asProcessingUserResult(() -> {
-            final DocRef docRef = lazyDocRef.getValueWithLocks();
-            Objects.requireNonNull(docRef);
-            return readDocument(docRef);
-        });
+        final DocRef docRef = lazyDocRef.getValueWithLocks();
+        Objects.requireNonNull(docRef);
+        return readDocument(docRef);
+    }
+
+    @Override
+    public Optional<DataRetentionRules> get() {
+        return Optional.ofNullable(getSingletonDoc())
+                .map(this::readDocument);
     }
 
     private DocRef doGetOrCreate() {

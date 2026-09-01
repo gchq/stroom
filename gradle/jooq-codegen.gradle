@@ -147,16 +147,26 @@ tasks.register('generateJooq') {
                 Thread.currentThread().getContextClassLoader()
             )
 
-            // Flyway is on the module's runtimeClasspath, not the build script
-            // classpath, so load the class reflectively.
-            classLoader.loadClass('org.flywaydb.core.Flyway')
-                .getMethod('configure', ClassLoader)
-                .invoke(null, classLoader)
-                .dataSource(tempJdbcUrl, 'stroomuser', 'stroompassword1')
-                .locations("classpath:${jooqMigrationLocation}" as String)
-                .table(jooqFlywayTable)
-                .load()
-                .migrate()
+            // Some Java migrations use libraries (e.g. JAXB) that discover their
+            // implementation via the thread context classloader, which in the
+            // Gradle daemon is Gradle's own loader and cannot see the module's
+            // runtimeClasspath. Point it at classLoader for the migration.
+            def previousContextClassLoader = Thread.currentThread().getContextClassLoader()
+            Thread.currentThread().setContextClassLoader(classLoader)
+            try {
+                // Flyway is on the module's runtimeClasspath, not the build script
+                // classpath, so load the class reflectively.
+                classLoader.loadClass('org.flywaydb.core.Flyway')
+                    .getMethod('configure', ClassLoader)
+                    .invoke(null, classLoader)
+                    .dataSource(tempJdbcUrl, 'stroomuser', 'stroompassword1')
+                    .locations("classpath:${jooqMigrationLocation}" as String)
+                    .table(jooqFlywayTable)
+                    .load()
+                    .migrate()
+            } finally {
+                Thread.currentThread().setContextClassLoader(previousContextClassLoader)
+            }
 
             // Run JOOQ codegen against the temp DB
             logger.lifecycle("  Running JOOQ codegen against ${dbName}")
