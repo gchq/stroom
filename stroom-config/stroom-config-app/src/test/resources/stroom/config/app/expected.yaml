@@ -132,6 +132,9 @@ appConfig:
     eventLinkCacheSizeLimit: 1000000
     physicalDeleteAge: "P7D"
   askStroomAi:
+    dockType: "DOCK"
+    dockLocation: "RIGHT"
+    dockSize: 300
     tableAnalysis:
       maxTotalRows: 10000
       maxRowsPerBatch: 1000
