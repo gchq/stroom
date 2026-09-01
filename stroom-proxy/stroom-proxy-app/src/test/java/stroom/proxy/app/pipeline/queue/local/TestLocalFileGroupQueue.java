@@ -20,6 +20,7 @@ import stroom.proxy.app.pipeline.queue.AbstractFileGroupQueueContractTest;
 import stroom.proxy.app.pipeline.queue.FileGroupQueue;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueItem;
 import stroom.proxy.app.pipeline.queue.FileGroupQueueMessage;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessageCodec;
 import stroom.proxy.app.pipeline.queue.QueueType;
 import stroom.proxy.app.pipeline.store.FileStoreLocation;
 
@@ -28,9 +29,16 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,6 +49,135 @@ class TestLocalFileGroupQueue extends AbstractFileGroupQueueContractTest {
     protected FileGroupQueue createQueue(final String name) throws IOException {
         final Path queueRoot = getCurrentTestDir().resolve("contract-queue-" + name);
         return new LocalFileGroupQueue(name, queueRoot);
+    }
+
+    /**
+     * H9. Without the increment on recovery, a message that kills its consumer on every attempt is
+     * handed back at the head of the queue forever and {@code maxDeliveryAttempts} can never break
+     * the loop.
+     */
+    @Test
+    void testARepeatedCrashEventuallyQuarantinesTheMessage() throws IOException {
+        final Path queueRoot = getCurrentTestDir().resolve("queue");
+        final FileStoreLocation location = FileStoreLocation.localFileSystem(
+                "receiveStore",
+                createReferencedFileGroup("store/receive/0000000001"));
+        final FileGroupQueueMessage message = createMessage("preAggregateInput", "file-group-1", location);
+
+        final LocalFileGroupQueue queue = newQueue(queueRoot, 2);
+        queue.publish(message);
+        queue.close();
+
+        // Each round is a process that takes the message and is killed before acknowledging it.
+        for (int attempt = 1; attempt < 3; attempt++) {
+            final LocalFileGroupQueue crashed = newQueue(queueRoot, 2);
+            final FileGroupQueueItem item = crashed.next().orElseThrow();
+            assertThat(LocalFileGroupQueue.deliveryAttempts(item.getMessage()))
+                    .as("attempt %d should carry the count of the crashes before it", attempt)
+                    .isEqualTo(attempt - 1);
+            crashed.close();
+        }
+
+        // The third recovery takes it to the bound, so it is quarantined rather than handed out again.
+        final LocalFileGroupQueue afterBound = newQueue(queueRoot, 2);
+        assertThat(afterBound.next())
+                .as("a message at maxDeliveryAttempts must not be delivered again")
+                .isEmpty();
+        assertThat(afterBound.getApproximatePendingCount()).isZero();
+        assertThat(Files.list(queueRoot.resolve("failed")).count())
+                .as("it is quarantined for an operator, not deleted")
+                .isPositive();
+    }
+
+    /**
+     * The increment on recovery goes through writePending, which allocates an id. With a non-empty
+     * queue that allocation collides unless the sequence is seeded first, and the collision is
+     * swallowed as a failed requeue - so the attempt silently went uncounted in exactly the case a
+     * real restart presents. The queue below is deliberately not empty.
+     */
+    @Test
+    void testRecoveryCountsTheAttemptEvenWhenTheQueueIsNotEmpty() throws IOException {
+        final Path queueRoot = getCurrentTestDir().resolve("queue");
+        final FileStoreLocation location = FileStoreLocation.localFileSystem(
+                "receiveStore",
+                createReferencedFileGroup("store/receive/0000000001"));
+
+        final LocalFileGroupQueue queue = newQueue(queueRoot, 100);
+        queue.publish(createMessage("preAggregateInput", "file-group-1", location));
+        queue.publish(createMessage("preAggregateInput", "file-group-2", location));
+
+        // Take the first and be killed, leaving the second still queued behind it.
+        final FileGroupQueueItem taken = queue.next().orElseThrow();
+        assertThat(taken.getMessage().fileGroupId()).isEqualTo("file-group-1");
+        queue.close();
+
+        final LocalFileGroupQueue restarted = newQueue(queueRoot, 100);
+        assertThat(restarted.getApproximatePendingCount()).isEqualTo(2);
+
+        // The recovered message is behind the one that was already queued, and carries the attempt.
+        try (final FileGroupQueueItem first = restarted.next().orElseThrow()) {
+            assertThat(first.getMessage().fileGroupId()).isEqualTo("file-group-2");
+            assertThat(LocalFileGroupQueue.deliveryAttempts(first.getMessage())).isZero();
+            first.acknowledge();
+        }
+        try (final FileGroupQueueItem recovered = restarted.next().orElseThrow()) {
+            assertThat(recovered.getMessage().fileGroupId()).isEqualTo("file-group-1");
+            assertThat(LocalFileGroupQueue.deliveryAttempts(recovered.getMessage()))
+                    .as("the crashed delivery must be counted")
+                    .isEqualTo(1);
+            recovered.acknowledge();
+        }
+    }
+
+    /**
+     * M1. Only a vanished pending file means another consumer won the race. Anything else - here a
+     * missing in-flight directory - used to send this loop round again onto the same file, forever.
+     */
+    @Test
+    void testAMoveFailureThatIsNotALostRaceIsReportedRatherThanRetriedForever() throws Exception {
+        final Path queueRoot = getCurrentTestDir().resolve("queue");
+        final FileStoreLocation location = FileStoreLocation.localFileSystem(
+                "receiveStore",
+                createReferencedFileGroup("store/receive/0000000001"));
+        final FileGroupQueueMessage message = createMessage("preAggregateInput", "file-group-1", location);
+
+        final LocalFileGroupQueue queue = newQueue(queueRoot, 100);
+        queue.publish(message);
+
+        Files.delete(queueRoot.resolve("in-flight"));
+
+        // Before the fix this looped forever, and neither @Timeout nor a thread interrupt can stop a
+        // tight loop of uninterruptible file operations - it would hang the build rather than fail it.
+        // So the call runs on a daemon thread we can walk away from, and the assertion is on the wait.
+        final ExecutorService executor = Executors.newSingleThreadExecutor(runnable -> {
+            final Thread thread = new Thread(runnable, "m1-probe");
+            thread.setDaemon(true);
+            return thread;
+        });
+        try {
+            final Callable<Optional<FileGroupQueueItem>> take = queue::next;
+            final Future<Optional<FileGroupQueueItem>> future = executor.submit(take);
+            assertThatThrownBy(() -> future.get(15, TimeUnit.SECONDS))
+                    .as("next() must report the failure rather than spin on the same file")
+                    .isNotInstanceOf(TimeoutException.class)
+                    .hasRootCauseInstanceOf(java.nio.file.NoSuchFileException.class);
+        } finally {
+            executor.shutdownNow();
+        }
+
+        assertThat(queue.getActiveLeaseCount())
+                .as("a claim taken for a move that failed must not be kept")
+                .isZero();
+    }
+
+    private static LocalFileGroupQueue newQueue(final Path queueRoot,
+                                                final int maxDeliveryAttempts) throws IOException {
+        return new LocalFileGroupQueue(
+                "preAggregateInput",
+                queueRoot,
+                new FileGroupQueueMessageCodec(),
+                Duration.ofHours(1),
+                maxDeliveryAttempts);
     }
 
     @Test
@@ -182,8 +319,19 @@ class TestLocalFileGroupQueue extends AbstractFileGroupQueueContractTest {
         assertThat(restartedQueue.getApproximateInFlightCount()).isZero();
 
         try (final FileGroupQueueItem recoveredItem = restartedQueue.next().orElseThrow()) {
-            assertThat(recoveredItem.getId()).isEqualTo("00000000000000000001");
-            assertThat(recoveredItem.getMessage()).isEqualTo(message);
+            // Recovery re-queues through writePending, so the message comes back under a NEW id at the
+            // back of the queue rather than under its old id at the head - the same reasoning as
+            // fail(): a message that keeps killing its consumer must not block everything behind it.
+            assertThat(recoveredItem.getId()).isEqualTo("00000000000000000002");
+            // The recovered message is no longer equal to the published one, and must not be: recovery
+            // is a redelivery, so it counts as an attempt. Asserting equality here is what let a crash
+            // loop run forever without ever reaching maxDeliveryAttempts (H9).
+            assertThat(LocalFileGroupQueue.deliveryAttempts(recoveredItem.getMessage()))
+                    .isEqualTo(1);
+            assertThat(recoveredItem.getMessage().fileGroupId())
+                    .isEqualTo(message.fileGroupId());
+            assertThat(recoveredItem.getMessage().fileStoreLocation())
+                    .isEqualTo(message.fileStoreLocation());
 
             recoveredItem.acknowledge();
         }

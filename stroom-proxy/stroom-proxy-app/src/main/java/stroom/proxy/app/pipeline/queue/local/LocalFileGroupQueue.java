@@ -415,6 +415,15 @@ public class LocalFileGroupQueue implements FileGroupQueue {
 
                 moveAtomically(pendingFile, inFlightFile);
             } catch (final NoSuchFileException e) {
+                if (Files.exists(pendingFile)) {
+                    // Not a lost race: the pending file is still there, so what is missing is the
+                    // target path or the in-flight directory itself. Continuing would re-select the
+                    // same file on the next iteration and spin here forever.
+                    if (claimed) {
+                        activeLeases.remove(itemId);
+                    }
+                    throw e;
+                }
                 // Another local consumer in this JVM/process won the race. Drop our
                 // own entry only when there is no in-flight file left for it to
                 // protect - that is, when the winner has already finished. Ids are
@@ -425,19 +434,37 @@ public class LocalFileGroupQueue implements FileGroupQueue {
                 continue;
             } catch (final FileAlreadyExistsException e) {
                 // The in-flight file exists and belongs to somebody else's lease. Deliberately do NOT
-                // release the lease here: activeLeases is keyed by item id, so removing it would strip
-                // the live holder's protection and let reclaimAbandonedLeases() redeliver work that is
-                // still being processed. (Audit M7 notes this branch leaks a claim; releasing it here
-                // is not the fix - TestLocalFileGroupQueueLeaseReclaim's concurrency test proves it
-                // redelivers live work.)
+                // release the lease here, unconditionally or guarded by `claimed`. Both were tried and
+                // both fail TestLocalFileGroupQueueLeaseReclaim's concurrency test, because `claimed`
+                // records who *added* the id, not who won the move:
+                //
+                //   B adds the id, then A adds and gets false, then A finds no in-flight file and wins
+                //   the move. A now owns live work while B holds claimed == true. B releasing here
+                //   strips the only protection A has, and the reclaim scan redelivers A's item.
+                //
+                // The claim is taken before the move on purpose, so the winner cannot be the claimant.
+                // Closing M7 needs the lease to record its owner rather than just the id, which is a
+                // design change, not a patch - see the ledger entry for 2026-09-01.
                 moveToFailed(pendingFile, "duplicate-pending", e);
                 continue;
             }
 
+            final byte[] messageBytes;
+            try {
+                messageBytes = Files.readAllBytes(inFlightFile);
+            } catch (final IOException e) {
+                // A failed read says nothing about whether the message is valid, so do not condemn a
+                // message that may be perfectly good. Release the lease so the reclaim scan can return
+                // it to pending, and let the caller see the failure.
+                activeLeases.remove(itemId);
+                throw e;
+            }
+
             final FileGroupQueueMessage message;
             try {
-                message = codec.fromBytes(Files.readAllBytes(inFlightFile));
+                message = codec.fromBytes(messageBytes);
             } catch (final Exception e) {
+                // The bytes were read and cannot be decoded, so this message really is unusable.
                 activeLeases.remove(itemId);
                 moveToFailed(inFlightFile, "invalid-message", e);
                 throw new IOException("Unable to read queue message " + inFlightFile, e);
@@ -531,8 +558,14 @@ public class LocalFileGroupQueue implements FileGroupQueue {
                     StandardOpenOption.WRITE);
         }
 
-        recoverInFlightMessages();
+        // Seed before recovering. Recovery re-queues through writePending, which allocates an id, so
+        // an unseeded allocator would hand out ids from 1 and collide with whatever is already in
+        // pending/ - and the collision is swallowed as a failed requeue, quietly dropping back to a
+        // move that does not count the attempt. That is the whole of H9, defeated in the common case
+        // of a restart with a non-empty queue. seedSequence reads in-flight/ too, so the ids it
+        // establishes already account for the messages recovery is about to move.
         seedSequence();
+        recoverInFlightMessages();
     }
 
     /**
@@ -751,7 +784,9 @@ public class LocalFileGroupQueue implements FileGroupQueue {
                 final Path pendingFile = pendingDir.resolve(inFlightFile.getFileName());
                 if (Files.exists(pendingFile)) {
                     moveToFailed(inFlightFile, "recovered-duplicate", null);
-                } else {
+                } else if (!requeueWithIncrementedAttempts(inFlightFile)) {
+                    // Could not read or rewrite the message, so return it as-is rather than lose it.
+                    // It keeps its old attempt count, as on the reclaim path.
                     moveAtomically(inFlightFile, pendingFile);
                 }
             }
