@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -262,18 +262,16 @@ public class RuleSetSettingsPresenter
     }
 
     private void listSelectionHandler(final MultiSelectEvent selectEvent) {
-        if (!isReadOnly()) {
-            final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
-            if (rule != null) {
-                expressionPresenter.read(rule.getExpression());
-                if (selectEvent.getSelectionType().isDoubleSelect()) {
-                    edit(rule);
-                }
-            } else {
-                expressionPresenter.read(null);
+        final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
+        if (rule != null) {
+            expressionPresenter.read(rule.getExpression());
+            if (selectEvent.getSelectionType().isDoubleSelect() && !isReadOnly()) {
+                edit(rule);
             }
-            updateButtons();
+        } else {
+            expressionPresenter.read(null);
         }
+        updateButtons();
     }
 
 
@@ -471,8 +469,8 @@ public class RuleSetSettingsPresenter
 
             editButton.setEnabled(false);
             copyButton.setEnabled(false);
-            disableButton.setEnabled(enabledStates.size() == 1);
-            deleteButton.setEnabled(true);
+            disableButton.setEnabled(!isReadOnly() && enabledStates.size() == 1);
+            deleteButton.setEnabled(!isReadOnly());
             moveUpButton.setEnabled(false);
             moveDownButton.setEnabled(false);
         }

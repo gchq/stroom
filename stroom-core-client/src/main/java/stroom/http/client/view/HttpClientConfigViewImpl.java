@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,8 @@ public class HttpClientConfigViewImpl
     @UiField
     CustomCheckBox cookiesEnabled;
     @UiField
+    CustomCheckBox followRedirects;
+    @UiField
     ValueSpinner maxConnections;
     @UiField
     ValueSpinner maxConnectionsPerRoute;
@@ -84,6 +86,7 @@ public class HttpClientConfigViewImpl
         connectionRequestTimeout.setEnabled(!readOnly);
         timeToLive.setEnabled(!readOnly);
         cookiesEnabled.setEnabled(!readOnly);
+        followRedirects.setEnabled(!readOnly);
         maxConnections.setEnabled(!readOnly);
         maxConnectionsPerRoute.setEnabled(!readOnly);
         keepAlive.setEnabled(!readOnly);
@@ -144,6 +147,16 @@ public class HttpClientConfigViewImpl
     @Override
     public boolean isCookiesEnabled() {
         return cookiesEnabled.getValue();
+    }
+
+    @Override
+    public void setFollowRedirects(final boolean followRedirects) {
+        this.followRedirects.setValue(followRedirects);
+    }
+
+    @Override
+    public boolean isFollowRedirects() {
+        return followRedirects.getValue();
     }
 
     @Override

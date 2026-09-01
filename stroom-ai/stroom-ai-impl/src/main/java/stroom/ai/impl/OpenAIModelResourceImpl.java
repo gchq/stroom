@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import stroom.openai.shared.OpenAIModelResource;
 import stroom.openai.shared.OpenAIModelTestResponse;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.NullSafe;
@@ -40,6 +42,8 @@ import java.util.NoSuchElementException;
 
 @AutoLogged
 public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUuid<OpenAIModelDoc> {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenAIModelResourceImpl.class);
 
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<AiService> aiServiceProvider;
@@ -81,24 +85,30 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
     @Override
     @AutoLogged(value = OperationType.PROCESS, verb = "Validate OpenAI model")
     public OpenAIModelTestResponse validateModel(final OpenAIModelDoc modelDoc) {
+        if (NullSafe.isEmptyString(modelDoc.getModelId())) {
+            return new OpenAIModelTestResponse(false, "Model ID must not be empty");
+        }
+
+        // Validating a model makes a server-side request to the model's (request-supplied) base URL, so
+        // require USE permission on the model document rather than allowing any logged-in user. Deliberately
+        // outside the try below, as a permission failure is not a validation result.
+        final DocRef docRef = getDocRef(modelDoc.getUuid());
+        final SecurityContext securityContext = securityContextProvider.get();
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have USE permission on AI model " + docRef);
+        }
+
         try {
-            if (NullSafe.isEmptyString(modelDoc.getModelId())) {
-                throw new IllegalArgumentException("Model ID must not be empty");
-            }
-
-            // Validating a model makes a server-side request to the model's (request-supplied) base URL, so
-            // require USE permission on the model document rather than allowing any logged-in user.
-            final DocRef docRef = getDocRef(modelDoc.getUuid());
-            final SecurityContext securityContext = securityContextProvider.get();
-            if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
-                throw new PermissionException(securityContext.getUserRef(),
-                        "You do not have USE permission on AI model " + docRef);
-            }
-
             final String model = aiServiceProvider.get().getModel(modelDoc);
             return new OpenAIModelTestResponse(model != null, model);
         } catch (final NoSuchElementException e) {
             return new OpenAIModelTestResponse(false, "Model " + modelDoc.getModelId() + " not found");
+        } catch (final RuntimeException e) {
+            // Whatever went wrong, the user is testing a connection they are trying to get working, so tell
+            // them what happened rather than letting this surface as an unexplained server error.
+            LOGGER.debug(e::getMessage, e);
+            return new OpenAIModelTestResponse(false, NullSafe.nonBlankStringElse(e.getMessage(), e.toString()));
         }
     }
 

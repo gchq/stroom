@@ -97,6 +97,15 @@ This is also the case if no nodes are configured as a single node is assumed.
 The stream processing will only complete successfully without a fatal error if the zip file can be uploaded to all storage nodes.
 Failure to upload the zip to any of the nodes will log a fatal error and the stream will need to be processed again once the problem has been resolved.
 Upload could fail for a number of reasons including full disk, network problems, down nodes etc.
+
+Transport level failures, e.g. a DNS lookup failure during a network blip, are retried, as they are expected in normal operation.
+Each node is attempted `stroom.planb.sendPartAttempts` times (default 3), waiting `stroom.planb.sendPartRetryDelay` (default 10 seconds) between attempts.
+Set `stroom.planb.sendPartAttempts` to 1 for no retries at all.
+Note that the processing task is held for the duration of the retries.
+A node that answers, even with an error, is not asked again, as sending the same zip again will not change the answer.
+Sending a zip a node may already have received, e.g. where the request completed but the response was lost, does not double count, because the additive stores (histogram and metric) skip a source they have already merged, keyed by the instance UUID the zip carries with it, and all other stores merge by put.
+Note that this only applies to sending the same zip again, reprocessing a stream builds a new one, with a new instance UUID, so it will be merged again.
+
 All processing and storage is expected to be idempotent so that future attempts to load the data again will just add the data to the store again.
 It is assumed that the data is the same for every load attempt.
 It may be necessary to rebuild a store if erroneous data is accidentally loaded unless the user is able to load data that nullifies the effect of the previous load by overwriting the same keys with corrected values.

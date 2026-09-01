@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.IdEnrichmentExpectedIds;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.stepping.capture.SteppingCounter;
 import stroom.svg.shared.SvgImage;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -60,7 +61,7 @@ import java.util.Set;
                 PipelineElementType.VISABILITY_STEPPING,
                 PipelineElementType.ROLE_MUTATOR},
         icon = SvgImage.PIPELINE_ID)
-public class IdEnrichmentFilter extends AbstractXMLFilter {
+public class IdEnrichmentFilter extends AbstractXMLFilter implements SteppingCounter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IdEnrichmentFilter.class);
 
@@ -107,6 +108,21 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
         } finally {
             super.startStream();
         }
+    }
+
+    /**
+     * The {@code EventId} this filter writes is a running count over the whole stream, so a replayed record
+     * has to be told what the count was before it. Without this it would restart at zero and label a
+     * mid-stream event as event 1.
+     */
+    @Override
+    public long getSteppingCount() {
+        return count;
+    }
+
+    @Override
+    public void setSteppingCount(final long count) {
+        this.count = count;
     }
 
     @Override

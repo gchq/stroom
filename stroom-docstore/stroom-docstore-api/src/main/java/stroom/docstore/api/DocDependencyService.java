@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,9 +61,13 @@ public interface DocDependencyService {
      * in SQL (e.g. document permission checks). Pagination is applied
      * <b>after</b> filtering so page sizes and totals are correct.
      *
-     * @param criteria the search/sort/page criteria
+     * @param criteria       the search/sort/page criteria
+     * @param pseudoRefUuids UUIDs of known pseudo-refs (e.g. Searchable / Annotation refs) that
+     *                       live outside the doc table and so must be reported as OK rather than
+     *                       missing. Resolved by the caller, as for
+     *                       {@link #fetchBrokenDependencies(Set)}.
      */
-    ResultPage<Dependency> fetchDependencies(DependencyCriteria criteria);
+    ResultPage<Dependency> fetchDependencies(DependencyCriteria criteria, Set<String> pseudoRefUuids);
 
     /**
      * Get all broken dependencies (edges whose target no longer exists in the doc table), keyed by

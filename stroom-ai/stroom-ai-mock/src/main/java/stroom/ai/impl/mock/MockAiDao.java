@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,16 @@ public class MockAiDao implements AiDao {
     @Override
     public List<AiChatMessage> getMessagesSince(final int chatId, final int lastSeenMessageId) {
         return List.of();
+    }
+
+    @Override
+    public Optional<AiChatMessage> getWorkingMessage(final int chatId) {
+        return Optional.empty();
+    }
+
+    @Override
+    public void deleteWorkingMessages(final int chatId) {
+
     }
 
     @Override

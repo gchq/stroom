@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,18 +37,29 @@ import stroom.util.time.TimePeriod;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface MetaDao {
 
-    Long getMaxId();
+    /**
+     * Get the current maximum id of any data.
+     *
+     * @return The maximum id of any data item or an empty optional if there is no data.
+     */
+    Optional<Long> getMaxId();
 
     /**
-     * Get the current maximum id of any data with a create time less than or equal to the supplied time.
+     * Get the current maximum id of any data with an id greater than or equal to the supplied id and a create
+     * time less than or equal to the supplied time.
      *
-     * @return The maximum id of any data item or null if there is no data.
+     * @param minId           The lowest id to consider. Bounding the search matters because the database finds
+     *                        the maximum id by working back down from the highest id there is, so without a
+     *                        lower bound it reads the whole table when nothing matches.
+     * @param maxCreateTimeMs The latest create time to consider.
+     * @return The maximum id of any matching data item or an empty optional if there is none.
      */
-    Long getMaxId(long maxCreateTimeMs);
+    Optional<Long> getMaxId(long minId, long maxCreateTimeMs);
 
     Meta create(MetaProperties metaProperties);
 

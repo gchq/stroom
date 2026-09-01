@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import stroom.test.common.TestUtil;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -179,9 +180,11 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
         return new SessionResourceImpl(
                 TestUtil.mockProvider(OpenIdManager.class),
                 TestUtil.mockProvider(HttpServletRequest.class),
+                TestUtil.mockProvider(HttpServletResponse.class),
                 TestUtil.mockProvider(AuthenticationEventLog.class),
                 () -> sessionListService,
                 TestUtil.mockProvider(StroomUserIdentityFactory.class),
-                MockSecurityContext::new);
+                MockSecurityContext::new,
+                AuthenticationConfig::new);
     }
 }

@@ -713,7 +713,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/AskStroomAIConfig"
+                  "$ref" : "#/components/schemas/AskStroomAiConfig"
                 }
               }
             },
@@ -831,7 +831,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/AskStroomAIConfig"
+                "$ref" : "#/components/schemas/AskStroomAiConfig"
               }
             }
           },
@@ -2430,6 +2430,36 @@
         "tags" : [ "Global Config" ]
       }
     },
+    "/config/v1/setConfigValue" : {
+      "post" : {
+        "operationId" : "setConfigValue",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SetConfigValueRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Set a single config property for all users",
+        "tags" : [ "Global Config" ]
+      }
+    },
     "/content/v1/abortImport" : {
       "post" : {
         "operationId" : "abortImport",
@@ -3702,8 +3732,8 @@
             "description" : "default response"
           }
         },
-        "summary" : "Fetch an analytic rule doc by its UUID",
-        "tags" : [ "Queries" ]
+        "summary" : "Fetch a data gen doc by its UUID",
+        "tags" : [ "Data Generators" ]
       },
       "put" : {
         "operationId" : "updateDataGen",
@@ -3738,8 +3768,8 @@
             "description" : "default response"
           }
         },
-        "summary" : "Update an analytic rule doc",
-        "tags" : [ "Queries" ]
+        "summary" : "Update a data gen doc",
+        "tags" : [ "Data Generators" ]
       }
     },
     "/dbStatus/v1" : {
@@ -9799,6 +9829,7 @@
     },
     "/query/v1/csv/search" : {
       "get" : {
+        "description" : "Returns the results as CSV. Sets the 'X-Stroom-Search-Incremental' header to say whether the search ran incrementally, and the 'X-Stroom-Search-Complete' header to say whether it finished. An incremental search returns whatever results it has when the timeout expires, so those may be partial; a non incremental search waits for the search to finish, which risks the request itself timing out.",
         "operationId" : "queryCsv",
         "parameters" : [ {
           "in" : "query",
@@ -9821,17 +9852,24 @@
             "format" : "int32",
             "default" : 100
           }
+        }, {
+          "in" : "query",
+          "name" : "incremental",
+          "schema" : {
+            "type" : "boolean",
+            "default" : true
+          }
+        }, {
+          "in" : "query",
+          "name" : "timeout",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
         } ],
         "responses" : {
           "default" : {
-            "content" : {
-              "text/plain" : {
-                "schema" : {
-                  "type" : "string"
-                }
-              }
-            },
-            "description" : "default response"
+            "description" : "Returns the matching rows as CSV, which may be a subset of the matching data if the search had not finished"
           }
         },
         "summary" : "Perform a csv query",
@@ -14764,6 +14802,9 @@
             "items" : {
               "$ref" : "#/components/schemas/AiChatMessage"
             }
+          },
+          "workingMessage" : {
+            "$ref" : "#/components/schemas/AiChatMessage"
           }
         }
       },
@@ -14859,6 +14900,9 @@
           },
           "query" : {
             "type" : "string"
+          },
+          "queryTablePreferences" : {
+            "$ref" : "#/components/schemas/QueryTablePreferences"
           },
           "rememberNotifications" : {
             "type" : "boolean"
@@ -15282,7 +15326,7 @@
           }
         }
       },
-      "AskStroomAIConfig" : {
+      "AskStroomAiConfig" : {
         "type" : "object",
         "properties" : {
           "attachmentDownloadTimeoutMs" : {
@@ -15291,6 +15335,18 @@
           },
           "chatSystemPrompt" : {
             "type" : "string"
+          },
+          "dockLocation" : {
+            "type" : "string",
+            "enum" : [ "TOP", "LEFT", "BOTTOM", "RIGHT" ]
+          },
+          "dockSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "dockType" : {
+            "type" : "string",
+            "enum" : [ "DIALOG", "TAB", "FLOAT", "DOCK" ]
           },
           "enableDebugDetail" : {
             "type" : "boolean"
@@ -15337,7 +15393,7 @@
             "$ref" : "#/components/schemas/AiChat"
           },
           "config" : {
-            "$ref" : "#/components/schemas/AskStroomAIConfig"
+            "$ref" : "#/components/schemas/AskStroomAiConfig"
           },
           "context" : {
             "$ref" : "#/components/schemas/AskStroomAiContext"
@@ -20891,6 +20947,9 @@
           "cookiesEnabled" : {
             "type" : "boolean"
           },
+          "followRedirects" : {
+            "type" : "boolean"
+          },
           "keepAlive" : {
             "$ref" : "#/components/schemas/SimpleDuration"
           },
@@ -24155,7 +24214,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', '=', '!=', 'starts with', 'ends with', 'matches regex', 'in', 'in dictionary'", "'=', '!='", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -24843,6 +24902,9 @@
           },
           "query" : {
             "type" : "string"
+          },
+          "queryTablePreferences" : {
+            "$ref" : "#/components/schemas/QueryTablePreferences"
           },
           "rememberNotifications" : {
             "type" : "boolean"
@@ -26482,6 +26544,24 @@
           }
         } ]
       },
+      "SetConfigValueRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRefValue" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "propertyName" : {
+            "type" : "string"
+          },
+          "stringValue" : {
+            "type" : "string"
+          },
+          "target" : {
+            "type" : "string",
+            "enum" : [ "ANALYTIC_UI_DEFAULT", "REPORT_UI_DEFAULT" ]
+          }
+        }
+      },
       "SetDocumentUserCreatePermissions" : {
         "type" : "object",
         "allOf" : [ {
@@ -26539,6 +26619,12 @@
             "type" : "boolean"
           },
           "formatOutput" : {
+            "type" : "boolean"
+          },
+          "hasOutput" : {
+            "type" : "boolean"
+          },
+          "indicativeCounts" : {
             "type" : "boolean"
           },
           "indicators" : {
@@ -29042,15 +29128,8 @@
       "UserPreferences" : {
         "type" : "object",
         "properties" : {
-          "aiDockLocation" : {
-            "type" : "string"
-          },
-          "aiDockSize" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "aiDockType" : {
-            "type" : "string"
+          "askStroomAiConfig" : {
+            "$ref" : "#/components/schemas/AskStroomAiConfig"
           },
           "dateTimePattern" : {
             "type" : "string",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -66,23 +67,22 @@ public class FeedStoreImpl
     }
 
     private final FeedNameValidator feedNameValidator;
-    private final SecurityContext securityContext;
     private final FeedSerialiser serialiser;
     private final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider;
 
     @Inject
     public FeedStoreImpl(final StoreFactory storeFactory,
+                         final SecurityContext securityContext,
                          final FeedNameValidator feedNameValidator,
                          final FeedSerialiser serialiser,
-                         final SecurityContext securityContext,
                          final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 FeedDoc.TYPE,
                 FeedDoc::builder,
                 FeedDoc::copy);
         this.feedNameValidator = feedNameValidator;
-        this.securityContext = securityContext;
         this.serialiser = serialiser;
         this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
     }
@@ -100,11 +100,10 @@ public class FeedStoreImpl
 
         // Double-check the feed wasn't created elsewhere at the same time.
         if (checkDuplicateName(name, created)) {
-            // Delete the newly created document as the name is duplicated.
-
-            // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
-            // permissions added to them until after they are created in the store.
-            securityContext.asProcessingUser(() -> getStore().deleteDocument(created));
+            // Delete the newly created document as the name is duplicated. getStore() is the
+            // deliberately unchecked handle, which is what undoing our own create needs: the document
+            // has no permissions yet, and the authority to remove it is that we just made it.
+            getStore().deleteDocument(created);
             throw new EntityServiceException("A feed named '" + name + "' already exists");
         } else {
             return created;
@@ -122,6 +121,10 @@ public class FeedStoreImpl
         }
 
         final String newName = createUniqueName(name);
+        // Copy reads the source document, so it needs VIEW on it. This override reaches
+        // getStore() directly, which is the unchecked handle, so the check the base applies is
+        // applied here.
+        checkDocumentPermission(docRef, DocumentPermission.VIEW);
         return getStore().copyDocument(docRef.getUuid(), newName);
     }
 

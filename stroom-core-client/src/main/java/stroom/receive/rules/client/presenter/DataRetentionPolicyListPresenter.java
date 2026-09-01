@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import stroom.cell.info.client.ActionCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.HeadingBuilder;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.retention.shared.DataRetentionRule;
+import stroom.query.api.ExpressionOperator;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
@@ -124,7 +124,9 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
 
         // Expression
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(DataRetentionRule::getAgeString)
+                DataGridUtil.textColumnBuilder((DataRetentionRule row) ->
+                                NullSafe.getOrElse(row, DataRetentionRule::getExpression,
+                                        ExpressionOperator::toString, ""))
                         .enabledWhen(DataRetentionRule::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Expression")
@@ -133,7 +135,6 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
                 600);
 
         addActionButtonColumn(20);
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addColumn(final String name,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -338,6 +338,13 @@ public class DashboardPresenter
 
     private void onDesign() {
         setDesignMode(!designMode);
+        // Design mode is stored on the document, so switching it is a change to the document like any
+        // other. Without this the toggle would leave nothing dirty, and a dashboard saved in design
+        // mode could never be taken out of it — there would be nothing for Save to write.
+        //
+        // Only the user-driven toggle does this. setDesignMode() is also called from onRead(), where
+        // marking the document dirty just for opening it would be wrong.
+        onChange();
     }
 
     private void setDesignMode(final boolean designMode) {
@@ -574,17 +581,22 @@ public class DashboardPresenter
                 }
             }
 
-            // Turn on design mode if this is a new dashboard.
-            if (dashboardConfig != null &&
-                dashboardConfig.getDesignMode() != null &&
-                dashboardConfig.getDesignMode()) {
-                editModeButton.setState(true);
-                setDesignMode(true);
-            }
-        } else {
-            // Turn on design mode if this is a read after a save or save as.
-            setDesignMode(true);
         }
+
+        // Design mode is a stored toggle, entered only when the flag is explicitly true.
+        //
+        // A NEW dashboard already arrives with it set: DashboardStoreImpl.getTemplate() applies
+        // designMode(true) to the template every new document is created from. So a null flag does
+        // NOT mean "new" — it means a dashboard saved before the flag existed, and those must open
+        // normally rather than being dragged into edit layout.
+        //
+        // The same rule is applied on a re-read after a save or save as, rather than forcing design
+        // mode on: onWrite now persists the mode the user was working in, so re-reading restores it.
+        // Forcing it on there also fired for an ordinary second read, which made this check
+        // unreachable in practice and put every dashboard into design mode.
+        final DashboardConfig config = dashboard.getDashboardConfig();
+        final boolean enterDesignMode = config != null && Boolean.TRUE.equals(config.getDesignMode());
+        setDesignMode(enterDesignMode);
 
         addComponentButton.setEnabled(!readOnly && !embedded);
         setConstraintsButton.setEnabled(!readOnly && !embedded);
@@ -662,7 +674,8 @@ public class DashboardPresenter
                 .layout(MutableConfigUtil.toLayoutConfig(layoutPresenter.getLayoutConfig()))
                 .layoutConstraints(layoutConstraints)
                 .preferredSize(MutableConfigUtil.toSize(preferredSize))
-                .designMode(false)
+                // Persist the mode the user is working in, so saving in design mode is remembered.
+                .designMode(designMode)
                 .modelVersion(VERSION_7_2_0)
                 .build();
         return dashboard.copy().dashboardConfig(dashboardConfig).build();

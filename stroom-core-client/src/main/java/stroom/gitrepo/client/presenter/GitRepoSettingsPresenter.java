@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import stroom.gitrepo.shared.GitRepoResource;
 import stroom.http.client.presenter.HttpClientConfigPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 
@@ -185,7 +186,7 @@ public class GitRepoSettingsPresenter
 
     @Override
     public void onSetHttpClientConfiguration() {
-        httpClientConfigPresenterProvider.get().show(httpClientConfiguration, updated -> {
+        httpClientConfigPresenterProvider.get().show(httpClientConfiguration, isReadOnly(), updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
                 httpClientConfiguration = updated;
                 onChange();
@@ -343,7 +344,7 @@ public class GitRepoSettingsPresenter
      *                       null if nothing is selected.
      */
     private void grabCredentialsList(final String credentialName) {
-        if (credentialName == null) {
+        if (NullSafe.isBlankString(credentialName)) {
             getView().getCredentialSelectionBox().setValue(null);
         } else {
             credentialClient.getCredentialByName(credentialName, credential ->

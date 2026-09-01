@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,21 +55,20 @@ class DashboardStoreImpl
     private static final String TEMPLATE_FILE = "DashboardTemplate.json";
 
     private final DashboardSerialiser serialiser;
-    private final SecurityContext securityContext;
 
     private DashboardConfig template;
 
     @Inject
     DashboardStoreImpl(final StoreFactory storeFactory,
-                       final DashboardSerialiser serialiser,
-                       final SecurityContext securityContext) {
+                       final SecurityContext securityContext,
+                       final DashboardSerialiser serialiser) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 DashboardDoc.TYPE,
                 DashboardDoc::builder,
                 DashboardDoc::copy);
         this.serialiser = serialiser;
-        this.securityContext = securityContext;
     }
 
     private DashboardConfig getTemplate() {
@@ -92,23 +91,30 @@ class DashboardStoreImpl
         return template;
     }
 
+    /**
+     * Create a dashboard from a template.
+     * <p>
+     * The template is applied to the document SKELETON rather than by reading the new document back
+     * and writing it again. A create is followed by permissions being attached
+     * ({@code ExplorerServiceImpl.create} calls {@code createNode} only after the handler returns), so
+     * a post-create write has to be authorised against a document that has no permissions yet. Working
+     * around that by wrapping it in {@code asProcessingUser} would leave the audit record unable to
+     * name the user who did it. There is nothing to authorise if there is no second write.
+     */
     @Override
     public DocRef createDocument(final String name) {
-        final DocRef docRef = getStore().createDocument(name);
-
-        // Create a dashboard from a template.
-
-        // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
-        // them until after they are created in the store.
-        securityContext.asProcessingUser(() -> {
-            final DashboardDoc dashboardDoc = getStore()
-                    .readDocument(docRef)
-                    .copy()
-                    .dashboardConfig(getTemplate())
-                    .build();
-            getStore().writeDocument(dashboardDoc);
-        });
-        return docRef;
+        return getStore().createDocument(name,
+                (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> DashboardDoc
+                        .builder()
+                        .uuid(uuid)
+                        .name(docName)
+                        .version(version)
+                        .createTimeMs(createTime)
+                        .updateTimeMs(updateTime)
+                        .createUser(createUser)
+                        .updateUser(updateUser)
+                        .dashboardConfig(getTemplate())
+                        .build());
     }
 
     @Override

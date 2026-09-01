@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.meta.impl.dao;
 
 import stroom.data.retention.api.DataRetentionRulesProvider;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.meta.api.MetaSecurityFilter;
 
 import com.google.inject.AbstractModule;
@@ -28,7 +29,18 @@ public class MetaTestModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(DataRetentionRulesProvider.class).toInstance(() -> null);
+        bind(DataRetentionRulesProvider.class).toInstance(new DataRetentionRulesProvider() {
+            @Override
+            public DataRetentionRules getOrCreate() {
+                return DataRetentionRules.builder()
+                        .build();
+            }
+
+            @Override
+            public Optional<DataRetentionRules> get() {
+                return Optional.empty();
+            }
+        });
     }
 
     @Provides

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,8 +106,8 @@ class TestStateProviderImpl {
 
 
     /**
-     * The StateProvider contract is that getState never returns null, which the getState() expression
-     * function relies on. A null from the query service must surface as ValNull, not null.
+     * The StateProvider contract is that getState never returns null, which the getState() expression function
+     * relies on. A null from the query service must surface as ValNull, not null.
      */
     @Test
     void nullValueIsReportedAsValNull() {

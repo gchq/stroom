@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,8 +72,11 @@ public class SigningKeyPresenter extends ContentTabPresenter<SigningKeyView> imp
 
         revokeButton = listPresenter.addButton(
                 SvgPresets.DELETE.title("Revoke the selected signing key"));
+        // Enabled explicitly because SvgPresets.CLEAR is one of the presets that starts disabled, and
+        // this button is never enabled anywhere else: it acts on every key rather than the selected
+        // one, so setButtonStates() — which is driven by the selection — has nothing to say about it.
         revokeAllButton = listPresenter.addButton(
-                SvgPresets.CLEAR.title("Revoke every signing key still in use"));
+                SvgPresets.CLEAR.with("Revoke every signing key still in use", true));
     }
 
     @Override

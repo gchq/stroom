@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,36 +122,28 @@ public class QueryDocEditPresenter
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
                 final AnalyticUiDefaultConfig analyticUiDefaultConfig = uiConfig.getAnalyticUiDefaultConfig();
-                if (analyticUiDefaultConfig.getDefaultErrorFeed() == null) {
-                    AlertEvent.fireError(this, "No default error feed configured", null);
-                } else if (analyticUiDefaultConfig.getDefaultDestinationFeed() == null) {
-                    AlertEvent.fireError(this, "No default destination feed configured", null);
-                } else if (analyticUiDefaultConfig.getDefaultNode() == null) {
-                    AlertEvent.fireError(this, "No default processing node configured", null);
-                } else {
-                    final String query = queryEditPresenter.getQuery();
-                    final TimeRange timeRange = queryEditPresenter.getTimeRange();
-                    restFactory
-                            .create(QUERY_RESOURCE)
-                            .method(res -> res.validateQuery(query))
-                            .onSuccess(validateExpressionResult -> {
-                                if (!validateExpressionResult.isOk()) {
-                                    AlertEvent.fireError(this,
-                                            validateExpressionResult.getString(),
-                                            null);
-                                } else {
-                                    AnalyticProcessType analyticProcessType = AnalyticProcessType.STREAMING;
-                                    if (validateExpressionResult.isGroupBy()) {
-                                        analyticProcessType = AnalyticProcessType.SCHEDULED_QUERY;
-                                    }
-                                    createRule(analyticUiDefaultConfig, query, timeRange, analyticProcessType);
+                final String query = queryEditPresenter.getQuery();
+                final TimeRange timeRange = queryEditPresenter.getTimeRange();
+                restFactory
+                        .create(QUERY_RESOURCE)
+                        .method(res -> res.validateQuery(query))
+                        .onSuccess(validateExpressionResult -> {
+                            if (!validateExpressionResult.isOk()) {
+                                AlertEvent.fireError(this,
+                                        validateExpressionResult.getString(),
+                                        null);
+                            } else {
+                                AnalyticProcessType analyticProcessType = AnalyticProcessType.STREAMING;
+                                if (validateExpressionResult.isGroupBy()) {
+                                    analyticProcessType = AnalyticProcessType.SCHEDULED_QUERY;
                                 }
-                            })
-                            .onFailure(restError ->
-                                    AlertEvent.fireErrorFromException(this, restError.getException(), null))
-                            .taskMonitorFactory(this)
-                            .exec();
-                }
+                                createRule(analyticUiDefaultConfig, query, timeRange, analyticProcessType);
+                            }
+                        })
+                        .onFailure(restError ->
+                                AlertEvent.fireErrorFromException(this, restError.getException(), null))
+                        .taskMonitorFactory(this)
+                        .exec();
             }
         }, this);
     }
@@ -319,33 +311,25 @@ public class QueryDocEditPresenter
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
                 final ReportUiDefaultConfig analyticUiDefaultConfig = uiConfig.getReportUiDefaultConfig();
-                if (analyticUiDefaultConfig.getDefaultErrorFeed() == null) {
-                    AlertEvent.fireError(this, "No default error feed configured", null);
-                } else if (analyticUiDefaultConfig.getDefaultDestinationFeed() == null) {
-                    AlertEvent.fireError(this, "No default destination feed configured", null);
-                } else if (analyticUiDefaultConfig.getDefaultNode() == null) {
-                    AlertEvent.fireError(this, "No default processing node configured", null);
-                } else {
-                    final String query = queryEditPresenter.getQuery();
-                    final TimeRange timeRange = queryEditPresenter.getTimeRange();
-                    restFactory
-                            .create(QUERY_RESOURCE)
-                            .method(res -> res.validateQuery(query))
-                            .onSuccess(validateExpressionResult -> {
-                                if (!validateExpressionResult.isOk()) {
-                                    AlertEvent.fireError(this,
-                                            validateExpressionResult.getString(),
-                                            null);
-                                } else {
-                                    createReport(analyticUiDefaultConfig, query, timeRange,
-                                            AnalyticProcessType.SCHEDULED_QUERY);
-                                }
-                            })
-                            .onFailure(restError ->
-                                    AlertEvent.fireErrorFromException(this, restError.getException(), null))
-                            .taskMonitorFactory(this)
-                            .exec();
-                }
+                final String query = queryEditPresenter.getQuery();
+                final TimeRange timeRange = queryEditPresenter.getTimeRange();
+                restFactory
+                        .create(QUERY_RESOURCE)
+                        .method(res -> res.validateQuery(query))
+                        .onSuccess(validateExpressionResult -> {
+                            if (!validateExpressionResult.isOk()) {
+                                AlertEvent.fireError(this,
+                                        validateExpressionResult.getString(),
+                                        null);
+                            } else {
+                                createReport(analyticUiDefaultConfig, query, timeRange,
+                                        AnalyticProcessType.SCHEDULED_QUERY);
+                            }
+                        })
+                        .onFailure(restError ->
+                                AlertEvent.fireErrorFromException(this, restError.getException(), null))
+                        .taskMonitorFactory(this)
+                        .exec();
             }
         }, this);
     }

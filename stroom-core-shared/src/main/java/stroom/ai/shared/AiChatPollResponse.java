@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,15 +30,23 @@ public class AiChatPollResponse {
     private final List<AiChatMessage> newMessages;
     @JsonProperty
     private final List<AiChatAttachment> attachments;
+    /**
+     * The WORKING message as it stands now, or null if nothing is being processed. Reported on every
+     * poll rather than only when new, because its text is updated in place as processing advances.
+     */
+    @JsonProperty
+    private final AiChatMessage workingMessage;
     @JsonProperty
     private final boolean complete;
 
     @JsonCreator
     public AiChatPollResponse(@JsonProperty("newMessages") final List<AiChatMessage> newMessages,
                               @JsonProperty("attachments") final List<AiChatAttachment> attachments,
+                              @JsonProperty("workingMessage") final AiChatMessage workingMessage,
                               @JsonProperty("complete") final boolean complete) {
         this.newMessages = newMessages;
         this.attachments = attachments;
+        this.workingMessage = workingMessage;
         this.complete = complete;
     }
 
@@ -48,6 +56,10 @@ public class AiChatPollResponse {
 
     public List<AiChatAttachment> getAttachments() {
         return attachments;
+    }
+
+    public AiChatMessage getWorkingMessage() {
+        return workingMessage;
     }
 
     public boolean isComplete() {

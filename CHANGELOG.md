@@ -13,6 +13,107 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.13] - 2026-08-27
+
+* Bug : Stop creation of content templates and data retention docs when they are just being fetched.
+
+* Bug : Fix error when trying to edit content templates, data retention rules and data receipt rules.
+
+* Bug **#5738** : Improve the error message produced by the `json-to-xml` XSLT function and the `JSONParser` pipeline element when the JSON is invalid.
+
+* Bug **#5742** : Fix meta DB performance issues.
+
+* Bug **#5745** : Fix meta find query performance.
+
+
+## [v7.13-beta.12] - 2026-08-18
+
+* Bug **#5730** : Fix doc create permission bug.
+
+* Bug **#5732** : Fix locate button enabled state.
+
+
+## [v7.13-beta.11] - 2026-08-17
+
+* Refactor : Change YAML config code back to using the legacy Jackson v2 as this is consistent with the current version of DropWizard.
+
+* Bug : Fix (de)serialisation of enum values in YAML files. Now correctly uses the enum name rather than toString value.
+
+* Bug : IMPORTANT! Rename DB migration scripts from `V07_14...` to `V07_13...` to correctly match the branch. This will break the DB migration when deploying the next release **IF** you have deployed **ANY** 7.13 version that is less than or equal to `v7.13-beta.10`. If you have deployed an earlier 7.13 version, you need to run the following script before running the next Stroom version to update the schema_history tables with the new names: https://raw.githubusercontent.com/gchq/stroom/refs/heads/7.13/scripts/v07_13_migration_script_rename.sql.
+
+* Bug **#5688** : Failed CSV search requests now return sensible error responses.
+
+* Bug **#5688** : Tell CSV search callers whether their results are complete, and add `incremental` and `timeout` query parameters so a slow query can return its full result set rather than silently returning nothing.
+
+* Bug **#5719** : Fix favourites not including folders.
+
+* Bug **#5723** : Fix QuickFilter passing partial text to credentials.
+
+* Bug **#5724** : Fix QuickFilter field qualifier so it only applies to known fields. This allows unquoted date/time text.
+
+* Bug **#5720** : Fix QuickFilter fields for dependencies.
+
+* Bug **#5645** : Change the dashboard/query `xpath()` function to concatenate the values of all matched items, evaluate expressions with XPath 3.1 (Saxon) rather than XPath 1.0, take namespace prefix mappings as a single `'prefix:uri prefix2:uri2'` argument and ignore namespaces altogether when no mappings are supplied. It also adds an optional delimiter argument.
+
+* Bug : Change the dashboard/query `jq()` function to concatenate the values of all matched elements rather than rendering them as a Java list, e.g. `[2, 3]`. It also adds an optional delimiter argument and stops the expression being re-compiled for every row.
+
+* Bug **#5726** : Fix Stroom & Proxy docker images so the SIGTERM from a Docker `stop` is passed through to Dropwizard for a graceful shutdown.
+
+* Bug **#5705** : Log a failure to get a Plan B shard at debug level rather than error as the failure is rethrown and reported by the caller, e.g. to the stream processing error file.
+
+* Bug **#5705** : Stop a Plan B snapshot fetch treating a 304 Not Modified answer from the store node as a fetch failure, which made lookups fail once the snapshot of an unchanged store aged out.
+
+* Bug **#5707** : Fix `lastName` arg on create_account command being used for `firstName`.
+
+* Bug : Change stroom CLI commands to mask the value of arguments for key `password` in the logs.
+
+* Bug **#5706** : Log a failure to send Plan B data to a node at debug level rather than error as the failure is rethrown and reported by the caller, e.g. to the stream processing error file.
+
+* Feature **#5706** : Retry sending Plan B data to a node when the send fails at the transport level, e.g. a DNS lookup failure during a network blip, controlled by `stroom.planb.sendPartAttempts` (default 3) and `stroom.planb.sendPartRetryDelay` (default 10s).
+
+* Dependency : Uplift java in docker images to 25.0.3_9.
+
+* Bug **#4621** : Honour hidden columns when running Reports, and persist the hidden state of a column against Report and Analytic Rule documents so that it survives a save.
+
+* Bug **#5176** : Disable rule execution if no error feed is configured.
+
+* Bug **#5176** : Remove the need to set default feeds and nodes before being able to create rules and reports.
+
+* Bug **#5176** : Validate scheduled executors to ensure an execution node is specified.
+
+* Feature **#5712** : Add an optional `ignoreWarnings` boolean argument to the XSLT functions `stroom:host-name()` and `stroom:host-address()` to suppress the WARN that is logged when a DNS lookup fails.
+
+
+## [v7.13-beta.10] - 2026-08-05
+
+* Bug **#5553** : Fix DocRefInfo cache bug.
+
+* Feature **#5582** : Add proper audit trail to doc history and store snapshots of data changes to allow future restore.
+
+* Task **#5588** : Improve JOOQ code generation to work with Flyway to remove catch 22 issue.
+
+* Feature **#2109** : Add doc dependencies to DB to improve capability.
+
+* Feature **#1556** : Add safe delete feature now we can depend on a reliable dependency discovery service.
+
+* Feature **#4111** : Add confirmation details when deleting a folder.
+
+* Bug **#4073** : Stop explorer scrolling to the top on deleting an item.
+
+* Bug **#5697** : Fix the UI bootstrap never recognising a user authenticated by an edge proxy (e.g. AWS ALB + Cognito, NGINX + oauth2-proxy): `/api/auth/flow/v1/status` now accepts a verified request token, and the new `security.authentication.edgeAuthentication` config block suppresses stroom's own OIDC flow and supports edge-aware logout when the proxy is the relying party.
+
+* Feature **#5697** : Apply CSRF Origin/X-CSRF checks to state-changing requests whose credential was injected by an authenticating edge proxy (previously only session-cookie identities were checked), and reject cross-site browser requests carrying a request token unless they send `X-CSRF: 1`. In-browser clients that attach their own bearer token must now send `X-CSRF: 1` on state-changing requests when `edgeAuthentication.enabled` is set; non-browser automation and inter-node traffic are unaffected.
+
+* Feature **#5697** : Add `security.authentication.openId.authenticationRequestExtraParams` to append provider-specific parameters to the OIDC authentication request, e.g. Google's `access_type: offline` without which Google issues no refresh token and the session cannot outlive the first access token.
+
+* Bug **#5696** : Stop the Plan B merge processor deleting un-merged queued data at startup and stop merge queue consumers churning through the queue when merges are interrupted at shutdown. Data queued for merge now survives a restart and interrupted merges are rerun when the merge job next runs.
+
+* Bug **#5696** : Fix Plan B merges double counting for histograms and metrics on resume.
+
+* Bug **#5696** : Stop Plan B histogram and metric stores double counting when a merge is rerun, e.g. after an interrupted shutdown, a duplicate part delivery or a sender retry. Each part shard now carries an instance UUID and additive stores track per source merge progress, skipping fully merged sources and resuming interrupted merges exactly after their last commit.
+
+* Bug **#5696** : Backport the Plan B filter staging buffer reuse from 7.13 so that a pooled buffer is no longer allocated and abandoned for every value element loaded.
+
 * Bug **#5689** : Fix issue where snapshots were not found.
 
 * Bug **#5692** : Fix `getState()` reporting "No state doc can be found for name: ..." for a Plan B store. The Scylla backed state provider is no longer registered, so it can no longer mask the Plan B provider.
@@ -2406,7 +2507,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.13...HEAD
+[v7.13-beta.13]: https://github.com/gchq/stroom/compare/v7.13-beta.12...v7.13-beta.13
+[v7.13-beta.12]: https://github.com/gchq/stroom/compare/v7.13-beta.11...v7.13-beta.12
+[v7.13-beta.11]: https://github.com/gchq/stroom/compare/v7.13-beta.10...v7.13-beta.11
+[v7.13-beta.10]: https://github.com/gchq/stroom/compare/v7.13-beta.9...v7.13-beta.10
 [v7.13-beta.9]: https://github.com/gchq/stroom/compare/v7.13-beta.8...v7.13-beta.9
 [v7.13-beta.8]: https://github.com/gchq/stroom/compare/v7.13-beta.7...v7.13-beta.8
 [v7.13-beta.7]: https://github.com/gchq/stroom/compare/v7.13-beta.6...v7.13-beta.7

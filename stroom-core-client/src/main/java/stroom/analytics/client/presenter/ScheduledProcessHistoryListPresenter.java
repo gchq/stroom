@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,8 +144,6 @@ public class ScheduledProcessHistoryListPresenter
                         .withToolTip("Any output or error message output by the execution.")
                         .build(),
                 ColumnSizeConstants.BIG_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private void replay() {

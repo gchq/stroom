@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,43 +51,26 @@ class ReportStoreImpl
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReportStoreImpl.class);
 
-    private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestFactory searchRequestFactory;
     private final Provider<ExecutionScheduleDao> executionScheduleDaoProvider;
-    private final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
 
     @Inject
     ReportStoreImpl(final StoreFactory storeFactory,
-                    final ReportSerialiser serialiser,
                     final SecurityContext securityContext,
+                    final ReportSerialiser serialiser,
                     final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
-                    final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                     final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                     final SearchRequestFactory searchRequestFactory) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 ReportDoc.TYPE,
                 ReportDoc::builder,
                 ReportDoc::copy);
-        this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
         this.executionScheduleDaoProvider = executionScheduleDaoProvider;
-        this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
-    }
-
-    @Override
-    public DocRef createDocument(final String name) {
-        final DocRef docRef = getStore().createDocument(name);
-
-        // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
-        // them until after they are created in the store.
-        securityContext.asProcessingUser(() -> {
-            final ReportDoc analyticRuleDoc = getStore().readDocument(docRef);
-            getStore().writeDocument(analyticRuleDoc);
-        });
-        return docRef;
     }
 
     @Override
@@ -96,7 +79,7 @@ class ReportStoreImpl
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        final ReportDoc document = getStore().readDocument(docRef);
+        final ReportDoc document = super.readDocument(docRef);
         return getStore().createDocument(newName,
                 (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
                     final Builder builder = document

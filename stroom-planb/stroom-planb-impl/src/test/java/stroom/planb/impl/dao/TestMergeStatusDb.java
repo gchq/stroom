@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,8 @@ class TestMergeStatusDb {
     private PlanBEnv createEnv(final Path path) {
         return new PlanBEnv(
                 path,
-                ByteSize.ofMebibytes(100).getBytes(),
+                // These tests write a handful of small status records.
+                ByteSize.ofMebibytes(10).getBytes(),
                 5,
                 false,
                 new HashClashCommitRunnable());

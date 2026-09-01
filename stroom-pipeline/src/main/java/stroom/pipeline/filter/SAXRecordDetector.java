@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package stroom.pipeline.filter;
 
-import stroom.pipeline.stepping.RecordDetector;
-import stroom.pipeline.stepping.SteppingController;
+import stroom.pipeline.stepping.capture.RecordDetector;
+import stroom.pipeline.stepping.capture.SteppingController;
 
 import org.xml.sax.SAXException;
 
@@ -26,11 +26,22 @@ public class SAXRecordDetector extends AbstractXMLFilter implements RecordDetect
     private SteppingController controller;
 
     private long currentStepIndex = -1;
+    // The record index the first replayed record should be reported as. Zero for a normal run, which counts
+    // records from the start of the stream. A replay that fires a single record from the middle of a stream
+    // sets it, so the record is captured under the index it actually has rather than as record 0.
+    private long baseRecordIndex;
+
+    /**
+     * Report the first record of the next stream as {@code baseRecordIndex} rather than 0.
+     */
+    public void setBaseRecordIndex(final long baseRecordIndex) {
+        this.baseRecordIndex = baseRecordIndex;
+    }
 
     @Override
     public void startStream() {
         if (controller != null) {
-            currentStepIndex = -1;
+            currentStepIndex = baseRecordIndex - 1;
             controller.resetSourceLocation();
         }
         super.startStream();

@@ -132,6 +132,9 @@ appConfig:
     eventLinkCacheSizeLimit: 1000000
     physicalDeleteAge: "P7D"
   askStroomAi:
+    dockType: "DOCK"
+    dockLocation: "RIGHT"
+    dockSize: 300
     tableAnalysis:
       maxTotalRows: 10000
       maxRowsPerBatch: 1000
@@ -745,6 +748,19 @@ appConfig:
         maxStoreSize: "10G"
         readAheadEnabled: true
         readerBlockedByWriter: false
+    stepping:
+      eagerMaterialisationRecords: 5000
+      filteredScanWindow: 50
+      maxBytesPerStream: 2147483648
+      maxRecordSizeBytes: 104857600
+      maxRecordsPerStream: 1000000
+      maxRetainedFingerprintsPerElement: 3
+      maxSessionIdleTime: "PT10M"
+      maxSweptStreamsPerSession: 10
+      orphanMaxAge: "PT1H"
+      prefetchWindow: 10
+      skeletonSweep: true
+      storeSubDir: "stepping"
     xmlSchema:
       cache:
         expireAfterAccess: "PT10M"
@@ -766,6 +782,8 @@ appConfig:
     minTimeToKeepSnapshots: "PT10M"
     nodeList: []
     path: "planb"
+    sendPartAttempts: 3
+    sendPartRetryDelay: "PT10S"
     snapshotRetryFetchInterval: "PT1M"
     stateDocCache:
       expireAfterAccess: null
@@ -949,8 +967,8 @@ appConfig:
     dataFeedIdentitiesDir: "data_feed_identities"
     dataFeedOwnerMetaKey: "AccountId"
     enabledAuthenticationTypes:
-    - "AuthenticationType{displayValue='OAuth Token'}"
-    - "AuthenticationType{displayValue='Client certificate'}"
+    - "TOKEN"
+    - "CERTIFICATE"
     fallbackReceiveAction: "RECEIVE"
     feedNameGenerationEnabled: false
     feedNameGenerationMandatoryHeaders:
@@ -1034,11 +1052,19 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      csrf:
+        protectBrowserOriginatedRequests: true
+      edgeAuthentication:
+        enabled: false
+        logout:
+          cookiesToExpire: []
+          signOutUrl: null
       maxApiKeyExpiryAge: "P365D"
       openId:
         allowedAudiences: []
         audienceClaimRequired: true
         authEndpoint: null
+        authenticationRequestExtraParams: {}
         clientCredentialsScopes:
         - "openid"
         clientId: null
@@ -1359,12 +1385,12 @@ appConfig:
     defaultApiKeyHashAlgorithm: "SHA3_256"
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathDocumentation: "/user-guide/content/documentation/"
-    helpSubPathExpressions: "/user-guide/dashboards/expressions/"
+    helpSubPathExpressions: "/reference-section/expressions/"
     helpSubPathJobs: "/reference-section/jobs/"
     helpSubPathProperties: "/user-guide/properties/"
-    helpSubPathQuickFilter: "/user-guide/finding-things/"
-    helpSubPathStroomQueryLanguage: "/user-guide/dashboards/stroom-query-language/"
-    helpUrl: "https://gchq.github.io/stroom-docs/7.5/docs"
+    helpSubPathQuickFilter: "/user-guide/content/finding-things/"
+    helpSubPathStroomQueryLanguage: "/user-guide/search/queries/stroom-query-language/"
+    helpUrl: "https://gchq.github.io/stroom-docs/7.13/docs"
     htmlTitle: "Stroom"
     maxEditorCompletionEntries: 1000
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"

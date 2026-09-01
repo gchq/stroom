@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -371,8 +371,6 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
                         .centerAligned()
                         .build(),
                 ColumnSizeConstants.ENABLED_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private SafeHtml getPingBarSafeHtml(final NodeStatusResult row) {

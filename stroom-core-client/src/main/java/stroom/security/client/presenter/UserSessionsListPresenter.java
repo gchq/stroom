@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,8 +120,6 @@ public class UserSessionsListPresenter extends MyPresenterWidget<PagerView> {
                         SessionDetails::getLastAccessedAgent)
                 .build();
         dataGrid.addAutoResizableColumn(agentColumn, "Agent", ColumnSizeConstants.BIG_COL);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     /**

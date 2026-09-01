@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.ReportDoc;
+import stroom.config.global.shared.ConfigTarget;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.docref.DocRef;
 import stroom.document.client.event.ChangeUiHandlers;
@@ -86,8 +87,10 @@ public class AnalyticNotificationEditPresenter
                 final AbstractAnalyticUiDefaultConfig defaultConfig;
                 if (ReportDoc.TYPE.equals(docRef.getType())) {
                     defaultConfig = extendedUiConfig.getReportUiDefaultConfig();
+                    analyticStreamDestinationPresenter.setConfigTarget(ConfigTarget.REPORT_UI_DEFAULT);
                 } else {
                     defaultConfig = extendedUiConfig.getAnalyticUiDefaultConfig();
+                    analyticStreamDestinationPresenter.setConfigTarget(ConfigTarget.ANALYTIC_UI_DEFAULT);
                 }
 
                 final NotificationDestination destination = NullSafe.get(

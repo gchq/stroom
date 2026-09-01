@@ -98,3 +98,15 @@ dependencies {
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }
+
+// Regenerates the checked-in ConfigProvidersModule after adding/removing an IsStroomConfig class.
+// The generator resolves its output path from the process working directory, so it must run from the
+// repo root. See GenerateConfigProvidersModule and TestConfigProvidersModule.
+tasks.register('generateConfigProvidersModule', JavaExec) {
+    dependsOn compileJava
+    dependsOn compileTestJava
+
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'stroom.config.global.impl.GenerateConfigProvidersModule'
+    workingDir = rootProject.projectDir
+}

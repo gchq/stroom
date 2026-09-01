@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.UserRef;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
@@ -51,10 +52,12 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
         return new SessionResourceImpl(
                 TestUtil.mockProvider(OpenIdManager.class),
                 TestUtil.mockProvider(HttpServletRequest.class),
+                TestUtil.mockProvider(HttpServletResponse.class),
                 TestUtil.mockProvider(AuthenticationEventLog.class),
                 () -> sessionListService,
                 TestUtil.mockProvider(StroomUserIdentityFactory.class),
-                MockSecurityContext::new);
+                MockSecurityContext::new,
+                AuthenticationConfig::new);
 
     }
 

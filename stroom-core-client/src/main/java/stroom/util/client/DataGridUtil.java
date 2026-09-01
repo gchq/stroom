@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import stroom.data.client.presenter.HasContextMenusCell;
 import stroom.data.client.presenter.UserRefCell;
 import stroom.data.grid.client.ColSpec;
 import stroom.data.grid.client.ColumnBuilder;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.HasContextMenus;
 import stroom.data.grid.client.HeadingBuilder;
 import stroom.data.grid.client.MyDataGrid;
@@ -211,10 +210,6 @@ public class DataGridUtil {
         };
     }
 
-    public static <T_ROW> Column<T_ROW, String> endColumn() {
-        return new EndColumn<T_ROW>();
-    }
-
 //    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addResizableTextColumn(
 //            final T_VIEW view,
 //            final Function<T_ROW, String> cellValueExtractor,
@@ -270,14 +265,6 @@ public class DataGridUtil {
                 svgStatusColumn(statusIconExtractor),
                 "",
                 ColumnSizeConstants.ICON_COL);
-    }
-
-    public static void addEndColumn(final MyDataGrid<?> view) {
-        view.addEndColumn(new EndColumn<>());
-    }
-
-    public static void addEndColumn(final DataGrid<?> view) {
-        view.addColumn(new EndColumn<>());
     }
 
     /**

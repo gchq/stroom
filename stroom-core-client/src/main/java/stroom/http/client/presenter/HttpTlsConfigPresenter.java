@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.credentials.client.presenter.CredentialClient;
 import stroom.credentials.client.presenter.CredentialListModel;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpTlsConfigPresenter.HttpTlsConfigView;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
@@ -66,8 +67,10 @@ public class HttpTlsConfigPresenter
     }
 
     public void show(final HttpTlsConfig httpTlsConfiguration,
+                     final boolean readOnly,
                      final Consumer<HttpTlsConfig> consumer) {
         read(httpTlsConfiguration);
+        getView().onReadOnly(readOnly);
 //        final PopupSize popupSize = PopupSize.resizable(430, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -132,7 +135,7 @@ public class HttpTlsConfigPresenter
     }
 
     public interface HttpTlsConfigView
-            extends View, Focus {
+            extends View, Focus, ReadOnlyChangeHandler {
 
         void setProtocol(String protocol);
 

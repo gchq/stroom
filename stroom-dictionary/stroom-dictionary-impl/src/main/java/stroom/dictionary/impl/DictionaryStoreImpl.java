@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DocFinder;
 import stroom.docstore.api.StoreFactory;
+import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -57,9 +58,11 @@ public class DictionaryStoreImpl
 
     @Inject
     DictionaryStoreImpl(final StoreFactory storeFactory,
+                        final SecurityContext securityContext,
                         final DictionarySerialiser serialiser,
                         final DocFinder docFinder) {
         super(storeFactory,
+                securityContext,
                 serialiser,
                 DictionaryDoc.TYPE,
                 DictionaryDoc::builder,

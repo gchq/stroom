@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,12 +62,21 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -75,6 +84,12 @@ import java.util.Optional;
 public class AiServiceImpl implements AiService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AiServiceImpl.class);
+
+    /**
+     * How much of a failed response body to include in the error we report back to the user. Enough to
+     * see what the endpoint objected to, not so much that an HTML error page fills the screen.
+     */
+    private static final int MAX_ERROR_BODY_LENGTH = 2_000;
 
     private static final SimpleDuration DEFAULT_TIMEOUT = SimpleDuration
             .builder()
@@ -111,69 +126,146 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public String getModel(final OpenAIModelDoc modelDoc) {
-        try {
-            // curl https://api.openai.com/v1/models \
-            //   -H "Authorization: Bearer $OPENAI_API_KEY"
+        // curl https://api.openai.com/v1/models \
+        //   -H "Authorization: Bearer $OPENAI_API_KEY"
 
+        final HttpClientConfig httpClientConfig = NullSafe.getOrElse(
+                modelDoc,
+                OpenAIModelDoc::getHttpClientConfiguration,
+                getDefaultHttpClientConfig());
+        final HttpClientConfiguration httpClientConfiguration = httpConfigResolver.resolve(httpClientConfig);
+        final HttpClientProviderCache httpClientProviderCache = httpClientCacheProvider.get();
+        final String url = getUrl(modelDoc, "models");
 
-            final HttpClientConfiguration httpClientConfiguration = httpConfigResolver.resolve(NullSafe.getOrElse(
-                    modelDoc,
-                    OpenAIModelDoc::getHttpClientConfiguration,
-                    getDefaultHttpClientConfig()));
-            final HttpClientProviderCache httpClientProviderCache = httpClientCacheProvider.get();
-            try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
-                final String url = getUrl(modelDoc, "models");
-                // Reject cloud-metadata/wildcard targets to prevent SSRF.
-                SsrfGuard.rejectMetadataAndWildcard(url);
+        try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
+            // Reject cloud-metadata/wildcard targets to prevent SSRF. Any redirect the client follows is
+            // checked the same way, see ConfiguredRedirectStrategy.
+            SsrfGuard.rejectMetadataAndWildcard(url);
 
-                final HttpGet httpGet = new HttpGet(url);
-                // Do not follow redirects - a redirect could otherwise reach a blocked address after the
-                // check above, since this client's redirect behaviour is request-supplied.
-                httpGet.setConfig(RequestConfig.custom().setRedirectsEnabled(false).build());
-                httpGet.addHeader("Content-Type", "application/audit");
+            final HttpGet httpGet = new HttpGet(url);
+            // A GET has no body, so it is `Accept` rather than `Content-Type` that tells the endpoint what
+            // we want back.
+            httpGet.addHeader(HttpHeaders.ACCEPT, ContentType.APPLICATION_JSON.getMimeType());
 
-                // Provide an API key
-                getApiKey(modelDoc).ifPresent(apiKey ->
-                        httpGet.addHeader("Authorization", "Bearer " + apiKey));
+            // Provide an API key
+            getApiKey(modelDoc).ifPresent(apiKey ->
+                    httpGet.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey));
 
-                return httpClientProvider.get().execute(httpGet, response -> {
-//                        final StringBuilder sb = new StringBuilder()
-//                    .append("Model ID: ")
-//                    .append(model.id())
-//                    .append("\nCreated: ")
-//                    .append(DateUtil.createNormalDateTimeString(model.created()))
-//                    .append("\nOwner: ")
-//                    .append(model.ownedBy())
-//                    .append("\nValid: ")
-//                    .append(model.isValid());
+            final HttpResult result = httpClientProvider.get().execute(httpGet, this::readResponse);
+            LOGGER.debug(() -> "getModel: GET '" + url + "' returned " + result.code() + " " + result.reasonPhrase()
+                               + ", headers: " + result.headers() + ", body:\n" + result.body());
 
-                    if (response.getCode() != 200) {
-                        return response.toString();
-                    }
-
-                    final byte[] bytes = response.getEntity().getContent().readAllBytes();
-                    return new String(bytes, StandardCharsets.UTF_8);
-                });
+            if (!result.isSuccess()) {
+                throw new RuntimeException(describeFailure(url, result, httpClientConfig));
             }
 
-//        final OpenAIOkHttpClient.Builder clientBuilder = OpenAIOkHttpClient.builder()
-//                .fromEnv();
-//
-//        if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-//            // Override the base URL
-//            clientBuilder.baseUrl(modelDoc.getBaseUrl());
-//        }
-//
-//        final String apiKey = getApiKey(modelDoc);
-//        // Provide a bearer token
-//        clientBuilder.credential(BearerTokenCredential.create(apiKey));
-//
-//        final OpenAIClient client = clientBuilder.build();
-//        return client.models().list().items().stream()
-//                .filter(model -> modelDoc.getModelId().equals(model.id()))
-//                .findFirst().orElseThrow();
+            return result.body();
+
         } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+            LOGGER.debug(() -> "getModel: GET '" + url + "' failed: " + e.getMessage(), e);
+            throw new UncheckedIOException("Error requesting '" + url + "': " + e.getMessage(), e);
+        }
+    }
+
+    private HttpResult readResponse(final ClassicHttpResponse response) throws IOException {
+        final Map<String, String> headers = new LinkedHashMap<>();
+        for (final Header header : response.getHeaders()) {
+            // First value wins, as that is what getFirstHeader() would have given us.
+            headers.putIfAbsent(header.getName().toLowerCase(Locale.ROOT), header.getValue());
+        }
+
+        String body = null;
+        final HttpEntity entity = response.getEntity();
+        if (entity != null) {
+            try (final InputStream inputStream = entity.getContent()) {
+                body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        }
+
+        return new HttpResult(response.getCode(), response.getReasonPhrase(), headers, body);
+    }
+
+    /**
+     * Says what went wrong in terms the person editing the model document can act on, i.e. the status the
+     * endpoint gave us and whatever it said about it, rather than just the fact that it was not a 200.
+     */
+    private String describeFailure(final String url,
+                                   final HttpResult result,
+                                   final HttpClientConfig httpClientConfig) {
+        final StringBuilder sb = new StringBuilder()
+                .append("GET ")
+                .append(url)
+                .append(" returned ")
+                .append(result.code());
+        if (NullSafe.isNonBlankString(result.reasonPhrase())) {
+            sb.append(" ").append(result.reasonPhrase());
+        }
+        sb.append(".");
+
+        explain(result, httpClientConfig).ifPresent(explanation -> sb.append(" ").append(explanation));
+
+        if (NullSafe.isNonBlankString(result.body())) {
+            final String body = result.body().strip();
+            sb.append("\nResponse:\n");
+            if (body.length() > MAX_ERROR_BODY_LENGTH) {
+                sb.append(body, 0, MAX_ERROR_BODY_LENGTH).append("...");
+            } else {
+                sb.append(body);
+            }
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Anything we can usefully add to the bare status, for the few cases where the endpoint or our own
+     * configuration has told us something more specific than the status code does. Every other failure is
+     * left to speak for itself through the status and the response body.
+     */
+    private Optional<String> explain(final HttpResult result, final HttpClientConfig httpClientConfig) {
+        if (result.isRedirect()) {
+            final String location = result.header(HttpHeaders.LOCATION)
+                    .map(value -> "'" + value + "'")
+                    .orElse("an unspecified location");
+            return Optional.of(httpClientConfig.isFollowRedirects()
+                    ? "The endpoint redirected to " + location + " but the redirect was not followed."
+                    : "The endpoint redirected to " + location + ", which was not followed because "
+                      + "'Follow Redirects' is turned off in this model's HTTP client configuration.");
+        }
+
+        if (result.code() == HttpStatus.SC_UNAUTHORIZED || result.code() == HttpStatus.SC_FORBIDDEN) {
+            return Optional.of(result.header(HttpHeaders.WWW_AUTHENTICATE)
+                    .map(challenge -> "The endpoint asked for authentication: " + challenge)
+                    .orElse("Check the API key set on this model."));
+        }
+
+        if (result.code() == HttpStatus.SC_NOT_FOUND) {
+            return Optional.of("Check the base URL set on this model.");
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * What a response told us, whatever it was, kept for as long as it takes to decide whether it was what
+     * we wanted and to say what it was if it was not. The entity is read here because it is only readable
+     * while the response is open.
+     */
+    private record HttpResult(int code,
+                              String reasonPhrase,
+                              Map<String, String> headers,
+                              String body) {
+
+        private boolean isSuccess() {
+            return code >= HttpStatus.SC_SUCCESS && code < HttpStatus.SC_REDIRECTION;
+        }
+
+        private boolean isRedirect() {
+            return code >= HttpStatus.SC_REDIRECTION && code < HttpStatus.SC_CLIENT_ERROR;
+        }
+
+        private Optional<String> header(final String name) {
+            return Optional.ofNullable(headers.get(name.toLowerCase(Locale.ROOT)));
         }
     }
 
@@ -378,6 +470,18 @@ public class AiServiceImpl implements AiService {
     public List<AiChatMessage> getMessagesSince(final int chatId, final int lastSeenMessageId) {
         verifyOwnership(chatId);
         return aiDao.getMessagesSince(chatId, lastSeenMessageId);
+    }
+
+    @Override
+    public Optional<AiChatMessage> getWorkingMessage(final int chatId) {
+        verifyOwnership(chatId);
+        return aiDao.getWorkingMessage(chatId);
+    }
+
+    // No ownership check — internal-only, called either side of processing a question.
+    @Override
+    public void deleteWorkingMessages(final int chatId) {
+        aiDao.deleteWorkingMessages(chatId);
     }
 
     @Override

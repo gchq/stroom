@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,4 +104,14 @@ public interface Shard {
      * @return true if the shard is idle and can be safely evicted from the shard map.
      */
     boolean isIdle();
+
+    /**
+     * Close the shard's underlying database, closing its LMDB environment. A {@link StoreShard}
+     * waits for in-flight readers and writers to finish before closing, and its data remains on
+     * disk to be reopened by a newly created shard. A {@link SnapshotShard} discards its local
+     * copy; if readers are in flight the actual close/delete is deferred until the last one
+     * finishes, so the env may still be open when this method returns. The shard must not be
+     * used after closing — obtain a fresh one from the {@code ShardManager}.
+     */
+    void close();
 }

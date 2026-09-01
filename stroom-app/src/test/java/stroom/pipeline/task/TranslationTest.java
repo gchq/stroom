@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -670,6 +670,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             requestBuilder.stepType(direction);
             final SteppingResult stepResponse = steppingService.step(requestBuilder.build());
 
+            // Carry the session id across steps exactly as the UI does. Without this every step would open
+            // a fresh session and re-sweep the stream, so the scripted sequences below would still pass but
+            // would never exercise serving a step from data an earlier step captured - which is the whole
+            // point of the engine they are the acceptance gate for.
+            requestBuilder.sessionUuid(stepResponse.getSessionUuid());
+
             if (stepResponse.getGeneralErrors() != null && !stepResponse.getGeneralErrors().isEmpty()) {
                 throw new RuntimeException(stepResponse.getGeneralErrors().iterator().next());
             }
@@ -726,7 +732,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 //                        }
 
                         final SharedElementData newElementData = new SharedElementData(
-                                input, output, indicators, elementData.isFormatInput(), elementData.isFormatOutput());
+                                input, output, indicators, elementData.isFormatInput(), elementData.isFormatOutput(),
+                                elementData.isHasOutput());
                         final SharedStepData newStepData = NullSafe.getOrElseGet(
                                 newResponse,
                                 SteppingResult::getStepData,
