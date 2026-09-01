@@ -101,6 +101,7 @@ public class PreAggregator {
     private final Histogram aggregateAgeHistogram;
 
     private Consumer<Path> destination;
+    private boolean recovered;
 
     @Inject
     public PreAggregator(final CleanupDirQueue deleteDirQueue,
@@ -116,9 +117,6 @@ public class PreAggregator {
         LOGGER.info("Initialising PreAggregator with aggregateDir: {}", aggregatingDir);
         DirUtil.ensureDirExists(aggregatingDir);
 
-        // Read all the current aggregates and establish the aggregation state.
-        initialiseAggregateStateMap();
-
         // Make splitting dir.
         final Path tempSplittingDir = dataDirProvider.get().resolve(DirNames.PRE_AGGREGATE_SPLITTING);
         DirUtil.ensureDirExists(tempSplittingDir);
@@ -132,6 +130,191 @@ public class PreAggregator {
         // Get or create the post split data dir.
         stagedSplittingDir = dataDirProvider.get().resolve(DirNames.PRE_AGGREGATE_SPLIT_OUTPUT);
         DirUtil.ensureDirExists(stagedSplittingDir);
+
+
+        aggregateItemCountHistogram = metrics.registrationBuilder(getClass())
+                .addNamePart(AGGREGATE_NAME_PART)
+                .addNamePart(Metrics.COUNT)
+                .histogram()
+                .createAndRegister();
+        aggregateByteSizeHistogram = metrics.registrationBuilder(getClass())
+                .addNamePart(AGGREGATE_NAME_PART)
+                .addNamePart(Metrics.SIZE_IN_BYTES)
+                .histogram()
+                .createAndRegister();
+        aggregateAgeHistogram = metrics.registrationBuilder(getClass())
+                .addNamePart(AGGREGATE_NAME_PART)
+                .addNamePart(Metrics.AGE_MS)
+                .histogram()
+                .createAndRegister();
+
+        // Periodically close old aggregates.
+        // Initialise this last in the ctor so that it is not fighting with the code
+        // above that initialises all the unfinished aggregates found on disk.
+        proxyServices.addFrequencyExecutor(
+                "Close Old Aggregates",
+                () -> this::closeOldAggregates,
+                Duration.ofSeconds(10).toMillis());
+    }
+
+    /**
+     * @return the numeric part id encoded in a pre-aggregate part directory name, or 0 if the name is
+     * not one this class wrote. Used to rebuild the part counter from the highest surviving id.
+     */
+    private static long partIdOf(final Path partDir) {
+        final String name = partDir.getFileName().toString();
+        try {
+            return Long.parseLong(name);
+        } catch (final NumberFormatException e) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "Ignoring unexpected non-numeric part directory '{}' when rebuilding aggregate state",
+                    partDir));
+            return 0;
+        }
+    }
+
+    private void initialiseAggregateStateMap() {
+        LOGGER.debug("Initialising the state of existing pre-aggregates");
+        // Read all the current aggregates and establish the aggregation state.
+        final AggregatorConfig aggregatorConfig = aggregatorConfigProvider.get();
+        final AtomicInteger unreadableGroupCount = new AtomicInteger();
+        final AtomicInteger unidentifiedAggregateCount = new AtomicInteger();
+        try (final Stream<Path> stream = Files.list(aggregatingDir)) {
+            // Look at each aggregate dir.
+            stream.forEach(aggregateDir -> {
+                final List<Path> groupDirs;
+                try (final Stream<Path> groupStream = Files.list(aggregateDir)) {
+                    // Skip any staging residue - it is a partial copy whose source survives, and its
+                    // name would not parse as a part id.
+                    groupDirs = groupStream
+                            .filter(path -> !DirUtil.isStagingDir(path))
+                            .toList();
+                } catch (final IOException e) {
+                    LOGGER.error(e::getMessage, e);
+                    throw new UncheckedIOException(e);
+                }
+
+                // The age clock must survive a restart. Taking Instant.now() meant every restart gave
+                // the aggregate a fresh aggregationFrequency to wait out, so on a proxy that restarts
+                // more often than that frequency an aggregate could never grow old enough to close.
+                final AggregateState aggregateState = new AggregateState(
+                        aggregatorConfig, oldestModifiedTime(groupDirs), aggregateDir);
+                final AtomicLong highestPartId = new AtomicLong(0);
+                final AtomicLong survivingPartCount = new AtomicLong(0);
+                final AtomicReference<FeedKey> feedKeyRef = new AtomicReference<>();
+                // Intern the feedKeys in the entries to reduce mem use
+                final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
+
+                for (final Path groupDir : groupDirs) {
+                    final FileGroup fileGroup = new FileGroup(groupDir);
+                    final Path entriesFile = fileGroup.getEntries();
+                    // Track the highest id rather than counting survivors. Counting meant that a
+                    // gap - left by a kill part-way through deleting a closed aggregate in place -
+                    // rebuilt the counter onto an id that still existed, so the next part's
+                    // Files.move hit a non-empty directory, threw DirectoryNotEmptyException, and
+                    // was swallowed as an IOException while the stage acknowledged and deleted the
+                    // input. Taking the maximum can never collide with a surviving name.
+                    //
+                    // These two run before the read on purpose: a group we cannot read still occupies
+                    // its part id, and the next part must be numbered above it either way.
+                    highestPartId.accumulateAndGet(partIdOf(groupDir), Math::max);
+                    survivingPartCount.incrementAndGet();
+                    try (final BufferedReader bufferedReader = Files.newBufferedReader(entriesFile)) {
+                        String line = bufferedReader.readLine();
+                        while (line != null) {
+                            final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line, feedKeyInterner);
+                            final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
+                            aggregateState.addItem(totalUncompressedSize);
+
+                            final FeedKey existingFeedKey = feedKeyRef.get();
+                            final FeedKey newFeedKey = zipEntryGroup.getFeedKey();
+                            if (existingFeedKey != null) {
+                                if (!existingFeedKey.equals(newFeedKey)) {
+                                    LOGGER.error("Unexpected feed key mismatch!!!");
+                                }
+                            } else {
+                                feedKeyRef.set(newFeedKey);
+                            }
+
+                            line = bufferedReader.readLine();
+                        }
+                    } catch (final IOException | RuntimeException e) {
+                        // One unreadable proxy.entries used to abort the whole rebuild, and with it
+                        // start-up - every time, because the file is still there on the next attempt.
+                        // Skip the group instead: its part id is already accounted for above, so the
+                        // counter stays safe, and the aggregate is merely under-counted, which closes
+                        // it earlier than needed rather than later.
+                        unreadableGroupCount.incrementAndGet();
+                        LOGGER.error(() -> LogUtil.message(
+                                "Unable to read '{}' while rebuilding pre-aggregate state: {}. The file "
+                                + "group is left in place for inspection and its items are not counted "
+                                + "towards the aggregate's size.",
+                                entriesFile, LogUtil.exceptionMessage(e)), e);
+                    }
+                }
+
+                // The next part must be numbered above every id already on disk, gap or no gap.
+                // Never below the number of surviving parts. partIdOf yields 0 for a directory name
+                // this class did not write, so taking the highest id alone would reset the counter to 0
+                // and send the next part straight back onto an existing directory - the very collision
+                // this rebuild exists to avoid.
+                aggregateState.partCount = Math.max(highestPartId.get(), survivingPartCount.get());
+
+                LOGGER.debug("Initialised aggregateState {}", aggregateState);
+                final FeedKey feedKey = feedKeyRef.get();
+                if (feedKey != null) {
+                    aggregateStateMap.put(feedKey, aggregateState);
+                } else if (survivingPartCount.get() > 0) {
+                    // Dropping it from the map silently left the directory on disk with nothing
+                    // tracking it: never grown, never closed, never forwarded. Say so loudly - it
+                    // holds data and needs an operator. Moving it needs a pipeline-tier failure
+                    // destination, which does not exist yet (P6.9).
+                    unidentifiedAggregateCount.incrementAndGet();
+                    LOGGER.error(() -> LogUtil.message(
+                            "Pre-aggregate '{}' holds {} file group(s) but no feed key could be derived "
+                            + "from any of them, so it cannot be tracked or closed. It is left in place "
+                            + "and needs manual recovery.",
+                            aggregateDir, survivingPartCount.get()));
+                }
+            });
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
+            throw new UncheckedIOException(e);
+        }
+        if (unreadableGroupCount.get() > 0) {
+            LOGGER.error("Skipped {} unreadable file group(s) while rebuilding pre-aggregate state",
+                    unreadableGroupCount);
+        }
+        if (unidentifiedAggregateCount.get() > 0) {
+            LOGGER.error("{} pre-aggregate(s) could not be identified and are not being tracked",
+                    unidentifiedAggregateCount);
+        }
+        final int size = aggregateStateMap.size();
+        if (size > 0) {
+            LOGGER.info("Completed initialisation of {} pre-aggregates", size);
+        }
+    }
+
+    /**
+     * Rebuild the in-memory aggregate state from disk and re-absorb any split output left by a
+     * previous run.
+     * <p>
+     * This is deliberately <strong>not</strong> done in the constructor. Re-absorbing split output
+     * calls {@link #addDir}, which can fill an aggregate and close it, and closing hands the
+     * directory to {@link #destination} - which the constructor has no way to set, because the
+     * destination is built from configuration the injector does not have. Recovery therefore runs
+     * from {@link #setDestination}, the one point at which the collaborator it needs is known to
+     * exist.
+     * </p>
+     */
+    private synchronized void recoverFromDisk() {
+        if (recovered) {
+            return;
+        }
+        recovered = true;
+
+        // Read all the current aggregates and establish the aggregation state.
+        initialiseAggregateStateMap();
 
         // Move any split data from previous proxy usage to the aggregates.
         // We will assume that data has been split appropriately for the current aggregate state.
@@ -186,124 +369,28 @@ public class PreAggregator {
         if (movedSplitCount.get() > 0) {
             LOGGER.info("Found {} existing pre-aggregate splits", movedSplitCount);
         }
-
-        aggregateItemCountHistogram = metrics.registrationBuilder(getClass())
-                .addNamePart(AGGREGATE_NAME_PART)
-                .addNamePart(Metrics.COUNT)
-                .histogram()
-                .createAndRegister();
-        aggregateByteSizeHistogram = metrics.registrationBuilder(getClass())
-                .addNamePart(AGGREGATE_NAME_PART)
-                .addNamePart(Metrics.SIZE_IN_BYTES)
-                .histogram()
-                .createAndRegister();
-        aggregateAgeHistogram = metrics.registrationBuilder(getClass())
-                .addNamePart(AGGREGATE_NAME_PART)
-                .addNamePart(Metrics.AGE_MS)
-                .histogram()
-                .createAndRegister();
-
-        // Periodically close old aggregates.
-        // Initialise this last in the ctor so that it is not fighting with the code
-        // above that initialises all the unfinished aggregates found on disk.
-        proxyServices.addFrequencyExecutor(
-                "Close Old Aggregates",
-                () -> this::closeOldAggregates,
-                Duration.ofSeconds(10).toMillis());
     }
+
 
     /**
-     * @return the numeric part id encoded in a pre-aggregate part directory name, or 0 if the name is
-     * not one this class wrote. Used to rebuild the part counter from the highest surviving id.
+     * @return the oldest last-modified time among {@code paths}, or now when there is nothing to go
+     * on. Parts are only ever added to an aggregate, so the oldest is when the aggregate started.
      */
-    private static long partIdOf(final Path partDir) {
-        final String name = partDir.getFileName().toString();
-        try {
-            return Long.parseLong(name);
-        } catch (final NumberFormatException e) {
-            LOGGER.warn(() -> LogUtil.message(
-                    "Ignoring unexpected non-numeric part directory '{}' when rebuilding aggregate state",
-                    partDir));
-            return 0;
-        }
-    }
-
-    private void initialiseAggregateStateMap() {
-        LOGGER.debug("Initialising the state of existing pre-aggregates");
-        // Read all the current aggregates and establish the aggregation state.
-        final AggregatorConfig aggregatorConfig = aggregatorConfigProvider.get();
-        try (final Stream<Path> stream = Files.list(aggregatingDir)) {
-            // Look at each aggregate dir.
-            stream.forEach(aggregateDir -> {
-                final AggregateState aggregateState = new AggregateState(aggregatorConfig, aggregateDir);
-                final AtomicLong highestPartId = new AtomicLong(0);
-                final AtomicLong survivingPartCount = new AtomicLong(0);
-                final AtomicReference<FeedKey> feedKeyRef = new AtomicReference<>();
-                // Intern the feedKeys in the entries to reduce mem use
-                final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
-                // Now examine each file group to read state.
-                try (final Stream<Path> groupStream = Files.list(aggregateDir)) {
-                    // Now read the entries, skipping any staging residue - it is a partial copy whose
-                    // source survives, and its name would not parse as a part id.
-                    groupStream.filter(path -> !DirUtil.isStagingDir(path)).forEach(groupDir -> {
-                        final FileGroup fileGroup = new FileGroup(groupDir);
-                        final Path entriesFile = fileGroup.getEntries();
-                        // Track the highest id rather than counting survivors. Counting meant that a
-                        // gap - left by a kill part-way through deleting a closed aggregate in place -
-                        // rebuilt the counter onto an id that still existed, so the next part's
-                        // Files.move hit a non-empty directory, threw DirectoryNotEmptyException, and
-                        // was swallowed as an IOException while the stage acknowledged and deleted the
-                        // input. Taking the maximum can never collide with a surviving name.
-                        highestPartId.accumulateAndGet(partIdOf(groupDir), Math::max);
-                        survivingPartCount.incrementAndGet();
-                        try (final BufferedReader bufferedReader = Files.newBufferedReader(entriesFile)) {
-                            String line = bufferedReader.readLine();
-                            while (line != null) {
-                                final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line, feedKeyInterner);
-                                final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
-                                aggregateState.addItem(totalUncompressedSize);
-
-                                final FeedKey existingFeedKey = feedKeyRef.get();
-                                final FeedKey newFeedKey = zipEntryGroup.getFeedKey();
-                                if (existingFeedKey != null) {
-                                    if (!existingFeedKey.equals(newFeedKey)) {
-                                        LOGGER.error("Unexpected feed key mismatch!!!");
-                                    }
-                                } else {
-                                    feedKeyRef.set(newFeedKey);
-                                }
-
-                                line = bufferedReader.readLine();
-                            }
-                        } catch (final IOException e) {
-                            LOGGER.error(e::getMessage, e);
-                            throw new UncheckedIOException(e);
-                        }
-                    });
-                } catch (final IOException e) {
-                    LOGGER.error(e::getMessage, e);
-                    throw new UncheckedIOException(e);
+    private static Instant oldestModifiedTime(final List<Path> paths) {
+        Instant oldest = null;
+        for (final Path path : paths) {
+            try {
+                final Instant modified = Files.getLastModifiedTime(path).toInstant();
+                if (oldest == null || modified.isBefore(oldest)) {
+                    oldest = modified;
                 }
-
-                // The next part must be numbered above every id already on disk, gap or no gap.
-                // Never below the number of surviving parts. partIdOf yields 0 for a directory name
-                // this class did not write, so taking the highest id alone would reset the counter to 0
-                // and send the next part straight back onto an existing directory - the very collision
-                // this rebuild exists to avoid.
-                aggregateState.partCount = Math.max(highestPartId.get(), survivingPartCount.get());
-
-                LOGGER.debug("Initialised aggregateState {}", aggregateState);
-                NullSafe.consume(feedKeyRef.get(), feedKey ->
-                        aggregateStateMap.put(feedKey, aggregateState));
-            });
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-            throw new UncheckedIOException(e);
+            } catch (final IOException e) {
+                LOGGER.debug(() -> LogUtil.message("Unable to read the modified time of {}", path), e);
+            }
         }
-        final int size = aggregateStateMap.size();
-        if (size > 0) {
-            LOGGER.info("Completed initialisation of {} pre-aggregates", size);
-        }
+        return oldest != null
+                ? oldest
+                : Instant.now();
     }
 
     private FeedKey readFeedKeyFromMeta(final FileGroup fileGroup) throws IOException {
@@ -787,8 +874,13 @@ public class PreAggregator {
         return aggregateState != null && aggregateState.isAggregateTooOld();
     }
 
+    /**
+     * Set the destination closed aggregates are handed to, and only then rebuild state from disk -
+     * see {@link #recoverFromDisk()} for why the order matters.
+     */
     public void setDestination(final Consumer<Path> destination) {
-        this.destination = destination;
+        this.destination = Objects.requireNonNull(destination, "destination");
+        recoverFromDisk();
     }
 
 

@@ -50,6 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
@@ -309,6 +310,74 @@ public class TestPreAggregator extends StroomUnitTest {
     }
 
     /**
+     * H30. Re-absorbing split output calls addDir, which can fill an aggregate and close it, and
+     * closing hands the directory to the destination. The constructor cannot set that destination, so
+     * doing the recovery there dereferenced null and the proxy never booted.
+     */
+    @Test
+    void testRecoveryRunsWhenTheDestinationIsSetRatherThanInTheConstructor() throws IOException {
+        final Path dataDir = Files.createTempDirectory("data");
+        final DataDirProvider dataDirProvider = () -> dataDir;
+        final CleanupDirQueue cleanupDirQueue = new CleanupDirQueue(dataDirProvider);
+        final ProxyConfig proxyConfig = getProxyConfig(false);
+
+        final Path splitOutputDir = dataDir.resolve(DirNames.PRE_AGGREGATE_SPLIT_OUTPUT);
+        final Path emptySplitGroup = splitOutputDir.resolve("splitGroup");
+        Files.createDirectories(emptySplitGroup);
+
+        final PreAggregator preAggregator = new PreAggregator(
+                cleanupDirQueue,
+                dataDirProvider,
+                proxyServices,
+                proxyConfig::getAggregatorConfig, new MockMetrics());
+
+        assertThat(emptySplitGroup)
+                .as("the constructor must not touch split output - it has no destination to close to")
+                .exists();
+
+        preAggregator.setDestination(path -> {
+        });
+
+        assertThat(emptySplitGroup)
+                .as("setDestination runs the recovery, which tidies the empty split group")
+                .doesNotExist();
+    }
+
+    /**
+     * H10. One unreadable proxy.entries aborted the whole rebuild, and so start-up - every time, since
+     * the file is still there on the next attempt.
+     */
+    @Test
+    void testAnUnreadableEntriesFileDoesNotPreventStartUp() throws IOException {
+        final Path dataDir = Files.createTempDirectory("data");
+        final DataDirProvider dataDirProvider = () -> dataDir;
+        final CleanupDirQueue cleanupDirQueue = new CleanupDirQueue(dataDirProvider);
+        final ProxyConfig proxyConfig = getProxyConfig(false);
+
+        // An aggregate holding one file group whose entries file is missing.
+        final Path partDir = dataDir
+                .resolve(DirNames.PRE_AGGREGATES)
+                .resolve("TEST_FEED")
+                .resolve("0000000001");
+        Files.createDirectories(partDir);
+
+        final PreAggregator preAggregator = new PreAggregator(
+                cleanupDirQueue,
+                dataDirProvider,
+                proxyServices,
+                proxyConfig::getAggregatorConfig, new MockMetrics());
+
+        assertThatNoException()
+                .as("an unreadable file group must be skipped, not fatal")
+                .isThrownBy(() -> preAggregator.setDestination(path -> {
+                }));
+
+        assertThat(partDir)
+                .as("and it is left in place for inspection, not deleted")
+                .exists();
+    }
+
+    /**
      * A kill inside the cross-filesystem move that publishes into {@code 23_split_output} leaves a
      * staging directory holding a partially copied tree. Its source still exists, so it is residue,
      * not data - the start-up recovery scan must not reach into it. It used to, because a staging
@@ -326,12 +395,15 @@ public class TestPreAggregator extends StroomUnitTest {
         final Path staging = DirUtil.stagingPathFor(splitOutputDir.resolve("splitGroup"));
         Files.createDirectories(staging);
 
-        // The constructor runs the recovery scan.
-        new PreAggregator(
+        // setDestination is what runs the recovery scan - the constructor no longer does, so calling
+        // it is what makes this test test anything.
+        final PreAggregator preAggregator = new PreAggregator(
                 cleanupDirQueue,
                 dataDirProvider,
                 proxyServices,
                 proxyConfig::getAggregatorConfig, new MockMetrics());
+        preAggregator.setDestination(path -> {
+        });
 
         assertThat(staging)
                 .as("recovery must leave staging residue alone rather than treat it as a split group")
