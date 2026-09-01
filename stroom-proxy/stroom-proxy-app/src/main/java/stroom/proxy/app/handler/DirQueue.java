@@ -408,7 +408,7 @@ public class DirQueue {
                 final Path targetParent = targetDir.getParent();
                 try {
                     DirUtil.ensureDirExists(targetParent);
-                    Files.move(sourceDir, targetDir, StandardCopyOption.ATOMIC_MOVE);
+                    DirUtil.moveDir(sourceDir, targetDir);
                     LOGGER.trace("add() - {} ({}) - Added sourceDir {}", name, rootDir, sourceDir);
                 } catch (final IOException e) {
                     final boolean targetParentExists = LogUtil.swallowExceptions(

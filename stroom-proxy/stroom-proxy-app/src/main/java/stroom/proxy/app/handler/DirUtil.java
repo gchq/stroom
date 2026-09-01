@@ -27,8 +27,11 @@ import stroom.util.string.StringIdUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -641,6 +644,99 @@ public class DirUtil {
                 }
             } catch (final NumberFormatException e) {
                 return OptionalLong.empty();
+            }
+        }
+    }
+
+    /**
+     * Suffix for the staging directory {@link #moveDirAcrossFileStores} builds on the target's
+     * filesystem before renaming it into place.
+     */
+    static final String CROSS_DEVICE_SUFFIX = ".xdev";
+
+    /**
+     * Move a directory, falling back to a copy when {@code source} and {@code target} are on different
+     * filesystems.
+     * <p>
+     * A bare {@code Files.move(source, target, ATOMIC_MOVE)} throws
+     * {@link AtomicMoveNotSupportedException} across filesystems, and the obvious fallback - a plain
+     * {@code Files.move} - does not help for a directory: the JDK can only rename it, so a non-empty
+     * directory fails with {@code DirectoryNotEmptyException}. Both were confirmed by experiment.
+     * That matters because the configuration validator recommends putting file stores on shared
+     * storage whenever a queue is non-local, which is exactly the layout that splits the temporary
+     * directories from the store.
+     * </p>
+     * <p>
+     * The fallback copies the tree to a staging directory <em>beside the target</em>, so the rename
+     * that publishes it is within one filesystem and remains atomic. The source is deleted only once
+     * that rename has succeeded, so an interruption duplicates rather than loses - the direction the
+     * pipeline's at-least-once contract already assumes.
+     * </p>
+     */
+    public static void moveDir(final Path source, final Path target) throws IOException {
+        try {
+            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+        } catch (final AtomicMoveNotSupportedException e) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "moveDir() - atomic move of '{}' to '{}' not supported, copying across filesystems",
+                    source, target));
+            moveDirAcrossFileStores(source, target);
+        }
+    }
+
+    /**
+     * Package private so it can be exercised without needing two filesystems to hand.
+     */
+    static void moveDirAcrossFileStores(final Path source, final Path target) throws IOException {
+        final Path staging = target.resolveSibling(target.getFileName().toString() + CROSS_DEVICE_SUFFIX);
+
+        // ATOMIC_MOVE fails when the target's parent is absent, and the two paths of this method must
+        // agree. copyRecursively would otherwise conjure the parent, so a layout mistake would surface
+        // on one filesystem and be silently accommodated on another.
+        final Path targetParent = target.getParent();
+        if (targetParent != null && !Files.isDirectory(targetParent)) {
+            throw new NoSuchFileException(
+                    FileUtil.getCanonicalPath(target),
+                    null,
+                    "Target parent directory does not exist");
+        }
+
+        try {
+            if (Files.exists(staging)) {
+                // A previous attempt was interrupted after creating it. Its content is unreferenced.
+                FileUtil.deleteDir(staging);
+            }
+            copyRecursively(source, staging);
+
+            // Beside the target, so this rename is within one filesystem and is atomic.
+            Files.move(staging, target, StandardCopyOption.ATOMIC_MOVE);
+
+        } catch (final IOException | RuntimeException e) {
+            if (!FileUtil.deleteDir(staging)) {
+                LOGGER.warn(() -> LogUtil.message(
+                        "moveDir() - failed to clean up staging dir '{}' after a failed move", staging));
+            }
+            throw e;
+        }
+
+        // The target is now in place, so losing the source loses nothing.
+        if (!FileUtil.deleteDir(source)) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "moveDir() - '{}' was copied to '{}' but the source could not be deleted. The data is "
+                    + "safe; the source may be picked up again and duplicated downstream.", source, target));
+        }
+    }
+
+    private static void copyRecursively(final Path source, final Path target) throws IOException {
+        try (final Stream<Path> stream = Files.walk(source)) {
+            for (final Path path : (Iterable<Path>) stream::iterator) {
+                final Path destination = target.resolve(source.relativize(path).toString());
+                if (Files.isDirectory(path)) {
+                    Files.createDirectories(destination);
+                } else {
+                    Files.createDirectories(destination.getParent());
+                    Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
+                }
             }
         }
     }

@@ -389,7 +389,7 @@ public class PreAggregator {
             // Atomically move the temporary split data into the split staging area.
             final Path source = partDirSet.parent;
             LOGGER.trace("Moving {} => {}", source, splitStaging);
-            Files.move(source, splitStaging, StandardCopyOption.ATOMIC_MOVE);
+            DirUtil.moveDir(source, splitStaging);
 
             // NOTE : If we get failure here before we delete the source then we will end up duplicating data, but
             // we can't do much about that.
@@ -469,7 +469,7 @@ public class PreAggregator {
         final long newPartCount = aggregateState.partCount + 1;
         // destDir: /21_pre_aggregates/<feed key>/<part count>/
         final Path destDir = aggregateState.aggregateDir.resolve(StringIdUtil.idToString(newPartCount));
-        Files.move(dir, destDir, StandardCopyOption.ATOMIC_MOVE);
+        DirUtil.moveDir(dir, destDir);
         // Record the part only once the move has succeeded. Incrementing first left the part, item and
         // byte counts claiming a part directory that a failed move never created - the same part-index
         // gap a crash mid-delete produces, reached without a crash.
