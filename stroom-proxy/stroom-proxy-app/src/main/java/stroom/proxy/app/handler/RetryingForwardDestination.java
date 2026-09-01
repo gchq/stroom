@@ -379,7 +379,29 @@ public class RetryingForwardDestination implements ForwardDestination {
                 }
             }
         } catch (final Throwable t) {
-            LOGGER.error(t::getMessage, t);
+            // The dir has already been handed out and the queue cursor has moved past it, and
+            // DirQueue.close() only tidies empty parents - so anything thrown here used to leave the
+            // directory on disk with nothing pointing at it and a log line that did not say which one.
+            // Only quarantine a dir that is still here. The throw can come from after the inner
+            // handler has already disposed of it - addToRetryQueue moves it into 02_retry, and the
+            // logging that follows builds its message from the exception, which can itself fail.
+            // Quarantining then would chase a path that has moved and report a second, misleading
+            // failure for a group that is actually fine.
+            if (Files.exists(dir)) {
+                LOGGER.error(() -> LogUtil.message(
+                        "'{}' - unexpected error forwarding '{}': {}. Quarantining it rather than "
+                        + "leaving it where nothing will look for it again.",
+                        destinationName, dir, LogUtil.exceptionMessage(t)), t);
+                moveToFailureDestination(
+                        dir,
+                        () -> LogUtil.message("'{}' - unexpected error forwarding '{}'",
+                                destinationName, dir),
+                        t);
+            } else {
+                LOGGER.error(() -> LogUtil.message(
+                        "'{}' - unexpected error after '{}' had already been dealt with: {}",
+                        destinationName, dir, LogUtil.exceptionMessage(t)), t);
+            }
         }
         // Failed, return false.
         return false;
@@ -389,15 +411,10 @@ public class RetryingForwardDestination implements ForwardDestination {
                                           final Supplier<String> msgSupplier,
                                           final Throwable e) {
         try {
-            final Path retryStateFile = getRetryStateFile(dir);
-            try {
-                FileUtil.deleteFile(retryStateFile);
-            } catch (final Exception e2) {
-                // Only deleting as it is no longer needed. The error.log file contains info about each attempt
-                // and retry.state is binary. Thus, we don't really care if we can't delete it.
-                LOGGER.debug("Unable to delete retry state file {}: {}",
-                        retryStateFile, LogUtil.exceptionMessage(e2), e2);
-            }
+            // retry.state travels with the group rather than being deleted first. Deleting it here
+            // opened a window: a kill between the delete and the move left the dir in place with no
+            // state, so the next attempt started its retry budget again and it could never give up.
+            // The cost is a small binary file in the failure dir, which error.log already explains.
             failureDestination.add(dir);
             LOGGER.error(() -> msgSupplier.get()
                                + " Will not retry, moving to failure destination "
@@ -418,25 +435,43 @@ public class RetryingForwardDestination implements ForwardDestination {
     private void retryDir(final Path dir) {
         LOGGER.debug("'{}' - retryDir(), dir: {}", destinationName, dir);
 
-        delayRetry(dir);
-
-        if (!proxyServices.isShuttingDown()) {
-            forwardDir(dir);
-        } else {
-            // No point trying to forward now
+        if (proxyServices.isShuttingDown()) {
+            // Deliberate: on shutdown the dir stays in the retry queue's directory and is picked up
+            // again on the next start. Quarantining it here would turn a restart into an incident.
             throw new RuntimeException("Proxy is shutting down");
         }
+
+        try {
+            // delayRetry reads retry.state, so it can throw on a corrupt or unreadable one. Escaping
+            // here strands the dir exactly as an escape from forwardDir did.
+            delayRetry(dir);
+        } catch (final Throwable t) {
+            LOGGER.error(() -> LogUtil.message(
+                    "'{}' - unexpected error preparing '{}' for retry: {}. Quarantining it.",
+                    destinationName, dir, LogUtil.exceptionMessage(t)), t);
+            moveToFailureDestination(
+                    dir,
+                    () -> LogUtil.message("'{}' - unexpected error preparing '{}' for retry",
+                            destinationName, dir),
+                    t);
+            return;
+        }
+
+        forwardDir(dir);
     }
 
     private void delayRetry(final Path dir) {
         // Read the state file, so we know when the item was last retried and how many
         // goes we have already had.
         final RetryState retryState = getRetryState(dir);
+        // Without a state file, treat the attempt as having just happened. Defaulting to epoch 0 made
+        // the delay calculation see an item that was overdue by decades, so a dir whose retry.state
+        // was missing or corrupt was retried with no delay at all, as fast as the loop could run it.
         final long lastAttemptEpochMs = NullSafe.getOrElse(
                 retryState,
                 RetryState::lastAttemptEpochMs,
-                0L);
-        final short attempts = NullSafe.getOrElse(retryState, RetryState::attempts, (short) -1);
+                System.currentTimeMillis());
+        final short attempts = NullSafe.getOrElse(retryState, RetryState::attempts, (short) 0);
         final StroomDuration retryDelay = forwardQueueConfig.getRetryDelay();
         final double retryDelayGrowthFactor = forwardQueueConfig.getRetryDelayGrowthFactor();
         final long retryDelayMs;
@@ -516,16 +551,23 @@ public class RetryingForwardDestination implements ForwardDestination {
             try {
                 final byte[] bytes = Files.readAllBytes(retryStateFile);
                 return RetryState.deserialise(bytes);
-            } catch (final IOException e) {
-                LOGGER.error(() ->
-                        LogUtil.message("Error reading retry file {}: {}", LogUtil.exceptionMessage(e), e));
+            } catch (final IOException | RuntimeException e) {
+                // RuntimeException too: deserialise works on a fixed-width buffer, so a truncated or
+                // corrupt file raises an unchecked exception that this catch could not see - and it
+                // escaped through delayRetry, stranding the dir.
+                LOGGER.error(() -> LogUtil.message(
+                        "'{}' - unable to read retry state '{}', treating it as a first attempt: {}",
+                        destinationName, retryStateFile, LogUtil.exceptionMessage(e)), e);
                 return null;
             }
         } else {
             if (Files.exists(retryStateFile)) {
-                LOGGER.error("{} exists but is not a file, ignoring", retryStateFile);
+                LOGGER.error("'{}' - '{}' exists but is not a file, ignoring",
+                        destinationName, retryStateFile);
             } else {
-                LOGGER.error("{} does not exist, ignoring", retryStateFile);
+                // Not an error: the first attempt legitimately has no state file yet.
+                LOGGER.debug("'{}' - '{}' does not exist, treating as a first attempt",
+                        destinationName, retryStateFile);
             }
             return null;
         }
@@ -542,8 +584,14 @@ public class RetryingForwardDestination implements ForwardDestination {
             try (final RandomAccessFile reader = new RandomAccessFile(retryStateFile.toFile(), "rwd");
                     final FileChannel channel = reader.getChannel()) {
                 final ByteBuffer byteBuffer = ByteBuffer.allocate(RetryState.TOTAL_BYTES);
-                // First read the existing value
-                channel.read(byteBuffer);
+                // First read the existing value. A short read used to be ignored, so a truncated
+                // retry.state was deserialised from a part-filled buffer.
+                final int readCount = channel.read(byteBuffer);
+                if (readCount != RetryState.TOTAL_BYTES) {
+                    throw new IOException(LogUtil.message(
+                            "Unexpected readCount {} for '{}', expecting {}",
+                            readCount, retryStateFile, RetryState.TOTAL_BYTES));
+                }
                 byteBuffer.flip();
                 final RetryState existingRetryState = RetryState.deserialise(byteBuffer);
                 updatedRetryState = existingRetryState.cloneAndUpdate();

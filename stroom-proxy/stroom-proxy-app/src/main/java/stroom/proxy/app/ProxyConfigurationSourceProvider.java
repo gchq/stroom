@@ -130,9 +130,15 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
         // between a stage they wrote and one the merge supplied.
         final JsonNode defaultsToMerge = objectMapper.valueToTree(defaultConfig);
         final JsonNode defaultPipelineNode = defaultsToMerge.get(ProxyConfig.PROP_NAME_PIPELINE);
-        if (defaultPipelineNode instanceof final ObjectNode defaultPipelineObject) {
-            defaultPipelineObject.remove(ProxyPipelineConfig.PROP_NAME_STAGES);
+        if (!(defaultPipelineNode instanceof final ObjectNode defaultPipelineObject)) {
+            // Failing quietly here would put the stages back into the merge and silently restore the
+            // defect this exclusion exists to remove, with nothing to show for it.
+            throw new IllegalStateException(
+                    "Expected an object at '" + ProxyConfig.PROP_NAME_PIPELINE + "' in the default "
+                    + "config so the '" + ProxyPipelineConfig.PROP_NAME_STAGES + "' block can be kept "
+                    + "out of the merge, but found: " + defaultPipelineNode);
         }
+        defaultPipelineObject.remove(ProxyPipelineConfig.PROP_NAME_STAGES);
 
         // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
         YamlV2Util.mergeYamlNodeTrees(

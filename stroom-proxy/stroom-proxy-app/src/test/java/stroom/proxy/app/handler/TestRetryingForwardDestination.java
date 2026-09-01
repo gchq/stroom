@@ -42,8 +42,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.stream.Stream;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -231,6 +233,52 @@ class TestRetryingForwardDestination {
 
     private Path getDataDir() {
         return dataDir;
+    }
+
+    /**
+     * M61. retry.state used to be deleted before the move to the failure destination, so a kill in
+     * between left the group in place with no state and the next attempt started its retry budget
+     * again - it could never give up. It now travels with the group.
+     */
+    @Test
+    void testTheRetryStateTravelsToTheFailureDestination() throws Exception {
+        final ForwardHttpQueueConfig forwardQueueConfig = ForwardHttpQueueConfig.builder()
+                .retryDelay(StroomDuration.ofMillis(50))
+                .maxRetryAge(StroomDuration.ofMillis(200))
+                .build();
+
+        final RetryingForwardDestination retryingForwardDestination = new RetryingForwardDestination(
+                forwardQueueConfig,
+                mockDelegateDestination,
+                this::getDataDir,
+                new SimplePathCreator(() -> homeDir, () -> tempDir),
+                dirQueueFactory,
+                proxyServices,
+                mockFileStores);
+
+        proxyServices.start();
+
+        Mockito.doAnswer(invocation -> {
+            throw new RuntimeException("Send failed");
+        }).when(mockDelegateDestination).add(Mockito.any());
+
+        retryingForwardDestination.add(createSourceDir(1));
+
+        final Path failureDir = retryingForwardDestination.getFailureDir();
+        TestUtil.waitForIt(
+                ThrowingSupplier.unchecked(() -> FileUtil.isEmptyDirectory(failureDir)),
+                false,
+                () -> "failureDir to be not empty",
+                Duration.ofSeconds(10),
+                Duration.ofMillis(100),
+                Duration.ofSeconds(1));
+
+        try (final Stream<Path> stream = Files.walk(failureDir)) {
+            assertThat(stream.map(path -> path.getFileName().toString()))
+                    .as("the retry state must arrive with the group, not be deleted before the move")
+                    .contains("retry.state");
+        }
+        proxyServices.stop();
     }
 
     private Path createSourceDir(final int num) {

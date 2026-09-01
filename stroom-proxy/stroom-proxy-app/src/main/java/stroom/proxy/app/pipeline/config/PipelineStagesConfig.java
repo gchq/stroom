@@ -53,8 +53,16 @@ import java.util.Set;
  * <p>
  * So this class does not guess. Omitted stages are recorded as unconfigured, and
  * {@code ProxyPipelineConfigValidator} raises an error naming each one, which
- * halts startup. A {@code stages} block must list all five stages; the standard
- * full pipeline is still what you get by omitting the block entirely.
+ * halts startup. A {@code stages} block must list all five stages, each stating
+ * {@code enabled} explicitly, and the block itself is required - omitting it is
+ * an error too, not a shorthand for the full pipeline. What a process runs is
+ * exactly what was written down.
+ * </p>
+ * <p>
+ * For this to hold, {@code stages} is excluded from the compile-time default
+ * merge in {@code ProxyConfigurationSourceProvider}. With it included, the
+ * default tree filled every gap before parsing, so an operator who named one
+ * stage silently got all five and nothing here could tell the difference.
  * </p>
  * <p>
  * The getters fall back to a <em>disabled</em> stage rather than a wired one, so
