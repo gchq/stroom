@@ -113,13 +113,6 @@ public class AskStroomAIService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AskStroomAIService.class);
 
-
-    /**
-     * Sentinel model ID that activates the stub ChatModel for offline testing.
-     * Create an OpenAIModel document with this as the modelId — no API key or base URL needed.
-     */
-    static final String STUB_MODEL_ID = "__stub__";
-
     /**
      * Polling interval (ms) when waiting for attachments.
      */
@@ -1521,12 +1514,7 @@ public class AskStroomAIService {
     }
 
     private ChatModel getChatModel(final OpenAIModelDoc openAIModelDoc) {
-        // Stub mode: return a test ChatModel that requires no API key or network.
-        if (STUB_MODEL_ID.equals(openAIModelDoc.getModelId())) {
-            LOGGER.info(() -> "Using stub ChatModel for testing (modelId='" + STUB_MODEL_ID + "')");
-            return new StubChatModel();
-        }
-
+        // Note that the stub ChatModel for offline testing is applied by AiService.getChatModel().
         LOGGER.debug(() -> "getChatModel: modelId='" + openAIModelDoc.getModelId()
                            + "' docRef=" + openAIModelDoc.getUuid());
         return aiService.getChatModel(openAIModelDoc);

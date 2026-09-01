@@ -25,6 +25,8 @@ import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.StroomCache;
 import stroom.credentials.api.HttpConfigResolver;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
@@ -46,8 +48,13 @@ import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.cohere.CohereScoringModel;
 import dev.langchain4j.model.cohere.CohereScoringModel.CohereScoringModelBuilder;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -73,6 +80,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -91,6 +99,14 @@ public class AiServiceImpl implements AiService {
      */
     private static final int MAX_ERROR_BODY_LENGTH = 2_000;
 
+    /**
+     * Sentinel model ID that activates the stub {@link ChatModel} for offline testing.
+     * Create an OpenAIModel document with this as the modelId — no API key or base URL needed.
+     */
+    public static final String STUB_MODEL_ID = "__stub__";
+
+    private static final String CHAT_RESPONSE_CACHE_NAME = "AI Chat Response Cache";
+
     private static final SimpleDuration DEFAULT_TIMEOUT = SimpleDuration
             .builder()
             .time(10)
@@ -104,6 +120,7 @@ public class AiServiceImpl implements AiService {
     private final Provider<HttpClientProviderCache> httpClientCacheProvider;
     private final SecurityContext securityContext;
     private final AiDao aiDao;
+    private final StroomCache<ChatKey, String> chatResponseCache;
 
     private HttpClientConfig defaultHttpClientConfig;
 
@@ -114,7 +131,9 @@ public class AiServiceImpl implements AiService {
                   final HttpConfigResolver httpConfigResolver,
                   final Provider<HttpClientProviderCache> httpClientCacheProvider,
                   final SecurityContext securityContext,
-                  final AiDao aiDao) {
+                  final AiDao aiDao,
+                  final CacheManager cacheManager,
+                  final Provider<AiConfig> aiConfigProvider) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.storedSecretsProvider = storedSecretsProvider;
@@ -122,6 +141,9 @@ public class AiServiceImpl implements AiService {
         this.httpClientCacheProvider = httpClientCacheProvider;
         this.securityContext = securityContext;
         this.aiDao = aiDao;
+        this.chatResponseCache = cacheManager.create(
+                CHAT_RESPONSE_CACHE_NAME,
+                () -> aiConfigProvider.get().getChatResponseCache());
     }
 
     @Override
@@ -301,7 +323,77 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    public Optional<DocRef> findModelByNameOrUuid(final String nameOrUuid) {
+        if (!NullSafe.isNonBlankString(nameOrUuid)) {
+            return Optional.empty();
+        }
+
+        // The store resolves names and UUIDs by testing VIEW, but USE is the permission you would grant to
+        // let a pipeline or query use a model without letting the user see the document itself. Elevate so
+        // that USE counts as VIEW here, matching the read that chat() goes on to do.
+        return securityContext.useAsReadResult(() -> {
+            final OpenAIModelStore store = openAIModelStoreProvider.get();
+
+            // Try by UUID first so that a model named after another model's UUID cannot shadow it.
+            final Optional<DocRef> byUuid = store.findByUuid(nameOrUuid);
+            if (byUuid.isPresent()) {
+                return byUuid;
+            }
+
+            LOGGER.debug(() -> "Unable to find OpenAI model by UUID '" + nameOrUuid + "', trying by name");
+            final List<DocRef> byName = store.findByName(nameOrUuid);
+            if (NullSafe.isEmptyCollection(byName)) {
+                return Optional.empty();
+            }
+            if (byName.size() > 1) {
+                LOGGER.info(() -> "Multiple OpenAI models found with name '" + nameOrUuid
+                                  + "' - using the first one that was created");
+            }
+            return Optional.of(byName.getFirst());
+        });
+    }
+
+    @Override
+    public String chat(final DocRef modelRef, final String systemPrompt, final String message) {
+        Objects.requireNonNull(modelRef, "No model supplied");
+
+        // Read the model ahead of consulting the cache so that the caller's permission to use it is checked
+        // on every call, not just on a cache miss. The read is cheap as the doc store caches documents.
+        final OpenAIModelDoc modelDoc = getOpenAIModelDoc(modelRef);
+        if (modelDoc == null) {
+            throw new RuntimeException("Unable to read OpenAI model " + modelRef);
+        }
+
+        // Key on the UUID rather than the whole doc so that a rename does not miss the cache. A change to
+        // the model's settings will not invalidate cached answers, which is why the cache is time bounded,
+        // see AiConfig.getChatResponseCache().
+        final ChatKey chatKey = new ChatKey(modelDoc.getUuid(), systemPrompt, message);
+        return chatResponseCache.get(chatKey, key -> doChat(modelDoc, systemPrompt, message));
+    }
+
+    private String doChat(final OpenAIModelDoc modelDoc, final String systemPrompt, final String message) {
+        final List<ChatMessage> messages = new ArrayList<>(2);
+        if (NullSafe.isNonBlankString(systemPrompt)) {
+            messages.add(new SystemMessage(systemPrompt));
+        }
+        messages.add(new UserMessage(Objects.requireNonNullElse(message, "")));
+
+        final ChatModel chatModel = getChatModel(modelDoc);
+        final ChatResponse chatResponse = LOGGER.logDurationIfDebugEnabled(
+                () -> chatModel.chat(messages),
+                r -> "chat: asked model '" + modelDoc.getModelId() + "'");
+
+        return NullSafe.get(chatResponse, ChatResponse::aiMessage, AiMessage::text);
+    }
+
+    @Override
     public ChatModel getChatModel(final OpenAIModelDoc modelDoc) {
+        // Stub mode: return a test ChatModel that requires no API key or network.
+        if (STUB_MODEL_ID.equals(modelDoc.getModelId())) {
+            LOGGER.info(() -> "Using stub ChatModel for testing (modelId='" + STUB_MODEL_ID + "')");
+            return new StubChatModel();
+        }
+
         LOGGER.debug(() -> "getChatModel: modelId='" + modelDoc.getModelId()
                            + "' baseUrl='" + NullSafe.toString(modelDoc.getBaseUrl()) + "'");
 
@@ -574,4 +666,16 @@ public class AiServiceImpl implements AiService {
     private HttpClientConfig createDefaultHttpClientConfig() {
         return HttpClientUtil.createDefaultHttpClientConfig(DEFAULT_TIMEOUT);
     }
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The identity of a question, for caching purposes. Two questions are the same question if they ask the
+     * same model the same thing with the same system prompt.
+     */
+    private record ChatKey(String modelUuid, String systemPrompt, String message) {
+
+    }
+
 }
