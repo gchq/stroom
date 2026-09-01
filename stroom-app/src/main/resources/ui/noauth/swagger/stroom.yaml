@@ -2543,9 +2543,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/DataGenDoc"
           description: default response
-      summary: Fetch an analytic rule doc by its UUID
+      summary: Fetch a data gen doc by its UUID
       tags:
-      - Queries
+      - Data Generators
     put:
       operationId: updateDataGen
       parameters:
@@ -2568,9 +2568,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/DataGenDoc"
           description: default response
-      summary: Update an analytic rule doc
+      summary: Update a data gen doc
       tags:
-      - Queries
+      - Data Generators
   /dbStatus/v1:
     get:
       operationId: getDbSystemTableStatus

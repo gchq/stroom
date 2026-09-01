@@ -3732,8 +3732,8 @@
             "description" : "default response"
           }
         },
-        "summary" : "Fetch an analytic rule doc by its UUID",
-        "tags" : [ "Queries" ]
+        "summary" : "Fetch a data gen doc by its UUID",
+        "tags" : [ "Data Generators" ]
       },
       "put" : {
         "operationId" : "updateDataGen",
@@ -3768,8 +3768,8 @@
             "description" : "default response"
           }
         },
-        "summary" : "Update an analytic rule doc",
-        "tags" : [ "Queries" ]
+        "summary" : "Update a data gen doc",
+        "tags" : [ "Data Generators" ]
       }
     },
     "/dbStatus/v1" : {
