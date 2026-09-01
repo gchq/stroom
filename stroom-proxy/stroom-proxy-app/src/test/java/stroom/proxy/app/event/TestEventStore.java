@@ -38,8 +38,43 @@ import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 public class TestEventStore {
+
+    /**
+     * H25/M65. forwardOldFiles() runs from the constructor and had no per-file guard, and its
+     * catch(IOException) could not see either of the exceptions that path actually raises - the
+     * RuntimeException from an unparseable file name, or a StroomStreamException from the receipt
+     * policy. One such file stopped the proxy booting, and stopped it booting every time after, since
+     * the file is still there.
+     */
+    @Test
+    void testAnUnparseableFileNameDoesNotPreventStartUp() throws IOException {
+        final Path dir = Files.createTempDirectory("stroom");
+        final Path eventDir = dir.resolve("event");
+        Files.createDirectories(eventDir);
+
+        // No time delimiter, so EventStoreFile.getFeedKey throws.
+        final Path unparseable = eventDir.resolve("not-an-event-file-name");
+        Files.writeString(unparseable, "some events");
+
+        final Metrics metrics = new MockMetrics();
+        assertThatNoException()
+                .as("one bad file name must not stop the proxy starting")
+                .isThrownBy(() -> new EventStore(
+                        Mockito.mock(ReceiverFactory.class),
+                        MockCommonSecurityContext.getInstance(),
+                        EventStoreConfig::new,
+                        () -> dir,
+                        new FileStores(metrics),
+                        new CacheManagerImpl(() -> metrics),
+                        metrics));
+
+        assertThat(unparseable)
+                .as("and the file is left in place rather than discarded")
+                .exists();
+    }
 
     @Test
     void test() throws IOException {

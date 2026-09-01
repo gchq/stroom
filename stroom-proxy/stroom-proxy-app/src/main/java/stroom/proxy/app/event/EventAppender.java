@@ -71,10 +71,16 @@ class EventAppender {
         }
     }
 
+    /**
+     * Idempotent. The field is cleared <em>before</em> the close, so a close that fails part way
+     * through its flush cannot leave this appender holding a stream that a second call would try to
+     * close again - which is what happened, because clearing it afterwards was skipped by the throw.
+     */
     public synchronized void close() throws IOException {
-        if (outputStream != null) {
-            outputStream.close();
+        final OutputStream toClose = outputStream;
+        if (toClose != null) {
             outputStream = null;
+            toClose.close();
         }
     }
 

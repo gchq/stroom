@@ -29,6 +29,7 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.metrics.Metrics;
 
 import com.codahale.metrics.Timer;
@@ -128,12 +129,37 @@ public class EventStore implements Managed {
         }
     }
 
+    /**
+     * Replay files left on disk by a previous run.
+     * <p>
+     * Guarded per file. This runs from the constructor, so an exception escaping it stops the proxy
+     * booting - and the file that caused it is still there on the next attempt, so it stops every
+     * subsequent boot too. The failure modes are not hypothetical: {@code forward} raises
+     * {@link RuntimeException} for a file name it cannot parse, and a {@code StroomStreamException}
+     * for a feed the receipt policy refuses. Neither is an {@link IOException}, so the catch below
+     * never saw them.
+     * </p>
+     */
     private void forwardOldFiles() {
+        int failureCount = 0;
         try (final Stream<Path> stream = Files.list(dir)) {
-            stream.forEach(this::forward);
+            for (final Path file : stream.toList()) {
+                try {
+                    forward(file);
+                } catch (final RuntimeException e) {
+                    failureCount++;
+                    LOGGER.error(() -> LogUtil.message(
+                            "Unable to forward '{}' on start-up: {}. It is left in place and will be "
+                            + "retried on the next start; the remaining files are still being forwarded.",
+                            file, LogUtil.exceptionMessage(e)), e);
+                }
+            }
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
+        }
+        if (failureCount > 0) {
+            LOGGER.error("Failed to forward {} event file(s) left over from a previous run", failureCount);
         }
     }
 
@@ -189,6 +215,16 @@ public class EventStore implements Managed {
                 forward(file);
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
+                // take() has already removed it, and forward() only deletes the file on success, so
+                // without this the file stays on disk with nothing left pointing at it - unforwarded
+                // until the next restart replays the directory. Offer rather than put: this runs on
+                // the forwarding thread, and blocking on a full queue would stop the very consumer
+                // that drains it.
+                if (!forwardQueue.offer(file)) {
+                    LOGGER.error(() -> LogUtil.message(
+                            "Forward queue is full, so '{}' cannot be re-queued after a failure. It "
+                            + "remains on disk and will be picked up on the next start.", file));
+                }
             }
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();

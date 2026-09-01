@@ -758,7 +758,11 @@ public class DirUtil {
 
     private static void copyRecursively(final Path source, final Path target) throws IOException {
         try (final Stream<Path> stream = Files.walk(source)) {
-            for (final Path path : (Iterable<Path>) stream::iterator) {
+            // Iterated rather than forEach'd because Files.copy throws IOException, and rather than
+            // collected because the tree can be any size.
+            final Iterator<Path> iterator = stream.iterator();
+            while (iterator.hasNext()) {
+                final Path path = iterator.next();
                 final Path destination = target.resolve(source.relativize(path).toString());
                 if (Files.isDirectory(path)) {
                     Files.createDirectories(destination);
