@@ -1,7 +1,5 @@
 package stroom.config.global.impl;
 
-import stroom.ai.shared.AskStroomAiConfig;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -38,10 +36,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    AskStroomAiConfig getAskStroomAIConfig(
+    stroom.ai.shared.AskStroomAiConfig getAskStroomAiConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                AskStroomAiConfig.class);
+                stroom.ai.shared.AskStroomAiConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
