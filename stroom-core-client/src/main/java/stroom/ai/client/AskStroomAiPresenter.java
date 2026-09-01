@@ -721,15 +721,15 @@ public class AskStroomAiPresenter
                                       final long timeMs,
                                       final long nowMs) {
         hb.elem(details -> {
-                    details.elem(summary -> {
-                        button(summary, SvgImage.INFO, iconButtonClassName("ai-message-summary-icon"));
-                        summary.span(text -> text.append(workingText(msg)), new Attribute("id", WORKING_TEXT_ID));
-                    }, SUMMARY, Attribute.className("ai-message-header"));
+            details.elem(summary -> {
+                button(summary, SvgImage.INFO, iconButtonClassName("ai-message-summary-icon"));
+                summary.span(text -> text.append(workingText(msg)), new Attribute("id", WORKING_TEXT_ID));
+            }, SUMMARY, Attribute.className("ai-message-header"));
 
-                    details.div(footer ->
-                            timestamp(footer, timeMs, nowMs), Attribute.className("ai-message-footer"));
-                }, DETAILS, Attribute.className("ai-message ai-message--working"),
-                new Attribute("id", WORKING_MESSAGE_ID));
+            details.div(footer ->
+                timestamp(footer, timeMs, nowMs), Attribute.className("ai-message-footer"));
+        }, DETAILS, Attribute.className("ai-message ai-message--working"),
+            new Attribute("id", WORKING_MESSAGE_ID));
     }
 
     /**
