@@ -51,7 +51,8 @@ public interface AiService {
      * happens to be another model's UUID cannot be used to reach that other model.
      *
      * @return The matching model, or empty if there is no match or the current user cannot view it. Where
-     * more than one model shares the supplied name, the first one created is returned.
+     * more than one model shares the supplied name, which of them is returned is stable but arbitrary, as
+     * the store orders by UUID, so a name that is not unique is not a dependable way to reach a model.
      */
     Optional<DocRef> findModelByNameOrUuid(String nameOrUuid);
 

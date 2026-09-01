@@ -18,8 +18,10 @@ package stroom.ai.impl.mock;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
+import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.AiProviderImpl;
 import stroom.ai.impl.OpenAIModelStoreImpl;
+import stroom.ai.impl.TableSummariserImpl;
 import stroom.query.language.functions.AiProvider;
 
 import com.google.inject.AbstractModule;
@@ -30,6 +32,7 @@ public class MockAiModule extends AbstractModule {
     protected void configure() {
         // Services
         bind(AiService.class).to(MockAiService.class);
+        bind(TableSummariser.class).to(TableSummariserImpl.class);
 
         // Backs the ai() StroomQL function, see ExpressionContextFactory.
         bind(AiProvider.class).to(AiProviderImpl.class);

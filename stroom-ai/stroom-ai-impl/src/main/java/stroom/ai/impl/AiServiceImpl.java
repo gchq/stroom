@@ -346,8 +346,10 @@ public class AiServiceImpl implements AiService {
                 return Optional.empty();
             }
             if (byName.size() > 1) {
+                // The store orders by UUID, which is random, so this says which one we used rather than
+                // implying a rule about which one it will be.
                 LOGGER.info(() -> "Multiple OpenAI models found with name '" + nameOrUuid
-                                  + "' - using the first one that was created");
+                                  + "' - using " + byName.getFirst());
             }
             return Optional.of(byName.getFirst());
         });
@@ -368,7 +370,26 @@ public class AiServiceImpl implements AiService {
         // the model's settings will not invalidate cached answers, which is why the cache is time bounded,
         // see AiConfig.getChatResponseCache().
         final ChatKey chatKey = new ChatKey(modelDoc.getUuid(), systemPrompt, message);
-        return chatResponseCache.get(chatKey, key -> doChat(modelDoc, systemPrompt, message));
+
+        // Deliberately a lookup, then the call, then a put, rather than a loading get. A loading get runs
+        // the load inside the cache's mapping function, which holds a lock on the map bin the key falls in
+        // for as long as the load takes. A model call can take minutes - the default request timeout is ten
+        // - so an unrelated question whose key happened to fall in the same bin would wait on it. The cost
+        // is that two identical questions asked at the same moment both reach the model; asked one after
+        // the other, which is what a pipeline or a query actually does, the second is still served from
+        // the cache.
+        final Optional<String> cached = chatResponseCache.getIfPresent(chatKey);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
+
+        // A failure is not cached, so the next caller asks the model again rather than being told for the
+        // next ten minutes what went wrong once.
+        final String answer = doChat(modelDoc, systemPrompt, message);
+        if (answer != null) {
+            chatResponseCache.put(chatKey, answer);
+        }
+        return answer;
     }
 
     private String doChat(final OpenAIModelDoc modelDoc, final String systemPrompt, final String message) {
