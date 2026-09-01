@@ -685,7 +685,10 @@ public class DirUtil {
     }
 
     /**
-     * Package private so it can be exercised without needing two filesystems to hand.
+     * The cross-filesystem half of {@link #moveDir}, called directly by
+     * {@link ForwardFileDestinationImpl} when the operator has already declared that the destination
+     * cannot do an atomic move, so there is no point provoking the exception on every file group.
+     * Package private so it can also be exercised without needing two filesystems to hand.
      */
     static void moveDirAcrossFileStores(final Path source, final Path target) throws IOException {
         final Path staging = target.resolveSibling(target.getFileName().toString() + CROSS_DEVICE_SUFFIX);

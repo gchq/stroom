@@ -16,9 +16,6 @@
 
 package stroom.proxy.app.handler;
 
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -34,18 +31,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Cross-filesystem moves are what {@link DirUtil#moveDir} exists for, and every other fixture in this
  * module puts everything under one JUnit temp directory - so the hazard cannot be arranged there and
  * has to be either injected or found. These tests do both: the fallback is exercised directly on one
- * filesystem, and the genuine cross-filesystem case runs when the machine has a second filesystem to
- * hand and is skipped with a reason when it does not.
+ * filesystem, and the genuine cross-filesystem case runs against a directory found by
+ * {@link OtherFileSystem} and is skipped with a reason when the machine has no second filesystem.
  */
 class TestDirUtilMoveDir {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDirUtilMoveDir.class);
-
-    /**
-     * Candidate roots on a filesystem other than the build directory. Both are conventional on Linux
-     * and are tmpfs, so they are a different {@code FileStore} from a disk-backed working directory.
-     */
-    private static final String[] OTHER_FILESYSTEM_ROOTS = {"/dev/shm", "/run/shm"};
 
     @Test
     void testAcrossFileStoresCopiesTheWholeTreeAndRemovesTheSource(@TempDir final Path tempDir)
@@ -104,10 +93,8 @@ class TestDirUtilMoveDir {
     @Test
     void testMoveDirFallsBackWhenTheTargetIsOnAnotherFileSystem(@TempDir final Path tempDir)
             throws IOException {
-        final Path otherFileSystemDir = findDirOnAnotherFileSystem(tempDir);
-        Assumptions.assumeTrue(otherFileSystemDir != null,
-                "No second filesystem available on this machine, so a cross-filesystem move cannot "
-                + "be arranged. Tried " + String.join(", ", OTHER_FILESYSTEM_ROOTS));
+        final Path otherFileSystemDir = OtherFileSystem.find(tempDir);
+        Assumptions.assumeTrue(otherFileSystemDir != null, OtherFileSystem.skipReason());
 
         final Path source = otherFileSystemDir.resolve("source");
         final Path target = tempDir.resolve("target");
@@ -123,21 +110,6 @@ class TestDirUtilMoveDir {
         } finally {
             stroom.util.io.FileUtil.deleteDir(otherFileSystemDir);
         }
-    }
-
-    private static Path findDirOnAnotherFileSystem(final Path reference) throws IOException {
-        for (final String root : OTHER_FILESYSTEM_ROOTS) {
-            final Path candidate = Path.of(root);
-            if (Files.isDirectory(candidate) && Files.isWritable(candidate)) {
-                if (!Files.getFileStore(candidate).equals(Files.getFileStore(reference))) {
-                    final Path dir = candidate.resolve("stroom-test-xdev-" + reference.getFileName());
-                    Files.createDirectories(dir);
-                    LOGGER.info("Using {} for the cross-filesystem test", dir);
-                    return dir;
-                }
-            }
-        }
-        return null;
     }
 
     private static void writeTree(final Path root) throws IOException {

@@ -208,11 +208,14 @@ public final class ForwardFileConfig
     }
 
     @JsonPropertyDescription(
-            "Stroom-Proxy will attempt to move files onto the forward destination using an atomic move. " +
-            "This ensures that the move does not happen more than once. If an atomic move is not possible, " +
-            "e.g. the destination is a remote file system that does not support an atomic move, then it will " +
-            "fall back to a non-atomic move with the risk of it happening more than once. If you see warnings " +
-            "in the logs or know the file system will not support atomic moves then set this to false. " +
+            "Stroom-Proxy will attempt to move file groups onto the forward destination using an atomic " +
+            "move. This ensures that the move does not happen more than once. If an atomic move is not " +
+            "possible, e.g. the destination is a remote file system that does not support an atomic move, " +
+            "then the file group is copied to a staging directory beside the target and that copy is " +
+            "renamed into place, so publishing it remains atomic. The source is only deleted once that " +
+            "rename has succeeded, so an interruption can duplicate the file group but cannot lose it. " +
+            "If you see warnings in the logs or know the file system will not support atomic moves then " +
+            "set this to false, which skips the atomic attempt and goes straight to the copy. " +
             "This property only affects moves to the directory defined by 'path' and 'subPathTemplate', not " +
             "retry/error directories.")
     public boolean isAtomicMoveEnabled() {

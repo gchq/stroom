@@ -388,28 +388,37 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
         }
     }
 
+    /**
+     * {@code source} is always a file group directory, so the fallback cannot be a plain
+     * {@link Files#move(Path, Path, java.nio.file.CopyOption...)}: the JDK can only rename a directory,
+     * so across filesystems - the very case the fallback exists for - it fails with
+     * {@link java.nio.file.DirectoryNotEmptyException}. {@link DirUtil#moveDirAcrossFileStores} copies
+     * the file group to a staging directory beside the target instead, so the rename that publishes it
+     * is within one filesystem and stays atomic, and the source is deleted only once that rename has
+     * succeeded. An interruption therefore duplicates the file group rather than losing it.
+     */
     private void doMove(final Path source, final Path target) throws IOException {
         if (isAtomicMoveEnabled) {
             try {
                 // If the target is on a remote FS then chances are ATOMIC_MOVE will not be supported
-                // so, we need a fallback, accepting that we lose the guarantee of exactly once.
+                // so, we need a fallback.
                 Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+                return;
             } catch (final AtomicMoveNotSupportedException e) {
                 LOGGER.warn(() -> LogUtil.message(
-                        "'{}' - Atomic move not supported, falling back to non-atomic move. "
-                        + "To stop seeing this warning set the config property {} to false."
-                        + "Moving '{}' to '{}",
+                        "'{}' - Atomic move not supported, falling back to a copy beside the target "
+                        + "followed by an atomic rename into place. To stop seeing this warning set the "
+                        + "config property {} to false. Moving '{}' to '{}'",
                         getDestinationDescription(),
                         ForwardFileConfig.PROP_NAME_ATOMIC_MOVE_ENABLED,
                         LogUtil.path(source),
                         LogUtil.path(target)));
-                // Non-atomic move
-                Files.move(source, target);
             }
-        } else {
-            // Non-atomic move
-            Files.move(source, target);
         }
+
+        // Either the operator has told us this destination cannot do an atomic move, or we have just
+        // found out that it cannot.
+        DirUtil.moveDirAcrossFileStores(source, target);
     }
 
     @Override

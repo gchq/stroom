@@ -32,6 +32,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -63,6 +64,74 @@ class TestForwardFileDestinationImpl {
     void setUp(@TempDir final Path homeDir) {
         dirs = new Dirs(homeDir);
         pathCreator = new SimplePathCreator(dirs::getHomeDir, dirs::getTempDir);
+    }
+
+    /**
+     * A file group is a directory, and {@code Files.move} can only rename a directory, so before
+     * {@link DirUtil#moveDirAcrossFileStores} was used here both branches of the move failed with
+     * {@code DirectoryNotEmptyException} across filesystems - the very case the fallback exists for.
+     */
+    @Test
+    void testAddMovesTheFileGroupWhenTheTargetIsOnAnotherFileSystem() throws IOException {
+        assertAddMovesAcrossFileSystems(true);
+    }
+
+    /**
+     * The documented remedy for the warning the atomic attempt logs. It used to reach the same plain
+     * {@code Files.move}, so following the advice did not help.
+     */
+    @Test
+    void testAddMovesTheFileGroupAcrossFileSystemsWhenTheAtomicMoveIsDisabled() throws IOException {
+        assertAddMovesAcrossFileSystems(false);
+    }
+
+    /**
+     * Disabling the atomic move now goes straight to the copy rather than to a rename, so pin that it
+     * still delivers the whole file group. Unlike the two above, this one needs no second filesystem.
+     */
+    @Test
+    void testAddWithTheAtomicMoveDisabledDeliversTheWholeFileGroup() {
+        final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
+                dirs.getStoreDir(),
+                NAME,
+                pathCreator,
+                false);
+
+        final Path source = createSourceDir(1);
+        final Snapshot sourceSnapshot = DirectorySnapshot.of(source);
+
+        forwardFileDest.add(source);
+
+        assertThat(source)
+                .doesNotExist();
+        assertThat(DirectorySnapshot.of(DirUtil.createPath(dirs.getStoreDir(), 1)))
+                .isEqualTo(sourceSnapshot);
+    }
+
+    private void assertAddMovesAcrossFileSystems(final boolean isAtomicMoveEnabled) throws IOException {
+        final Path otherFileSystemDir = OtherFileSystem.find(dirs.getHomeDir());
+        Assumptions.assumeTrue(otherFileSystemDir != null, OtherFileSystem.skipReason());
+
+        try {
+            final Path storeDir = otherFileSystemDir.resolve("store");
+            final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
+                    storeDir,
+                    NAME,
+                    pathCreator,
+                    isAtomicMoveEnabled);
+
+            final Path source = createSourceDir(1);
+            final Snapshot sourceSnapshot = DirectorySnapshot.of(source);
+
+            forwardFileDest.add(source);
+
+            assertThat(source)
+                    .doesNotExist();
+            assertThat(DirectorySnapshot.of(DirUtil.createPath(storeDir, 1)))
+                    .isEqualTo(sourceSnapshot);
+        } finally {
+            FileUtil.deleteDir(otherFileSystemDir);
+        }
     }
 
     @Test
