@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping;
+package stroom.pipeline.stepping.capture;
 
 /**
- * A filter used to test if the current step in stepping mode matches against
- * the step filter provided by the user.
+ * This is a marker interface for identifying pipeline elements that detect
+ * record end points in data. For XML a record end point occurs when
+ * endDocument() is called but if no XML is being processed a record end point
+ * could be a new line etc.
  */
-public interface SteppingFilter {
-    /**
-     * Tests to see if a filter has been applied
-     */
-    boolean isFilterApplied();
-
-    /**
-     * Test to see if the filter has matched the current record.
-     */
-    boolean filterMatches(long currentRecordNo);
+public interface RecordDetector {
+    void setController(SteppingController controller);
 }

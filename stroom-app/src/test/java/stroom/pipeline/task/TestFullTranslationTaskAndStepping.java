@@ -18,6 +18,7 @@ package stroom.pipeline.task;
 
 import stroom.test.common.StroomPipelineTestFileUtil;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -32,6 +33,10 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);
 
+    // A ThreadLocal where every sibling uses a static AtomicBoolean: this is the only setup flag shared
+    // across two classes (TestSkeletonSweptStepping extends this one). It relies on the harness running
+    // each class on its own worker thread; if both ever shared a thread the subclass would skip setup and
+    // fail loudly on missing data (StroomIntegrationTest also throws on an uncleaned test change).
     private static final ThreadLocal<Boolean> DONE_SETUP = ThreadLocal.withInitial(() -> false);
 
     @BeforeEach
@@ -43,6 +48,23 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
             loadAllRefData();
             DONE_SETUP.set(true);
         }
+    }
+
+    /**
+     * The corpus was recorded by the old engine's whole-pipeline sweeps, so this class gates the
+     * <b>full-sweep</b> mode - the fallback, since {@code stepping.skeletonSweep} became the default. The
+     * skeleton-mode run of the same corpus is {@link TestSkeletonSweptStepping}, whose own mapper (a child
+     * {@code @BeforeEach} runs after this one) replaces this pin.
+     */
+    @BeforeEach
+    void pinFullSweepMode() {
+        setConfigValueMapper(stroom.pipeline.stepping.store.SteppingConfig.class,
+                config -> config.withSkeletonSweep(false));
+    }
+
+    @AfterEach
+    void unpinFullSweepMode() {
+        clearConfigValueMapper();
     }
 
     @Override

@@ -14,14 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping;
+package stroom.pipeline.stepping.capture;
+
+import stroom.util.shared.TextRange;
 
 /**
- * This is a marker interface for identifying pipeline elements that detect
- * record end points in data. For XML a record end point occurs when
- * endDocument() is called but if no XML is being processed a record end point
- * could be a new line etc.
+ * A recorder collects data from either the input or output of a pipeline
+ * element.
  */
-public interface RecordDetector {
-    void setController(SteppingController controller);
+public interface Recorder {
+    /**
+     * Get the currently captured data from this recorder.
+     *
+     * @return Any data that has been captured by this recorder.
+     */
+    Object getData(TextRange textRange);
+
+    /**
+     * Clear the current data from this recorder.
+     */
+    void clear(TextRange textRange);
 }

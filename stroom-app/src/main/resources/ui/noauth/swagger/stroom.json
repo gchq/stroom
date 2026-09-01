@@ -26536,6 +26536,12 @@
           "formatOutput" : {
             "type" : "boolean"
           },
+          "hasOutput" : {
+            "type" : "boolean"
+          },
+          "indicativeCounts" : {
+            "type" : "boolean"
+          },
           "indicators" : {
             "$ref" : "#/components/schemas/Indicators"
           },

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.stepping;
-
-import stroom.util.shared.TextRange;
+package stroom.pipeline.stepping.store;
 
 /**
- * A recorder collects data from either the input or output of a pipeline
- * element.
+ * Thrown when the persistent stepping IO store cannot satisfy a request, e.g. an IO error or a
+ * configured size cap being exceeded.
  */
-public interface Recorder {
-    /**
-     * Get the currently captured data from this recorder.
-     *
-     * @return Any data that has been captured by this recorder.
-     */
-    Object getData(TextRange textRange);
+public class StepDataStoreException extends RuntimeException {
 
-    /**
-     * Clear the current data from this recorder.
-     */
-    void clear(TextRange textRange);
+    public StepDataStoreException(final String message) {
+        super(message);
+    }
+
+    public StepDataStoreException(final String message, final Throwable cause) {
+        super(message, cause);
+    }
 }

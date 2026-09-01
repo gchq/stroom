@@ -558,6 +558,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.pipeline.stepping.store.SteppingConfig getSteppingConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.pipeline.stepping.store.SteppingConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.planb.impl.PlanBConfig getPlanBConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
