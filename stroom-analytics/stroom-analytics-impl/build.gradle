@@ -71,6 +71,8 @@ dependencies {
     implementation libs.zero.allocation.hashing
 
     runtimeOnly libs.mysql.connector.java
+    // This batch module is needed at runtime for simple mail to work
+    runtimeOnly libs.simple.java.mail.batch.module
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
