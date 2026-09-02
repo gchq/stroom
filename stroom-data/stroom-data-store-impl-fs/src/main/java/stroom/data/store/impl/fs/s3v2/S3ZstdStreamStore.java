@@ -262,7 +262,8 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
             }
 
             validationResult = validationResult.errorIfNot(LogUtil.message(
-                            "Key name pattern is not supported for this volume type. Please remove the key name pattern."),
+                            "Key name pattern is not supported for this volume type. " +
+                            "Please remove the key name pattern."),
                     () -> NullSafe.isBlankString(s3ClientConfig.getKeyPattern()));
         }
         return validationResult;
