@@ -17,12 +17,14 @@
 package stroom.data.store.impl.fs.shared;
 
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -43,6 +45,16 @@ public class FsVolumeGroupRow {
         this.group = Objects.requireNonNull(group);
         this.volumeCount = volumeCount;
         this.volumeTypes = NullSafe.unmodifiableList(volumeTypes);
+    }
+
+    @Deprecated // Test use only
+    @SerialisationTestConstructor
+    public FsVolumeGroupRow() {
+        this.group = FsVolumeGroup.builder()
+                .name("dummy")
+                .build();
+        this.volumeCount = 0;
+        this.volumeTypes = Collections.emptyList();
     }
 
     public FsVolumeGroup getGroup() {
