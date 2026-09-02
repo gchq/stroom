@@ -223,7 +223,7 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                         .withDetectorName(doc.getName())
                                         .withDetectorUuid(doc.getUuid())
                                         .withDetectorVersion(doc.getVersion())
-                                        .withDetailedDescription(doc.getDescription())
+                                        .withDetailedDescription(RuleUtil.getDetailedDescription(doc))
                                         .withRandomDetectionUniqueId()
                                         .withDetectionRevision(0)
                                         .withExecutionSchedule(NullSafe

@@ -915,7 +915,7 @@ public class TableBuilderAnalyticExecutor {
                         .withDetectorName(analyticRuleDoc.getName())
                         .withDetectorUuid(analyticRuleDoc.getUuid())
                         .withDetectorVersion(analyticRuleDoc.getVersion())
-                        .withDetailedDescription(analyticRuleDoc.getDescription())
+                        .withDetailedDescription(RuleUtil.getDetailedDescription(analyticRuleDoc))
                         .withDetectionUniqueId(UUID.randomUUID().toString())
                         .withDetectionRevision(0)
                         .notDefunct()

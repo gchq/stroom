@@ -143,11 +143,18 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
         analyticsDataSetup.checkStreamCount(expectedStreams);
 
         // As we have created alerts ensure we now have more streams.
+        final String result = readNewestStream();
+        assertThat(result.split("<detection>").length).isEqualTo(expectedRecords);
+        assertThat(result).contains("user5");
+    }
+
+    /**
+     * @return The content of the most recently written stream, e.g. the detections a rule has just produced.
+     */
+    protected String readNewestStream() {
         final Meta newestMeta = analyticsDataSetup.getNewestMeta();
         try (final Source source = streamStore.openSource(newestMeta.getId())) {
-            final String result = SourceUtil.readString(source);
-            assertThat(result.split("<detection>").length).isEqualTo(expectedRecords);
-            assertThat(result).contains("user5");
+            return SourceUtil.readString(source);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
