@@ -83,6 +83,13 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
         return addHandlerToSource(ChangeDataEvent.getType(), handler);
     }
 
+    /**
+     * @see AbstractNotificationListPresenter#setAnalyticProcessType(AnalyticProcessType)
+     */
+    public void setAnalyticProcessType(final AnalyticProcessType analyticProcessType) {
+        notificationList.setAnalyticProcessType(analyticProcessType);
+    }
+
     @Override
     protected void onRead(final DocRef docRef, final D analyticRuleDoc, final boolean readOnly) {
         uiConfigCache.get(extendedUiConfig -> {

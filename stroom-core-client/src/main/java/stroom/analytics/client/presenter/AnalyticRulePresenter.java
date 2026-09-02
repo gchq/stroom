@@ -47,6 +47,7 @@ public class AnalyticRulePresenter
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final AnalyticQueryEditPresenter analyticQueryEditPresenter;
+    private final AnalyticNotificationPresenter analyticNotificationPresenter;
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
@@ -63,13 +64,18 @@ public class AnalyticRulePresenter
         super(eventBus, view);
         this.analyticQueryEditPresenter = analyticQueryEditPresenter;
 
+        // Created up front rather than by the tab provider, as the notifications tab has to be told when the
+        // processing type changes on the execution tab, which can happen before the tab is ever opened.
+        // Assigned before the change handler below is registered, as that handler reads it.
+        this.analyticNotificationPresenter = notificationPresenterProvider.get();
+
         final AnalyticProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
         analyticProcessingPresenter.setDocumentEditPresenter(this);
         analyticProcessingPresenter.addChangeDataHandler(e ->
                 setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
 
         addTab(QUERY, new DocTabProvider<>(() -> analyticQueryEditPresenter));
-        addTab(NOTIFICATIONS, new DocTabProvider<>(notificationPresenterProvider::get));
+        addTab(NOTIFICATIONS, new DocTabProvider<>(() -> analyticNotificationPresenter));
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
         addTab(SHARDS, new DocTabProvider<>(analyticDataShardsPresenterProvider::get));
         addTab(DUPLICATE_MANAGEMENT, new DocTabProvider<>(duplicateManagementPresenterProvider::get));
@@ -117,6 +123,9 @@ public class AnalyticRulePresenter
     private void setRuleType(final AnalyticProcessType analyticProcessType) {
         setTabHidden(SHARDS, analyticProcessType != AnalyticProcessType.TABLE_BUILDER);
         setTabHidden(DUPLICATE_MANAGEMENT, analyticProcessType != AnalyticProcessType.SCHEDULED_QUERY);
+        // Some notification settings only apply to one processing type, so the tab has to know about a change
+        // made on the execution tab.
+        analyticNotificationPresenter.setAnalyticProcessType(analyticProcessType);
     }
 
     @Override

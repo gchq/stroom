@@ -17,6 +17,7 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
+import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.config.global.client.presenter.ConfigDefaultSetter;
 import stroom.config.global.shared.ConfigTarget;
@@ -85,6 +86,16 @@ public class AnalyticStreamDestinationPresenter
                 this);
     }
 
+    /**
+     * Only a streaming rule has a source feed to fall back to, so the option is disabled for anything else
+     * rather than left looking as though it will do something.
+     */
+    public void setAnalyticProcessType(final AnalyticProcessType analyticProcessType) {
+        getView().setUseSourceFeedIfPossibleEnabled(
+                AnalyticProcessType.STREAMING.equals(analyticProcessType));
+    }
+
+
     public void read(final NotificationStreamDestination streamDestination) {
         if (streamDestination != null) {
             getView().setUseSourceFeedIfPossible(streamDestination.isUseSourceFeedIfPossible());
@@ -122,5 +133,7 @@ public class AnalyticStreamDestinationPresenter
         boolean isUseSourceFeedIfPossible();
 
         void setUseSourceFeedIfPossible(boolean useSourceFeedIfPossible);
+
+        void setUseSourceFeedIfPossibleEnabled(boolean enabled);
     }
 }

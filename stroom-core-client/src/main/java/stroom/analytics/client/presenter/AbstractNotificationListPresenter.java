@@ -18,6 +18,7 @@ package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
@@ -61,6 +62,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
     private final ListDataProvider<NotificationConfig> dataProvider;
     final List<NotificationConfig> list = new ArrayList<>();
     private DocRef docRef;
+    private AnalyticProcessType analyticProcessType;
 
     @Inject
     public AbstractNotificationListPresenter(final EventBus eventBus,
@@ -105,7 +107,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
 
     private void add() {
         final AnalyticNotificationEditPresenter presenter = editPresenterProvider.get();
-        presenter.read(docRef, NotificationConfig.builder().build());
+        presenter.read(docRef, analyticProcessType, NotificationConfig.builder().build());
         ShowPopupEvent
                 .builder(presenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -127,7 +129,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         final NotificationConfig selected = selectionModel.getSelected();
         if (selected != null) {
             final AnalyticNotificationEditPresenter presenter = editPresenterProvider.get();
-            presenter.read(docRef, selected);
+            presenter.read(docRef, analyticProcessType, selected);
             ShowPopupEvent
                     .builder(presenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -247,6 +249,11 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
 
     private String getDestinationAsString(final NotificationConfig row) {
         if (row.getDestination() instanceof final NotificationStreamDestination streamDest) {
+            // Say where the detections will actually go, which for a streaming rule using the source feed is
+            // not the destination feed shown against the notification.
+            if (streamDest.isUsingSourceFeed(analyticProcessType)) {
+                return "Source feed";
+            }
             return NullSafe.get(streamDest.getDestinationFeed(),
                     DocRef::getDisplayValue);
         } else if (row.getDestination() instanceof final NotificationEmailDestination emailDest) {
@@ -275,9 +282,29 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         removeButton.setTitle("Remove Notification");
     }
 
+    /**
+     * The processing type lives on the Execution tab, so it can change while this tab is open. Whether the
+     * source feed option applies depends on it, so take the new value rather than waiting for the document to
+     * be read again.
+     */
+    public void setAnalyticProcessType(final AnalyticProcessType analyticProcessType) {
+        if (this.analyticProcessType != analyticProcessType) {
+            this.analyticProcessType = analyticProcessType;
+            // The destination column says where detections will go, which this changes. Only worth redrawing
+            // if the grid is already showing, as the first draw will use the new value regardless, and
+            // refresh() would otherwise bind the data display before the tab has ever been opened.
+            if (initialised) {
+                refresh();
+            }
+        }
+    }
+
     @Override
     protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
         this.docRef = docRef;
+        // Deliberately not taking the processing type from the document. This tab is read lazily on first
+        // open, which can be after the type has been changed on the execution tab, so the document would be
+        // stale. The owning presenter tells us instead, see setAnalyticProcessType.
         list.clear();
         if (document.getNotifications() != null) {
             list.addAll(document.getNotifications());

@@ -118,7 +118,9 @@ public class DetectionConsumerFactory {
             if (notificationConfig.getDestination() instanceof
                     final NotificationStreamDestination streamDestination) {
                 final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
-                detectionsWriter.setFeed(streamDestination.getDestinationFeed());
+                if (!streamDestination.isUsingSourceFeed(analyticRuleDoc.getAnalyticProcessType())) {
+                    detectionsWriter.setFeed(streamDestination.getDestinationFeed());
+                }
                 return new DetectionConsumer() {
                     @Override
                     public void accept(final Detection detection) {
@@ -186,4 +188,5 @@ public class DetectionConsumerFactory {
 
         return null;
     }
+
 }
