@@ -32,7 +32,14 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
-@Tag(name = "Queries")
+/**
+ * REST API for the data generator document.
+ * <p>
+ * Fetch and update only - data generators are created, copied, renamed and deleted through the
+ * explorer, like any other document.
+ * </p>
+ */
+@Tag(name = "Data Generators")
 @Path("/datagen" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -42,14 +49,14 @@ public interface DataGenResource
     @GET
     @Path("/{uuid}")
     @Operation(
-            summary = "Fetch an analytic rule doc by its UUID",
+            summary = "Fetch a data gen doc by its UUID",
             operationId = "fetchDataGen")
     DataGenDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
     @Operation(
-            summary = "Update an analytic rule doc",
+            summary = "Update a data gen doc",
             operationId = "updateDataGen")
     DataGenDoc update(@PathParam("uuid") String uuid,
                       @Parameter(description = "doc", required = true) DataGenDoc doc);

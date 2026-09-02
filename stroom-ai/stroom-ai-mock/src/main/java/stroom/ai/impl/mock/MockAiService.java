@@ -205,6 +205,16 @@ public class MockAiService implements AiService {
     }
 
     @Override
+    public Optional<AiChatMessage> getWorkingMessage(final int chatId) {
+        return aiService.getWorkingMessage(chatId);
+    }
+
+    @Override
+    public void deleteWorkingMessages(final int chatId) {
+        aiService.deleteWorkingMessages(chatId);
+    }
+
+    @Override
     public void verifyOwnership(final int chatId) {
 
     }

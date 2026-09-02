@@ -132,6 +132,9 @@ appConfig:
     eventLinkCacheSizeLimit: 1000000
     physicalDeleteAge: "P7D"
   askStroomAi:
+    dockType: "DOCK"
+    dockLocation: "RIGHT"
+    dockSize: 300
     tableAnalysis:
       maxTotalRows: 10000
       maxRowsPerBatch: 1000
@@ -745,6 +748,19 @@ appConfig:
         maxStoreSize: "10G"
         readAheadEnabled: true
         readerBlockedByWriter: false
+    stepping:
+      eagerMaterialisationRecords: 5000
+      filteredScanWindow: 50
+      maxBytesPerStream: 2147483648
+      maxRecordSizeBytes: 104857600
+      maxRecordsPerStream: 1000000
+      maxRetainedFingerprintsPerElement: 3
+      maxSessionIdleTime: "PT10M"
+      maxSweptStreamsPerSession: 10
+      orphanMaxAge: "PT1H"
+      prefetchWindow: 10
+      skeletonSweep: true
+      storeSubDir: "stepping"
     xmlSchema:
       cache:
         expireAfterAccess: "PT10M"

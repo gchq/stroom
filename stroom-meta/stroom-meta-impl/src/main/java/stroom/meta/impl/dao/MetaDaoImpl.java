@@ -42,7 +42,6 @@ import stroom.meta.impl.db.MetaDbConnProvider;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
-import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -157,6 +156,11 @@ public class MetaDaoImpl implements MetaDao {
     private static final int MAX_VALUES_PER_INSERT = 500;
 
     private static final int FIND_RECORD_LIMIT = 1000000;
+
+    /**
+     * The name MySQL gives the primary key index, for use in index hints.
+     */
+    private static final String PRIMARY_KEY_INDEX = "PRIMARY";
 
     static final stroom.meta.impl.db.jooq.tables.Meta META_M = META.as("m");
     static final MetaFeed META_FEED_F = META_FEED.as("f");
@@ -341,24 +345,30 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     @Override
-    public Long getMaxId() {
+    public Optional<Long> getMaxId() {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                         .select(DSL.max(META_M.ID))
                         .from(META_M)
                         .fetchOptional())
-                .map(Record1::value1)
-                .orElse(null);
+                .map(Record1::value1);
     }
 
     @Override
-    public Long getMaxId(final long maxCreateTimeMs) {
+    public Optional<Long> getMaxId(final long minId, final long maxCreateTimeMs) {
+        // Walk back down the primary key and stop at the first row created at or before the supplied time.
+        // `max(id)` would read every row created at or before that time instead, which is most of the table
+        // for a recent time, so it gets slower as the table grows. Ids and create times rise together, so the
+        // row we want is normally within a few rows of the end. The index hint is needed because MySQL will
+        // otherwise use a create time index and sort all the matching rows to satisfy the `order by`.
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                        .select(DSL.max(META_M.ID))
-                        .from(META_M)
-                        .where(META_M.CREATE_TIME.le(maxCreateTimeMs))
+                        .select(META_M.ID)
+                        .from(META_M.useIndex(PRIMARY_KEY_INDEX))
+                        .where(META_M.ID.ge(minId))
+                        .and(META_M.CREATE_TIME.le(maxCreateTimeMs))
+                        .orderBy(META_M.ID.desc())
+                        .limit(1)
                         .fetchOptional())
-                .map(Record1::value1)
-                .orElse(null);
+                .map(Record1::value1);
     }
 
     @Override
@@ -573,13 +583,15 @@ public class MetaDaoImpl implements MetaDao {
         final Select<Record1<Long>> select;
         // One big batch should be more efficient as long as it only locks the rows being changed
         // and no others. If it does lock other rows then smaller batches may be needed.
+        // Every table `buildMeteWithOptionalJoins` joins to is joined on its primary key, so each meta
+        // appears once and the ids are unique.
         if (batchSize <= 0) {
             // 0 == one big batch
-            select = DSL.selectDistinct(META_M.ID)
+            select = DSL.select(META_M.ID)
                     .from(metaWithJoins)
                     .where(conditions);
         } else {
-            select = DSL.selectDistinct(META_M.ID)
+            select = DSL.select(META_M.ID)
                     .from(metaWithJoins)
                     .where(conditions)
                     .limit(batchSize);
@@ -1517,8 +1529,10 @@ public class MetaDaoImpl implements MetaDao {
                                     Long,
                                     Integer,
                                     Long>> select = metaExpressionMapper.addJoins(
+                                            // Each meta joins to at most one row of every other table,
+                                            // so the results are unique.
                                             context
-                                                    .selectDistinct(
+                                                    .select(
                                                             META_M.ID,
                                                             META_FEED_F.NAME,
                                                             META_TYPE_T.NAME,
@@ -1577,7 +1591,8 @@ public class MetaDaoImpl implements MetaDao {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
                         metaExpressionMapper.addJoins(
                                         (context
-                                                .selectDistinct(
+                                                // The `group by parent.id` below gives one row per parent.
+                                                .select(
                                                         parent.ID,
                                                         PARENT_FEED.NAME,
                                                         PARENT_TYPE.NAME,
@@ -1633,7 +1648,10 @@ public class MetaDaoImpl implements MetaDao {
                         metaExpressionMapper.addJoins(
                                         context
                                                 .select(
-                                                        DSL.countDistinct(META_M.ID),
+                                                        // The counts below need to be distinct as many
+                                                        // metas share a feed, type, processor and status,
+                                                        // but each meta appears once.
+                                                        DSL.count(),
                                                         DSL.countDistinct(META_FEED_F.NAME),
                                                         DSL.groupConcatDistinct(META_FEED_F.NAME)
                                                                 .separator(GROUP_CONCAT_DELIMITER),
@@ -1881,8 +1899,9 @@ public class MetaDaoImpl implements MetaDao {
 
         return JooqUtil.contextResult(metaDbConnProvider,
                         context -> {
+                            // The `group by` below gives one row per uuid.
                             SelectJoinStep<Record1<String>> select = context
-                                    .selectDistinct(META_PROCESSOR_P.PROCESSOR_UUID)
+                                    .select(META_PROCESSOR_P.PROCESSOR_UUID)
                                     .from(META_M);
 
                             select = select

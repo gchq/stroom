@@ -16,6 +16,9 @@
 
 package stroom.pipeline.filter;
 
+import stroom.pipeline.xml.event.EventList;
+import stroom.pipeline.xml.event.simple.SimpleEventListBuilder;
+
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -36,8 +39,13 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
     private final Configuration configuration;
     private final PipelineConfiguration pipe;
     private final ReceivingContentHandler receivingContentHandler;
+    // Captures the same SAX stream as the TinyTree, as replayable events. The tree stays the source for
+    // getData()/XPath; the event list is the form the stepping store persists (see the stored-stepping-state
+    // design). Fed by broadcasting through handler, so the individual SAX methods need no change.
+    private final SimpleEventListBuilder eventListBuilder = new SimpleEventListBuilder();
 
     private NodeInfo root;
+    private EventList eventList;
     private boolean startedDocument;
 
     private ContentHandler handler = NullXMLFilter.INSTANCE;
@@ -68,7 +76,10 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
             receivingContentHandler.setPipelineConfiguration(pipe);
             receivingContentHandler.setReceiver(builder);
 
-            handler = receivingContentHandler;
+            eventListBuilder.reset();
+
+            // Broadcast every buffered event to both the tree and the event list.
+            handler = new TeeContentHandler(receivingContentHandler, eventListBuilder);
         }
     }
 
@@ -136,6 +147,8 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
                 if (builder != null) {
                     // Store the current root.
                     root = builder.getCurrentRoot();
+                    // Capture the same record as replayable events.
+                    eventList = eventListBuilder.getEventList();
                 }
 
                 reset();
@@ -283,5 +296,97 @@ public abstract class TinyTreeBufferFilter extends AbstractXMLFilter {
 
     public NodeInfo getEvents() {
         return root;
+    }
+
+    /**
+     * @return the current record as a replayable {@link EventList}, or null if nothing is buffered. The
+     * same content as {@link #getEvents()}, in the form the stepping store persists.
+     */
+    public EventList getEventList() {
+        return eventList;
+    }
+
+    /**
+     * Broadcasts every SAX callback to two handlers, so the buffered stream feeds both the TinyTree and the
+     * event list without duplicating the eleven callback methods.
+     */
+    private static final class TeeContentHandler implements ContentHandler {
+
+        private final ContentHandler a;
+        private final ContentHandler b;
+
+        private TeeContentHandler(final ContentHandler a, final ContentHandler b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        @Override
+        public void setDocumentLocator(final Locator locator) {
+            a.setDocumentLocator(locator);
+            b.setDocumentLocator(locator);
+        }
+
+        @Override
+        public void startDocument() throws SAXException {
+            a.startDocument();
+            b.startDocument();
+        }
+
+        @Override
+        public void endDocument() throws SAXException {
+            a.endDocument();
+            b.endDocument();
+        }
+
+        @Override
+        public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
+            a.startPrefixMapping(prefix, uri);
+            b.startPrefixMapping(prefix, uri);
+        }
+
+        @Override
+        public void endPrefixMapping(final String prefix) throws SAXException {
+            a.endPrefixMapping(prefix);
+            b.endPrefixMapping(prefix);
+        }
+
+        @Override
+        public void startElement(final String uri, final String localName, final String qName,
+                                 final Attributes atts) throws SAXException {
+            a.startElement(uri, localName, qName, atts);
+            b.startElement(uri, localName, qName, atts);
+        }
+
+        @Override
+        public void endElement(final String uri, final String localName, final String qName)
+                throws SAXException {
+            a.endElement(uri, localName, qName);
+            b.endElement(uri, localName, qName);
+        }
+
+        @Override
+        public void characters(final char[] ch, final int start, final int length) throws SAXException {
+            a.characters(ch, start, length);
+            b.characters(ch, start, length);
+        }
+
+        @Override
+        public void ignorableWhitespace(final char[] ch, final int start, final int length)
+                throws SAXException {
+            a.ignorableWhitespace(ch, start, length);
+            b.ignorableWhitespace(ch, start, length);
+        }
+
+        @Override
+        public void processingInstruction(final String target, final String data) throws SAXException {
+            a.processingInstruction(target, data);
+            b.processingInstruction(target, data);
+        }
+
+        @Override
+        public void skippedEntity(final String name) throws SAXException {
+            a.skippedEntity(name);
+            b.skippedEntity(name);
+        }
     }
 }

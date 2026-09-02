@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Singleton
@@ -81,16 +82,21 @@ public class MockMetaService implements MetaService, Clearable {
     private long currentId;
 
     @Override
-    public Long getMaxId() {
+    public Optional<Long> getMaxId() {
         if (currentId == 0) {
-            return null;
+            return Optional.empty();
         }
-        return currentId;
+        return Optional.of(currentId);
     }
 
     @Override
-    public Long getMaxId(final long maxCreateTimeMs) {
-        return getMaxId();
+    public Optional<Long> getMaxId(final long minId, final long maxCreateTimeMs) {
+        return metaMap.values()
+                .stream()
+                .filter(meta -> meta.getId() >= minId
+                                && meta.getCreateMs() <= maxCreateTimeMs)
+                .map(Meta::getId)
+                .max(Long::compare);
     }
 
     @Override

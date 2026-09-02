@@ -30,6 +30,7 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -74,6 +75,8 @@ class JsonToXml extends StroomExtensionFunctionCall {
 
         try {
             parser.parse(new InputSource(new StringReader(json)));
+        } catch (final SAXParseException e) {
+            throw new RuntimeException(describeParseError(e), e);
         } catch (final Exception e) {
             throw new RuntimeException("Error parsing JSON - " + e.getMessage(), e);
         }
@@ -85,6 +88,24 @@ class JsonToXml extends StroomExtensionFunctionCall {
         builder.reset();
 
         return sequence;
+    }
+
+    /**
+     * Describe a JSON parse failure including the location of the error within the JSON.
+     */
+    private static String describeParseError(final SAXParseException e) {
+        final StringBuilder sb = new StringBuilder("Error parsing JSON");
+        if (e.getLineNumber() > 0) {
+            sb.append(" at line ");
+            sb.append(e.getLineNumber());
+            if (e.getColumnNumber() > 0) {
+                sb.append(", column ");
+                sb.append(e.getColumnNumber());
+            }
+        }
+        sb.append(" - ");
+        sb.append(e.getMessage());
+        return sb.toString();
     }
 
     private void createWarning(final XPathContext context, final Throwable t) {
