@@ -123,6 +123,14 @@ class TestReport extends AbstractAnalyticsTest {
             where UserId = user5
             select StreamId, EventId, UserId""";
 
+    /**
+     * Matches no events, so the report it produces has no rows.
+     */
+    private static final String EMPTY_QUERY = """
+            from index_view
+            where UserId = nosuchuser
+            select StreamId, EventId, UserId""";
+
     @Test
     void test() {
         basicTest(QUERY, null, 9, """
@@ -203,6 +211,67 @@ class TestReport extends AbstractAnalyticsTest {
                 executionScheduleDao.fetchScheduleByUuid(executionSchedule.getUuid());
         assertThat(reloaded).isPresent();
         assertThat(reloaded.get().isEnabled()).isFalse();
+    }
+
+    /**
+     * A report whose query finds nothing must not be delivered where the report says not to send empty reports,
+     * otherwise the recipient gets an empty file every time the schedule fires.
+     */
+    @Test
+    void testEmptyReportIsNotSentWhenNotWanted() {
+        runReport(EMPTY_QUERY, false);
+
+        assertThat(reportStreamCount())
+                .withFailMessage("An empty report should not have been delivered")
+                .isZero();
+    }
+
+    /**
+     * Sending empty reports is the default, as a recipient may want to know the report ran and found nothing.
+     */
+    @Test
+    void testEmptyReportIsSentWhenWanted() {
+        runReport(EMPTY_QUERY, true);
+
+        assertThat(reportStreamCount())
+                .withFailMessage("An empty report should have been delivered")
+                .isOne();
+    }
+
+    /**
+     * Only emptiness suppresses a report. A report that found something is always delivered.
+     */
+    @Test
+    void testPopulatedReportIsSentEvenWhenEmptyReportsAreNotWanted() {
+        runReport(QUERY, false);
+
+        assertThat(reportStreamCount())
+                .withFailMessage("A report with rows should have been delivered")
+                .isOne();
+    }
+
+    private void runReport(final String query,
+                           final boolean sendEmptyReports) {
+        final ReportDoc reportDoc = ReportDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query(query)
+                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
+                .reportSettings(ReportSettings
+                        .builder()
+                        .fileType(DownloadSearchResultFileType.CSV)
+                        .sendEmptyReports(sendEmptyReports)
+                        .build())
+                .notifications(createNotificationConfig())
+                .errorFeed(analyticsDataSetup.getDetections())
+                .build();
+
+        createExecutionSchedule(writeReport(reportDoc));
+        scheduledExecutorService.exec(reportExecutor);
+    }
+
+    private int reportStreamCount() {
+        return metaService.find(FindMetaCriteria.createWithType(REPORT_STREAM_TYPE)).size();
     }
 
     /**

@@ -202,12 +202,23 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
                             dataStore,
                             resultRequest);
 
-                    for (final NotificationConfig notificationConfig : doc.getNotifications()) {
-                        try {
-                            sendFile(doc, notificationConfig, reportFile, executionTime, effectiveExecutionTime);
-                        } catch (final IOException e) {
-                            errorConsumer.add(e);
+                    // Send the report if it is not empty, or if we are happy to send empty reports anyway.
+                    // ReportDoc always supplies settings, so there is nothing to fall back to here.
+                    if (doc.getReportSettings().isSendEmptyReports() || reportFile.rowCount() > 0) {
+                        for (final NotificationConfig notificationConfig : doc.getNotifications()) {
+                            try {
+                                sendFile(doc,
+                                        notificationConfig,
+                                        reportFile,
+                                        executionTime,
+                                        effectiveExecutionTime);
+                            } catch (final IOException e) {
+                                errorConsumer.add(e);
+                            }
                         }
+                    } else {
+                        LOGGER.debug("run() - Notifications skipped as the report is empty, report: {}, " +
+                                     "reportFile: {}", RuleUtil.getRuleIdentity(doc), reportFile);
                     }
 
                 } catch (final IOException e) {
