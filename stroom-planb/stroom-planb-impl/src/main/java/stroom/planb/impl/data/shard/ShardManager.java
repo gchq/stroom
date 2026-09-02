@@ -321,11 +321,8 @@ public class ShardManager {
         cleanupMap(shardMap);
         cleanupMap(archiveShardMap);
 
-        // Before the sweep, so a copy closed here has already deleted its own dir and anything still
-        // retired is counted as live below.
-        closeRetiredArchiveShards();
-
-        // Reap generation dirs left by crashes / deferred deletes (no live owner).
+        // Reap generation dirs left by crashes / deferred deletes (no live owner). Copies still awaiting
+        // their readers count as live, so this cannot delete one out from under a reader.
         sweepOrphanGenerationDirs(false);
 
         deleteOrphanedDirs();
@@ -666,11 +663,15 @@ public class ShardManager {
     }
 
     /**
-     * Closes retired archive copies whose readers have all left, returning any that are still in use to
-     * the queue for a later cycle. Each is tried at most once per call, so a copy pinned by a long read
-     * cannot spin here.
+     * Reclaims the local disk held by archive copies that a republish superseded: closes those whose
+     * readers have all left and deletes their local copy, returning any still in use to the queue for a
+     * later cycle. Each is tried at most once per call, so a copy pinned by a long read cannot spin here.
+     *
+     * <p>Driven by the shared file store housekeeping job. It is deliberately not called from a query:
+     * the queue spans every bucket and doc, so a read would be deleting files that have nothing to do
+     * with what it was asked for.
      */
-    private void closeRetiredArchiveShards() {
+    public void closeRetiredArchiveShards() {
         for (int i = retiredArchiveShards.size(); i > 0; i--) {
             final ArchiveStoreShard shard = retiredArchiveShards.poll();
             if (shard == null) {

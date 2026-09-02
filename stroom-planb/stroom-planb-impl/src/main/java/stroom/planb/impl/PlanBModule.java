@@ -152,8 +152,9 @@ public class PlanBModule extends AbstractModule {
                 .bindJobTo(PlanBSharedFileStoreHousekeepingRunnable.class, builder -> builder
                         .name("Plan B Shared FS Housekeeping")
                         .description("Detects orphaned directories on the shared file store and "
-                                + "moves them to trash, then empties trash entries from previous runs.")
-                        .cronSchedule(CronExpressions.EVERY_HOUR.getExpression())
+                                + "moves them to trash, then empties trash entries from previous runs. "
+                                + "Also deletes unused local copies of archive buckets.")
+                        .cronSchedule(CronExpressions.EVERY_5TH_MINUTE.getExpression())
                         .advanced(true));
 
         LifecycleBinder.create(binder())
@@ -203,8 +204,12 @@ public class PlanBModule extends AbstractModule {
     private static class PlanBSharedFileStoreHousekeepingRunnable extends RunnableWrapper {
 
         @Inject
-        PlanBSharedFileStoreHousekeepingRunnable(final SharedFileStoreCleaner executor) {
-            super(executor::exec);
+        PlanBSharedFileStoreHousekeepingRunnable(final SharedFileStoreCleaner executor,
+                                                 final ShardManager shardManager) {
+            super(() -> {
+                executor.exec();
+                shardManager.closeRetiredArchiveShards();
+            });
         }
     }
 
