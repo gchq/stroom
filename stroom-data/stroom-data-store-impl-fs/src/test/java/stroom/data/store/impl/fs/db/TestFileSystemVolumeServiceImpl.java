@@ -150,7 +150,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
     void test() {
         Mockito.when(mockStoreImpl.getStreamStore(Mockito.any(FsVolumeType.class)))
                 .thenReturn(mockStreamStore);
-        Mockito.when(mockStreamStore.validateVolume(Mockito.any(FsVolume.class)))
+        Mockito.when(mockStreamStore.validateVolume(Mockito.any(FsVolume.class), Mockito.any(), Mockito.any()))
                 .thenReturn(ValidationResult.ok());
         List<FsVolume> list = volumeService.find(FindFsVolumeCriteria.matchAll())
                 .getValues();

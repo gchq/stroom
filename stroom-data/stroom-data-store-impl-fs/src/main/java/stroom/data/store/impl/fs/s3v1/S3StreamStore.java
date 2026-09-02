@@ -264,8 +264,10 @@ public class S3StreamStore extends AbstractS3StreamStore {
     }
 
     @Override
-    public ValidationResult validateVolume(final FsVolume volume) {
-        return super.validateVolume(volume);
+    public ValidationResult validateVolume(final FsVolume volume,
+                                           final List<FsVolume> otherVolumesInGroup,
+                                           final List<FsVolume> allOtherVolumes) {
+        return super.validateVolume(volume, otherVolumesInGroup, allOtherVolumes);
     }
 
     private S3Location deriveS3Location(final DataVolume dataVolume,

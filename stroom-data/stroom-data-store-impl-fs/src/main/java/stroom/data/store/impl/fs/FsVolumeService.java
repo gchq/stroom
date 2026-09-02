@@ -46,8 +46,4 @@ public interface FsVolumeService
     void ensureDefaultVolumes();
 
     ValidationResult validate(FsVolume volume);
-
-    ValidationResult validateForDupPath(FsVolume volume);
-
-    ValidationResult validateVolumePath(FsVolume volume);
 }

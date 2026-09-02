@@ -135,8 +135,7 @@ public final class JsonUtil {
         try {
             return getMapper().readValue(content, valueType);
         } catch (final JacksonException e) {
-            throw new RuntimeException(String.format("Error deserialising object %s %s",
-                    content, e.getMessage()), e);
+            throw new JsonDeserialisationException(content, valueType, e);
         }
     }
 
@@ -146,8 +145,7 @@ public final class JsonUtil {
         try {
             return getMapper().readValue(content, valueType);
         } catch (final JacksonException e) {
-            throw new RuntimeException(String.format("Error deserialising object %s %s",
-                    EncodingUtil.asString(content), e.getMessage()), e);
+            throw new JsonDeserialisationException(EncodingUtil.asString(content), valueType, e);
         }
     }
 
@@ -504,6 +502,39 @@ public final class JsonUtil {
                          "error in the description.",
                     typeName, defaultValue, jsonNodeName, targetClassName, enclosingClassName, propertyName);
             return defaultValue;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class JsonDeserialisationException extends RuntimeException {
+
+        private final String json;
+        private final Class<?> clazz;
+
+        public JsonDeserialisationException(final String message,
+                                            final String json,
+                                            final Class<?> clazz,
+                                            final Exception e) {
+            super(message, e);
+            this.json = json;
+            this.clazz = clazz;
+        }
+
+        public JsonDeserialisationException(final String json, final Class<?> clazz, final Exception e) {
+            super(e.getMessage());
+            this.json = json;
+            this.clazz = clazz;
+        }
+
+        public String getJson() {
+            return json;
+        }
+
+        public Class<?> getClazz() {
+            return clazz;
         }
     }
 }

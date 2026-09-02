@@ -46,6 +46,7 @@ import org.jspecify.annotations.NullMarked;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -58,6 +59,10 @@ import java.util.Set;
 public class StoreImpl implements Store, AttributeMapFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoreImpl.class);
+    /// Vol types that support {@link Store#addExistingS3Source(MetaProperties, S3Location)}
+    private static final Set<FsVolumeType> ADD_EXISTING_SUPPORTED_FS_VOLUME_TYPES = EnumSet.of(
+            FsVolumeType.S3_V1,
+            FsVolumeType.S3_V1_READ_ONLY);
 
     private static final int MINIMUM_BYTE_COUNT = 10;
 

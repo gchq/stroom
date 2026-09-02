@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 @JsonInclude(Include.NON_NULL)
 public class ValidationResult {
@@ -69,6 +70,14 @@ public class ValidationResult {
         return validate(Severity.ERROR, message, test);
     }
 
+    /**
+     * If this is OK, calls test and returns a new {@link ValidationResult} based on the outcome of test.
+     * If test returns true, a new {@link ValidationResult} with the specified message and severity is returned.
+     */
+    public ValidationResult errorIf(final String message, final BooleanSupplier test) {
+        return validate(Severity.ERROR, message, () -> !test.getAsBoolean());
+    }
+
     /// @param severity The severity of this validation test.
     /// @param message  The message to display if the validation fails.
     /// @param test     Should return true if the validation passes, false if it fails.
@@ -82,6 +91,18 @@ public class ValidationResult {
                         Objects.requireNonNull(severity),
                         Objects.requireNonNull(message));
             }
+        } else {
+            return this;
+        }
+    }
+
+    /// Calls validation if this is ok and validation is non null.
+    ///
+    /// @param validation The validation step to run if this is ok.
+    /// @return The result.
+    public ValidationResult validate(final Supplier<ValidationResult> validation) {
+        if (isOk() && validation != null) {
+            return validation.get();
         } else {
             return this;
         }

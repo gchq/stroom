@@ -43,11 +43,15 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -58,6 +62,7 @@ import java.util.concurrent.atomic.AtomicLong;
 class FsStreamStore implements StreamStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsStreamStore.class);
+    private static final String TEMP_FILE_PREFIX = "stroomFsVolVal";
 
     private final FsPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
@@ -260,7 +265,9 @@ class FsStreamStore implements StreamStore {
     }
 
     @Override
-    public ValidationResult validateVolume(final FsVolume volume) {
+    public ValidationResult validateVolume(final FsVolume volume,
+                                           final List<FsVolume> otherVolumesInGroup,
+                                           final List<FsVolume> allOtherVolumes) {
         Objects.requireNonNull(volume);
         ValidationResult validationResult = ValidationResult.ok();
 
@@ -268,25 +275,119 @@ class FsStreamStore implements StreamStore {
                 "S3 Configuration is not supported for this volume type",
                 () -> NullSafe.isBlankString(volume.getS3ClientConfigData()));
 
-        if (NullSafe.isBlankString(volume, FsVolume::getPath)) {
-            validationResult = ValidationResult.error("You must provide a path for the volume.");
-        } else {
-            final FsVolumeService volumeService = fsVolumeServiceProvider.get();
-            final String existingPath = NullSafe.get(
-                    volume.getId(),
-                    volumeService::fetch,
-                    FsVolume::getPath);
-            final boolean hasPathChanged = !Objects.equals(existingPath, volume.getPath());
-            // TODO it is debatable whether these should call back to volumeService or do it in here.
-            if (hasPathChanged) {
-                validationResult = volumeService.validateForDupPath(volume);
+        if (validationResult.isOk()) {
+            if (NullSafe.isBlankString(volume, FsVolume::getPath)) {
+                validationResult = ValidationResult.error("You must provide a path for the volume.");
+            } else {
+                final FsVolumeService volumeService = fsVolumeServiceProvider.get();
+                final String existingPath = NullSafe.get(
+                        volume.getId(),
+                        volumeService::fetch,
+                        FsVolume::getPath);
+                final boolean hasPathChanged = !Objects.equals(existingPath, volume.getPath());
+                if (hasPathChanged) {
+                    validationResult = validateForDupPath(volume, otherVolumesInGroup);
 
-                if (validationResult.isOk()) {
-                    validationResult = volumeService.validateVolumePath(volume);
+                    if (validationResult.isOk()) {
+                        validationResult = validateVolumePath(volume);
+                    }
                 }
             }
         }
         return validationResult;
+    }
+
+    public ValidationResult validateForDupPath(final FsVolume volume,
+                                               final List<FsVolume> otherVolumesInGroup) {
+        final Path absPath = getAbsVolumePath(volume);
+        // We need to get all, so we can make all the db one's absolute in the same was as our one
+        final boolean foundDup = NullSafe.stream(otherVolumesInGroup)
+                .anyMatch(dbVol ->
+                        Objects.equals(getAbsVolumePath(dbVol), absPath));
+        if (foundDup) {
+            return ValidationResult.error(LogUtil.message(
+                    "Another volume already exists in this group with path '{}'", absPath));
+        } else {
+            return ValidationResult.ok();
+        }
+    }
+
+    public ValidationResult validateVolumePath(final FsVolume volume) {
+        final Path absPath = getAbsVolumePath(volume);
+        LOGGER.debug("path: {}", absPath);
+
+        if (!Files.exists(absPath)) {
+            try {
+                LOGGER.info(() -> LogUtil.message("Creating volume in {}", absPath));
+                Files.createDirectories(absPath);
+            } catch (final IOException e) {
+                final String msg;
+                if (absPath.toString().equals(e.getMessage())) {
+                    // Some java IO exceptions just have the path as the message, helpful.
+                    msg = e.getClass().getSimpleName();
+                } else {
+                    msg = e.getMessage();
+                }
+                return ValidationResult.error(LogUtil.message(
+                        "Error creating volume path '{}': {}",
+                        absPath,
+                        msg));
+            }
+        } else if (!Files.isDirectory(absPath)) {
+            return ValidationResult.error(LogUtil.message(
+                    "Error creating volume path '{}': The path exists but is not a directory.",
+                    absPath));
+        } else {
+            // The validation step creates a temp file to test access, so need to ignore that
+            final long count = FileUtil.count(absPath, filePath ->
+                    filePath.getFileName().toString().startsWith(TEMP_FILE_PREFIX));
+            if (count > 0) {
+                throw new RuntimeException(
+                        "Attempt to create volume in a directory that is not empty: " + absPath);
+            }
+        }
+
+        // Can't seem to find a good way of checking if we have write perms on the dir so create a file
+        // then delete it, after a small delay
+        Path tempFile = null;
+        try {
+            tempFile = Files.createTempFile(absPath, TEMP_FILE_PREFIX, null);
+
+
+        } catch (final IOException e) {
+            return ValidationResult.error(LogUtil.message(
+                    "Error creating test file in directory {}. " +
+                    "Does Stroom have the right permissions on this directory? " +
+                    "Error message: {} {}",
+                    absPath,
+                    e.getClass().getSimpleName(),
+                    e.getMessage()));
+        } finally {
+            // Wait a few secs before we delete the file in case some file systems prevent deletion
+            // immediately after creation
+            if (tempFile != null) {
+                //noinspection resource // Closed inside job
+                final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+                final Path finalTempFile = tempFile;
+                executorService.schedule(() -> {
+                    LOGGER.debug("About to delete file {}", finalTempFile);
+                    try {
+                        Files.deleteIfExists(finalTempFile);
+                    } catch (final IOException e) {
+                        LOGGER.error("Unable to delete temporary file {}", finalTempFile, e);
+                    } finally {
+                        executorService.shutdown();
+                        executorService.close();
+                    }
+                }, 10, TimeUnit.SECONDS);
+            }
+        }
+
+        return ValidationResult.ok();
+    }
+
+    private Path getAbsVolumePath(final FsVolume volume) {
+        return pathCreator.toAppPath(volume.getPath());
     }
 
 

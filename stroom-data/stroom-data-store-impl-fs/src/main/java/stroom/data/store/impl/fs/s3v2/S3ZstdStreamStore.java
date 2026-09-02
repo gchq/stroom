@@ -30,7 +30,6 @@ import stroom.data.store.impl.fs.FsMetaS3LocationDao;
 import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
 import stroom.data.store.impl.fs.PhysicalDeleteOutcome;
 import stroom.data.store.impl.fs.shared.DataVolume;
-import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.shared.S3LocationDataVolume;
 import stroom.data.store.impl.fs.shared.ValidationResult;
@@ -238,12 +237,10 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
     }
 
     @Override
-    public ValidationResult validateVolume(final FsVolume volume) {
-        ValidationResult validationResult = super.validateVolume(volume);
+    protected ValidationResult validateS3Config(final S3ClientConfig s3ClientConfig) {
+        ValidationResult validationResult = super.validateS3Config(s3ClientConfig);
 
         if (validationResult.isOk()) {
-            final S3ClientConfig s3ClientConfig = readS3ClientConfig(volume);
-
             // TODO The requirement for static bucket name and no key pattern, may no longer
             //  be needed now that we have a table for storing the s3 location.
             if (NullSafe.isNonBlankString(s3ClientConfig.getBucketName())) {
@@ -265,8 +262,7 @@ public class S3ZstdStreamStore extends AbstractS3StreamStore {
             }
 
             validationResult = validationResult.errorIfNot(LogUtil.message(
-                            "Key name pattern is not supported for volume type {}. Please remove the key name pattern.",
-                            volume.getVolumeType().getDisplayValue()),
+                            "Key name pattern is not supported for this volume type. Please remove the key name pattern."),
                     () -> NullSafe.isBlankString(s3ClientConfig.getKeyPattern()));
         }
         return validationResult;

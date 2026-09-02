@@ -32,6 +32,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
+import stroom.util.shared.StringUtil;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -80,6 +81,9 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         final byte[] finalData = data;
         final FsVolumeType volumeType = Objects.requireNonNullElse(fileVolume.getVolumeType(), FsVolumeType.STANDARD);
 
+        // map blank => null so the unique constraint is not violated
+        final String volPath = StringUtil.blankAsNull(fileVolume.getPath());
+
         final Integer id = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                 .insertInto(FS_VOLUME)
                 .columns(FS_VOLUME.VERSION,
@@ -99,7 +103,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
                         fileVolume.getCreateUser(),
                         fileVolume.getUpdateTimeMs(),
                         fileVolume.getUpdateUser(),
-                        fileVolume.getPath(),
+                        volPath,
                         fileVolume.getStatus().getPrimitiveValue(),
                         fileVolume.getByteLimit(),
                         fileVolume.getVolumeState().getId(),
@@ -249,7 +253,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         record.set(FS_VOLUME.CREATE_USER, fileVolume.getCreateUser());
         record.set(FS_VOLUME.UPDATE_TIME_MS, fileVolume.getUpdateTimeMs());
         record.set(FS_VOLUME.UPDATE_USER, fileVolume.getUpdateUser());
-        record.set(FS_VOLUME.PATH, fileVolume.getPath());
+        record.set(FS_VOLUME.PATH, StringUtil.blankAsNull(fileVolume.getPath()));
         record.set(FS_VOLUME.STATUS, fileVolume.getStatus().getPrimitiveValue());
         record.set(FS_VOLUME.BYTE_LIMIT, fileVolume.getByteLimit());
         record.set(FS_VOLUME.FK_FS_VOLUME_STATE_ID, fileVolume.getVolumeState().getId());
@@ -336,7 +340,8 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
                 LOGGER.error(e::getMessage, e);
             }
         }
-        return builder.build();
+        final FsVolume fsVolume = builder.build();
+        return fsVolume;
     }
 
     private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<FsVolumeRecord, Byte> field,

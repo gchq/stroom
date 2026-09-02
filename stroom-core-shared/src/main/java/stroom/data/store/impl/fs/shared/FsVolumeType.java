@@ -33,9 +33,12 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
     // ************ IMPORTANT!!!!!! ************
 
     /**
-     * Uses a posix file system that is mounted locally.
+     * Uses a posix file system which is mounted locally.
      */
-    STANDARD(0, "Standard", false),
+    STANDARD(0,
+            "Standard",
+            10,
+            false),
 
     /**
      * The first iteration of an S3 stream store implementation.
@@ -43,7 +46,10 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
      * then uploads the file to S3.
      * Reads are done by downloading the zip file from S3 to a temp dir and unzipping it.
      */
-    S3_V1(1, "S3 v1", false),
+    S3_V1(1,
+            "S3 v1",
+            20,
+            false),
 
     /**
      * The second iteration of an S3 stream store implementation.
@@ -51,14 +57,20 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
      * as a separate zstd frame. The segment index is included at the end of the zstd file as a skippable frame.
      * If there is sufficient data to create a dictionary, then a dictionary will be used.
      */
-    S3_V2(2, "S3 v2 (Experimental)", false),
+    S3_V2(2,
+            "S3 v2 (Experimental)",
+            40,
+            false),
 
     /**
      * A read only implementation of S3_V1.
      * Intended for use where the raw data is uploaded to S3 by proxy (in proxy zip format)
      * and read directly from there.
      */
-    S3_V1_READ_ONLY(3, "S3 v1 (Read only)", true),
+    S3_V1_READ_ONLY(3,
+            "S3 v1 (Read only)",
+            30,
+            true),
 
     ;
 
@@ -71,15 +83,20 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
     public static final PrimitiveValueConverter<FsVolumeType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(FsVolumeType.class, FsVolumeType.values());
 
+    /// The persisted primitive value, DO NOT CHANGE without DB migration !!!
     private final int id;
     private final String displayValue;
+    /// Only used for sorting in the UI, can be changed if the UI display order needs to change
+    private final int displayIndex;
     private final boolean readOnly;
 
     FsVolumeType(final int id,
                  final String displayValue,
+                 final int displayIndex,
                  final boolean readOnly) {
         this.id = id;
         this.displayValue = displayValue;
+        this.displayIndex = displayIndex;
         this.readOnly = readOnly;
     }
 
@@ -97,6 +114,10 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
         return displayValue;
     }
 
+    public int getDisplayIndex() {
+        return displayIndex;
+    }
+
     @Override
     public byte getPrimitiveValue() {
         return (byte) id;
@@ -111,6 +132,13 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
      */
     public static Set<FsVolumeType> getS3VolumeTypes() {
         return S3_VOLUME_TYPES;
+    }
+
+    /**
+     * @return True if this volumeType is an S3 volume type.
+     */
+    public boolean isS3VolumeType() {
+        return getS3VolumeTypes().contains(this);
     }
 
     /**

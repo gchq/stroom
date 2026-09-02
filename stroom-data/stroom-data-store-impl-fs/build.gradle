@@ -54,6 +54,7 @@ dependencies {
     implementation libs.kryo
     implementation libs.restygwt
     implementation libs.vavr
+    implementation libs.ws.rs.api
     implementation libs.zstd.jni
     implementation libs.zero.allocation.hashing
 

@@ -46,7 +46,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.capacity.HasCapacitySelector;
 import stroom.util.io.capacity.HasCapacitySelectorFactory;
-import stroom.util.json.JsonUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
@@ -79,9 +78,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -164,9 +160,12 @@ public class FsVolumeServiceImpl implements FsVolumeService {
         return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
             FsVolume.Builder builder = fsVolume.copy();
             final Path volPath = getAbsVolumePath(fsVolume);
+            validateVolume(fsVolume);
+            final FsVolumeType volumeType = fsVolume.getVolumeType();
             try {
-                validateVolume(fsVolume);
-                if (fsVolume.getPath() != null && fsVolume.getByteLimit() == null) {
+                if (!volumeType.isS3VolumeType()
+                    && fsVolume.getPath() != null
+                    && fsVolume.getByteLimit() == null) {
                     //set an arbitrary default limit size of 250MB on each volume to prevent the
                     //filesystem from running out of space, assuming they have 500MB free of course.
                     getDefaultVolumeLimit(volPath)
@@ -182,7 +181,7 @@ public class FsVolumeServiceImpl implements FsVolumeService {
                 builder.volumeState(fileVolumeState);
 
             } catch (final Exception e) {
-                LOGGER.error("Unable to create volume due to an error creating directory {}", volPath, e);
+                LOGGER.error("Unable to create volume - {}", LogUtil.exceptionMessage(e), e);
                 final String msg;
                 if (volPath.toString().equals(e.getMessage())) {
                     // Some java IO exceptions just have the path as the message, helpful.
@@ -202,58 +201,13 @@ public class FsVolumeServiceImpl implements FsVolumeService {
         });
     }
 
-    private S3ClientConfig readS3ClientConfig(final FsVolume fileVolume) {
-        final String s3ClientConfigData = fileVolume.getS3ClientConfigData();
-        if (NullSafe.isNonBlankString(s3ClientConfigData)) {
-            return JsonUtil
-                    .readValue(s3ClientConfigData, S3ClientConfig.class);
-        } else {
-            return null;
-        }
-    }
-
     private void validateVolume(final FsVolume fsVolume) {
-        Objects.requireNonNull(fsVolume);
-        final FsVolumeType volumeType = Objects.requireNonNull(fsVolume.getVolumeType(),
-                "You must specify a volume type");
-
-        final StreamStore streamStore = Objects.requireNonNull(storeImpl.getStreamStore(volumeType),
-                () -> LogUtil.message("No stream store found for volume type {}", volumeType));
-
-        final ValidationResult validationResult = streamStore.validateVolume(fsVolume);
+        final ValidationResult validationResult = validate(fsVolume);
         LOGGER.debug("validateVolume() - validationResult: {}", validationResult);
         if (validationResult.isError()) {
             throw new RuntimeException(validationResult.getMessage());
         }
     }
-
-//    private void validateS3V2Volume(final FsVolume fileVolume) {
-//        final S3ClientConfig s3ClientConfig = readS3ClientConfig(fileVolume);
-//        Objects.requireNonNull(s3ClientConfig, "S3 Client Configuration must be provided.");
-//
-//        if (NullSafe.isNonBlankString(s3ClientConfig.getBucketName())) {
-//            final Template template;
-//            try {
-//                template = templateCache.getTemplate(s3ClientConfig.getBucketName());
-//            } catch (final RuntimeException e) {
-//                throw new RuntimeException(LogUtil.message("Bucket name '{}' must be a valid static template - {}",
-//                        s3ClientConfig.getBucketName(), e.getMessage()), e);
-//            }
-//
-//            if (!template.isStatic()) {
-//                throw new RuntimeException(LogUtil.message("Bucket name '{}' must be a valid static template - {}",
-//                        s3ClientConfig.getBucketName()));
-//            }
-//        } else {
-//            throw new RuntimeException(LogUtil.message("Bucket name must be provided"));
-//        }
-//
-//        if (s3ClientConfig.getKeyPattern() != null) {
-//            throw new RuntimeException(LogUtil.message("Key name pattern is not supported for volume type {}. " +
-//                                                       "Please remove the key name pattern.",
-//                    fileVolume.getVolumeType().getDisplayValue()));
-//        }
-//    }
 
     @Override
     public FsVolume update(final FsVolume fileVolume) {
@@ -345,6 +299,7 @@ public class FsVolumeServiceImpl implements FsVolumeService {
 
     Optional<FsVolume> doGetS3Volume(final S3CacheKey s3CacheKey) {
         Objects.requireNonNull(s3CacheKey);
+
         final Optional<FsVolume> s3Volume = getCurrentVolumes()
                 .groupNameToVolumesMap()
                 .values()
@@ -352,9 +307,7 @@ public class FsVolumeServiceImpl implements FsVolumeService {
                 .flatMap(List::stream)
                 .filter(fsVolume ->
                         fsVolume.getStatus() == VolumeUseStatus.ACTIVE)
-                .filter(fsVolume ->
-                        fsVolume.getVolumeType() != null
-                        && FsVolumeType.getS3VolumeTypes().contains(fsVolume.getVolumeType()))
+                .filter(vol -> vol.getVolumeType() != null)
                 .filter(fsVolume -> {
                     final S3ClientConfig s3ClientConfig = fsVolume.getS3ClientConfig();
                     if (s3ClientConfig != null) {
@@ -915,100 +868,40 @@ public class FsVolumeServiceImpl implements FsVolumeService {
                 volume.getVolumeType(), "You must specify a volume type");
         try {
             // Delegate validation to the streamStore that understands the volume type
-            final StreamStore streamStore = storeImpl.getStreamStore(volumeType);
-            validationResult = streamStore.validateVolume(volume);
+            final StreamStore streamStore = Objects.requireNonNull(storeImpl.getStreamStore(volumeType),
+                    () -> LogUtil.message("No stream store found for volume type {}", volumeType));
+
+            // Get all the other vols in the group so the stream store can check for dups and the like
+            final List<FsVolume> allOtherVolumes = getAllOtherVolumes(volume);
+            final List<FsVolume> otherVolumesInGroup = getOtherVolumesInGroup(volume, allOtherVolumes);
+
+            validationResult = streamStore.validateVolume(volume, otherVolumesInGroup, allOtherVolumes);
         } catch (final RuntimeException e) {
             validationResult = ValidationResult.error(e.getMessage());
         }
         return validationResult;
     }
 
-    @Override
-    public ValidationResult validateForDupPath(final FsVolume volume) {
-        final Path absPath = getAbsVolumePath(volume);
+    private List<FsVolume> getAllOtherVolumes(final FsVolume volume) {
+        Objects.requireNonNull(volume);
         final List<FsVolume> volumes = fsVolumeDao.getAll();
-        // We need to get all, so we can make all the db one's absolute in the same was as our one
-        final boolean foundDup = volumes.stream()
-                .anyMatch(dbVol ->
-                        !Objects.equals(dbVol.getId(), volume.getId())
-                        && Objects.equals(getAbsVolumePath(dbVol), absPath));
-        if (foundDup) {
-            return ValidationResult.error(LogUtil.message(
-                    "Another volume already exists with path '{}'", absPath));
-        } else {
-            return ValidationResult.ok();
-        }
+        final List<FsVolume> otherVolumes = NullSafe.stream(volumes)
+                .filter(vol ->
+                        !Objects.equals(vol.getId(), volume.getId()))
+                .toList();
+        LOGGER.debug("getAllOtherVolumes() - volume: {}, otherVolumes: {}", volume, otherVolumes);
+        return otherVolumes;
     }
 
-    @Override
-    public ValidationResult validateVolumePath(final FsVolume volume) {
-        final Path absPath = getAbsVolumePath(volume);
-        LOGGER.debug("path: {}", absPath);
-
-        if (!Files.exists(absPath)) {
-            try {
-                LOGGER.info(() -> LogUtil.message("Creating volume in {}", absPath));
-                Files.createDirectories(absPath);
-            } catch (final IOException e) {
-                final String msg;
-                if (absPath.toString().equals(e.getMessage())) {
-                    // Some java IO exceptions just have the path as the message, helpful.
-                    msg = e.getClass().getSimpleName();
-                } else {
-                    msg = e.getMessage();
-                }
-                return ValidationResult.error(LogUtil.message(
-                        "Error creating volume path '{}': {}",
-                        absPath,
-                        msg));
-            }
-        } else if (!Files.isDirectory(absPath)) {
-            return ValidationResult.error(LogUtil.message(
-                    "Error creating volume path '{}': The path exists but is not a directory.",
-                    absPath));
-        } else {
-            // The validation step creates a temp file to test access, so need to ignore that
-            final long count = FileUtil.count(absPath, filePath ->
-                    filePath.getFileName().toString().startsWith(TEMP_FILE_PREFIX));
-            if (count > 0) {
-                throw new RuntimeException(
-                        "Attempt to create volume in a directory that is not empty: " + absPath);
-            }
-        }
-
-        // Can't seem to find a good way of checking if we have write perms on the dir so create a file
-        // then delete it, after a small delay
-        Path tempFile = null;
-        try {
-            tempFile = Files.createTempFile(absPath, TEMP_FILE_PREFIX, null);
-
-
-        } catch (final IOException e) {
-            return ValidationResult.error(LogUtil.message(
-                    "Error creating test file in directory {}. " +
-                    "Does Stroom have the right permissions on this directory? " +
-                    "Error message: {} {}",
-                    absPath,
-                    e.getClass().getSimpleName(),
-                    e.getMessage()));
-        } finally {
-            // Wait a few secs before we delete the file in case some file systems prevent deletion
-            // immediately after creation
-            if (tempFile != null) {
-                final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-                final Path finalTempFile = tempFile;
-                executorService.schedule(() -> {
-                    LOGGER.debug("About to delete file {}", finalTempFile);
-                    try {
-                        Files.deleteIfExists(finalTempFile);
-                    } catch (final IOException e) {
-                        LOGGER.error("Unable to delete temporary file {}", finalTempFile, e);
-                    }
-                }, 5, TimeUnit.SECONDS);
-            }
-        }
-
-        return ValidationResult.ok();
+    private List<FsVolume> getOtherVolumesInGroup(final FsVolume volume,
+                                                  final List<FsVolume> allOtherVolumes) {
+        Objects.requireNonNull(volume);
+        final List<FsVolume> otherVolumes = NullSafe.stream(allOtherVolumes)
+                .filter(otherVol ->
+                        Objects.equals(otherVol.getVolumeGroupId(), volume.getVolumeGroupId()))
+                .toList();
+        LOGGER.debug("getOtherVolumesInGroup() - volume: {}, otherVolumes: {}", volume, otherVolumes);
+        return otherVolumes;
     }
 
     private Path getAbsVolumePath(final FsVolume volume) {
@@ -1035,7 +928,9 @@ public class FsVolumeServiceImpl implements FsVolumeService {
 
 
     @NullMarked
-    private record S3CacheKey(String regionName, String bucketName) {
+    private record S3CacheKey(
+            String regionName,
+            String bucketName) {
 
         private S3CacheKey {
             Objects.requireNonNull(regionName);

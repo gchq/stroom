@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs.s3v1;
 
 
+import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.aws.s3.shared.S3Location;
 import stroom.cache.api.TemplateCache;
 import stroom.data.store.api.DataException;
@@ -30,12 +31,14 @@ import stroom.data.store.impl.fs.PhysicalDeleteOutcome;
 import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.shared.S3LocationDataVolume;
+import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.string.TemplateUtil;
 
 import jakarta.inject.Inject;
 
@@ -135,6 +138,23 @@ public class S3ReadOnlyStreamStore extends AbstractS3StreamStore {
     @Override
     public FsVolumeType getVolumeType() {
         return FsVolumeType.S3_V1_READ_ONLY;
+    }
+
+    @Override
+    protected ValidationResult validateS3Config(final S3ClientConfig s3ClientConfig) {
+        ValidationResult validationResult = super.validateS3Config(s3ClientConfig);
+
+        // We can't allow templated region/bucket as we need to match them against the s3 location
+        // that is sent to us from proxy.
+        validationResult = validationResult.errorIfNot(
+                "Templated values are not supported for the S3 region with this volume type.", () ->
+                        TemplateUtil.isStaticTemplate(s3ClientConfig.getRegion()));
+
+        validationResult = validationResult.errorIfNot(
+                "Templated values are not supported for the S3 bucket with this volume type.", () ->
+                        TemplateUtil.isStaticTemplate(s3ClientConfig.getBucketName()));
+
+        return validationResult;
     }
 
 

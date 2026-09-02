@@ -114,6 +114,7 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
                         .rightAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Volume Count")
+                        .rightAligned()
                         .withToolTip("The number of Volumes inside this Volume Group.")
                         .build(),
                 150);

@@ -28,6 +28,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -42,7 +43,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class FsVolumeEditPresenter
         extends MyPresenterWidget<FsVolumeEditView> {
@@ -73,7 +78,7 @@ public class FsVolumeEditPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption(title)
-                .onShow(e -> getView().focus())
+                .onShow(ignored -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final FsVolume updated = write(volume);
@@ -158,8 +163,14 @@ public class FsVolumeEditPresenter
                 .exec();
     }
 
+    private List<FsVolumeType> getVolumeTypesInDisplayOrder() {
+        return Arrays.stream(FsVolumeType.values())
+                .sorted(Comparator.comparingInt(FsVolumeType::getDisplayIndex))
+                .collect(Collectors.toList());
+    }
+
     private void read(final FsVolume volume) {
-        getView().getVolumeType().addItems(FsVolumeType.values());
+        getView().getVolumeType().addItems(getVolumeTypesInDisplayOrder());
         getView().getVolumeType().setValue(volume.getVolumeType());
         getView().getPath().setText(volume.getPath());
         getView().getVolumeStatus().addItems(VolumeUseStatus.values());
@@ -179,7 +190,7 @@ public class FsVolumeEditPresenter
     private FsVolume write(final FsVolume volume) {
         Long bytesLimit = null;
         final String limit = getView().getByteLimit().getText().trim();
-        if (limit.length() > 0) {
+        if (NullSafe.isNonEmptyString(limit)) {
             bytesLimit = ModelStringUtil.parseIECByteSizeString(limit);
         }
         return volume

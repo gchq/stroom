@@ -87,7 +87,13 @@ public interface StreamStore {
     /**
      * Allow the appropriate {@link StreamStore} implementation to validate the {@link FsVolume} configuration.
      *
+     * @param fsVolume            The volume to validate.
+     * @param otherVolumesInGroup A list of the other volumes in the same group as the volume to validate,
+     *                            not including the volume to validate.
+     * @param allOtherVolumes     A list of all other volumes in the system, not including the volume to validate.
      * @return
      */
-    ValidationResult validateVolume(final FsVolume fsVolume);
+    ValidationResult validateVolume(final FsVolume fsVolume,
+                                    final List<FsVolume> otherVolumesInGroup,
+                                    final List<FsVolume> allOtherVolumes);
 }

@@ -102,7 +102,8 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
         this.volumeType = Objects.requireNonNullElse(volumeType, FsVolumeType.STANDARD);
         this.s3ClientConfig = s3ClientConfig;
         this.s3ClientConfigData = s3ClientConfigData;
-        this.volumeGroup = Objects.requireNonNull(volumeGroup);
+        // Can't non-null this as sometimes we create minimal objects with just an ID for logging
+        this.volumeGroup = volumeGroup;
     }
 
     /// Test use only

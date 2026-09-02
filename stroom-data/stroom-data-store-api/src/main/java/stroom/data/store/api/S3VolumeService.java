@@ -17,6 +17,7 @@
 package stroom.data.store.api;
 
 
+import stroom.aws.s3.shared.S3Location;
 import stroom.data.store.impl.fs.shared.FsVolume;
 
 import org.jspecify.annotations.NullMarked;
@@ -33,7 +34,7 @@ public interface S3VolumeService {
                                    final String bucketName);
 
     @NullMarked
-    default Optional<FsVolume> getS3Volume(final stroom.aws.s3.shared.S3Location s3Location) {
+    default Optional<FsVolume> getS3Volume(final S3Location s3Location) {
         return getS3Volume(s3Location.getRegionName(), s3Location.getBucketName());
     }
 }

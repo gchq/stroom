@@ -45,6 +45,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.function.Consumer;
@@ -95,7 +97,8 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
                             .create(FS_VOLUME_RESOURCE)
-                            .method(resource -> resource.find(criteria))
+                            .method(resource ->
+                                    resource.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
                             .taskMonitorFactory(getView())
@@ -112,11 +115,22 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
         if (volume == null) {
             return null;
         }
-        if (FsVolumeType.isS3VolumeType(volume.getVolumeType())) {
-            return NullSafe.getOrElse(
-                    volume.getS3ClientConfig(),
-                    S3ClientConfig::getBucketName,
-                    S3ClientConfig.DEFAULT_BUCKET_NAME);
+        if (FsVolumeType.isS3VolumeType(volume.getVolumeType()) && volume.getS3ClientConfig() != null) {
+            final S3ClientConfig s3ClientConfig = volume.getS3ClientConfig();
+            final List<String> parts = new ArrayList<>();
+            NullSafe.consumeNonBlankString(
+                    s3ClientConfig.getRegion(),
+                    region -> "region: " + region,
+                    parts::add);
+            NullSafe.consumeNonBlankString(
+                    s3ClientConfig.getBucketName(),
+                    region -> "bucket: " + region,
+                    parts::add);
+            NullSafe.consumeNonBlankString(
+                    s3ClientConfig.getKeyPattern(),
+                    region -> "key: " + region,
+                    parts::add);
+            return String.join(", ", parts);
         } else {
             return volume.getPath();
         }

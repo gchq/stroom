@@ -97,10 +97,10 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     private void edit() {
         final FsVolumeGroupRow selected = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (selected != null) {
-            final FsVolumeGroup volume = selected.getGroup();
+            final FsVolumeGroup volumeGroup = selected.getGroup();
             restFactory
                     .create(FS_VOLUME_GROUP_RESOURCE)
-                    .method(res -> res.fetch(volume.getId()))
+                    .method(res -> res.fetch(volumeGroup.getId()))
                     .onSuccess(this::edit)
                     .taskMonitorFactory(this)
                     .exec();
