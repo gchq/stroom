@@ -21,12 +21,9 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBConstants;
 import stroom.planb.impl.PlanBPaths;
-import stroom.planb.impl.dao.Db;
 import stroom.planb.impl.data.archive.ArchiveShardRef;
 import stroom.planb.impl.data.shard.AbstractStoreShard;
 import stroom.planb.shared.PlanBDocument;
-import stroom.util.concurrent.UncheckedInterruptedException;
-import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -37,35 +34,39 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
 
 /**
- * A read-only, idle-evictable local cache of ONE archive bucket on the shared store
- * (<sharedPath>/archive/<uuid>/<idx>/<dateLabel>/). It copies the
- * bucket's {@code data.mdb} down into a per-instance generation dir
+ * A read-only, idle-evictable local cache of ONE version of ONE archive bucket on the shared store
+ * (<sharedPath>/archive/<uuid>/<idx>/<dateLabel>/). The constructor copies the bucket's
+ * {@code data.mdb} down into a per-instance generation dir
  * ({@code archive_cache/<uuid>_<idx>_<dateLabel>/<generation>}) and mmaps the LOCAL copy read-only, so
- * repeat archive reads reuse it instead of re-copying the (large) bucket every query. Version-checks the
- * bucket's {@code .version} on access and re-syncs when it changes (later records keep merging into
- * the same date bucket). Bucket deletion (retention) needs no handling here — the locator stops
- * returning a deleted bucket, so this copy is simply never served again and idle-evicts.
+ * repeat archive reads reuse it instead of re-copying the (large) bucket every query.
  *
- * <p>The fresh generation dir per instance means an idle-evicted (closing) instance and its replacement
- * never share a {@code lock.mdb} directory, avoiding the robust-mutex SIGSEGV hazard.
+ * <p>The copy is never replaced in place. Later records keep merging into the same date bucket, and
+ * {@link #isStale()} reports when that has happened; {@code ShardManager} answers by building a
+ * replacement instance on a fresh generation dir and retiring this one. Replacing rather than
+ * re-opening is what keeps reads lock-free: closing an env to swap its data file underneath needs
+ * {@code exclusiveReadLock}, so doing it on the read path made a query wait for every in-flight
+ * reader, including the minutes-long pathway build.
+ *
+ * <p>Bucket deletion (retention) needs no handling here — the locator stops returning a deleted
+ * bucket, so this copy is simply never served again and idle-evicts.
+ *
+ * <p>The fresh generation dir per instance means a closing instance (idle-evicted or retired) and its
+ * replacement never share a {@code lock.mdb} directory, avoiding the robust-mutex SIGSEGV hazard.
  */
 public class ArchiveStoreShard extends AbstractStoreShard {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ArchiveStoreShard.class);
 
-    private static final long SYNC_CHECK_INTERVAL_MS = 1000;
+    private static final long STALE_CHECK_INTERVAL_MS = 1000;
 
     private final Path archiveBucketDir;
-    private final ReentrantLock syncLock = new ReentrantLock();
-    private volatile long lastSyncCheckTimeMs = 0;
+    private final String copiedVersion;
+    private volatile long lastStaleCheckTimeMs = 0;
 
     public ArchiveStoreShard(final ByteBuffers byteBuffers,
                              final ByteBufferFactory byteBufferFactory,
@@ -80,9 +81,9 @@ public class ArchiveStoreShard extends AbstractStoreShard {
                         .resolve(newGeneration()),
                 false); // deferred open — read-only env can't open until data.mdb is copied in
         this.archiveBucketDir = ref.dir();
-        // Initial copy-down + read-only open (throws if the bucket has no data.mdb — caller treats a
+        // Copy-down + read-only open (throws if the bucket has no data.mdb — caller treats a
         // failed archive read as a miss, so no broken cache entry is left).
-        syncFromArchiveIfRequired();
+        this.copiedVersion = copyDownAndOpen();
     }
 
     private static String newGeneration() {
@@ -95,21 +96,36 @@ public class ArchiveStoreShard extends AbstractStoreShard {
     }
 
     @Override
-    public <R> R get(final Function<Db<?, ?>, R> function) {
-        syncFromArchiveIfRequired();
-        return super.get(function);
-    }
-
-    @Override
-    public String getInfo() {
-        syncFromArchiveIfRequired();
-        return super.getInfo();
-    }
-
-    @Override
     public boolean isIdle() {
         final Duration timeout = configProvider.get().getMinTimeToKeepStoreShardEnv().getDuration();
         return lastAccessTime.plus(timeout).isBefore(Instant.now());
+    }
+
+    /**
+     * True when the bucket has been republished since this copy was taken, i.e. this instance should be
+     * replaced rather than served again. Reads the bucket's {@code .version} at most once per
+     * {@link #STALE_CHECK_INTERVAL_MS} and takes no lock, so a reader never waits on it — a lost race
+     * costs one redundant check or a replacement that lands a moment later.
+     *
+     * <p>False when the version cannot be read at all: retention can delete the bucket at any point,
+     * and until the locator stops offering it the copy already held is the best answer available.
+     */
+    public boolean isStale() {
+        final long now = System.currentTimeMillis();
+        if (now - lastStaleCheckTimeMs < STALE_CHECK_INTERVAL_MS) {
+            return false;
+        }
+        lastStaleCheckTimeMs = now;
+
+        try {
+            final String bucketVersion = readVersionIfPresent(
+                    archiveBucketDir.resolve(PlanBConstants.VERSION_FILE_NAME));
+            return bucketVersion != null && !bucketVersion.equals(copiedVersion);
+        } catch (final IOException e) {
+            LOGGER.debug(() -> "Could not read version of " + archiveBucketDir
+                    + ", keeping current copy: " + e.getMessage());
+            return false;
+        }
     }
 
     // Read-only — these are never invoked (archive shards are held in a separate map that the merge /
@@ -135,118 +151,38 @@ public class ArchiveStoreShard extends AbstractStoreShard {
     }
 
     /**
-     * Copies the bucket's {@code data.mdb} down and opens it read-only when the local copy is absent or
-     * its {@code .version} differs from the bucket's. Throttled to at most once per
-     * {@link #SYNC_CHECK_INTERVAL_MS}, measured from the end of the last sync so that a reader arriving
-     * while one is in progress waits for it on {@code syncLock} rather than reading the copy being
-     * replaced. The swap runs under {@code exclusiveReadLock} so no in-flight reader sees a half-open env.
+     * Copies the bucket's {@code data.mdb} into this instance's generation dir and opens it read-only,
+     * returning the bucket version copied. Runs from the constructor only: the dir is private to an
+     * instance nothing can reach yet, so the copy needs no temp file and the open needs no lock.
      */
-    private void syncFromArchiveIfRequired() {
-        final long now = System.currentTimeMillis();
-        if (db != null && now - lastSyncCheckTimeMs < SYNC_CHECK_INTERVAL_MS) {
-            return;
-        }
-
-        syncLock.lock();
-        try {
-            syncFromArchiveUnderLock();
-        } finally {
-            syncLock.unlock();
-        }
-    }
-
-    private void syncFromArchiveUnderLock() {
-        // Re-check under the lock: another thread may have synced while we waited.
-        final long now = System.currentTimeMillis();
-        if (db != null && now - lastSyncCheckTimeMs < SYNC_CHECK_INTERVAL_MS) {
-            return;
-        }
-
-        try {
-            syncFromArchive();
-        } finally {
-            // Stamped once the copy and swap are done rather than before they start. Both the traces
-            // list and its histogram query the same bucket at the same moment, and stamping up front
-            // let whichever arrived second skip the interval check and read the copy that the first
-            // one was still replacing.
-            lastSyncCheckTimeMs = System.currentTimeMillis();
-        }
-    }
-
-    private void syncFromArchive() {
+    private String copyDownAndOpen() {
         final Path sharedDataFile = archiveBucketDir.resolve(PlanBConstants.DATA_FILE_NAME);
         final Path sharedVersionFile = archiveBucketDir.resolve(PlanBConstants.VERSION_FILE_NAME);
-        final Path localVersionFile = shardDir.resolve(PlanBConstants.VERSION_FILE_NAME);
 
         try {
             if (!Files.exists(sharedDataFile)) {
-                // Bucket vanished (retention) or is incomplete. If we already have a local copy keep
-                // serving it (it will idle-evict); otherwise this shard cannot be used.
-                if (db == null) {
-                    throw new RuntimeException("Archive bucket has no data.mdb: " + archiveBucketDir);
-                }
-                return;
+                // Bucket vanished (retention) or is incomplete, so this shard cannot be used.
+                throw new RuntimeException("Archive bucket has no data.mdb: " + archiveBucketDir);
             }
 
-            String sharedVersion = readVersionIfPresent(sharedVersionFile);
-            if (sharedVersion == null) {
-                // No .version file at all: either retention deleted the bucket since the locator listed
-                // it, or a crash left its first push unversioned (see publishBucketData). A republish
-                // does NOT cause this — it rewrites .version in place. If we already have a local copy,
-                // keep serving it and re-check next interval; otherwise sync on the data file alone.
-                if (db != null) {
-                    return;
-                }
-                sharedVersion = "";
-            }
-            final String localVersion = Files.exists(localVersionFile)
-                    ? Files.readString(localVersionFile).trim()
-                    : "";
+            // No .version file at all: either retention deleted the bucket since the locator listed it,
+            // or a crash left its first push unversioned (see publishBucketData). A republish does NOT
+            // cause this — it rewrites .version in place. Copy on the data file alone and record the
+            // empty version, so the first bucket version to appear reads as a change.
+            final String readVersion = readVersionIfPresent(sharedVersionFile);
+            final String bucketVersion = readVersion == null ? "" : readVersion;
 
-            if (db != null && localVersion.equals(sharedVersion)) {
-                return; // local copy is current
-            }
-
-            LOGGER.debug(() -> "Syncing archive bucket " + archiveBucketDir + " to local copy " + shardDir);
-
-            final Path syncTmpDir = shardDir.resolve("sync_tmp");
-            FileUtil.deleteDir(syncTmpDir);
-            Files.createDirectories(syncTmpDir);
-            Files.copy(sharedDataFile, syncTmpDir.resolve(PlanBConstants.DATA_FILE_NAME),
-                    StandardCopyOption.REPLACE_EXISTING);
-
-            writeLock.lockInterruptibly();
-            try {
-                exclusiveReadLock.lockInterruptibly();
-                try {
-                    closeDb();
-                    Files.move(syncTmpDir.resolve(PlanBConstants.DATA_FILE_NAME),
-                            shardDir.resolve(PlanBConstants.DATA_FILE_NAME),
-                            StandardCopyOption.REPLACE_EXISTING);
-                    // Drop any lock.mdb so the read-only open starts with clean mutex state.
-                    Files.deleteIfExists(shardDir.resolve(PlanBConstants.LOCK_FILE_NAME));
-                    Files.writeString(localVersionFile, sharedVersion);
-                    open();
-                } finally {
-                    exclusiveReadLock.unlock();
-                }
-            } finally {
-                writeLock.unlock();
-            }
-            FileUtil.deleteDir(syncTmpDir);
+            LOGGER.debug(() -> "Copying archive bucket " + archiveBucketDir + " to local copy " + shardDir);
+            Files.copy(sharedDataFile, shardDir.resolve(PlanBConstants.DATA_FILE_NAME));
+            Files.writeString(shardDir.resolve(PlanBConstants.VERSION_FILE_NAME), bucketVersion);
+            open();
+            return bucketVersion;
 
         } catch (final NoSuchFileException e) {
             // A file we were part way through reading has gone: retention can delete the whole bucket
             // dir at any point, and on a store with no atomic move data.mdb is briefly absent while
-            // publishBucketData replaces it. Keep serving any current local copy; only surface a
-            // failure if we have no copy yet (the caller treats a failed archive read as a miss).
-            if (db == null) {
-                throw new UncheckedIOException(e);
-            }
-            LOGGER.debug(() -> "Archive bucket changed during sync, keeping current copy: "
-                    + archiveBucketDir);
-        } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(e);
+            // publishBucketData replaces it. The caller treats a failed archive read as a miss.
+            throw new UncheckedIOException(e);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

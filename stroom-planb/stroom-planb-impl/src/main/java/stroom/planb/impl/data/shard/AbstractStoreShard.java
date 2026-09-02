@@ -169,6 +169,37 @@ public abstract class AbstractStoreShard implements Shard {
         }
     }
 
+    /**
+     * Closes the env and deletes the local copy, but only if no reader is inside {@link #get} and no
+     * writer holds the shard. Returns false and leaves the shard untouched otherwise, so the caller can
+     * come back on a later cycle.
+     *
+     * <p>Used to close an instance that has been replaced in the shard map and is no longer reachable by
+     * new readers. Unlike {@link #evict()} this never waits: a reader may hold the shard for as long as
+     * its work takes, and blocking here would hand that wait to whoever is doing the cleanup.
+     */
+    public boolean closeIfUnused() {
+        if (!writeLock.tryLock()) {
+            return false;
+        }
+        try {
+            if (!exclusiveReadLock.tryLock()) {
+                return false;
+            }
+            try {
+                LOGGER.debug(() -> "Closing replaced local shard for: " + doc.asDocRef()
+                        + " (shardIndex: " + shardIndex + ")");
+                closeDb();
+                FileUtil.deleteDir(shardDir);
+                return true;
+            } finally {
+                exclusiveReadLock.unlock();
+            }
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
     /** Called after a successful mutation while holding the write lock; subclasses may override. */
     protected void afterMutation() {
     }

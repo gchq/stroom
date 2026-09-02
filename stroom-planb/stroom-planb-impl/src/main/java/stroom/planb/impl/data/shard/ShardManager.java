@@ -67,9 +67,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
@@ -100,6 +102,9 @@ public class ShardManager {
     private final StripedLock creationLocks = new StripedLock();
     // Cached read-only local copies of shared-store archive buckets, keyed uuid_<idx>_<dateLabel>.
     private final Map<String, Shard> archiveShardMap = new ConcurrentHashMap<>();
+    // Archive copies replaced because their bucket was republished. Out of the map, so no new reader can
+    // reach them, but their env stays open until the readers still inside them leave. Drained by cleanup().
+    private final Queue<ArchiveStoreShard> retiredArchiveShards = new ConcurrentLinkedQueue<>();
     private final NodeInfo nodeInfo;
     private final Provider<PlanBConfig> configProvider;
     private final PlanBPaths planBPaths;
@@ -316,6 +321,10 @@ public class ShardManager {
         cleanupMap(shardMap);
         cleanupMap(archiveShardMap);
 
+        // Before the sweep, so a copy closed here has already deleted its own dir and anything still
+        // retired is counted as live below.
+        closeRetiredArchiveShards();
+
         // Reap generation dirs left by crashes / deferred deletes (no live owner).
         sweepOrphanGenerationDirs(false);
 
@@ -437,8 +446,14 @@ public class ShardManager {
         // Both roots are swept the same way: archive_cache/ is where the <identity>/<generation>
         // layout is used, and shards/ is included so a stray generation dir there cannot accumulate.
         sweepGenerationDirs(planBPaths.getShardDir(), collectLiveGenerationDirs(shardMap), startup);
-        sweepGenerationDirs(planBPaths.getArchiveCacheDir(), collectLiveGenerationDirs(archiveShardMap),
-                startup);
+
+        // A retired copy is out of the map but its env is still open, so its dir must count as live or
+        // the sweep would delete the files underneath a reader.
+        final Set<Path> liveArchiveDirs = collectLiveGenerationDirs(archiveShardMap);
+        for (final ArchiveStoreShard shard : retiredArchiveShards) {
+            liveArchiveDirs.add(shard.getShardDir().toAbsolutePath().normalize());
+        }
+        sweepGenerationDirs(planBPaths.getArchiveCacheDir(), liveArchiveDirs, startup);
     }
 
     private static Set<Path> collectLiveGenerationDirs(final Map<String, Shard> map) {
@@ -607,10 +622,10 @@ public class ShardManager {
     }
 
     /**
-     * Read from a cached, read-only local copy of an archive bucket (copied down + version-checked +
-     * idle-evicted), instead of copying the bucket to a temp dir per call. Keyed by
-     * {@code uuid_<shardIndex>_<dateLabel>}. Mirrors the live {@link #get} retry so a read racing an
-     * idle eviction re-resolves a fresh copy.
+     * Read from a cached, read-only local copy of an archive bucket, instead of copying the bucket to a
+     * temp dir per call. Keyed by {@code uuid_<shardIndex>_<dateLabel>}. A copy superseded by a
+     * republish is replaced rather than refreshed, so the read itself never waits for another reader.
+     * Mirrors the live {@link #get} retry so a read racing an eviction re-resolves a fresh copy.
      */
     public <R> R getArchive(final PlanBDocument doc,
                             final int shardIndex,
@@ -625,13 +640,53 @@ public class ShardManager {
         }
     }
 
+    /**
+     * Resolves the cached copy of an archive bucket, replacing it first if the bucket has been
+     * republished since the copy was taken. The replaced instance is retired rather than re-opened in
+     * place: swapping an env's data file underneath needs exclusive access, so doing it here would make
+     * every reader of this bucket wait for every other reader to finish.
+     */
     private Shard getArchiveShard(final PlanBDocument doc,
                                   final int shardIndex,
                                   final ArchiveShardRef ref) {
         final String cacheKey = doc.getUuid() + "_" + shardIndex + "_" + ref.dateLabel();
+
+        // Two arg remove so a replacement published by another thread since we read the map is never
+        // the one retired.
+        if (archiveShardMap.get(cacheKey) instanceof final ArchiveStoreShard archiveShard
+            && archiveShard.isStale()
+            && archiveShardMap.remove(cacheKey, archiveShard)) {
+            LOGGER.debug(() -> "Retiring superseded archive copy for: " + cacheKey);
+            retiredArchiveShards.add(archiveShard);
+        }
+
         return archiveShardMap.computeIfAbsent(cacheKey, k ->
                 new ArchiveStoreShard(byteBuffers, byteBufferFactory, configProvider, planBPaths,
                         doc, shardIndex, ref));
+    }
+
+    /**
+     * Closes retired archive copies whose readers have all left, returning any that are still in use to
+     * the queue for a later cycle. Each is tried at most once per call, so a copy pinned by a long read
+     * cannot spin here.
+     */
+    private void closeRetiredArchiveShards() {
+        for (int i = retiredArchiveShards.size(); i > 0; i--) {
+            final ArchiveStoreShard shard = retiredArchiveShards.poll();
+            if (shard == null) {
+                break;
+            }
+            if (!shard.closeIfUnused()) {
+                retiredArchiveShards.add(shard);
+            }
+        }
+
+        // Depth is bounded by how long the longest reader holds a copy against how often the bucket is
+        // republished, so growth here means a reader is holding a shard for a long time.
+        if (!retiredArchiveShards.isEmpty()) {
+            LOGGER.info(() -> retiredArchiveShards.size()
+                             + " superseded archive copies are still open, awaiting their readers");
+        }
     }
 
     /**
