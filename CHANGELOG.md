@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.14] - 2026-09-02
+
+* Bug **#5747** : Fix Stroom AI integration to support redirects.
+
+* Bug **#5749** : Fix Ask Stroom AI so that it can deliver partial results if possible if the user terminates a request or a request fails.
+
+* Bug **#5752** : Persist Ask Stroom AI settings to user preferences.
+
+* Bug **#5756** : Enable Ask Stroom AI cancel button while query is in progress.
+
+* Bug **#5764** : Add in missing SimpleMail batch module dependency to stop errors when sending email.
+
+
 ## [v7.13-beta.13] - 2026-08-27
 
 * Bug : Stop creation of content templates and data retention docs when they are just being fetched.
@@ -2507,7 +2520,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.14...HEAD
+[v7.13-beta.14]: https://github.com/gchq/stroom/compare/v7.13-beta.13...v7.13-beta.14
 [v7.13-beta.13]: https://github.com/gchq/stroom/compare/v7.13-beta.12...v7.13-beta.13
 [v7.13-beta.12]: https://github.com/gchq/stroom/compare/v7.13-beta.11...v7.13-beta.12
 [v7.13-beta.11]: https://github.com/gchq/stroom/compare/v7.13-beta.10...v7.13-beta.11
