@@ -12,5 +12,17 @@
                         helpText="If a report contains no data because none is found by the query then do you still want to send an empty report? In some cases you might want to so the recipient knows there is nothing to report rather than the possibility that the report just didn't execute.">
             <tickbox:CustomCheckBox ui:field="sendEmptyReports" addStyleNames="allow-focus"/>
         </form:FormGroup>
+        <form:FormGroup label="AI Summary"
+                        helpText="Ask an AI model to summarise the report's data and deliver the summary with the report. The summary is added as a sheet for Excel reports, as a section for Markdown reports, and as a separate file for CSV and TSV reports. It is also available to email templates as {{ aiSummary }} and is written to the ReportAiSummary stream meta entry. If the model cannot be reached the report is still sent, without a summary.">
+            <tickbox:CustomCheckBox ui:field="aiSummaryEnabled" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup identity="aiSummaryModel" label="AI Summary Model"
+                        helpText="The model to ask. If this is not set the model configured for Ask Stroom AI is used.">
+            <g:SimplePanel ui:field="aiSummaryModel"/>
+        </form:FormGroup>
+        <form:FormGroup identity="aiSummaryPrompt" label="AI Summary Prompt"
+                        helpText="What to ask the model about the report&apos;s data. Leave this empty to use the default, which asks for a short summary of what the data shows and anything worth attention.">
+            <g:TextArea ui:field="aiSummaryPrompt" width="100%" visibleLines="4"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

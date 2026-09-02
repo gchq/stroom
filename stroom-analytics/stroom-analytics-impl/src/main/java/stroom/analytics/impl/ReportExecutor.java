@@ -16,6 +16,12 @@
 
 package stroom.analytics.impl;
 
+import stroom.ai.api.TableSource;
+import stroom.ai.api.TableSummariser;
+import stroom.ai.api.TableSummaryRequest;
+import stroom.ai.api.TableSummaryResult;
+import stroom.ai.shared.AskStroomAiConfig;
+import stroom.ai.shared.TableAnalysisConfig;
 import stroom.analytics.api.NotificationState;
 import stroom.analytics.impl.ScheduledExecutorService.ExecutionResult;
 import stroom.analytics.shared.ExecutionSchedule;
@@ -25,6 +31,7 @@ import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.ReportDoc;
+import stroom.analytics.shared.ReportSettings;
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
@@ -87,6 +94,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> {
@@ -95,6 +103,11 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
 
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");
+    /**
+     * Runs of whitespace, for flattening a summary onto the single line that a meta entry is.
+     */
+    private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
+    private static final String AI_SUMMARY_HEADING = "AI Summary";
 
     private final ReportStore reportStore;
     private final ResultStoreManager searchResponseCreatorManager;
@@ -106,6 +119,9 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
     private final Store streamStore;
     private final NotificationStateService notificationStateService;
     private final Provider<EmailSender> emailSenderProvider;
+    private final TableSummariser tableSummariser;
+    private final Provider<AskStroomAiConfig> askStroomAiConfigProvider;
+    private final Provider<TableAnalysisConfig> tableAnalysisConfigProvider;
 
     @Inject
     public ReportExecutor(final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
@@ -120,7 +136,10 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
                           final TempDirProvider tempDirProvider,
                           final Store streamStore,
                           final NotificationStateService notificationStateService,
-                          final Provider<EmailSender> emailSenderProvider) {
+                          final Provider<EmailSender> emailSenderProvider,
+                          final TableSummariser tableSummariser,
+                          final Provider<AskStroomAiConfig> askStroomAiConfigProvider,
+                          final Provider<TableAnalysisConfig> tableAnalysisConfigProvider) {
         super(analyticErrorWriterProvider, errorReceiverProxyProvider, analyticRuleHolderProvider);
         this.reportStore = reportStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
@@ -132,6 +151,9 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
         this.streamStore = streamStore;
         this.notificationStateService = notificationStateService;
         this.emailSenderProvider = emailSenderProvider;
+        this.tableSummariser = tableSummariser;
+        this.askStroomAiConfigProvider = askStroomAiConfigProvider;
+        this.tableAnalysisConfigProvider = tableAnalysisConfigProvider;
     }
 
     @Override
@@ -213,14 +235,11 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
                 } catch (final IOException e) {
                     errorConsumer.add(e);
                 } finally {
-                    // Delete the file after we complete.
+                    // Delete the files after we complete.
                     if (reportFile != null) {
-                        try {
-                            Files.deleteIfExists(reportFile.file());
-                        } catch (final IOException e) {
-                            // Swallow as just a temp file
-                            LOGGER.error("Error deleting reportFile: {} - {}",
-                                    reportFile, LogUtil.exceptionMessage(e), e);
+                        deleteTempFile(reportFile.file());
+                        if (reportFile.summaryFile() != null) {
+                            deleteTempFile(reportFile.summaryFile());
                         }
                     }
                 }
@@ -234,6 +253,16 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
         }
 
         return executionResult;
+    }
+
+    private void deleteTempFile(final Path file) {
+        try {
+            Files.deleteIfExists(file);
+        } catch (final IOException e) {
+            // Swallow as just a temp file
+            LOGGER.error("Error deleting report temp file: {} - {}",
+                    file, LogUtil.exceptionMessage(e), e);
+        }
     }
 
     @Override
@@ -273,6 +302,10 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
         final String fileName = getFileName(reportDoc.getName() + "_" + dateTime, fileType.getExtension());
         final Path file = tempDirProvider.get().resolve(fileName);
         final FormatterFactory formatterFactory = new FormatterFactory(dateTimeSettings);
+
+        // Ask the model before writing the report, as the Excel and Markdown outputs carry the summary
+        // inside the report itself. A summary that could not be produced is null and simply absent.
+        final String aiSummary = createAiSummary(reportDoc, dateTimeSettings, dataStore, resultRequest);
 
         // Start target
         try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
@@ -323,6 +356,9 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
                     info.add(new KV("Effective Execution Time",
                             DateUtil.createNormalDateTimeString(effectiveExecutionTime)));
                     excelTarget.writeInfo(info);
+                    excelTarget.writeText(AI_SUMMARY_HEADING, aiSummary);
+                } else if (target instanceof final MarkdownTarget markdownTarget) {
+                    markdownTarget.writeSection(AI_SUMMARY_HEADING, aiSummary);
                 }
             } catch (final Exception e) {
                 LOGGER.debug(e::getMessage, e);
@@ -331,7 +367,148 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
                 target.end();
             }
         }
-        return new ReportFile(file, fileType, totalRowCount);
+        // CSV and TSV are for a machine to read, so prose cannot go in them without breaking them for
+        // whatever reads them. The summary travels as a file of its own instead.
+        Path summaryFile = null;
+        if (aiSummary != null
+            && (DownloadSearchResultFileType.CSV.equals(fileType)
+                || DownloadSearchResultFileType.TSV.equals(fileType))) {
+            final Path candidate = tempDirProvider.get().resolve(
+                    getFileName(reportDoc.getName() + "_" + dateTime + " summary", "md"));
+            try {
+                Files.writeString(candidate, aiSummary);
+                summaryFile = candidate;
+            } catch (final IOException e) {
+                // As with the summary itself, a companion that cannot be written costs the summary and
+                // not the report. Throwing here would also strand the report file, which is only cleaned
+                // up once this method has returned it.
+                LOGGER.warn(() -> "Unable to write the AI summary file for report '" + reportDoc.getName()
+                                  + "', sending the report without it - " + LogUtil.exceptionMessage(e), e);
+                deleteTempFile(candidate);
+            }
+        }
+
+        return new ReportFile(file, fileType, totalRowCount, aiSummary, summaryFile);
+    }
+
+    /**
+     * Asks the configured model to summarise the report's data.
+     * <p>
+     * The report is what the recipient is waiting for, so a model that is down, slow or misconfigured
+     * costs the summary and nothing else - the failure is logged and the report goes out without it.
+     * </p>
+     *
+     * @return The summary, or null if the report does not ask for one or one could not be produced.
+     */
+    private String createAiSummary(final ReportDoc reportDoc,
+                                   final DateTimeSettings dateTimeSettings,
+                                   final DataStore dataStore,
+                                   final ResultRequest resultRequest) {
+        final ReportSettings reportSettings = reportDoc.getReportSettings();
+        if (!reportSettings.isAiSummaryEnabled()) {
+            return null;
+        }
+
+        Path markdownFile = null;
+        try {
+            final DocRef modelRef = reportSettings.getAiSummaryModel() != null
+                    ? reportSettings.getAiSummaryModel()
+                    : NullSafe.get(askStroomAiConfigProvider.get(), AskStroomAiConfig::getModelRef);
+            if (modelRef == null) {
+                throw new RuntimeException("No AI model is set on the report and none is configured for "
+                                           + "Ask Stroom AI");
+            }
+
+            final TableAnalysisConfig tableAnalysisConfig = Objects.requireNonNullElseGet(
+                    tableAnalysisConfigProvider.get(), TableAnalysisConfig::new);
+            final int maxRows = tableAnalysisConfig.getMaxTotalRows();
+
+            // Render the same result a second time as markdown, which is what the summariser reads. This
+            // leaves the report's own write path alone, and is bounded by the row cap rather than by the
+            // size of the report.
+            markdownFile = Files.createTempFile(tempDirProvider.get(), "report-ai-", ".md");
+            final long rowCount = writeMarkdownTable(
+                    markdownFile,
+                    dateTimeSettings,
+                    dataStore,
+                    resultRequest.copy().requestedRange(new OffsetRange(0, maxRows)).build());
+
+            final TableSummaryResult result = tableSummariser.summarise(TableSummaryRequest
+                    .builder()
+                    .source(new TableSource(
+                            "report '" + reportDoc.getName() + "'",
+                            markdownFile,
+                            rowCount >= maxRows))
+                    .modelRef(modelRef)
+                    .config(tableAnalysisConfig)
+                    .query(NullSafe.nonBlankStringElse(
+                            reportSettings.getAiSummaryPrompt(),
+                            ReportSettings.DEFAULT_AI_SUMMARY_PROMPT))
+                    .build());
+
+            if (!result.summarised()) {
+                // Nothing was summarised, so there is nothing worth putting in the report. The result
+                // still says why, which is worth recording.
+                LOGGER.info(() -> "No AI summary for report '" + reportDoc.getName() + "' - "
+                                  + result.text());
+                return null;
+            }
+
+            LOGGER.debug(() -> "createAiSummary: report '" + reportDoc.getName() + "' rows=" + rowCount
+                               + " summaryLength=" + result.text().length());
+            return result.text();
+
+        } catch (final Exception e) {
+            LOGGER.warn(() -> "Unable to create an AI summary for report '" + reportDoc.getName()
+                              + "', sending the report without one - " + LogUtil.exceptionMessage(e), e);
+            return null;
+
+        } finally {
+            if (markdownFile != null) {
+                try {
+                    Files.deleteIfExists(markdownFile);
+                } catch (final IOException e) {
+                    // Swallow as just a temp file
+                    LOGGER.error("Error deleting AI summary source file: {} - {}",
+                            markdownFile, LogUtil.exceptionMessage(e), e);
+                }
+            }
+        }
+    }
+
+    /**
+     * Writes the result as a markdown table, which is the form the summariser reads.
+     *
+     * @return The number of rows written.
+     */
+    private long writeMarkdownTable(final Path markdownFile,
+                                    final DateTimeSettings dateTimeSettings,
+                                    final DataStore dataStore,
+                                    final ResultRequest resultRequest) throws IOException {
+        try (final OutputStream outputStream = new BufferedOutputStream(
+                Files.newOutputStream(markdownFile))) {
+            final MarkdownTarget target = new MarkdownTarget(outputStream);
+            target.start();
+            try {
+                target.startTable("Report");
+                final SearchResultWriter searchResultWriter = new SearchResultWriter(
+                        new SampleGenerator(false, 100),
+                        target);
+                final TableResultCreator tableResultCreator =
+                        new TableResultCreator(new FormatterFactory(dateTimeSettings),
+                                expressionPredicateFactory) {
+                            @Override
+                            public TableResultBuilder createTableResultBuilder() {
+                                return searchResultWriter;
+                            }
+                        };
+                tableResultCreator.create(dataStore, resultRequest);
+                return searchResultWriter.getRowCount();
+            } finally {
+                target.endTable();
+                target.end();
+            }
+        }
     }
 
     private String getFileName(final String baseName,
@@ -381,6 +558,10 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
                                             DateUtil.createNormalDateTimeString(executionTime));
                                     write(writer, "EffectiveExecutionTime",
                                             DateUtil.createNormalDateTimeString(effectiveExecutionTime));
+                                    if (reportFile.aiSummary() != null) {
+                                        write(writer, "ReportAiSummary",
+                                                flattenForMeta(reportFile.aiSummary()));
+                                    }
                                 }
                             }
                         }
@@ -407,6 +588,14 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
             LOGGER.debug("sendFile() - Not notifying - notificationConfig: {}, notificationState: {}",
                     notificationConfig, notificationState);
         }
+    }
+
+    /**
+     * A meta entry is one {@code key:value} line, so a summary that runs to paragraphs has to be put on
+     * one line to go in one. The whole summary is kept; only its shape is lost.
+     */
+    private String flattenForMeta(final String summary) {
+        return WHITESPACE_RUN.matcher(summary).replaceAll(" ").trim();
     }
 
     private void write(final Writer writer, final String key, final String value) throws IOException {

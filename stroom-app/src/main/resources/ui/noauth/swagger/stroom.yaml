@@ -18472,6 +18472,12 @@ components:
     ReportSettings:
       type: object
       properties:
+        aiSummaryEnabled:
+          type: boolean
+        aiSummaryModel:
+          $ref: "#/components/schemas/DocRef"
+        aiSummaryPrompt:
+          type: string
         fileType:
           type: string
           enum:
