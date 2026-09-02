@@ -7,8 +7,8 @@ Stroom now has **two ways of getting processor tasks onto worker nodes**, select
 
 | | |
 |---|---|
-| **`true`** (default) | **Worker claiming.** Each node works out which filters it may process, asks one query which of them have work, and claims tasks straight from CREATED to PROCESSING with `SELECT … FOR UPDATE SKIP LOCKED`. No master node is involved. Described in [§3](#3-worker-claiming-as-built). |
-| **`false`** | **The master queue.** The pre-existing behaviour, unchanged: the master node fills an in-memory queue and hands tasks out on request. Described in [§2](#2-the-master-queue-mode-unchanged). |
+| **`true`** | **Worker claiming. Experimental, and NOT the default.** Each node works out which filters it may process, asks one query which of them have work, and claims tasks straight from CREATED to PROCESSING with `SELECT … FOR UPDATE SKIP LOCKED`. No master node is involved. Described in [§3](#3-worker-claiming-as-built). |
+| **`false`** (default) | **The master queue.** The pre-existing behaviour, unchanged: the master node fills an in-memory queue and hands tasks out on request. Described in [§2](#2-the-master-queue-mode-unchanged). |
 
 The property must be **identical on every node**, and changing it is a hard cutover: stop the whole
 cluster, change it everywhere, start again. A mixed cluster is not supported. See
@@ -1415,7 +1415,7 @@ Phase 4 reversal, which is the one place the built system deliberately departs f
   flat in filter count where the queue path's is not, and the summary's query rate turns out to be
   independent of filter count, which was the one number B existed to fix. B and the uniqueness
   constraint stay on the shelf.
-- **Phase 4 — REVISED 2026-08-06. Default on; §4 NOT deleted.**
+- **Phase 4 — REVISED 2026-08-06, revised again 2026-09-02. Off by default; §4 NOT deleted.**
 
   Phase 4 was built as specified (queue path deleted, `getMasterNode` eliminated) and then
   **deliberately reversed** at the user's direction. The reason is deployment risk, and it is worth
@@ -1425,10 +1425,25 @@ Phase 4 reversal, which is the one place the built system deliberately departs f
   > claiming does not keep a large cluster fed, the only remedy is a code revert and redeploy.
   > Keeping both paths behind a property turns that into a config change.
 
+  The 2026-09-02 revision took the same argument one step further, again at the user's direction:
+  a fallback nobody has ever exercised is not a fallback. If claiming is the default, the first
+  production run of it is still the first time anyone finds out, and the *queue* becomes the
+  untried path. So the mode ships **off**, as an experiment to be turned on deliberately, and the
+  default upgrade path is the behaviour that already works.
+
   So the shipped state is:
-    - `stroom.processor.claimTasksOnWorker` **defaults to true** — worker claiming is what a new
-      or upgraded deployment runs.
-    - The master queue path is retained in full and selected by setting it to **false**.
+    - `stroom.processor.claimTasksOnWorker` **defaults to false** — a new or upgraded deployment
+      runs the master queue, exactly as before. Worker claiming is **experimental** and opted into.
+    - The claiming path is retained in full and selected by setting it to **true**.
+    - **Being off by default must not mean being untested.** Everything in §3 is covered by tests
+      that set the mode explicitly rather than inheriting it: the DAO-level mechanics in
+      `TestProcessorTaskClaimer` / `TestProcessorTaskClaiming` / `TestProcessorTaskAvailability` /
+      `TestProcessorTaskHeartbeat` / `TestProcessorTaskReaper` / `TestProcessorTaskClaimFairness`,
+      the mode switch itself in `TestDataProcessorTaskFactory` (both branches, and an assertion
+      that the default is off), and the whole route end to end against a real database in
+      `TestWorkerTaskClaiming`, which also runs the same scenario through both modes and asserts
+      they hand out the same tasks. Without that, an unrelated change could break claiming and
+      nothing would say so until someone turned it on in anger.
     - **Hard cutover only.** The property must be identical on every node, and changing it means
       stopping the whole cluster, changing it everywhere, and starting again. A mixed cluster is
       not supported: the two modes use different task states and neither can see the other's
@@ -1442,11 +1457,12 @@ Phase 4 reversal, which is the one place the built system deliberately departs f
       the live queue and sweeping them would destroy it). The cost of a switch is that tasks in
       flight when the cluster stopped wait out `taskLeaseTimeout`.
 
-  **What this leaves undone:** §4's deletion list and the master-free checkpoint. They remain
-  correct as a description of where this ends up; they are simply deferred until worker claiming
-  has enough production time behind it that giving up the fallback is an easy call. When that
-  happens, Phase 4 is the change already proven to work — it built and passed cleanly before it
-  was reversed.
+  **What this leaves undone:** §4's deletion list and the master-free checkpoint, and now also
+  making claiming the default. They remain correct as a description of where this ends up; they
+  are simply deferred until worker claiming has enough trial time behind it. The order is now:
+  turn it on in a trial deployment, then default it on, then delete the queue. When that last
+  step comes, Phase 4 is the change already proven to work — it built and passed cleanly before
+  it was reversed.
 
 ## 8. Testing and measurement
 

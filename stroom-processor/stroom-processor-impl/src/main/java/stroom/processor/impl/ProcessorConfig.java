@@ -38,7 +38,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     private static final boolean DEFAULT_ASSIGN_TASKS = true;
     private static final boolean DEFAULT_FILL_TASK_QUEUE = true;
     private static final int DEFAULT_QUEUE_SIZE = 1000;
-    private static final boolean DEFAULT_CLAIM_TASKS_ON_WORKER = true;
+    private static final boolean DEFAULT_CLAIM_TASKS_ON_WORKER = false;
     private static final int DEFAULT_TASKS_TO_CREATE = 1000;
     private static final boolean DEFAULT_CREATE_TASKS_BEYOND_PROCESS_LIMIT = true;
     private static final int DEFAULT_TASK_CREATION_THREAD_COUNT = 5;
@@ -48,7 +48,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     private static final StroomDuration DEFAULT_TASK_LEASE_TIMEOUT = StroomDuration.ofMinutes(10);
 
     private final ProcessorDbConfig dbConfig;
-    private final boolean claimTasksOnWorker;
+    private boolean claimTasksOnWorker;
     private final boolean assignTasks;
     private final StroomDuration deleteAge;
     private final boolean fillTaskQueue;
@@ -189,22 +189,32 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     }
 
 
-    @JsonPropertyDescription("gh-5699. Should each worker node find and claim its own processor tasks directly " +
-                             "from the database (true), or be fed by the task queue held in memory on the master " +
-                             "node (false)? A worker knows which filters its own processing profiles allow it to " +
-                             "run, which the master has to guess at on its behalf, so claiming both removes the " +
-                             "master from the processing path and lets a node ask only about work it can " +
-                             "actually do. " +
+    @JsonPropertyDescription("EXPERIMENTAL (gh-5699), off by default and not yet proven in production - leave " +
+                             "this false unless you have been asked to trial it. Should each worker node find " +
+                             "and claim its own processor tasks directly from the database (true), or be fed by " +
+                             "the task queue held in memory on the master node (false, the default and the " +
+                             "long-standing behaviour)? A worker knows which filters its own processing " +
+                             "profiles allow it to run, which the master has to guess at on its behalf, so " +
+                             "claiming both removes the master from the processing path and lets a node ask " +
+                             "only about work it can actually do. " +
                              "THIS MUST BE THE SAME ON EVERY NODE. The two modes use different task states and " +
                              "neither can see the other's in flight work, so changing it means a hard cutover: " +
                              "stop the whole cluster, change the value everywhere, start it again. Running a " +
-                             "mixed cluster is not supported and will leave tasks unprocessed. Switching back to " +
-                             "the master queue is a supported way to recover if worker claiming does not keep " +
-                             "the cluster fed; tasks left behind by either mode are returned to the created " +
-                             "state, so nothing is lost, though tasks in flight when the cluster stopped wait " +
-                             "for stroom.processor.taskLeaseTimeout before being picked up again.")
+                             "mixed cluster is not supported and will leave tasks unprocessed. Turning it back " +
+                             "off is the supported way to recover if worker claiming does not keep the cluster " +
+                             "fed; tasks left behind by either mode are returned to the created state, so " +
+                             "nothing is lost, though tasks in flight when the cluster stopped wait for " +
+                             "stroom.processor.taskLeaseTimeout before being picked up again.")
     public boolean isClaimTasksOnWorker() {
         return claimTasksOnWorker;
+    }
+
+    /**
+     * Test only, in keeping with the other setters here. Production must never flip this at
+     * runtime - see the property description for why it is a whole-cluster cutover.
+     */
+    public void setClaimTasksOnWorker(final boolean claimTasksOnWorker) {
+        this.claimTasksOnWorker = claimTasksOnWorker;
     }
 
     @JsonPropertyDescription("Should the master node assign tasks to workers when tasks are requested? " +

@@ -799,7 +799,7 @@ appConfig:
       statisticsMode: "INTERNAL"
   processor:
     assignTasks: true
-    claimTasksOnWorker: true
+    claimTasksOnWorker: false
     createTasksBeyondProcessLimit: true
     databaseMultiInsertMaxBatchSize: 500
     db:

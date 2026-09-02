@@ -25,6 +25,7 @@ import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.selection.VolumeConfig;
+import stroom.processor.impl.ProcessorTaskQueueManager;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -57,6 +58,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final IndexShardManager indexShardManager;
     private final IndexShardWriterCache indexShardWriterCache;
     private final VolumeCreator volumeCreator;
+    private final ProcessorTaskQueueManager processorTaskQueueManager;
     private final Set<Clearable> clearables;
     private final FsVolumeConfig fsVolumeConfig;
     private final VolumeConfig volumeConfig;
@@ -74,6 +76,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final IndexShardManager indexShardManager,
                               final IndexShardWriterCache indexShardWriterCache,
                               final VolumeCreator volumeCreator,
+                              final ProcessorTaskQueueManager processorTaskQueueManager,
                               final Set<Clearable> clearables,
                               final VolumeConfig volumeConfig,
                               final FsVolumeConfig fsVolumeConfig,
@@ -85,6 +88,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
         this.volumeCreator = volumeCreator;
+        this.processorTaskQueueManager = processorTaskQueueManager;
         this.clearables = clearables;
         this.volumeConfig = volumeConfig;
         this.fsVolumeConfig = fsVolumeConfig;
@@ -137,6 +141,10 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         LOGGER.info("Creating index volume groups in {}", indexVolDir.toAbsolutePath().normalize());
         volumeCreator.setup(indexVolDir);
 
+        // Ensure we can create tasks. Only the master queue mode needs this, but it is harmless in
+        // worker claiming mode and doing it unconditionally keeps the two modes' test setup identical.
+        processorTaskQueueManager.startup();
+
         LOGGER.info("Setting NEEDS_CLEAN_UP_THREAD_LOCAL to true");
         NEEDS_CLEAN_UP_THREAD_LOCAL.set(true);
 
@@ -164,6 +172,11 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         LOGGER.info(() -> LogUtil.inSeparatorLine("Starting tear down of thread '{}' ({})",
                 Thread.currentThread().getName(),
                 Thread.currentThread().getId()));
+        // Make sure we are no longer creating tasks. This also clears the in memory task queue, which
+        // nothing else does - without it a queue entry can outlive the database row it points at and
+        // leak into the next test.
+        processorTaskQueueManager.shutdown();
+
         // Make sure we don't delete database entries without clearing the pool.
         indexShardWriterCache.shutdown();
         LOGGER.info("Deleting shards from disk");

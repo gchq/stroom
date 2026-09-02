@@ -43,8 +43,12 @@ import java.util.stream.Collectors;
 
 /**
  * gh-5699. Finds and claims this node's own processor tasks, instead of asking the master node's
- * in-memory queue for them. Used when {@code stroom.processor.claimTasksOnWorker} is true, which
- * is the default; {@code ProcessorTaskQueueManagerImpl} is the other mode.
+ * in-memory queue for them. Used when {@code stroom.processor.claimTasksOnWorker} is true. That
+ * is an experimental mode and is <b>off by default</b>, so by default nothing here runs in
+ * production and {@code ProcessorTaskQueueManagerImpl} does the work instead. Everything in this
+ * class is nonetheless covered by tests that turn the mode on explicitly - see
+ * {@code TestProcessorTaskClaimer}, {@code TestProcessorTaskClaiming} and the app level
+ * {@code TestWorkerTaskClaiming} - so that it cannot rot silently while unused.
  * See PROCESSOR_WORKER_TASK_QUEUEING_DESIGN.md §3.3.
  * <p>
  * <b>Threading.</b> The safe operations here (SKIP LOCKED claims, concurrent maps, atomic

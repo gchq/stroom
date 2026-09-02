@@ -88,4 +88,13 @@ public class ProcessorTaskTestHelper {
     public boolean isClaimTasksOnWorker() {
         return processorConfigProvider.get().isClaimTasksOnWorker();
     }
+
+    /**
+     * Select the task selection mode for this test. Worker claiming is experimental and off by
+     * default, so a test that wants to cover it has to ask for it. Each test class gets its own
+     * injector, so this cannot leak beyond the class that sets it.
+     */
+    public void setClaimTasksOnWorker(final boolean claimTasksOnWorker) {
+        processorConfigProvider.get().setClaimTasksOnWorker(claimTasksOnWorker);
+    }
 }
