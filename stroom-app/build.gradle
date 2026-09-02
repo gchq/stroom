@@ -210,6 +210,7 @@ dependencies {
     runtimeOnly libs.jakarta.el
 
     // Use default DB config.
+    testImplementation libs.poi.ooxml
     testImplementation project(':stroom-activity:stroom-activity-api')
     testImplementation project(':stroom-activity:stroom-activity-mock')
     testImplementation project(':stroom-ai:stroom-ai-mock')

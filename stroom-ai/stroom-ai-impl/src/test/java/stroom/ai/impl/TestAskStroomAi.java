@@ -19,6 +19,7 @@ package stroom.ai.impl;
 import stroom.ai.api.AiService;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
+import stroom.cache.impl.CacheManagerImpl;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.util.date.DateUtil;
 
@@ -56,7 +57,9 @@ public class TestAskStroomAi {
                 null,
                 null,
                 null,
-                null);
+                null,
+                new CacheManagerImpl(),
+                AiConfig::new);
         final OpenAIModelDoc modelDoc = new OpenAIModelDoc(
                 UUID.randomUUID().toString(),
                 "test",

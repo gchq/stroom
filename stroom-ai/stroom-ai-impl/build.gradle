@@ -19,6 +19,7 @@ ext.moduleName = 'stroom.ai.impl'
 dependencies {
     implementation project(':stroom-ai:stroom-ai-api')
     implementation project(':stroom-ai:stroom-ai-impl-db')
+    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-config:stroom-config-global-api')
     implementation project(':stroom-core-shared')
@@ -34,6 +35,7 @@ dependencies {
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-query:stroom-query-impl')
+    implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
@@ -52,6 +54,8 @@ dependencies {
     runtimeOnly libs.mysql.connector.java
 
 
+
+    testImplementation project(':stroom-cache:stroom-cache-impl')
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

@@ -16,6 +16,7 @@
 
 package stroom.analytics;
 
+import stroom.ai.api.OpenAIModelStore;
 import stroom.ai.impl.mock.MockAiModule;
 import stroom.analytics.impl.ExecutionScheduleDao;
 import stroom.analytics.impl.ReportExecutor;
@@ -46,6 +47,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
+import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.Column;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.resource.impl.ResourceModule;
@@ -59,6 +61,9 @@ import stroom.util.shared.scheduler.ScheduleType;
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -91,6 +96,8 @@ class TestReport extends AbstractAnalyticsTest {
 
     @Inject
     private ReportExecutor reportExecutor;
+    @Inject
+    private OpenAIModelStore openAIModelStore;
     @Inject
     private AnalyticsDataSetup analyticsDataSetup;
     @Inject
@@ -206,11 +213,125 @@ class TestReport extends AbstractAnalyticsTest {
     }
 
     /**
+     * A report that asks for an AI summary must still deliver the report data unchanged - CSV has nowhere to
+     * put prose - and must carry the summary in the stream meta so a stream consumer can find it.
+     */
+    @Test
+    void testAiSummaryIsWrittenToStreamMeta() {
+        final DocRef modelDocRef = writeStubModel();
+
+        final ReportDoc reportDoc = ReportDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query(QUERY)
+                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
+                .reportSettings(ReportSettings
+                        .builder()
+                        .fileType(DownloadSearchResultFileType.CSV)
+                        .aiSummaryEnabled(true)
+                        .aiSummaryModel(modelDocRef)
+                        .build())
+                .notifications(createNotificationConfig())
+                .errorFeed(analyticsDataSetup.getDetections())
+                .build();
+        writeReport(reportDoc);
+        createExecutionSchedule(reportStore.list().getFirst());
+
+        scheduledExecutorService.exec(reportExecutor);
+
+        analyticsDataSetup.checkStreamCount(9);
+        final Meta newestMeta = analyticsDataSetup.getNewestMeta();
+        try (final Source source = streamStore.openSource(newestMeta.getId())) {
+            // The data is untouched - a summary must never corrupt the report for whatever reads it.
+            assertThat(SourceUtil.readString(source).trim()).isEqualTo(resolveStreamId("""
+                    "StreamId","EventId","UserId"
+                    "${streamId}","5","user5"
+                    "${streamId}","9","user5"
+                    "${streamId}","14","user5"
+                    "${streamId}","20","user5"
+                    "${streamId}","23","user5"
+                    """).trim());
+
+            try (final InputStreamProvider inputStreamProvider = source.get(0)) {
+                try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
+                    final String meta = StreamUtil.streamToString(inputStream);
+                    // The stub model reports how many rows it was given, which proves the summary was made
+                    // from this report's data rather than being a fixed string.
+                    assertThat(meta).contains("ReportAiSummary:[Stub Batch Analysis");
+                    assertThat(meta).contains("5 rows");
+                    // A meta entry is one line, so the summary must have been flattened onto one.
+                    assertThat(meta.lines().filter(line -> line.startsWith("ReportAiSummary:")).count())
+                            .isOne();
+                }
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * An Excel report carries the summary inside the workbook, on a sheet of its own, rather than beside it.
+     */
+    @Test
+    void testAiSummaryIsWrittenToAnExcelSheet() {
+        final DocRef modelDocRef = writeStubModel();
+
+        final ReportDoc reportDoc = ReportDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query(QUERY)
+                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
+                .reportSettings(ReportSettings
+                        .builder()
+                        .fileType(DownloadSearchResultFileType.EXCEL)
+                        .aiSummaryEnabled(true)
+                        .aiSummaryModel(modelDocRef)
+                        .build())
+                .notifications(createNotificationConfig())
+                .errorFeed(analyticsDataSetup.getDetections())
+                .build();
+        writeReport(reportDoc);
+        createExecutionSchedule(reportStore.list().getFirst());
+
+        scheduledExecutorService.exec(reportExecutor);
+
+        analyticsDataSetup.checkStreamCount(9);
+        final Meta newestMeta = analyticsDataSetup.getNewestMeta();
+        try (final Source source = streamStore.openSource(newestMeta.getId())) {
+            try (final InputStreamProvider inputStreamProvider = source.get(0)) {
+                try (final Workbook workbook = new XSSFWorkbook(inputStreamProvider.get())) {
+                    // The report data is still there, on its own sheet, alongside the info and summary.
+                    assertThat(workbook.getSheet("Report")).isNotNull();
+                    assertThat(workbook.getSheet("Report").getLastRowNum()).isEqualTo(5);
+
+                    final Sheet summarySheet = workbook.getSheet("AI Summary");
+                    assertThat(summarySheet).isNotNull();
+                    assertThat(summarySheet.getRow(0).getCell(0).getStringCellValue())
+                            .startsWith("[Stub Batch Analysis");
+                }
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * @return A model that answers without a network or an API key, see {@code AiServiceImpl.STUB_MODEL_ID}.
+     */
+    private DocRef writeStubModel() {
+        final DocRef docRef = openAIModelStore.createDocument("Stub Model");
+        final OpenAIModelDoc modelDoc = openAIModelStore.readDocument(docRef);
+        openAIModelStore.writeDocument(modelDoc.copy().modelId("__stub__").build());
+        return docRef;
+    }
+
+    /**
      * The base class only tidies up analytic rules and detections, so each test here must remove the report doc and
      * the report stream it created, else the doc count and stream count assertions fail for the next test.
      */
     @AfterEach
     void tidyUpReports() {
+        openAIModelStore.list().forEach(docRef -> openAIModelStore.deleteDocument(docRef));
         reportStore.list().forEach(docRef -> reportStore.deleteDocument(docRef));
         metaService.find(FindMetaCriteria.createWithType(REPORT_STREAM_TYPE))
                 .getValues()

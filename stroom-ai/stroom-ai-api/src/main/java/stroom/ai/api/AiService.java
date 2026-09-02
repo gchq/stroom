@@ -45,6 +45,27 @@ public interface AiService {
 
     OpenAIModelDoc getOpenAIModelDoc(DocRef docRef);
 
+    /**
+     * Resolve a model reference of the sort supplied to the {@code ai()} XSLT and StroomQL functions, i.e.
+     * either the UUID or the name of an {@link OpenAIModelDoc}. UUID is tried first, so a model whose name
+     * happens to be another model's UUID cannot be used to reach that other model.
+     *
+     * @return The matching model, or empty if there is no match or the current user cannot view it. Where
+     * more than one model shares the supplied name, which of them is returned is stable but arbitrary, as
+     * the store orders by UUID, so a name that is not unique is not a dependable way to reach a model.
+     */
+    Optional<DocRef> findModelByNameOrUuid(String nameOrUuid);
+
+    /**
+     * Ask a model a single question and get its answer, i.e. a one-shot chat with no history.
+     *
+     * @param modelRef     The model to ask.
+     * @param systemPrompt The system prompt to send ahead of the message. May be null.
+     * @param message      The message to ask the model.
+     * @return The model's answer, or null if it had nothing to say.
+     */
+    String chat(DocRef modelRef, String systemPrompt, String message);
+
     String getModel(OpenAIModelDoc modelDoc);
 
     ChatModel getChatModel(OpenAIModelDoc modelDoc);
