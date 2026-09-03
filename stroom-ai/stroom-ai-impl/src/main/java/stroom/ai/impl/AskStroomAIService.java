@@ -58,6 +58,7 @@ import stroom.resource.api.ResourceStore;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -96,6 +97,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -661,6 +663,15 @@ public class AskStroomAIService {
                     return finalResponseText;
 
                 } catch (final Exception e) {
+                    // A terminated task, or a stop flipped mid-call, is a deliberate stop rather
+                    // than a failure. processUnified throws TaskTerminatedException when the task
+                    // is terminated before the model call; treat both the same friendly way as a
+                    // stop caught between attempts, rather than surfacing a raw error to the user.
+                    if (e instanceof TaskTerminatedException || cancelled.get()) {
+                        LOGGER.info(() -> "processQuestion: terminated/cancelled for chatId=" + chatId);
+                        return "Analysis was cancelled before a response was produced.";
+                    }
+
                     if (!isContextOverflowError(e)) {
                         throw e;
                     }
@@ -837,17 +848,27 @@ public class AskStroomAIService {
                                         final int chatId,
                                         final List<ChatMessage> messages,
                                         final int attempt) {
-        LOGGER.debug(() -> "processUnified: sending " + messages.size()
-                           + " messages to LLM for chatId=" + chatId
-                           + " (attempt " + attempt + ")");
+        return taskContextFactory.contextResult(
+                "AI data analysis",
+                taskContext -> {
+                    taskContext.info(() -> "Chat Id: " + chatId);
 
-        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
-                () -> chatModel.chat(messages),
-                r -> "processUnified chatId=" + chatId
-                     + " attempt=" + attempt
-                     + " responseLength=" + r.aiMessage().text().length());
-        LOGGER.trace(() -> "processUnified response:\n" + response.aiMessage().text());
-        return response;
+                    if (taskContext.isTerminated()) {
+                        throw new TaskTerminatedException();
+                    }
+
+                    LOGGER.debug(() -> "processUnified: sending " + messages.size()
+                                       + " messages to LLM for chatId=" + chatId
+                                       + " (attempt " + attempt + ")");
+
+                    final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
+                            () -> chatModel.chat(messages),
+                            r -> "processUnified chatId=" + chatId
+                                 + " attempt=" + attempt
+                                 + " responseLength=" + r.aiMessage().text().length());
+                    LOGGER.trace(() -> "processUnified response:\n" + response.aiMessage().text());
+                    return response;
+                }).get();
     }
 
     /**
@@ -921,10 +942,28 @@ public class AskStroomAIService {
                                           final int chatId,
                                           final int workingMessageId,
                                           final StringBuilder debugLog) {
+        return taskContextFactory.contextResult(
+                "Batched AI data analysis",
+                taskContext -> analyseWithAttachments(taskContext,
+                        request, chatModel, attachments, chatId, workingMessageId, debugLog)).get();
+    }
+
+    private String analyseWithAttachments(final TaskContext taskContext,
+                                          final AskStroomAiRequest request,
+                                          final ChatModel chatModel,
+                                          final List<AiChatAttachment> attachments,
+                                          final int chatId,
+                                          final int workingMessageId,
+                                          final StringBuilder debugLog) {
         // Shares the flag registered for the whole question, so a stop issued before batch analysis
         // started is not lost.
         final AtomicBoolean cancelled = cancellationFlags.computeIfAbsent(
                 chatId, k -> new AtomicBoolean(false));
+
+        // Either signal means stop: the explicit user stop, or the task being terminated.
+        final BooleanSupplier stopRequested = () -> cancelled.get() || taskContext.isTerminated();
+
+        info(taskContext, () -> "Reading attachments");
 
         final List<TableSource> sources = attachments
                 .stream()
@@ -941,19 +980,21 @@ public class AskStroomAIService {
                 .config(getTableAnalysisConfig(request.getConfig()))
                 .query(request.getMessage())
                 .context(buildConversationSummary(chatId))
-                .cancelled(cancelled::get)
+                .cancelled(stopRequested)
                 .progressListener(new TableSummaryProgressListener() {
                     @Override
                     public void onBatchesBuilt(final int batchCount, final int sourceCount) {
-                        aiService.updateMessageText(workingMessageId,
-                                "Analysing " + batchCount + " batch(es) across "
-                                + sourceCount + " attachment(s)...");
+                        final String message = "Analysing " + batchCount + " batch(es) across "
+                                               + sourceCount + " attachment(s)...";
+                        info(taskContext, () -> message);
+                        aiService.updateMessageText(workingMessageId, message);
                     }
 
                     @Override
                     public void onBatchStarted(final int batchNumber, final int batchCount) {
-                        aiService.updateMessageText(workingMessageId,
-                                "Analysing batch " + batchNumber + " of " + batchCount + "...");
+                        final String message = "Analysing batch " + batchNumber + " of " + batchCount + "...";
+                        info(taskContext, () -> message);
+                        aiService.updateMessageText(workingMessageId, message);
                     }
 
                     @Override

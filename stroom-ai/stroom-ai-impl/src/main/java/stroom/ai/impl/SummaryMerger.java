@@ -17,6 +17,7 @@
 package stroom.ai.impl;
 
 import stroom.ai.shared.TableAnalysisConfig;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -28,6 +29,7 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 /**
  * Merges the summaries produced by batch analysis into a single answer.
@@ -90,10 +92,14 @@ class SummaryMerger {
                     try {
                         merged.add(mergeChunk(chunk));
                     } catch (final RuntimeException e) {
-                        // Keep the summaries rather than lose them. They are still an answer, just a
-                        // longer and more repetitive one than the merged version would have been.
-                        LOGGER.warn(() -> "Failed to merge " + chunk.size()
-                                          + " summaries, keeping them unmerged", e);
+                        if (e.getCause() instanceof CancellationException) {
+                            LOGGER.warn(() -> "Chat summary merge operation aborted", e);
+                        } else {
+                            // Keep the summaries rather than lose them. They are still an answer, just a
+                            // longer and more repetitive one than the merged version would have been.
+                            LOGGER.warn(() -> "Failed to merge " + chunk.size()
+                                              + " summaries, keeping them unmerged", e);
+                        }
                         degraded = true;
                         merged.addAll(chunk);
                     }
