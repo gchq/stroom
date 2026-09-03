@@ -29,7 +29,6 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
-import stroom.docstore.api.DocFinder;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -39,7 +38,6 @@ import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockUserSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 import stroom.test.StroomIntegrationTest;
-import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
@@ -128,6 +126,8 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                 .analyticProcessType(sample.getAnalyticProcessType())
                 .analyticProcessConfig(sample.getAnalyticProcessConfig())
                 .notifications(new ArrayList<>(sample.getNotifications()))
+                .description(sample.getDescription())
+                .includeRuleDocumentation(sample.isIncludeRuleDocumentation())
                 .errorFeed(analyticsDataSetup.getDetections())
                 .build();
         analyticRuleStore.writeDocument(analyticRuleDoc);
