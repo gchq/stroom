@@ -22,8 +22,12 @@ import stroom.docstore.api.DocumentTypeName;
 import stroom.pathways.shared.TracesDoc;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.shared.PlanBDocument;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -38,12 +42,15 @@ class TracesDocLoader {
 
     private final PlanBDocCache planBDocCache;
     private final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider;
+    private final SecurityContext securityContext;
 
     @Inject
     TracesDocLoader(final PlanBDocCache planBDocCache,
-                    final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider) {
+                    final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider,
+                    final SecurityContext securityContext) {
         this.planBDocCache = planBDocCache;
         this.documentActionHandlersProvider = documentActionHandlersProvider;
+        this.securityContext = securityContext;
     }
 
     PlanBDocument getPlanBDoc(final DocRef docRef) {
@@ -51,19 +58,37 @@ class TracesDocLoader {
             return null;
         }
         if (TracesDoc.TYPE.equals(docRef.getType())) {
+            final PlanBDocument doc;
             try {
                 final DocumentActionHandler<?> handler = documentActionHandlersProvider.get()
                         .get(new DocumentTypeName(TracesDoc.TYPE));
                 if (handler == null) {
                     throw new IllegalStateException("No handler found for type: " + TracesDoc.TYPE);
                 }
-                return (PlanBDocument) handler.readDocument(docRef);
+                doc = (PlanBDocument) handler.readDocument(docRef);
             } catch (final Exception e) {
                 LOGGER.error("Failed to read TracesDoc " + docRef, e);
                 throw new RuntimeException("Failed to read TracesDoc '" + docRef.getName() + "'", e);
             }
+            // Outside the try: the catch above would report a refusal as a failed read.
+            return checkUsePermission(doc);
         } else {
             return planBDocCache.get(docRef.getName());
         }
+    }
+
+    // The read above is unauthorised, so this is the only point at which a caller's right to the
+    // trace store is decided. The PlanBDocCache branch applies USE for itself.
+    private PlanBDocument checkUsePermission(final PlanBDocument doc) {
+        if (doc == null) {
+            return null;
+        }
+        final DocRef docRef = doc.asDocRef();
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.USE)) {
+            throw new PermissionException(
+                    securityContext.getUserRef(),
+                    LogUtil.message("You are not authorised to read {}", docRef));
+        }
+        return doc;
     }
 }
