@@ -17,6 +17,9 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleLevel;
+import stroom.analytics.shared.AnalyticRuleStatus;
+import stroom.analytics.shared.ReportDoc;
 
 import org.junit.jupiter.api.Test;
 
@@ -70,6 +73,67 @@ class TestRuleUtil {
 
         assertThat(RuleUtil.getDetailedDescription(doc))
                 .isEmpty();
+    }
+
+    @Test
+    void getLevel() {
+        final AnalyticRuleDoc doc = AnalyticRuleDoc.builder()
+                .uuid("test-uuid")
+                .level(AnalyticRuleLevel.HIGH)
+                .build();
+
+        // The display value goes on the detection, not the enum name.
+        assertThat(RuleUtil.getLevel(doc))
+                .isEqualTo("High");
+    }
+
+    @Test
+    void getLevel_notSet() {
+        // A rule need not declare a level, in which case no level element is written to the detection.
+        assertThat(RuleUtil.getLevel(buildRule(true)))
+                .isNull();
+    }
+
+    @Test
+    void getLevel_report() {
+        // Only an analytic rule has a level. A report produces no detections, so it has none.
+        assertThat(RuleUtil.getLevel(ReportDoc.builder().uuid("test-uuid").build()))
+                .isNull();
+    }
+
+    @Test
+    void getLevel_nullDoc() {
+        assertThat(RuleUtil.getLevel(null))
+                .isNull();
+    }
+
+    @Test
+    void getStatus() {
+        final AnalyticRuleDoc doc = AnalyticRuleDoc.builder()
+                .uuid("test-uuid")
+                .status(AnalyticRuleStatus.STABLE)
+                .build();
+
+        assertThat(RuleUtil.getStatus(doc))
+                .isEqualTo("Stable");
+    }
+
+    @Test
+    void getStatus_notSet() {
+        assertThat(RuleUtil.getStatus(buildRule(true)))
+                .isNull();
+    }
+
+    @Test
+    void getStatus_report() {
+        assertThat(RuleUtil.getStatus(ReportDoc.builder().uuid("test-uuid").build()))
+                .isNull();
+    }
+
+    @Test
+    void getStatus_nullDoc() {
+        assertThat(RuleUtil.getStatus(null))
+                .isNull();
     }
 
     private AnalyticRuleDoc buildRule(final boolean includeRuleDocumentation) {

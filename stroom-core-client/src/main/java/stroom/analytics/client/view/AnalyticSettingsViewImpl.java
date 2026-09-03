@@ -16,10 +16,10 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.ReportSettingsPresenter.ReportSettingsView;
+import stroom.analytics.client.presenter.AnalyticSettingsPresenter.AnalyticSettingsView;
 import stroom.analytics.client.presenter.SettingsUiHandlers;
-import stroom.analytics.shared.ReportSettings;
-import stroom.dashboard.shared.DownloadSearchResultFileType;
+import stroom.analytics.shared.AnalyticRuleLevel;
+import stroom.analytics.shared.AnalyticRuleStatus;
 import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -35,25 +35,32 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ReportSettingsViewImpl extends ViewWithUiHandlers<SettingsUiHandlers> implements ReportSettingsView {
+public class AnalyticSettingsViewImpl
+        extends ViewWithUiHandlers<SettingsUiHandlers>
+        implements AnalyticSettingsView {
 
     private final Widget widget;
 
     @UiField
-    SelectionBox<DownloadSearchResultFileType> fileType;
+    SelectionBox<AnalyticRuleLevel> level;
     @UiField
-    CustomCheckBox sendEmptyReports;
+    SelectionBox<AnalyticRuleStatus> status;
+    @UiField
+    CustomCheckBox includeRuleDocumentation;
     @UiField
     SimplePanel errorFeed;
     @UiField
     Button setDefaultErrorFeed;
 
     @Inject
-    public ReportSettingsViewImpl(final Binder binder) {
+    public AnalyticSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        fileType.addItems(DownloadSearchResultFileType.asSortedList());
-        fileType.setValue(ReportSettings.DEFAULT_FILE_TYPE);
+        // A rule need not declare a level or a status, so both offer a blank item to go back to.
+        level.setNonSelectString("");
+        level.addItems(AnalyticRuleLevel.values());
+        status.setNonSelectString("");
+        status.addItems(AnalyticRuleStatus.values());
 
         setDefaultErrorFeed.setTitle("Set as the default error feed for all users");
     }
@@ -65,27 +72,37 @@ public class ReportSettingsViewImpl extends ViewWithUiHandlers<SettingsUiHandler
 
     @Override
     public void focus() {
-        fileType.focus();
+        level.focus();
     }
 
     @Override
-    public DownloadSearchResultFileType getFileType() {
-        return fileType.getValue();
+    public AnalyticRuleLevel getLevel() {
+        return level.getValue();
     }
 
     @Override
-    public void setFileType(final DownloadSearchResultFileType fileType) {
-        this.fileType.setValue(fileType);
+    public void setLevel(final AnalyticRuleLevel level) {
+        this.level.setValue(level);
     }
 
     @Override
-    public boolean isSendEmptyReports() {
-        return sendEmptyReports.getValue();
+    public AnalyticRuleStatus getStatus() {
+        return status.getValue();
     }
 
     @Override
-    public void setSendEmptyReports(final boolean sendEmptyReports) {
-        this.sendEmptyReports.setValue(sendEmptyReports);
+    public void setStatus(final AnalyticRuleStatus status) {
+        this.status.setValue(status);
+    }
+
+    @Override
+    public boolean isIncludeRuleDocumentation() {
+        return includeRuleDocumentation.getValue();
+    }
+
+    @Override
+    public void setIncludeRuleDocumentation(final boolean includeRuleDocumentation) {
+        this.includeRuleDocumentation.setValue(includeRuleDocumentation);
     }
 
     @Override
@@ -98,22 +115,27 @@ public class ReportSettingsViewImpl extends ViewWithUiHandlers<SettingsUiHandler
         this.setDefaultErrorFeed.setVisible(visible);
     }
 
+    @UiHandler("level")
+    public void onLevelChange(final ValueChangeEvent<AnalyticRuleLevel> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("status")
+    public void onStatusChange(final ValueChangeEvent<AnalyticRuleStatus> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("includeRuleDocumentation")
+    public void onIncludeRuleDocumentation(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onChange();
+    }
+
     @UiHandler("setDefaultErrorFeed")
     public void onSetDefaultErrorFeed(final ClickEvent event) {
         getUiHandlers().onSetDefaultErrorFeed();
     }
 
-    @UiHandler("fileType")
-    public void onFileTypeChange(final ValueChangeEvent<DownloadSearchResultFileType> event) {
-        getUiHandlers().onChange();
-    }
-
-    @UiHandler("sendEmptyReports")
-    public void onSendEmptyReports(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onChange();
-    }
-
-    public interface Binder extends UiBinder<Widget, ReportSettingsViewImpl> {
+    public interface Binder extends UiBinder<Widget, AnalyticSettingsViewImpl> {
 
     }
 }

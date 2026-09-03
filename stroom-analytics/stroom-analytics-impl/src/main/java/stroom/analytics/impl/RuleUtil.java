@@ -18,6 +18,8 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleLevel;
+import stroom.analytics.shared.AnalyticRuleStatus;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.util.shared.NullSafe;
 
@@ -52,6 +54,34 @@ public class RuleUtil {
             return null;
         }
         return NullSafe.get(doc, AbstractAnalyticRuleDoc::getDescription);
+    }
+
+    /**
+     * The level to put on a detection, which denotes the severity of the rule that produced it.
+     * <p>
+     * Only {@link AnalyticRuleDoc} carries a level. Anything else, e.g. a report, has none.
+     * </p>
+     *
+     * @return The display value of the doc's level, or null where it has none.
+     */
+    public static String getLevel(final AbstractAnalyticRuleDoc doc) {
+        return doc instanceof final AnalyticRuleDoc analyticRuleDoc
+                ? NullSafe.get(analyticRuleDoc.getLevel(), AnalyticRuleLevel::getDisplayValue)
+                : null;
+    }
+
+    /**
+     * The status to put on a detection, which denotes how reliable the rule that produced it is.
+     * <p>
+     * Only {@link AnalyticRuleDoc} carries a status. Anything else, e.g. a report, has none.
+     * </p>
+     *
+     * @return The display value of the doc's status, or null where it has none.
+     */
+    public static String getStatus(final AbstractAnalyticRuleDoc doc) {
+        return doc instanceof final AnalyticRuleDoc analyticRuleDoc
+                ? NullSafe.get(analyticRuleDoc.getStatus(), AnalyticRuleStatus::getDisplayValue)
+                : null;
     }
 
     public static long getMin(final Long currentValue, final Long newValue) {

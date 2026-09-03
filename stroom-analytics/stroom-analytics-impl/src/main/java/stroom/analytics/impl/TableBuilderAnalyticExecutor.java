@@ -921,6 +921,8 @@ public class TableBuilderAnalyticExecutor {
                         .notDefunct()
                         .withValues(values)
                         .withLinkedEvents(linkedEvents)
+                        .withLevel(RuleUtil.getLevel(analyticRuleDoc))
+                        .withStatus(RuleUtil.getStatus(analyticRuleDoc))
                         .build();
 
                 detectionConsumer.accept(detection);

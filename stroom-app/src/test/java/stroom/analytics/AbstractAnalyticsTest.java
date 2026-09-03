@@ -128,6 +128,8 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                 .notifications(new ArrayList<>(sample.getNotifications()))
                 .description(sample.getDescription())
                 .includeRuleDocumentation(sample.isIncludeRuleDocumentation())
+                .level(sample.getLevel())
+                .status(sample.getStatus())
                 .errorFeed(analyticsDataSetup.getDetections())
                 .build();
         analyticRuleStore.writeDocument(analyticRuleDoc);

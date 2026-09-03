@@ -39,6 +39,7 @@ public class AnalyticRulePresenter
         extends DocTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
 
     private static final TabData QUERY = new TabDataImpl("Query");
+    private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData NOTIFICATIONS = new TabDataImpl("Notifications");
     private static final TabData EXECUTION = new TabDataImpl("Execution");
     private static final TabData SHARDS = new TabDataImpl("Shards");
@@ -53,6 +54,7 @@ public class AnalyticRulePresenter
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
                                  final AnalyticQueryEditPresenter analyticQueryEditPresenter,
+                                 final Provider<AnalyticSettingsPresenter> settingsPresenterProvider,
                                  final Provider<AnalyticNotificationPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
@@ -75,6 +77,7 @@ public class AnalyticRulePresenter
                 setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
 
         addTab(QUERY, new DocTabProvider<>(() -> analyticQueryEditPresenter));
+        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
         addTab(NOTIFICATIONS, new DocTabProvider<>(() -> analyticNotificationPresenter));
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
         addTab(SHARDS, new DocTabProvider<>(analyticDataShardsPresenterProvider::get));

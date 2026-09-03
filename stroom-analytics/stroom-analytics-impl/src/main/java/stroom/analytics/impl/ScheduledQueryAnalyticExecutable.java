@@ -233,6 +233,8 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                         .notDefunct()
                                         .withValues(values)
                                         .withLinkedEvents(linkedEvents)
+                                        .withLevel(RuleUtil.getLevel(doc))
+                                        .withStatus(RuleUtil.getStatus(doc))
                                         .build();
                                 detectionConsumerProxy.getDetectionConsumer().accept(detection);
                             }

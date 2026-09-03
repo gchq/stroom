@@ -22,6 +22,8 @@ import stroom.analytics.impl.ScheduledExecutorService;
 import stroom.analytics.impl.ScheduledQueryAnalyticExecutable;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleLevel;
+import stroom.analytics.shared.AnalyticRuleStatus;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionHistoryRequest;
 import stroom.analytics.shared.ExecutionSchedule;
@@ -117,6 +119,33 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
 
         assertThat(readNewestStream())
                 .contains(RULE_DOCUMENTATION);
+    }
+
+    /**
+     * A rule's level and status are declared on the rule and written to every detection it produces,
+     * whichever way the rule is processed.
+     */
+    @Test
+    void testLevelAndStatusIncludedInDetections() {
+        runRule(ruleBuilder()
+                .level(AnalyticRuleLevel.HIGH)
+                .status(AnalyticRuleStatus.STABLE)
+                .build());
+
+        assertThat(readNewestStream())
+                .contains("<level>High</level>")
+                .contains("<status>Stable</status>");
+    }
+
+    @Test
+    void testLevelAndStatusOmittedWhenNotSet() {
+        // Neither is mandatory, so a rule that declares neither produces detections without the elements.
+        runRule(ruleBuilder().build());
+
+        assertThat(readNewestStream())
+                .contains("user5")
+                .doesNotContain("<level>")
+                .doesNotContain("<status>");
     }
 
     private AnalyticRuleDoc.Builder ruleBuilder() {

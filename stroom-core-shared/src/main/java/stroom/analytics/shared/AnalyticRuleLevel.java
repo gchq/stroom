@@ -14,11 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.analytics.client.presenter;
+package stroom.analytics.shared;
 
-import stroom.document.client.event.ChangeUiHandlers;
+import stroom.docref.HasDisplayValue;
 
-public interface AnalyticNotificationUiHandlers extends ChangeUiHandlers {
+/**
+ * A rule's level denotes its severity.
+ * A high level rule detection should be prioritised over a low level rule detection.
+ */
+public enum AnalyticRuleLevel implements HasDisplayValue {
+    LOW("Low"),
+    MEDIUM("Medium"),
+    HIGH("High"),
+    CRITICAL("Critical"),
+    ;
 
-    void onSetDefaultErrorFeed();
+    private final String displayValue;
+
+    AnalyticRuleLevel(final String displayValue) {
+        this.displayValue = displayValue;
+    }
+
+    @Override
+    public String getDisplayValue() {
+        return displayValue;
+    }
 }

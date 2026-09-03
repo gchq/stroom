@@ -16,34 +16,38 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.presenter.AbstractSettingsPresenter.SettingsView;
 import stroom.analytics.client.presenter.ReportSettingsPresenter.ReportSettingsView;
 import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ReportSettings;
+import stroom.config.global.client.presenter.ConfigDefaultSetter;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.docref.DocRef;
-import stroom.document.client.event.ChangeUiHandlers;
-import stroom.entity.client.presenter.DocPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 
 public class ReportSettingsPresenter
-        extends DocPresenter<ReportSettingsView, ReportDoc> {
+        extends AbstractSettingsPresenter<ReportSettingsView, ReportDoc> {
 
     @Inject
-    public ReportSettingsPresenter(final EventBus eventBus, final ReportSettingsView view) {
-        super(eventBus, view);
-        view.setUiHandlers(this);
+    public ReportSettingsPresenter(final EventBus eventBus,
+                                   final ReportSettingsView view,
+                                   final DocSelectionBoxPresenter errorFeedPresenter,
+                                   final UiConfigCache uiConfigCache,
+                                   final ConfigDefaultSetter configDefaultSetter) {
+        super(eventBus, view, errorFeedPresenter, uiConfigCache, configDefaultSetter);
     }
 
     @Override
     protected void onRead(final DocRef docRef,
                           final ReportDoc document,
                           final boolean readOnly) {
+        super.onRead(docRef, document, readOnly);
         getView().setFileType(NullSafe.getOrElse(
                 document,
                 ReportDoc::getReportSettings,
@@ -65,13 +69,14 @@ public class ReportSettingsPresenter
                 .build();
         return document.copy()
                 .reportSettings(reportSettings)
+                .errorFeed(getErrorFeed())
                 .build();
     }
 
     // --------------------------------------------------------------------------------
 
 
-    public interface ReportSettingsView extends View, Focus, HasUiHandlers<ChangeUiHandlers> {
+    public interface ReportSettingsView extends SettingsView, Focus {
 
         DownloadSearchResultFileType getFileType();
 

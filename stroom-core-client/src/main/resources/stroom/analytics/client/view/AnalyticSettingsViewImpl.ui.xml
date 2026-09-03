@@ -1,0 +1,38 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:list="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="analyticRuleLevel"
+                        label="Level"
+                        helpText="The severity of this rule. A detection from a rule with a high level should be prioritised over one from a rule with a low level. The level is included in the detections that this rule produces.">
+            <list:SelectionBox ui:field="level"/>
+        </form:FormGroup>
+
+        <form:FormGroup identity="analyticRuleStatus"
+                        label="Status"
+                        helpText="How reliable this rule is, from Experimental through to Stable, or Deprecated for a rule that has been superseded. The status is included in the detections that this rule produces.">
+            <list:SelectionBox ui:field="status"/>
+        </form:FormGroup>
+
+        <form:FormGroup identity="includeRuleDocumentation"
+                        label="Include Rule Documentation"
+                        helpText="Determines if the rule's documentation will be included in any detections that it produces.">
+            <tickbox:CustomCheckBox ui:field="includeRuleDocumentation"/>
+        </form:FormGroup>
+
+        <form:FormGroup identity="analyticProcessingErrorFeed"
+                        label="Feed For Errors"
+                        helpText="The Feed to write any errors that occur during execution to.">
+            <g:FlowPanel styleName="button-group">
+                <g:SimplePanel ui:field="errorFeed"/>
+                <b:Button ui:field="setDefaultErrorFeed"
+                          text="Set Default"
+                          addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

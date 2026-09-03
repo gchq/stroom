@@ -58,6 +58,19 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
     @JsonProperty
     private final boolean includeRuleDocumentation;
 
+    /**
+     * A rule's level denotes its severity.
+     * A high level rule detection should be prioritised over a low level rule detection.
+     */
+    @JsonProperty
+    private final AnalyticRuleLevel level;
+
+    /**
+     * A rule's status denotes how reliable it is.
+     */
+    @JsonProperty
+    private final AnalyticRuleStatus status;
+
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
     public AnalyticRuleDoc(@JsonProperty("uuid") final String uuid,
@@ -82,8 +95,8 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                            @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
                            @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences,
                            @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
-                           @JsonProperty("level") final String level,
-                           @JsonProperty("status") final String status) {
+                           @JsonProperty("level") final AnalyticRuleLevel level,
+                           @JsonProperty("status") final AnalyticRuleStatus status) {
         super(TYPE, uuid,
                 name,
                 version,
@@ -104,16 +117,24 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                 rememberNotifications,
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig,
-                queryTablePreferences,
-                level,
-                status);
+                queryTablePreferences);
         this.includeRuleDocumentation = includeRuleDocumentation == null
                 ? INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE
                 : includeRuleDocumentation;
+        this.level = level;
+        this.status = status;
     }
 
     public boolean isIncludeRuleDocumentation() {
         return includeRuleDocumentation;
+    }
+
+    public AnalyticRuleLevel getLevel() {
+        return level;
+    }
+
+    public AnalyticRuleStatus getStatus() {
+        return status;
     }
 
     /**
@@ -132,18 +153,22 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
             return false;
         }
         final AnalyticRuleDoc that = (AnalyticRuleDoc) o;
-        return includeRuleDocumentation == that.includeRuleDocumentation;
+        return includeRuleDocumentation == that.includeRuleDocumentation &&
+               level == that.level &&
+               status == that.status;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), includeRuleDocumentation);
+        return Objects.hash(super.hashCode(), includeRuleDocumentation, level, status);
     }
 
     @Override
     public String toString() {
         return "AnalyticRuleDoc{" +
                "includeRuleDocumentation=" + includeRuleDocumentation +
+               ", level=" + level +
+               ", status=" + status +
                '}';
     }
 
@@ -158,6 +183,8 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
     public static class Builder extends AbstractAnalyticRuleDocBuilder<AnalyticRuleDoc, Builder> {
 
         boolean includeRuleDocumentation = INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE;
+        AnalyticRuleLevel level;
+        AnalyticRuleStatus status;
 
         public Builder() {
         }
@@ -165,6 +192,8 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
         public Builder(final AnalyticRuleDoc doc) {
             super(doc);
             this.includeRuleDocumentation = doc.includeRuleDocumentation;
+            this.level = doc.level;
+            this.status = doc.status;
         }
 
         public Builder includeRuleDocumentation(final boolean includeRuleDocumentation) {
@@ -172,12 +201,12 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
             return self();
         }
 
-        public Builder level(final String level) {
+        public Builder level(final AnalyticRuleLevel level) {
             this.level = level;
             return self();
         }
 
-        public Builder status(final String status) {
+        public Builder status(final AnalyticRuleStatus status) {
             this.status = status;
             return self();
         }
