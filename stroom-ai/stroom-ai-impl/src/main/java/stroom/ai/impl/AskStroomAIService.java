@@ -55,6 +55,7 @@ import stroom.resource.api.ResourceStore;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -99,6 +100,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -675,6 +677,15 @@ public class AskStroomAIService {
                     return finalResponseText;
 
                 } catch (final Exception e) {
+                    // A terminated task, or a stop flipped mid-call, is a deliberate stop rather
+                    // than a failure. processUnified throws TaskTerminatedException when the task
+                    // is terminated before the model call; treat both the same friendly way as a
+                    // stop caught between attempts, rather than surfacing a raw error to the user.
+                    if (e instanceof TaskTerminatedException || cancelled.get()) {
+                        LOGGER.info(() -> "processQuestion: terminated/cancelled for chatId=" + chatId);
+                        return "Analysis was cancelled before a response was produced.";
+                    }
+
                     if (!isContextOverflowError(e)) {
                         throw e;
                     }
@@ -851,17 +862,27 @@ public class AskStroomAIService {
                                         final int chatId,
                                         final List<ChatMessage> messages,
                                         final int attempt) {
-        LOGGER.debug(() -> "processUnified: sending " + messages.size()
-                           + " messages to LLM for chatId=" + chatId
-                           + " (attempt " + attempt + ")");
+        return taskContextFactory.contextResult(
+                "AI data analysis",
+                taskContext -> {
+                    taskContext.info(() -> "Chat Id: " + chatId);
 
-        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
-                () -> chatModel.chat(messages),
-                r -> "processUnified chatId=" + chatId
-                     + " attempt=" + attempt
-                     + " responseLength=" + r.aiMessage().text().length());
-        LOGGER.trace(() -> "processUnified response:\n" + response.aiMessage().text());
-        return response;
+                    if (taskContext.isTerminated()) {
+                        throw new TaskTerminatedException();
+                    }
+
+                    LOGGER.debug(() -> "processUnified: sending " + messages.size()
+                                       + " messages to LLM for chatId=" + chatId
+                                       + " (attempt " + attempt + ")");
+
+                    final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
+                            () -> chatModel.chat(messages),
+                            r -> "processUnified chatId=" + chatId
+                                 + " attempt=" + attempt
+                                 + " responseLength=" + r.aiMessage().text().length());
+                    LOGGER.trace(() -> "processUnified response:\n" + response.aiMessage().text());
+                    return response;
+                }).get();
     }
 
     /**
@@ -935,10 +956,26 @@ public class AskStroomAIService {
                                           final int chatId,
                                           final int workingMessageId,
                                           final StringBuilder debugLog) {
+        return taskContextFactory.contextResult(
+                "Batched AI data analysis",
+                taskContext -> analyseWithAttachments(taskContext,
+                        request, chatModel, attachments, chatId, workingMessageId, debugLog)).get();
+    }
+
+    private String analyseWithAttachments(final TaskContext taskContext,
+                                          final AskStroomAiRequest request,
+                                          final ChatModel chatModel,
+                                          final List<AiChatAttachment> attachments,
+                                          final int chatId,
+                                          final int workingMessageId,
+                                          final StringBuilder debugLog) {
         // Shares the flag registered for the whole question, so a stop issued before batch analysis
         // started is not lost.
         final AtomicBoolean cancelled = cancellationFlags.computeIfAbsent(
                 chatId, k -> new AtomicBoolean(false));
+
+        // Either signal means stop: the explicit user stop, or the task being terminated.
+        final BooleanSupplier stopRequested = () -> cancelled.get() || taskContext.isTerminated();
 
         final TableAnalysisConfig tableAnalysisConfig = getTableAnalysisConfig(request.getConfig());
         final String conversationContext = buildConversationSummary(chatId);
@@ -948,6 +985,7 @@ public class AskStroomAIService {
                            + " maxParallel=" + tableAnalysisConfig.getMaxParallelBatches());
 
         // Build batches from markdown files on disk.
+        taskContext.info(() -> "Reading attachments");
         final List<String> batches = new ArrayList<>();
         boolean anyTruncated = false;
         int unreadableAttachments = 0;
@@ -1013,7 +1051,7 @@ public class AskStroomAIService {
 
         final List<CompletableFuture<String>> futures = new ArrayList<>();
         for (int i = 0; i < totalBatches; i++) {
-            if (cancelled.get()) {
+            if (stopRequested.getAsBoolean()) {
                 final int batchIdx = i;
                 LOGGER.debug(() -> "analyseWithAttachments: cancelled for chatId=" + chatId
                                    + " at batch " + batchIdx + "/" + totalBatches);
@@ -1029,11 +1067,12 @@ public class AskStroomAIService {
                     throw new RuntimeException("Interrupted waiting for batch slot", e);
                 }
                 try {
-                    if (cancelled.get()) {
+                    if (stopRequested.getAsBoolean()) {
                         return null;
                     }
-                    aiService.updateMessageText(workingMessageId,
-                            "Analysing batch " + batchNum + " of " + totalBatches + "...");
+                    final String batchStatusMessage = "Analysing batch " + batchNum + " of " + totalBatches + "...";
+                    taskContext.info(() -> batchStatusMessage);
+                    aiService.updateMessageText(workingMessageId, batchStatusMessage);
 
                     final String userPrompt = userPromptTemplate
                             .replace("{{query}}", userQuery)
@@ -1079,7 +1118,7 @@ public class AskStroomAIService {
 
         // Once cancelled, give the batches already in flight a short while to land before taking
         // stock. What the user stopped is the work still queued behind them.
-        if (cancelled.get() && futures.stream().anyMatch(future -> !future.isDone())) {
+        if (stopRequested.getAsBoolean() && futures.stream().anyMatch(future -> !future.isDone())) {
             aiService.updateMessageText(workingMessageId,
                     "Cancelled - waiting briefly for batches already in progress...");
             awaitInFlightBatches(futures, chatId);
@@ -1090,7 +1129,7 @@ public class AskStroomAIService {
         final List<String> summaries = new ArrayList<>();
         int failedBatches = 0;
         for (final CompletableFuture<String> future : futures) {
-            if (cancelled.get() && !future.isDone()) {
+            if (stopRequested.getAsBoolean() && !future.isDone()) {
                 continue;
             }
             try {
@@ -1109,7 +1148,7 @@ public class AskStroomAIService {
         }
 
         if (summaries.isEmpty()) {
-            if (cancelled.get()) {
+            if (stopRequested.getAsBoolean()) {
                 return "Analysis was cancelled before any results were produced.";
             }
             return "No results could be extracted from the data.";
@@ -1135,7 +1174,7 @@ public class AskStroomAIService {
         if (summaries.size() == 1) {
             merged = summaries.getFirst();
         } else {
-            if (cancelled.get()) {
+            if (stopRequested.getAsBoolean()) {
                 aiService.updateMessageText(workingMessageId,
                         "Cancelled - summarising the " + summaries.size()
                         + " batch(es) completed so far...");
@@ -1146,7 +1185,7 @@ public class AskStroomAIService {
         }
 
         notes.coverage(summaries.size(), totalBatches, failedBatches,
-                unreadableAttachments, cancelled.get());
+                unreadableAttachments, stopRequested.getAsBoolean());
         return notes.appendTo(merged);
     }
 
