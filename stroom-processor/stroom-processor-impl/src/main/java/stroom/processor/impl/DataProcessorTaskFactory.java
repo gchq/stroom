@@ -24,7 +24,6 @@ import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.JobNames;
-import stroom.processor.impl.db.jooq.tables.Processor;
 import stroom.processor.shared.AssignTasksRequest;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
@@ -57,6 +56,8 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     private final ProcessorTaskResource processorTaskResource;
     private final NodeInfo nodeInfo;
     private final TaskContextFactory taskContextFactory;
+    private final ProcessorTaskClaimer processorTaskClaimer;
+    private final Provider<ProcessorConfig> processorConfigProvider;
     private RunnableFactory runnableFactory;
 
     @Inject
@@ -64,16 +65,50 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
                              final ProcessorTaskResource processorTaskResource,
                              final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider,
                              final NodeInfo nodeInfo,
-                             final TaskContextFactory taskContextFactory) {
+                             final TaskContextFactory taskContextFactory,
+                             final ProcessorTaskClaimer processorTaskClaimer,
+                             final Provider<ProcessorConfig> processorConfigProvider) {
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.processorTaskResource = processorTaskResource;
         this.nodeInfo = nodeInfo;
         this.runnableFactory = new RunnableFactoryImpl(dataProcessorTaskHandlerProvider);
         this.taskContextFactory = taskContextFactory;
+        this.processorTaskClaimer = processorTaskClaimer;
+        this.processorConfigProvider = processorConfigProvider;
     }
 
     @Override
     public List<DistributedTask> fetch(final String nodeName, final int count) {
+        if (processorConfigProvider.get().isClaimTasksOnWorker()) {
+            return claim(count);
+        }
+        return assign(nodeName, count);
+    }
+
+    /**
+     * gh-5699. Find and claim our own tasks. Note what is <em>not</em> here: no master node, no
+     * cluster state, and no REST call - so nothing to fail when there is no master, and nothing
+     * for a node to queue behind.
+     */
+    private List<DistributedTask> claim(final int count) {
+        try {
+            final TaskContext taskContext = taskContextFactory.current();
+            taskContext.info(() -> "Claiming processor tasks");
+            final List<ProcessorTask> processorTasks = processorTaskClaimer.claimTasks(count);
+            taskContext.info(() -> "Claimed " + processorTasks.size() + " new tasks");
+            return toDistributedTasks(processorTasks, true);
+
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return Collections.emptyList();
+    }
+
+    /**
+     * Ask the master node's queue for work, the behaviour worker claiming replaces. Kept so that a
+     * cluster can be cut back to it if claiming does not keep the nodes fed.
+     */
+    private List<DistributedTask> assign(final String nodeName, final int count) {
         try {
             if (targetNodeSetFactory.isClusterStateInitialised()) {
                 final String masterNode = targetNodeSetFactory.getMasterNode();
@@ -87,17 +122,7 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
                         "Received " +
                                 processorTaskList.getList().size() +
                                 " new tasks");
-                return processorTaskList
-                        .getList()
-                        .stream()
-                        .map(processorTask -> {
-                            final Runnable runnable = runnableFactory.create(processorTask);
-                            return new DistributedDataProcessorTask(JobNames.DATA_PROCESSOR,
-                                    runnable,
-                                    THREAD_POOL,
-                                    processorTask);
-                        })
-                        .collect(Collectors.toList());
+                return toDistributedTasks(processorTaskList.getList(), false);
             }
         } catch (final RuntimeException | NullClusterStateException | NodeNotFoundException e) {
             LOGGER.error(e.getMessage(), e);
@@ -106,17 +131,43 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
         return Collections.emptyList();
     }
 
+    private List<DistributedTask> toDistributedTasks(final List<ProcessorTask> processorTasks,
+                                                     final boolean alreadyClaimed) {
+        return processorTasks
+                .stream()
+                .map(processorTask -> {
+                    final Runnable runnable = runnableFactory.create(processorTask, alreadyClaimed);
+                    return (DistributedTask) new DistributedDataProcessorTask(JobNames.DATA_PROCESSOR,
+                            runnable,
+                            THREAD_POOL,
+                            processorTask);
+                })
+                .collect(Collectors.toList());
+    }
+
     @Override
     public Boolean abandon(final String nodeName, final List<DistributedTask> tasks) {
+        final List<ProcessorTask> processorTasks = tasks
+                .stream()
+                .map(distributedTask -> (DistributedDataProcessorTask) distributedTask)
+                .map(DistributedDataProcessorTask::getProcessorTask)
+                .collect(Collectors.toList());
+
+        if (processorConfigProvider.get().isClaimTasksOnWorker()) {
+            try {
+                // We claimed these ourselves, so we put them back ourselves. Without this they
+                // would sit in PROCESSING until their lease expired.
+                processorTaskClaimer.abandonTasks(processorTasks);
+                return true;
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+                return false;
+            }
+        }
+
         try {
             if (targetNodeSetFactory.isClusterStateInitialised()) {
                 final String masterNode = targetNodeSetFactory.getMasterNode();
-
-                final List<ProcessorTask> processorTasks = tasks
-                        .stream()
-                        .map(distributedTask -> (DistributedDataProcessorTask) distributedTask)
-                        .map(DistributedDataProcessorTask::getProcessorTask)
-                        .collect(Collectors.toList());
 
                 final ProcessorTaskList processorTaskList = new ProcessorTaskList(nodeInfo.getThisNodeName(),
                         processorTasks);
@@ -161,16 +212,20 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
         }
 
         @Override
-        public Runnable create(final ProcessorTask processorTask) {
+        public Runnable create(final ProcessorTask processorTask, final boolean alreadyClaimed) {
             return () -> {
                 final DataProcessorTaskHandler dataProcessorTaskHandler = dataProcessorTaskHandlerProvider.get();
-                dataProcessorTaskHandler.exec(processorTask);
+                dataProcessorTaskHandler.exec(processorTask, alreadyClaimed);
             };
         }
     }
 
     public interface RunnableFactory {
 
-        Runnable create(ProcessorTask processorTask);
+        /**
+         * @param alreadyClaimed True if this node took the task to PROCESSING when it claimed it,
+         *                       so the handler must not transition it again.
+         */
+        Runnable create(ProcessorTask processorTask, boolean alreadyClaimed);
     }
 }

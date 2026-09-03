@@ -22,6 +22,7 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
+import stroom.processor.api.JobNames;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.api.ProcessorTaskService;
@@ -72,7 +73,8 @@ public class ProcessorModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(ProcessorFilterCache.class)
                 .addBinding(ProcessorProfileCache.class)
-                .addBinding(PrioritisedFilters.class);
+                .addBinding(PrioritisedFilters.class)
+                .addBinding(ProcessorTaskAvailability.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(ProcessorTaskServiceImpl.class);
@@ -90,27 +92,38 @@ public class ProcessorModule extends AbstractModule {
                 .bind(ProcessorFilterDoc.TYPE, ProcessorFilterImportExportHandlerImpl.class);
 
         HasSystemInfoBinder.create(binder())
-                .bind(ProcessorTaskQueueManagerImpl.class);
+                .bind(ProcessorTaskQueueManagerImpl.class)
+                .bind(ProcessorClaimSystemInfo.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ProcessorTaskQueueStatistics.class, builder -> builder
                         .name("Processor Task Queue Statistics")
-                        .description("Write statistics about the size of the task queue")
+                        .description("Write statistics about the size of the task queue. Only does anything "
+                                     + "when stroom.processor.claimTasksOnWorker is false")
+                        .frequencySchedule("1m"))
+                .bindJobTo(ProcessorTaskManagerReleaseOldQueuedTasks.class, builder -> builder
+                        .name("Processor Task Manager Release Old Queued Tasks")
+                        .description("Release queued tasks from old master nodes. Only does anything when "
+                                     + "stroom.processor.claimTasksOnWorker is false")
                         .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskRetention.class, builder -> builder
                         .name(PROCESSOR_TASK_RETENTION_JOB_NAME)
                         .description("Physically delete processor tasks that have been logically " +
                                      "deleted or complete based on age (stroom.processor.deleteAge)")
                         .frequencySchedule("10m"))
-                .bindJobTo(ProcessorTaskManagerDisownDeadTasks.class, builder -> builder
-                        .name("Processor Task Manager Disown Dead Tasks")
-                        .description("Tasks that seem to be stuck processing due to the death of a processing node " +
-                                     "are disowned and added back to the task queue for processing after " +
-                                     "(stroom.processor.disownDeadTasksAfter)")
+                .bindJobTo(ProcessorTaskHeartbeatJob.class, builder -> builder
+                        .name("Processor Task Heartbeat")
+                        .description("Renew the status time of tasks this node is currently processing " +
+                                     "so that live long-running tasks can be told apart from tasks " +
+                                     "owned by a dead node")
                         .frequencySchedule("1m"))
-                .bindJobTo(ProcessorTaskManagerReleaseOldQueuedTasks.class, builder -> builder
-                        .name("Processor Task Manager Release Old Queued Tasks")
-                        .description("Release queued tasks from old master nodes")
+                .bindJobTo(ProcessorTaskReaperJob.class, builder -> builder
+                        .name(JobNames.PROCESSOR_TASK_REAPER)
+                        .description("Return tasks whose processing node has died - detected by a heartbeat " +
+                                     "(status time) not renewed within stroom.processor.taskLeaseTimeout - " +
+                                     "to the CREATED state so they can be processed by another node. " +
+                                     "Do not disable this job while tasks are being processed or tasks on " +
+                                     "a failed node will never be recovered")
                         .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskCreatorJob.class, builder -> builder
                         .name("Processor Task Creator")
@@ -124,31 +137,6 @@ public class ProcessorModule extends AbstractModule {
                 .bindStartupTaskTo(ProcessorTaskManagerStartup.class)
                 .bindShutdownTaskTo(ProcessorTaskManagerShutdown.class);
     }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class ProcessorTaskQueueStatistics extends RunnableWrapper {
-
-        @Inject
-        ProcessorTaskQueueStatistics(final ProcessorTaskQueueManager processorTaskQueueManager) {
-            super(processorTaskQueueManager::writeQueueStatistics);
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class ProcessorTaskRetention extends RunnableWrapper {
-
-        @Inject
-        ProcessorTaskRetention(final ProcessorTaskDeleteExecutor processorTaskDeleteExecutor) {
-            super(processorTaskDeleteExecutor::exec);
-        }
-    }
-
 
     // --------------------------------------------------------------------------------
 
@@ -177,11 +165,11 @@ public class ProcessorModule extends AbstractModule {
     // --------------------------------------------------------------------------------
 
 
-    private static class ProcessorTaskManagerDisownDeadTasks extends RunnableWrapper {
+    private static class ProcessorTaskQueueStatistics extends RunnableWrapper {
 
         @Inject
-        ProcessorTaskManagerDisownDeadTasks(final ProcessorTaskQueueManagerImpl processorTaskManager) {
-            super(processorTaskManager::disownDeadTasks);
+        ProcessorTaskQueueStatistics(final ProcessorTaskQueueManager processorTaskQueueManager) {
+            super(processorTaskQueueManager::writeQueueStatistics);
         }
     }
 
@@ -194,6 +182,42 @@ public class ProcessorModule extends AbstractModule {
         @Inject
         ProcessorTaskManagerReleaseOldQueuedTasks(final ProcessorTaskQueueManagerImpl processorTaskQueueManager) {
             super(processorTaskQueueManager::releaseOldQueuedTasks);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ProcessorTaskRetention extends RunnableWrapper {
+
+        @Inject
+        ProcessorTaskRetention(final ProcessorTaskDeleteExecutor processorTaskDeleteExecutor) {
+            super(processorTaskDeleteExecutor::exec);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ProcessorTaskReaperJob extends RunnableWrapper {
+
+        @Inject
+        ProcessorTaskReaperJob(final ProcessorTaskReaper processorTaskReaper) {
+            super(processorTaskReaper::exec);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ProcessorTaskHeartbeatJob extends RunnableWrapper {
+
+        @Inject
+        ProcessorTaskHeartbeatJob(final ProcessorTaskHeartbeat processorTaskHeartbeat) {
+            super(processorTaskHeartbeat::exec);
         }
     }
 

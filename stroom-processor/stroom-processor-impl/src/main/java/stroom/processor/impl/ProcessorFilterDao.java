@@ -45,7 +45,26 @@ public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
      */
     int logicallyDeleteOldProcessorFilters(Instant deleteThreshold);
 
-    ProcessorFilter restoreProcessorFilter(final ProcessorFilter processorFilter, final boolean resetTracker);
+    /**
+     * Bring a logically deleted filter back into use, by <b>replacing it with a replica</b>: a new
+     * filter with a new id and a fresh tracker that takes over the deleted filter's uuid and
+     * settings, and records it as its parent. The deleted filter keeps its tasks and its history
+     * and stays deleted, with a new uuid of its own so the unique key still holds.
+     * <p>
+     * It replaces rather than resets because a filter id has to keep meaning the same body of
+     * work. Resetting a tracker in place changes what an id means without changing the id, which
+     * silently invalidates everything keyed by filter id - the per node availability summary,
+     * {@code FilterFetchBackoff}, {@code ProcessorProfileCache} - with no signal that would tell
+     * the other nodes in the cluster to throw their copies away. It also left retained COMPLETE
+     * tasks pointing at a tracker claiming the filter had never run. A new id invalidates all of
+     * that naturally, and is what reprocessing already does
+     * ({@code ProcessorFilterServiceImpl.reprocess}).
+     *
+     * @param processorFilter The deleted filter to replace. Returned unchanged if it is not
+     *                        actually deleted.
+     * @return The replica, or the supplied filter if there was nothing to do.
+     */
+    ProcessorFilter restoreProcessorFilter(ProcessorFilter processorFilter);
 
     /**
      * Physically delete old processor filters that are logically deleted with an update time older than the threshold.

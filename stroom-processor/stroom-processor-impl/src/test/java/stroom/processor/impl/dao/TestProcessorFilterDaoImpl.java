@@ -259,6 +259,103 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
                 .isNull();
     }
 
+    /**
+     * gh-5699 Phase 0b. Restoring a deleted filter replaces it rather than reviving it, so that a
+     * filter id keeps meaning one fixed body of work - see
+     * PROCESSOR_WORKER_TASK_QUEUEING_DESIGN.md §3.8.
+     */
+    @Test
+    void restoringADeletedFilterReplacesItWithAReplica() {
+        final Processor processor = createProcessor();
+        final ProcessorFilter original = createProcessorFilter(processor);
+        final String uuid = original.getUuid();
+        createProcessorTask(original, TaskStatus.COMPLETE, NODE1, FEED);
+
+        // Work already done, which is exactly what the old tracker reset destroyed.
+        final ProcessorFilterTracker tracker = original.getProcessorFilterTracker();
+        tracker.setMinMetaId(500L);
+        tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
+        processorFilterTrackerDao.update(tracker);
+
+        processorFilterDao.logicalDeleteByProcessorFilterId(original.getId());
+        final ProcessorFilter deleted = processorFilterDao.fetch(original.getId()).orElseThrow();
+        assertThat(deleted.isDeleted()).isTrue();
+
+        final ProcessorFilter replica = processorFilterDao.restoreProcessorFilter(deleted);
+
+        assertThat(replica.getId())
+                .describedAs("a new id, so nothing keyed by filter id is silently left stale")
+                .isNotEqualTo(original.getId());
+        assertThat(replica.getParentFilterId())
+                .describedAs("lineage back to the filter it replaced")
+                .isEqualTo(original.getId());
+        assertThat(replica.isDeleted()).isFalse();
+        assertThat(replica.getUuid())
+                .describedAs("the replica takes over the doc ref, so the doc still resolves")
+                .isEqualTo(uuid);
+
+        final ProcessorFilterTracker replicaTracker = replica.getProcessorFilterTracker();
+        assertThat(replicaTracker.getId()).isNotEqualTo(tracker.getId());
+        assertThat(replicaTracker.getMinMetaId()).isEqualTo(0L);
+        assertThat(replicaTracker.getStatus()).isEqualTo(ProcessorFilterTrackerStatus.CREATED);
+
+        final ProcessorFilter superseded = processorFilterDao.fetch(original.getId()).orElseThrow();
+        assertThat(superseded.isDeleted())
+                .describedAs("the filter that did the work stays deleted, with its history intact")
+                .isTrue();
+        assertThat(superseded.getUuid())
+                .describedAs("it has to give up the uuid - only one row may hold it")
+                .isNotEqualTo(uuid);
+        assertThat(superseded.getProcessorFilterTracker().getMinMetaId()).isEqualTo(500L);
+        assertThat(getProcessorTaskCount(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(original.getId())))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void restoringAFilterWithActiveTasksNoLongerFails() {
+        final Processor processor = createProcessor();
+        final ProcessorFilter original = createProcessorFilter(processor);
+        processorFilterDao.logicalDeleteByProcessorFilterId(original.getId());
+        // Resetting a tracker under an active task would have reprocessed data being processed, so
+        // the old code refused. A replica leaves those tasks with the filter that owns them, so
+        // there is nothing left to refuse.
+        createProcessorTask(original, TaskStatus.PROCESSING, NODE1, FEED);
+
+        final ProcessorFilter deleted = processorFilterDao.fetch(original.getId()).orElseThrow();
+        final ProcessorFilter replica = processorFilterDao.restoreProcessorFilter(deleted);
+
+        assertThat(replica.getId()).isNotEqualTo(original.getId());
+        assertThat(getProcessorTaskCount(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(replica.getId())))
+                .describedAs("the replica starts with no tasks of its own")
+                .isEqualTo(0);
+    }
+
+    @Test
+    void restoringUndeletesTheProcessor() {
+        final Processor processor = createProcessor();
+        final ProcessorFilter original = createProcessorFilter(processor);
+        processorDao.logicalDeleteByProcessorId(processor.getId());
+
+        final ProcessorFilter deleted = processorFilterDao.fetch(original.getId()).orElseThrow();
+        assertThat(deleted.getProcessor().isDeleted()).isTrue();
+
+        final ProcessorFilter replica = processorFilterDao.restoreProcessorFilter(deleted);
+
+        assertThat(replica.getProcessor().isDeleted())
+                .describedAs("a replica of a filter whose processor is deleted could never run")
+                .isFalse();
+        assertThat(getProcessorCount(PROCESSOR.DELETED.eq(false))).isEqualTo(1);
+    }
+
+    @Test
+    void restoringAFilterThatIsNotDeletedChangesNothing() {
+        final Processor processor = createProcessor();
+        final ProcessorFilter original = createProcessorFilter(processor);
+
+        assertThat(processorFilterDao.restoreProcessorFilter(original)).isEqualTo(original);
+        assertThat(getProcessorFilterCount(null)).isEqualTo(1);
+    }
+
     @Test
     void nextPollMsRoundTrips() {
         final Processor processor = createProcessor();

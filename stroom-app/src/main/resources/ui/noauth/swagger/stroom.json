@@ -9672,6 +9672,33 @@
         "tags" : [ "Processor Tasks" ]
       }
     },
+    "/processorTask/v1/claimStatus/{nodeName}" : {
+      "get" : {
+        "operationId" : "getProcessorClaimStatus",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcessorClaimStatus"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get what a node is doing about claiming its own processor tasks",
+        "tags" : [ "Processor Tasks" ]
+      }
+    },
     "/processorTask/v1/find" : {
       "post" : {
         "operationId" : "findProcessorTasks",
@@ -23475,6 +23502,60 @@
           }
         }
       },
+      "ProcessorClaimStatus" : {
+        "type" : "object",
+        "properties" : {
+          "backedOffFilterCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "claimAttempts" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "claimTasksOnWorker" : {
+            "type" : "boolean"
+          },
+          "eligibleFilterCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "emptyClaims" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "error" : {
+            "type" : "string"
+          },
+          "filtersWithWorkCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "lastHeartbeatAgeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lockedMetaReleases" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "nodeName" : {
+            "type" : "string"
+          },
+          "summaryAgeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "tasksClaimed" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "tasksInFlight" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "ProcessorFilter" : {
         "type" : "object",
         "properties" : {
@@ -23512,6 +23593,10 @@
           "minMetaCreateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "parentFilterId" : {
+            "type" : "integer",
+            "format" : "int32"
           },
           "pipelineName" : {
             "type" : "string"
