@@ -34,17 +34,17 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * {@code stroom:ai($model, $message)} and {@code stroom:ai($model, $message, $systemPrompt)}. Asks the chat
+ * {@code stroom:ask-ai($model, $message)} and {@code stroom:ask-ai($model, $message, $systemPrompt)}. Asks the chat
  * model identified by name or UUID a question and returns its answer.
  * <p>
  * The model is asked once per call, so a pipeline that calls this for every record will make a request per
  * record. Repeated identical questions are served from a cache, see {@code AiConfig.chatResponseCache}.
  */
-class Ai extends StroomExtensionFunctionCall {
+class AskAi extends StroomExtensionFunctionCall {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Ai.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AskAi.class);
 
-    public static final String FUNCTION_NAME = "ai";
+    public static final String FUNCTION_NAME = "ask-ai";
 
     private final AiService aiService;
 
@@ -55,7 +55,7 @@ class Ai extends StroomExtensionFunctionCall {
     private Map<String, Optional<DocRef>> cachedModelRefs;
 
     @Inject
-    Ai(final AiService aiService) {
+    AskAi(final AiService aiService) {
         this.aiService = aiService;
     }
 

@@ -14881,7 +14881,8 @@
             "enum" : [ "STROOM_QL_VERSION_0_1", "SIGMA" ]
           },
           "level" : {
-            "type" : "string"
+            "type" : "string",
+            "enum" : [ "LOW", "MEDIUM", "HIGH", "CRITICAL" ]
           },
           "name" : {
             "type" : "string"
@@ -14908,7 +14909,8 @@
             "type" : "boolean"
           },
           "status" : {
-            "type" : "string"
+            "type" : "string",
+            "enum" : [ "EXPERIMENTAL", "TESTING", "STABLE", "DEPRECATED" ]
           },
           "suppressDuplicateNotifications" : {
             "type" : "boolean"
@@ -24882,9 +24884,6 @@
             "type" : "string",
             "enum" : [ "STROOM_QL_VERSION_0_1", "SIGMA" ]
           },
-          "level" : {
-            "type" : "string"
-          },
           "name" : {
             "type" : "string"
           },
@@ -24911,9 +24910,6 @@
           },
           "reportSettings" : {
             "$ref" : "#/components/schemas/ReportSettings"
-          },
-          "status" : {
-            "type" : "string"
           },
           "suppressDuplicateNotifications" : {
             "type" : "boolean"

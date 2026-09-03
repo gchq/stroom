@@ -52,6 +52,21 @@ public final class NotificationStreamDestination extends NotificationDestination
         return useSourceFeedIfPossible;
     }
 
+    /**
+     * Whether detections will actually go to the feed the source data came from rather than to the
+     * destination feed.
+     * <p>
+     * Only a streaming rule processes a source stream to take a feed from, so for anything else the option is
+     * ignored and the destination feed is used. Not a getter, so that Jackson leaves it alone.
+     * </p>
+     *
+     * @param analyticProcessType How the owning rule is processed.
+     */
+    public boolean isUsingSourceFeed(final AnalyticProcessType analyticProcessType) {
+        return useSourceFeedIfPossible
+               && AnalyticProcessType.STREAMING.equals(analyticProcessType);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

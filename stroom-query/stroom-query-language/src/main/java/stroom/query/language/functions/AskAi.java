@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
-        name = Ai.NAME,
+        name = AskAi.NAME,
         commonCategory = FunctionCategory.AI,
         commonReturnType = ValString.class,
         commonReturnDescription = "The model's answer.",
@@ -55,13 +55,13 @@ import java.util.function.Supplier;
                                         description = "The system prompt to send to the model ahead of the " +
                                                       "message, e.g. to tell it what role to play.",
                                         argType = ValString.class)})})
-class Ai extends AbstractManyChildFunction {
+class AskAi extends AbstractManyChildFunction {
 
-    static final String NAME = "ai";
+    static final String NAME = "askAi";
 
     private final AiProvider aiProvider;
 
-    public Ai(final ExpressionContext expressionContext, final String name) {
+    public AskAi(final ExpressionContext expressionContext, final String name) {
         super(name, 2, 3);
         this.aiProvider = expressionContext.getAiProvider();
         Objects.requireNonNull(aiProvider, "Null AI provider");

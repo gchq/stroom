@@ -28,15 +28,15 @@ public class AiXsltFunctionModule extends AbstractXsltFunctionModule {
 
     @Override
     protected void configureFunctions() {
-        bindFunction(AiFunction.class);
+        bindFunction(AskAiFunction.class);
     }
 
-    private static class AiFunction extends StroomExtensionFunctionDefinition<Ai> {
+    private static class AskAiFunction extends StroomExtensionFunctionDefinition<AskAi> {
 
         @Inject
-        AiFunction(final Provider<Ai> functionCallProvider) {
+        AskAiFunction(final Provider<AskAi> functionCallProvider) {
             super(
-                    Ai.FUNCTION_NAME,
+                    AskAi.FUNCTION_NAME,
                     2,
                     3,
                     new SequenceType[]{

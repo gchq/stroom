@@ -18,7 +18,7 @@ package stroom.analytics.client.presenter;
 
 import stroom.document.client.event.ChangeUiHandlers;
 
-public interface AnalyticNotificationUiHandlers extends ChangeUiHandlers {
+public interface SettingsUiHandlers extends ChangeUiHandlers {
 
     void onSetDefaultErrorFeed();
 }

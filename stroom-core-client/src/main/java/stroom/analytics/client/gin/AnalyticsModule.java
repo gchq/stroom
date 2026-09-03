@@ -27,6 +27,8 @@ import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.Analy
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
+import stroom.analytics.client.presenter.AnalyticSettingsPresenter;
+import stroom.analytics.client.presenter.AnalyticSettingsPresenter.AnalyticSettingsView;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
 import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter;
@@ -46,6 +48,7 @@ import stroom.analytics.client.view.AnalyticEmailDestinationViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationEditViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
+import stroom.analytics.client.view.AnalyticSettingsViewImpl;
 import stroom.analytics.client.view.AnalyticStreamDestinationViewImpl;
 import stroom.analytics.client.view.BatchExecutionScheduleEditViewImpl;
 import stroom.analytics.client.view.DuplicateManagementViewImpl;
@@ -64,6 +67,9 @@ public class AnalyticsModule extends PluginModule {
 
         bind(AnalyticRulePresenter.class);
 
+        bindPresenterWidget(AnalyticSettingsPresenter.class,
+                AnalyticSettingsView.class,
+                AnalyticSettingsViewImpl.class);
         bindPresenterWidget(AnalyticNotificationEditPresenter.class,
                 AnalyticNotificationEditView.class,
                 AnalyticNotificationEditViewImpl.class);

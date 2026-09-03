@@ -22,6 +22,8 @@ import stroom.analytics.impl.ScheduledExecutorService;
 import stroom.analytics.impl.ScheduledQueryAnalyticExecutable;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleLevel;
+import stroom.analytics.shared.AnalyticRuleStatus;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionHistoryRequest;
 import stroom.analytics.shared.ExecutionSchedule;
@@ -79,27 +81,88 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
     @Inject
     private ScheduledExecutorService<AnalyticRuleDoc> scheduledExecutorService;
 
+    private static final String QUERY = """
+            from index_view
+            where UserId = user5
+            select StreamId, EventId, UserId""";
+
+    private static final String RULE_DOCUMENTATION = "Internal notes that must not leave Stroom.";
+
     @Test
     void testSingleEventScheduledQuery() {
-        final String query = """
-                from index_view
-                where UserId = user5
-                select StreamId, EventId, UserId""";
-        basicTest(query, 9, 6);
+        basicTest(QUERY, 9, 6);
     }
 
-    private void basicTest(final String query,
-                           final int expectedStreams,
-                           final int expectedRecords) {
-        final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
+    /**
+     * A rule told not to include its documentation must not put it in the detections it writes, whichever way
+     * the rule is processed. Detections can leave Stroom, e.g. by email, so this is not merely cosmetic.
+     */
+    @Test
+    void testRuleDocumentationExcludedFromDetections() {
+        runRule(ruleBuilder()
+                .description(RULE_DOCUMENTATION)
+                .includeRuleDocumentation(false)
+                .build());
+
+        assertThat(readNewestStream())
+                .contains("user5")
+                .doesNotContain(RULE_DOCUMENTATION)
+                .doesNotContain("<detailedDescription>");
+    }
+
+    @Test
+    void testRuleDocumentationIncludedInDetections() {
+        runRule(ruleBuilder()
+                .description(RULE_DOCUMENTATION)
+                .includeRuleDocumentation(true)
+                .build());
+
+        assertThat(readNewestStream())
+                .contains(RULE_DOCUMENTATION);
+    }
+
+    /**
+     * A rule's level and status are declared on the rule and written to every detection it produces,
+     * whichever way the rule is processed.
+     */
+    @Test
+    void testLevelAndStatusIncludedInDetections() {
+        runRule(ruleBuilder()
+                .level(AnalyticRuleLevel.HIGH)
+                .status(AnalyticRuleStatus.STABLE)
+                .build());
+
+        assertThat(readNewestStream())
+                .contains("<level>High</level>")
+                .contains("<status>Stable</status>");
+    }
+
+    @Test
+    void testLevelAndStatusOmittedWhenNotSet() {
+        // Neither is mandatory, so a rule that declares neither produces detections without the elements.
+        runRule(ruleBuilder().build());
+
+        assertThat(readNewestStream())
+                .contains("user5")
+                .doesNotContain("<level>")
+                .doesNotContain("<status>");
+    }
+
+    private AnalyticRuleDoc.Builder ruleBuilder() {
+        return AnalyticRuleDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .query(query)
+                .query(QUERY)
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
                 .notifications(createNotificationConfig())
-                .errorFeed(analyticsDataSetup.getDetections())
-                .build();
-        final DocRef docRef = writeRule(analyticRuleDoc);
+                .errorFeed(analyticsDataSetup.getDetections());
+    }
+
+    private void runRule(final AnalyticRuleDoc analyticRuleDoc) {
+        createScheduleAndRun(writeRule(analyticRuleDoc));
+    }
+
+    private ExecutionSchedule createScheduleAndRun(final DocRef docRef) {
         final long now = System.currentTimeMillis();
         final ExecutionSchedule executionSchedule = executionScheduleDao.createExecutionSchedule(ExecutionSchedule
                 .builder()
@@ -124,6 +187,17 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
 
         // Now run the search process.
         scheduledExecutorService.exec(analyticsExecutor);
+
+        return executionSchedule;
+    }
+
+    private void basicTest(final String query,
+                           final int expectedStreams,
+                           final int expectedRecords) {
+        final AnalyticRuleDoc analyticRuleDoc = ruleBuilder()
+                .query(query)
+                .build();
+        final ExecutionSchedule executionSchedule = createScheduleAndRun(writeRule(analyticRuleDoc));
 
         // As we have created alerts ensure we now have more streams.
         testDetectionsStream(expectedStreams, expectedRecords);
