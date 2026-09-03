@@ -29,7 +29,6 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
-import stroom.docstore.api.DocFinder;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -39,7 +38,6 @@ import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockUserSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 import stroom.test.StroomIntegrationTest;
-import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
@@ -128,6 +126,10 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                 .analyticProcessType(sample.getAnalyticProcessType())
                 .analyticProcessConfig(sample.getAnalyticProcessConfig())
                 .notifications(new ArrayList<>(sample.getNotifications()))
+                .description(sample.getDescription())
+                .includeRuleDocumentation(sample.isIncludeRuleDocumentation())
+                .level(sample.getLevel())
+                .status(sample.getStatus())
                 .errorFeed(analyticsDataSetup.getDetections())
                 .build();
         analyticRuleStore.writeDocument(analyticRuleDoc);
@@ -143,11 +145,18 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
         analyticsDataSetup.checkStreamCount(expectedStreams);
 
         // As we have created alerts ensure we now have more streams.
+        final String result = readNewestStream();
+        assertThat(result.split("<detection>").length).isEqualTo(expectedRecords);
+        assertThat(result).contains("user5");
+    }
+
+    /**
+     * @return The content of the most recently written stream, e.g. the detections a rule has just produced.
+     */
+    protected String readNewestStream() {
         final Meta newestMeta = analyticsDataSetup.getNewestMeta();
         try (final Source source = streamStore.openSource(newestMeta.getId())) {
-            final String result = SourceUtil.readString(source);
-            assertThat(result.split("<detection>").length).isEqualTo(expectedRecords);
-            assertThat(result).contains("user5");
+            return SourceUtil.readString(source);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

@@ -223,7 +223,7 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                         .withDetectorName(doc.getName())
                                         .withDetectorUuid(doc.getUuid())
                                         .withDetectorVersion(doc.getVersion())
-                                        .withDetailedDescription(doc.getDescription())
+                                        .withDetailedDescription(RuleUtil.getDetailedDescription(doc))
                                         .withRandomDetectionUniqueId()
                                         .withDetectionRevision(0)
                                         .withExecutionSchedule(NullSafe
@@ -233,6 +233,8 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                         .notDefunct()
                                         .withValues(values)
                                         .withLinkedEvents(linkedEvents)
+                                        .withLevel(RuleUtil.getLevel(doc))
+                                        .withStatus(RuleUtil.getStatus(doc))
                                         .build();
                                 detectionConsumerProxy.getDetectionConsumer().accept(detection);
                             }

@@ -3,6 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:list="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="searchDownloadFileType" label="File Type">
@@ -23,6 +24,16 @@
         <form:FormGroup identity="aiSummaryPrompt" label="AI Summary Prompt"
                         helpText="What to ask the model about the report&apos;s data. Leave this empty to use the default, which asks for a short summary of what the data shows and anything worth attention.">
             <g:TextArea ui:field="aiSummaryPrompt" width="100%" visibleLines="4"/>
+        </form:FormGroup>
+        <form:FormGroup identity="analyticProcessingErrorFeed"
+                        label="Feed For Errors"
+                        helpText="The Feed to write to for any errors that occur during execution.">
+            <g:FlowPanel styleName="button-group">
+                <g:SimplePanel ui:field="errorFeed"/>
+                <b:Button ui:field="setDefaultErrorFeed"
+                          text="Set Default"
+                          addStyleNames="allow-focus"/>
+            </g:FlowPanel>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

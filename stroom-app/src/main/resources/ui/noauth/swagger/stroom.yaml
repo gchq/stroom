@@ -10263,6 +10263,11 @@ components:
           - SIGMA
         level:
           type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
         name:
           type: string
         notifications:
@@ -10281,6 +10286,11 @@ components:
           type: boolean
         status:
           type: string
+          enum:
+          - EXPERIMENTAL
+          - TESTING
+          - STABLE
+          - DEPRECATED
         suppressDuplicateNotifications:
           type: boolean
         timeRange:
@@ -18371,8 +18381,6 @@ components:
           enum:
           - STROOM_QL_VERSION_0_1
           - SIGMA
-        level:
-          type: string
         name:
           type: string
         notifications:
@@ -18391,8 +18399,6 @@ components:
           type: boolean
         reportSettings:
           $ref: "#/components/schemas/ReportSettings"
-        status:
-          type: string
         suppressDuplicateNotifications:
           type: boolean
         timeRange:
