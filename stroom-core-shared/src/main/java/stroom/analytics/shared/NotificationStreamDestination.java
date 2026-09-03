@@ -19,7 +19,6 @@ package stroom.analytics.shared;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -63,7 +62,6 @@ public final class NotificationStreamDestination extends NotificationDestination
      *
      * @param analyticProcessType How the owning rule is processed.
      */
-    @JsonIgnore
     public boolean isUsingSourceFeed(final AnalyticProcessType analyticProcessType) {
         return useSourceFeedIfPossible
                && AnalyticProcessType.STREAMING.equals(analyticProcessType);
