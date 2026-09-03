@@ -16,13 +16,13 @@
 
 package stroom.util.client;
 
-import stroom.pathways.shared.otel.trace.NanoDuration;
-
 /**
  * Utility methods for formatting durations and counts in a human-readable form.
  *
- * <p>All methods are pure static helpers with no GWT-specific imports, making
- * the class safe for use in both GWT client code and server-side compilation.
+ * <p>All methods are pure static helpers taking primitives, with no GWT-specific imports. This
+ * package is translatable in every GWT app through {@code stroom.util.Util}, so it must not name a
+ * type from a feature module: only the main app inherits {@code stroom.pathways.Pathways}, and an
+ * import of one would fail the dashboard compile with "No source code is available for type".
  */
 public final class DurationUtil {
 
@@ -30,7 +30,7 @@ public final class DurationUtil {
     }
 
     /**
-     * Formats a {@link NanoDuration} into a human-readable string that scales
+     * Formats a duration in nanoseconds into a human-readable string that scales
      * automatically from nanoseconds up to hours:
      * <ul>
      *   <li>&lt; 1 µs  → {@code Xns}</li>
@@ -41,32 +41,28 @@ public final class DurationUtil {
      *   <li>&ge; 1 hr  → {@code Xh Xm Xs}</li>
      * </ul>
      *
-     * @param duration the duration to format, or {@code null}
-     * @return a human-readable string, or {@code ""} if {@code duration} is {@code null}
+     * @param nanos the duration to format, in nanoseconds
+     * @return a human-readable string
      */
-    public static String formatDuration(final NanoDuration duration) {
-        if (duration == null) {
-            return "";
-        }
-        final long n = duration.getNanos();
-        if (n < 0) {
+    public static String formatDuration(final long nanos) {
+        if (nanos < 0) {
             return "0ns";
         }
-        if (n < 1_000L) {
-            return n + "ns";
+        if (nanos < 1_000L) {
+            return nanos + "ns";
         }
-        if (n < 1_000_000L) {
-            return formatOneDecimal(n / 1_000.0) + "µs";
+        if (nanos < 1_000_000L) {
+            return formatOneDecimal(nanos / 1_000.0) + "µs";
         }
-        if (n < 1_000_000_000L) {
-            return formatOneDecimal(n / 1_000_000.0) + "ms";
+        if (nanos < 1_000_000_000L) {
+            return formatOneDecimal(nanos / 1_000_000.0) + "ms";
         }
-        if (n < 60_000_000_000L) {
+        if (nanos < 60_000_000_000L) {
             // < 1 minute — show seconds to 1 decimal place
-            return formatOneDecimal(n / 1_000_000_000.0) + "s";
+            return formatOneDecimal(nanos / 1_000_000_000.0) + "s";
         }
         // >= 1 minute — break into h / m / s (integer seconds)
-        final long totalSecs = n / 1_000_000_000L;
+        final long totalSecs = nanos / 1_000_000_000L;
         final long hours = totalSecs / 3_600L;
         final long mins = (totalSecs % 3_600L) / 60L;
         final long secs = totalSecs % 60L;

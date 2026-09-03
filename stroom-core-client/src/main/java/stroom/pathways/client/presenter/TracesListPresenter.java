@@ -291,7 +291,7 @@ public class TracesListPresenter
             if (start == null || rootEnd == null || rootEnd.isLessThan(start)) {
                 return "";
             }
-            return DurationUtil.formatDuration(rootEnd.diff(start));
+            return DurationUtil.formatDuration(rootEnd.diff(start).getNanos());
         };
         final Column<TraceRoot, String> column = DataGridUtil
                 .textColumnBuilder(valueExtractor)
@@ -316,7 +316,7 @@ public class TracesListPresenter
             if (start == null || end == null || end.isLessThan(start)) {
                 return "";
             }
-            return DurationUtil.formatDuration(end.diff(start));
+            return DurationUtil.formatDuration(end.diff(start).getNanos());
         };
         final Column<TraceRoot, String> column = DataGridUtil
                 .textColumnBuilder(valueExtractor)
