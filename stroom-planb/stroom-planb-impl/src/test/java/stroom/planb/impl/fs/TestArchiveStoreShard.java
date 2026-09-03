@@ -31,6 +31,7 @@ import stroom.planb.shared.StateSettings;
 import stroom.planb.shared.StateType;
 import stroom.task.api.ExecutorProvider;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -43,7 +44,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -88,7 +88,7 @@ class TestArchiveStoreShard {
      * blocking would hand that wait to whoever is running cleanup.
      */
     @Test
-    void aReplacedCopyIsClosedOnlyOnceItsReadersHaveLeft(@TempDir final Path tempDir) throws Exception {
+    void replacedCopyIsClosedOnlyOnceItsReadersHaveLeft(@TempDir final Path tempDir) throws Exception {
         final PlanBDoc doc = createDoc();
         final Path bucket = createBucket(tempDir, doc, "v1");
         final ArchiveStoreShard shard = createArchiveShard(tempDir, doc, bucket);
@@ -118,7 +118,7 @@ class TestArchiveStoreShard {
      * pathway build, which holds one for minutes at a time.
      */
     @Test
-    void aReadDoesNotWaitForAnotherReaderAfterARepublish(@TempDir final Path tempDir) throws Exception {
+    void readDoesNotWaitForAnotherReaderAfterARepublish(@TempDir final Path tempDir) throws Exception {
         final PlanBDoc doc = createDoc();
         final Path bucket = createBucket(tempDir, doc, "v1");
         final ArchiveShardRef ref = new ArchiveShardRef(DATE_LABEL, bucket, BucketGranularity.HOUR);
@@ -143,7 +143,7 @@ class TestArchiveStoreShard {
 
             // Refreshing the copy in place needed exclusive access, so this used to block until the
             // reader above released, however long that took.
-            assertTimeoutPreemptively(Duration.ofSeconds(10), () ->
+            Assertions.assertTimeoutPreemptively(Duration.ofSeconds(10), () ->
                     shardManager.getArchive(doc, SHARD_INDEX, ref, db -> null));
         } finally {
             releaseReader.countDown();
