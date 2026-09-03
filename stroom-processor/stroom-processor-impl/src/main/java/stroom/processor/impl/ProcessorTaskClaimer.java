@@ -66,9 +66,12 @@ import java.util.stream.Collectors;
  * once needs no query at all: the heartbeat registry already knows exactly what this node is
  * running. Only a genuinely cluster wide limit has to ask the database, and then only for filters
  * that actually have one, and the answer is cached for {@link #CLUSTER_COUNT_CACHE_MS} so that a
- * busy node does not count the cluster once per claim. Overshooting a cluster limit by up to
- * (nodes x batch) within that window is accepted, consistent with the existing behaviour that all
- * of these limits deliberately over provision rather than throttle exactly.
+ * busy node does not count the cluster once per claim. The cached count is carried forward by what
+ * the registry has seen since it was taken, so this node's own claims and completions inside the
+ * window are exact and only the rest of the cluster is approximated - see
+ * {@link #getClusterCount(ProcessorFilter)}. Overshooting a cluster limit by up to
+ * (other nodes x batch) within that window is accepted, consistent with the existing behaviour
+ * that all of these limits deliberately over provision rather than throttle exactly.
  */
 @Singleton
 public class ProcessorTaskClaimer {
@@ -284,16 +287,36 @@ public class ProcessorTaskClaimer {
     }
 
     /**
-     * How many of this filter's tasks the whole cluster is processing, from a short lived cache.
+     * How many of this filter's tasks the whole cluster is processing, from a short lived cache
+     * corrected for what this node has done since the count was taken.
+     * <p>
+     * The database is asked at most once per {@link #CLUSTER_COUNT_CACHE_MS}, but the cached
+     * answer is not used raw: this node's own claims and completions inside that window are known
+     * exactly and for free from the heartbeat registry, so the count is carried forward by the
+     * change in that registry since the query. A count taken before a claim therefore cannot be
+     * spent twice by back to back claims, and capacity freed by this node's tasks finishing is
+     * seen without waiting for the cache to expire.
+     * <p>
+     * The registry gives the <em>change</em> rather than the absolute local figure because it
+     * only knows about tasks this JVM claimed. Tasks left in PROCESSING under this node's name by
+     * a previous run are the reaper's business, but they are real cluster load in the meantime and
+     * the query counts them; taking a delta keeps them counted.
      */
     private int getClusterCount(final ProcessorFilter filter) {
         final long nowMs = System.currentTimeMillis();
         final ClusterCount cached = clusterCounts.get(filter.getId());
         if (cached != null && cached.isCurrent(nowMs)) {
-            return cached.count();
+            return cached.estimate(processorTaskHeartbeat.countForFilter(filter.getId()));
         }
         final int count = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.PROCESSING);
-        clusterCounts.put(filter.getId(), new ClusterCount(count, nowMs));
+        // The baseline is taken after the query, not before. A task of this node's that finishes
+        // while the query is in flight is already missing from the count that comes back, so a
+        // baseline taken beforehand would have the delta subtract it a second time and leave the
+        // estimate under the true cluster count for the rest of the window - the direction that
+        // over claims. Taking it afterwards can only over count, which claims less. Nothing can be
+        // claimed in the gap to make that worse, because claiming is single flight per node.
+        final int localCount = processorTaskHeartbeat.countForFilter(filter.getId());
+        clusterCounts.put(filter.getId(), new ClusterCount(count, localCount, nowMs));
         return count;
     }
 
@@ -344,10 +367,29 @@ public class ProcessorTaskClaimer {
     // --------------------------------------------------------------------------------
 
 
-    private record ClusterCount(int count, long takenMs) {
+    /**
+     * A cluster wide PROCESSING count for one filter, as at {@code takenMs}, together with how
+     * many of that filter's tasks this node held at that moment.
+     *
+     * @param count      The whole cluster's count when the query ran.
+     * @param localCount This node's heartbeat registry count as at just after the query, the
+     *                   baseline the estimate is carried forward from.
+     * @param takenMs    When the query ran.
+     */
+    private record ClusterCount(int count, int localCount, long takenMs) {
 
         private boolean isCurrent(final long nowMs) {
             return nowMs >= takenMs && nowMs - takenMs < CLUSTER_COUNT_CACHE_MS;
+        }
+
+        /**
+         * @param localCountNow This node's current heartbeat registry count for the filter.
+         * @return The cluster count with this node's claims and completions since the query
+         * applied. Never negative - the registry and the query can disagree transiently about
+         * this node's own rows, and a negative count would read as free capacity.
+         */
+        private int estimate(final int localCountNow) {
+            return Math.max(0, count + localCountNow - localCount);
         }
     }
 }

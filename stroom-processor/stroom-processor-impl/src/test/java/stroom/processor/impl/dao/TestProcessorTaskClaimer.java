@@ -24,6 +24,7 @@ import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorProfileCache;
 import stroom.processor.impl.ProcessorTaskAvailability;
 import stroom.processor.impl.ProcessorTaskClaimer;
+import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskHeartbeat;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -110,6 +111,86 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
     }
 
     @Test
+    void backToBackClaimsCannotSpendTheSameClusterCountTwice() {
+        final Processor processor = createProcessor();
+        final ProcessorFilter filter = processorFilterDao.update(
+                createProcessorFilter(processor).copy().maxProcessingTasks(2).build());
+        createTasks(filter, 5);
+        final ProcessorTaskClaimer claimer = claimer(List.of(filter));
+
+        assertThat(claimer.claimTasks(2)).hasSize(2);
+
+        // The cluster count behind the limit is cached for a second, and the same node asking
+        // again inside that window is the ordinary case - a fetch is single flight per node, but
+        // nothing spaces successive fetches out.
+        assertThat(claimer.claimTasks(2))
+                .describedAs("a count taken before a claim must not be spent again by the next one")
+                .isEmpty();
+        assertThat(processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.PROCESSING))
+                .describedAs("so the filter's own limit holds for one node claiming repeatedly, "
+                             + "not just across nodes")
+                .isEqualTo(2);
+    }
+
+    @Test
+    void capacityFreedByThisNodesOwnTasksIsSeenWithoutWaitingForTheCountToExpire() {
+        final Processor processor = createProcessor();
+        final ProcessorFilter filter = processorFilterDao.update(
+                createProcessorFilter(processor).copy().maxProcessingTasks(2).build());
+        // This node is already running both of the tasks the filter allows, with more waiting.
+        final List<Long> running = List.of(
+                createProcessorTask(filter, TaskStatus.PROCESSING, NODE1, FEED),
+                createProcessorTask(filter, TaskStatus.PROCESSING, NODE1, FEED));
+        createTasks(filter, 2);
+        final ProcessorTaskHeartbeat heartbeat = heartbeat();
+        running.forEach(taskId -> heartbeat.register(taskId, filter.getId(), null));
+        final ProcessorTaskClaimer claimer = claimer(List.of(filter), null, heartbeat);
+
+        assertThat(claimer.claimTasks(2))
+                .describedAs("the cluster is at the filter's limit, so there is nothing to take")
+                .isEmpty();
+
+        // Those two are done with, which the registry knows about the moment it happens.
+        processorTaskDao.releaseTasks(Set.copyOf(running), TaskStatus.PROCESSING);
+        running.forEach(heartbeat::deregister);
+
+        assertThat(claimer.claimTasks(2))
+                .describedAs("the cached count is corrected by what this node has since finished, "
+                             + "rather than the node idling until it expires")
+                .hasSize(2);
+    }
+
+    @Test
+    void taskFinishingWhileTheCountIsInFlightIsNotSubtractedTwice() {
+        final Processor processor = createProcessor();
+        final ProcessorFilter filter = processorFilterDao.update(
+                createProcessorFilter(processor).copy().maxProcessingTasks(2).build());
+        final long running = createProcessorTask(filter, TaskStatus.PROCESSING, NODE1, FEED);
+        createTasks(filter, 3);
+        final ProcessorTaskHeartbeat heartbeat = heartbeat();
+        heartbeat.register(running, filter.getId(), null);
+
+        // The task this node was running finishes while the cluster count query is in flight, so
+        // the count comes back without it. The registry baseline the count is carried forward from
+        // has to be taken on the same side of that, or this node's one task is subtracted twice.
+        final ProcessorTaskDao dao = Mockito.spy(processorTaskDao);
+        Mockito.doAnswer(invocation -> {
+            processorTaskDao.releaseTasks(Set.of(running), TaskStatus.PROCESSING);
+            heartbeat.deregister(running);
+            return invocation.callRealMethod();
+        }).when(dao).countTasksForFilter(filter.getId(), TaskStatus.PROCESSING);
+        final ProcessorTaskClaimer claimer = claimer(List.of(filter), null, heartbeat, dao);
+
+        assertThat(claimer.claimTasks(2)).hasSize(2);
+
+        assertThat(claimer.claimTasks(2))
+                .describedAs("the filter is at its limit, whatever happened during the query")
+                .isEmpty();
+        assertThat(processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.PROCESSING))
+                .isEqualTo(2);
+    }
+
+    @Test
     void abandonedTasksGoBackForAnotherNode() {
         final Processor processor = createProcessor();
         final ProcessorFilter filter = createProcessorFilter(processor);
@@ -147,6 +228,13 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
     private ProcessorTaskClaimer claimer(final List<ProcessorFilter> eligible,
                                          final MetaService metaService,
                                          final ProcessorTaskHeartbeat heartbeat) {
+        return claimer(eligible, metaService, heartbeat, processorTaskDao);
+    }
+
+    private ProcessorTaskClaimer claimer(final List<ProcessorFilter> eligible,
+                                         final MetaService metaService,
+                                         final ProcessorTaskHeartbeat heartbeat,
+                                         final ProcessorTaskDao dao) {
         final EligibleFilters eligibleFilters = Mockito.mock(EligibleFilters.class);
         Mockito.when(eligibleFilters.getEligibleFilters(Mockito.any(Instant.class))).thenReturn(eligible);
 
@@ -156,7 +244,7 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
         Mockito.when(processorConfig.getSkipEmptyFilterFetchDuration()).thenReturn(StroomDuration.ZERO);
 
         final ProcessorTaskAvailability availability = new ProcessorTaskAvailability(
-                eligibleFilters, processorTaskDao, () -> processorConfig);
+                eligibleFilters, dao, () -> processorConfig);
 
         final MetaService meta = metaService != null
                 ? metaService
@@ -170,7 +258,7 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
 
         return new ProcessorTaskClaimer(
                 availability,
-                processorTaskDao,
+                dao,
                 Mockito.mock(ProcessorProfileCache.class),
                 heartbeat != null
                         ? heartbeat

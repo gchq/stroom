@@ -1142,8 +1142,14 @@ which at least is an honest central queue rather than a cache pretending not to 
 2. **Cluster-wide limits use a short-TTL count cache.** Cache the per-filter cluster PROCESSING
    count for ~1s, and only for filters that actually have a limit
    (`isProcessingTaskCountBounded()`, or a profile with `maxClusterThreads < MAX_VALUE`).
-   Overshoot bounded by (nodes × batch) within the TTL is accepted, consistent with the standing
-   decision that all concurrency limits deliberately over-provision.
+   The cached figure is **carried forward by the change in this node's heartbeat registry since
+   the query**, so a count taken before a claim cannot be spent again by the next claim inside the
+   window, and capacity freed by this node's own tasks completing is seen immediately. A delta
+   rather than an absolute local count, because the registry only knows tasks *this JVM* claimed —
+   rows left PROCESSING under this node's name by a previous run are real cluster load until the
+   reaper takes them, and the query counts them.
+   Overshoot is therefore bounded by (**other** nodes × batch) within the TTL, which is accepted,
+   consistent with the standing decision that all concurrency limits deliberately over-provision.
 
    `maxNodeThreads` needs **no query at all** — the node knows its own PROCESSING count exactly
    from the heartbeat registry. Only genuinely cluster-wide limits touch the database.
@@ -1395,7 +1401,9 @@ Phase 4 reversal, which is the one place the built system deliberately departs f
     - The heartbeat registry now carries the **filter id** per task, which makes a per-node
       concurrency limit exact and free (§6 item 2's "no query at all"). Only genuinely
       cluster-wide limits query, and only for filters that have one, cached 1s
-      (`ProcessorTaskClaimer.CLUSTER_COUNT_CACHE_MS`, deliberately not a property).
+      (`ProcessorTaskClaimer.CLUSTER_COUNT_CACHE_MS`, deliberately not a property) and carried
+      forward by the registry delta since the query, so the window over-provisions only for what
+      *other* nodes have done.
     - **Locked meta: claim first, release after** as §3.3 requires, outside the claim transaction.
     - `FilterFetchBackoff` gained `recordEmptyClaim`/`isClaimDue` keyed on the summary's
       `MIN(id)` **availability marker** — a distinct pair rather than an overload, because the
