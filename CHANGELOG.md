@@ -13,6 +13,21 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.15] - 2026-09-03
+
+* Feature **#5758** : Track Ask Stroom AI queries in Task Manager so they can be cancelled by an operator.
+
+* Bug **#5766** : Fix scheduled query and table builder analytic rules including the rule's documentation in detections when `Include Rule Documentation` is unticked.
+
+* Bug **#5768** : Fix reports always being sent even when `Send Empty Reports` is unticked and the report has no rows.
+
+* Bug **#5770** : Fix `Use Source Feed If Possible` having no effect, so a streaming rule again writes its detections to the feed the source data came from. The option is ignored, and disabled in the user interface, for rules that are not streaming.
+
+* Feature **#5774** : Add `Level` and `Status` to an Analytic Rule, which are written to every detection the rule produces and are available to notification email templates as `{{ level }}` and `{{ status }}`.
+
+* Refactor **#5774** : Move `Include Rule Documentation` and `Feed For Errors` from the Notifications tab of an Analytic Rule or Report to a new Settings tab, so the Notifications tab holds only notifications.
+
+
 ## [v7.13-beta.14] - 2026-09-02
 
 * Bug **#5747** : Fix Stroom AI integration to support redirects.
@@ -2520,7 +2535,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.15...HEAD
+[v7.13-beta.15]: https://github.com/gchq/stroom/compare/v7.13-beta.14...v7.13-beta.15
 [v7.13-beta.14]: https://github.com/gchq/stroom/compare/v7.13-beta.13...v7.13-beta.14
 [v7.13-beta.13]: https://github.com/gchq/stroom/compare/v7.13-beta.12...v7.13-beta.13
 [v7.13-beta.12]: https://github.com/gchq/stroom/compare/v7.13-beta.11...v7.13-beta.12
