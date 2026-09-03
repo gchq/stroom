@@ -326,8 +326,8 @@ class TestSharedFileStoreTraceRoundTrip {
     }
 
     /**
-     * Reads the trace back the way {@code AbstractTracesStore} does, through the shard manager's
-     * archive reader rather than by opening the published file directly.
+     * Reads the trace back the way a query does, through the shard manager's archive reader rather
+     * than by opening the published file directly.
      */
     private int spanCountInArchive(final PlanBDoc doc,
                                    final int shardIndex,

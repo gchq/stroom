@@ -23,9 +23,6 @@ import stroom.pathways.shared.GetSpansRequest;
 import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.TracesDoc;
-import stroom.planb.impl.data.archive.ArchiveShardLocator;
-import stroom.planb.impl.data.shard.ShardManager;
-import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -46,16 +43,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 /**
- * Every trace query endpoint must resolve its document through {@link TracesDocLoader}, which is where
- * the caller's USE permission is applied, before it reads anything.
+ * Every trace query endpoint must resolve its document through {@link TraceArchiveReader}, which
+ * applies the caller's USE permission, before it reads anything.
  *
- * <p>Refusing the load and asserting the refusal reaches the caller proves the endpoint consults the
- * loader at all; asserting the shard manager and shard locator were never touched proves it does so
- * before reading. A future endpoint that read a shard first would fail here.
+ * <p>Refusing the load and asserting the refusal reaches the caller proves the endpoint resolves the
+ * document at all; asserting nothing else was asked of the reader proves it does so before reading,
+ * since every bucket read goes through the same object. An endpoint that read a bucket first would
+ * fail here.
  */
 class TestTracesQueryAuthorisation {
 
@@ -67,15 +65,7 @@ class TestTracesQueryAuthorisation {
     private static final String TRACE_ID = "0123456789abcdef";
 
     @Mock
-    private TracesDocLoader docLoader;
-    @Mock
-    private ShardManager shardManager;
-    @Mock
-    private ArchiveShardLocator archiveShardLocator;
-    @Mock
-    private MergedCheckpointCache mergedCheckpointCache;
-    @Mock
-    private ExpressionPredicateFactory expressionPredicateFactory;
+    private TraceArchiveReader archiveReader;
     @Mock
     private SecurityContext securityContext;
     @Mock
@@ -96,15 +86,11 @@ class TestTracesQueryAuthorisation {
             final Function<TaskContext, Object> function = invocation.getArgument(1);
             return (Supplier<Object>) () -> function.apply(null);
         });
-        when(docLoader.getPlanBDoc(any()))
+        when(archiveReader.getPlanBDoc(any()))
                 .thenThrow(new PermissionException(null, "You are not authorised to read " + DOC_REF));
 
         store = new SharedFileTracesStore(
-                docLoader,
-                shardManager,
-                archiveShardLocator,
-                mergedCheckpointCache,
-                expressionPredicateFactory,
+                archiveReader,
                 securityContext,
                 executorProvider,
                 taskContextFactory);
@@ -112,8 +98,10 @@ class TestTracesQueryAuthorisation {
 
     private void assertRefused(final ThrowingCall call) {
         assertThatThrownBy(call::run).isInstanceOf(PermissionException.class);
-        verify(docLoader).getPlanBDoc(DOC_REF);
-        verifyNoInteractions(shardManager, archiveShardLocator);
+        verify(archiveReader).getPlanBDoc(DOC_REF);
+        // Every read of a bucket goes through the reader, so nothing else being asked of it means the
+        // refusal landed before any of the store was touched.
+        verifyNoMoreInteractions(archiveReader);
     }
 
     @Test

@@ -20,7 +20,6 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentTypeName;
 import stroom.pathways.shared.TracesDoc;
-import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.shared.PlanBDocument;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
@@ -40,45 +39,50 @@ class TracesDocLoader {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TracesDocLoader.class);
 
-    private final PlanBDocCache planBDocCache;
     private final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider;
     private final SecurityContext securityContext;
 
     @Inject
-    TracesDocLoader(final PlanBDocCache planBDocCache,
-                    final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider,
+    TracesDocLoader(final Provider<Map<DocumentTypeName, DocumentActionHandler>> documentActionHandlersProvider,
                     final SecurityContext securityContext) {
-        this.planBDocCache = planBDocCache;
         this.documentActionHandlersProvider = documentActionHandlersProvider;
         this.securityContext = securityContext;
     }
 
+    /**
+     * Resolves the trace store a query names, once the caller is allowed to use it.
+     *
+     * <p>The type is supplied by the caller and is checked rather than trusted. Only a
+     * {@link TracesDoc} is resolvable here: the type decides nothing beyond whether the request is
+     * accepted, so it cannot be used to steer the lookup somewhere else.
+     */
     PlanBDocument getPlanBDoc(final DocRef docRef) {
         if (docRef == null) {
             return null;
         }
-        if (TracesDoc.TYPE.equals(docRef.getType())) {
-            final PlanBDocument doc;
-            try {
-                final DocumentActionHandler<?> handler = documentActionHandlersProvider.get()
-                        .get(new DocumentTypeName(TracesDoc.TYPE));
-                if (handler == null) {
-                    throw new IllegalStateException("No handler found for type: " + TracesDoc.TYPE);
-                }
-                doc = (PlanBDocument) handler.readDocument(docRef);
-            } catch (final Exception e) {
-                LOGGER.error("Failed to read TracesDoc " + docRef, e);
-                throw new RuntimeException("Failed to read TracesDoc '" + docRef.getName() + "'", e);
-            }
-            // Outside the try: the catch above would report a refusal as a failed read.
-            return checkUsePermission(doc);
-        } else {
-            return planBDocCache.get(docRef.getName());
+        if (!TracesDoc.TYPE.equals(docRef.getType())) {
+            throw new IllegalArgumentException(
+                    "A trace query needs a " + TracesDoc.TYPE + ", not a '" + docRef.getType() + "'");
         }
+
+        final PlanBDocument doc;
+        try {
+            final DocumentActionHandler<?> handler = documentActionHandlersProvider.get()
+                    .get(new DocumentTypeName(TracesDoc.TYPE));
+            if (handler == null) {
+                throw new IllegalStateException("No handler found for type: " + TracesDoc.TYPE);
+            }
+            doc = (PlanBDocument) handler.readDocument(docRef);
+        } catch (final Exception e) {
+            LOGGER.error("Failed to read TracesDoc " + docRef, e);
+            throw new RuntimeException("Failed to read TracesDoc '" + docRef.getName() + "'", e);
+        }
+        // Outside the try: the catch above would report a refusal as a failed read.
+        return checkUsePermission(doc);
     }
 
     // The read above is unauthorised, so this is the only point at which a caller's right to the
-    // trace store is decided. The PlanBDocCache branch applies USE for itself.
+    // trace store is decided.
     private PlanBDocument checkUsePermission(final PlanBDocument doc) {
         if (doc == null) {
             return null;

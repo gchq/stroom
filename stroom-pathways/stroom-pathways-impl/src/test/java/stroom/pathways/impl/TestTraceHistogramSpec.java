@@ -16,7 +16,7 @@
 
 package stroom.pathways.impl;
 
-import stroom.pathways.impl.AbstractTracesStore.HistogramSpec;
+import stroom.pathways.impl.TraceHistograms.HistogramSpec;
 import stroom.pathways.shared.TraceHistogram;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
@@ -124,7 +124,7 @@ class TestTraceHistogramSpec {
 
     @Test
     void anUnboundedWindowIsNotCounted() {
-        assertThat(AbstractTracesStore.histogramSpec(null, BUCKETS, doc()).available()).isFalse();
+        assertThat(TraceHistograms.histogramSpec(null, BUCKETS, doc()).available()).isFalse();
     }
 
     @Test
@@ -134,12 +134,12 @@ class TestTraceHistogramSpec {
         // single bucket, so the click must be refused.
         final HistogramSpec narrowest = spec(DAY_START, DAY_START.plusMillis(1));
         assertThat(narrowest.nBuckets()).isEqualTo(1);
-        assertThat(AbstractTracesStore.assembleHistogram(narrowest, new long[narrowest.nBuckets()])
+        assertThat(TraceHistograms.assembleHistogram(narrowest, new long[narrowest.nBuckets()])
                 .isDrillable()).isFalse();
 
         // Anything wider has room to narrow into.
         final HistogramSpec wider = spec(DAY_START, DAY_START.plus(Duration.ofHours(6)));
-        assertThat(AbstractTracesStore.assembleHistogram(wider, new long[wider.nBuckets()])
+        assertThat(TraceHistograms.assembleHistogram(wider, new long[wider.nBuckets()])
                 .isDrillable()).isTrue();
     }
 
@@ -149,7 +149,7 @@ class TestTraceHistogramSpec {
     }
 
     private static HistogramSpec spec(final Instant from, final Instant to) {
-        return AbstractTracesStore.histogramSpec(
+        return TraceHistograms.histogramSpec(
                 new TimeRange("test", from.toString(), to.toString()), BUCKETS, doc());
     }
 

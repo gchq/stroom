@@ -20,8 +20,6 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentTypeName;
 import stroom.pathways.shared.TracesDoc;
-import stroom.planb.impl.PlanBDocCache;
-import stroom.planb.shared.PlanBDocument;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.PermissionException;
@@ -50,8 +48,6 @@ class TestTracesDocLoader {
     private static final String DOC_NAME = "My Traces";
 
     @Mock
-    private PlanBDocCache planBDocCache;
-    @Mock
     private SecurityContext securityContext;
     @Mock
     private DocumentActionHandler<TracesDoc> handler;
@@ -65,7 +61,7 @@ class TestTracesDocLoader {
         handlers = new HashMap<>();
         handlers.put(new DocumentTypeName(TracesDoc.TYPE), handler);
         final Provider<Map<DocumentTypeName, DocumentActionHandler>> handlersProvider = () -> handlers;
-        loader = new TracesDocLoader(planBDocCache, handlersProvider, securityContext);
+        loader = new TracesDocLoader(handlersProvider, securityContext);
     }
 
     private static TracesDoc tracesDoc() {
@@ -88,7 +84,7 @@ class TestTracesDocLoader {
     @Test
     void nullDocRefReturnsNull() {
         assertThat(loader.getPlanBDoc(null)).isNull();
-        verifyNoInteractions(securityContext, planBDocCache);
+        verifyNoInteractions(securityContext, handler);
     }
 
     @Test
@@ -173,22 +169,21 @@ class TestTracesDocLoader {
     }
 
     /**
-     * Plan B documents keep their existing route through the cache, which applies USE for itself. A
-     * second check here would be harmless but a missing cache lookup would not.
+     * The type travels in the request body, so a caller can set it to anything. It must not be able to
+     * pick a document of another type, nor reach a different lookup by naming one.
      */
     @Test
-    void nonTraceDocumentIsResolvedByTheCache() {
-        final PlanBDocument cached = tracesDoc();
-        when(planBDocCache.get("Some State Store")).thenReturn(cached);
-
+    void anotherDocumentTypeIsRejected() {
         final DocRef stateDocRef = DocRef.builder()
                 .type("StateStore")
                 .uuid("state-uuid")
                 .name("Some State Store")
                 .build();
 
-        assertThat(loader.getPlanBDoc(stateDocRef)).isSameAs(cached);
-        verify(planBDocCache).get("Some State Store");
-        verifyNoInteractions(handler);
+        assertThatThrownBy(() -> loader.getPlanBDoc(stateDocRef))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining(TracesDoc.TYPE);
+        verifyNoInteractions(handler, securityContext);
     }
+
 }

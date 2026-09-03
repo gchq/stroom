@@ -17,6 +17,7 @@
 package stroom.pathways.impl;
 
 import stroom.docref.DocRef;
+import stroom.pathways.impl.TraceHistograms.HistogramSpec;
 import stroom.pathways.shared.FindTraceCriteria;
 import stroom.pathways.shared.FindTracesWithHistogramCriteria;
 import stroom.pathways.shared.GetSpansRequest;
@@ -26,20 +27,18 @@ import stroom.pathways.shared.TraceHistogram;
 import stroom.pathways.shared.TraceOverview;
 import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TracesResultPage;
+import stroom.pathways.shared.TracesStore;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.impl.dao.trace.TraceRootField;
 import stroom.planb.impl.dao.trace.TraceSecondaryIndex;
-import stroom.planb.impl.data.archive.ArchiveShardLocator;
 import stroom.planb.impl.data.archive.ArchiveShardRef;
-import stroom.planb.impl.data.shard.ShardManager;
 import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.TraceSettings;
 import stroom.query.api.TimeFilter;
-import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
@@ -80,24 +79,21 @@ import java.util.function.Predicate;
  * the scan threads.
  */
 @Singleton
-class SharedFileTracesStore extends AbstractTracesStore {
+class SharedFileTracesStore implements TracesStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SharedFileTracesStore.class);
 
+    private final TraceArchiveReader archiveReader;
     private final SecurityContext securityContext;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
 
     @Inject
-    SharedFileTracesStore(final TracesDocLoader docLoader,
-                          final ShardManager shardManager,
-                          final ArchiveShardLocator archiveShardLocator,
-                          final MergedCheckpointCache mergedCheckpointCache,
-                          final ExpressionPredicateFactory expressionPredicateFactory,
+    SharedFileTracesStore(final TraceArchiveReader archiveReader,
                           final SecurityContext securityContext,
                           final ExecutorProvider executorProvider,
                           final TaskContextFactory taskContextFactory) {
-        super(docLoader, shardManager, archiveShardLocator, mergedCheckpointCache, expressionPredicateFactory);
+        this.archiveReader = archiveReader;
         this.securityContext = securityContext;
         this.executor = executorProvider.get();
         this.taskContextFactory = taskContextFactory;
@@ -115,21 +111,21 @@ class SharedFileTracesStore extends AbstractTracesStore {
     // A trace that arrived since the last publish run therefore has no bucket yet and is not found.
     private Trace doGetTrace(final GetTraceRequest request) {
         final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
-        final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
+        final PlanBDocument doc = archiveReader.getPlanBDoc(request.getDataSourceRef());
         final long fromMs = request.getStartTimeMs() != null ? request.getStartTimeMs() : Long.MIN_VALUE;
         final long toMs = request.getStartTimeMs() != null ? request.getStartTimeMs() : Long.MAX_VALUE;
-        final int shardIndex = archiveShardIndex(doc, request.getTraceId());
+        final int shardIndex = archiveReader.archiveShardIndex(doc, request.getTraceId());
 
         // Normally one bucket; still unioned so a trace whose spans are split across buckets reads whole.
         final List<Trace> sources = new ArrayList<>();
-        for (final ArchiveShardRef ref : relevantArchiveShards(doc, request.getTraceId(), fromMs, toMs)) {
-            final Trace archived = getTraceFromArchive(ref, shardIndex, traceIdBytes, doc);
+        for (final ArchiveShardRef ref : archiveReader.relevantArchiveShards(doc, request.getTraceId(), fromMs, toMs)) {
+            final Trace archived = archiveReader.getTraceFromArchive(ref, shardIndex, traceIdBytes, doc);
             if (archived != null) {
                 sources.add(archived);
             }
         }
 
-        final Trace merged = mergeTraces(request.getTraceId(), sources);
+        final Trace merged = TraceArchiveReader.mergeTraces(request.getTraceId(), sources);
         if (merged != null) {
             return merged;
         }
@@ -146,12 +142,12 @@ class SharedFileTracesStore extends AbstractTracesStore {
     // Pages the span tree from the trace's archive bucket(s) only — see doGetTrace for why the
     // holding-area shard is not consulted.
     private TraceSpanPage doGetSpans(final GetSpansRequest request) {
-        final TraceDb.SpanOpenTest openTest = openTest(request.getGroupSelection());
-        final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
+        final TraceDb.SpanOpenTest openTest = SpanPaging.openTest(request.getGroupSelection());
+        final PlanBDocument doc = archiveReader.getPlanBDoc(request.getDataSourceRef());
         final long fromMs = request.getStartTimeMs() != null ? request.getStartTimeMs() : Long.MIN_VALUE;
         final long toMs = request.getStartTimeMs() != null ? request.getStartTimeMs() : Long.MAX_VALUE;
-        final List<ArchiveShardRef> refs = relevantArchiveShards(doc, request.getTraceId(), fromMs, toMs);
-        return archiveSpanPage(request, refs, openTest);
+        final List<ArchiveShardRef> refs = archiveReader.relevantArchiveShards(doc, request.getTraceId(), fromMs, toMs);
+        return archiveReader.archiveSpanPage(request, refs, openTest);
     }
 
     @Override
@@ -165,19 +161,15 @@ class SharedFileTracesStore extends AbstractTracesStore {
     // first-write-wins — see doGetTrace for why the holding-area shard is not consulted.
     private TraceOverview doGetTraceOverview(final GetTraceOverviewRequest request) {
         final byte[] traceIdBytes = HexStringUtil.decode(request.getTraceId());
-        final PlanBDocument doc = getPlanBDoc(request.getDataSourceRef());
-        final int shardIndex = archiveShardIndex(doc, request.getTraceId());
+        final PlanBDocument doc = archiveReader.getPlanBDoc(request.getDataSourceRef());
+        final int shardIndex = archiveReader.archiveShardIndex(doc, request.getTraceId());
         final Map<String, Span> bySpanId = new LinkedHashMap<>();
 
-        for (final ArchiveShardRef ref : relevantArchiveShards(
+        for (final ArchiveShardRef ref : archiveReader.relevantArchiveShards(
                 doc, request.getTraceId(), request.getFromMs(), request.getToMs())) {
-            final List<Span> archived = shardManager.getArchive(doc, shardIndex, ref, reader -> {
-                if (reader instanceof final TraceDb traceDb) {
-                    return traceDb.getOverviewSpans(
-                            traceIdBytes, request.getFromMs(), request.getToMs(), request.getMaxBars());
-                }
-                throw new IllegalStateException("Unexpected value: " + reader);
-            });
+            final List<Span> archived = archiveReader.readArchive(doc, shardIndex, ref, traceDb ->
+                    traceDb.getOverviewSpans(
+                            traceIdBytes, request.getFromMs(), request.getToMs(), request.getMaxBars()));
             if (archived != null) {
                 archived.forEach(s -> bySpanId.putIfAbsent(s.getSpanId(), s));
             }
@@ -202,13 +194,13 @@ class SharedFileTracesStore extends AbstractTracesStore {
     // A bucketCount above zero adds the histogram, counted from the same bucket copy as the page.
     private TracesResultPage doFindTraces(final FindTraceCriteria criteria, final int bucketCount) {
         final DocRef docRef = criteria.getDataSourceRef();
-        final PlanBDocument doc = getPlanBDoc(docRef);
+        final PlanBDocument doc = archiveReader.getPlanBDoc(docRef);
         if (doc == null) {
             LOGGER.warn(() -> "No Plan B doc found for '" + docRef.getName() + "'");
             throw new RuntimeException("No Plan B doc found for '" + docRef.getName() + "'");
         }
 
-        final Predicate<TraceRoot> filterPredicate = buildFilterPredicate(criteria.getFilter());
+        final Predicate<TraceRoot> filterPredicate = archiveReader.buildFilterPredicate(criteria.getFilter());
         final UserIdentity userIdentity = securityContext.getUserIdentity();
         final TaskContext parentContext = taskContextFactory.current();
         final List<CompletableFuture<BucketResult>> futures = new ArrayList<>();
@@ -234,14 +226,14 @@ class SharedFileTracesStore extends AbstractTracesStore {
                 criteria.getTemporalOrderingTolerance(),
                 criteria.getTimeRange());
 
-        final TimeFilter timeFilter = resolveTimeFilter(criteria.getTimeRange());
+        final TimeFilter timeFilter = TraceHistograms.resolveTimeFilter(criteria.getTimeRange());
         validateTimeRangeLimit(doc, timeFilter);
 
         // Null when no histogram was asked for, or when the window is unbounded or too wide to count.
         // Where a histogram IS available its window is the criteria's own resolved time filter, so the
         // page and the counts always describe the same span of time.
         final HistogramSpec histogramSpec = bucketCount > 0
-                ? histogramSpec(criteria.getTimeRange(), bucketCount, doc)
+                ? TraceHistograms.histogramSpec(criteria.getTimeRange(), bucketCount, doc)
                 : null;
         final HistogramSpec countableSpec = histogramSpec != null && histogramSpec.available()
                 ? histogramSpec
@@ -250,21 +242,21 @@ class SharedFileTracesStore extends AbstractTracesStore {
         // Fan out over archive buckets only — the holding-area shards are never queried.
         //
         // An absent time range is bounded rather than treated as all-time. Every ref returned here is
-        // opened through ShardManager.getArchive, which copies that bucket's whole data.mdb down to local
-        // disk and holds it until idle eviction — so an unbounded fan-out would pull the entire archive
-        // history onto the node and saturate the shared mount. validateTimeRangeLimit cannot catch this
-        // because it returns early for a null filter.
+        // opened for reading, which copies that bucket's whole data.mdb down to local disk and holds it
+        // until idle eviction — so an unbounded fan-out would pull the entire archive history onto the
+        // node and saturate the shared mount. validateTimeRangeLimit cannot catch this because it
+        // returns early for a null filter.
         final long toMs = timeFilter != null ? timeFilter.getTo() : System.currentTimeMillis();
         final long fromMs = timeFilter != null
                 ? timeFilter.getFrom()
-                : toMs - maxWindowMs(doc);
+                : toMs - TraceHistograms.maxWindowMs(doc);
         if (timeFilter == null) {
             LOGGER.debug(() -> "No time range for '" + doc.getName() + "', defaulting to the last "
-                    + maxWindowMs(doc) + "ms rather than scanning every archive bucket");
+                    + TraceHistograms.maxWindowMs(doc) + "ms rather than scanning every archive bucket");
         }
         for (int i = 0; i < doc.getShardCount(); i++) {
             final int shardIndex = i;
-            for (final ArchiveShardRef ref : archiveShardLocator.findRelevantShards(
+            for (final ArchiveShardRef ref : archiveReader.shardsForIndex(
                     doc, shardIndex, fromMs, toMs)) {
                 futures.add(CompletableFuture.supplyAsync(
                         taskContextFactory.childContextResult(parentContext,
@@ -290,9 +282,8 @@ class SharedFileTracesStore extends AbstractTracesStore {
     }
 
     // The page and the histogram counts read from one archive bucket. Both are taken inside a single
-    // ShardManager.getArchive call: the shard holds its read lock for the whole callback and replacing
-    // the local copy needs the exclusive read lock, so neither half can be read from a copy the other
-    // did not see. counts is null when no histogram was asked for.
+    // readArchive call, which holds the bucket open for the whole callback, so neither half can be read
+    // from a copy the other did not see. counts is null when no histogram was asked for.
     private record BucketResult(TracesResultPage page, long[] counts) {
 
     }
@@ -394,7 +385,7 @@ class SharedFileTracesStore extends AbstractTracesStore {
         // rather than returning counts of zero.
         final TraceHistogram histogram;
         if (countableSpec != null) {
-            histogram = assembleHistogram(countableSpec, totals);
+            histogram = TraceHistograms.assembleHistogram(countableSpec, totals);
         } else if (histogramSpec != null) {
             histogram = TraceHistogram.unavailable(histogramSpec.maxWindowMs());
         } else {
@@ -457,9 +448,8 @@ class SharedFileTracesStore extends AbstractTracesStore {
 
     /**
      * Runs {@code findTraces()}, and the histogram count when {@code countableSpec} is non-null, against
-     * an archive bucket via a cached, read-only, idle-evicted local copy
-     * ({@link ShardManager#getArchive}) rather than copying the whole bucket to a temp dir per call.
-     * Both run inside one {@code getArchive} call so they read the same copy of the bucket.
+     * one archive bucket. Both run inside a single
+     * {@link TraceArchiveReader#readArchive} call so they read the same copy of the bucket.
      */
     private BucketResult queryArchive(final ArchiveShardRef ref,
                                       final int shardIndex,
@@ -468,18 +458,15 @@ class SharedFileTracesStore extends AbstractTracesStore {
                                       final Predicate<TraceRoot> filterPredicate,
                                       final HistogramSpec countableSpec) {
         try {
-            return shardManager.getArchive(doc, shardIndex, ref, reader -> {
-                if (reader instanceof final TraceDb traceDb) {
-                    final TracesResultPage page = traceDb.findTraces(criteria, filterPredicate);
-                    final long[] counts = countableSpec == null
-                            ? null
-                            : traceDb.histogram(countableSpec.timeFilter(),
-                                    countableSpec.bucketWidthMs(),
-                                    countableSpec.nBuckets(),
-                                    filterPredicate);
-                    return new BucketResult(page, counts);
-                }
-                throw new IllegalStateException("Unexpected value: " + reader);
+            return archiveReader.readArchive(doc, shardIndex, ref, traceDb -> {
+                final TracesResultPage page = traceDb.findTraces(criteria, filterPredicate);
+                final long[] counts = countableSpec == null
+                        ? null
+                        : traceDb.histogram(countableSpec.timeFilter(),
+                                countableSpec.bucketWidthMs(),
+                                countableSpec.nBuckets(),
+                                filterPredicate);
+                return new BucketResult(page, counts);
             });
         } catch (final Exception e) {
             LOGGER.error(() -> "Error querying archive shard " + ref.dateLabel() +
