@@ -33,7 +33,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestAi extends AbstractXsltFunctionTest<Ai> {
+class TestAskAi extends AbstractXsltFunctionTest<AskAi> {
 
     private static final String MODEL_NAME = "My Model";
     private static final DocRef MODEL_REF = DocRef.builder()
@@ -46,7 +46,7 @@ class TestAi extends AbstractXsltFunctionTest<Ai> {
     private AiService mockAiService;
 
     @InjectMocks
-    private Ai ai;
+    private AskAi askAi;
 
     @Test
     void call() {
@@ -161,12 +161,12 @@ class TestAi extends AbstractXsltFunctionTest<Ai> {
     }
 
     @Override
-    Ai getXsltFunction() {
-        return ai;
+    AskAi getXsltFunction() {
+        return askAi;
     }
 
     @Override
     String getFunctionName() {
-        return Ai.FUNCTION_NAME;
+        return AskAi.FUNCTION_NAME;
     }
 }

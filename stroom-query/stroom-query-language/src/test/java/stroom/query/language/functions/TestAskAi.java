@@ -3,11 +3,11 @@ package stroom.query.language.functions;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class TestAi extends AbstractFunctionTest<Ai> {
+public class TestAskAi extends AbstractFunctionTest<AskAi> {
 
     @Override
-    Class<Ai> getFunctionType() {
-        return Ai.class;
+    Class<AskAi> getFunctionType() {
+        return AskAi.class;
     }
 
     /**
@@ -15,7 +15,7 @@ public class TestAi extends AbstractFunctionTest<Ai> {
      * than the no-op provider that {@link ExpressionContext}'s no-args constructor supplies.
      */
     @Override
-    Supplier<Ai> getFunctionSupplier() {
+    Supplier<AskAi> getFunctionSupplier() {
         final ExpressionContext expressionContext = ExpressionContext.builder()
                 .aiProvider((modelNameOrUuid, systemPrompt, message) -> {
                     if ("BAD_MODEL".equals(modelNameOrUuid)) {
@@ -24,7 +24,7 @@ public class TestAi extends AbstractFunctionTest<Ai> {
                     return ValString.create(modelNameOrUuid + "|" + systemPrompt + "|" + message);
                 })
                 .build();
-        return () -> new Ai(expressionContext, Ai.NAME);
+        return () -> new AskAi(expressionContext, AskAi.NAME);
     }
 
     @Override
