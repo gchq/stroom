@@ -642,9 +642,6 @@ public class SpanValueSerde implements Serde<SpanValue> {
         } else if (type == ValueType.BOOLEAN.getPrimitiveValue()) {
             ByteBufferUtils.skip(input, 1);
 
-        } else if (type == ValueType.INTEGER.getPrimitiveValue()) {
-            ByteBufferUtils.skip(input, Integer.BYTES);
-
         } else if (type == ValueType.LONG.getPrimitiveValue()) {
             ByteBufferUtils.skip(input, Long.BYTES);
 
@@ -835,9 +832,6 @@ public class SpanValueSerde implements Serde<SpanValue> {
 
             } else if (type == ValueType.BOOLEAN.getPrimitiveValue()) {
                 ByteBufferUtils.skip(input, 1);
-
-            } else if (type == ValueType.INTEGER.getPrimitiveValue()) {
-                ByteBufferUtils.skip(input, Integer.BYTES);
 
             } else if (type == ValueType.LONG.getPrimitiveValue()) {
                 ByteBufferUtils.skip(input, Long.BYTES);
