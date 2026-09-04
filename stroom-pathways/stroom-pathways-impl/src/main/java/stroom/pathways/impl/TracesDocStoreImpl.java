@@ -41,7 +41,10 @@ import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -226,14 +229,39 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
         if (sharedPathStr == null || sharedPathStr.isBlank()) {
             return false;
         }
+        final Path sharedRoot;
         try {
-            final Path sharedRoot = Path.of(sharedPathStr);
-            // Every stage: a store whose data has all been published to archive buckets still holds
-            // data, and changing its shard count would leave those buckets unreachable.
-            return PlanBConstants.STAGE_DIR_NAMES.stream()
-                    .anyMatch(stage -> Files.exists(sharedRoot.resolve(stage).resolve(doc.getUuid())));
-        } catch (final Exception e) {
+            sharedRoot = Path.of(sharedPathStr);
+        } catch (final InvalidPathException e) {
+            // Not a path at all, so it names nowhere data could be.
+            LOGGER.warn(() -> "Not a usable shared file store path: " + sharedPathStr);
             return false;
+        }
+        // Every stage: a store whose data has all been published to archive buckets still holds
+        // data, and changing its shard count would leave those buckets unreachable.
+        return PlanBConstants.STAGE_DIR_NAMES.stream()
+                .anyMatch(stage -> directoryExists(sharedRoot.resolve(stage).resolve(doc.getUuid())));
+    }
+
+    /**
+     * Whether the directory is there, where a directory that cannot be looked at counts as there.
+     *
+     * <p>{@link Files#exists} answers both "it is not there" and "I could not tell" with
+     * {@code false}, which is the wrong way round for the caller: it is deciding whether the shard
+     * count may still change, and a shard count is how a trace's bucket is located — so allowing the
+     * change because an unreachable mount looked empty would leave the real data where nothing will
+     * look for it again. A refused edit costs a retry; this costs the data.
+     */
+    private static boolean directoryExists(final Path path) {
+        try {
+            Files.readAttributes(path, BasicFileAttributes.class);
+            return true;
+        } catch (final NoSuchFileException e) {
+            return false;
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.warn(() -> "Could not check " + path + ", so treating it as holding data: "
+                              + e.getMessage());
+            return true;
         }
     }
 
