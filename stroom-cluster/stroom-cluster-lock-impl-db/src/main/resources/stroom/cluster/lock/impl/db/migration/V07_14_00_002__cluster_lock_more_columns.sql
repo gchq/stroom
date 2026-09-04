@@ -33,8 +33,9 @@ BEGIN
     AND column_name = 'node_name';
 
     IF object_count = 0 THEN
-        -- The node holding the lock. Written when the lock is taken and matched when it is extended or
-        -- released, so that only the holder can do either.
+        -- The node holding the lock, written when the lock is taken. Reported to whoever is waiting
+        -- on a contended lock. It does not decide who may extend or release the lock: lock_token does,
+        -- because a node name is not unique to one acquisition.
         ALTER TABLE cluster_lock ADD COLUMN node_name varchar(255) DEFAULT NULL;
     END IF;
 
@@ -46,8 +47,8 @@ BEGIN
     AND column_name = 'thread_name';
 
     IF object_count = 0 THEN
-        -- The thread on that node holding the lock, matched alongside node_name and reported to whoever
-        -- is waiting on the lock.
+        -- The thread on that node holding the lock, reported alongside node_name when a lock is
+        -- contended.
         ALTER TABLE cluster_lock ADD COLUMN thread_name varchar(255) DEFAULT NULL;
     END IF;
 

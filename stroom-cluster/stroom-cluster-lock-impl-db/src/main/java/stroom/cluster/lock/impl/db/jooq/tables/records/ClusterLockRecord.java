@@ -116,6 +116,20 @@ public class ClusterLockRecord extends UpdatableRecordImpl<ClusterLockRecord> {
         return (Long) get(6);
     }
 
+    /**
+     * Setter for <code>stroom.cluster_lock.lock_token</code>.
+     */
+    public void setLockToken(String value) {
+        set(7, value);
+    }
+
+    /**
+     * Getter for <code>stroom.cluster_lock.lock_token</code>.
+     */
+    public String getLockToken() {
+        return (String) get(7);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -139,7 +153,7 @@ public class ClusterLockRecord extends UpdatableRecordImpl<ClusterLockRecord> {
     /**
      * Create a detached, initialised ClusterLockRecord
      */
-    public ClusterLockRecord(Integer id, Integer version, String name, Long lockTimeMs, String nodeName, String threadName, Long leaseMs) {
+    public ClusterLockRecord(Integer id, Integer version, String name, Long lockTimeMs, String nodeName, String threadName, Long leaseMs, String lockToken) {
         super(ClusterLock.CLUSTER_LOCK);
 
         setId(id);
@@ -149,6 +163,7 @@ public class ClusterLockRecord extends UpdatableRecordImpl<ClusterLockRecord> {
         setNodeName(nodeName);
         setThreadName(threadName);
         setLeaseMs(leaseMs);
+        setLockToken(lockToken);
         resetTouchedOnNotNull();
     }
 }

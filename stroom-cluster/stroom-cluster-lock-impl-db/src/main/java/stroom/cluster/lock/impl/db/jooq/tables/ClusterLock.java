@@ -87,6 +87,11 @@ public class ClusterLock extends TableImpl<ClusterLockRecord> {
      */
     public final TableField<ClusterLockRecord, Long> LEASE_MS = createField(DSL.name("lease_ms"), SQLDataType.BIGINT, this, "");
 
+    /**
+     * The column <code>stroom.cluster_lock.lock_token</code>.
+     */
+    public final TableField<ClusterLockRecord, String> LOCK_TOKEN = createField(DSL.name("lock_token"), SQLDataType.VARCHAR(36), this, "");
+
     private ClusterLock(Name alias, Table<ClusterLockRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

@@ -30,6 +30,7 @@ import stroom.util.time.StroomDuration;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.jooq.Field;
 import org.jooq.impl.DSL;
 
 import java.time.Duration;
@@ -37,12 +38,14 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static stroom.cluster.lock.impl.db.jooq.tables.ClusterLock.CLUSTER_LOCK;
@@ -52,21 +55,47 @@ class DbClusterLock implements Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DbClusterLock.class);
     public static final int VERSION = 0;
+    private static final char LIKE_ESCAPE = '!';
     private final Set<String> registeredLockSet = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final ClusterLockDbConnProvider clusterLockDbConnProvider;
     private final Provider<ClusterLockConfig> clusterLockConfigProvider;
     private final Provider<NodeInfo> nodeInfoProvider;
 
-    private final AtomicInteger lockCreationCounter = new AtomicInteger(0);
+    /**
+     * The database's own clock, in milliseconds. Every comparison of a lease against the current time
+     * uses this rather than the JVM clock, so that a node whose clock runs ahead of its peers cannot
+     * decide another node's lease has expired when it has not.
+     *
+     * <p>The no-argument {@code UNIX_TIMESTAMP()} reads epoch time directly. Passing it a datetime
+     * instead would convert through the session time zone, where a local time during a
+     * daylight-saving fall-back names two different instants — and reading an hour ahead would make
+     * every held lock look long expired.
+     */
+    private static final Field<Long> DB_NOW_MS =
+            DSL.field("CAST(UNIX_TIMESTAMP() * 1000 AS SIGNED)", Long.class);
+
     private final Random random = new Random();
 
-    private final ScheduledExecutorService leaseExtensionExecutor =
-            Executors.newScheduledThreadPool(4, runnable -> {
-                final Thread thread = new Thread(runnable, "Stroom-ClusterLock-LeaseExtension");
-                thread.setDaemon(true);
-                return thread;
-            });
+    // Timing only — never waits on the database, so one lock's slow round trip cannot delay another
+    // lock's heartbeat.
+    private final ScheduledExecutorService leaseScheduler =
+            Executors.newSingleThreadScheduledExecutor(
+                    daemonThreadFactory("Stroom-ClusterLock-LeaseTimer"));
+
+    // Runs the heartbeat round trips. Unbounded in principle, but a Heartbeat submits nothing while its
+    // own previous round trip is still running, so this holds at most one thread per lock currently
+    // held by this node, and trims them when they go idle.
+    private final ExecutorService leaseExecutor =
+            Executors.newCachedThreadPool(daemonThreadFactory("Stroom-ClusterLock-LeaseExtension"));
+
+    private static ThreadFactory daemonThreadFactory(final String name) {
+        return runnable -> {
+            final Thread thread = new Thread(runnable, name);
+            thread.setDaemon(true);
+            return thread;
+        };
+    }
 
     @Inject
     DbClusterLock(final ClusterLockDbConnProvider clusterLockDbConnProvider,
@@ -116,15 +145,15 @@ class DbClusterLock implements Clearable {
         final long leaseMs = lockTimeout.toMillis();
         final Instant timeoutTime = startTime.plus(lockTimeout);
 
-        boolean acquired = false;
+        String lockToken = null;
         int loopCount = 0;
         long currentSleepMs = 100;
         final long maxSleepMs = 2000;
 
         while (!Thread.currentThread().isInterrupted()) {
             loopCount++;
-            acquired = tryAcquireLock(lockName, leaseMs);
-            if (acquired) {
+            lockToken = tryAcquireLock(lockName, leaseMs);
+            if (lockToken != null) {
                 if (loopCount > 1) {
                     LOGGER.info("Acquired lock {}, waited {}",
                             lockName, Duration.between(startTime, Instant.now()));
@@ -161,7 +190,7 @@ class DbClusterLock implements Clearable {
             }
         }
 
-        if (!acquired) {
+        if (lockToken == null) {
             if (waitForLock) {
                 throw new RuntimeException("Failed to acquire lock: " + lockName);
             } else {
@@ -172,27 +201,42 @@ class DbClusterLock implements Clearable {
             }
         }
 
-        // Lock heartbeat scheduled rate task
-        final String ownerNodeName = getNodeName();
-        final String ownerThreadName = getThreadName();
-        final Thread workerThread = Thread.currentThread();
-        final ScheduledFuture<?> heartbeatTask;
+        final String token = lockToken;
         final long heartbeatInterval = Math.max(1000, leaseMs / 3);
-        heartbeatTask = leaseExtensionExecutor.scheduleAtFixedRate(
-                () -> extendLease(lockName, ownerNodeName, ownerThreadName, workerThread),
+        final Thread workerThread = Thread.currentThread();
+        final LeaseHeartbeat heartbeat = new LeaseHeartbeat(
+                lockName,
+                leaseMs,
+                heartbeatInterval,
+                () -> renewLease(lockName, token),
+                leaseExecutor,
+                System::nanoTime,
+                workerThread::interrupt);
+        final ScheduledFuture<?> heartbeatTask = leaseScheduler.scheduleWithFixedDelay(
+                heartbeat::tick,
                 heartbeatInterval,
                 heartbeatInterval,
                 TimeUnit.MILLISECONDS);
 
         // Run the supplier and release the lock in finally
         final LogExecutionTime holdExecutionTime = new LogExecutionTime();
+        final T result;
         try {
-            return supplier.get();
+            result = supplier.get();
         } finally {
-            if (heartbeatTask != null) {
-                heartbeatTask.cancel(true);
+            // Stop first: releasing nulls the token, which an extension already in flight would
+            // otherwise read as the lock having been taken by someone else and fence for.
+            heartbeat.stop();
+            // false — the scheduler thread is shared by every lock held on this node, and the round
+            // trip it would interrupt does not run there anyway.
+            heartbeatTask.cancel(false);
+            releaseLock(lockName, token);
+
+            if (heartbeat.isFenced()) {
+                // Clear the interrupt we raised, so it does not carry over to whatever this thread
+                // runs next — for a pooled thread that is unrelated work.
+                Thread.interrupted();
             }
-            releaseLock(lockName);
 
             // Log hold duration metric
             if (holdExecutionTime.getDurationMs() > 60000) {
@@ -203,16 +247,30 @@ class DbClusterLock implements Clearable {
 
             LOGGER.debug("lock({}) - <<< {}", lockName, logExecutionTime);
         }
+
+        // Outside the finally, so an exception from the supplier is not masked by this one. Work that
+        // swallowed the interrupt would otherwise return as though it had held the lock throughout.
+        if (heartbeat.isFenced()) {
+            throw new RuntimeException(LogUtil.message(
+                    "Lost the lease on cluster lock {} while the work was running, so it may have run "
+                    + "on another node at the same time", lockName));
+        }
+        return result;
     }
 
-    private boolean tryAcquireLock(final String lockName, final long leaseMs) {
+    // Takes the lock if it is free or its lease has expired, and returns a token identifying this
+    // acquisition, or null if someone else holds it. Releasing and extending match on that token:
+    // without it a holder whose lease had expired could release or extend the lock a later holder
+    // now owns, because node name and thread name are not unique to one acquisition.
+    private String tryAcquireLock(final String lockName, final long leaseMs) {
+        final String token = UUID.randomUUID().toString();
         final String nodeName = getNodeName();
         final String threadName = getThreadName();
-        final long now = System.currentTimeMillis();
 
         final int updated = JooqUtil.transactionResult(clusterLockDbConnProvider, context -> {
             return context.update(CLUSTER_LOCK)
-                    .set(CLUSTER_LOCK.LOCK_TIME_MS, now)
+                    .set(CLUSTER_LOCK.LOCK_TIME_MS, DB_NOW_MS)
+                    .set(CLUSTER_LOCK.LOCK_TOKEN, token)
                     .set(CLUSTER_LOCK.NODE_NAME, nodeName)
                     .set(CLUSTER_LOCK.THREAD_NAME, threadName)
                     .set(CLUSTER_LOCK.LEASE_MS, leaseMs)
@@ -220,56 +278,43 @@ class DbClusterLock implements Clearable {
                             .and(CLUSTER_LOCK.LOCK_TIME_MS.isNull()
                                     .or(CLUSTER_LOCK.LOCK_TIME_MS
                                             .add(DSL.coalesce(CLUSTER_LOCK.LEASE_MS, leaseMs))
-                                            .lt(now))))
+                                            .lt(DB_NOW_MS))))
                     .execute();
         });
 
-        return updated == 1;
+        return updated == 1 ? token : null;
     }
 
-    private void releaseLock(final String lockName) {
-        final String nodeName = getNodeName();
-        final String threadName = getThreadName();
-
-        JooqUtil.transaction(clusterLockDbConnProvider, context -> {
-            context.update(CLUSTER_LOCK)
+    private void releaseLock(final String lockName, final String token) {
+        final int updated = JooqUtil.transactionResult(clusterLockDbConnProvider, context -> {
+            return context.update(CLUSTER_LOCK)
                     .setNull(CLUSTER_LOCK.LOCK_TIME_MS)
+                    .setNull(CLUSTER_LOCK.LOCK_TOKEN)
                     .setNull(CLUSTER_LOCK.NODE_NAME)
                     .setNull(CLUSTER_LOCK.THREAD_NAME)
                     .setNull(CLUSTER_LOCK.LEASE_MS)
                     .where(CLUSTER_LOCK.NAME.eq(lockName)
-                            .and(CLUSTER_LOCK.NODE_NAME.eq(nodeName))
-                            .and(CLUSTER_LOCK.THREAD_NAME.eq(threadName)))
+                            .and(CLUSTER_LOCK.LOCK_TOKEN.eq(token)))
+                    .execute();
+        });
+        if (updated == 0) {
+            LOGGER.warn("Lock {} was not released because this acquisition no longer holds it — the " +
+                        "lease lapsed and it may since have been taken elsewhere", lockName);
+        }
+    }
+
+    // Pushes this acquisition's lease forward, returning the number of lock rows it matched: 1 while
+    // this acquisition still holds the lock, 0 once it does not.
+    private int renewLease(final String lockName, final String token) {
+        return JooqUtil.transactionResult(clusterLockDbConnProvider, context -> {
+            return context.update(CLUSTER_LOCK)
+                    .set(CLUSTER_LOCK.LOCK_TIME_MS, DB_NOW_MS)
+                    .where(CLUSTER_LOCK.NAME.eq(lockName)
+                            .and(CLUSTER_LOCK.LOCK_TOKEN.eq(token)))
                     .execute();
         });
     }
 
-    private void extendLease(final String lockName,
-                             final String nodeName,
-                             final String threadName,
-                             final Thread workerThread) {
-        final long now = System.currentTimeMillis();
-        try {
-            final int updated = JooqUtil.transactionResult(clusterLockDbConnProvider, context -> {
-                return context.update(CLUSTER_LOCK)
-                        .set(CLUSTER_LOCK.LOCK_TIME_MS, now)
-                        .where(CLUSTER_LOCK.NAME.eq(lockName)
-                                .and(CLUSTER_LOCK.NODE_NAME.eq(nodeName))
-                                .and(CLUSTER_LOCK.THREAD_NAME.eq(threadName)))
-                        .execute();
-            });
-            if (updated == 1) {
-                LOGGER.debug("Extended lease for lock {} (node={}, thread={})", lockName, nodeName, threadName);
-            } else {
-                LOGGER.error("Lock lease lost for lock {} (node={}, thread={})! " +
-                                "Active fencing triggered: interrupting worker thread.",
-                        lockName, nodeName, threadName);
-                workerThread.interrupt();
-            }
-        } catch (final Exception e) {
-            LOGGER.warn("Failed to extend lease for lock {}: {}", lockName, e.getMessage());
-        }
-    }
 
     private String getOwnerInfoMessage(final String lockName) {
         try {
@@ -299,9 +344,10 @@ class DbClusterLock implements Clearable {
 
     public void deleteLocks(final String prefix) {
         try {
+            final String pattern = escapeLikeLiteral(prefix) + "%";
             final int deleted = JooqUtil.transactionResult(clusterLockDbConnProvider, context -> {
                 return context.deleteFrom(CLUSTER_LOCK)
-                        .where(CLUSTER_LOCK.NAME.like(prefix + "%"))
+                        .where(CLUSTER_LOCK.NAME.like(pattern, LIKE_ESCAPE))
                         .execute();
             });
             if (deleted > 0) {
@@ -310,6 +356,15 @@ class DbClusterLock implements Clearable {
         } catch (final Exception e) {
             LOGGER.error("Failed to delete locks with prefix '{}': {}", prefix, e.getMessage(), e);
         }
+    }
+
+    // '%' and '_' are wildcards to LIKE, so a prefix containing either would match names it does not
+    // start with. Nothing generates such a prefix today; escaping means nothing has to keep checking.
+    static String escapeLikeLiteral(final String value) {
+        return value
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
     }
 
     private void checkLockCreated(final String name) {
