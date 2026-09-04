@@ -61,6 +61,21 @@ public class SpanValueSerde implements Serde<SpanValue> {
         timeSerde = new NanoTimeSerde();
     }
 
+    // An element count read from the buffer decides how much memory is reserved for the list, so it is
+    // checked before it is used: a negative count throws NegativeArraySizeException, and an oversized
+    // one reserves memory the buffer could never fill. Every element occupies at least one byte, so
+    // what is left in the buffer is an upper bound on how many there can be. Values reaching here are
+    // no longer only ones this node wrote — a shared file store carries them between nodes.
+    static int readCount(final ByteBuffer input, final String what) {
+        final int count = input.getInt();
+        if (count < 0 || count > input.remaining()) {
+            throw new IllegalStateException(
+                    "Cannot read " + count + " " + what + " from a buffer with "
+                    + input.remaining() + " bytes remaining");
+        }
+        return count;
+    }
+
     private ByteBuffer ensure(final ByteBuffer byteBuffer,
                               final int require) {
         if (byteBuffer.remaining() < require) {
@@ -150,7 +165,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
 
     private List<KeyValue> readKvList(final Txn<ByteBuffer> txn,
                                       final ByteBuffer input) {
-        final int size = input.getInt();
+        final int size = readCount(input, "attributes");
         if (size == 0) {
             return null;
         }
@@ -177,7 +192,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
 
     private List<AnyValue> readValueList(final Txn<ByteBuffer> txn,
                                          final ByteBuffer byteBuffer) {
-        final int size = byteBuffer.getInt();
+        final int size = readCount(byteBuffer, "array values");
         if (size == 0) {
             return null;
         }
@@ -226,6 +241,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
                                      final ByteBuffer output) {
         ByteBuffer result = output;
         if (anyValue == null) {
+            result = ensure(output, 1);
             result.put((byte) 128);
 
         } else {
@@ -267,6 +283,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
                 result = writeHexString(txn, anyValue.getBytesValue(), result);
 
             } else {
+                result = ensure(output, 1);
                 result.put((byte) 128);
             }
         }
@@ -336,7 +353,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
 
     private List<SpanEvent> readEvents(final Txn<ByteBuffer> txn,
                                        final ByteBuffer input) {
-        final int size = input.getInt();
+        final int size = readCount(input, "events");
         if (size == 0) {
             return null;
         }
@@ -395,7 +412,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
 
     private List<SpanLink> readLinks(final Txn<ByteBuffer> txn,
                                      final ByteBuffer input) {
-        final int size = input.getInt();
+        final int size = readCount(input, "links");
         if (size == 0) {
             return null;
         }
@@ -431,6 +448,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
         result = writeHexString(txn, link.getSpanId(), result);
         result = writeString(txn, link.getTraceState(), result);
         result = writeKvList(txn, link.getAttributes(), result);
+        result = ensure(result, Integer.BYTES);
         result.putInt(link.getDroppedAttributesCount());
         return result;
     }
