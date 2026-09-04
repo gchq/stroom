@@ -16,18 +16,24 @@
 
 package stroom.planb.impl;
 
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,17 +43,26 @@ public class PlanBDocStoreImpl
         extends AbstractDocumentStore<PlanBDoc>
         implements PlanBDocStore {
 
+    private final SecurityContext securityContext;
+    private final Provider<PlanBPaths> planBPathsProvider;
+    private final Provider<ClusterLockService> clusterLockServiceProvider;
+
     @Inject
     public PlanBDocStoreImpl(
             final StoreFactory storeFactory,
+            final PlanBDocSerialiser serialiser,
             final SecurityContext securityContext,
-            final PlanBDocSerialiser serialiser) {
+            final Provider<PlanBPaths> planBPathsProvider,
+            final Provider<ClusterLockService> clusterLockServiceProvider) {
         super(storeFactory,
                 securityContext,
                 serialiser,
                 PlanBDoc.TYPE,
                 PlanBDoc::builder,
                 PlanBDoc::copy);
+        this.securityContext = securityContext;
+        this.planBPathsProvider = planBPathsProvider;
+        this.clusterLockServiceProvider = clusterLockServiceProvider;
     }
 
     /**
@@ -77,7 +92,7 @@ public class PlanBDocStoreImpl
                         .stateType(StateType.TEMPORAL_STATE)
                         .build());
 
-        // Double-check the feed wasn't created elsewhere at the same time.
+        // Double-check no state store with this name was created elsewhere at the same time.
         if (checkDuplicateName(name, created)) {
             // Delete the newly created document as the key is duplicated. getStore() is the
             // deliberately unchecked handle, which is what undoing our own create needs: the document
@@ -185,8 +200,81 @@ public class PlanBDocStoreImpl
     }
 
     @Override
+    public void deleteDocument(final DocRef docRef) {
+        super.deleteDocument(docRef);
+        if (docRef != null && docRef.getUuid() != null) {
+            try {
+                clusterLockServiceProvider.get().deleteLocks(PlanBConstants.getMergeLockPrefix(docRef.getUuid()));
+            } catch (final Exception e) {
+                // Ignore lock deletion failures on document delete to avoid failing document delete itself
+            }
+        }
+    }
+
+    @Override
     public PlanBDoc writeDocument(final PlanBDoc document) {
         validateName(document.getName());
+        validateSettings(document);
+
+        final DocRef docRef = DocRef.builder()
+                .type(document.getType())
+                .uuid(document.getUuid())
+                .name(document.getName())
+                .build();
+        final PlanBDoc oldDoc = getStore().readDocument(docRef);
+        if (oldDoc != null
+            && document.getShardCount() > 0
+            && oldDoc.getShardCount() != document.getShardCount()) {
+            if (hasData(oldDoc)) {
+                throw new EntityServiceException(
+                        "Cannot change shard count: data has already been written to this store.");
+            }
+        }
+
         return super.writeDocument(document);
+    }
+
+    private void validateSettings(final PlanBDoc document) {
+        final String error = AbstractPlanBSettings.validationError(
+                NullSafe.get(document, PlanBDoc::getSettings));
+        if (error != null) {
+            throw new EntityServiceException(error);
+        }
+    }
+
+    private boolean hasData(final PlanBDoc doc) {
+        if (doc == null) {
+            return false;
+        }
+        // 1. Check shared storage
+        final String sharedPathStr = doc.getSharedPath();
+        if (NullSafe.isNonBlankString(sharedPathStr)) {
+            try {
+                final Path sharedRoot = Path.of(sharedPathStr);
+                // Every stage: data that has all been published to archive buckets still counts, and
+                // changing the shard count would leave those buckets unreachable.
+                for (final String stage : PlanBConstants.STAGE_DIR_NAMES) {
+                    if (Files.exists(sharedRoot.resolve(stage).resolve(doc.getUuid()))) {
+                        return true;
+                    }
+                }
+            } catch (final Exception e) {
+                // Ignore
+            }
+        }
+        // 2. Check local storage
+        try {
+            final Path localRoot = planBPathsProvider.get().getShardDir();
+            if (Files.isDirectory(localRoot)) {
+                try (final java.util.stream.Stream<Path> list = Files.list(localRoot)) {
+                    if (list.anyMatch(p -> p.getFileName().toString().startsWith(doc.getUuid()))) {
+                        return true;
+                    }
+                }
+            }
+        } catch (final Exception e) {
+            // Ignore
+        }
+        return false;
     }
 }

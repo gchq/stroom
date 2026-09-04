@@ -24,7 +24,7 @@ import stroom.planb.impl.dao.StateKeyTestUtil.ValueFunction;
 import stroom.planb.impl.dao.session.SessionDb;
 import stroom.planb.impl.dao.session.SessionFields;
 import stroom.planb.impl.dao.session.SessionRequest;
-import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.value.Session;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SessionKeySchema;
@@ -168,7 +168,7 @@ class TestSessionDb {
 
             // Condense and delete.
             db.condense(Instant.parse("2025-12-07T00:10:00.000Z"));
-            db.deleteOldData(Instant.parse("2025-12-04T00:10:00.000Z"), true);
+            db.runRetention(Instant.parse("2025-12-04T00:10:00.000Z"), true);
 
             results.clear();
             db.search(
@@ -311,10 +311,10 @@ class TestSessionDb {
         try (final SessionDb db = SessionDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
             assertThat(db.count()).isEqualTo(109);
             db.condense(Instant.now());
-            db.deleteOldData(Instant.MIN, true);
+            db.runRetention(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(1);
             db.condense(Instant.now());
-            db.deleteOldData(Instant.now(), true);
+            db.runRetention(Instant.now(), true);
             assertThat(db.count()).isEqualTo(0);
         }
     }

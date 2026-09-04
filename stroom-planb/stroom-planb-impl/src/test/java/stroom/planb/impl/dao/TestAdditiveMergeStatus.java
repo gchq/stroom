@@ -22,7 +22,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.planb.impl.dao.histogram.HistogramDb;
 import stroom.planb.impl.dao.metric.MetricDb;
 import stroom.planb.impl.dao.metric.MetricFields;
-import stroom.planb.impl.data.TemporalValue;
+import stroom.planb.impl.data.value.TemporalValue;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.keyprefix.Tag;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;

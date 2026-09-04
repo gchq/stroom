@@ -51,7 +51,7 @@ import stroom.planb.impl.serde.time.ZonedYearTimeSerde;
 import stroom.planb.impl.serde.valtime.InsertTimeSerde;
 import stroom.planb.shared.HistogramSettings;
 import stroom.planb.shared.MaxValueSize;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
@@ -95,7 +95,7 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
 
     private HistogramDb(final PlanBEnv env,
                         final ByteBuffers byteBuffers,
-                        final PlanBDoc doc,
+                        final PlanBDocument doc,
                         final HistogramSettings settings,
                         final TemporalResolution temporalResolution,
                         final TemporalKeySerde keySerde,
@@ -123,7 +123,7 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
 
     public static HistogramDb create(final Path path,
                                      final ByteBuffers byteBuffers,
-                                     final PlanBDoc doc,
+                                     final PlanBDocument doc,
                                      final boolean readOnly) {
         // Ensure all settings are non null.
         final HistogramSettings settings;
@@ -140,7 +140,8 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                 readOnly,
                 hashClashCommitRunnable);
         try {
-            // Rows will store hour precision.
+            // The zone the key's coarse time is bucketed in, so a day or hour row lines up with the
+            // user's calendar rather than UTC.
             final ZoneId zoneId = UserTimeZoneUtil.getZoneId(settings.getKeySchema().getTimeZone(), null);
 
             // The key time is always a coarse grained time with rows having multiple values.
@@ -360,9 +361,9 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
     }
 
     @Override
-    public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
+    public long runRetention(final Instant deleteBefore, final boolean useStateTime) {
         return env.write(writer -> {
-            final long count = deleteOldData(writer, deleteBefore, useStateTime);
+            final long count = runRetention(writer, deleteBefore, useStateTime);
 
             // Delete unused lookup keys.
             if (!Thread.currentThread().isInterrupted()) {
@@ -376,7 +377,7 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
         });
     }
 
-    private long deleteOldData(final LmdbWriter writer,
+    private long runRetention(final LmdbWriter writer,
                                final Instant deleteBefore,
                                final boolean useStateTime) {
         return env.read(readTxn -> {

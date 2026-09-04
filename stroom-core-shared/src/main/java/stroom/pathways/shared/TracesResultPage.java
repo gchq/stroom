@@ -27,12 +27,31 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
+/**
+ * A page of traces, optionally carrying the histogram of the window the page was drawn from. The
+ * histogram travels with the page so that both come from one read of each archive bucket rather than
+ * from two requests that could see different copies; it is null on a page-only query.
+ */
 @JsonInclude(Include.NON_NULL)
 public class TracesResultPage extends ResultPage<TraceRoot> {
 
+    @JsonProperty
+    private final TraceHistogram histogram;
+
+    public TracesResultPage(final List<TraceRoot> values,
+                            final PageResponse pageResponse) {
+        this(values, pageResponse, null);
+    }
+
     @JsonCreator
     public TracesResultPage(@JsonProperty("values") final List<TraceRoot> values,
-                            @JsonProperty("pageResponse") final PageResponse pageResponse) {
+                            @JsonProperty("pageResponse") final PageResponse pageResponse,
+                            @JsonProperty("histogram") final TraceHistogram histogram) {
         super(values, pageResponse);
+        this.histogram = histogram;
+    }
+
+    public TraceHistogram getHistogram() {
+        return histogram;
     }
 }

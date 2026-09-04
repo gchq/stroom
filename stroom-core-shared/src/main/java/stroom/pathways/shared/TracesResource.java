@@ -41,6 +41,9 @@ public interface TracesResource extends RestResource, DirectRestService {
     String BASE_PATH = "/traces" + ResourcePaths.V2;
     String FIND_TRACES_SUB_PATH = "/findTraces";
     String FIND_TRACE_SUB_PATH = "/findTrace";
+    String GET_SPANS_SUB_PATH = "/getSpans";
+    String GET_TRACE_OVERVIEW_SUB_PATH = "/getTraceOverview";
+    String FIND_TRACES_WITH_HISTOGRAM_SUB_PATH = "/findTracesWithHistogram";
 
     @POST
     @Path(FIND_TRACES_SUB_PATH)
@@ -57,4 +60,28 @@ public interface TracesResource extends RestResource, DirectRestService {
             operationId = "findTrace")
     Trace findTrace(
             @Parameter(description = "request", required = true) GetTraceRequest request);
+
+    @POST
+    @Path(GET_SPANS_SUB_PATH)
+    @Operation(
+            summary = "Get a tree-order page of a trace's spans",
+            operationId = "getSpans")
+    TraceSpanPage getSpans(
+            @Parameter(description = "request", required = true) GetSpansRequest request);
+
+    @POST
+    @Path(GET_TRACE_OVERVIEW_SUB_PATH)
+    @Operation(
+            summary = "Get a downsampled overview of a large trace",
+            operationId = "getTraceOverview")
+    TraceOverview getTraceOverview(
+            @Parameter(description = "request", required = true) GetTraceOverviewRequest request);
+
+    @POST
+    @Path(FIND_TRACES_WITH_HISTOGRAM_SUB_PATH)
+    @Operation(
+            summary = "Find traces and a histogram of the same window from one read",
+            operationId = "findTracesWithHistogram")
+    TracesResultPage findTracesWithHistogram(
+            @Parameter(description = "criteria", required = true) FindTracesWithHistogramCriteria criteria);
 }

@@ -50,8 +50,17 @@ public class Trace {
         return parentSpanIdMap;
     }
 
+    /**
+     * The single root span (empty {@code parentSpanId}), or {@code null} for an orphan-only trace
+     * whose root has aged out or never arrived. Callers must be null-safe.
+     */
     public Span root() {
-        return parentSpanIdMap.get("").get(0);
+        final List<Span> roots = parentSpanIdMap == null
+                ? null
+                : parentSpanIdMap.get("");
+        return roots == null || roots.isEmpty()
+                ? null
+                : roots.get(0);
     }
 
     public List<Span> children(final Span span) {
@@ -131,16 +140,10 @@ public class Trace {
             if (parentSpanIdMap == null || parentSpanIdMap.isEmpty()) {
                 throw new RuntimeException("No spans found");
             }
-            final List<Span> roots = parentSpanIdMap.get("");
-            if (roots == null) {
-                throw new RuntimeException("No root found");
-            }
-            if (roots.isEmpty()) {
-                throw new RuntimeException("No root found");
-            } else if (roots.size() > 1) {
-                throw new RuntimeException("Multiple roots found");
-            }
-
+            // A trace may legitimately have no root span — an "orphan-only" trace whose root has
+            // aged out (age-based retention or publishing) or never arrived. Build it regardless so the
+            // UI can render the available spans (a rootless forest) with a warning, rather than
+            // failing the whole detail view. Consumers use the null-safe root().
             return new Trace(traceId, parentSpanIdMap);
         }
     }

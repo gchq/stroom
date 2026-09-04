@@ -39,6 +39,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class TraceProcessor {
@@ -58,7 +59,7 @@ public class TraceProcessor {
     public void processTrace(final LmdbWriter writer,
                              final PathwaysDb pathwaysDb,
                              final byte[] traceId,
-                             final Function<byte[], Trace> traceFunction,
+                             final Function<byte[], Optional<Trace>> traceFunction,
                              final PathwaysDoc doc,
                              final MessageReceiver messageReceiver) {
         try {
@@ -67,20 +68,34 @@ public class TraceProcessor {
                 final boolean processed = processingStatus
                         .get(writer.getWriteTxn(), keyByteBuffer.duplicate(), Objects::nonNull);
                 if (!processed) {
-                    // Get the full trace.
-                    final Trace trace = traceFunction.apply(traceId);
-
-                    // If we have no status then process this trace root.
-                    LOGGER.debug(() -> "\n" + trace.toString());
-
-                    // Construct known paths for all traces.
-                    buildPathways(writer, trace, doc, messageReceiver, pathwaysDb);
-
-                    // After processing record that we have processed.
-                    processingStatus.insert(writer, keyByteBuffer, PROCESSED);
-
-                    writer.tryCommit();
+                    final Optional<Trace> optTrace = traceFunction.apply(traceId);
+                    if (optTrace.isEmpty()) {
+                        // findTrace returns empty only when the bucket holds no span at all for this
+                        // trace — a trace with spans but no root span still comes back. Mark as
+                        // processed so it is skipped on future ticks.
+                        LOGGER.warn("Skipping trace root {} as the bucket holds no spans for it; " +
+                                        "marking as processed to suppress future re-scans",
+                                HexStringUtil.encode(traceId));
+                        processingStatus.insert(writer, keyByteBuffer, PROCESSED);
+                        writer.tryCommit();
+                    } else {
+                        final Trace trace = optTrace.get();
+                        LOGGER.debug(() -> "\n" + trace.toString());
+                        if (trace.root() == null) {
+                            // A pathway is keyed on the root span's name, and this trace has no root
+                            // span. Left unmarked rather than marked processed, because the root may
+                            // still arrive: nothing offers a trace for processing until it has one, so
+                            // leaving the marker off costs nothing and keeps the trace eligible.
+                            messageReceiver.log(Severity.WARNING, () -> "Skipping trace "
+                                    + HexStringUtil.encode(traceId) + " as it has no root span");
+                        } else {
+                            buildPathways(writer, trace, doc, messageReceiver, pathwaysDb);
+                            processingStatus.insert(writer, keyByteBuffer, PROCESSED);
+                            writer.tryCommit();
+                        }
+                    }
                 }
+                return null;
             });
         } catch (final RuntimeException e) {
             LOGGER.error("Error processing trace {}", HexStringUtil.encode(traceId), e);

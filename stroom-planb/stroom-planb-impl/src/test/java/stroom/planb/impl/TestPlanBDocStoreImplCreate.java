@@ -44,8 +44,10 @@ class TestPlanBDocStoreImplCreate {
         final MockSecurityContext securityContext = new MockSecurityContext();
         return new PlanBDocStoreImpl(
                 new StoreFactoryImpl(new MemoryPersistence(), null, securityContext, null, () -> null),
+                new PlanBDocSerialiser(new Serialiser2FactoryImpl()),
                 securityContext,
-                new PlanBDocSerialiser(new Serialiser2FactoryImpl()));
+                () -> null,
+                () -> null);
     }
 
     @Test

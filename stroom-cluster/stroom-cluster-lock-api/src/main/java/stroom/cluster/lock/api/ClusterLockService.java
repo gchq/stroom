@@ -22,18 +22,22 @@ import java.util.function.Supplier;
  * Cluster wide mutual exclusion, used to ensure that only one node at a time runs some piece of
  * work.
  * <p>
- * All methods are backed by a row lock on the {@code cluster_lock} table. <b>No master node and no
+ * All methods are backed by a row in the {@code cluster_lock} table. <b>No master node and no
  * inter-node communication is involved</b>, so a lock can be taken by any node and works whether or
  * not a master has been elected. This makes a cluster lock the preferred way to say "only one node
  * should do this at a time" in preference to gating work on the node being the master.
  * <p>
- * The lock is held for as long as the supplied runnable/supplier takes to run and is released when
- * its transaction commits, so the work done under a lock should be bounded.
+ * A lock is held under a <b>lease</b>. The holder renews it periodically for as long as the supplied
+ * runnable/supplier runs, and it is released when that returns. A node that dies therefore frees the
+ * lock once its lease runs out, rather than holding it for good. The other side of that bargain is
+ * that a holder which cannot renew — because it stalled, or cannot reach the database — has its
+ * thread <b>interrupted</b>, so work done under a lock must be able to stop when interrupted.
  * <p>
- * Locking is <b>not fair</b>. A node waiting on a lock that is held for longer than the database
- * lock wait timeout will rejoin the back of the queue, so waiters are not served in arrival order.
+ * Locking is <b>not fair</b>: a node that gives up waiting retries from the back of the queue, so
+ * waiters are not served in arrival order.
  * <p>
- * Lock rows are created on demand the first time a name is used and are never deleted.
+ * Lock rows are created on demand the first time a name is used, and removed only by
+ * {@link #deleteLocks(String)}.
  */
 public interface ClusterLockService {
 
@@ -63,4 +67,9 @@ public interface ClusterLockService {
      *                          timeout.
      */
     <T> T lockResult(final String lockName, final Supplier<T> supplier);
+
+    /**
+     * Delete all cluster lock records where the lock name starts with the specified prefix.
+     */
+    void deleteLocks(final String prefix);
 }

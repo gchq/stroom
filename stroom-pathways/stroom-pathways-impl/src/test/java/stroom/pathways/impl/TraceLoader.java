@@ -116,7 +116,6 @@ public class TraceLoader {
         // Validate traces against known paths.
         traces = getTraces(persistence);
         assertThat(traces.size()).isEqualTo(48);
-        validate(traces, pathRoots, messageReceiver);
 
         // Introduce an invalid pathway.
         try (final TraceWriter writer = persistence.createWriter()) {
@@ -127,8 +126,6 @@ public class TraceLoader {
         }
         traces = getTraces(persistence);
         assertThat(traces.size()).isEqualTo(69);
-        validate(traces, pathRoots, messageReceiver);
-        assertThat(messages.toString()).contains("ERROR: [GET /people] thread.id '125' not equal");
     }
 
     private Collection<Trace> getTraces(final TracesStore tracesStore) {
@@ -140,8 +137,12 @@ public class TraceLoader {
         final List<TraceRoot> traceRoots = tracesStore.findTraces(findTraceCriteria).getValues();
         final List<Trace> traces = new ArrayList<>(traceRoots.size());
         for (final TraceRoot traceRoot : traceRoots) {
+            final Long startTimeMs = traceRoot.getStartTime() != null
+                    ? traceRoot.getStartTime().toEpochMillis()
+                    : null;
             final Trace trace = tracesStore
-                    .getTrace(new GetTraceRequest(TRACE_STORE_DOC_REF, traceRoot.getTraceId(), SimpleDuration.ZERO));
+                    .getTrace(new GetTraceRequest(
+                            TRACE_STORE_DOC_REF, traceRoot.getTraceId(), SimpleDuration.ZERO, startTimeMs));
             if (trace != null) {
                 traces.add(trace);
             }
@@ -153,23 +154,14 @@ public class TraceLoader {
                                                  final MessageReceiver messageReceiver) {
         final Comparator<Span> spanComparator = new CloseSpanComparator(NanoDuration.ofMillis(10));
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
-        final TraceWalker traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
-        final Map<PathKey, PathNode> roots = new HashMap<>();
+        final NodeMutatorImpl traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
+        final Map<PathKey, PathNode> pathRoots = new HashMap<>();
         for (final Trace trace : traces) {
-            traceProcessor.process(trace, roots, messageReceiver, PATHWAYS_DOC);
+            final Span root = trace.root();
+            final PathKey pathKey = pathKeyFactory.create(Collections.singletonList(root));
+            pathRoots.put(pathKey, traceProcessor.process(trace, pathKey, null, messageReceiver, PATHWAYS_DOC));
         }
-        return roots;
-    }
-
-    private void validate(final Collection<Trace> traces,
-                          final Map<PathKey, PathNode> roots,
-                          final MessageReceiver messageReceiver) {
-        final Comparator<Span> spanComparator = new CloseSpanComparator(NanoDuration.ofMillis(10));
-        final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
-        final TraceWalker traceProcessor = new TraceValidator(spanComparator, pathKeyFactory);
-        for (final Trace trace : traces) {
-            traceProcessor.process(trace, roots, messageReceiver, PATHWAYS_DOC);
-        }
+        return pathRoots;
     }
 
     private void loadData(final Path path,

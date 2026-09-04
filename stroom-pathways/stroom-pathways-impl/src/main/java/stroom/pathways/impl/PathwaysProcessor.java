@@ -18,6 +18,7 @@ package stroom.pathways.impl;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.node.api.NodeInfo;
@@ -26,10 +27,16 @@ import stroom.pathways.shared.PathwayResultPage;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.planb.impl.dao.Count;
+import stroom.planb.impl.dao.Db;
 import stroom.planb.impl.dao.LmdbWriter;
 import stroom.planb.impl.dao.trace.PathwaysDb;
 import stroom.planb.impl.dao.trace.TraceDb;
-import stroom.planb.impl.data.ShardManager;
+import stroom.planb.impl.data.archive.ArchiveShardLocator;
+import stroom.planb.impl.data.archive.ArchiveShardRef;
+import stroom.planb.impl.data.shard.ShardManager;
+import stroom.planb.shared.HasHoldingAreaSettings;
+import stroom.planb.shared.HoldingAreaSettings;
+import stroom.planb.shared.PlanBDocument;
 import stroom.util.concurrent.StripedLock;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -40,15 +47,17 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.time.SimpleDurationUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,7 +74,6 @@ import java.util.stream.Stream;
 public class PathwaysProcessor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PathwaysProcessor.class);
-    private static final ByteBuffer PROCESSED = ByteBuffer.allocate(0);
 
     private final PathwaysStore pathwaysStore;
     private final MessageReceiverFactory messageReceiverFactory;
@@ -77,6 +85,8 @@ public class PathwaysProcessor {
     private final PathwaySerde pathwaySerde;
     private final ShardManager shardManager;
     private final NodeInfo nodeInfo;
+    private final ClusterLockService clusterLockService;
+    private final ArchiveShardLocator archiveShardLocator;
 
     @Inject
     public PathwaysProcessor(final PathwaysStore pathwaysStore,
@@ -85,77 +95,58 @@ public class PathwaysProcessor {
                              final ByteBuffers byteBuffers,
                              final PathwaySerde pathwaySerde,
                              final ShardManager shardManager,
-                             final NodeInfo nodeInfo) {
+                             final NodeInfo nodeInfo,
+                             final ClusterLockService clusterLockService,
+                             final ArchiveShardLocator archiveShardLocator) {
         this.pathwaysStore = pathwaysStore;
         this.messageReceiverFactory = messageReceiverFactory;
         this.byteBuffers = byteBuffers;
         this.pathwaySerde = pathwaySerde;
         this.shardManager = shardManager;
         this.nodeInfo = nodeInfo;
+        this.clusterLockService = clusterLockService;
+        this.archiveShardLocator = archiveShardLocator;
 
         dbPath = pathCreator.toAppPath("${stroom.home}/pathways");
     }
 
+    /**
+     * Scheduled entry point. Delegates to {@link #processCompletedTraces} for each PathwaysDoc
+     * assigned to this node, taking every trace a bucket holds a merge time for.
+     *
+     * <p>No settling delay is applied here. A trace only reaches a bucket once publishing has
+     * waited out the store's {@code Max Wait For Data}, so the wait for a trace's remaining spans
+     * has already happened by the time this can see it, and a bucket is only offered for reading
+     * once its version marker is in place.
+     */
     public void exec() {
         // Reclaim stores for docs that have been deleted since the last run.
         deleteOldStores();
 
-        final List<DocRef> docRefs = pathwaysStore.list();
-        for (final DocRef docRef : NullSafe.list(docRefs)) {
+        // Everything stamped up to now; the ordered scan stops there rather than running to the
+        // end of the index. Anything stamped during this pass is taken on the next one.
+        final long cutoffMs = Instant.now().toEpochMilli();
+
+        for (final DocRef docRef : NullSafe.list(pathwaysStore.list())) {
             try {
-                process(docRef);
+                final PathwaysDoc doc = pathwaysStore.readDocument(docRef);
+                if (doc != null
+                    && doc.getTracesDocRef() != null
+                    && Objects.equals(doc.getProcessingNode(), nodeInfo.getThisNodeName())) {
+                    // Held under the store's read lock for the whole of the processing below so it
+                    // can't be closed and deleted while we read from it.
+                    useStore(docRef, true, pathwaysDb -> {
+                        if (pathwaysDb != null) {
+                            processCompletedTraces(doc, cutoffMs, pathwaysDb);
+                        }
+                        return null;
+                    });
+                }
             } catch (final RuntimeException e) {
                 // Keep going: a doc deleted since list() above, or one that fails to process,
                 // must not stop us processing the rest until the next run of this job.
                 LOGGER.error(() -> LogUtil.message("Error processing pathways for '{}': {}",
                         docRef, e.getMessage()), e);
-            }
-        }
-    }
-
-    private void process(final DocRef docRef) {
-        final PathwaysDoc doc = pathwaysStore.readDocument(docRef);
-        if (doc != null &&
-            doc.getTracesDocRef() != null &&
-            Objects.equals(doc.getProcessingNode(), nodeInfo.getThisNodeName())) {
-
-            // Check that this is the node that trace stores are likely to be located.
-            if (shardManager.isSnapshotNode()) {
-                throw new RuntimeException("Attempt to run pathways processing on different node to trace store");
-            }
-
-            final DocRef infoFeed = doc.getInfoFeed();
-            if (infoFeed != null && infoFeed.getName() != null) {
-                // Load pathways DB for doc, held under its read lock for the whole of the
-                // processing below so it can't be closed and deleted while we write to it.
-                useStore(docRef, true, pathwaysDb -> {
-                    if (pathwaysDb == null) {
-                        return null;
-                    }
-
-                    messageReceiverFactory.create(infoFeed.getName(), messageReceiver -> {
-
-                        shardManager.get(doc.getTracesDocRef().getName(), db -> {
-                            if (db instanceof final TraceDb traceDb) {
-
-                                try (final LmdbWriter writer = pathwaysDb.createWriter()) {
-                                    final TraceProcessor traceProcessor =
-                                            new TraceProcessor(byteBuffers, pathwaySerde);
-                                    traceDb.iterateTraces((traceId, function) ->
-                                            traceProcessor.processTrace(writer,
-                                                    pathwaysDb,
-                                                    traceId,
-                                                    function,
-                                                    doc,
-                                                    messageReceiver));
-                                    writer.commit();
-                                }
-                            }
-                            return null;
-                        });
-                    });
-                    return null;
-                });
             }
         }
     }
@@ -404,5 +395,114 @@ public class PathwaysProcessor {
                 .exact(true)
                 .build();
         return new PathwayResultPage(list, pageResponse);
+    }
+
+    /**
+     * For a single PathwaysDoc, finds all eligible traces across every shard of
+     * the linked TracesDoc and runs pathways processing on each one.
+     *
+     * <p>Takes a per-shard lock so that in a multi-node cluster, different nodes can process
+     * different shards concurrently without blocking each other.
+     */
+    private void processCompletedTraces(final PathwaysDoc doc,
+                                        final long cutoffMs,
+                                        final PathwaysDb pathwaysDb) {
+        if (shardManager.isSnapshotNode()) {
+            // Trace completion runs only on merge (shard-owning) nodes.
+            return;
+        }
+
+        final PlanBDocument tracesDoc = shardManager.getDoc(doc.getTracesDocRef().getName());
+        if (tracesDoc == null) {
+            LOGGER.warn("No PlanB doc found for traces doc ref '{}' — skipping for pathways doc {}",
+                    doc.getTracesDocRef().getName(), doc.getName());
+            return;
+        }
+
+        final DocRef infoFeed = doc.getInfoFeed();
+        final long toMs = System.currentTimeMillis();
+        final long fromMs = bucketWindowStartMs(tracesDoc, toMs);
+        for (int i = 0; i < tracesDoc.getShardCount(); i++) {
+            final int shardIdx = i;
+            // Per-shard lock: nodes in a cluster can process different shards in parallel.
+            final String lockName = "pathways-write-" + doc.getUuid() + "-" + shardIdx;
+            clusterLockService.tryLock(lockName, () -> {
+                for (final ArchiveShardRef ref :
+                        archiveShardLocator.findRelevantShards(tracesDoc, shardIdx, fromMs, toMs)) {
+                    shardManager.getArchive(tracesDoc, shardIdx, ref, db ->
+                            processShardTraces(db, pathwaysDb, infoFeed, doc, cutoffMs));
+                }
+            });
+        }
+    }
+
+    /**
+     * How far back to look for buckets holding traces not yet processed.
+     *
+     * <p>One maximum wait for data, because that is the furthest back a newly published trace can
+     * land. Buckets are labelled by the root's start time, and a trace whose real root never arrived
+     * waits the full time and is then published under a root synthesized from its earliest span — so
+     * its label can be a whole wait old, but no older. Anything earlier was published in a previous
+     * window and has a processed marker already.
+     */
+    private static long bucketWindowStartMs(final PlanBDocument tracesDoc, final long toMs) {
+        final SimpleDuration maxWait = HasHoldingAreaSettings.holdingAreaSettings(tracesDoc.getSettings())
+                .map(HoldingAreaSettings::getMaxWaitForData)
+                .orElse(HoldingAreaSettings.DEFAULT_MAX_WAIT_FOR_DATA);
+        return SimpleDurationUtil.minus(Instant.ofEpochMilli(toMs), maxWait).toEpochMilli();
+    }
+
+    /**
+     * Processes eligible completed traces from a single TracesDoc shard into the
+     * PathwaysDb. Must be called while the caller holds the appropriate
+     * {@code pathways-write-*} cluster lock for this shard.
+     */
+    private Void processShardTraces(final Db<?, ?> db,
+                                    final PathwaysDb pathwaysDb,
+                                    final DocRef infoFeed,
+                                    final PathwaysDoc doc,
+                                    final long cutoffMs) {
+        if (!(db instanceof final TraceDb traceDb)) {
+            return null;
+        }
+
+        // Collect the traces this bucket holds a merge time for. iterateRootsMergedBefore stops
+        // early once the time-ordered key exceeds cutoffMs — O(eligible) scan.
+        // TODO: Replace the full scan from the beginning of trace-roots-merge-time with a
+        //  persistent cursor (watermark) stored in PathwaysDb. On each tick the scan would
+        //  start from the last-processed (mergeTimeMs, traceId) key rather than the
+        //  beginning of the index, making the cost O(new eligible) rather than
+        //  O(all eligible since the shard was created). The PathwaysDb processingStatus DBI
+        //  currently provides idempotency but not position tracking.
+        final List<byte[]> eligible = new ArrayList<>();
+        traceDb.iterateRootsMergedBefore(cutoffMs, eligible::add);
+
+        if (eligible.isEmpty()) {
+            LOGGER.debug("No traces ready for pathways completion for doc {}", doc.getName());
+            return null;
+        }
+
+        LOGGER.debug("Processing {} completed trace(s) for pathways doc {}",
+                eligible.size(), doc.getName());
+
+        if (infoFeed != null && infoFeed.getName() != null) {
+            messageReceiverFactory.create(infoFeed.getName(), messageReceiver -> {
+                try (final LmdbWriter writer = pathwaysDb.createWriter()) {
+                    final TraceProcessor traceProcessor =
+                            new TraceProcessor(byteBuffers, pathwaySerde);
+                    for (final byte[] traceId : eligible) {
+                        traceProcessor.processTrace(
+                                writer,
+                                pathwaysDb,
+                                traceId,
+                                traceDb::findTrace,
+                                doc,
+                                messageReceiver);
+                    }
+                    writer.commit();
+                }
+            });
+        }
+        return null;
     }
 }

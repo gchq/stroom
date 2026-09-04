@@ -20,18 +20,35 @@ import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.TraceSettingsPresenter.TraceSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
+import stroom.planb.client.view.PublishingSettingsView;
 import stroom.planb.client.view.RetentionSettingsView;
-import stroom.planb.client.view.SnapshotSettingsView;
+import stroom.planb.client.view.SharedFileStoreSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.planb.shared.HoldingAreaSettings;
 import stroom.planb.shared.TraceSettings;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+/**
+ * Settings for a Traces store. A trace store is only ever served from a shared file store, so this
+ * offers no snapshot or part-transfer settings — see {@code AbstractHttpStoreSettings} for the store
+ * types that do.
+ */
 public class TraceSettingsPresenter
         extends AbstractPlanBSettingsPresenter<TraceSettingsView> {
+
+    /**
+     * Held from the most recent {@link #read} so that {@link #write} round-trips them. Neither has an
+     * editor — the query range limit because nothing offers one yet, the compaction frequency because
+     * reclaiming pages in the holding area is internal housekeeping an operator has no reason to set.
+     * Without this a save would silently clear whatever was configured.
+     */
+    private SimpleDuration maxQueryTimeRange;
+    private SimpleDuration compactionFrequency;
 
     @Inject
     public TraceSettingsPresenter(
@@ -51,30 +68,42 @@ public class TraceSettingsPresenter
 
     private void read(final TraceSettings settings, final boolean readOnly) {
         setReadOnly(readOnly);
+        maxQueryTimeRange = settings.getMaxQueryTimeRange();
+        compactionFrequency = settings.getHoldingArea().getCompactionFrequency();
         getView().setMaxStoreSize(settings.getMaxStoreSize());
-        getView().setSynchroniseMerge(settings.getSynchroniseMerge());
-        getView().setOverwrite(settings.getOverwrite());
+        getView().setMaxSpansPerTrace(settings.getMaxSpansPerTrace());
+        getView().setGranularity(settings.getGranularity());
+        getView().setMaxWaitForData(settings.getHoldingArea().getMaxWaitForData());
         getView().setRetention(settings.getRetention());
-        getView().setSnapshotSettings(settings.getSnapshotSettings());
+        getView().setSharedFileStore(settings.getSharedFileStore());
     }
 
     public AbstractPlanBSettings write() {
         return new TraceSettings.Builder()
                 .maxStoreSize(getView().getMaxStoreSize())
-                .synchroniseMerge(getView().getSynchroniseMerge())
-                .overwrite(getView().getOverwrite())
+                .maxSpansPerTrace(getView().getMaxSpansPerTrace())
+                .granularity(getView().getGranularity())
+                .holdingArea(new HoldingAreaSettings.Builder()
+                        .maxWaitForData(getView().getMaxWaitForData())
+                        .compactionFrequency(compactionFrequency)
+                        .build())
                 .retention(getView().getRetention())
-                .snapshotSettings(getView().getSnapshotSettings())
+                .sharedFileStore(getView().getSharedFileStore())
+                .maxQueryTimeRange(maxQueryTimeRange)
                 .build();
     }
 
     public interface TraceSettingsView extends
             View,
             GeneralSettingsView,
+            SharedFileStoreSettingsView,
+            PublishingSettingsView,
             RetentionSettingsView,
-            SnapshotSettingsView,
             ReadOnlyChangeHandler,
             HasUiHandlers<ChangeUiHandlers> {
 
+        Long getMaxSpansPerTrace();
+
+        void setMaxSpansPerTrace(Long maxSpansPerTrace);
     }
 }

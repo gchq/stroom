@@ -28,6 +28,7 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.EnvInfo;
+import org.lmdbjava.LmdbException;
 import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 
@@ -51,6 +52,7 @@ public class PlanBEnv implements AutoCloseable {
     protected final Env<ByteBuffer> env;
     private final ReentrantLock writeTxnLock = new ReentrantLock();
     private final ReentrantLock dbCommitLock = new ReentrantLock();
+    private final Path path;
     private final boolean readOnly;
     private final HashClashCommitRunnable commitRunnable;
 
@@ -60,6 +62,7 @@ public class PlanBEnv implements AutoCloseable {
                     final boolean readOnly,
                     final HashClashCommitRunnable commitRunnable) {
         final LmdbEnvDir lmdbEnvDir = new LmdbEnvDir(path, true);
+        this.path = path;
         this.readOnly = readOnly;
         this.commitRunnable = commitRunnable;
         concurrentReaderSemaphore = new Semaphore(CONCURRENT_READERS);
@@ -98,7 +101,12 @@ public class PlanBEnv implements AutoCloseable {
 
     public final <T> T write(final Function<LmdbWriter, T> function) {
         try (final LmdbWriter writer = createWriter()) {
-            return function.apply(writer);
+            try {
+                return function.apply(writer);
+            } catch (final Throwable e) {
+                fail(writer, e);
+                throw e;
+            }
         }
     }
 
@@ -106,13 +114,65 @@ public class PlanBEnv implements AutoCloseable {
         try (final LmdbWriter writer = createWriter()) {
             try (final Txn<ByteBuffer> readTxn = env.txnRead()) {
                 return function.apply(readTxn, writer);
+            } catch (final Throwable e) {
+                fail(writer, e);
+                throw e;
             }
         }
     }
 
     public final void write(final Consumer<LmdbWriter> consumer) {
         try (final LmdbWriter writer = createWriter()) {
-            consumer.accept(writer);
+            try {
+                consumer.accept(writer);
+            } catch (final Throwable e) {
+                fail(writer, e);
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Runs one operation against a writer that the caller holds across many operations.
+     *
+     * <p>Only an {@link LmdbException} aborts the txn. LMDB flags a txn MDB_TXN_ERROR once one of
+     * its own operations fails, e.g. with MDB_MAP_FULL, and every later use of it then fails with
+     * MDB_BAD_TXN — so committing such a txn on close throws from the commit listener and reports
+     * that secondary failure instead of the real cause.
+     *
+     * <p>Any other failure leaves the txn healthy and must not discard it. A serde that overflows a
+     * fixed-width buffer has written nothing to LMDB, and aborting would throw away every record
+     * buffered since the last commit because one record was malformed. Those propagate to the
+     * caller, which rejects the single record and carries on.
+     */
+    public final void writeWith(final LmdbWriter writer, final Runnable operation) {
+        try {
+            operation.run();
+        } catch (final Throwable e) {
+            if (e instanceof LmdbException) {
+                fail(writer, e);
+            }
+            throw e;
+        }
+    }
+
+    /** Aborts the writer and translates a map-full failure. Callers rethrow. */
+    private void fail(final LmdbWriter writer, final Throwable e) {
+        abortQuietly(writer, e);
+        throwIfStoreFull(e);
+    }
+
+    private void throwIfStoreFull(final Throwable e) {
+        if (e instanceof Env.MapFullException) {
+            throw new PlanBStoreFullException(path, getUsage(), e);
+        }
+    }
+
+    private static void abortQuietly(final LmdbWriter writer, final Throwable cause) {
+        try {
+            writer.abort();
+        } catch (final Throwable e) {
+            cause.addSuppressed(e);
         }
     }
 
@@ -155,6 +215,17 @@ public class PlanBEnv implements AutoCloseable {
         env.close();
     }
 
+    /**
+     * How much of the map LMDB has allocated pages for. Pages freed by deletes are included
+     * because LMDB never shrinks the file, so this, not the live data size, is what determines
+     * whether another write can succeed.
+     */
+    public Usage getUsage() {
+        final EnvInfo info = env.info();
+        final long usedBytes = (info.lastPageNumber + 1) * env.stat().pageSize;
+        return new Usage(usedBytes, info.mapSize);
+    }
+
     public EnvInf getInfo() {
         final List<String> dbNames = getDbNames();
         return new EnvInf(env.stat(), env.info(), env.getMaxKeySize(), dbNames);
@@ -171,5 +242,14 @@ public class PlanBEnv implements AutoCloseable {
 
     public record EnvInf(Stat stat, EnvInfo envInfo, int maxKeySize, List<String> dbNames) {
 
+    }
+
+    public record Usage(long usedBytes, long mapSize) {
+
+        public double fraction() {
+            return mapSize == 0
+                    ? 0
+                    : (double) usedBytes / mapSize;
+        }
     }
 }

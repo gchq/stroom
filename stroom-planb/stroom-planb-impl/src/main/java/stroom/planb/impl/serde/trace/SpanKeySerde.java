@@ -32,8 +32,14 @@ public class SpanKeySerde implements KeySerde<SpanKey> {
 
     private static final int TRACE_ID_LENGTH = 16;
     private static final int PARENT_SPAN_ID_LENGTH = 8;
+    private static final int START_TIME_LENGTH = 8;
     private static final int SPAN_ID_LENGTH = 8;
-    private static final int LENGTH = TRACE_ID_LENGTH + PARENT_SPAN_ID_LENGTH + SPAN_ID_LENGTH;
+    // Key layout: traceId ∥ parentSpanId ∥ startTime ∥ spanId. startTime precedes spanId so that a
+    // parent's children (prefix traceId ∥ parentSpanId) scan in start-time order — the order the
+    // waterfall displays them in. startTime is a big-endian epoch-nanos long (positive, so unsigned
+    // byte order == chronological order).
+    private static final int LENGTH =
+            TRACE_ID_LENGTH + PARENT_SPAN_ID_LENGTH + START_TIME_LENGTH + SPAN_ID_LENGTH;
     private static final byte[] NO_PARENT_SPAN_ID = new byte[PARENT_SPAN_ID_LENGTH];
 
     private final ByteBuffers byteBuffers;
@@ -76,6 +82,7 @@ public class SpanKeySerde implements KeySerde<SpanKey> {
         }
         byteBuffer.put(traceId);
         byteBuffer.put(parentSpanId);
+        byteBuffer.putLong(parseStartTime(spanKey.getStartTimeUnixNano()));
         byteBuffer.put(spanId);
         byteBuffer.flip();
     }
@@ -87,10 +94,23 @@ public class SpanKeySerde implements KeySerde<SpanKey> {
         final byte[] spanId = new byte[SPAN_ID_LENGTH];
         byteBuffer.get(traceId);
         byteBuffer.get(parentSpanId);
+        final long startTime = byteBuffer.getLong();
         byteBuffer.get(spanId);
         return new SpanKey(HexStringUtil.encode(traceId),
                 HexStringUtil.encode(spanId),
-                spanIdBytesToString(parentSpanId));
+                spanIdBytesToString(parentSpanId),
+                Long.toString(startTime));
+    }
+
+    private static long parseStartTime(final String startTimeUnixNano) {
+        if (NullSafe.isEmptyString(startTimeUnixNano)) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(startTimeUnixNano);
+        } catch (final NumberFormatException e) {
+            return 0L;
+        }
     }
 
     private byte[] spanIdStringToBytes(final String spanId) {

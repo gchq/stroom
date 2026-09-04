@@ -1,0 +1,336 @@
+/*
+ * Copyright 2016-2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.pathways.impl;
+
+import stroom.cluster.lock.api.ClusterLockService;
+import stroom.docref.DocRef;
+import stroom.docstore.api.Store;
+import stroom.docstore.api.StoreFactory;
+import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
+import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportState;
+import stroom.pathways.shared.TracesDoc;
+import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.fs.SharedFileStoreDocStore;
+import stroom.planb.impl.fs.SharedFileStoreTrash;
+import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+@Singleton
+public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocStore {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TracesDocStoreImpl.class);
+
+    private final Store<TracesDoc> store;
+    private final TracesDocSerialiser serialiser;
+    private final Provider<ClusterLockService> clusterLockServiceProvider;
+
+    @Inject
+    TracesDocStoreImpl(final StoreFactory storeFactory,
+                       final TracesDocSerialiser serialiser,
+                       final Provider<ClusterLockService> clusterLockServiceProvider) {
+        this.store = storeFactory.createStore(
+                serialiser,
+                TracesDoc.TYPE,
+                TracesDoc::tracesBuilder,
+                TracesDoc::copyTraces,
+                () -> null);
+        this.serialiser = serialiser;
+        this.clusterLockServiceProvider = clusterLockServiceProvider;
+    }
+
+    // ---------------------------------------------------------------------
+    // START OF ExplorerActionHandler
+    // ---------------------------------------------------------------------
+
+    @Override
+    public DocRef createDocument(final String name) {
+        return store.createDocument(name);
+    }
+
+    @Override
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
+        return store.copyDocument(docRef.getUuid(), newName);
+    }
+
+    @Override
+    public DocRef moveDocument(final DocRef docRef) {
+        return store.moveDocument(docRef);
+    }
+
+    @Override
+    public DocRef renameDocument(final DocRef docRef, final String name) {
+        return store.renameDocument(docRef, name);
+    }
+
+    @Override
+    public void deleteDocument(final DocRef docRef) {
+        // Read the doc BEFORE deleting the config so we can capture the sharedPath.
+        final TracesDoc doc = docRef != null && docRef.getUuid() != null
+                ? store.readDocument(DocRef.builder()
+                        .uuid(docRef.getUuid())
+                        .type(TracesDoc.TYPE)
+                        .build())
+                : null;
+
+        // 1. Delete config from the document store.
+        store.deleteDocument(docRef);
+
+        // 2. Atomically rename shared-filesystem shard directories to trash.
+        //    The housekeeping job drains trash asynchronously.
+        //    Non-fatal: orphan detection will catch any rename failures on the next run.
+        if (doc != null) {
+            trashSharedData(doc);
+        }
+
+        // 3. Clean up cluster merge locks.
+        if (docRef != null && docRef.getUuid() != null) {
+            try {
+                clusterLockServiceProvider.get()
+                        .deleteLocks(PlanBConstants.getMergeLockPrefix(docRef.getUuid()));
+            } catch (final Exception e) {
+                // Ignore lock deletion failures to avoid failing the document delete itself.
+            }
+        }
+    }
+
+    private void trashSharedData(final TracesDoc doc) {
+        if (doc.getSharedPath() == null || doc.getSharedPath().isBlank()) {
+            return;
+        }
+        SharedFileStoreTrash.trashDoc(Path.of(doc.getSharedPath()), doc.getUuid());
+    }
+
+    // ---------------------------------------------------------------------
+    // END OF ExplorerActionHandler
+    // ---------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------
+    // START OF HasDependencies
+    // ---------------------------------------------------------------------
+
+    @Override
+    public void remapDependencies(final DocRef docRef,
+                                  final Map<DocRef, DocRef> remappings) {
+        store.remapDependencies(docRef, remappings);
+    }
+
+    // ---------------------------------------------------------------------
+    // END OF HasDependencies
+    // ---------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------
+    // START OF DocumentActionHandler
+    // ---------------------------------------------------------------------
+
+    @Override
+    public TracesDoc readDocument(final DocRef docRef) {
+        return store.readDocument(docRef);
+    }
+
+    @Override
+    public TracesDoc writeDocument(final TracesDoc document) {
+        validateSettings(document);
+        final DocRef docRef = DocRef.builder()
+                .type(document.getType())
+                .uuid(document.getUuid())
+                .name(document.getName())
+                .build();
+        final TracesDoc oldDoc = store.readDocument(docRef);
+        // Guard against inadvertent shard-count changes when shared file store data already exists.
+        if (oldDoc != null
+                && document.getShardCount() > 0
+                && oldDoc.getShardCount() != document.getShardCount()) {
+            if (hasSharedFileStoreData(oldDoc)) {
+                throw new EntityServiceException(
+                        "Cannot change shard count: data has already been written to this store.");
+            }
+        }
+        return store.writeDocument(document);
+    }
+
+    /**
+     * Backstops the REST path, which does not go through the client's pre-save check.
+     *
+     * <p>A trace store is only ever read through a shared file store, so a stored document must always
+     * name one. {@code SharedFileTracesStore} is the sole reader and has no fallback to resolve a
+     * document without a path or shards, so this is the boundary that keeps one out of the store.
+     *
+     * <p>Called from {@link #writeDocument} and {@link #importDocument}. Note {@code createDocument}
+     * delegates straight to the underlying docstore and so bypasses this, which is why a newly created
+     * document has no shared path until it is first saved.
+     */
+    private void validateSettings(final TracesDoc document) {
+        final String error = AbstractPlanBSettings.validationError(document.getSettings());
+        if (error != null) {
+            throw new EntityServiceException(error);
+        }
+        if (document.getSharedPath() == null || document.getSharedPath().isBlank()) {
+            throw new EntityServiceException("A shared file store path is required.");
+        }
+        if (document.getShardCount() < 1) {
+            throw new EntityServiceException("A shard count of at least 1 is required.");
+        }
+    }
+
+    @Override
+    public boolean hasSharedFileStoreData(final String uuid) {
+        final DocRef docRef = DocRef.builder()
+                .uuid(uuid)
+                .type(TracesDoc.TYPE)
+                .build();
+        return hasSharedFileStoreData(store.readDocument(docRef));
+    }
+
+    private boolean hasSharedFileStoreData(final TracesDoc doc) {
+        if (doc == null) {
+            return false;
+        }
+        final String sharedPathStr = doc.getSharedPath();
+        if (sharedPathStr == null || sharedPathStr.isBlank()) {
+            return false;
+        }
+        try {
+            final Path sharedRoot = Path.of(sharedPathStr);
+            // Every stage: a store whose data has all been published to archive buckets still holds
+            // data, and changing its shard count would leave those buckets unreachable.
+            return PlanBConstants.STAGE_DIR_NAMES.stream()
+                    .anyMatch(stage -> Files.exists(sharedRoot.resolve(stage).resolve(doc.getUuid())));
+        } catch (final Exception e) {
+            return false;
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // END OF DocumentActionHandler
+    // ---------------------------------------------------------------------
+
+    // ---------------------------------------------------------------------
+    // START OF ImportExportActionHandler
+    // ---------------------------------------------------------------------
+
+    @Override
+    public Set<DocRef> listDocuments() {
+        return store.listDocuments();
+    }
+
+    /**
+     * Rejects a document that names no shared file store, before it reaches the docstore.
+     *
+     * <p>The underlying store deserialises and persists without going through
+     * {@link #writeDocument}, so this is the only point at which an imported trace store can be
+     * checked. Reported through {@code importState} rather than thrown, to match how the docstore
+     * surfaces import failures.
+     */
+    @Override
+    public DocRef importDocument(final DocRef docRef,
+                                 final ImportExportDocument importExportDocument,
+                                 final ImportState importState,
+                                 final ImportSettings importSettings) {
+        if (importExportDocument != null) {
+            try {
+                validateSettings(serialiser.read(importExportDocument));
+            } catch (final IOException | RuntimeException e) {
+                importState.addMessage(Severity.ERROR, e.getMessage());
+                return docRef;
+            }
+        }
+        return store.importDocument(docRef, importExportDocument, importState, importSettings);
+    }
+
+    @Override
+    public ImportExportDocument exportDocument(final DocRef docRef,
+                                               final boolean omitAuditFields,
+                                               final List<Message> messageList) {
+        return store.exportDocument(docRef, omitAuditFields, messageList);
+    }
+
+    @Override
+    public String getType() {
+        return store.getType();
+    }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
+        return null;
+    }
+
+    // ---------------------------------------------------------------------
+    // END OF ImportExportActionHandler
+    // ---------------------------------------------------------------------
+
+    @Override
+    public List<DocRef> list() {
+        return store.list();
+    }
+
+
+    @Override
+    public Map<String, String> getIndexableData(final DocRef docRef) {
+        return store.getIndexableData(docRef);
+    }
+
+    // -------------------------------------------------------------------------
+    // SharedFileStoreDocStore
+    // -------------------------------------------------------------------------
+
+    /**
+     * Throws rather than skipping a listed document it cannot read:
+     * {@link stroom.planb.impl.fs.SharedFileStoreCleaner} trashes whatever is missing from this
+     * answer, so a short list costs data. A document deleted
+     * between the list and the read costs one housekeeping run, and is an orphan by the next one.
+     */
+    @Override
+    public Map<Path, Set<String>> getLiveSharedPathData() {
+        final Map<Path, Set<String>> result = new HashMap<>();
+        for (final DocRef docRef : store.list()) {
+            final TracesDoc doc = store.readDocument(docRef);
+            if (doc == null) {
+                throw new EntityServiceException("Could not read listed trace store " + docRef);
+            }
+            final String sharedPathStr = doc.getSharedPath();
+            if (sharedPathStr == null || sharedPathStr.isBlank()) {
+                continue;
+            }
+            result.computeIfAbsent(Path.of(sharedPathStr), k -> new HashSet<>())
+                    .add(doc.getUuid());
+        }
+        return result;
+    }
+}

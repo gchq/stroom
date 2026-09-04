@@ -26,13 +26,13 @@ import stroom.planb.impl.serde.hash.HashFactoryFactory;
 import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 
 public class TemporalKeySerdeFactory {
 
     private static final String KEY_LOOKUP_DB_NAME = "key";
 
-    public static TemporalKeySerde createKeySerde(final PlanBDoc doc,
+    public static TemporalKeySerde createKeySerde(final PlanBDocument doc,
                                                   final KeyType keyType,
                                                   final HashLength hashLength,
                                                   final PlanBEnv env,

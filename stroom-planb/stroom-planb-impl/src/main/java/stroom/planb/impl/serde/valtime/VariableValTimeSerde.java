@@ -70,7 +70,7 @@ public class VariableValTimeSerde implements ValTimeSerde {
                 yield ValSerdeUtil.read(valSlice);
             }
             case UID_LOOKUP -> {
-                // Read via UI lookup.
+                // Read via UID lookup.
                 final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, valSlice);
                 yield ValSerdeUtil.read(valueByteBuffer);
             }

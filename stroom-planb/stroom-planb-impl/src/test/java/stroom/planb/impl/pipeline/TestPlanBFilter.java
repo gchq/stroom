@@ -37,10 +37,11 @@ import stroom.pipeline.filter.TestFilter;
 import stroom.pipeline.filter.TestSAXEventFilter;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.util.ProcessorUtil;
-import stroom.planb.impl.dao.ShardWriters;
-import stroom.planb.impl.dao.ShardWriters.ShardWriter;
-import stroom.planb.impl.data.SpanKV;
-import stroom.planb.impl.data.TemporalValue;
+import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.dao.PlanBStreamWriter;
+import stroom.planb.impl.dao.PlanBStreamWriterFactory;
+import stroom.planb.impl.data.value.SpanKV;
+import stroom.planb.impl.data.value.TemporalValue;
 import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanValue;
 import stroom.planb.shared.PlanBDoc;
@@ -91,9 +92,11 @@ public class TestPlanBFilter {
     private static final JsonMapper MAPPER = createMapper(true);
 
     @Mock
-    ShardWriters shardWriters;
+    PlanBStreamWriterFactory shardWriters;
     @Mock
-    ShardWriter shardWriter;
+    PlanBStreamWriter shardWriter;
+    @Mock
+    PlanBDocCache planBDocCache;
 
     @Test
     void test() throws Exception {
@@ -101,13 +104,11 @@ public class TestPlanBFilter {
 
         Mockito.when(shardWriters.createWriter(Mockito.any()))
                 .thenReturn(shardWriter);
-        // Match the exact map name. The XML is pretty printed, so this also verifies that inter element
-        // whitespace does not pollute the captured map name.
-        Mockito.when(shardWriter.getDoc(Mockito.eq("test"), Mockito.any()))
-                .thenReturn(Optional.of(PlanBDoc.builder()
+        Mockito.when(planBDocCache.get(Mockito.any()))
+                .thenReturn(PlanBDoc.builder()
                         .uuid(UUID.randomUUID().toString())
                         .stateType(StateType.TRACE)
-                        .build()));
+                        .build());
         final Answer<?> answer = invocation -> {
             final SpanKV spanKV = invocation.getArgument(1);
             LOGGER.info(spanKV.toString());
@@ -325,11 +326,11 @@ public class TestPlanBFilter {
     void traceWithoutSpanDoesNotReuseThePreviousSpan() {
         Mockito.when(shardWriters.createWriter(Mockito.any()))
                 .thenReturn(shardWriter);
-        Mockito.when(shardWriter.getDoc(Mockito.eq("test"), Mockito.any()))
-                .thenReturn(Optional.of(PlanBDoc.builder()
+        Mockito.when(planBDocCache.get(Mockito.eq("test")))
+                .thenReturn(PlanBDoc.builder()
                         .uuid(UUID.randomUUID().toString())
                         .stateType(StateType.TRACE)
-                        .build()));
+                        .build());
 
         final String xml = """
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -366,11 +367,11 @@ public class TestPlanBFilter {
     void histogramBadValueIsARecordErrorNotFatal() {
         Mockito.when(shardWriters.createWriter(Mockito.any()))
                 .thenReturn(shardWriter);
-        Mockito.when(shardWriter.getDoc(Mockito.eq("hmap"), Mockito.any()))
-                .thenReturn(Optional.of(PlanBDoc.builder()
+        Mockito.when(planBDocCache.get(Mockito.eq("hmap")))
+                .thenReturn(PlanBDoc.builder()
                         .uuid(UUID.randomUUID().toString())
                         .stateType(StateType.HISTOGRAM)
-                        .build()));
+                        .build());
 
         final String xml = """
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -412,7 +413,8 @@ public class TestPlanBFilter {
                 new LocationFactoryProxy(),
                 metaHolder,
                 new ByteBufferFactoryImpl(),
-                shardWriters);
+                shardWriters,
+                planBDocCache);
         filter.setElementId(new ElementId("planBFilter"));
 
         ProcessorUtil.processXml(input, new ErrorReceiverProxy(errorReceiver), filter,
@@ -430,11 +432,12 @@ public class TestPlanBFilter {
         final MetaHolder metaHolder = new MetaHolder();
         metaHolder.setMeta(new Meta());
         final PlanBFilter splitter = new PlanBFilter(
-                new ErrorReceiverProxy(),
+                new ErrorReceiverProxy(new FatalErrorReceiver()),
                 new LocationFactoryProxy(),
                 metaHolder,
                 new ByteBufferFactoryImpl(),
-                shardWriters);
+                shardWriters,
+                planBDocCache);
 
         final TestFilter testFilter = new TestFilter(null, null);
 

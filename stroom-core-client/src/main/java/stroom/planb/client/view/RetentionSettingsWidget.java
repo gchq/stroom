@@ -44,13 +44,25 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
     @UiField
     SelectionBox<TimeUnit> retentionTimeUnit;
     @UiField
+    FormGroup retentionCheckIntervalPanel;
+    @UiField
+    ValueSpinner retentionCheckInterval;
+    @UiField
+    SelectionBox<TimeUnit> retentionCheckIntervalTimeUnit;
+    @UiField
+    FormGroup useStateTimePanel;
+    @UiField
     CustomCheckBox useStateTime;
 
     private boolean readOnly;
+    private boolean useStateTimeVisible = true;
+    private boolean checkIntervalVisible;
 
     @Inject
     public RetentionSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
+
+        retentionCheckIntervalPanel.setVisible(checkIntervalVisible);
 
         retentionAge.setMin(1);
         retentionAge.setMax(9999);
@@ -61,6 +73,15 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
         retentionTimeUnit.addItem(TimeUnit.MONTHS);
         retentionTimeUnit.addItem(TimeUnit.YEARS);
         retentionTimeUnit.setValue(TimeUnit.YEARS);
+
+        retentionCheckInterval.setMin(1);
+        retentionCheckInterval.setMax(9999);
+        retentionCheckInterval.setValue(1);
+
+        retentionCheckIntervalTimeUnit.addItem(TimeUnit.MINUTES);
+        retentionCheckIntervalTimeUnit.addItem(TimeUnit.HOURS);
+        retentionCheckIntervalTimeUnit.addItem(TimeUnit.DAYS);
+        retentionCheckIntervalTimeUnit.setValue(TimeUnit.HOURS);
     }
 
     @Override
@@ -77,6 +98,11 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
                         .time(retentionAge.getValue())
                         .timeUnit(retentionTimeUnit.getValue())
                         .build())
+                .checkInterval(SimpleDuration
+                        .builder()
+                        .time(retentionCheckInterval.getValue())
+                        .timeUnit(retentionCheckIntervalTimeUnit.getValue())
+                        .build())
                 .useStateTime(useStateTime.getValue())
                 .build();
     }
@@ -86,39 +112,75 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
         final RetentionSettings settings = new RetentionSettings.Builder(retention).build();
         this.retentionAge.setValue(1);
         this.retentionTimeUnit.setValue(TimeUnit.YEARS);
+        this.retentionCheckInterval.setValue(1);
+        this.retentionCheckIntervalTimeUnit.setValue(TimeUnit.HOURS);
         this.retentionEnabled.setValue(settings.isEnabled());
         if (settings.getDuration() != null) {
             this.retentionAge.setValue(settings.getDuration().getTime());
             this.retentionTimeUnit.setValue(settings.getDuration().getTimeUnit());
         }
-        this.useStateTime.setValue(settings.useStateTime());
-        setRetentionEnabled(retentionEnabled.getValue());
+        if (settings.getCheckInterval() != null) {
+            this.retentionCheckInterval.setValue(settings.getCheckInterval().getTime());
+            this.retentionCheckIntervalTimeUnit.setValue(settings.getCheckInterval().getTimeUnit());
+        }
+        // Clamped, so a value the user cannot see is never read back out by getRetention().
+        this.useStateTime.setValue(useStateTimeVisible && settings.useStateTime());
+        updateStates();
     }
 
-    private void setRetentionEnabled(final boolean enabled) {
-        if (!readOnly) {
-            if (enabled) {
+    /**
+     * Show the check frequency for a store that acts on it. Only the shared file store merge
+     * processor reads it; a store whose retention runs on its own schedule has nothing to set here,
+     * so the field stays hidden and keeps whatever value the document already holds.
+     */
+    public void setCheckIntervalVisible(final boolean visible) {
+        this.checkIntervalVisible = visible;
+        retentionCheckIntervalPanel.setVisible(visible);
+        updateStates();
+    }
+
+    /**
+     * Hide the Use State Time option for a store whose retention ignores it.
+     */
+    public void setUseStateTimeVisible(final boolean visible) {
+        this.useStateTimeVisible = visible;
+        if (!visible) {
+            useStateTime.setValue(false);
+        }
+        useStateTimePanel.setVisible(visible);
+    }
+
+    private void updateStates() {
+        final boolean editable = !readOnly;
+        retentionEnabled.setEnabled(editable);
+
+        final boolean retentionOn = retentionEnabled.getValue();
+        if (editable) {
+            if (retentionOn) {
                 retentionAgePanel.getElement().getStyle().setOpacity(1);
             } else {
                 retentionAgePanel.getElement().getStyle().setOpacity(0.5);
             }
-            retentionAge.setEnabled(enabled);
-            retentionTimeUnit.setEnabled(enabled);
-            useStateTime.setEnabled(enabled);
         }
+        if (editable && checkIntervalVisible) {
+            retentionCheckIntervalPanel.getElement().getStyle()
+                    .setOpacity(retentionOn ? 1 : 0.5);
+        }
+        retentionAge.setEnabled(editable && retentionOn);
+        retentionTimeUnit.setEnabled(editable && retentionOn);
+        retentionCheckInterval.setEnabled(editable && retentionOn && checkIntervalVisible);
+        retentionCheckIntervalTimeUnit.setEnabled(editable && retentionOn && checkIntervalVisible);
+        useStateTime.setEnabled(editable && retentionOn);
     }
 
     public void onReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
-        retentionEnabled.setEnabled(!readOnly);
-        retentionAge.setEnabled(!readOnly);
-        retentionTimeUnit.setEnabled(!readOnly);
-        useStateTime.setEnabled(!readOnly);
+        updateStates();
     }
 
     @UiHandler("retentionEnabled")
     public void onRetentionEnabled(final ValueChangeEvent<Boolean> event) {
-        setRetentionEnabled(retentionEnabled.getValue());
+        updateStates();
         getUiHandlers().onChange();
     }
 
@@ -129,6 +191,16 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
 
     @UiHandler("retentionTimeUnit")
     public void onRetainTimeUnit(final ValueChangeEvent<TimeUnit> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("retentionCheckInterval")
+    public void onRetentionCheckInterval(final ValueChangeEvent<Long> event) {
+        getUiHandlers().onChange();
+    }
+
+    @UiHandler("retentionCheckIntervalTimeUnit")
+    public void onRetentionCheckIntervalTimeUnit(final ValueChangeEvent<TimeUnit> event) {
         getUiHandlers().onChange();
     }
 

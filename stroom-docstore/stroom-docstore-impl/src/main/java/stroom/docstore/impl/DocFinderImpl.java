@@ -24,6 +24,7 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +52,15 @@ class DocFinderImpl implements DocFinder {
     public List<DocRef> findByName(final String type,
                                    final String nameFilter,
                                    final boolean allowWildCards) {
+        // When type is null, search all document types as documented.
+        // The name cache requires a non-null type key, so bypass it and go direct to persistence,
+        // which treats a null/empty type collection as "all types".
+        if (type == null) {
+            return persistence.find((Collection<String>) null, List.of(nameFilter), allowWildCards).stream()
+                    .filter(this::canView)
+                    .collect(Collectors.toList());
+        }
+
         // Use the name cache for exact (non-wildcard) lookups.
         if (!allowWildCards) {
             // Cache returns unfiltered results; apply permission filter at this boundary.

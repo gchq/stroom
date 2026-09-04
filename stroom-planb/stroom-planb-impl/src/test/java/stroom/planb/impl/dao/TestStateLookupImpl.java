@@ -20,7 +20,7 @@ import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.dao.temporalstate.TemporalStateDb;
 import stroom.planb.impl.dao.temporalstate.TemporalStateRequest;
-import stroom.planb.impl.data.TemporalState;
+import stroom.planb.impl.data.value.TemporalState;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.shared.PlanBDoc;
