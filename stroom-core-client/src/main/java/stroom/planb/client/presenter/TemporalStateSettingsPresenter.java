@@ -21,8 +21,8 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.TemporalStateSettingsPresenter.TemporalStateSettingsView;
 import stroom.planb.client.view.CondenseSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
+import stroom.planb.client.view.HttpStoreSettingsView;
 import stroom.planb.client.view.RetentionSettingsView;
-import stroom.planb.client.view.SnapshotSettingsView;
 import stroom.planb.client.view.StateValueSchemaSettingsView;
 import stroom.planb.client.view.TemporalStateKeySchemaSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
@@ -82,7 +82,7 @@ public class TemporalStateSettingsPresenter
             GeneralSettingsView,
             CondenseSettingsView,
             RetentionSettingsView,
-            SnapshotSettingsView,
+            HttpStoreSettingsView,
             TemporalStateKeySchemaSettingsView,
             StateValueSchemaSettingsView,
             ReadOnlyChangeHandler,

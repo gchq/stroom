@@ -196,6 +196,12 @@ public class DocumentTypeRegistry {
             "Pathways",
             SvgImage.DOCUMENT_PATHWAYS);
 
+    public static final DocumentType TRACES_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "Traces",
+            "Traces",
+            SvgImage.DOCUMENT_TRACES);
+
 
     public static final DocumentType DUAL_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SEARCH,
@@ -284,6 +290,7 @@ public class DocumentTypeRegistry {
         put(XML_SCHEMA_DOCUMENT_TYPE);
         put(XSLT_DOCUMENT_TYPE);
         put(PATHWAYS_DOCUMENT_TYPE);
+        put(TRACES_DOCUMENT_TYPE);
 
         // Searchables
         put(DUAL_DOCUMENT_TYPE);

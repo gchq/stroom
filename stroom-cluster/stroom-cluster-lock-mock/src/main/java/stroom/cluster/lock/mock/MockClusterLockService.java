@@ -36,4 +36,9 @@ public class MockClusterLockService implements ClusterLockService {
     public <T> T lockResult(final String lockName, final Supplier<T> supplier) {
         return supplier.get();
     }
+
+    @Override
+    public void deleteLocks(final String prefix) {
+        // No-op for mock
+    }
 }

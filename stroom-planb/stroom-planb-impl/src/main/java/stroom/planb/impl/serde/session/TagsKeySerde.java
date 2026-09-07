@@ -24,7 +24,7 @@ import stroom.planb.impl.dao.PlanBEnv;
 import stroom.planb.impl.dao.UidLookupDb;
 import stroom.planb.impl.dao.UidLookupRecorder;
 import stroom.planb.impl.dao.UsedLookupsRecorder;
-import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.value.Session;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.keyprefix.Tag;
 import stroom.planb.impl.serde.time.TimeSerde;

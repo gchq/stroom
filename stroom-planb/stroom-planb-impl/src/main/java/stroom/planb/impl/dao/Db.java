@@ -18,6 +18,7 @@ package stroom.planb.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb2.KV;
+import stroom.planb.impl.dao.PlanBEnv.Usage;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -45,16 +46,48 @@ public interface Db<K, V> extends AutoCloseable {
 
     void merge(Path source);
 
-    long deleteOldData(Instant deleteBefore,
+    default void mergeComplete() {
+    }
+
+    long runRetention(Instant deleteBefore,
                        boolean useStateTime);
+
+    /**
+     * Moves records out of this store and into subdirectories of {@code bucketBaseDir}, one per
+     * bucket, so that queries can read them. How records are grouped into buckets, how a bucket
+     * subdirectory is named, and what {@code publishBefore} decides are all up to the
+     * implementation — a store type need not bucket by time, or at all, and need not restrict
+     * itself to records older than the cut-off. {@code TraceDb}, for instance, moves every span of
+     * a trace it selects and uses {@code publishBefore} only to decide when the trace's root
+     * retires. Returns 0 for a store type that does not publish this way.
+     *
+     * @return the number of rows removed from this store
+     */
+    default long publish(final Instant publishBefore,
+                         final Path bucketBaseDir) {
+        return 0L;
+    }
 
     long condense(Instant condenseBefore);
 
     void compact(Path destination);
 
+    /**
+     * How much of the store's fixed-size LMDB map is allocated. Callers use this to avoid starting
+     * work that cannot complete, because a full map fails the write rather than growing.
+     */
+    Usage getUsage();
+
     LmdbWriter createWriter();
 
     void write(Consumer<LmdbWriter> consumer);
+
+    /**
+     * Runs one operation against a writer obtained from {@link #createWriter()} and held across many
+     * operations, aborting it on failure. Callers that hold a writer must route every write through
+     * here, because {@link #write(Consumer)}'s failure handling only covers the writer it owns.
+     */
+    void writeWith(LmdbWriter writer, Runnable operation);
 
     void lock(Runnable runnable);
 
@@ -65,9 +98,9 @@ public interface Db<K, V> extends AutoCloseable {
     String getInfoString();
 
     /**
-     * @return The id that uniquely identifies this LMDB instance. Minted once when the instance is first
-     * created and carried wherever the instance is copied, so it identifies a merge source across replays.
-     * Null only for a read only instance created before instance ids were introduced.
+     * @return The id that uniquely identifies this LMDB instance. Minted on the first writable open and
+     * carried wherever the instance is copied, so it identifies a merge source across replays. Null only
+     * when the env was opened read only and holds no id, since a read only open cannot mint one.
      */
     String getInstanceUuid();
 

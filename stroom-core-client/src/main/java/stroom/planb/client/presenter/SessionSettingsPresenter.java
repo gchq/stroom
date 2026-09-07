@@ -21,9 +21,9 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.SessionSettingsPresenter.SessionSettingsView;
 import stroom.planb.client.view.CondenseSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
+import stroom.planb.client.view.HttpStoreSettingsView;
 import stroom.planb.client.view.RetentionSettingsView;
 import stroom.planb.client.view.SessionKeySchemaSettingsView;
-import stroom.planb.client.view.SnapshotSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.SessionSettings;
 
@@ -79,7 +79,7 @@ public class SessionSettingsPresenter
             GeneralSettingsView,
             CondenseSettingsView,
             RetentionSettingsView,
-            SnapshotSettingsView,
+            HttpStoreSettingsView,
             SessionKeySchemaSettingsView,
             ReadOnlyChangeHandler,
             HasUiHandlers<ChangeUiHandlers> {

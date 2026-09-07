@@ -25,4 +25,10 @@ public interface TracesStore {
     ResultPage<TraceRoot> findTraces(FindTraceCriteria criteria);
 
     Trace getTrace(GetTraceRequest request);
+
+    TraceSpanPage getSpans(GetSpansRequest request);
+
+    TraceOverview getTraceOverview(GetTraceOverviewRequest request);
+
+    TracesResultPage findTracesWithHistogram(FindTracesWithHistogramCriteria criteria);
 }

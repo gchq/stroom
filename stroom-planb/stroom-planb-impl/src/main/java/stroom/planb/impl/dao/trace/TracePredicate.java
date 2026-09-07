@@ -132,7 +132,7 @@ public class TracePredicate implements Predicate<Trace> {
             return true;
         }
 
-        // Set or expand duration range.
+        // Check the span's own duration against the node's duration constraint.
         final NanoTime startTime = NanoTime.fromString(span.getStartTimeUnixNano());
         final NanoTime endTime = NanoTime.fromString(span.getEndTimeUnixNano());
         final NanoTime duration = endTime.subtract(startTime);
@@ -141,12 +141,12 @@ public class TracePredicate implements Predicate<Trace> {
             return false;
         }
 
-        // Set or expand flags.
+        // Check flags.
         if (!checkConstraint(constraints, "flags", span.getFlags())) {
             return false;
         }
 
-        // Set or expand kind.
+        // Check kind.
         if (!checkConstraint(constraints, "kind", span.getKind().name())) {
             return false;
         }
@@ -166,7 +166,7 @@ public class TracePredicate implements Predicate<Trace> {
             return false;
         }
 
-        // Set or expand attributes.
+        // Check every attribute the span carries against the node's constraint for it.
         return attributes.entrySet().stream().allMatch(entry -> {
             final String key = entry.getKey();
             final KeyValue value = entry.getValue();

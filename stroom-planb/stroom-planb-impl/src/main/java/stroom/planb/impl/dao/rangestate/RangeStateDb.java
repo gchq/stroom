@@ -34,8 +34,8 @@ import stroom.planb.impl.dao.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.dao.PlanBSearchHelper.ValuesExtractor;
 import stroom.planb.impl.dao.SchemaInfo;
 import stroom.planb.impl.dao.UsedLookupsRecorder;
-import stroom.planb.impl.data.RangeState;
-import stroom.planb.impl.data.RangeState.Key;
+import stroom.planb.impl.data.value.RangeState;
+import stroom.planb.impl.data.value.RangeState.Key;
 import stroom.planb.impl.serde.rangestate.ByteRangeKeySerde;
 import stroom.planb.impl.serde.rangestate.IntegerRangeKeySerde;
 import stroom.planb.impl.serde.rangestate.LongRangeKeySerde;
@@ -44,7 +44,7 @@ import stroom.planb.impl.serde.rangestate.ShortRangeKeySerde;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.RangeStateSettings;
 import stroom.planb.shared.RangeType;
 import stroom.query.api.DateTimeSettings;
@@ -79,7 +79,7 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
 
     private RangeStateDb(final PlanBEnv env,
                          final ByteBuffers byteBuffers,
-                         final PlanBDoc doc,
+                         final PlanBDocument doc,
                          final RangeStateSettings settings,
                          final RangeKeySerde keySerde,
                          final ValTimeSerde valueSerde,
@@ -101,7 +101,7 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
 
     public static RangeStateDb create(final Path path,
                                       final ByteBuffers byteBuffers,
-                                      final PlanBDoc doc,
+                                      final PlanBDocument doc,
                                       final boolean readOnly) {
         // Ensure all settings are non null.
         final RangeStateSettings settings;
@@ -286,9 +286,9 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
     }
 
     @Override
-    public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
+    public long runRetention(final Instant deleteBefore, final boolean useStateTime) {
         return env.write(writer -> {
-            final long count = deleteOldData(writer, deleteBefore);
+            final long count = runRetention(writer, deleteBefore);
 
             // Delete unused lookup keys.
             if (!Thread.currentThread().isInterrupted()) {
@@ -303,7 +303,7 @@ public class RangeStateDb extends AbstractDb<Key, Val> {
         });
     }
 
-    private long deleteOldData(final LmdbWriter writer,
+    private long runRetention(final LmdbWriter writer,
                                final Instant deleteBefore) {
         return env.read(readTxn -> {
             final Count changeCount = new Count();

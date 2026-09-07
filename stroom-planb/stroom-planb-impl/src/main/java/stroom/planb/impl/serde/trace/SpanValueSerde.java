@@ -61,6 +61,21 @@ public class SpanValueSerde implements Serde<SpanValue> {
         timeSerde = new NanoTimeSerde();
     }
 
+    // An element count read from the buffer decides how much memory is reserved for the list, so it is
+    // checked before it is used: a negative count throws NegativeArraySizeException, and an oversized
+    // one reserves memory the buffer could never fill. Every element occupies at least one byte, so
+    // what is left in the buffer is an upper bound on how many there can be. Values reaching here are
+    // no longer only ones this node wrote — a shared file store carries them between nodes.
+    static int readCount(final ByteBuffer input, final String what) {
+        final int count = input.getInt();
+        if (count < 0 || count > input.remaining()) {
+            throw new IllegalStateException(
+                    "Cannot read " + count + " " + what + " from a buffer with "
+                    + input.remaining() + " bytes remaining");
+        }
+        return count;
+    }
+
     private ByteBuffer ensure(final ByteBuffer byteBuffer,
                               final int require) {
         if (byteBuffer.remaining() < require) {
@@ -91,6 +106,52 @@ public class SpanValueSerde implements Serde<SpanValue> {
         return NanoTimeUtil.fromInstant(instant);
     }
 
+    /**
+     * Reads only the {@code insertTime} field (the very first field in the
+     * serialised layout) from raw value bytes.  Unlike {@link #read} this
+     * method does <em>not</em> touch the UID lookup table, so it is safe to
+     * call even when the lookup is incomplete or inconsistent.
+     *
+     * @param val raw serialised value buffer; its position is not modified.
+     */
+    public NanoTime readInsertTime(final ByteBuffer val) {
+        return readNanoTime(val.duplicate());
+    }
+
+    /**
+     * Reads the fields the bounded aggregate sweep needs — span {@code name},
+     * {@code insertTime} (receipt), {@code endTime} and the {@code status} code — in a single
+     * pass, without materialising the full span. The status is the last field in the layout, so
+     * the intervening fields are consumed to reach it; this lets the merge quick-path fold a span's
+     * error state into the per-trace stats without a full {@link #read}. The name is resolved
+     * through the UID lookup table (so the lookup must be present).
+     *
+     * @param val raw serialised value buffer; its position is not modified.
+     */
+    public SpanSummary readSummary(final Txn<ByteBuffer> txn, final ByteBuffer val) {
+        final ByteBuffer input = val.duplicate();
+        final NanoTime insertTime = readNanoTime(input);
+        final String name = readString(txn, input);
+        input.get();                       // kind (1 byte) — skip
+        skipNanoTime(input);               // startTimeUnixNano — skip
+        final NanoTime endTime = readNanoTime(input);
+        readString(txn, input);            // traceState
+        input.getInt();                    // flags
+        readKvList(txn, input);            // attributes
+        input.getInt();                    // droppedAttributesCount
+        readEvents(txn, input);            // events
+        input.getInt();                    // droppedEventsCount
+        readLinks(txn, input);             // links
+        input.getInt();                    // droppedLinksCount
+        final SpanStatus status = readStatus(txn, input);
+        final StatusCode statusCode = status == null ? null : status.getCode();
+        return new SpanSummary(name, insertTime, endTime, statusCode);
+    }
+
+    /** Lightweight subset of a span value read by {@link #readSummary}. */
+    public record SpanSummary(String name, NanoTime insertTime, NanoTime endTime, StatusCode statusCode) {
+    }
+
     private ByteBuffer writeKvList(final Txn<ByteBuffer> txn, final List<KeyValue> list, final ByteBuffer byteBuffer) {
         final List<KeyValue> values = NullSafe.list(list);
         ByteBuffer result = ensure(byteBuffer, Integer.BYTES);
@@ -104,7 +165,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
 
     private List<KeyValue> readKvList(final Txn<ByteBuffer> txn,
                                       final ByteBuffer input) {
-        final int size = input.getInt();
+        final int size = readCount(input, "attributes");
         if (size == 0) {
             return null;
         }
@@ -131,7 +192,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
 
     private List<AnyValue> readValueList(final Txn<ByteBuffer> txn,
                                          final ByteBuffer byteBuffer) {
-        final int size = byteBuffer.getInt();
+        final int size = readCount(byteBuffer, "array values");
         if (size == 0) {
             return null;
         }
@@ -180,6 +241,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
                                      final ByteBuffer output) {
         ByteBuffer result = output;
         if (anyValue == null) {
+            result = ensure(output, 1);
             result.put((byte) 128);
 
         } else {
@@ -221,6 +283,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
                 result = writeHexString(txn, anyValue.getBytesValue(), result);
 
             } else {
+                result = ensure(output, 1);
                 result.put((byte) 128);
             }
         }
@@ -290,7 +353,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
 
     private List<SpanEvent> readEvents(final Txn<ByteBuffer> txn,
                                        final ByteBuffer input) {
-        final int size = input.getInt();
+        final int size = readCount(input, "events");
         if (size == 0) {
             return null;
         }
@@ -349,7 +412,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
 
     private List<SpanLink> readLinks(final Txn<ByteBuffer> txn,
                                      final ByteBuffer input) {
-        final int size = input.getInt();
+        final int size = readCount(input, "links");
         if (size == 0) {
             return null;
         }
@@ -385,6 +448,7 @@ public class SpanValueSerde implements Serde<SpanValue> {
         result = writeHexString(txn, link.getSpanId(), result);
         result = writeString(txn, link.getTraceState(), result);
         result = writeKvList(txn, link.getAttributes(), result);
+        result = ensure(result, Integer.BYTES);
         result.putInt(link.getDroppedAttributesCount());
         return result;
     }
@@ -578,9 +642,6 @@ public class SpanValueSerde implements Serde<SpanValue> {
         } else if (type == ValueType.BOOLEAN.getPrimitiveValue()) {
             ByteBufferUtils.skip(input, 1);
 
-        } else if (type == ValueType.INTEGER.getPrimitiveValue()) {
-            ByteBufferUtils.skip(input, Integer.BYTES);
-
         } else if (type == ValueType.LONG.getPrimitiveValue()) {
             ByteBufferUtils.skip(input, Long.BYTES);
 
@@ -772,11 +833,8 @@ public class SpanValueSerde implements Serde<SpanValue> {
             } else if (type == ValueType.BOOLEAN.getPrimitiveValue()) {
                 ByteBufferUtils.skip(input, 1);
 
-            } else if (type == ValueType.INTEGER.getPrimitiveValue()) {
-                ByteBufferUtils.skip(input, Integer.BYTES);
-
             } else if (type == ValueType.LONG.getPrimitiveValue()) {
-                ByteBufferUtils.skip(input, Integer.BYTES);
+                ByteBufferUtils.skip(input, Long.BYTES);
 
             } else if (type == ValueType.DOUBLE.getPrimitiveValue()) {
                 ByteBufferUtils.skip(input, Double.BYTES);

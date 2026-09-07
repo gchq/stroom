@@ -20,7 +20,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
-import stroom.planb.impl.data.RangeState.Key;
+import stroom.planb.impl.data.value.RangeState.Key;
 
 import org.lmdbjava.Txn;
 

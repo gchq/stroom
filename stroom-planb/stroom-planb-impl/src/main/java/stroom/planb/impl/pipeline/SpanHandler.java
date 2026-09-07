@@ -227,7 +227,7 @@ public class SpanHandler extends DefaultHandler {
 
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
-        // outside the value element so capture the chars, so we can get keys, map names, etc.
+        // Accumulate the text of the current element so endElement can read it as a span field.
         contentBuffer.append(ch, start, length);
     }
 

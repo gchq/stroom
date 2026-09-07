@@ -48,4 +48,9 @@ class ClusterLockServiceImpl implements ClusterLockService {
     public void tryLock(final String lockName, final Runnable runnable) {
         dbClusterLock.tryLock(lockName, runnable);
     }
+
+    @Override
+    public void deleteLocks(final String prefix) {
+        dbClusterLock.deleteLocks(prefix);
+    }
 }

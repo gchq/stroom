@@ -24,12 +24,13 @@ import stroom.docstore.api.DocFinder;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBDocStore;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.dao.trace.TraceDb;
-import stroom.planb.impl.data.FileDescriptor;
-import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.MergeProcessor;
-import stroom.planb.impl.data.ShardManager;
-import stroom.planb.impl.data.SpanKV;
+import stroom.planb.impl.data.shard.ShardManager;
+import stroom.planb.impl.data.value.SpanKV;
+import stroom.planb.impl.rest.FileDescriptor;
+import stroom.planb.impl.rest.FileHashUtil;
 import stroom.planb.impl.serde.SpanDataLoaderTestUtil;
 import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanValue;
@@ -61,6 +62,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -120,6 +122,10 @@ public class TestTraceDb {
                 .traceId("d18ea88869434c083a361644267ecf32")
                 .parentSpanId("")
                 .spanId("e0a94d9f5cd3a306")
+                // The span key now includes start time (siblings sort chronologically), so a point
+                // get must supply the stored span's start time — that of e0a94d9f5cd3a306 in the
+                // TEST_TRACES test data.
+                .startTimeUnixNano("1747388819043137843")
                 .build();
     }
 
@@ -145,7 +151,7 @@ public class TestTraceDb {
 
     @Test
     void testFullProcess(@TempDir final Path rootDir) {
-        final StatePaths statePaths = new StatePaths(rootDir);
+        final PlanBPaths planBPaths = new PlanBPaths(rootDir);
         final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
         final DocFinder docFinder = Mockito.mock(DocFinder.class);
         final PlanBDoc doc = PlanBDoc
@@ -166,6 +172,7 @@ public class TestTraceDb {
         final String path = rootDir.toAbsolutePath().toString();
         final PlanBConfig planBConfig = new PlanBConfig(path);
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+
         final ShardManager shardManager = new ShardManager(
                 new ByteBuffers(byteBufferFactory),
                 byteBufferFactory,
@@ -173,12 +180,13 @@ public class TestTraceDb {
                 planBDocStore,
                 null,
                 () -> planBConfig,
-                statePaths,
+                planBPaths,
                 null,
                 new SimpleTaskContextFactory(),
-                executorProvider);
+                executorProvider,
+                null);
         final MergeProcessor mergeProcessor = new MergeProcessor(
-                statePaths,
+                planBPaths,
                 new MockSecurityContext(),
                 new SimpleTaskContextFactory(),
                 shardManager,
@@ -213,7 +221,7 @@ public class TestTraceDb {
 
             // Read compacted
             assertThat(shardCount(shardManager)).isEqualTo(166);
-            assertThat(shardDbNameCount(shardManager)).isEqualTo(9);
+            assertThat(shardDbNameCount(shardManager)).isEqualTo(19);
 
             // Try deletion.
             shardManager.condenseAll(new SimpleTaskContext());
@@ -222,7 +230,7 @@ public class TestTraceDb {
             assertThat(shardCount(shardManager)).isEqualTo(0);
             final String infoString = shardManager.get(MAP_NAME, Db::getInfoString);
             System.err.println(infoString);
-            assertThat(shardDbNameCount(shardManager)).isEqualTo(9);
+            assertThat(shardDbNameCount(shardManager)).isEqualTo(19);
 
             // Try compaction.
             shardManager.compactAll();
@@ -230,7 +238,7 @@ public class TestTraceDb {
 
             // Read compacted
             assertThat(shardCount(shardManager)).isEqualTo(0);
-            assertThat(shardEnvEntryCount(shardManager)).isEqualTo(9);
+            assertThat(shardEnvEntryCount(shardManager)).isEqualTo(19);
         } finally {
             // The shard's env must be closed before JUnit deletes the @TempDir
             shardManager.closeAll();
@@ -450,31 +458,9 @@ public class TestTraceDb {
                           final Function<Integer, SpanValue> valueFunction) {
         try (final TraceDb db = TraceDb.create(tempDir, BYTE_BUFFERS, BYTE_BUFFER_FACTORY, getDoc(settings), false)) {
             assertThat(db.count()).isEqualTo(166);
-//            final SpanKey key = keyFunction.apply(0);
-//            final SpanValue expectedVal = valueFunction.apply(0);
-//            final SpanValue value = db.get(key);
-//            assertThat(value).isNotNull();
-//            assertThat(value).isEqualTo(expectedVal);
-
-//            final FieldIndex fieldIndex = new FieldIndex();
-//            fieldIndex.create(TraceFields.KEY);
-//            fieldIndex.create(TraceFields.VALUE_TYPE);
-//            fieldIndex.create(TraceFields.VALUE);
-//            final List<SpanValue[]> results = new ArrayList<>();
-//            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
-//            db.search(
-//                    new ExpressionCriteria(ExpressionOperator.builder().build()),
-//                    fieldIndex,
-//                    null,
-//                    expressionPredicateFactory,
-//                    results::add);
-//            assertThat(results.size()).isEqualTo(1);
-//            assertThat(results.getFirst()[0]).isEqualTo(key.getVal());
-//            assertThat(results.getFirst()[1].toString()).isEqualTo(expectedVal.type().toString());
-//            assertThat(results.getFirst()[2]).isEqualTo(expectedVal);
 
             // Test deleting data.
-            db.deleteOldData(Instant.now(), false);
+            db.runRetention(Instant.now(), false);
         }
     }
 
@@ -492,7 +478,7 @@ public class TestTraceDb {
             }
 
             // Test deleting data.
-            db.deleteOldData(Instant.now(), false);
+            db.runRetention(Instant.now(), false);
         }
     }
 

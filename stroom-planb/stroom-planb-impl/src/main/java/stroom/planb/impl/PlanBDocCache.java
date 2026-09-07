@@ -16,11 +16,24 @@
 
 package stroom.planb.impl;
 
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
+
+import java.util.List;
 
 public interface PlanBDocCache {
 
-    PlanBDoc get(String name);
+    /**
+     * Returns all {@link PlanBDocument} instances (both {@code PlanBDoc} and
+     * {@code TracesDoc}) known to the system, served from the cache where
+     * possible and loaded from the docstore on a cache miss.
+     */
+    List<PlanBDocument> getAll();
+
+    /**
+     * @throws PlanBDocNotFoundException if no document is registered under that name. Never returns
+     *                                   {@code null}.
+     */
+    PlanBDocument get(String name);
 
     void remove(String name);
 }

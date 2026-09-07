@@ -1,0 +1,22 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:i="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="form-group">
+        <form:FormGroup identity="maxWaitForDataPanel"
+                        label="Max Wait For Data"
+                        helpText="The longest that incomplete data is held back until the rest of it arrives. Data that is already complete does not wait: it becomes queryable on the next merge. Once the wait runs out, whatever has arrived is published as it stands, and anything turning up after that is published on its own. A longer wait keeps more data together; a shorter wait makes incomplete data queryable sooner.">
+            <g:FlowPanel styleName="durationSetting">
+                <v:ValueSpinner ui:field="maxWaitForData"/>
+                <i:SelectionBox ui:field="maxWaitForDataTimeUnit" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="granularityPanel"
+                        label="Bucket Granularity"
+                        helpText="How the queryable store is partitioned by time: Hour, Day, or Week.">
+            <i:SelectionBox ui:field="granularity" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

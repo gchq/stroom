@@ -17,12 +17,17 @@
 package stroom.planb.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
 import stroom.planb.client.view.CondenseSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
+import stroom.planb.client.view.HttpStoreSettingsView;
 import stroom.planb.client.view.RetentionSettingsView;
+import stroom.planb.client.view.SharedFileStoreSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.PlanBDoc;
@@ -32,12 +37,13 @@ import stroom.planb.shared.StateType;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class PlanBSettingsPresenter
         extends DocPresenter<PlanBSettingsView, PlanBDoc>
-        implements StateTypeChangeUiHandlers {
+        implements StateTypeChangeUiHandlers, HasChangeHandlers {
 
     private final Provider<StateSettingsPresenter> stateSettingsPresenterProvider;
     private final Provider<TemporalStateSettingsPresenter> temporalStateSettingsPresenterProvider;
@@ -191,8 +197,6 @@ public class PlanBSettingsPresenter
                 final TraceSettingsPresenter presenter =
                         traceSettingsPresenterProvider.get();
                 presenter.getView().setMaxStoreSize(maxStoreSize);
-                presenter.getView().setSynchroniseMerge(synchroniseMerge);
-                presenter.getView().setOverwrite(overwrite);
                 presenter.getView().setRetention(retention);
                 settingsPresenter = presenter;
                 break;
@@ -200,13 +204,54 @@ public class PlanBSettingsPresenter
         }
 
         if (settingsPresenter != null) {
-            if (currentStateType == null) {
+            if (currentStateType == null && getEntity() != null) {
                 settingsPresenter.read(getEntity().getSettings(), isReadOnly());
             }
             getView().setSettingsView(settingsPresenter.getView());
-            settingsPresenter.addChangeHandler(this::onChange);
+            settingsPresenter.addChangeHandler(() -> {
+                if (getEntity() != null) {
+                    onChange();
+                }
+                // For embedded use (e.g. TracesSettingsPresenter): propagate the
+                // change so listeners registered via addChangeHandler are notified.
+                ChangeEvent.fire(this);
+            });
         }
         currentStateType = stateType;
+    }
+
+    public void setStateTypeLocked(final boolean locked) {
+        getView().setStateTypeVisible(!locked);
+    }
+
+    public void readSettings(final AbstractPlanBSettings settings,
+                             final StateType stateType,
+                             final boolean readOnly) {
+        getView().setStateType(stateType);
+        currentStateType = null;
+        changeStateType();
+        if (settingsPresenter != null) {
+            settingsPresenter.read(settings, readOnly);
+        }
+        getView().onReadOnly(readOnly);
+    }
+
+    public AbstractPlanBSettings writeSettings() {
+        return settingsPresenter != null
+                ? settingsPresenter.write()
+                : null;
+    }
+
+    public void setSharedFileStoreLocked(final boolean locked) {
+        if (settingsPresenter != null
+                && settingsPresenter.getView() instanceof final SharedFileStoreSettingsView view) {
+            view.setSharedFileStoreLocked(locked);
+        }
+    }
+
+    @Override
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     private Long getMaxStoreSize(final View view) {
@@ -217,15 +262,15 @@ public class PlanBSettingsPresenter
     }
 
     private Boolean getSynchroniseMerge(final View view) {
-        if (view instanceof final GeneralSettingsView generalSettingsView) {
-            return generalSettingsView.getSynchroniseMerge();
+        if (view instanceof final HttpStoreSettingsView httpStoreSettingsView) {
+            return httpStoreSettingsView.getSynchroniseMerge();
         }
         return synchroniseMerge;
     }
 
     private Boolean getOverwrite(final View view) {
-        if (view instanceof final GeneralSettingsView generalSettingsView) {
-            return generalSettingsView.getOverwrite();
+        if (view instanceof final HttpStoreSettingsView httpStoreSettingsView) {
+            return httpStoreSettingsView.getOverwrite();
         }
         return overwrite;
     }
@@ -250,6 +295,8 @@ public class PlanBSettingsPresenter
         StateType getStateType();
 
         void setStateType(StateType stateType);
+
+        void setStateTypeVisible(boolean visible);
 
         void setSettingsView(View view);
     }
