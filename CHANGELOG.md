@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12.16] - 2026-09-07
+
+* Bug **#5738** : Improve the error message produced by the `json-to-xml` XSLT function and the `JSONParser` pipeline element when the JSON is invalid.
+
+* Feature **#5775** : Add `dropwizard-json-logging` runtime dependency so that JSON format app/request logging can be used. See https://www.dropwizard.io/en/stable/manual/configuration.html#json-layout for details of the YAML configuration required to enable it. Add new proxy config property `proxyConfig.logStream.useMappedDiagnosticContext` to support structured JSON logging. Add `type` to the `proxyConfig.logStream.metaKeys` default list so the stream type gets logged.
+
+
 ## [v7.12.15] - 2026-08-17
 
 * Bug **#5726** : Fix Stroom & Proxy docker images so the SIGTERM from a Docker `stop` is passed through to Dropwizard for a graceful shutdown.
@@ -2263,7 +2270,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.15...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12.16...HEAD
+[v7.12.16]: https://github.com/gchq/stroom/compare/v7.12.15...v7.12.16
 [v7.12.15]: https://github.com/gchq/stroom/compare/v7.12.14...v7.12.15
 [v7.12.14]: https://github.com/gchq/stroom/compare/v7.12.13...v7.12.14
 [v7.12.13]: https://github.com/gchq/stroom/compare/v7.12.12...v7.12.13
