@@ -121,8 +121,6 @@ public class TracesDoc extends AbstractPlanBDoc {
                ", description='" + getDescription() + '\'' +
                ", stateType=" + getStateType() +
                ", settings=" + getSettings() +
-               ", shardCount=" + getShardCount() +
-               ", sharedPath='" + getSharedPath() + '\'' +
                '}';
     }
 

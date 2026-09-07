@@ -17,10 +17,15 @@
 package stroom.pathways.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
+import stroom.importexport.api.ImportExportDocument;
+import stroom.importexport.shared.ImportState;
 import stroom.pathways.shared.TracesDoc;
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.fs.SharedFileStore;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.planb.shared.TraceSettings;
 import stroom.util.shared.EntityServiceException;
@@ -30,6 +35,7 @@ import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -41,6 +47,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -96,8 +104,34 @@ class TestTracesDocStoreShardCountGuard {
     @Test
     void allowsTheChangeWhenTheStoreHasNoData() throws IOException {
         final Path sharedRoot = Files.createDirectories(tempDir.resolve("empty"));
+
         changeShardCount(sharedRoot);
-        assertThat(true).isTrue();
+
+        // Asserted on what reached the store rather than on the returned document, which is only
+        // whatever the mock was told to hand back and would say nothing about the guard.
+        final ArgumentCaptor<TracesDoc> written = ArgumentCaptor.forClass(TracesDoc.class);
+        verify(store).writeDocument(written.capture());
+        assertThat(SharedFileStore.shardCountOf(written.getValue())).isEqualTo(8);
+    }
+
+    /**
+     * A document the node has never held has no shard count to preserve. The document store reports
+     * that by throwing rather than by returning null, so the guard has to expect it — treating it as
+     * a failure would refuse the save outright.
+     */
+    @Test
+    void allowsASaveOfAStoreTheNodeHasNeverHeld() throws IOException {
+        final Path sharedRoot = Files.createDirectories(tempDir.resolve("save-new"));
+        final TracesDoc newDoc = doc(8, sharedRoot);
+        when(store.readDocument(any()))
+                .thenThrow(new DocumentNotFoundException(newDoc.asDocRef()));
+        when(store.writeDocument(any())).thenReturn(newDoc);
+
+        storeImpl.writeDocument(newDoc);
+
+        final ArgumentCaptor<TracesDoc> written = ArgumentCaptor.forClass(TracesDoc.class);
+        verify(store).writeDocument(written.capture());
+        assertThat(SharedFileStore.shardCountOf(written.getValue())).isEqualTo(8);
     }
 
     @Test
@@ -138,5 +172,74 @@ class TestTracesDocStoreShardCountGuard {
             sharedRoot.toFile().setExecutable(true, false);
             sharedRoot.toFile().setReadable(true, false);
         }
+    }
+
+    // ---------------------------------------------------------------------
+    // Import goes through the same guard, whether or not it replaces an existing document
+    // ---------------------------------------------------------------------
+
+    private DocRef importShardCountChange(final Path sharedRoot, final ImportState importState)
+            throws IOException {
+        final DocRef target = DocRef.builder().type(TracesDoc.TYPE).uuid(UUID).name("test_name").build();
+        final TracesDoc oldDoc = doc(4, sharedRoot);
+        final TracesDoc incoming = doc(8, sharedRoot);
+        when(store.readDocument(any())).thenReturn(oldDoc);
+        when(serialiser.read(any(ImportExportDocument.class))).thenReturn(incoming);
+        when(store.importDocument(any(), any(), any(), any())).thenReturn(target);
+        return storeImpl.importDocument(
+                target, new ImportExportDocument(), importState, null);
+    }
+
+    @Test
+    void importAllowsTheChangeWhenTheStoreHasNoData() throws IOException {
+        final Path sharedRoot = Files.createDirectories(tempDir.resolve("import-empty"));
+        final ImportState importState = new ImportState(
+                DocRef.builder().type(TracesDoc.TYPE).uuid(UUID).build(), "test");
+
+        importShardCountChange(sharedRoot, importState);
+
+        verify(store).importDocument(any(), any(), any(), any());
+        assertThat(importState.getMessageList()).isEmpty();
+    }
+
+    /**
+     * The ordinary case for a content pack: the node has never held this store, so there is no shard
+     * count to preserve. The document store reports that by throwing rather than by returning null,
+     * so the guard has to expect it — treating it as a failure would refuse every first-time import.
+     */
+    @Test
+    void importAllowsAStoreTheNodeHasNeverHeld() throws IOException {
+        final Path sharedRoot = Files.createDirectories(tempDir.resolve("import-new"));
+        final DocRef target = DocRef.builder().type(TracesDoc.TYPE).uuid(UUID).name("test_name").build();
+        final ImportState importState = new ImportState(target, "test");
+
+        when(store.readDocument(any()))
+                .thenThrow(new DocumentNotFoundException(target));
+        when(serialiser.read(any(ImportExportDocument.class))).thenReturn(doc(8, sharedRoot));
+        when(store.importDocument(any(), any(), any(), any())).thenReturn(target);
+
+        storeImpl.importDocument(target, new ImportExportDocument(), importState, null);
+
+        verify(store).importDocument(any(), any(), any(), any());
+        assertThat(importState.getMessageList()).isEmpty();
+    }
+
+    /**
+     * An import that changes the shard count over a store holding data would leave every existing
+     * bucket unreachable, exactly as a save would. Reported onto the import state rather than thrown,
+     * which is how the import screen surfaces a refusal.
+     */
+    @Test
+    void importRefusesTheChangeWhenTheStoreHasData() throws IOException {
+        final Path sharedRoot = Files.createDirectories(tempDir.resolve("import-populated"));
+        Files.createDirectories(sharedRoot.resolve(PlanBConstants.ARCHIVE_DIR_NAME).resolve(UUID));
+        final ImportState importState = new ImportState(
+                DocRef.builder().type(TracesDoc.TYPE).uuid(UUID).build(), "test");
+
+        importShardCountChange(sharedRoot, importState);
+
+        verify(store, never()).importDocument(any(), any(), any(), any());
+        assertThat(importState.getMessageList())
+                .anyMatch(m -> m.getMessage().contains("Cannot change shard count"));
     }
 }

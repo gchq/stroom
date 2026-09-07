@@ -34,6 +34,7 @@ import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.impl.data.archive.ArchiveShardLocator;
 import stroom.planb.impl.data.archive.ArchiveShardRef;
 import stroom.planb.impl.data.shard.ShardManager;
+import stroom.planb.impl.fs.SharedFileStore;
 import stroom.planb.shared.HasHoldingAreaSettings;
 import stroom.planb.shared.HoldingAreaSettings;
 import stroom.planb.shared.PlanBDocument;
@@ -422,7 +423,7 @@ public class PathwaysProcessor {
         final DocRef infoFeed = doc.getInfoFeed();
         final long toMs = System.currentTimeMillis();
         final long fromMs = bucketWindowStartMs(tracesDoc, toMs);
-        for (int i = 0; i < tracesDoc.getShardCount(); i++) {
+        for (int i = 0; i < SharedFileStore.shardCountOf(tracesDoc); i++) {
             final int shardIdx = i;
             // Per-shard lock: nodes in a cluster can process different shards in parallel.
             final String lockName = "pathways-write-" + doc.getUuid() + "-" + shardIdx;

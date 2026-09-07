@@ -18,7 +18,6 @@ package stroom.planb.shared;
 
 import stroom.docstore.shared.AbstractDoc;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
@@ -68,20 +67,6 @@ public abstract class AbstractPlanBDoc extends AbstractDoc implements PlanBDocum
 
     public AbstractPlanBSettings getSettings() {
         return settings;
-    }
-
-    @JsonIgnore
-    public int getShardCount() {
-        return settings instanceof final HasSharedFileStore s && s.getSharedFileStore() != null
-                ? s.getSharedFileStore().getShardCount()
-                : 0;
-    }
-
-    @JsonIgnore
-    public String getSharedPath() {
-        return settings instanceof final HasSharedFileStore s && s.getSharedFileStore() != null
-                ? s.getSharedFileStore().getSharedPath()
-                : null;
     }
 
     @Override

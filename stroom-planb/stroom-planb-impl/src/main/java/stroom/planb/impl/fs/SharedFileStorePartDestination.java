@@ -46,9 +46,7 @@ public class SharedFileStorePartDestination implements PartDestination {
     @Override
     public boolean transfer(final WrittenPart part, final Meta meta) {
         // <sharedPath>/processing/<docUuid>/<shardIndex>/<metaId>_<ts>/
-        final Path processingTarget = Path.of(
-                Objects.requireNonNull(part.doc().getSharedPath(),
-                        "sharedPath unexpectedly null for shared-store part"))
+        final Path processingTarget = SharedFileStore.rootOf(part.doc())
                 .resolve(PlanBConstants.PROCESSING_DIR_NAME)
                 .resolve(part.doc().getUuid())
                 .resolve(PlanBConstants.formatShardIndex(part.shardIndex()))

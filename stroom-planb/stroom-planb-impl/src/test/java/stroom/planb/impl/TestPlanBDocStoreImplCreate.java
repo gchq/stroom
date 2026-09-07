@@ -46,7 +46,6 @@ class TestPlanBDocStoreImplCreate {
                 new StoreFactoryImpl(new MemoryPersistence(), null, securityContext, null, () -> null),
                 new PlanBDocSerialiser(new Serialiser2FactoryImpl()),
                 securityContext,
-                () -> null,
                 () -> null);
     }
 

@@ -52,15 +52,4 @@ public interface PlanBDocument extends Document {
      */
     AbstractPlanBSettings getSettings();
 
-    /**
-     * Returns the number of shards configured for the shared-file-store, or
-     * {@code 0} if no shared-file-store is configured.
-     */
-    int getShardCount();
-
-    /**
-     * Returns the filesystem path of the shared-file-store, or {@code null}
-     * if no shared-file-store is configured.
-     */
-    String getSharedPath();
 }

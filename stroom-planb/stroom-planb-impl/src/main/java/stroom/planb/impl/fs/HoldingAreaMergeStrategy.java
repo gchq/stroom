@@ -241,7 +241,7 @@ public class HoldingAreaMergeStrategy implements MergeStrategy {
 
     /** Where this doc's holding shards live. Known only here — no other store type keeps one. */
     private static Path holdingDocDir(final PlanBDocument doc) {
-        return Path.of(doc.getSharedPath())
+        return SharedFileStore.rootOf(doc)
                 .resolve(PlanBConstants.HOLDING_DIR_NAME)
                 .resolve(doc.getUuid());
     }

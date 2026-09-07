@@ -29,6 +29,7 @@ import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.impl.data.archive.ArchiveShardLocator;
 import stroom.planb.impl.data.archive.ArchiveShardRef;
 import stroom.planb.impl.data.shard.ShardManager;
+import stroom.planb.impl.fs.SharedFileStore;
 import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.shared.PlanBDocument;
 import stroom.query.api.DateTimeSettings;
@@ -112,10 +113,10 @@ class TraceArchiveReader {
     }
 
     int archiveShardIndex(final PlanBDocument doc, final String traceId) {
-        if (doc == null || doc.getSharedPath() == null || doc.getShardCount() <= 0) {
+        if (!SharedFileStore.isConfigured(doc)) {
             return -1;
         }
-        return ShardKeyRouter.computeShardIndex(traceId, doc.getShardCount());
+        return ShardKeyRouter.computeShardIndex(traceId, SharedFileStore.shardCountOf(doc));
     }
 
     List<ArchiveShardRef> relevantArchiveShards(final PlanBDocument doc,

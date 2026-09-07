@@ -174,7 +174,7 @@ public class SharedFileStorePublisher {
     public void pushArchive(final PlanBDocument doc,
                      final int shardIndex,
                      final StagedArchive archiveShard) throws IOException {
-        final Path archiveShardDir = Path.of(doc.getSharedPath())
+        final Path archiveShardDir = SharedFileStore.rootOf(doc)
                 .resolve(PlanBConstants.ARCHIVE_DIR_NAME)
                 .resolve(doc.getUuid())
                 .resolve(PlanBConstants.formatShardIndex(shardIndex))

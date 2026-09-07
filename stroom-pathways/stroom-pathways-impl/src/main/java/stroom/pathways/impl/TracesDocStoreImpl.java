@@ -18,6 +18,7 @@ package stroom.pathways.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -26,6 +27,7 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.pathways.shared.TracesDoc;
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.fs.SharedFileStore;
 import stroom.planb.impl.fs.SharedFileStoreDocStore;
 import stroom.planb.impl.fs.SharedFileStoreTrash;
 import stroom.planb.shared.AbstractPlanBSettings;
@@ -134,10 +136,10 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
     }
 
     private void trashSharedData(final TracesDoc doc) {
-        if (doc.getSharedPath() == null || doc.getSharedPath().isBlank()) {
+        if (!SharedFileStore.isConfigured(doc)) {
             return;
         }
-        SharedFileStoreTrash.trashDoc(Path.of(doc.getSharedPath()), doc.getUuid());
+        SharedFileStoreTrash.trashDoc(SharedFileStore.rootOf(doc), doc.getUuid());
     }
 
     // ---------------------------------------------------------------------
@@ -170,22 +172,37 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
     @Override
     public TracesDoc writeDocument(final TracesDoc document) {
         validateSettings(document);
-        final DocRef docRef = DocRef.builder()
+        checkShardCountUnchanged(DocRef.builder()
                 .type(document.getType())
                 .uuid(document.getUuid())
                 .name(document.getName())
-                .build();
-        final TracesDoc oldDoc = store.readDocument(docRef);
-        // Guard against inadvertent shard-count changes when shared file store data already exists.
-        if (oldDoc != null
-                && document.getShardCount() > 0
-                && oldDoc.getShardCount() != document.getShardCount()) {
-            if (hasSharedFileStoreData(oldDoc)) {
-                throw new EntityServiceException(
-                        "Cannot change shard count: data has already been written to this store.");
-            }
-        }
+                .build(), document);
         return store.writeDocument(document);
+    }
+
+    // Refuses a shard count change to a store that already holds data. A trace's bucket is derived
+    // from the shard count, so changing it once data exists leaves that data where nothing will look
+    // for it again. Both saving and importing can change it, and an import replaces a document that
+    // already exists, so both ask. docRef names the document being written over: for a save the
+    // document itself, and for an import the reference carried in the import file, which is how an
+    // existing store with that uuid is found.
+    private void checkShardCountUnchanged(final DocRef docRef, final TracesDoc document) {
+        final TracesDoc oldDoc;
+        try {
+            oldDoc = store.readDocument(docRef);
+        } catch (final DocumentNotFoundException e) {
+            // Nothing is being written over, so there is no shard count to preserve. Reported by
+            // throwing rather than by a null return, and reached whenever the node has not held this
+            // store before — the ordinary case for an import, and for a save that names a document
+            // the docstore does not have.
+            return;
+        }
+        if (SharedFileStore.shardCountOf(document) > 0
+                && SharedFileStore.shardCountOf(oldDoc) != SharedFileStore.shardCountOf(document)
+                && hasSharedFileStoreData(oldDoc)) {
+            throw new EntityServiceException(
+                    "Cannot change shard count: data has already been written to this store.");
+        }
     }
 
     /**
@@ -204,10 +221,10 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
         if (error != null) {
             throw new EntityServiceException(error);
         }
-        if (document.getSharedPath() == null || document.getSharedPath().isBlank()) {
+        if (SharedFileStore.sharedPathOf(document).isEmpty()) {
             throw new EntityServiceException("A shared file store path is required.");
         }
-        if (document.getShardCount() < 1) {
+        if (SharedFileStore.shardCountOf(document) < 1) {
             throw new EntityServiceException("A shard count of at least 1 is required.");
         }
     }
@@ -225,8 +242,8 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
         if (doc == null) {
             return false;
         }
-        final String sharedPathStr = doc.getSharedPath();
-        if (sharedPathStr == null || sharedPathStr.isBlank()) {
+        final String sharedPathStr = SharedFileStore.sharedPathOf(doc).orElse(null);
+        if (sharedPathStr == null) {
             return false;
         }
         final Path sharedRoot;
@@ -279,7 +296,8 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
     }
 
     /**
-     * Rejects a document that names no shared file store, before it reaches the docstore.
+     * Rejects an imported document that names no shared file store, or that changes the shard count
+     * of a store already holding data, before either reaches the docstore.
      *
      * <p>The underlying store deserialises and persists without going through
      * {@link #writeDocument}, so this is the only point at which an imported trace store can be
@@ -293,7 +311,9 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
                                  final ImportSettings importSettings) {
         if (importExportDocument != null) {
             try {
-                validateSettings(serialiser.read(importExportDocument));
+                final TracesDoc incoming = serialiser.read(importExportDocument);
+                validateSettings(incoming);
+                checkShardCountUnchanged(docRef, incoming);
             } catch (final IOException | RuntimeException e) {
                 importState.addMessage(Severity.ERROR, e.getMessage());
                 return docRef;
@@ -352,12 +372,9 @@ public class TracesDocStoreImpl implements TracesDocStore, SharedFileStoreDocSto
             if (doc == null) {
                 throw new EntityServiceException("Could not read listed trace store " + docRef);
             }
-            final String sharedPathStr = doc.getSharedPath();
-            if (sharedPathStr == null || sharedPathStr.isBlank()) {
-                continue;
-            }
-            result.computeIfAbsent(Path.of(sharedPathStr), k -> new HashSet<>())
-                    .add(doc.getUuid());
+            SharedFileStore.sharedPathOf(doc).ifPresent(sharedPath ->
+                    result.computeIfAbsent(Path.of(sharedPath), k -> new HashSet<>())
+                            .add(doc.getUuid()));
         }
         return result;
     }

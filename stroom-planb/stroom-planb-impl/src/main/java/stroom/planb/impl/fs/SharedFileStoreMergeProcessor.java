@@ -132,7 +132,7 @@ public class SharedFileStoreMergeProcessor {
             Collections.shuffle(planBDocs);
 
             for (final PlanBDocument doc : planBDocs) {
-                if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
+                if (SharedFileStore.isConfigured(doc)) {
                     try {
                         mergeDoc(doc, taskContext);
                     } catch (final Exception e) {
@@ -152,7 +152,7 @@ public class SharedFileStoreMergeProcessor {
             return;
         }
 
-        final Path processingDocDir = Path.of(doc.getSharedPath())
+        final Path processingDocDir = SharedFileStore.rootOf(doc)
                 .resolve(PlanBConstants.PROCESSING_DIR_NAME)
                 .resolve(doc.getUuid());
 
@@ -161,8 +161,9 @@ public class SharedFileStoreMergeProcessor {
         // race for shard 0 first, causing O(N²) failed lock attempts per cycle
         // instead of O(N).  With a shuffle each node is likely to win a
         // different shard, giving close to 1:1 work distribution.
-        final List<Integer> shardIndices = new ArrayList<>(doc.getShardCount());
-        for (int i = 0; i < doc.getShardCount(); i++) {
+        final int shardCount = SharedFileStore.shardCountOf(doc);
+        final List<Integer> shardIndices = new ArrayList<>(shardCount);
+        for (int i = 0; i < shardCount; i++) {
             shardIndices.add(i);
         }
         Collections.shuffle(shardIndices);
@@ -326,7 +327,7 @@ public class SharedFileStoreMergeProcessor {
      * alongside them is ignored.
      */
     private static Path archiveDocDir(final PlanBDocument doc) {
-        return Path.of(doc.getSharedPath())
+        return SharedFileStore.rootOf(doc)
                 .resolve(PlanBConstants.ARCHIVE_DIR_NAME)
                 .resolve(doc.getUuid());
     }

@@ -26,6 +26,7 @@ import stroom.planb.impl.data.value.State;
 import stroom.planb.impl.data.value.TemporalRangeState;
 import stroom.planb.impl.data.value.TemporalState;
 import stroom.planb.impl.data.value.TemporalValue;
+import stroom.planb.impl.fs.SharedFileStore;
 import stroom.planb.shared.AbstractHttpStoreSettings;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.logging.LambdaLogger;
@@ -150,12 +151,12 @@ public class PlanBStreamWriter implements AutoCloseable {
     }
 
     private int getShardIndex(final PlanBDocument doc, final String key) {
-        final int shardCount = doc.getShardCount();
+        final int shardCount = SharedFileStore.shardCountOf(doc);
         return shardCount <= 0 ? UNSHARDED : ShardKeyRouter.computeShardIndex(key, shardCount);
     }
 
     private int getShardIndex(final PlanBDocument doc, final long value) {
-        final int shardCount = doc.getShardCount();
+        final int shardCount = SharedFileStore.shardCountOf(doc);
         return shardCount <= 0 ? UNSHARDED : ShardKeyRouter.computeShardIndex(value, shardCount);
     }
 
@@ -200,16 +201,11 @@ public class PlanBStreamWriter implements AutoCloseable {
         }
     }
 
-    /**
-     * Returns true when the doc is configured for direct shared-filesystem
-     * delivery: it must have a positive shard count AND a non-blank shared path.
-     * Either condition missing means the batch must fall back to the REST path.
-     */
-    private boolean isSharedStoreDestination(final PlanBDocument doc) {
-        final String sharedPath = doc.getSharedPath();
-        return doc.getShardCount() > 0
-                && sharedPath != null
-                && !sharedPath.isBlank();
+    // Whether the doc is configured for direct shared-filesystem delivery. A batch goes either to the
+    // shared file store or over REST; the destination chosen here then resolves the store's location
+    // without testing again.
+    private static boolean isSharedStoreDestination(final PlanBDocument doc) {
+        return SharedFileStore.isConfigured(doc);
     }
 
     /**

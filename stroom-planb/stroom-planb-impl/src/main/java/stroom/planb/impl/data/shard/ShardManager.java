@@ -34,6 +34,7 @@ import stroom.planb.impl.data.SnapshotNotFoundException;
 import stroom.planb.impl.data.archive.ArchiveShardRef;
 import stroom.planb.impl.data.shard.SnapshotShard.DbFactory;
 import stroom.planb.impl.fs.ArchiveStoreShard;
+import stroom.planb.impl.fs.SharedFileStore;
 import stroom.planb.impl.rest.FileTransferClient;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.PlanBDocument;
@@ -191,12 +192,10 @@ public class ShardManager {
         try {
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
             shardMap.values().forEach(shard -> {
+                // createShard refuses a shared file store doc, so shardMap only ever holds the
+                // locally maintained ones. A shared file store's shards are maintained instead by the
+                // merge cycle, under a cluster lock.
                 final PlanBDocument doc = shard.getDoc();
-                // Never taken today: createShard rejects a shared-file-store doc, so shardMap cannot
-                // hold one. Those shards are maintained by the merge cycle under a cluster lock.
-                if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
-                    return;
-                }
                 final Runnable runnable = taskContextFactory
                         .childContext(parentTaskContext, "Maintain shard: " + doc.getName(), taskContext -> {
                             try {
@@ -807,7 +806,11 @@ public class ShardManager {
     }
 
     private Shard createShard(final PlanBDocument doc) {
-        if (isSnapshotNode() && (doc.getSharedPath() == null || doc.getShardCount() == 0)) {
+        if (SharedFileStore.isConfigured(doc)) {
+            throw new NotImplementedException("Not yet implemented");
+        }
+
+        if (isSnapshotNode()) {
             return new SnapshotShard(
                     byteBuffers,
                     byteBufferFactory,
@@ -817,10 +820,6 @@ public class ShardManager {
                     doc,
                     DB_FACTORY,
                     executor);
-        }
-
-        if (doc.getSharedPath() != null && doc.getShardCount() > 0) {
-            throw new NotImplementedException("Not yet implemented");
         }
 
         return new RestStoreShard(

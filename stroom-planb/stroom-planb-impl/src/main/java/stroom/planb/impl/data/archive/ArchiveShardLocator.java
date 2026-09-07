@@ -17,6 +17,7 @@
 package stroom.planb.impl.data.archive;
 
 import stroom.planb.impl.PlanBConstants;
+import stroom.planb.impl.fs.SharedFileStore;
 import stroom.planb.shared.BucketGranularity;
 import stroom.planb.shared.PlanBDocument;
 import stroom.util.logging.LambdaLogger;
@@ -67,12 +68,11 @@ public class ArchiveShardLocator {
                                                     final int shardIndex,
                                                     final long filterFromMs,
                                                     final long filterToMs) {
-        final String sharedPath = doc.getSharedPath();
-        if (sharedPath == null) {
+        if (!SharedFileStore.isConfigured(doc)) {
             return List.of();
         }
 
-        final Path archiveBase = Path.of(sharedPath)
+        final Path archiveBase = SharedFileStore.rootOf(doc)
                 .resolve(PlanBConstants.ARCHIVE_DIR_NAME)
                 .resolve(doc.getUuid())
                 .resolve(PlanBConstants.formatShardIndex(shardIndex));

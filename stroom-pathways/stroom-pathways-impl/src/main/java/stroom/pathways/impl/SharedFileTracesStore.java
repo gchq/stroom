@@ -35,6 +35,7 @@ import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.impl.dao.trace.TraceRootField;
 import stroom.planb.impl.dao.trace.TraceSecondaryIndex;
 import stroom.planb.impl.data.archive.ArchiveShardRef;
+import stroom.planb.impl.fs.SharedFileStore;
 import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.TraceSettings;
@@ -254,7 +255,7 @@ class SharedFileTracesStore implements TracesStore {
             LOGGER.debug(() -> "No time range for '" + doc.getName() + "', defaulting to the last "
                     + TraceHistograms.maxWindowMs(doc) + "ms rather than scanning every archive bucket");
         }
-        for (int i = 0; i < doc.getShardCount(); i++) {
+        for (int i = 0; i < SharedFileStore.shardCountOf(doc); i++) {
             final int shardIndex = i;
             for (final ArchiveShardRef ref : archiveReader.shardsForIndex(
                     doc, shardIndex, fromMs, toMs)) {

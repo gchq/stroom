@@ -43,6 +43,7 @@ import stroom.planb.impl.data.value.State;
 import stroom.planb.impl.fs.HoldingAreaMergeStrategy;
 import stroom.planb.impl.fs.LocalArchive;
 import stroom.planb.impl.fs.MergeStrategy;
+import stroom.planb.impl.fs.SharedFileStore;
 import stroom.planb.impl.fs.SharedFileStoreMergeProcessor;
 import stroom.planb.impl.fs.SharedFileStorePartDestination;
 import stroom.planb.impl.fs.SharedFileStorePublisher;
@@ -300,7 +301,7 @@ class TestSharedFileStoreMerge {
      * local directory and opening it read-only — no LMDB env is ever opened on the shared store.
      */
     private String readPublished(final Path sharedShardDir, final String key) throws IOException {
-        final int shardIndex = ShardKeyRouter.computeShardIndex(key, doc.getShardCount());
+        final int shardIndex = ShardKeyRouter.computeShardIndex(key, SharedFileStore.shardCountOf(doc));
         final Path localDir = Files.createTempDirectory(tempDir, "read_" + key + "_");
         Files.copy(sharedShardDir.resolve(PlanBConstants.formatShardIndex(shardIndex))
                         .resolve(PlanBConstants.DATA_FILE_NAME),
