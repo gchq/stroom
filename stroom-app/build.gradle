@@ -208,6 +208,9 @@ dependencies {
     implementation libs.ws.rs.api
 
     runtimeOnly libs.jakarta.el
+    // This allows the use of JSON format app/request logs
+    // See https://www.dropwizard.io/en/stable/manual/configuration.html#json-layout
+    runtimeOnly libs.dropwizard.json.logging
 
     // Use default DB config.
     testImplementation libs.poi.ooxml
