@@ -112,6 +112,7 @@ proxyConfig:
     - "GUID"
     - "ReceiptId"
     - "Feed"
+    - "Type"
     - "System"
     - "Environment"
     - "RemoteHost"
@@ -119,6 +120,7 @@ proxyConfig:
     - "RemoteDN"
     - "RemoteCertExpiry"
     - "DataReceiptRule"
+    useMappedDiagnosticContext: false
   path:
     data: "data"
     home: null
