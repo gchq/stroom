@@ -27,20 +27,24 @@ public class ExpressionContext {
     private final int maxStringLength;
     private final DateTimeSettings dateTimeSettings;
     private final StateProvider stateProvider;
+    private final AiProvider aiProvider;
 
     public ExpressionContext() {
         this.maxStringLength = 100;
         this.dateTimeSettings = DateTimeSettings.builder().build();
         this.stateProvider = (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
+        this.aiProvider = (modelNameOrUuid, systemPrompt, message) -> ValNull.INSTANCE;
     }
 
     @JsonCreator
     public ExpressionContext(final int maxStringLength,
                              final DateTimeSettings dateTimeSettings,
-                             final StateProvider stateProvider) {
+                             final StateProvider stateProvider,
+                             final AiProvider aiProvider) {
         this.maxStringLength = maxStringLength;
         this.dateTimeSettings = dateTimeSettings;
         this.stateProvider = stateProvider;
+        this.aiProvider = aiProvider;
     }
 
     public int getMaxStringLength() {
@@ -53,6 +57,10 @@ public class ExpressionContext {
 
     public StateProvider getStateProvider() {
         return stateProvider;
+    }
+
+    public AiProvider getAiProvider() {
+        return aiProvider;
     }
 
     @Override
@@ -98,6 +106,7 @@ public class ExpressionContext {
         private int maxStringLength;
         private DateTimeSettings dateTimeSettings;
         private StateProvider stateProvider;
+        private AiProvider aiProvider;
 
         private Builder() {
         }
@@ -106,6 +115,7 @@ public class ExpressionContext {
             this.maxStringLength = expressionContext.maxStringLength;
             this.dateTimeSettings = expressionContext.dateTimeSettings;
             this.stateProvider = expressionContext.stateProvider;
+            this.aiProvider = expressionContext.aiProvider;
         }
 
         public Builder maxStringLength(final int maxStringLength) {
@@ -123,8 +133,13 @@ public class ExpressionContext {
             return this;
         }
 
+        public Builder aiProvider(final AiProvider aiProvider) {
+            this.aiProvider = aiProvider;
+            return this;
+        }
+
         public ExpressionContext build() {
-            return new ExpressionContext(maxStringLength, dateTimeSettings, stateProvider);
+            return new ExpressionContext(maxStringLength, dateTimeSettings, stateProvider, aiProvider);
         }
     }
 }

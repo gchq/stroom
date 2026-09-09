@@ -1,0 +1,206 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.pipeline.task;
+
+import stroom.data.shared.StreamTypeNames;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaFields;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.SharedElementData;
+import stroom.pipeline.shared.stepping.PipelineStepRequest;
+import stroom.pipeline.shared.stepping.SharedStepData;
+import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.shared.stepping.SteppingResult;
+import stroom.pipeline.stepping.SteppingService;
+import stroom.pipeline.stepping.fingerprint.ElementFingerprints;
+import stroom.pipeline.stepping.read.SessionStepResolver;
+import stroom.pipeline.stepping.read.SessionStepResolver.SessionStepResult;
+import stroom.pipeline.stepping.read.StoreStepResolver;
+import stroom.pipeline.stepping.session.SteppingSession;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm.Condition;
+
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * Validates the async + cross-stream path end-to-end: a durable {@link SteppingSession} that sweeps streams
+ * lazily and asynchronously must, when driven through {@link SessionStepResolver#resolve}, agree with
+ * {@code SteppingService.step()} as it walks FORWARD across every stream of a multi-stream feed, and for
+ * LAST across streams.
+ */
+class TestSessionStepping extends TranslationTest {
+
+    private static final long TIMEOUT_MS = 60_000L;
+    private static final AtomicBoolean DONE_SETUP = new AtomicBoolean();
+
+    @Inject
+    private SteppingService steppingService;
+    @Inject
+    private PipelineStore pipelineStore;
+    @Inject
+    private DocFinder docFinder;
+
+    private final SessionStepResolver resolver = new SessionStepResolver(new StoreStepResolver());
+
+    @BeforeEach
+    void setup() {
+        if (!DONE_SETUP.get()) {
+            importConfig();
+            loadAllRefData();
+            DONE_SETUP.set(true);
+        }
+    }
+
+    @Override
+    protected boolean cleanupBetweenTests() {
+        return false;
+    }
+
+    @Test
+    void testXmlEvents() {
+        resolveAgreesWithStepService("XML-EVENTS");
+    }
+
+    @Test
+    void testRawStreamingEvents() {
+        resolveAgreesWithStepService("RAW_STREAMING-EVENTS");
+    }
+
+    /**
+     * Walk a whole multi-stream feed and check that resolving directly against a session agrees with the
+     * service's own step() at every record, including across stream boundaries.
+     * <p>
+     * <b>Both sides are served from the session</b>, so this does not hold the engine to an independent
+     * implementation - the golden {@code ~STEPPING~} corpus in {@link TestFullTranslationTaskAndStepping}
+     * is what does that. What this earns its keep for is cross-stream navigation: walking FORWARD off the
+     * end of one stream into the next, and LAST across a whole multi-stream selection, which the scripted
+     * golden sequences exercise far less directly.
+     */
+    private void resolveAgreesWithStepService(final String feedName) {
+        testTranslationTask(feedName, false, false);
+
+        final DocRef pipelineRef = docFinder.findByName(PipelineDoc.TYPE, feedName).getFirst();
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName)
+                .addOperator(ExpressionOperator.builder().op(Op.OR)
+                        .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                        .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .build())
+                .build();
+        final PipelineStepRequest baseRequest = PipelineStepRequest.builder()
+                .pipelineDoc(pipelineDoc)
+                .criteria(new FindMetaCriteria(expression))
+                .timeout(Long.MAX_VALUE)
+                .build();
+
+        final ElementFingerprints fingerprints = steppingService.computeFingerprints(baseRequest);
+        final SteppingSession session = steppingService.createSession(baseRequest);
+        String stepSessionUuid = null;
+        try {
+            // Walk the whole feed forward via step() and, at every record, check the session resolve
+            // (REFRESH at the same location, and FORWARD to the next) agrees.
+            // The step() oracle carries its session id, as the UI does - dropping it would self-heal
+            // into a fresh session and silently re-capture the stream on every call.
+            SteppingResult stepped = steppingService.step(baseRequest.copy().stepType(StepType.FIRST).build());
+            stepSessionUuid = stepped.getSessionUuid();
+            assertThat(stepped.isFoundRecord()).as("FIRST for " + feedName).isTrue();
+
+            int compared = 0;
+            boolean crossedStreams = false;
+            final long firstMetaId = stepped.getFoundLocation().getMetaId();
+
+            while (stepped.isFoundRecord()) {
+                final StepLocation loc = stepped.getFoundLocation();
+                if (loc.getMetaId() != firstMetaId) {
+                    crossedStreams = true;
+                }
+
+                final SessionStepResult refreshed = resolver.resolve(
+                        session, baseRequest.copy().stepType(StepType.REFRESH).stepLocation(loc).build(),
+                        fingerprints, TIMEOUT_MS);
+                assertThat(refreshed.foundRecord()).as("session has record at " + loc).isTrue();
+                assertThat(refreshed.foundLocation()).isEqualTo(loc);
+                assertElementIoMatches(feedName, loc, stepped.getStepData(), refreshed.stepData());
+                compared++;
+
+                final SteppingResult nextStepped = steppingService.step(baseRequest.copy()
+                        .stepType(StepType.FORWARD).stepLocation(loc).sessionUuid(stepSessionUuid).build());
+                stepSessionUuid = nextStepped.getSessionUuid();
+                if (nextStepped.isFoundRecord()) {
+                    final SessionStepResult sessionForward = resolver.resolve(
+                            session, baseRequest.copy().stepType(StepType.FORWARD).stepLocation(loc).build(),
+                            fingerprints, TIMEOUT_MS);
+                    assertThat(sessionForward.foundLocation())
+                            .as("session FORWARD from " + loc + " for " + feedName)
+                            .isEqualTo(nextStepped.getFoundLocation());
+                }
+                stepped = nextStepped;
+            }
+
+            assertThat(compared).as("compared records for " + feedName).isGreaterThan(0);
+            assertThat(crossedStreams).as("feed " + feedName + " should span multiple streams").isTrue();
+
+            // LAST across streams must agree too.
+            final SteppingResult steppedLast = steppingService.step(
+                    baseRequest.copy().stepType(StepType.LAST).sessionUuid(stepSessionUuid).build());
+            stepSessionUuid = steppedLast.getSessionUuid();
+            final SessionStepResult sessionLast = resolver.resolve(
+                    session, baseRequest.copy().stepType(StepType.LAST).build(), fingerprints, TIMEOUT_MS);
+            assertThat(sessionLast.foundLocation())
+                    .as("session LAST for " + feedName)
+                    .isEqualTo(steppedLast.getFoundLocation());
+        } finally {
+            try {
+                session.close();
+            } finally {
+                if (stepSessionUuid != null) {
+                    steppingService.terminateStepping(
+                            baseRequest.copy().sessionUuid(stepSessionUuid).build());
+                }
+            }
+        }
+    }
+
+    private void assertElementIoMatches(final String feedName,
+                                        final StepLocation loc,
+                                        final SharedStepData stepped,
+                                        final SharedStepData session) {
+        for (final String elementId : stepped.getElementMap().keySet()) {
+            final SharedElementData steppedData = stepped.getElementData(elementId);
+            final SharedElementData sessionData = session.getElementMap().get(elementId);
+            assertThat(sessionData).as("element %s at %s for %s", elementId, loc, feedName).isNotNull();
+            assertThat(sessionData.getOutput())
+                    .as("output for element %s at %s for %s", elementId, loc, feedName)
+                    .isEqualTo(steppedData.getOutput());
+            assertThat(sessionData.getInput())
+                    .as("input for element %s at %s for %s", elementId, loc, feedName)
+                    .isEqualTo(steppedData.getInput());
+        }
+    }
+}

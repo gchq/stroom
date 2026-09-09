@@ -568,12 +568,16 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     }
 
     @Override
-    public ProcessorFilter restore(final DocRef processorFilterDocRef, final boolean resetTracker) {
+    public ProcessorFilter restore(final DocRef processorFilterDocRef) {
         final ProcessorFilter processorFilter = fetchByUuid(processorFilterDocRef.getUuid())
                 .orElseThrow(() ->
                         new RuntimeException("No processor filter found for docRef " + processorFilterDocRef));
 
-        return processorFilterDao.restoreProcessorFilter(processorFilter, resetTracker);
+        final ProcessorFilter restored = processorFilterDao.restoreProcessorFilter(processorFilter);
+        // The replica holds the doc ref's uuid now, so the dependency edges recorded against it
+        // are the replica's.
+        updateDocDependencies(restored);
+        return restored;
     }
 
     @Override

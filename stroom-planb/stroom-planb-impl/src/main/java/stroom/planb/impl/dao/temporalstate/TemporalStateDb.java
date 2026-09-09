@@ -35,7 +35,7 @@ import stroom.planb.impl.dao.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.dao.PlanBSearchHelper.ValuesExtractor;
 import stroom.planb.impl.dao.SchemaInfo;
 import stroom.planb.impl.dao.UsedLookupsRecorder;
-import stroom.planb.impl.data.TemporalState;
+import stroom.planb.impl.data.value.TemporalState;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.impl.serde.temporalkey.TemporalKeySerde;
 import stroom.planb.impl.serde.temporalkey.TemporalKeySerdeFactory;
@@ -49,7 +49,7 @@ import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.api.DateTimeSettings;
@@ -86,7 +86,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
 
     private TemporalStateDb(final PlanBEnv env,
                             final ByteBuffers byteBuffers,
-                            final PlanBDoc doc,
+                            final PlanBDocument doc,
                             final TemporalStateSettings settings,
                             final TimeSerde timeSerde,
                             final TemporalKeySerde keySerde,
@@ -110,7 +110,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
 
     public static TemporalStateDb create(final Path path,
                                          final ByteBuffers byteBuffers,
-                                         final PlanBDoc doc,
+                                         final PlanBDocument doc,
                                          final boolean readOnly) {
         // Ensure all settings are non null.
         final TemporalStateSettings settings;
@@ -307,9 +307,9 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
     }
 
     @Override
-    public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
+    public long runRetention(final Instant deleteBefore, final boolean useStateTime) {
         return env.write(writer -> {
-            final long count = deleteOldData(writer, deleteBefore, useStateTime);
+            final long count = runRetention(writer, deleteBefore, useStateTime);
 
             // Delete unused lookup keys.
             if (!Thread.currentThread().isInterrupted()) {
@@ -324,7 +324,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
         });
     }
 
-    private long deleteOldData(final LmdbWriter writer,
+    private long runRetention(final LmdbWriter writer,
                                final Instant deleteBefore,
                                final boolean useStateTime) {
         return env.read(readTxn -> {
@@ -413,7 +413,7 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
                 deleteState(writer, lastState);
                 changeCount++;
 
-                // Insert the new session.
+                // Insert the new state.
                 insert(writer, newState);
             }
 

@@ -45,6 +45,9 @@ public abstract class AbstractPlanBSettingsPresenter<V extends View>
 
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
+        if (getView() instanceof final stroom.entity.client.presenter.ReadOnlyChangeHandler changeHandler) {
+            changeHandler.onReadOnly(readOnly);
+        }
     }
 
     @Override

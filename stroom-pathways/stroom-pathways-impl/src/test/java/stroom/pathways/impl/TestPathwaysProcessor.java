@@ -19,12 +19,14 @@ package stroom.pathways.impl;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.node.api.NodeInfo;
 import stroom.pathways.shared.FindPathwayCriteria;
 import stroom.pathways.shared.PathwaysDoc;
-import stroom.planb.impl.data.ShardManager;
+import stroom.planb.impl.data.archive.ArchiveShardLocator;
+import stroom.planb.impl.data.shard.ShardManager;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
@@ -151,6 +153,8 @@ class TestPathwaysProcessor {
                 byteBuffers,
                 null,
                 Mockito.mock(ShardManager.class),
-                Mockito.mock(NodeInfo.class));
+                Mockito.mock(NodeInfo.class),
+                Mockito.mock(ClusterLockService.class),
+                Mockito.mock(ArchiveShardLocator.class));
     }
 }

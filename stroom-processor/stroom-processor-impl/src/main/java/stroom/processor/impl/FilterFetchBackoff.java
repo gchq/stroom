@@ -40,9 +40,18 @@ import java.util.stream.Collectors;
  * nothing to do.
  * </p>
  * <p>
- * This is state held in memory only, and only the master node fills the queue. The tasks it is
- * about are queued in memory by that node, so there is nothing to persist; if master ship moves,
- * the new master simply asks for everything once.
+ * This is state held in memory only, per JVM, and there is nothing to persist: the worst a lost
+ * copy costs is one round of asking about filters that turn out to have nothing.
+ * </p>
+ * <p>
+ * It serves both ways of finding work. Filling the master's queue, a filter is worth asking about
+ * again once task creation has produced something for it, which
+ * {@link #recordTasksCreated(ProcessorFilter)} signals. Claiming on a worker node, the node has
+ * already been told by the availability summary that the filter has waiting tasks, so an empty
+ * result means another node claimed them first; the filter becomes worth trying again when the
+ * summary shows <em>different</em> waiting work, which is what {@link #recordEmptyClaim} and
+ * {@link #isClaimDue} compare. Both are the same rule - do not re-ask a filter until something has
+ * changed - reached from opposite directions.
  * </p>
  */
 @Singleton
@@ -107,6 +116,40 @@ public class FilterFetchBackoff {
     }
 
     /**
+     * Record that we tried to claim tasks for this filter and got none, so leave it alone until
+     * the work waiting for it changes.
+     *
+     * @param availabilityMarker Identifies the waiting work we were told about when we tried,
+     *                           i.e. the id of the filter's oldest waiting task from the
+     *                           availability summary. The filter becomes due again as soon as a
+     *                           summary reports a different marker, because that is new work
+     *                           rather than the same work another node beat us to.
+     */
+    public void recordEmptyClaim(final ProcessorFilter filter,
+                                 final StroomDuration skipEmptyFilterFetchDuration,
+                                 final long availabilityMarker) {
+        if (isTurnedOff(skipEmptyFilterFetchDuration)) {
+            return;
+        }
+        final long nextFetchMs = clock.getAsLong() + skipEmptyFilterFetchDuration.toMillis();
+        getState(filter).recordEmptyClaim(nextFetchMs, availabilityMarker);
+    }
+
+    /**
+     * @return True if it is worth trying to claim tasks for this filter, given what the
+     * availability summary currently says is waiting for it.
+     */
+    public boolean isClaimDue(final ProcessorFilter filter,
+                              final StroomDuration skipEmptyFilterFetchDuration,
+                              final long availabilityMarker) {
+        if (isTurnedOff(skipEmptyFilterFetchDuration)) {
+            return true;
+        }
+        final FilterState state = stateByFilterId.get(filter.getId());
+        return state == null || state.isFetchDue(clock.getAsLong(), availabilityMarker);
+    }
+
+    /**
      * Record that this filter had created tasks for us, so it is worth asking again straight away.
      */
     public void recordFetchedTasks(final ProcessorFilter filter) {
@@ -163,8 +206,23 @@ public class FilterFetchBackoff {
         private long nextFetchMs;
         private long creationVersion;
 
+        /**
+         * What was waiting for this filter when we last claimed nothing for it, so that a summary
+         * showing something different makes it due again. Null unless the last empty result came
+         * from a claim rather than a queue fill.
+         */
+        private Long emptyClaimMarker;
+
         private synchronized boolean isFetchDue(final long nowMs) {
             return nowMs >= nextFetchMs;
+        }
+
+        private synchronized boolean isFetchDue(final long nowMs, final long availabilityMarker) {
+            // Different work waiting than the work we lost the race for, so it is worth another go
+            // however recently we tried.
+            return emptyClaimMarker == null
+                   || emptyClaimMarker != availabilityMarker
+                   || nowMs >= nextFetchMs;
         }
 
         private synchronized long getCreationVersion() {
@@ -180,13 +238,21 @@ public class FilterFetchBackoff {
             // tells us nothing and the filter stays due a fetch.
         }
 
+        private synchronized void recordEmptyClaim(final long nextFetchMs,
+                                                   final long availabilityMarker) {
+            this.nextFetchMs = nextFetchMs;
+            this.emptyClaimMarker = availabilityMarker;
+        }
+
         private synchronized void recordFetchDue() {
             nextFetchMs = 0;
+            emptyClaimMarker = null;
         }
 
         private synchronized void recordTasksCreated() {
             creationVersion++;
             nextFetchMs = 0;
+            emptyClaimMarker = null;
         }
     }
 }

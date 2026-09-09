@@ -35,7 +35,7 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public final class MetricSettings
-        extends AbstractPlanBSettings {
+        extends AbstractHttpStoreSettings {
 
     @JsonProperty
     private final MetricKeySchema keySchema;
@@ -93,7 +93,7 @@ public final class MetricSettings
                '}';
     }
 
-    public static class Builder extends AbstractBuilder<MetricSettings, Builder> {
+    public static class Builder extends AbstractHttpBuilder<MetricSettings, Builder> {
 
         private MetricKeySchema keySchema;
         private MetricValueSchema valueSchema;

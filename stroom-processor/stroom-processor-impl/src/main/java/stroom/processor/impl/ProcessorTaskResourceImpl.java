@@ -24,6 +24,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.AssignTasksRequest;
+import stroom.processor.shared.ProcessorClaimStatus;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.ProcessorTaskResource;
@@ -36,6 +37,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.SyncInvoker;
 
 @Singleton
 @AutoLogged
@@ -45,16 +47,19 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     private final Provider<DocumentEventLog> documentEventLogProvider;
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<ProcessorTaskQueueManager> processorTaskManagerProvider;
+    private final Provider<ProcessorClaimStatusFactory> processorClaimStatusFactoryProvider;
 
     @Inject
     ProcessorTaskResourceImpl(final Provider<ProcessorTaskService> processorTaskServiceProvider,
                               final Provider<DocumentEventLog> documentEventLogProvider,
                               final Provider<NodeService> nodeServiceProvider,
-                              final Provider<ProcessorTaskQueueManager> processorTaskManagerProvider) {
+                              final Provider<ProcessorTaskQueueManager> processorTaskManagerProvider,
+                              final Provider<ProcessorClaimStatusFactory> processorClaimStatusFactoryProvider) {
         this.processorTaskServiceProvider = processorTaskServiceProvider;
         this.documentEventLogProvider = documentEventLogProvider;
         this.nodeServiceProvider = nodeServiceProvider;
         this.processorTaskManagerProvider = processorTaskManagerProvider;
+        this.processorClaimStatusFactoryProvider = processorClaimStatusFactoryProvider;
     }
 
     @Override
@@ -141,7 +146,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public Boolean abandonTasks(final String nodeName, final ProcessorTaskList request) {
-        final Boolean result = nodeServiceProvider.get()
+        return nodeServiceProvider.get()
                 .remoteRestResult(
                         nodeName,
                         Boolean.class,
@@ -154,6 +159,22 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
                                         .abandonTasks(request),
                         builder ->
                                 builder.put(Entity.json(request)));
-        return result;
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public ProcessorClaimStatus getClaimStatus(final String nodeName) {
+        return nodeServiceProvider.get()
+                .remoteRestResult(
+                        nodeName,
+                        ProcessorClaimStatus.class,
+                        () -> ResourcePaths.buildAuthenticatedApiPath(
+                                ProcessorTaskResource.BASE_PATH,
+                                ProcessorTaskResource.CLAIM_STATUS_PATH_PART,
+                                nodeName),
+                        () ->
+                                processorClaimStatusFactoryProvider.get()
+                                        .getStatus(),
+                        SyncInvoker::get);
     }
 }

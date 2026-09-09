@@ -45,6 +45,7 @@ public class ReportPresenter
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final ReportQueryEditPresenter reportQueryEditPresenter;
+    private final ReportNotificationPresenter reportNotificationPresenter;
 
     @Inject
     public ReportPresenter(final EventBus eventBus,
@@ -62,9 +63,13 @@ public class ReportPresenter
         final ReportProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
         analyticProcessingPresenter.setDocumentEditPresenter(this);
 
+        // Created up front rather than by the tab provider, so it can be told the processing type whether or
+        // not the tab has been opened.
+        this.reportNotificationPresenter = notificationPresenterProvider.get();
+
         addTab(QUERY, new DocTabProvider<>(() -> reportQueryEditPresenter));
         addTab(SETTINGS, new DocTabProvider<>(reportSettingsPresenterProvider::get));
-        addTab(NOTIFICATIONS, new DocTabProvider<>(notificationPresenterProvider::get));
+        addTab(NOTIFICATIONS, new DocTabProvider<>(() -> reportNotificationPresenter));
         addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
@@ -104,6 +109,14 @@ public class ReportPresenter
     @Override
     public String getType() {
         return ReportDoc.TYPE;
+    }
+
+    @Override
+    protected void onRead(final DocRef docRef, final ReportDoc document, final boolean readOnly) {
+        super.onRead(docRef, document, readOnly);
+        // A report is always a scheduled query, but tell the notifications tab explicitly rather than leaving
+        // it to infer anything.
+        reportNotificationPresenter.setAnalyticProcessType(document.getAnalyticProcessType());
     }
 
     @Override

@@ -20,13 +20,20 @@ import stroom.ai.impl.mock.MockAiModule;
 import stroom.analytics.impl.AnalyticRuleProcessors;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.NotificationConfig;
+import stroom.analytics.shared.NotificationDestinationType;
+import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.DocFinderModule;
 import stroom.index.VolumeTestConfigModule;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
@@ -38,6 +45,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.resource.impl.ResourceModule;
 import stroom.test.BootstrapTestModule;
 import stroom.test.CommonTranslationTestHelper;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -45,7 +53,10 @@ import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.List;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(UriFactoryModule.class)
@@ -71,14 +82,17 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
     private AnalyticRuleProcessors analyticRuleProcessors;
     @Inject
     private ProcessorFilterService processorFilterService;
+    @Inject
+    private MetaService metaService;
+
+    private static final String QUERY = """
+            from index_view
+            where UserId = user5
+            select StreamId, EventId, UserId""";
 
     @Test
     void testSingleEvent() {
-        final String query = """
-                from index_view
-                where UserId = user5
-                select StreamId, EventId, UserId""";
-        basicTest(query, 9, 6);
+        basicTest(QUERY, 9, 6);
     }
 
     @Test
@@ -108,15 +122,70 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
         basicTest(query, 9, 6);
     }
 
+    /**
+     * A streaming rule asked to use the source feed writes its detections back to the feed the events came
+     * from, rather than to the destination feed configured on the notification.
+     */
+    @Test
+    void testUseSourceFeedWritesDetectionsToTheSourceFeed() {
+        runRule(QUERY, true);
+
+        assertThat(newestDetectionsFeedName())
+                .isEqualTo(CommonTranslationTestHelper.FEED_NAME);
+    }
+
+    /**
+     * The control case. Without the option the detections go to the destination feed as normal.
+     */
+    @Test
+    void testWithoutUseSourceFeedWritesDetectionsToTheDestinationFeed() {
+        runRule(QUERY, false);
+
+        assertThat(newestDetectionsFeedName())
+                .isEqualTo(analyticsDataSetup.getDetections().getName());
+    }
+
+    /**
+     * @return The feed the most recent detections stream was written to.
+     */
+    private String newestDetectionsFeedName() {
+        final ResultPage<Meta> detections = metaService.find(
+                FindMetaCriteria.createWithType(StreamTypeNames.DETECTIONS));
+        assertThat(detections.size())
+                .withFailMessage("Expected exactly one detections stream")
+                .isOne();
+        return detections.getValues().getFirst().getFeedName();
+    }
+
+    private void runRule(final String query,
+                         final boolean useSourceFeedIfPossible) {
+        final NotificationConfig notificationConfig = NotificationConfig
+                .builder()
+                .destinationType(NotificationDestinationType.STREAM)
+                .destination(NotificationStreamDestination
+                        .builder()
+                        .destinationFeed(analyticsDataSetup.getDetections())
+                        .useSourceFeedIfPossible(useSourceFeedIfPossible)
+                        .build())
+                .build();
+        basicTest(query, List.of(notificationConfig));
+    }
+
     private void basicTest(final String query,
                            final int expectedStreams,
                            final int expectedRecords) {
+        basicTest(query, createNotificationConfig());
+        testDetectionsStream(expectedStreams, expectedRecords);
+    }
+
+    private void basicTest(final String query,
+                           final List<NotificationConfig> notifications) {
         final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.STREAMING)
-                .notifications(createNotificationConfig())
+                .notifications(notifications)
                 .errorFeed(analyticsDataSetup.getDetections())
                 .build();
         final DocRef analyticRuleDocRef = writeRule(analyticRuleDoc);
@@ -143,8 +212,5 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
 
         // Now run the processing.
         commonTranslationTestHelper.processAll();
-
-        // As we have created alerts ensure we now have more streams.
-        testDetectionsStream(expectedStreams, expectedRecords);
     }
 }

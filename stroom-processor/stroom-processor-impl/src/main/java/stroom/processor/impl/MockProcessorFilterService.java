@@ -187,10 +187,10 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     }
 
     @Override
-    public ProcessorFilter restore(final DocRef processorFilterDocRef, final boolean resetTracker) {
+    public ProcessorFilter restore(final DocRef processorFilterDocRef) {
         final ProcessorFilter processorFilter = dao.fetchByUuid(processorFilterDocRef.getUuid())
                 .orElseThrow();
-        return processorFilter.copy().deleted(false).build();
+        return dao.restoreProcessorFilter(processorFilter);
     }
 
     @Override

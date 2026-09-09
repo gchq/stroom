@@ -497,7 +497,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AskStroomAIConfig"
+                $ref: "#/components/schemas/AskStroomAiConfig"
           description: default response
       summary: Get the default config to use for asking questions
       tags:
@@ -579,7 +579,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AskStroomAIConfig"
+              $ref: "#/components/schemas/AskStroomAiConfig"
         description: config
         required: true
       responses:
@@ -2543,9 +2543,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/DataGenDoc"
           description: default response
-      summary: Fetch an analytic rule doc by its UUID
+      summary: Fetch a data gen doc by its UUID
       tags:
-      - Queries
+      - Data Generators
     put:
       operationId: updateDataGen
       parameters:
@@ -2568,9 +2568,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/DataGenDoc"
           description: default response
-      summary: Update an analytic rule doc
+      summary: Update a data gen doc
       tags:
-      - Queries
+      - Data Generators
   /dbStatus/v1:
     get:
       operationId: getDbSystemTableStatus
@@ -6609,6 +6609,25 @@ paths:
       summary: Assign some tasks
       tags:
       - Processor Tasks
+  /processorTask/v1/claimStatus/{nodeName}:
+    get:
+      operationId: getProcessorClaimStatus
+      parameters:
+      - in: path
+        name: nodeName
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessorClaimStatus"
+          description: default response
+      summary: Get what a node is doing about claiming its own processor tasks
+      tags:
+      - Processor Tasks
   /processorTask/v1/find:
     post:
       operationId: findProcessorTasks
@@ -10202,6 +10221,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AiChatMessage"
+        workingMessage:
+          $ref: "#/components/schemas/AiChatMessage"
     AnalyticDataShard:
       type: object
       properties:
@@ -10261,6 +10282,11 @@ components:
           - SIGMA
         level:
           type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
         name:
           type: string
         notifications:
@@ -10279,6 +10305,11 @@ components:
           type: boolean
         status:
           type: string
+          enum:
+          - EXPERIMENTAL
+          - TESTING
+          - STABLE
+          - DEPRECATED
         suppressDuplicateNotifications:
           type: boolean
         timeRange:
@@ -10744,7 +10775,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AnyValue"
-    AskStroomAIConfig:
+    AskStroomAiConfig:
       type: object
       properties:
         attachmentDownloadTimeoutMs:
@@ -10752,6 +10783,23 @@ components:
           format: int64
         chatSystemPrompt:
           type: string
+        dockLocation:
+          type: string
+          enum:
+          - TOP
+          - LEFT
+          - BOTTOM
+          - RIGHT
+        dockSize:
+          type: integer
+          format: int32
+        dockType:
+          type: string
+          enum:
+          - DIALOG
+          - TAB
+          - FLOAT
+          - DOCK
         enableDebugDetail:
           type: boolean
         historySummaryPrompt:
@@ -10784,7 +10832,7 @@ components:
         aiChat:
           $ref: "#/components/schemas/AiChat"
         config:
-          $ref: "#/components/schemas/AskStroomAIConfig"
+          $ref: "#/components/schemas/AskStroomAiConfig"
         context:
           $ref: "#/components/schemas/AskStroomAiContext"
         message:
@@ -15197,6 +15245,8 @@ components:
           $ref: "#/components/schemas/SimpleDuration"
         cookiesEnabled:
           type: boolean
+        followRedirects:
+          type: boolean
         keepAlive:
           $ref: "#/components/schemas/SimpleDuration"
         maxConnections:
@@ -17311,6 +17361,45 @@ components:
         version:
           type: integer
           format: int32
+    ProcessorClaimStatus:
+      type: object
+      properties:
+        backedOffFilterCount:
+          type: integer
+          format: int32
+        claimAttempts:
+          type: integer
+          format: int64
+        claimTasksOnWorker:
+          type: boolean
+        eligibleFilterCount:
+          type: integer
+          format: int32
+        emptyClaims:
+          type: integer
+          format: int64
+        error:
+          type: string
+        filtersWithWorkCount:
+          type: integer
+          format: int32
+        lastHeartbeatAgeMs:
+          type: integer
+          format: int64
+        lockedMetaReleases:
+          type: integer
+          format: int64
+        nodeName:
+          type: string
+        summaryAgeMs:
+          type: integer
+          format: int64
+        tasksClaimed:
+          type: integer
+          format: int64
+        tasksInFlight:
+          type: integer
+          format: int32
     ProcessorFilter:
       type: object
       properties:
@@ -17339,6 +17428,9 @@ components:
         minMetaCreateTimeMs:
           type: integer
           format: int64
+        parentFilterId:
+          type: integer
+          format: int32
         pipelineName:
           type: string
         pipelineUuid:
@@ -18350,8 +18442,6 @@ components:
           enum:
           - STROOM_QL_VERSION_0_1
           - SIGMA
-        level:
-          type: string
         name:
           type: string
         notifications:
@@ -18370,8 +18460,6 @@ components:
           type: boolean
         reportSettings:
           $ref: "#/components/schemas/ReportSettings"
-        status:
-          type: string
         suppressDuplicateNotifications:
           type: boolean
         timeRange:
@@ -18390,6 +18478,12 @@ components:
     ReportSettings:
       type: object
       properties:
+        aiSummaryEnabled:
+          type: boolean
+        aiSummaryModel:
+          $ref: "#/components/schemas/DocRef"
+        aiSummaryPrompt:
+          type: string
         fileType:
           type: string
           enum:
@@ -19621,6 +19715,10 @@ components:
         formatInput:
           type: boolean
         formatOutput:
+          type: boolean
+        hasOutput:
+          type: boolean
+        indicativeCounts:
           type: boolean
         indicators:
           $ref: "#/components/schemas/Indicators"
@@ -21558,13 +21656,8 @@ components:
     UserPreferences:
       type: object
       properties:
-        aiDockLocation:
-          type: string
-        aiDockSize:
-          type: integer
-          format: int32
-        aiDockType:
-          type: string
+        askStroomAiConfig:
+          $ref: "#/components/schemas/AskStroomAiConfig"
         dateTimePattern:
           type: string
           description: A date time formatting pattern string conforming to the specification

@@ -278,6 +278,16 @@ subprojects {
     test {
         useJUnitPlatform()
 
+        // Gradle forks the test JVMs, so a -D on the gradle command line reaches the daemon and
+        // stops there. Forward the ones measurement tests use to scale or enable themselves, e.g.
+        // -DtestFilterCount for TestProcessorTaskQueryPlans and -DrunProcessorBenchmark for
+        // TestProcessorTaskDispatchBenchmark. Deliberately a narrow prefix rather than the whole
+        // system property set, which would make test runs depend on whatever the daemon happens
+        // to have been started with.
+        systemProperties System.properties.findAll { key, value ->
+            key.startsWith("test") || key.startsWith("bench") || key.startsWith("run")
+        }
+
         // set heap size for the test JVM(s)
 //        minHeapSize = "128m"
 //        maxHeapSize = "8G"

@@ -21,7 +21,9 @@ import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.stream.LmdbIterable;
 import stroom.lmdb.stream.LmdbIterable.EntryConsumer;
 import stroom.planb.impl.dao.PlanBEnv.EnvInf;
+import stroom.planb.impl.dao.PlanBEnv.Usage;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -58,7 +60,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
 
     protected final PlanBEnv env;
     protected final ByteBuffers byteBuffers;
-    protected final PlanBDoc doc;
+    protected final PlanBDocument doc;
     protected final Dbi<ByteBuffer> dbi;
     protected final Dbi<ByteBuffer> infoDbi;
     protected final SchemaInfo schemaInfo;
@@ -66,7 +68,7 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
 
     public AbstractDb(final PlanBEnv env,
                       final ByteBuffers byteBuffers,
-                      final PlanBDoc doc,
+                      final PlanBDocument doc,
                       final Boolean overwrite,
                       final HashClashCommitRunnable hashClashCommitRunnable,
                       final SchemaInfo schema) {
@@ -321,9 +323,17 @@ public abstract class AbstractDb<K, V> implements Db<K, V> {
 
     @Override
     public void write(final Consumer<LmdbWriter> consumer) {
-        try (final LmdbWriter writer = createWriter()) {
-            consumer.accept(writer);
-        }
+        env.write(consumer);
+    }
+
+    @Override
+    public void writeWith(final LmdbWriter writer, final Runnable operation) {
+        env.writeWith(writer, operation);
+    }
+
+    @Override
+    public Usage getUsage() {
+        return env.getUsage();
     }
 
     @Override

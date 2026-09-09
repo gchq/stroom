@@ -18,6 +18,7 @@ package stroom.query.language.functions;
 
 public enum FunctionCategory {
     AGGREGATE("Aggregate"),
+    AI("AI"),
     CAST("Cast"),
     DATE("Date"),
     LINK("Link"),

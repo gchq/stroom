@@ -21,7 +21,6 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.pathways.client.presenter.TracesPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserTabPresenter;
 import stroom.security.shared.AppPermission;

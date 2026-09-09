@@ -270,8 +270,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
                     dataFormat = workbook.createDataFormat();
                     cellStyle = workbook.createCellStyle();
 
-                    if (settings instanceof NumberFormatSettings) {
-                        final NumberFormatSettings numberFormatSettings = (NumberFormatSettings) settings;
+                    if (settings instanceof final NumberFormatSettings numberFormatSettings) {
                         final StringBuilder sb = new StringBuilder();
 
                         if (Boolean.TRUE.equals(numberFormatSettings.getUseSeparator())) {
@@ -297,8 +296,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
                 case DATE_TIME:
                     String pattern = "dd/mm/yyyy hh:mm:ss";
 
-                    if (settings instanceof DateTimeFormatSettings) {
-                        final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) settings;
+                    if (settings instanceof final DateTimeFormatSettings dateTimeFormatSettings) {
                         if (dateTimeFormatSettings.getPattern() != null
                             && dateTimeFormatSettings.getPattern().trim().length() > 0) {
                             pattern = dateTimeFormatSettings.getPattern();
@@ -337,6 +335,27 @@ public class ExcelTarget implements SearchResultWriter.Target {
             for (final Integer columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
                 sheet.autoSizeColumn(columnIndex);
             }
+        }
+    }
+
+    /**
+     * Writes a block of prose to a sheet of its own. Excel caps a cell at
+     * {@link #EXCEL_MAX_CELL_CHARACTERS} characters, so the text is laid out a line to a row rather than
+     * put in one cell, which also means it reads as text rather than as one unwrapped line.
+     *
+     * @param sheetName The name of the sheet to create.
+     * @param text      The text to write. Nothing is written if this is null or blank.
+     */
+    public void writeText(final String sheetName, final String text) {
+        if (workbook == null || text == null || text.isBlank()) {
+            return;
+        }
+
+        final SXSSFSheet textSheet = workbook.createSheet(sheetName);
+        int textRowNum = 0;
+        for (final String line : text.split("\n", -1)) {
+            final SXSSFRow textRow = textSheet.createRow(textRowNum++);
+            textRow.createCell(0).setCellValue(getText(line).orElse(""));
         }
     }
 

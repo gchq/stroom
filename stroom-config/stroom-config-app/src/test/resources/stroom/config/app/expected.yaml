@@ -17,6 +17,12 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
   ai:
+    chatResponseCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     db:
       connection:
         jdbcDriverClassName: null
@@ -132,6 +138,9 @@ appConfig:
     eventLinkCacheSizeLimit: 1000000
     physicalDeleteAge: "P7D"
   askStroomAi:
+    dockType: "DOCK"
+    dockLocation: "RIGHT"
+    dockSize: 300
     tableAnalysis:
       maxTotalRows: 10000
       maxRowsPerBatch: 1000
@@ -751,6 +760,19 @@ appConfig:
         maxStoreSize: "10G"
         readAheadEnabled: true
         readerBlockedByWriter: false
+    stepping:
+      eagerMaterialisationRecords: 5000
+      filteredScanWindow: 50
+      maxBytesPerStream: 2147483648
+      maxRecordSizeBytes: 104857600
+      maxRecordsPerStream: 1000000
+      maxRetainedFingerprintsPerElement: 3
+      maxSessionIdleTime: "PT10M"
+      maxSweptStreamsPerSession: 10
+      orphanMaxAge: "PT1H"
+      prefetchWindow: 10
+      skeletonSweep: true
+      storeSubDir: "stepping"
     xmlSchema:
       cache:
         expireAfterAccess: "PT10M"
@@ -767,13 +789,25 @@ appConfig:
         statisticsMode: "INTERNAL"
       maxElements: 1000000
   planb:
+    defaultShardCounts:
+      STATE: 16
+      TEMPORAL_STATE: 32
+      RANGED_STATE: 16
+      TEMPORAL_RANGED_STATE: 32
+      SESSION: 32
+      HISTOGRAM: 16
+      METRIC: 16
+      TRACE: 64
     mergeStatusRetention: "P30D"
+    mergedCheckpointCacheTtl: "PT10M"
     minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
+    minTimeToKeepStoreShardEnv: "PT1H"
     nodeList: []
     path: "planb"
     sendPartAttempts: 3
     sendPartRetryDelay: "PT10S"
+    shardMergeThreadCount: 4
     snapshotRetryFetchInterval: "PT1M"
     stateDocCache:
       expireAfterAccess: null
@@ -783,6 +817,7 @@ appConfig:
       statisticsMode: "INTERNAL"
   processor:
     assignTasks: true
+    claimTasksOnWorker: false
     createTasksBeyondProcessLimit: true
     databaseMultiInsertMaxBatchSize: 500
     db:
@@ -802,7 +837,6 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     deleteAge: "P1D"
-    disownDeadTasksAfter: "PT10M"
     fillTaskQueue: true
     processorCache:
       expireAfterAccess: "PT10S"
@@ -838,7 +872,9 @@ appConfig:
     skipEmptyFilterFetchDuration: "PT10S"
     skipNonProducingFiltersDuration: "PT10S"
     skipNonProducingFiltersMaxDuration: "PT1M"
+    taskAvailabilityInterval: "PT5S"
     taskCreationThreadCount: 5
+    taskLeaseTimeout: "PT10M"
     tasksToCreate: 1000
     useMaxMetaIdFromPreviousPoll: true
     waitToQueueTasksDuration: "PT10S"

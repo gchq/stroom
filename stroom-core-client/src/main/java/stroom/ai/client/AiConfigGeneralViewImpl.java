@@ -18,8 +18,8 @@ package stroom.ai.client;
 
 import stroom.ai.client.AiConfigGeneralPresenter.AiConfigGeneralView;
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
-import stroom.ai.client.AskStroomAiPresenter.DockLocation;
-import stroom.ai.client.AskStroomAiPresenter.DockType;
+import stroom.ai.shared.AskStroomAiConfig.DockLocation;
+import stroom.ai.shared.AskStroomAiConfig.DockType;
 import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;

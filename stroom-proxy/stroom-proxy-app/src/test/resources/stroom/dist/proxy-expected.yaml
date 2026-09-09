@@ -77,6 +77,7 @@ proxyConfig:
       connectionRequestTimeout: "PT3M"
       connectionTimeout: "PT3M"
       cookiesEnabled: false
+      followRedirects: true
       keepAlive: "PT0S"
       maxConnections: 1024
       maxConnectionsPerRoute: 1024
@@ -112,6 +113,7 @@ proxyConfig:
     - "GUID"
     - "ReceiptId"
     - "Feed"
+    - "Type"
     - "System"
     - "Environment"
     - "RemoteHost"
@@ -119,6 +121,7 @@ proxyConfig:
     - "RemoteDN"
     - "RemoteCertExpiry"
     - "DataReceiptRule"
+    useMappedDiagnosticContext: false
   path:
     data: "data"
     home: null

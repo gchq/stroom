@@ -18,26 +18,36 @@ package stroom.ai.impl;
 
 import stroom.ai.impl.db.AiDbConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder(alphabetic = true)
 public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     private final AiDbConfig dbConfig;
+    private final CacheConfig chatResponseCache;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
+        chatResponseCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterWrite(StroomDuration.ofMinutes(10))
+                .build();
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public AiConfig(@JsonProperty("db") final AiDbConfig dbConfig) {
+    public AiConfig(@JsonProperty("db") final AiDbConfig dbConfig,
+                    @JsonProperty("chatResponseCache") final CacheConfig chatResponseCache) {
         this.dbConfig = dbConfig;
+        this.chatResponseCache = chatResponseCache;
     }
 
     @Override
@@ -46,10 +56,20 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         return dbConfig;
     }
 
+    @JsonPropertyDescription("Caches the answers given by the ai() XSLT and StroomQL functions, keyed on the " +
+                             "model, system prompt and message, so that repeated identical questions do not " +
+                             "each result in a call to the model. Set maximumSize to 0 to ask the model every " +
+                             "time.")
+    @JsonProperty("chatResponseCache")
+    public CacheConfig getChatResponseCache() {
+        return chatResponseCache;
+    }
+
     @Override
     public String toString() {
         return "AiConfig{" +
                "dbConfig=" + dbConfig +
+               ", chatResponseCache=" + chatResponseCache +
                '}';
     }
 }

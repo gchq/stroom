@@ -16,18 +16,24 @@
 
 package stroom.planb.impl;
 
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.StoreFactory;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,17 +43,23 @@ public class PlanBDocStoreImpl
         extends AbstractDocumentStore<PlanBDoc>
         implements PlanBDocStore {
 
+    private final SecurityContext securityContext;
+    private final Provider<ClusterLockService> clusterLockServiceProvider;
+
     @Inject
     public PlanBDocStoreImpl(
             final StoreFactory storeFactory,
+            final PlanBDocSerialiser serialiser,
             final SecurityContext securityContext,
-            final PlanBDocSerialiser serialiser) {
+            final Provider<ClusterLockService> clusterLockServiceProvider) {
         super(storeFactory,
                 securityContext,
                 serialiser,
                 PlanBDoc.TYPE,
                 PlanBDoc::builder,
                 PlanBDoc::copy);
+        this.securityContext = securityContext;
+        this.clusterLockServiceProvider = clusterLockServiceProvider;
     }
 
     /**
@@ -77,7 +89,7 @@ public class PlanBDocStoreImpl
                         .stateType(StateType.TEMPORAL_STATE)
                         .build());
 
-        // Double-check the feed wasn't created elsewhere at the same time.
+        // Double-check no state store with this name was created elsewhere at the same time.
         if (checkDuplicateName(name, created)) {
             // Delete the newly created document as the key is duplicated. getStore() is the
             // deliberately unchecked handle, which is what undoing our own create needs: the document
@@ -185,8 +197,30 @@ public class PlanBDocStoreImpl
     }
 
     @Override
+    public void deleteDocument(final DocRef docRef) {
+        super.deleteDocument(docRef);
+        if (docRef != null && docRef.getUuid() != null) {
+            try {
+                clusterLockServiceProvider.get().deleteLocks(PlanBConstants.getMergeLockPrefix(docRef.getUuid()));
+            } catch (final Exception e) {
+                // Ignore lock deletion failures on document delete to avoid failing document delete itself
+            }
+        }
+    }
+
+    @Override
     public PlanBDoc writeDocument(final PlanBDoc document) {
         validateName(document.getName());
+        validateSettings(document);
+
         return super.writeDocument(document);
+    }
+
+    private void validateSettings(final PlanBDoc document) {
+        final String error = AbstractPlanBSettings.validationError(
+                NullSafe.get(document, PlanBDoc::getSettings));
+        if (error != null) {
+            throw new EntityServiceException(error);
+        }
     }
 }

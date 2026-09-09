@@ -48,6 +48,10 @@ public class DateTimeFormatter {
     }
 
     public String format(final Long ms) {
+        return format(ms, null);
+    }
+
+    public String format(final Long ms, final String momentPatternOverride) {
         if (ms == null) {
             return null;
         }
@@ -56,21 +60,17 @@ public class DateTimeFormatter {
 
         String pattern = tz.pattern;
 
-        // If UTC then just display the `Z` suffix.
-        if (Use.UTC.equals(tz.use)) {
-            pattern = pattern.replaceAll("Z", "[Z]");
+        if (momentPatternOverride != null) {
+            pattern = momentPatternOverride;
+        } else {
+            // If UTC then just display the `Z` suffix.
+            if (Use.UTC.equals(tz.use)) {
+                pattern = pattern.replaceAll("Z", "[Z]");
+            }
+            // Ensure we haven't doubled up square brackets.
+            pattern = pattern.replaceAll("\\[+", "[");
+            pattern = pattern.replaceAll("]+", "]");
         }
-        // Ensure we haven't doubled up square brackets.
-        pattern = pattern.replaceAll("\\[+", "[");
-        pattern = pattern.replaceAll("]+", "]");
-
-        // If UTC then just display the `Z` suffix.
-        if (Use.UTC.equals(tz.use)) {
-            pattern = pattern.replaceAll("Z", "[Z]");
-        }
-        // Ensure we haven't doubled up square brackets.
-        pattern = pattern.replaceAll("\\[+", "[");
-        pattern = pattern.replaceAll("]+", "]");
 
         return MomentJs.nativeToDateString(ms, tz.use.getDisplayValue(), pattern, tz.zoneId, tz.offsetMinutes);
     }

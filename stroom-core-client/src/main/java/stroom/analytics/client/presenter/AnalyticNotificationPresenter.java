@@ -18,10 +18,6 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
-import stroom.config.global.client.presenter.ConfigDefaultSetter;
-import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.ui.config.client.UiConfigCache;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -35,24 +31,9 @@ public class AnalyticNotificationPresenter
     @Inject
     public AnalyticNotificationPresenter(final EventBus eventBus,
                                          final AnalyticNotificationView view,
-                                         final DocSelectionBoxPresenter errorFeedPresenter,
-                                         final AnalyticNotificationListPresenter notificationListPresenter,
-                                         final UiConfigCache uiConfigCache,
-                                         final ConfigDefaultSetter configDefaultSetter) {
-        super(eventBus,
-                view,
-                errorFeedPresenter,
-                notificationListPresenter,
-                uiConfigCache,
-                configDefaultSetter);
+                                         final AnalyticNotificationListPresenter notificationListPresenter) {
+        super(eventBus, view, notificationListPresenter);
         this.notificationListPresenter = notificationListPresenter;
-        getView().setIncludeRuleDocumentationVisible(true);
-    }
-
-    @Override
-    protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
-        super.onRead(docRef, analyticRuleDoc, readOnly);
-        getView().setIncludeRuleDocumentation(analyticRuleDoc.isIncludeRuleDocumentation());
     }
 
     @Override
@@ -61,8 +42,6 @@ public class AnalyticNotificationPresenter
         return analyticRuleDoc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .errorFeed(errorFeedPresenter.getSelectedEntityReference())
-                .includeRuleDocumentation(getView().isIncludeRuleDocumentation())
                 .build();
     }
 }

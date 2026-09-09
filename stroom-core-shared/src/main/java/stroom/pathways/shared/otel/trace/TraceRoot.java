@@ -45,15 +45,72 @@ public class TraceRoot {
     private final int depth;
     @JsonProperty
     private final int totalSpans;
+    /**
+     * Wall-clock epoch millis of the most recent merge cycle that touched this trace.
+     * Drives the retention and publishing "is this trace still active?" decision so a
+     * long-running trace's root is retained (kept live and current) rather than aged
+     * out by its (fixed) start time. Zero when unknown.
+     */
+    @JsonProperty
+    private final long lastActivityMs;
+    /**
+     * The root span's <em>own</em> end time (its {@code endTimeUnixNano}), as opposed to
+     * {@link #endTime} which is the maximum end time across <em>all</em> spans in the trace.
+     * When a background/pool thread captures the trace's OTel context and later emits spans
+     * long after the root finished, {@link #endTime} is dragged far into the future while this
+     * stays fixed; the gap between the two reveals such "trailing leaked activity". Nullable
+     * when unknown.
+     */
+    @JsonProperty
+    private final NanoTime rootEndTime;
+    /**
+     * True when this row represents an "orphan-only" trace: a traceId with spans but no root span
+     * (the root aged out under retention or publishing, or never arrived). Such a row is synthesized
+     * from per-trace stats rather than from a root span; the UI flags it and its detail view
+     * renders a rootless span forest.
+     */
+    @JsonProperty
+    private final boolean orphan;
+    /**
+     * True when any span in the trace reported an error status
+     * ({@link StatusCode#STATUS_CODE_ERROR}).
+     */
+    @JsonProperty
+    private final boolean error;
+    /**
+     * True when spans for this trace were rejected because it had already reached the store's
+     * per-trace span limit. The trace is deliberately incomplete: a single runaway trace, typically
+     * one whose OTel context leaked into pooled work, would otherwise fill a whole shard and stop
+     * that shard accepting any data at all.
+     */
+    @JsonProperty
+    private final boolean truncated;
 
     public TraceRoot(final Trace trace) {
+        final Span root = trace.root();
         this.traceId = trace.getTraceId();
-        this.name = trace.root().getName();
-        this.startTime = trace.root().start();
-        this.endTime = trace.root().end();
+        this.name = root == null ? "" : root.getName();
+        this.startTime = root == null ? null : root.start();
+        this.endTime = root == null ? null : root.end();
         this.services = services(trace);
-        this.depth = depth(trace);
+        this.depth = root == null ? 0 : depth(trace);
         this.totalSpans = totalSpans(trace);
+        this.lastActivityMs = 0L;
+        this.rootEndTime = root == null ? null : root.end();
+        this.orphan = root == null;
+        this.error = hasError(trace);
+        this.truncated = false;
+    }
+
+    private static boolean hasError(final Trace trace) {
+        return trace.getParentSpanIdMap()
+                .values()
+                .stream()
+                .flatMap(List::stream)
+                .anyMatch(span -> {
+                    final SpanStatus status = span.getStatus();
+                    return status != null && StatusCode.STATUS_CODE_ERROR.equals(status.getCode());
+                });
     }
 
     private static int services(final Trace trace) {
@@ -101,7 +158,12 @@ public class TraceRoot {
                      @JsonProperty("endTime") final NanoTime endTime,
                      @JsonProperty("services") final int services,
                      @JsonProperty("depth") final int depth,
-                     @JsonProperty("totalSpans") final int totalSpans) {
+                     @JsonProperty("totalSpans") final int totalSpans,
+                     @JsonProperty("lastActivityMs") final long lastActivityMs,
+                     @JsonProperty("rootEndTime") final NanoTime rootEndTime,
+                     @JsonProperty("orphan") final boolean orphan,
+                     @JsonProperty("error") final boolean error,
+                     @JsonProperty("truncated") final boolean truncated) {
         this.traceId = traceId;
         this.name = name;
         this.startTime = startTime;
@@ -109,6 +171,11 @@ public class TraceRoot {
         this.services = services;
         this.depth = depth;
         this.totalSpans = totalSpans;
+        this.lastActivityMs = lastActivityMs;
+        this.rootEndTime = rootEndTime;
+        this.orphan = orphan;
+        this.error = error;
+        this.truncated = truncated;
     }
 
     public String getTraceId() {
@@ -139,6 +206,26 @@ public class TraceRoot {
         return totalSpans;
     }
 
+    public long getLastActivityMs() {
+        return lastActivityMs;
+    }
+
+    public NanoTime getRootEndTime() {
+        return rootEndTime;
+    }
+
+    public boolean isOrphan() {
+        return orphan;
+    }
+
+    public boolean isError() {
+        return error;
+    }
+
+    public boolean isTruncated() {
+        return truncated;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -151,15 +238,21 @@ public class TraceRoot {
         return services == traceRoot.services &&
                depth == traceRoot.depth &&
                totalSpans == traceRoot.totalSpans &&
+               lastActivityMs == traceRoot.lastActivityMs &&
                Objects.equals(traceId, traceRoot.traceId) &&
                Objects.equals(name, traceRoot.name) &&
                Objects.equals(startTime, traceRoot.startTime) &&
-               Objects.equals(endTime, traceRoot.endTime);
+               Objects.equals(endTime, traceRoot.endTime) &&
+               Objects.equals(rootEndTime, traceRoot.rootEndTime) &&
+               orphan == traceRoot.orphan &&
+               error == traceRoot.error &&
+               truncated == traceRoot.truncated;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(traceId, name, startTime, endTime, services, depth, totalSpans);
+        return Objects.hash(traceId, name, startTime, endTime, services, depth, totalSpans,
+                lastActivityMs, rootEndTime, orphan, error, truncated);
     }
 
     public static Builder builder() {
@@ -179,6 +272,11 @@ public class TraceRoot {
         private int services;
         private int depth;
         private int totalSpans;
+        private long lastActivityMs;
+        private NanoTime rootEndTime;
+        private boolean orphan;
+        private boolean error;
+        private boolean truncated;
 
         private Builder() {
         }
@@ -191,6 +289,11 @@ public class TraceRoot {
             this.services = traceRoot.services;
             this.depth = traceRoot.depth;
             this.totalSpans = traceRoot.totalSpans;
+            this.lastActivityMs = traceRoot.lastActivityMs;
+            this.rootEndTime = traceRoot.rootEndTime;
+            this.orphan = traceRoot.orphan;
+            this.error = traceRoot.error;
+            this.truncated = traceRoot.truncated;
         }
 
         public Builder traceId(final String traceId) {
@@ -228,6 +331,31 @@ public class TraceRoot {
             return self();
         }
 
+        public Builder lastActivityMs(final long lastActivityMs) {
+            this.lastActivityMs = lastActivityMs;
+            return self();
+        }
+
+        public Builder rootEndTime(final NanoTime rootEndTime) {
+            this.rootEndTime = rootEndTime;
+            return self();
+        }
+
+        public Builder orphan(final boolean orphan) {
+            this.orphan = orphan;
+            return self();
+        }
+
+        public Builder error(final boolean error) {
+            this.error = error;
+            return self();
+        }
+
+        public Builder truncated(final boolean truncated) {
+            this.truncated = truncated;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -242,7 +370,12 @@ public class TraceRoot {
                     endTime,
                     services,
                     depth,
-                    totalSpans
+                    totalSpans,
+                    lastActivityMs,
+                    rootEndTime,
+                    orphan,
+                    error,
+                    truncated
             );
         }
     }

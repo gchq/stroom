@@ -51,7 +51,8 @@ public class PathwaysDb implements AutoCloseable {
         this.env = env;
         this.byteBuffers = byteBuffers;
 
-        // Read and validate that the schema is as expected.
+        // Two plain key/value DBIs, created on first open. Unlike AbstractDb there is no stored schema
+        // to read back and validate, because neither key nor value goes through a versioned serde.
         processingStatus = new SimpleDb(
                 env,
                 env.openDbi("processing-status", DbiFlags.MDB_CREATE),

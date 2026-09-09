@@ -57,6 +57,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import jakarta.inject.Inject;
 import org.jooq.Condition;
+import org.jooq.TableField;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
@@ -188,14 +189,14 @@ class AbstractProcessorTest {
         return processorFilterDao.create(processorFilter);
     }
 
-    protected void createProcessorTask(final ProcessorFilter processorFilter,
+    protected long createProcessorTask(final ProcessorFilter processorFilter,
                                        final TaskStatus taskStatus,
                                        final String nodeName,
                                        final String feedName) {
-        createProcessorTask(processorFilter, taskStatus, nodeName, feedName, Instant.now());
+        return createProcessorTask(processorFilter, taskStatus, nodeName, feedName, Instant.now());
     }
 
-    protected void createProcessorTask(final ProcessorFilter processorFilter,
+    protected long createProcessorTask(final ProcessorFilter processorFilter,
                                        final TaskStatus taskStatus,
                                        final String nodeName,
                                        final String feedName,
@@ -215,6 +216,32 @@ class AbstractProcessorTest {
             context.attach(processorTaskRecord);
             processorTaskRecord.store();
         });
+        return processorTaskRecord.getId();
+    }
+
+    protected TaskStatus getTaskStatus(final long taskId) {
+        return TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                fetchTaskField(taskId, PROCESSOR_TASK.STATUS));
+    }
+
+    protected Integer getTaskNodeId(final long taskId) {
+        return fetchTaskField(taskId, PROCESSOR_TASK.FK_PROCESSOR_NODE_ID);
+    }
+
+    protected int getTaskVersion(final long taskId) {
+        return fetchTaskField(taskId, PROCESSOR_TASK.VERSION);
+    }
+
+    protected long getTaskStatusTimeMs(final long taskId) {
+        return fetchTaskField(taskId, PROCESSOR_TASK.STATUS_TIME_MS);
+    }
+
+    private <T> T fetchTaskField(final long taskId, final TableField<ProcessorTaskRecord, T> field) {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .select(field)
+                .from(PROCESSOR_TASK)
+                .where(PROCESSOR_TASK.ID.eq(taskId))
+                .fetchOne(field));
     }
 
     protected int getProcessorCount(final Condition condition) {

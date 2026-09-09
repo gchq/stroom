@@ -40,8 +40,14 @@ public class BasicHttpClientFactory implements HttpClientFactory {
         if (configuration == null) {
             configuration = new io.dropwizard.client.HttpClientConfiguration();
         }
+        // The redirect policy has no counterpart in the Dropwizard configuration, so it is applied here
+        // rather than being carried by the conversion above.
+        final boolean followRedirects = httpClientConfiguration == null
+                ? HttpClientConfiguration.DEFAULT_FOLLOW_REDIRECTS
+                : httpClientConfiguration.isFollowRedirects();
         return new HttpClientBuilder((Environment) null)
                 .using(configuration)
+                .using(new ConfiguredRedirectStrategy(followRedirects))
                 .build(name);
     }
 }

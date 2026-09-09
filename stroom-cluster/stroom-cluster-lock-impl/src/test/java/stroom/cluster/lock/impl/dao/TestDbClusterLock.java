@@ -19,16 +19,19 @@ package stroom.cluster.lock.impl.dao;
 import stroom.cluster.lock.impl.db.ClusterLockDbConfig;
 import stroom.cluster.lock.impl.db.ClusterLockDbConnProvider;
 import stroom.cluster.lock.impl.db.ClusterLockDbModule;
+import stroom.db.util.JooqUtil;
 import stroom.test.common.util.db.DbTestUtil;
 
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static stroom.cluster.lock.impl.db.jooq.tables.ClusterLock.CLUSTER_LOCK;
 
 class TestDbClusterLock {
 
@@ -117,4 +120,103 @@ class TestDbClusterLock {
         assertThat(sequence)
                 .containsExactly(1, 2);
     }
+
+    @Test
+    void testOwnerTracking() {
+        final ClusterLockDbConnProvider clusterLockDbConnProvider = DbTestUtil.getTestDbDatasource(
+                new ClusterLockDbModule(), new ClusterLockDbConfig());
+
+        final DbClusterLock dbClusterLock = new DbClusterLock(clusterLockDbConnProvider, ClusterLockConfig::new);
+        final String lockName = "TRACKING_TEST";
+
+        dbClusterLock.lock(lockName, () -> {
+            JooqUtil.context(clusterLockDbConnProvider, context -> {
+                final Optional<? extends org.jooq.Record> opt = context.select(
+                                CLUSTER_LOCK.NODE_NAME,
+                                CLUSTER_LOCK.THREAD_NAME,
+                                CLUSTER_LOCK.LEASE_MS,
+                                CLUSTER_LOCK.LOCK_TIME_MS)
+                        .from(CLUSTER_LOCK)
+                        .where(CLUSTER_LOCK.NAME.eq(lockName))
+                        .fetchOptional();
+
+                assertThat(opt.isPresent()).isTrue();
+                final org.jooq.Record record = opt.get();
+                assertThat(record.get(CLUSTER_LOCK.THREAD_NAME)).isEqualTo(Thread.currentThread().getName());
+                assertThat(record.get(CLUSTER_LOCK.NODE_NAME)).isEqualTo("unknown");
+                assertThat(record.get(CLUSTER_LOCK.LEASE_MS)).isNotNull();
+            });
+        });
+    }
+
+    @Test
+    void testLockTTL() throws InterruptedException {
+        final ClusterLockDbConnProvider clusterLockDbConnProvider = DbTestUtil.getTestDbDatasource(
+                new ClusterLockDbModule(), new ClusterLockDbConfig());
+
+        // Thread 1 uses a short 200ms lockTimeout so the DB LEASE_MS is set to 200ms.
+        // This means thread 1's lease expires 200ms after it acquires the lock.
+        final ClusterLockConfig shortLeaseConfig = new ClusterLockConfig(
+                new ClusterLockDbConfig(),
+                stroom.util.time.StroomDuration.ofMillis(200));
+        final DbClusterLock dbClusterLock1 = new DbClusterLock(clusterLockDbConnProvider, () -> shortLeaseConfig);
+
+        // Thread 2 uses a longer lockTimeout so that its acquisition retry window
+        // is large enough to handle transient DB latency, while the COALESCE in
+        // tryAcquireLock still reads thread 1's DB LEASE_MS = 200ms.
+        final ClusterLockConfig longWaitConfig = new ClusterLockConfig(
+                new ClusterLockDbConfig(),
+                stroom.util.time.StroomDuration.ofMillis(5_000));
+        final DbClusterLock dbClusterLock2 = new DbClusterLock(clusterLockDbConnProvider, () -> longWaitConfig);
+
+        final String lockName = "TTL_TEST";
+
+        final CountDownLatch thread1Acquired = new CountDownLatch(1);
+        final CountDownLatch thread2Finished = new CountDownLatch(1);
+        final List<String> results = new ArrayList<>();
+
+        final Thread thread1 = new Thread(() -> {
+            dbClusterLock1.lock(lockName, () -> {
+                thread1Acquired.countDown();
+                try {
+                    // Hold the lock for 1 second. But the DB lease is only 200ms!
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                // "thread1 done" is added regardless of interrupt (expected behaviour).
+            });
+        });
+
+        final Thread thread2 = new Thread(() -> {
+            try {
+                thread1Acquired.await();
+                // Wait another 300ms so thread 1's 200ms DB lease has definitely expired.
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            // Thread 2 should steal the expired lock on its first tryAcquireLock attempt
+            // because LOCK_TIME_MS + COALESCE(LEASE_MS=200, 5000) = T1+200 < now=T1+300.
+            dbClusterLock2.lock(lockName, () -> {
+                results.add("thread2 acquired");
+                thread2Finished.countDown();
+            });
+        });
+
+        thread1.start();
+        thread2.start();
+
+        // Allow up to 5 seconds: thread startup + 300ms sleep + DB round-trip + safety margin.
+        final boolean success = thread2Finished.await(5_000, TimeUnit.MILLISECONDS);
+        assertThat(success).withFailMessage("Thread 2 failed to steal the lock after lease expired").isTrue();
+
+        // At this point thread 2 has finished; thread 1 may still be sleeping.
+        // Only thread2's result should be present at this instant.
+        assertThat(results).contains("thread2 acquired");
+
+        thread1.join();
+        thread2.join();
+    }
 }
+

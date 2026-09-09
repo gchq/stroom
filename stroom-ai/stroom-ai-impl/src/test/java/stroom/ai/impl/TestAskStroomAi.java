@@ -17,8 +17,9 @@
 package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
-import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
+import stroom.cache.impl.CacheManagerImpl;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.util.date.DateUtil;
 
@@ -56,7 +57,9 @@ public class TestAskStroomAi {
                 null,
                 null,
                 null,
-                null);
+                null,
+                new CacheManagerImpl(),
+                AiConfig::new);
         final OpenAIModelDoc modelDoc = new OpenAIModelDoc(
                 UUID.randomUUID().toString(),
                 "test",
@@ -75,7 +78,7 @@ public class TestAskStroomAi {
                 null);
         final ChatModel chatModel = aiService.getChatModel(modelDoc);
 
-        final AskStroomAIConfig modelConfig = new AskStroomAIConfig();
+        final AskStroomAiConfig modelConfig = new AskStroomAiConfig();
         final TableAnalysisConfig tableAnalysisConfig = modelConfig.getTableAnalysis();
 
         // Create column header string.

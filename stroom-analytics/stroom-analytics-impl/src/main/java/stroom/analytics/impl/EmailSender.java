@@ -103,9 +103,7 @@ public class EmailSender {
                 effectiveExecutionTime);
 
         final EmailContent renderedEmail = ruleEmailTemplatingService.renderEmail(emailDestination, context);
-        final List<AttachmentResource> attachmentResources = List.of(new AttachmentResource(
-                file.getFileName().toString(),
-                new FileDataSource(file.toFile())));
+        final List<AttachmentResource> attachmentResources = createAttachments(reportFile);
         if (LOGGER.isTraceEnabled()) {
             logContentsOfFile(file);
         }
@@ -122,7 +120,24 @@ public class EmailSender {
         }
     }
 
-    private static @NonNull Map<String, Object> createTemplateContext(final ReportDoc reportDoc,
+    /**
+     * @return The report, and its summary too where the summary could not go inside the report. Separate
+     * attachments rather than an archive, so the recipient does not have to unpack anything.
+     */
+    static List<AttachmentResource> createAttachments(final ReportFile reportFile) {
+        final List<AttachmentResource> attachmentResources = new ArrayList<>();
+        attachmentResources.add(new AttachmentResource(
+                reportFile.file().getFileName().toString(),
+                new FileDataSource(reportFile.file().toFile())));
+        if (reportFile.summaryFile() != null) {
+            attachmentResources.add(new AttachmentResource(
+                    reportFile.summaryFile().getFileName().toString(),
+                    new FileDataSource(reportFile.summaryFile().toFile())));
+        }
+        return attachmentResources;
+    }
+
+    static @NonNull Map<String, Object> createTemplateContext(final ReportDoc reportDoc,
                                                                       final ReportFile reportFile,
                                                                       final Instant executionTime,
                                                                       final Instant effectiveExecutionTime) {
@@ -135,6 +150,10 @@ public class EmailSender {
         context.put("rowCount", reportFile.rowCount());
         context.put("fileType", reportFile.fileType().name());
         context.put("fileName", reportFile.file().getFileName().toString());
+        // Always present, so that a template using it renders whether or not there was a summary to make.
+        // Jinjava is configured to fail on unknown tokens, so the key has to be here even when the value
+        // is not.
+        context.put("aiSummary", Objects.requireNonNullElse(reportFile.aiSummary(), ""));
         LOGGER.debug("createTemplateContext() - {}", context);
         return Collections.unmodifiableMap(context);
     }

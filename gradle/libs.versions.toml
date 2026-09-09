@@ -58,6 +58,7 @@ dropwizard-core = { module = "io.dropwizard:dropwizard-core" }#files("libs/dropw
 dropwizard-jackson = { module = "io.dropwizard:dropwizard-jackson" } # version controlled by dropwizard-dependencies
 dropwizard-jersey = { module = "io.dropwizard:dropwizard-jersey" } # version controlled by dropwizard-dependencies
 dropwizard-jetty = { module = "io.dropwizard:dropwizard-jetty" } #was 1.0.6 now 1.1.0
+dropwizard-json-logging = { module = "io.dropwizard:dropwizard-json-logging" } # version controlled by dropwizard-dependencies
 dropwizard-lifecycle = { module = "io.dropwizard:dropwizard-lifecycle" } # version controlled by dropwizard-dependencies
 dropwizard-metrics-annotation = { module = "io.dropwizard.metrics:metrics-annotation" } # version controlled by dropwizard-dependencies
 dropwizard-metrics-caffeine3 = { module = "io.dropwizard.metrics:metrics-caffeine3" } # version controlled by dropwizard-dependencies

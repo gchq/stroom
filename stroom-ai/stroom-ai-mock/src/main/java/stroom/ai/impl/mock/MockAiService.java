@@ -103,6 +103,16 @@ public class MockAiService implements AiService {
     }
 
     @Override
+    public Optional<DocRef> findModelByNameOrUuid(final String nameOrUuid) {
+        return aiService.findModelByNameOrUuid(nameOrUuid);
+    }
+
+    @Override
+    public String chat(final DocRef modelRef, final String systemPrompt, final String message) {
+        return aiService.chat(modelRef, systemPrompt, message);
+    }
+
+    @Override
     public String getModel(final OpenAIModelDoc modelDoc) {
         return aiService.getModel(modelDoc);
     }
@@ -202,6 +212,16 @@ public class MockAiService implements AiService {
     @Override
     public List<AiChatMessage> getMessagesSince(final int chatId, final int lastSeenMessageId) {
         return aiService.getMessagesSince(chatId, lastSeenMessageId);
+    }
+
+    @Override
+    public Optional<AiChatMessage> getWorkingMessage(final int chatId) {
+        return aiService.getWorkingMessage(chatId);
+    }
+
+    @Override
+    public void deleteWorkingMessages(final int chatId) {
+        aiService.deleteWorkingMessages(chatId);
     }
 
     @Override

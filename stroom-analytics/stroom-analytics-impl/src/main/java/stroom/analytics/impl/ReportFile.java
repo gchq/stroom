@@ -20,14 +20,23 @@ package stroom.analytics.impl;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Objects;
 
+/**
+ * @param aiSummary   The model's summary of the report's data, or null where the report does not ask for
+ *                    one or the model could not produce one.
+ * @param summaryFile The summary as a file of its own, for the file types that have no place to put prose
+ *                    inside the report. Null otherwise.
+ */
 @NullMarked
 record ReportFile(Path file,
                   DownloadSearchResultFileType fileType,
-                  long rowCount) {
+                  long rowCount,
+                  @Nullable String aiSummary,
+                  @Nullable Path summaryFile) {
 
     public ReportFile {
         Objects.requireNonNull(file);

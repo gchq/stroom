@@ -43,14 +43,18 @@ public class AskStroomAiConfigViewImpl
     @UiField
     LayerContainer layerContainer;
     @UiField
-    Button setDefault;
+    Button restoreFromDefaults;
+    @UiField
+    Button setDefaults;
 
-    private Consumer<TaskMonitorFactory> onSetDefaultHandler;
+    private Consumer<TaskMonitorFactory> onRestoreFromDefaultsHandler;
+    private Consumer<TaskMonitorFactory> onSetDefaultsHandler;
 
     @Inject
     public AskStroomAiConfigViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        setDefault.setVisible(false);
+        restoreFromDefaults.setVisible(true);
+        setDefaults.setVisible(false);
     }
 
     @Override
@@ -69,19 +73,31 @@ public class AskStroomAiConfigViewImpl
     }
 
     @Override
-    public void allowSetDefault(final boolean allow) {
-        setDefault.setVisible(allow);
+    public void setRestoreFromDefaults(final Consumer<TaskMonitorFactory> handler) {
+        this.onRestoreFromDefaultsHandler = handler;
     }
 
     @Override
-    public void setOnSetDefault(final Consumer<TaskMonitorFactory> handler) {
-        this.onSetDefaultHandler = handler;
+    public void allowSetDefaults(final boolean allow) {
+        setDefaults.setVisible(allow);
     }
 
-    @UiHandler("setDefault")
-    public void onSetDefaultClick(final ClickEvent event) {
-        if (onSetDefaultHandler != null) {
-            onSetDefaultHandler.accept(setDefault);
+    @Override
+    public void setOnSetDefaults(final Consumer<TaskMonitorFactory> handler) {
+        this.onSetDefaultsHandler = handler;
+    }
+
+    @UiHandler("restoreFromDefaults")
+    public void onRestoreFromDefaultsClick(final ClickEvent event) {
+        if (onRestoreFromDefaultsHandler != null) {
+            onRestoreFromDefaultsHandler.accept(restoreFromDefaults);
+        }
+    }
+
+    @UiHandler("setDefaults")
+    public void onSetDefaultsClick(final ClickEvent event) {
+        if (onSetDefaultsHandler != null) {
+            onSetDefaultsHandler.accept(setDefaults);
         }
     }
 

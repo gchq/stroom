@@ -21,10 +21,14 @@ import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.util.CharBuffer;
 import stroom.util.xml.XMLUtil;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.ReceivingContentHandler;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.query.QueryResult;
 import net.sf.saxon.s9api.Serializer.Property;
 import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.tree.tiny.TinyBuilder;
 import net.sf.saxon.xpath.XPathEvaluator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,6 +112,29 @@ public final class EventListUtils {
             QueryResult.serialize(nodeInfo, sr, getOutputProperties());
             return sw.toString();
         } catch (final XPathException | RuntimeException e) {
+            throw ProcessException.create(e.getMessage());
+        }
+    }
+
+    /**
+     * Build a Saxon {@link NodeInfo} (TinyTree) from an event list by firing it at a builder.
+     * <p>
+     * This is the bridge from stored stepping events back to a tree: rendering display text as
+     * {@code getXML(buildNodeInfo(events))} goes through the same Saxon serialiser as capturing did, so it is
+     * byte-identical to the pre-events store (unlike {@link #getXML(EventList)}, which uses a different,
+     * JAXP, serialiser). XPath over persisted output builds its tree the same way.
+     */
+    public static NodeInfo buildNodeInfo(final EventList events) {
+        try {
+            final Configuration configuration = Configuration.newConfiguration();
+            final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
+            final ReceivingContentHandler receivingContentHandler = new ReceivingContentHandler();
+            final TinyBuilder builder = new TinyBuilder(pipe);
+            receivingContentHandler.setPipelineConfiguration(pipe);
+            receivingContentHandler.setReceiver(builder);
+            events.fire(receivingContentHandler);
+            return builder.getCurrentRoot();
+        } catch (final SAXException | RuntimeException e) {
             throw ProcessException.create(e.getMessage());
         }
     }

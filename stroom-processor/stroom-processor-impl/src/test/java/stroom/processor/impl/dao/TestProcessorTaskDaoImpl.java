@@ -22,6 +22,7 @@ import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.datasource.QueryField;
@@ -99,49 +100,86 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         assertThat(countOwned(null)).isEqualTo(3);
     }
 
+    /**
+     * gh-5699. The reaper's condition: a PROCESSING task whose heartbeat has gone un-renewed past
+     * the lease is dead and goes back to CREATED; anything else is left alone. The version bump is
+     * the fence that stops the original owner writing over it afterwards.
+     */
     @Test
-    void testRetainOwnedTasks() {
-        assertThat(getProcessorCount(null)).isZero();
-        assertThat(countTasks()).isZero();
-        assertThat(countOwned(NODE1)).isZero();
-        assertThat(countOwned(NODE2)).isZero();
-
+    void testReapDeadTasks() {
         processor1 = createProcessor();
-
-        assertThat(getProcessorCount(null)).isOne();
-
         processorFilter1a = createProcessorFilter(processor1);
-        assertThat(getProcessorFilterCount(null)).isOne();
 
-        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE2, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE2, FEED);
-        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE2, FEED);
+        final Instant now = Instant.now();
+        final Instant stale = now.minus(20, ChronoUnit.MINUTES);
+        final Instant fresh = now.minus(1, ChronoUnit.MINUTES);
 
-        assertThat(countTasks()).isEqualTo(6);
-        assertThat(countOwned(NODE1)).isEqualTo(3);
-        assertThat(countOwned(NODE2)).isEqualTo(3);
+        final long dead = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED, stale);
+        final long alive = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED, fresh);
+        final long queued = createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED, stale);
+        final long complete = createProcessorTask(processorFilter1a, TaskStatus.COMPLETE, NODE1, FEED, stale);
+        final int deadVersionBefore = getTaskVersion(dead);
 
-        processorTaskDao.retainOwnedTasks(Set.of(NODE1, NODE2), Instant.now());
+        assertThat(processorTaskDao.reapDeadTasks(now.minus(10, ChronoUnit.MINUTES))).isEqualTo(1);
 
-        assertThat(countTasks()).isEqualTo(6);
-        assertThat(countOwned(NODE1)).isEqualTo(3);
-        assertThat(countOwned(NODE2)).isEqualTo(3);
+        assertThat(getTaskStatus(dead)).isEqualTo(TaskStatus.CREATED);
+        assertThat(getTaskNodeId(dead))
+                .describedAs("a reaped task must be unowned so any node can claim it")
+                .isNull();
+        assertThat(getTaskVersion(dead))
+                .describedAs("the version bump is what fences the original owner")
+                .isEqualTo(deadVersionBefore + 1);
 
-        processorTaskDao.retainOwnedTasks(Set.of(NODE1), Instant.now().minusSeconds(10));
+        assertThat(getTaskStatus(alive))
+                .describedAs("a heartbeat within the lease means the node is alive")
+                .isEqualTo(TaskStatus.PROCESSING);
+        assertThat(getTaskNodeId(alive)).isNotNull();
+        assertThat(getTaskStatus(queued))
+                .describedAs("only PROCESSING rows are dead task candidates")
+                .isEqualTo(TaskStatus.QUEUED);
+        assertThat(getTaskStatus(complete)).isEqualTo(TaskStatus.COMPLETE);
+    }
 
-        assertThat(countTasks()).isEqualTo(6);
-        assertThat(countOwned(NODE1)).isEqualTo(3);
-        assertThat(countOwned(NODE2)).isEqualTo(3);
+    /**
+     * gh-5699. A failed version check means we lost the lease, so the write is abandoned rather
+     * than forced - forcing it is exactly how a half dead node stamps COMPLETE over a task another
+     * node now owns.
+     */
+    @Test
+    void testChangeTaskStatusAbandonsOnLostLease() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
 
-        processorTaskDao.retainOwnedTasks(Set.of(NODE1), Instant.now().plusSeconds(10));
+        final Instant now = Instant.now();
+        final long taskId = createProcessorTask(
+                processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED, now.minus(20, ChronoUnit.MINUTES));
 
-        assertThat(countTasks()).isEqualTo(6);
-        assertThat(countOwned(NODE1)).isEqualTo(3);
-        assertThat(countOwned(NODE2)).isZero();
-        assertThat(countOwned(null)).isEqualTo(3);
+        final ProcessorTask taskAsOwned = processorTaskDao.find(new ExpressionCriteria())
+                .getValues()
+                .getFirst();
+        assertThat(taskAsOwned.getId()).isEqualTo(taskId);
+
+        // The reaper takes the task from us: version bumps, so our copy is now stale.
+        assertThat(processorTaskDao.reapDeadTasks(now.minus(10, ChronoUnit.MINUTES))).isEqualTo(1);
+
+        // Our belated attempt to complete it must be abandoned...
+        final ProcessorTask result = processorTaskDao.changeTaskStatus(
+                taskAsOwned, NODE1, TaskStatus.COMPLETE, now.toEpochMilli(), now.toEpochMilli());
+
+        assertThat(result).isNull();
+        // ...leaving the row as the reaper set it, not stamped COMPLETE.
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.CREATED);
+        assertThat(getTaskNodeId(taskId)).isNull();
+
+        // A write with the current version still succeeds - abandonment is about lost leases,
+        // not a general write freeze.
+        final ProcessorTask current = processorTaskDao.find(new ExpressionCriteria())
+                .getValues()
+                .getFirst();
+        final ProcessorTask updated = processorTaskDao.changeTaskStatus(
+                current, NODE1, TaskStatus.PROCESSING, now.toEpochMilli(), null);
+        assertThat(updated).isNotNull();
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.PROCESSING);
     }
 
     @Test

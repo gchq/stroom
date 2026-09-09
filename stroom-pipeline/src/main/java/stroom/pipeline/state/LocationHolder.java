@@ -88,6 +88,24 @@ public class LocationHolder implements Holder {
         return currentLocation;
     }
 
+    /**
+     * Inject a pre-computed {@link SourceLocation} as the current record's location, for stepping reprocess.
+     * <p>
+     * A reprocess re-runs the pipeline from an interior element - below the {@code SplitFilter} that normally
+     * drives {@link #storeLocation()} from the parser {@link Locator} - so nothing would populate this holder
+     * and downstream location functions ({@code stroom:record-no}, {@code source}, {@code line-from} etc.)
+     * would report defaults. The per-record {@link SourceLocation} captured during the original sweep is fed
+     * back in here before each record is replayed, so those functions report the source-parse location again
+     * (record-level; see {@code stepping-design.md} §11). Only used in reprocess; the normal parse path
+     * populates the holder via {@link #storeLocation()} and never calls this.
+     */
+    public void setReplayLocation(final SourceLocation sourceLocation) {
+        this.currentLocation = sourceLocation;
+        // Buffering (maxSize > 1) is not used in stepping (splitCount == 1), so there is no locations list to
+        // consume; keep it null so move() leaves the injected value in place.
+        this.locations = null;
+    }
+
     public void reset() {
         LOGGER.trace("Reset() called");
         recordIndex = -1;

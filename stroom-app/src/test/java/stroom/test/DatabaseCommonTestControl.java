@@ -141,7 +141,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         LOGGER.info("Creating index volume groups in {}", indexVolDir.toAbsolutePath().normalize());
         volumeCreator.setup(indexVolDir);
 
-        // Ensure we can create tasks.
+        // Ensure we can create tasks. Only the master queue mode needs this, but it is harmless in
+        // worker claiming mode and doing it unconditionally keeps the two modes' test setup identical.
         processorTaskQueueManager.startup();
 
         LOGGER.info("Setting NEEDS_CLEAN_UP_THREAD_LOCAL to true");
@@ -171,7 +172,9 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         LOGGER.info(() -> LogUtil.inSeparatorLine("Starting tear down of thread '{}' ({})",
                 Thread.currentThread().getName(),
                 Thread.currentThread().getId()));
-        // Make sure we are no longer creating tasks.
+        // Make sure we are no longer creating tasks. This also clears the in memory task queue, which
+        // nothing else does - without it a queue entry can outlive the database row it points at and
+        // leak into the next test.
         processorTaskQueueManager.shutdown();
 
         // Make sure we don't delete database entries without clearing the pool.

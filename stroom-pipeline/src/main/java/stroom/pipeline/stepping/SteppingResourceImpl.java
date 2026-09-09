@@ -39,23 +39,26 @@ class SteppingResourceImpl implements SteppingResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingResourceImpl.class);
 
     private final Provider<SteppingService> steppingServiceProvider;
+    private final Provider<SteppingPipelineLookup> steppingPipelineLookupProvider;
     private final Provider<PipelineEventLog> pipelineEventLogProvider;
 
     @Inject
     SteppingResourceImpl(final Provider<SteppingService> steppingServiceProvider,
+                         final Provider<SteppingPipelineLookup> steppingPipelineLookupProvider,
                          final Provider<PipelineEventLog> pipelineEventLog) {
         this.steppingServiceProvider = steppingServiceProvider;
+        this.steppingPipelineLookupProvider = steppingPipelineLookupProvider;
         this.pipelineEventLogProvider = pipelineEventLog;
     }
 
     @Override
     public DocRef findElementDoc(final FindElementDocRequest request) {
-        return steppingServiceProvider.get().findElementDoc(request);
+        return steppingPipelineLookupProvider.get().findElementDoc(request);
     }
 
     @Override
     public DocRef getPipelineForStepping(final GetPipelineForMetaRequest request) {
-        return steppingServiceProvider.get().getPipelineForStepping(request);
+        return steppingPipelineLookupProvider.get().getPipelineForStepping(request);
     }
 
     @Override

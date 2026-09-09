@@ -136,6 +136,19 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
     @JsonProperty
     private final SimpleDuration maxTaskCreationDelay;
 
+    /**
+     * The filter this one was made from, where it replaced an existing filter rather than being
+     * created outright, e.g. restoring a deleted filter so that its range is processed again.
+     * Processing a range again makes a new filter rather than resetting an existing filter's
+     * tracker, so that a filter id always means the same body of work; this is what keeps the
+     * history visible once it does. Null for a filter that replaced nothing.
+     * <p>
+     * A soft reference: the parent is physically deleted once its tasks have gone, and this is
+     * then left dangling rather than the parent being kept alive by its descendants.
+     */
+    @JsonProperty
+    private final Integer parentFilterId;
+
     @JsonCreator
     public ProcessorFilter(@JsonProperty("id") final Integer id,
                            @JsonProperty("version") final Integer version,
@@ -161,7 +174,8 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                            @JsonProperty("runAsUser") final UserRef runAsUser,
                            @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                            @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
-                           @JsonProperty("maxTaskCreationDelay") final SimpleDuration maxTaskCreationDelay) {
+                           @JsonProperty("maxTaskCreationDelay") final SimpleDuration maxTaskCreationDelay,
+                           @JsonProperty("parentFilterId") final Integer parentFilterId) {
 
         this.id = id;
         this.version = version;
@@ -197,6 +211,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
         this.maxTaskCreationDelay = maxTaskCreationDelay;
+        this.parentFilterId = parentFilterId;
     }
 
     @Override
@@ -253,6 +268,14 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
      */
     public SimpleDuration getMaxTaskCreationDelay() {
         return maxTaskCreationDelay;
+    }
+
+    /**
+     * Null unless this filter replaced another, e.g. a deleted filter restored so that its range
+     * is processed again. May refer to a filter that has since been physically deleted.
+     */
+    public Integer getParentFilterId() {
+        return parentFilterId;
     }
 
     @JsonIgnore
@@ -403,6 +426,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
                ", maxTaskCreationDelay=" + maxTaskCreationDelay +
+               ", parentFilterId=" + parentFilterId +
                '}';
     }
 
@@ -464,6 +488,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
         private SimpleDuration maxTaskCreationDelay;
+        private Integer parentFilterId;
 
         public Builder() {
 
@@ -497,6 +522,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
             this.minMetaCreateTimeMs = filter.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = filter.maxMetaCreateTimeMs;
             this.maxTaskCreationDelay = filter.maxTaskCreationDelay;
+            this.parentFilterId = filter.parentFilterId;
         }
 
         public Builder id(final Integer id) {
@@ -622,6 +648,15 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
             return self();
         }
 
+        /**
+         * The filter this one replaced, e.g. the deleted filter it was restored from. Null for a
+         * filter that replaced nothing.
+         */
+        public Builder parentFilterId(final Integer parentFilterId) {
+            this.parentFilterId = parentFilterId;
+            return self();
+        }
+
         protected Builder self() {
             return this;
         }
@@ -652,7 +687,8 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                     runAsUser,
                     minMetaCreateTimeMs,
                     maxMetaCreateTimeMs,
-                    maxTaskCreationDelay);
+                    maxTaskCreationDelay,
+                    parentFilterId);
         }
     }
 }

@@ -159,6 +159,11 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      */
     public final TableField<ProcessorFilterRecord, String> MAX_TASK_CREATION_DELAY = createField(DSL.name("max_task_creation_delay"), SQLDataType.VARCHAR(255), this, "");
 
+    /**
+     * The column <code>stroom.processor_filter.parent_filter_id</code>.
+     */
+    public final TableField<ProcessorFilterRecord, Integer> PARENT_FILTER_ID = createField(DSL.name("parent_filter_id"), SQLDataType.INTEGER, this, "");
+
     private ProcessorFilter(Name alias, Table<ProcessorFilterRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

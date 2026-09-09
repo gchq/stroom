@@ -63,7 +63,7 @@ public class VariableKeySerde implements KeyPrefixSerde {
                 yield ValSerdeUtil.read(byteBuffer);
             }
             case UID_LOOKUP -> {
-                // Read via UI lookup.
+                // Read via UID lookup.
                 final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, byteBuffer);
                 yield ValSerdeUtil.read(valueByteBuffer);
             }

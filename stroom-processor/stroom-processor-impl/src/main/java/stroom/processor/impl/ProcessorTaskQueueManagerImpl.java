@@ -128,8 +128,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
      */
     private volatile boolean allowTaskQueueFill = false;
 
-    private final Map<String, Instant> lastNodeContactTime = new ConcurrentHashMap<>();
-    private Instant lastDisownedTasks = Instant.now();
 
     @Inject
     ProcessorTaskQueueManagerImpl(final ProcessorTaskDao processorTaskDao,
@@ -602,49 +600,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         }
 
         return size;
-    }
-
-    public void disownDeadTasks() {
-        LOGGER.trace(() -> "disownDeadTasks()");
-        try {
-            final String node = nodeInfo.getThisNodeName();
-            final String masterNode = targetNodeSetFactory.getMasterNode();
-            if (node != null && node.equals(masterNode)) {
-                // If this is the master node then see if there are any nodes that we haven't had contact with
-                // for some time.
-
-                // If we haven't had contact with a node for 10 minutes then forcibly release the tasks owned
-                // by that node.
-                final Instant now = Instant.now();
-                final Set<String> activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now));
-                final Instant disownTaskAge = now.minus(processorConfigProvider.get().getDisownDeadTasksAfter());
-                if (lastDisownedTasks.isBefore(disownTaskAge)) {
-                    lastDisownedTasks = now;
-
-                    // Remove nodes we haven't had contact with for 10 minutes.
-                    lastNodeContactTime.forEach((k, v) -> {
-                        if (v.isBefore(disownTaskAge)) {
-                            lastNodeContactTime.remove(k);
-                        }
-                    });
-
-                    // Retain all tasks that have had their status updated in the last 10 minutes or belong to
-                    // nodes we know have been active in the last 10 minutes.
-                    final DurationTimer durationTimer = DurationTimer.start();
-                    final long count = processorTaskDao.retainOwnedTasks(lastNodeContactTime.keySet(), disownTaskAge);
-                    if (count > 0) {
-                        LOGGER.warn(() ->
-                                "Removed task ownership for dead nodes (count = " +
-                                count +
-                                ") in " +
-                                durationTimer.get());
-                    }
-                }
-            }
-        } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
     }
 
     public synchronized void releaseOldQueuedTasks() {

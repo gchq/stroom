@@ -46,6 +46,8 @@ dependencies {
     implementation libs.zxcvbn
 
     runtimeOnly libs.mysql.connector.java
+    // This batch module is needed at runtime for simple mail to work
+    runtimeOnly libs.simple.java.mail.batch.module
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-dictionary:stroom-dictionary-mock')

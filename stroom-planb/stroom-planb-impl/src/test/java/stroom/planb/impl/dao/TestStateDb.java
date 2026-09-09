@@ -25,14 +25,15 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBDocStore;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.dao.StateValueTestUtil.ValueFunction;
 import stroom.planb.impl.dao.state.StateDb;
 import stroom.planb.impl.dao.state.StateFields;
-import stroom.planb.impl.data.FileDescriptor;
-import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.MergeProcessor;
-import stroom.planb.impl.data.ShardManager;
-import stroom.planb.impl.data.State;
+import stroom.planb.impl.data.shard.ShardManager;
+import stroom.planb.impl.data.value.State;
+import stroom.planb.impl.rest.FileDescriptor;
+import stroom.planb.impl.rest.FileHashUtil;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.PlanBDoc;
@@ -82,6 +83,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -219,7 +221,7 @@ class TestStateDb {
 
     @Test
     void testFullProcess(@TempDir final Path rootDir) {
-        final StatePaths statePaths = new StatePaths(rootDir);
+        final PlanBPaths planBPaths = new PlanBPaths(rootDir);
         final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
         final DocFinder docFinder = Mockito.mock(DocFinder.class);
         final PlanBDoc doc = PlanBDoc
@@ -240,6 +242,7 @@ class TestStateDb {
         final String path = rootDir.toAbsolutePath().toString();
         final PlanBConfig planBConfig = new PlanBConfig(path);
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
+
         final ShardManager shardManager = new ShardManager(
                 new ByteBuffers(byteBufferFactory),
                 byteBufferFactory,
@@ -247,12 +250,13 @@ class TestStateDb {
                 planBDocStore,
                 null,
                 () -> planBConfig,
-                statePaths,
+                planBPaths,
                 null,
                 new SimpleTaskContextFactory(),
-                executorProvider);
+                executorProvider,
+                null);
         final MergeProcessor mergeProcessor = new MergeProcessor(
-                statePaths,
+                planBPaths,
                 new MockSecurityContext(),
                 new SimpleTaskContextFactory(),
                 shardManager,
@@ -790,7 +794,7 @@ class TestStateDb {
             assertThat(results.getFirst()[2]).isEqualTo(expectedVal);
 
             // Test deleting data.
-            db.deleteOldData(Instant.now(), false);
+            db.runRetention(Instant.now(), false);
         }
     }
 
@@ -809,7 +813,7 @@ class TestStateDb {
             }
 
             // Test deleting data.
-            db.deleteOldData(Instant.now(), false);
+            db.runRetention(Instant.now(), false);
         }
     }
 

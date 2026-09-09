@@ -16,7 +16,7 @@
 
 package stroom.main.client.view;
 
-import stroom.ai.client.AskStroomAiPresenter.DockLocation;
+import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.main.client.event.DockResizeEvent;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.widget.util.client.Size;
