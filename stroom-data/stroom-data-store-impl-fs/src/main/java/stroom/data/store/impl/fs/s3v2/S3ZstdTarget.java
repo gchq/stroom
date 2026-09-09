@@ -331,6 +331,10 @@ public final class S3ZstdTarget implements Target {
                         ByteCountOutputStream::getCount,
                         0L);
 
+                LOGGER.debug(() -> LogUtil.message(
+                        "close() - fileKey: {}, parentFileKey: {}, rawSize: {}, fileSize: {}",
+                        fileKey, NullSafe.get(parentTarget, S3ZstdTarget::getFileKey), rawSize, fileSize));
+
                 if (isRootTarget) {
                     // These only get set on the parent
                     updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(rawSize));

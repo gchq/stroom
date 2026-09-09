@@ -33,6 +33,10 @@ import java.util.Objects;
  */
 public class ZstdSegmentUtil {
 
+//    private static final VarHandle VH_INT_LE = ValueLayout.JAVA_INT
+//            .withOrder(ByteOrder.LITTLE_ENDIAN)
+//            .varHandle();
+
     private ZstdSegmentUtil() {
     }
 
@@ -114,11 +118,32 @@ public class ZstdSegmentUtil {
         }
     }
 
-    public static int getFrameCountRelativePosition() {
-        return -ZstdConstants.SEEKABLE_MAGIC_NUMBER_SIZE - 1 -  // The bit field
-               Integer.BYTES;
+//    /**
+//     * Return true if {@link ZstdConstants#SEEKABLE_MAGIC_NUMBER} is found at the very end of
+//     * compressedBuffer (with the end being its limit).
+//     *
+//     * @param compressedMemorySegment The buffer to test. The buffer does not have to include the whole file, just
+//     *                                at least the last 4 bytes.
+//     */
+//    public static boolean isSeekable(final MemorySegment compressedMemorySegment) {
+//        Objects.requireNonNull(compressedMemorySegment);
+//        final long byteSize = compressedMemorySegment.byteSize();
+//        if (byteSize < ZstdConstants.SEEKABLE_MAGIC_NUMBER_SIZE) {
+//            return false;
+//        } else {
+//            final long seekableMagicNumberOffset = byteSize - ZstdConstants.SEEKABLE_MAGIC_NUMBER_SIZE;
+//            final int seekableMagicNumber = compressedMemorySegment.get(
+//                    ValueLayout.JAVA_INT_UNALIGNED.withOrder(ByteOrder.LITTLE_ENDIAN),
+//                    seekableMagicNumberOffset);
+//            return seekableMagicNumber == ZstdConstants.SEEKABLE_MAGIC_NUMBER_INT_LE;
+//        }
+//    }
 
-    }
+//    public static int getFrameCountRelativePosition() {
+//        return -ZstdConstants.SEEKABLE_MAGIC_NUMBER_SIZE - 1 -  // The bit field
+//               Integer.BYTES;
+//
+//    }
 
     /**
      * Get the number of frames in a seekable Zstd file.
@@ -135,6 +160,18 @@ public class ZstdSegmentUtil {
         final long frameCount = getUnsignedIntLE(compressedBuffer, frameCountIdx);
         return (int) frameCount;
     }
+
+//    /**
+//     * Get the number of frames in a seekable Zstd file.
+//     *
+//     * @param compressedMemorySegment A {@link ByteBuffer} that includes the end of the file.
+//     */
+//    public static int getFrameCount(final MemorySegment compressedMemorySegment) {
+//        // FRAME_COUNT_RELATIVE_POSITION is negative
+//        final long frameCountOffset = compressedMemorySegment.byteSize()
+//        + ZstdConstants.FRAME_COUNT_RELATIVE_POSITION;
+//        return (int) VH_INT_LE.get(compressedMemorySegment, frameCountOffset);
+//    }
 
     public static FrameLocation getFrameLocation(final ByteBuffer compressedBuffer, final int frameIdx) {
         final int frameCount = getFrameCount(compressedBuffer);
@@ -173,15 +210,17 @@ public class ZstdSegmentUtil {
     public static long getSeekTableEntryIndex(final ByteBuffer compressedBuffer,
                                               final int frameIdx,
                                               final int frameCount) {
-        // C == cumulativeCompressedSize
-        // U == uncompressedSize
-        // F == frameCount    \
-        // B == bitfield      | - Footer
-        // M == magic number  /
-        // Frames:                 0       1       2       3       4       5
-        // ........................CCCCUUUUCCCCUUUUCCCCUUUUCCCCUUUUCCCCUUUUCCCCUUUUFFFFBMMMM
-        // 012345678901234567890123456789012345678901234567890123456789012345678901234567890
-        // 0         1         2         3         4         5         6         7         8
+        // C == cumulativeCompressedSize LE
+        // U == uncompressedSize LE
+        // I == Dict UUID (most sig. bits) BE   \
+        // i == Dict UUID (least sig. bits) BE  |
+        // F == frameCount                      |
+        // B == bitfield                        | - Footer
+        // M == magic number                    /
+        // Frames:                 0               1               2               ----------FOOTER---------
+        // ........................CCCCCCCCUUUUUUUUCCCCCCCCUUUUUUUUCCCCCCCCUUUUUUUUIIIIIIIIIIIIIIIIFFFFBMMMM
+        // 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456
+        // 0         1         2         3         4         5         6         7         8         9
 
         return compressedBuffer.capacity()
                - ZstdConstants.SEEKABLE_FOOTER_SIZE

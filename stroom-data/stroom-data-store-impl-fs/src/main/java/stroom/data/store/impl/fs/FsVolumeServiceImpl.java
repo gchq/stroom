@@ -580,22 +580,24 @@ public class FsVolumeServiceImpl implements FsVolumeService {
             for (final FsVolume volume : dbVolumes) {
                 final FsVolumeType volumeType = volume.getVolumeType();
 
+                final FsVolume updated;
                 if (FsVolumeType.STANDARD == volumeType) {
                     taskContextFactory.current().info(() -> "Refreshing volume '" + getAbsVolumePath(volume) + "'");
                     // Update the volume state and save in the DB.
-                    final FsVolume updated = updateVolumeState(volume);
+                    updated = updateVolumeState(volume);
 
                     // Record some statistics for the use of this volume.
                     recordStats(updated);
-                    final String groupName = groupIdToNameMap.get(updated.getVolumeGroupId());
-                    groupNameToVolumesMap.computeIfAbsent(groupName, ignored -> new ArrayList<>())
-                            .add(updated);
                 } else {
                     // We would have to make a LOT of api calls to get all size stats for S3 vols.
                     // Could maybe look into using
                     // https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-inventory.html
                     LOGGER.debug("Can't capture stats for volume type {}", volumeType);
+                    updated = volume;
                 }
+                final String groupName = groupIdToNameMap.get(updated.getVolumeGroupId());
+                groupNameToVolumesMap.computeIfAbsent(groupName, ignored -> new ArrayList<>())
+                        .add(updated);
             }
         } else {
             LOGGER.debug(() -> LogUtil.message("Not updating state for vols {}, with min update time {}",

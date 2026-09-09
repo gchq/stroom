@@ -63,6 +63,7 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
     private static final UUID NO_DICTIONARY_UUID = ZstdConstants.ZERO_UUID;
     private static final byte[] NO_DICTIONARY_UUID_BYTES = UuidUtil.toByteArray(NO_DICTIONARY_UUID);
 
+
     static final ZstdSeekTable EMPTY = new ZstdSeekTable(
             NO_DICTIONARY_UUID,
             0,
@@ -78,6 +79,7 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
      * All operations on this buffer should be absolute so as not to modify its postion/limit
      */
     private final ByteBuffer seekTableEntriesBuffer;
+//    private final MemorySegment seekTableEntriesBuffer;
 
 //    private ZstdSeekTable(final int frameCount, final byte[] seekTableEntries) {
 //        this.frameCount = frameCount;
@@ -644,10 +646,12 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
             this.actualSeekTableFrameSize = actualSeekTableFrameSize;
         }
 
+        /// @return The size in bytes of the complete seek table frame.
         public long getRequiredSeekTableFrameSize() {
             return requiredSeekTableFrameSize;
         }
 
+        /// @return The number of bytes provided to parse a seek table frame from.
         public long getActualSeekTableFrameSize() {
             return actualSeekTableFrameSize;
         }

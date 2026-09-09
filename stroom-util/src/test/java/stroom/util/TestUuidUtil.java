@@ -19,6 +19,8 @@ package stroom.util;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
@@ -76,4 +78,54 @@ class TestUuidUtil {
         Assertions.assertThat(uuid2.toString())
                 .isEqualTo(uuid1);
     }
+
+    @Test
+    void test6() {
+        try (final Arena arena = Arena.ofConfined()) {
+            final UUID uuid1 = UUID.randomUUID();
+            final MemorySegment segment = arena.allocate(32);
+            final int offset = 4;
+            UuidUtil.writeUuid(segment, uuid1, offset);
+
+            final UUID uuid2 = UuidUtil.readUuid(segment, offset);
+            final UUID uuid3 = UuidUtil.readUuid(segment.asSlice(offset));
+            Assertions.assertThat(uuid2)
+                    .isEqualTo(uuid1)
+                    .isEqualTo(uuid3);
+        }
+    }
+
+    @Test
+    void test7() {
+        try (final Arena arena = Arena.ofConfined()) {
+            final UUID uuid1 = UUID.randomUUID();
+            final MemorySegment segment = arena.allocate(20);
+            UuidUtil.writeUuid(segment, uuid1, 3);
+            final UUID uuid2 = UuidUtil.readUuid(segment, 3);
+            Assertions.assertThat(uuid2)
+                    .isEqualTo(uuid1);
+        }
+    }
+
+    @Test
+    void test8() {
+        try (final Arena arena = Arena.ofConfined()) {
+            final UUID uuid1 = UUID.randomUUID();
+            final MemorySegment segment = arena.allocate(10); // Not enough space for UUID
+            Assertions.assertThatThrownBy(
+                            () -> UuidUtil.writeUuid(segment, uuid1, 0))
+                    .isInstanceOf(IndexOutOfBoundsException.class);
+        }
+    }
+
+    @Test
+    void test9() {
+        try (final Arena arena = Arena.ofConfined()) {
+            final MemorySegment segment = arena.allocate(10); // Not enough space for UUID
+            Assertions.assertThatThrownBy(
+                            () -> UuidUtil.readUuid(segment, 0))
+                    .isInstanceOf(IndexOutOfBoundsException.class);
+        }
+    }
+
 }

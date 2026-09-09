@@ -30,6 +30,7 @@ import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataRequest.DisplayMode;
 import stroom.pipeline.shared.FetchDataResult;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.shared.Count;
 import stroom.util.shared.FetchWithLongId;
@@ -164,15 +165,16 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                                         .withObjects(stroomEventLoggingService.convert(fetchDataResult))
                                         .build());
 
-                    } catch (final ViewDataException vde) {
+                    } catch (final RuntimeException e) {
                         // Convert an ex into a fetch result
-                        final AbstractFetchDataResult fetchDataResult = createErrorResult(vde);
+                        final AbstractFetchDataResult fetchDataResult = createErrorResult(
+                                request.getSourceLocation(), e);
                         outcome = ComplexLoggedOutcome.failure(
                                 fetchDataResult,
                                 ViewEventAction.builder()
                                         .withObjects(stroomEventLoggingService.convert(fetchDataResult))
                                         .build(),
-                                vde.getMessage());
+                                e.getMessage());
                     }
                     return outcome;
                 })
@@ -189,14 +191,14 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
         return childStreamTypes;
     }
 
-    private FetchDataResult createErrorResult(final ViewDataException viewDataException) {
+    private FetchDataResult createErrorResult(final SourceLocation sourceLocation, final Exception e) {
         // TODO: 03/11/2022 Not sure we should be always setting this to raw_events, though depending on where
         //  the ex happened we may or may not know the actual strm type
         return new FetchDataResult(
                 null,
                 StreamTypeNames.RAW_EVENTS,
                 null,
-                viewDataException.getSourceLocation(),
+                sourceLocation,
                 OffsetRange.zero(),
                 Count.of(0L, true),
                 Count.of(0L, true),
@@ -206,7 +208,7 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                 false,
                 null,
                 DisplayMode.TEXT,
-                Collections.singletonList(viewDataException.getMessage()));
+                Collections.singletonList(e.getMessage()));
     }
 
     @Override

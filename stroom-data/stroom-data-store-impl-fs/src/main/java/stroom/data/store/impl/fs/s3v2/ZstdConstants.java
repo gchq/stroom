@@ -20,17 +20,25 @@ package stroom.data.store.impl.fs.s3v2;
 import stroom.util.UuidUtil;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.UUID;
 
 public class ZstdConstants {
 
     /**
      * Identifies the frame as one that zstd will skip over.
+     * This is separate to the magic number used to identify a seekable file.
      * See <a href="https://github.com/facebook/zstd/blob/release/doc/zstd_compression_format.md#skippable-frames">
      * skippable-frames</a>
      */
     public static final byte[] SKIPPABLE_FRAME_MAGIC_NUMBER = new byte[]{0x5E, 0x2A, 0x4D, 0x18};
     public static final ByteBuffer SKIPPABLE_FRAME_MAGIC_NUMBER_BUFFER = ByteBuffer.wrap(SKIPPABLE_FRAME_MAGIC_NUMBER);
+
+    /// {@link SKIPPABLE_FRAME_MAGIC_NUMBER} as a Little Endian Integer
+    public static final int SKIPPABLE_MAGIC_NUMBER_INT_LE = SKIPPABLE_FRAME_MAGIC_NUMBER_BUFFER
+            .slice()
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .getInt();
 
     /**
      * Number of bytes for {@link ZstdConstants#SKIPPABLE_FRAME_MAGIC_NUMBER}
@@ -52,6 +60,11 @@ public class ZstdConstants {
      * zstd_seekable_compression_format</a>
      */
     public static final byte[] SEEKABLE_MAGIC_NUMBER = new byte[]{(byte) 0xB1, (byte) 0xEA, (byte) 0x92, (byte) 0x8F};
+
+    /// {@link SEEKABLE_MAGIC_NUMBER} as a Little Endian Integer
+    public static final int SEEKABLE_MAGIC_NUMBER_INT_LE = ByteBuffer.wrap(SEEKABLE_MAGIC_NUMBER)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .getInt();
 
     /**
      * Number of bytes for {@link ZstdConstants#SEEKABLE_MAGIC_NUMBER}
@@ -82,15 +95,6 @@ public class ZstdConstants {
      */
     public static final int DICTIONARY_UUID_SIZE = UuidUtil.UUID_BYTES;
 
-    /**
-     * The position of the dictionary UUID value in the skippable frame
-     * <strong>relative to the END of the byte[]/buffer/stream</strong>.
-     * This is a negative number.
-     */
-    public static final int DICTIONARY_UUID_RELATIVE_POSITION = -1 * (SEEKABLE_MAGIC_NUMBER_SIZE
-                                                                      + BIT_FIELD_SIZE
-                                                                      + FRAME_COUNT_SIZE
-                                                                      + DICTIONARY_UUID_SIZE);
 
     /**
      * A read-only {@link ByteBuffer} that wraps {@link ZstdConstants#SEEKABLE_MAGIC_NUMBER}
@@ -110,6 +114,13 @@ public class ZstdConstants {
                                                    + SEEKABLE_MAGIC_NUMBER_SIZE;
 
     /**
+     * The position of the dictionary UUID value in the skippable frame
+     * <strong>relative to the END of the byte[]/buffer/stream</strong>.
+     * This is a negative number.
+     */
+    public static final int DICTIONARY_UUID_RELATIVE_POSITION = -1 * SEEKABLE_FOOTER_SIZE;
+
+    /**
      * Number of bytes in an entry in the seek table within a seekable frame.
      */
     public static final int SEEK_TABLE_ENTRY_SIZE = Long.BYTES + Long.BYTES;
@@ -121,6 +132,55 @@ public class ZstdConstants {
     public static final String ZSTD_CONTENT_ENCODING = "zstd";
     public static final String ZSTD_CONTENT_TYPE = "application/zstd";
 
+//    public static final MemoryLayout SEEK_TABLE_FRAME_INFO_LAYOUT = MemoryLayout.structLayout(
+//            ValueLayout.JAVA_LONG_UNALIGNED
+//                    .withOrder(ByteOrder.LITTLE_ENDIAN)
+//                    .withName("cumulativeCompressedSize"),
+//            ValueLayout.JAVA_LONG_UNALIGNED
+//                    .withOrder(ByteOrder.LITTLE_ENDIAN)
+//                    .withName("uncompressedSize"));
+//
+//    public static final VarHandle CUM_COMPRESSED_SIZE_HANDLE =
+//            SEEK_TABLE_FRAME_INFO_LAYOUT.varHandle(
+//                    MemoryLayout.PathElement.groupElement("cumulativeCompressedSize"));
+//    public static final VarHandle UNCOMPRESSED_SIZE_HANDLE =
+//            SEEK_TABLE_FRAME_INFO_LAYOUT.varHandle(
+//                    MemoryLayout.PathElement.groupElement("uncompressedSize"));
+
+//    public static final MemoryLayout SEEK_TABLE_FOOTER_LAYOUT = MemoryLayout.structLayout(
+//            UuidUtil.UNALIGNED_UUID_LAYOUT,
+//            ValueLayout.JAVA_INT_UNALIGNED
+//                    .withOrder(ByteOrder.LITTLE_ENDIAN)
+//                    .withName("frameCount"),
+//            ValueLayout.JAVA_BYTE
+//                    .withName("bitField"),
+//            ValueLayout.JAVA_INT_UNALIGNED
+//                    .withOrder(ByteOrder.LITTLE_ENDIAN)
+//                    .withName("seekableMagicNumber"));
+//
+//    public static final VarHandle FRAME_COUNT_HANDLE =
+//            SEEK_TABLE_FOOTER_LAYOUT.varHandle(
+//                    MemoryLayout.PathElement.groupElement("frameCount"));
+//    public static final VarHandle BIT_FIELD_HANDLE =
+//            SEEK_TABLE_FOOTER_LAYOUT.varHandle(
+//                    MemoryLayout.PathElement.groupElement("bitField"));
+//    public static final VarHandle MAGIC_NUMBER_HANDLE =
+//            SEEK_TABLE_FOOTER_LAYOUT.varHandle(
+//                    MemoryLayout.PathElement.groupElement("seekableMagicNumber"));
+
+//    /**
+//     * Number of bytes in an entry in the seek table within a seekable frame.
+//     */
+//    public static final int SEEK_TABLE_ENTRY_SIZE = Long.BYTES + Long.BYTES;
+//    public static final int SEEK_TABLE_ENTRY_SIZE = Math.toIntExact(SEEK_TABLE_FRAME_INFO_LAYOUT.byteSize());
+
+    /**
+     * Number of bytes in a seekable frame footer
+     * <pre>
+     * <16b dict UUID BE><4b frame count LE><1b table descriptor><4b seekable magic number LE>
+     * </pre>
+     */
+//    public static final int SEEKABLE_FOOTER_SIZE = Math.toIntExact(SEEK_TABLE_FOOTER_LAYOUT.byteSize());
     private ZstdConstants() {
         // Constants only
     }

@@ -23,17 +23,19 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.base.Strings;
 import com.google.common.io.CountingOutputStream;
+import com.google.common.io.Files;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -51,6 +53,9 @@ class TestZstdSegmentInputStream {
 
     private final List<String> data = new ArrayList<>();
     private final List<byte[]> dataBytes = new ArrayList<>();
+
+    @TempDir
+    private Path tempDir;
 
     /**
      * Make sure we can handle a variety of buffer sizes when consuming the stream
@@ -155,7 +160,13 @@ class TestZstdSegmentInputStream {
         assertThat(zstdSeekTable.getFrameCount())
                 .isEqualTo(iterations);
 
-        final ZstdFrameSupplier zstdFrameSupplier = new ByteArrayFrameSupplier(compressedBytes);
+//        final ZstdFrameSupplier zstdFrameSupplier = new ByteArrayFrameSupplier(compressedBytes);
+
+        // Write the compressed bytes to a file and init the FrameSupplier that mmaps it
+        final Path file = tempDir.resolve("data.zst");
+        Files.write(compressedBytes, file.toFile());
+        final ZstdFrameSupplier zstdFrameSupplier = new FileFrameSupplierImpl(file);
+
         final HeapBufferPool heapBufferPool = new HeapBufferPool(ByteBufferPoolConfig::new);
         final ZstdSegmentInputStream zstdSegmentInputStream = new ZstdSegmentInputStream(
                 zstdSeekTable,
@@ -234,26 +245,26 @@ class TestZstdSegmentInputStream {
     // --------------------------------------------------------------------------------
 
 
-    private static class ByteArrayFrameSupplier extends AbstractZstdFrameSupplier {
-
-        private final byte[] compressedBytes;
-
-        private ByteArrayFrameSupplier(final byte[] compressedBytes) {
-            this.compressedBytes = compressedBytes;
-        }
-
-        @Override
-        public void close() throws Exception {
-            // no-op
-        }
-
-        @Override
-        public InputStream next() {
-            final FrameLocation frameLocation = nextFrameLocation();
-            return new ByteArrayInputStream(
-                    compressedBytes,
-                    Math.toIntExact(frameLocation.position()),
-                    Math.toIntExact(frameLocation.compressedSize()));
-        }
-    }
+//    private static class ByteArrayFrameSupplier extends AbstractZstdFrameSupplier {
+//
+//        private final byte[] compressedBytes;
+//
+//        private ByteArrayFrameSupplier(final byte[] compressedBytes) {
+//            this.compressedBytes = compressedBytes;
+//        }
+//
+//        @Override
+//        public void close() throws Exception {
+//            // no-op
+//        }
+//
+//        @Override
+//        public InputStream next() {
+//            final FrameLocation frameLocation = nextFrameLocation();
+//            return new ByteArrayInputStream(
+//                    compressedBytes,
+//                    Math.toIntExact(frameLocation.position()),
+//                    Math.toIntExact(frameLocation.compressedSize()));
+//        }
+//    }
 }

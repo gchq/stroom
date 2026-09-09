@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 
+/// A file backed FrameSupplier that uses memory mapping to access the individual frames in the file.
 public class FileFrameSupplierImpl extends AbstractZstdFrameSupplier {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FileFrameSupplierImpl.class);
@@ -42,8 +43,8 @@ public class FileFrameSupplierImpl extends AbstractZstdFrameSupplier {
     private final Path file;
     private final boolean closeResources;
     private final MemorySegment fileMemorySegment;
-    private FileChannel fileChannel = null;
-    private Arena arena = null;
+    private FileChannel fileChannel;
+    private Arena arena;
 
     public FileFrameSupplierImpl(final Path file) throws IOException {
         this.file = Objects.requireNonNull(file);
@@ -65,8 +66,6 @@ public class FileFrameSupplierImpl extends AbstractZstdFrameSupplier {
     }
 
     /**
-     * Caller is responsible for closing fileChannel and arena.
-     *
      * @param fileMemorySegment A memory segment covering all data frames in the seek table.
      */
     public FileFrameSupplierImpl(final Path file,
@@ -74,7 +73,10 @@ public class FileFrameSupplierImpl extends AbstractZstdFrameSupplier {
         this.file = Objects.requireNonNull(file);
         this.closeResources = false;
         this.fileMemorySegment = Objects.requireNonNull(fileMemorySegment);
+
         // We are using the provided fileMemorySegment, so don't need to create the fileChannel and arena
+        this.fileChannel = null;
+        this.arena = null;
     }
 
     private FileChannel createFileChannel() throws IOException {
@@ -92,7 +94,7 @@ public class FileFrameSupplierImpl extends AbstractZstdFrameSupplier {
     public void close() throws Exception {
         if (closeResources) {
             fileChannel = NullSafeExtra.close(fileChannel, true, "fileChannel");
-            fileChannel = NullSafeExtra.close(arena, true, "arena");
+            arena = NullSafeExtra.close(arena, true, "arena");
         }
     }
 

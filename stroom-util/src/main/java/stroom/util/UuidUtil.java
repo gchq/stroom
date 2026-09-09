@@ -17,6 +17,10 @@
 package stroom.util;
 
 
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
@@ -26,6 +30,20 @@ import java.util.UUID;
  * Util methods for reading/writing {@link UUID}s in binary form.
  */
 public class UuidUtil {
+
+    public static final MemoryLayout UNALIGNED_UUID_LAYOUT = MemoryLayout.structLayout(
+            ValueLayout.JAVA_LONG_UNALIGNED
+                    .withOrder(ByteOrder.BIG_ENDIAN)
+                    .withName("uuidMostSignificant"),
+            ValueLayout.JAVA_LONG_UNALIGNED
+                    .withOrder(ByteOrder.BIG_ENDIAN)
+                    .withName("uuidLeastSignificant"));
+
+    public static final VarHandle UUID_MOST_SIGNIFICANT_HANDLE =
+            UNALIGNED_UUID_LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("uuidMostSignificant"));
+
+    public static final VarHandle UUID_LEAST_SIGNIFICANT_HANDLE =
+            UNALIGNED_UUID_LAYOUT.varHandle(MemoryLayout.PathElement.groupElement("uuidLeastSignificant"));
 
     public static final int UUID_BYTES = 16;
 
@@ -96,6 +114,37 @@ public class UuidUtil {
         } finally {
             buffer.order(order);
         }
+    }
+
+    /**
+     * Writes a UUID into a MemorySegment at offset 0.
+     */
+    public static void writeUuid(final MemorySegment segment, final UUID uuid) {
+        writeUuid(segment, uuid, 0L);
+    }
+
+    /**
+     * Writes a UUID into a MemorySegment at the specified byte offset.
+     */
+    public static void writeUuid(final MemorySegment segment, final UUID uuid, final long offset) {
+        UUID_MOST_SIGNIFICANT_HANDLE.set(segment, offset, uuid.getMostSignificantBits());
+        UUID_LEAST_SIGNIFICANT_HANDLE.set(segment, offset, uuid.getLeastSignificantBits());
+    }
+
+    /**
+     * Reads a UUID from a MemorySegment at the offset 0.
+     */
+    public static UUID readUuid(final MemorySegment segment) {
+        return readUuid(segment, 0L);
+    }
+
+    /**
+     * Reads a UUID from a MemorySegment at the specified byte offset.
+     */
+    public static UUID readUuid(final MemorySegment segment, final long offset) {
+        final long mostSig = (long) UUID_MOST_SIGNIFICANT_HANDLE.get(segment, offset);
+        final long leastSig = (long) UUID_LEAST_SIGNIFICANT_HANDLE.get(segment, offset);
+        return new UUID(mostSig, leastSig);
     }
 
     /**

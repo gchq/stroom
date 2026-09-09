@@ -74,8 +74,8 @@ import java.util.function.Supplier;
  * C == cumulativeCompressedSize (8 byte long)
  * U == uncompressedSize (8 byte long)
  * ============ FOOTER ============
- * I == Dictionary UUID (most significant bits LE)
- * i == Dictionary UUID (least significant bits LE)
+ * I == Dictionary UUID (most significant bits BE)
+ * i == Dictionary UUID (least significant bits BE)
  * F == frameCount (4 byte int)
  * B == bitfield (1 byte)
  * M == seek table magic number (4 byte int)

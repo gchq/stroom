@@ -198,6 +198,7 @@ public class S3FrameSupplierImpl extends AbstractZstdFrameSupplier {
     private boolean shouldDownloadAll(final ZstdSeekTable zstdSeekTable,
                                       final IntSortedSet includedFrameIndexes,
                                       final boolean includeAll) {
+
         final long totalUncompressedSize = getTotalUncompressedSize(includedFrameIndexes, includeAll);
         LOGGER.debug("shouldDownloadAll() - totalUncompressedSize: {}", totalUncompressedSize);
         if (totalUncompressedSize == 0) {

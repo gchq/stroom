@@ -28,11 +28,13 @@ import java.util.UUID;
 
 public class ZstdDictionary {
 
+    /// The primary key of this dictionary in the database
     private final long id;
+    /// A UUID that uniquely identifies this dictionary
     private final UUID uuid;
+    /// The bytes of the actual ZStandard dictionary
     private final byte[] dictionaryBytes;
-    // Lazily cache the dict uuid bytes as we are likely to cache the dictionaries
-    // for repeated use.
+    /// The dictionary UUID in byte form, lazily cached for repeated use
     private volatile byte[] uuidBytes = null;
 
     public ZstdDictionary(final String uuid,
@@ -90,7 +92,7 @@ public class ZstdDictionary {
      */
     public byte[] getUuidBytes() {
         if (uuidBytes == null) {
-            // Doesn't matter if >1 threads do this
+            // Doesn't matter if multiple threads do this as it is idempotent
             uuidBytes = UuidUtil.toByteArray(uuid);
         }
         return uuidBytes;

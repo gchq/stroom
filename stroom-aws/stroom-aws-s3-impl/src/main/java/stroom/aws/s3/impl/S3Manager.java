@@ -109,7 +109,7 @@ public class S3Manager {
      * {@link Meta} is used to provide values for the templated bucket name.
      */
     public String createBucketName(final SimpleMeta meta, final TimeBasis timeBasis) {
-        return createBucketName(null, timeBasis);
+        return createBucketName(null, meta, timeBasis);
     }
 
     /**

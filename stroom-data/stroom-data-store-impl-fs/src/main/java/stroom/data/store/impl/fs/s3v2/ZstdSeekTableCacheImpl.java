@@ -49,7 +49,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 // TODO This may be too much data to put in to an in-mem cache as some of the seek tables could
-//  be quite chunky. Maybe we need to cache to mmapped files
+//  be quite chunky. Maybe we need to cache to mmapped files. Equally we are likely to be opening many
+//  seek tables, so cannot hold a file handle open for each one.
 public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdSeekTableCacheImpl.class);
