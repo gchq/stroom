@@ -16,8 +16,7 @@
 
 package stroom.index.shared;
 
-import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.data.store.impl.fs.shared.FsVolumeState;
+import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.util.json.JsonUtil;
 
 import org.assertj.core.api.Assertions;
@@ -100,26 +99,22 @@ class TestIndexVolume {
                               final boolean expectedIsFull) {
         final long total = 1000;
         final long free = total - used;
-        final FsVolumeState fsVolumeState = new FsVolumeState(
-                1,
-                1,
-                used,
-                free,
-                total,
-                System.currentTimeMillis());
-        final FsVolume fsVolume = FsVolume
+        final IndexVolume indexVolume = IndexVolume
                 .builder()
-                .byteLimit(limit)
-                .volumeState(fsVolumeState)
+                .bytesLimit(limit)
+                .bytesFree(free)
+                .bytesTotal(total)
+                .bytesUsed(used)
+                .state(VolumeUseState.ACTIVE)
                 .build();
 
-        Assertions.assertThat(fsVolume.getCapacityInfo().isFull())
+        Assertions.assertThat(indexVolume.getCapacityInfo().isFull())
                 .isEqualTo(expectedIsFull);
-        Assertions.assertThat(fsVolume.getCapacityInfo().getTotalCapacityBytes())
+        Assertions.assertThat(indexVolume.getCapacityInfo().getTotalCapacityBytes())
                 .hasValue(total);
-        Assertions.assertThat(fsVolume.getCapacityInfo().getCapacityUsedBytes())
+        Assertions.assertThat(indexVolume.getCapacityInfo().getCapacityUsedBytes())
                 .hasValue(used);
-        Assertions.assertThat(fsVolume.getCapacityInfo().getFreeCapacityBytes())
+        Assertions.assertThat(indexVolume.getCapacityInfo().getFreeCapacityBytes())
                 .hasValue(free);
     }
 }

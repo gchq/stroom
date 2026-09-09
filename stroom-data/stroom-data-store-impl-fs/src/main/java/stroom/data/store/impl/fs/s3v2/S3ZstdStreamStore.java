@@ -1,0 +1,451 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.data.store.impl.fs.s3v2;
+
+import stroom.aws.s3.client.S3MetaKeysMapper;
+import stroom.aws.s3.impl.S3Manager;
+import stroom.aws.s3.impl.S3ManagerFactory;
+import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.aws.s3.shared.S3Location;
+import stroom.cache.api.TemplateCache;
+import stroom.data.store.api.DataException;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Target;
+import stroom.data.store.impl.fs.AbstractS3StreamStore;
+import stroom.data.store.impl.fs.FsMetaS3LocationDao;
+import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
+import stroom.data.store.impl.fs.PhysicalDeleteOutcome;
+import stroom.data.store.impl.fs.shared.DataVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.shared.S3LocationDataVolume;
+import stroom.data.store.impl.fs.shared.ValidationResult;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.SimpleMeta;
+import stroom.task.api.ExecutorProvider;
+import stroom.util.io.FileUtil;
+import stroom.util.io.TempDirProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+import stroom.util.string.TemplateUtil.Template;
+import stroom.util.time.TimeBasis;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+@Singleton
+public class S3ZstdStreamStore extends AbstractS3StreamStore {
+
+    // TODO See TODOs in S3ZstdSource and S3ZstdTarget
+    //  Change to store all keys in the fs_meta_s3_location table so we don't rely on brittle
+    //  templated bucket names and can discover what files we have without the cost of hitting
+    //  S3.
+
+    // TODO Consider if we want to allow child targets to live in different buckets to their parents.
+
+    // TODO Add region/bucket/key to the zstd_dictionary table so we have an explicit location for the dictionary
+
+    // TODO Add region/bucket/key of the dict to the s3 meta data for each file using the dict
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdStreamStore.class);
+
+    static final TimeBasis TIME_BASIS = TimeBasis.META_CREATION_TIME;
+
+    private static final int MAX_CACHED_ITEMS = 10;
+
+    private final TemplateCache templateCache;
+    private final Map<Long, TrackedSource> cache = new ConcurrentHashMap<>();
+    private final Set<TrackedSource> evictable = new HashSet<>();
+    private final MetaService metaService;
+    private final S3StreamTypeExtensions s3StreamTypeExtensions;
+    private final S3MetaKeysMapper s3MetaKeysMapper;
+    private final ZstdSeekTableCache zstdSeekTableCache;
+    private final HeapBufferPool heapBufferPool;
+    private final S3ManagerFactory s3ManagerFactory;
+    private final ZstdDictionaryService zstdDictionaryService;
+    private final ExecutorProvider executorProvider;
+    private final FsMetaS3LocationDao fsMetaS3LocationDao;
+    private final ZstdDictionaryDao zstdDictionaryDao;
+    private final ZstdDictionaryTaskDao zstdDictionaryTaskDao;
+    private final Path tempDir;
+
+    @Inject
+    S3ZstdStreamStore(
+            final TemplateCache templateCache,
+            final TempDirProvider tempDirProvider,
+            final MetaService metaService,
+            final S3StreamTypeExtensions s3StreamTypeExtensions,
+            final S3MetaKeysMapper s3MetaKeysMapper,
+            final ZstdSeekTableCache zstdSeekTableCache,
+            final HeapBufferPool heapBufferPool,
+            final S3ManagerFactory s3ManagerFactory,
+            final ZstdDictionaryService zstdDictionaryService,
+            final ExecutorProvider executorProvider,
+            final FsMetaS3LocationDao fsMetaS3LocationDao,
+            final ZstdDictionaryDao zstdDictionaryDao,
+            final ZstdDictionaryTaskDao zstdDictionaryTaskDao) {
+        super(templateCache);
+        this.templateCache = templateCache;
+        this.metaService = metaService;
+        this.s3StreamTypeExtensions = s3StreamTypeExtensions;
+        this.s3MetaKeysMapper = s3MetaKeysMapper;
+        this.zstdSeekTableCache = zstdSeekTableCache;
+        this.heapBufferPool = heapBufferPool;
+        this.s3ManagerFactory = s3ManagerFactory;
+        this.zstdDictionaryService = zstdDictionaryService;
+        this.executorProvider = executorProvider;
+        this.fsMetaS3LocationDao = fsMetaS3LocationDao;
+        this.zstdDictionaryDao = zstdDictionaryDao;
+        this.zstdDictionaryTaskDao = zstdDictionaryTaskDao;
+
+        try {
+            tempDir = tempDirProvider.get().resolve("s3v2_cache");
+            LOGGER.debug("ctor() - Ensuring and clearing tempDir: {}", tempDir);
+            Files.createDirectories(tempDir);
+            FileUtil.deleteContents(tempDir);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public Target openTarget(final Meta meta, final DataVolume dataVolume) throws DataException {
+        LOGGER.debug("getTarget() - dataVolume: {}, meta: {}", dataVolume, meta);
+        final Path tempDir = createTempDir(meta.getId());
+        final S3Manager s3Manager = createS3Manager(dataVolume);
+        return S3ZstdTarget.create(
+                metaService,
+                this,
+                s3Manager,
+                s3StreamTypeExtensions,
+                s3MetaKeysMapper,
+                heapBufferPool,
+                tempDir,
+                dataVolume,
+                meta);
+    }
+
+    public Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException {
+        LOGGER.debug("getSource() - dataVolume: {}, meta: {}", dataVolume, meta);
+        final S3Manager s3Manager = createS3Manager(dataVolume);
+        final TrackedSource trackedSource = cache.compute(
+                meta.getId(),
+                (ignored, aTrackedSource) -> {
+                    if (aTrackedSource == null) {
+                        final Path tempPath = createTempDir(meta.getId());
+
+                        final TrackedSource trackedSource2 = new TrackedSource(
+                                meta.getId(),
+                                tempPath,
+                                Instant.now(),
+                                new AtomicInteger(1));
+                        LOGGER.debug("getSource() - Creating trackedSource: {}", trackedSource2);
+                        return trackedSource2;
+                    } else {
+                        synchronized (S3ZstdStreamStore.this) {
+                            evictable.remove(aTrackedSource);
+                        }
+                        aTrackedSource.useCount().incrementAndGet();
+                        return aTrackedSource;
+                    }
+                });
+
+        return new S3ZstdSource(
+                this,
+                trackedSource.path(),
+                getS3KeyPrefix(dataVolume, meta),
+                s3Manager,
+                meta,
+                dataVolume,
+                s3StreamTypeExtensions,
+                s3MetaKeysMapper,
+                executorProvider);
+    }
+
+    @Override
+    public FsVolumeType getVolumeType() {
+        return FsVolumeType.S3_V2;
+    }
+
+    @Override
+    public PhysicalDeleteOutcome physicallyDelete(final SimpleMeta simpleMeta,
+                                                  final DataVolume dataVolume,
+                                                  final Progress progress) {
+        Objects.requireNonNull(simpleMeta);
+        Objects.requireNonNull(dataVolume);
+        LOGGER.debug("physicallyDelete() - simpleMeta: {}, dataVolume: {}", simpleMeta, dataVolume);
+        final long metaId = simpleMeta.getId();
+
+        // TODO Need to read all the file locations from fsMetaS3LocationDao
+        final S3LocationDataVolume s3LocationDataVolume = fsMetaS3LocationDao.getS3LocationDataVolume(
+                simpleMeta.getId());
+        final Set<S3Location> s3Locations = NullSafe.set(NullSafe.get(
+                s3LocationDataVolume,
+                S3LocationDataVolume::s3Locations));
+
+        final S3Manager s3Manager = createS3Manager(dataVolume);
+
+        // Delete all the files on S3 for this meta
+        s3Manager.delete(s3Locations);
+
+        // Delete the s3 locations for this meta.
+        fsMetaS3LocationDao.delete(List.of(metaId));
+
+        // Delete any dictionary tasks for this meta.
+        zstdDictionaryTaskDao.deleteByMetaIds(List.of(metaId));
+
+        // TODO how do we know when a dict is no longer in use, maybe we need to add the dict uuid
+        //  to the fs_meta_s3_location table as a nullable column. Probably need a separate cleanup
+        //  job for them.
+
+        return new S3PhysicalDeleteOutcome(
+                true,
+                dataVolume,
+                simpleMeta,
+                s3Locations);
+    }
+
+    @Override
+    protected ValidationResult validateS3Config(final S3ClientConfig s3ClientConfig) {
+        ValidationResult validationResult = super.validateS3Config(s3ClientConfig);
+
+        if (validationResult.isOk()) {
+            // TODO The requirement for static bucket name and no key pattern, may no longer
+            //  be needed now that we have a table for storing the s3 location.
+            if (NullSafe.isNonBlankString(s3ClientConfig.getBucketName())) {
+                Template template = Template.EMPTY_TEMPLATE;
+                try {
+                    template = templateCache.getTemplate(s3ClientConfig.getBucketName());
+                } catch (final RuntimeException e) {
+                    validationResult = ValidationResult.error(LogUtil.message(
+                            "Bucket name '{}' must be a valid static template - {}",
+                            s3ClientConfig.getBucketName(), e.getMessage()));
+                }
+
+                validationResult = validationResult.errorIfNot(LogUtil.message(
+                                "Bucket name '{}' must be a valid static template - {}",
+                                s3ClientConfig.getBucketName()),
+                        template::isStatic);
+            } else {
+                validationResult = ValidationResult.error("Bucket name must be provided");
+            }
+
+            validationResult = validationResult.errorIfNot(LogUtil.message(
+                            "Key name pattern is not supported for this volume type. " +
+                            "Please remove the key name pattern."),
+                    () -> NullSafe.isBlankString(s3ClientConfig.getKeyPattern()));
+        }
+        return validationResult;
+    }
+
+    /**
+     * The key prefix for all items belonging to this meta.
+     */
+    private String getS3KeyPrefix(final DataVolume dataVolume, final Meta meta) {
+        final S3Manager s3Manager = createS3Manager(dataVolume);
+        return String.join(
+                " > ",
+                "S3",
+                s3Manager.getBucketNamePattern(),
+                S3StreamTypeExtensions.getPrefix(meta.getId()));
+    }
+
+    private S3Manager createS3Manager(final DataVolume dataVolume) {
+        return s3ManagerFactory.createS3Manager(dataVolume.volume().getS3ClientConfig());
+    }
+
+    public void release(final Meta meta, final Path path) {
+        cache.compute(meta.getId(), (k, v) -> {
+            if (v == null) {
+                deleteLocalDir("Release deleting: ", path);
+            } else {
+                final int count = v.useCount().decrementAndGet();
+                assert count >= 0;
+                if (count == 0) {
+                    synchronized (S3ZstdStreamStore.this) {
+                        evictable.add(v);
+                    }
+                }
+            }
+            return v;
+        });
+
+        evict();
+    }
+
+    private void evict() {
+        if (cache.size() > MAX_CACHED_ITEMS) {
+            final List<TrackedSource> list;
+            synchronized (S3ZstdStreamStore.this) {
+                list = new ArrayList<>(evictable);
+            }
+            list.sort(Comparator.comparing(TrackedSource::createTime));
+
+            for (final TrackedSource trackedSource : list) {
+                if (cache.size() > MAX_CACHED_ITEMS) {
+                    cache.compute(trackedSource.metaId, (k, v) -> {
+                        if (v == null || v.useCount().get() == 0) {
+                            deleteLocalDir("Evict delete dir: ", trackedSource.path());
+                            synchronized (S3ZstdStreamStore.this) {
+                                evictable.remove(trackedSource);
+                            }
+                            return null;
+                        }
+                        return v;
+                    });
+                }
+            }
+        }
+    }
+
+//    /**
+//     * Zips the contents of tempDir into a single ZIP file then uploads it to S3
+//     */
+//    public void upload(final Path tempDir,
+//                       final DataVolume dataVolume,
+//                       final Meta meta,
+//                       final AttributeMap attributeMap) {
+//        LOGGER.debug(() -> LogUtil.message("upload() - tempDir: {}, metaId: {}, attributeMap: {}",
+//                tempDir, NullSafe.get(meta, Meta::getId), attributeMap));
+//        // Create zip.
+//        Path zipFile = null;
+//        try {
+//            zipFile = tempDir.resolve(S3FileExtensions.ZIP_FILE_NAME);
+//            ZipUtil.zip(zipFile, tempDir);
+//
+//            // Upload the zip to S3.
+//            final S3Manager s3Manager = createS3Manager(dataVolume);
+//            s3Manager.upload(meta, attributeMap, zipFile);
+//
+//        } catch (final IOException e) {
+//            LOGGER.error(e::getMessage, e);
+//            throw new UncheckedIOException(e);
+//        } finally {
+//            deleteFile("Deleting target zip: ", zipFile);
+//        }
+//    }
+
+    private Path createTempDir(final Long metaId) {
+        try {
+            final Path tempDir = this.tempDir.resolve(metaId + "__" + UUID.randomUUID());
+            Files.createDirectories(tempDir);
+            LOGGER.debug("createTempPath() - Returning tempDir: {}", tempDir);
+            return tempDir;
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void deleteLocalDir(final String message, final Path dir) {
+        if (dir != null) {
+            try {
+                LOGGER.debug(() -> message + FileUtil.getCanonicalPath(dir));
+                FileUtil.deleteDir(dir);
+            } catch (final RuntimeException e2) {
+                LOGGER.debug(e2::getMessage, e2);
+            }
+        }
+    }
+
+    private void deleteLocalFile(final String message, final Path file) {
+        if (file != null) {
+            try {
+                LOGGER.debug(() -> message + FileUtil.getCanonicalPath(file));
+                Files.delete(file);
+            } catch (final IOException e) {
+                LOGGER.debug(e::getMessage, e);
+            }
+        }
+    }
+
+    ZstdDictionaryService getZstdDictionaryService() {
+        return zstdDictionaryService;
+    }
+
+    ZstdSeekTableCache getZstdSeekTableCache() {
+        return zstdSeekTableCache;
+    }
+
+    HeapBufferPool getHeapBufferPool() {
+        return heapBufferPool;
+    }
+
+    //    Optional<ZstdDictionary> getZstdDictionary(final ZstdDictionaryKey zstdDictionaryKey,
+//                                               final DataVolume dataVolume) {
+//        return zstdDictionaryService.getZstdDictionary(zstdDictionaryKey, dataVolume);
+//    }
+//
+//    void createRecompressTask(final ZstdDictionaryKey zstdDictionaryKey,
+//                              final long metaId,
+//                              final DataVolume dataVolume)
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record TrackedSource(Long metaId,
+                                 Path path,
+                                 Instant createTime,
+                                 AtomicInteger useCount) {
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final TrackedSource that = (TrackedSource) o;
+            return Objects.equals(metaId, that.metaId) && Objects.equals(path, that.path);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(metaId, path);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    record S3PhysicalDeleteOutcome(
+            boolean wasSuccessful,
+            DataVolume dataVolume,
+            SimpleMeta simpleMeta,
+            Set<S3Location> s3Locations) implements PhysicalDeleteOutcome {
+
+    }
+}

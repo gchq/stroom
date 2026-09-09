@@ -20,6 +20,7 @@ package stroom.util.io.capacity;
 import stroom.util.shared.HasCapacity;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 public class WeightedFreePercentRandomCapacitySelector extends AbstractSelector {
@@ -34,7 +35,7 @@ public class WeightedFreePercentRandomCapacitySelector extends AbstractSelector 
     public <T extends HasCapacity> T doSelect(final List<T> filteredList) {
 
         final double[] thresholds = getWeightingThresholds(filteredList);
-        final double random = Math.random();
+        final double random = ThreadLocalRandom.current().nextDouble();
 
         int index = thresholds.length - 1;
         for (int i = 0; i < thresholds.length; i++) {

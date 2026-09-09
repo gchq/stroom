@@ -17,6 +17,9 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 
@@ -35,6 +38,8 @@ public interface FsVolumeGroupDao {
     List<String> getNames();
 
     List<FsVolumeGroup> getAll();
+
+    ResultPage<FsVolumeGroupRow> findExtended(ExpressionCriteria criteria);
 
     void delete(String name);
 

@@ -225,7 +225,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
     @Override
     public void release(final ByteBuffer byteBuffer) {
         if (byteBuffer != null && byteBuffer.isDirect()) {
-            final int offset = getOffset(byteBuffer.capacity());
+            final int offset = getOffset(byteBuffer);
             if (isUnPooled(offset)) {
                 ByteBufferSupport.unmap(byteBuffer);
             } else {
@@ -299,7 +299,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
         }
 
         LOGGER.info("Cleared the following buffers from the pool (buffer size:number cleared) - " +
-                String.join(", ", msgs));
+                    String.join(", ", msgs));
     }
 
     @Override
@@ -360,7 +360,29 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
         }
     }
 
-    private int getOffset(final int minCapacity) {
+    /**
+     * The switch approach seems to be a lot quicker than {@link Math#log10(double)}
+     * <strong>IF</strong> we expect the values to be exactly a power of 10, which they ought to be
+     * for buffers coming back to the pool (because we created them with power of ten sizes).
+     */
+    private static int getOffset(final ByteBuffer byteBuffer) {
+        final int capacity = byteBuffer.capacity();
+        return switch (capacity) {
+            case 1 -> 0;
+            case 10 -> 1;
+            case 100 -> 2;
+            case 1_000 -> 3;
+            case 10_000 -> 4;
+            case 100_000 -> 5;
+            case 1_000_000 -> 6;
+            case 10_000_000 -> 7;
+            case 100_000_000 -> 8;
+            case 1_000_000_000 -> 9;
+            default -> (int) Math.ceil(Math.log10(capacity));
+        };
+    }
+
+    private static int getOffset(final int minCapacity) {
         if (minCapacity <= 10) {
             // Optimisation for ints/longs
             return minCapacity <= 1

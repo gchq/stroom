@@ -61,28 +61,6 @@ class TestStringUtil {
 
 
     @ParameterizedTest
-    @CsvSource(nullValues = {"<<NULL>>"}, value = {
-            "'abc',false",
-            "' abc ',false",
-            "'',true",
-            "<<NULL>>,true",
-            "' ',true",
-            "'  ',true",
-            "'\n',true",
-            "'\t',true",
-    })
-    void testIsBlank1(final String input, final boolean expectedOutput) {
-
-        final boolean isBlank = StringUtil.isBlank(input);
-
-        LOGGER.info("input: [{}], expectedOutput: {}, isBlank: {}",
-                input, expectedOutput, isBlank);
-
-        assertThat(isBlank)
-                .isEqualTo(expectedOutput);
-    }
-
-    @ParameterizedTest
     @CsvSource(nullValues = {"<NULL>"}, value = {
             "<NULL>,<NULL>",
             "'abc','abc'",

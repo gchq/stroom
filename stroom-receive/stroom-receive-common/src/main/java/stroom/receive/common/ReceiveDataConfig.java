@@ -126,6 +126,9 @@ public class ReceiveDataConfig
     @JsonProperty
     private final ByteSize maxRequestSize;
 
+    @JsonProperty
+    private final S3EventConfig s3Event;
+
     public ReceiveDataConfig() {
         // Sort them to ensure consistent order on serialisation
         metaTypes = DEFAULT_META_TYPES;
@@ -144,6 +147,7 @@ public class ReceiveDataConfig
         receiptCheckMode = DEFAULT_RECEIPT_CHECK_MODE;
         fallbackReceiveAction = DEFAULT_FALLBACK_RECEIVE_ACTION;
         maxRequestSize = null;
+        s3Event = new S3EventConfig();
     }
 
     @SuppressWarnings("unused")
@@ -164,7 +168,8 @@ public class ReceiveDataConfig
             @JsonProperty("feedNameGenerationMandatoryHeaders") final Set<String> feedNameGenerationMandatoryHeaders,
             @JsonProperty("receiptCheckMode") final ReceiptCheckMode receiptCheckMode,
             @JsonProperty("fallbackReceiveAction") final ReceiveAction fallbackReceiveAction,
-            @JsonProperty("maxRequestSize") final ByteSize maxRequestSize) {
+            @JsonProperty("maxRequestSize") final ByteSize maxRequestSize,
+            @JsonProperty("s3Event") final S3EventConfig s3Event) {
 
         this.metaTypes = NullSafe.getOrElse(metaTypes, ReceiveDataConfig::cleanSet, DEFAULT_META_TYPES);
         this.enabledAuthenticationTypes = NullSafe.getOrElse(
@@ -193,6 +198,7 @@ public class ReceiveDataConfig
         this.receiptCheckMode = Objects.requireNonNullElse(receiptCheckMode, DEFAULT_RECEIPT_CHECK_MODE);
         this.fallbackReceiveAction = Objects.requireNonNullElse(fallbackReceiveAction, DEFAULT_FALLBACK_RECEIVE_ACTION);
         this.maxRequestSize = maxRequestSize;
+        this.s3Event = s3Event;
     }
 
     private ReceiveDataConfig(final Builder builder) {
@@ -212,7 +218,8 @@ public class ReceiveDataConfig
                 builder.feedNameGenerationMandatoryHeaders,
                 builder.receiptCheckMode,
                 builder.fallbackReceiveAction,
-                builder.maxRequestSize);
+                builder.maxRequestSize,
+                builder.s3EventConfig);
     }
 
     @NotNull
@@ -359,6 +366,11 @@ public class ReceiveDataConfig
         return maxRequestSize;
     }
 
+    @JsonPropertyDescription("The configuration for an SQS queue.")
+    public S3EventConfig getS3Event() {
+        return s3Event;
+    }
+
     @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = "If authenticationRequired is true, then enabledAuthenticationTypes must " +
@@ -391,6 +403,7 @@ public class ReceiveDataConfig
                ", feedNameGenerationMandatoryHeaders=" + feedNameGenerationMandatoryHeaders +
                ", receiptCheckMode=" + receiptCheckMode +
                ", maxRequestSize=" + maxRequestSize +
+               ", s3Event=" + s3Event +
                '}';
     }
 
@@ -416,7 +429,9 @@ public class ReceiveDataConfig
                && Objects.equals(feedNameTemplate, that.feedNameTemplate)
                && Objects.equals(feedNameGenerationMandatoryHeaders, that.feedNameGenerationMandatoryHeaders)
                && Objects.equals(maxRequestSize, that.maxRequestSize)
-               && receiptCheckMode == that.receiptCheckMode;
+               && receiptCheckMode == that.receiptCheckMode
+               && Objects.equals(s3Event, that.s3Event);
+
     }
 
     @Override
@@ -435,7 +450,8 @@ public class ReceiveDataConfig
                 feedNameTemplate,
                 feedNameGenerationMandatoryHeaders,
                 receiptCheckMode,
-                maxRequestSize);
+                maxRequestSize,
+                s3Event);
     }
 
     public static Builder copy(final ReceiveDataConfig receiveDataConfig) {
@@ -455,6 +471,7 @@ public class ReceiveDataConfig
         builder.receiptCheckMode = receiveDataConfig.getReceiptCheckMode();
         builder.fallbackReceiveAction = receiveDataConfig.fallbackReceiveAction;
         builder.maxRequestSize = receiveDataConfig.maxRequestSize;
+        builder.s3EventConfig = receiveDataConfig.s3Event;
         return builder;
     }
 
@@ -497,6 +514,8 @@ public class ReceiveDataConfig
         private ReceiptCheckMode receiptCheckMode;
         private ReceiveAction fallbackReceiveAction;
         private ByteSize maxRequestSize;
+        //        private S3EventNotificationConfig s3EventNotification;
+        private S3EventConfig s3EventConfig;
 
         private Builder() {
         }
@@ -594,6 +613,11 @@ public class ReceiveDataConfig
 
         public Builder withMaxRequestSize(final ByteSize maxRequestSize) {
             this.maxRequestSize = maxRequestSize;
+            return this;
+        }
+
+        public Builder withS3EventConfig(final S3EventConfig s3EventConfig) {
+            this.s3EventConfig = s3EventConfig;
             return this;
         }
 

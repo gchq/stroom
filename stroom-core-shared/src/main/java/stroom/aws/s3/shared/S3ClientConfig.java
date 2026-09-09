@@ -16,19 +16,31 @@
 
 package stroom.aws.s3.shared;
 
+import stroom.aws.common.shared.AwsAssumeRole;
+import stroom.aws.common.shared.AwsCredentials;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.NotInjectableConfig;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
+@NotInjectableConfig // Used in lists so not a unique thing
 @JsonInclude(Include.NON_NULL)
-public class S3ClientConfig {
+public class S3ClientConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final String DEFAULT_BUCKET_NAME = "stroom.${feed}.${type}";
     public static final String DEFAULT_KEY_PATTERN =
             "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip";
+    public static final boolean DEFAULT_CROSS_REGION_ENALBED = false;
+    public static final boolean DEFAULT_ASYNC_ENABLED = false;
+    public static final boolean DEFAULT_MULTIPART_ENABLED = false;
+    public static final boolean DEFAULT_CREATE_BUCKETS_ENABLED = false;
 
     @JsonProperty
     private final AwsCredentials credentials;
@@ -74,6 +86,11 @@ public class S3ClientConfig {
     @JsonProperty
     private final String keyPattern;
 
+    @JsonIgnore
+    private int hash = 0;
+    @JsonIgnore
+    private boolean hashIsZero = false;
+
     @JsonCreator
     public S3ClientConfig(@JsonProperty("credentials") final AwsCredentials credentials,
                           @JsonProperty("assumeRole") final AwsAssumeRole assumeRole,
@@ -88,11 +105,11 @@ public class S3ClientConfig {
                           @JsonProperty("accelerate") final Boolean accelerate,
                           @JsonProperty("forcePathStyle") final Boolean forcePathStyle,
                           @JsonProperty("numRetries") final Integer numRetries,
-                          @JsonProperty("crossRegionAccessEnabled") final boolean crossRegionAccessEnabled,
+                          @JsonProperty("crossRegionAccessEnabled") final Boolean crossRegionAccessEnabled,
                           @JsonProperty("thresholdInBytes") final Long thresholdInBytes,
-                          @JsonProperty("async") final boolean async,
-                          @JsonProperty("multipart") final boolean multipart,
-                          @JsonProperty("createBuckets") final boolean createBuckets,
+                          @JsonProperty("async") final Boolean async,
+                          @JsonProperty("multipart") final Boolean multipart,
+                          @JsonProperty("createBuckets") final Boolean createBuckets,
                           @JsonProperty("bucketName") final String bucketName,
                           @JsonProperty("keyPattern") final String keyPattern) {
         this.credentials = credentials;
@@ -108,11 +125,12 @@ public class S3ClientConfig {
         this.accelerate = accelerate;
         this.forcePathStyle = forcePathStyle;
         this.numRetries = numRetries;
-        this.crossRegionAccessEnabled = crossRegionAccessEnabled;
+        this.crossRegionAccessEnabled = Objects.requireNonNullElse(
+                crossRegionAccessEnabled, DEFAULT_CROSS_REGION_ENALBED);
         this.thresholdInBytes = thresholdInBytes;
-        this.async = async;
-        this.multipart = multipart;
-        this.createBuckets = createBuckets;
+        this.async = Objects.requireNonNullElse(async, DEFAULT_ASYNC_ENABLED);
+        this.multipart = Objects.requireNonNullElse(multipart, DEFAULT_MULTIPART_ENABLED);
+        this.createBuckets = Objects.requireNonNullElse(createBuckets, DEFAULT_CREATE_BUCKETS_ENABLED);
         this.bucketName = bucketName;
         this.keyPattern = keyPattern;
     }
@@ -216,28 +234,43 @@ public class S3ClientConfig {
         }
         final S3ClientConfig that = (S3ClientConfig) o;
         return crossRegionAccessEnabled == that.crossRegionAccessEnabled &&
-                async == that.async &&
-                multipart == that.multipart &&
-                createBuckets == that.createBuckets &&
-                Objects.equals(credentials, that.credentials) &&
-                Objects.equals(readBufferSizeInBytes, that.readBufferSizeInBytes) &&
-                Objects.equals(region, that.region) &&
-                Objects.equals(minimalPartSizeInBytes, that.minimalPartSizeInBytes) &&
-                Objects.equals(targetThroughputInGbps, that.targetThroughputInGbps) &&
-                Objects.equals(maxConcurrency, that.maxConcurrency) &&
-                Objects.equals(endpointOverride, that.endpointOverride) &&
-                Objects.equals(checksumValidationEnabled, that.checksumValidationEnabled) &&
-                Objects.equals(httpConfiguration, that.httpConfiguration) &&
-                Objects.equals(accelerate, that.accelerate) &&
-                Objects.equals(forcePathStyle, that.forcePathStyle) &&
-                Objects.equals(numRetries, that.numRetries) &&
-                Objects.equals(thresholdInBytes, that.thresholdInBytes) &&
-                Objects.equals(bucketName, that.bucketName) &&
-                Objects.equals(keyPattern, that.keyPattern);
+               async == that.async &&
+               multipart == that.multipart &&
+               createBuckets == that.createBuckets &&
+               Objects.equals(credentials, that.credentials) &&
+               Objects.equals(readBufferSizeInBytes, that.readBufferSizeInBytes) &&
+               Objects.equals(region, that.region) &&
+               Objects.equals(minimalPartSizeInBytes, that.minimalPartSizeInBytes) &&
+               Objects.equals(targetThroughputInGbps, that.targetThroughputInGbps) &&
+               Objects.equals(maxConcurrency, that.maxConcurrency) &&
+               Objects.equals(endpointOverride, that.endpointOverride) &&
+               Objects.equals(checksumValidationEnabled, that.checksumValidationEnabled) &&
+               Objects.equals(httpConfiguration, that.httpConfiguration) &&
+               Objects.equals(accelerate, that.accelerate) &&
+               Objects.equals(forcePathStyle, that.forcePathStyle) &&
+               Objects.equals(numRetries, that.numRetries) &&
+               Objects.equals(thresholdInBytes, that.thresholdInBytes) &&
+               Objects.equals(bucketName, that.bucketName) &&
+               Objects.equals(keyPattern, that.keyPattern);
     }
 
     @Override
     public int hashCode() {
+        // Lazy hashCode caching as this is used as a map key.
+        // Borrows pattern from String.hashCode()
+        int h = hash;
+        if (h == 0 && !hashIsZero) {
+            h = buildHashCode();
+            if (h == 0) {
+                hashIsZero = true;
+            } else {
+                hash = h;
+            }
+        }
+        return h;
+    }
+
+    public int buildHashCode() {
         return Objects.hash(
                 credentials,
                 readBufferSizeInBytes,
@@ -263,26 +296,26 @@ public class S3ClientConfig {
     @Override
     public String toString() {
         return "S3ClientConfig{" +
-                "credentials=" + credentials +
-                ", readBufferSizeInBytes=" + readBufferSizeInBytes +
-                ", region='" + region + '\'' +
-                ", minimalPartSizeInBytes=" + minimalPartSizeInBytes +
-                ", targetThroughputInGbps=" + targetThroughputInGbps +
-                ", maxConcurrency=" + maxConcurrency +
-                ", endpointOverride='" + endpointOverride + '\'' +
-                ", checksumValidationEnabled=" + checksumValidationEnabled +
-                ", httpConfiguration=" + httpConfiguration +
-                ", accelerate=" + accelerate +
-                ", forcePathStyle=" + forcePathStyle +
-                ", numRetries=" + numRetries +
-                ", crossRegionAccessEnabled=" + crossRegionAccessEnabled +
-                ", thresholdInBytes=" + thresholdInBytes +
-                ", async=" + async +
-                ", multipart=" + multipart +
-                ", createBuckets=" + createBuckets +
-                ", bucketName='" + bucketName + '\'' +
-                ", keyPattern='" + keyPattern + '\'' +
-                '}';
+               "credentials=" + credentials +
+               ", readBufferSizeInBytes=" + readBufferSizeInBytes +
+               ", region='" + region + '\'' +
+               ", minimalPartSizeInBytes=" + minimalPartSizeInBytes +
+               ", targetThroughputInGbps=" + targetThroughputInGbps +
+               ", maxConcurrency=" + maxConcurrency +
+               ", endpointOverride='" + endpointOverride + '\'' +
+               ", checksumValidationEnabled=" + checksumValidationEnabled +
+               ", httpConfiguration=" + httpConfiguration +
+               ", accelerate=" + accelerate +
+               ", forcePathStyle=" + forcePathStyle +
+               ", numRetries=" + numRetries +
+               ", crossRegionAccessEnabled=" + crossRegionAccessEnabled +
+               ", thresholdInBytes=" + thresholdInBytes +
+               ", async=" + async +
+               ", multipart=" + multipart +
+               ", createBuckets=" + createBuckets +
+               ", bucketName='" + bucketName + '\'' +
+               ", keyPattern='" + keyPattern + '\'' +
+               '}';
     }
 
     public static class Builder {

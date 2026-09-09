@@ -21,9 +21,22 @@ import java.util.Set;
 
 public interface InputStreamProvider extends Closeable {
 
+    /**
+     * @return The {@link SegmentInputStream} for the main data stream
+     */
     SegmentInputStream get();
 
-    SegmentInputStream get(String streamType);
+    /**
+     * @return The {@link SegmentInputStream} for the specified child streamTypeName, i.e. types
+     * as defined in {@link stroom.data.shared.StreamTypeNames}. If streamTypeName is null,
+     * this is the same as calling {@link InputStreamProvider#get()}.
+     */
+    SegmentInputStream get(String streamTypeName);
 
+    /**
+     * @return The set of child stream type names in this stream (part of a stream).
+     * I.e. names as defined in {@link stroom.data.shared.StreamTypeNames}.
+     * May be empty if the stream has no child streams.
+     */
     Set<String> getChildTypes();
 }

@@ -16,6 +16,8 @@
 
 package stroom.proxy.app.event;
 
+import stroom.util.shared.FeedKey;
+
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -32,7 +34,7 @@ public class TestEventAppender {
     void test() throws IOException {
         final Path dir = Files.createTempDirectory("stroom");
 
-        final FeedKey feedKey = new FeedKey("Test", "Raw Events");
+        final FeedKey feedKey = FeedKey.of("Test", "Raw Events");
         final Instant now = Instant.now();
         final Path file = EventStoreFile.createNew(dir, feedKey, now);
         final EventAppender eventAppender = new EventAppender(file, now, new EventStoreConfig());

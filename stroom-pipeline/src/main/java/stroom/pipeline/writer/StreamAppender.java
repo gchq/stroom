@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.shared.FeedDoc;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -190,21 +191,22 @@ public class StreamAppender extends AbstractAppender {
                 checkTermination();
 
                 // Write process meta data.
-                streamTarget.getAttributes().putAll(metaData.getAttributes());
+                final AttributeMap targetAttributeMap = streamTarget.getAttributes();
+                targetAttributeMap.putAll(metaData.getAttributes());
 
                 // Get current process statistics
-                final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount,
-                        errorReceiverProxy);
+                final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(
+                        recordCount, errorReceiverProxy);
                 // Diff the current statistics with the last captured statistics.
                 final ProcessStatistics currentStatistics = processStatistics.subtract(lastProcessStatistics);
                 // Set the last statistics.
                 lastProcessStatistics = processStatistics;
 
                 // Write statistics meta data.
-                currentStatistics.write(streamTarget.getAttributes());
+                currentStatistics.write(targetAttributeMap);
 
                 // Overwrite the actual output record count.
-                streamTarget.getAttributes().put(MetaFields.REC_WRITE.getFldName(), String.valueOf(count));
+                targetAttributeMap.put(MetaFields.REC_WRITE.getFldName(), String.valueOf(count));
 
                 // Close the stream target.
                 try {
@@ -215,18 +217,14 @@ public class StreamAppender extends AbstractAppender {
                         fatal(e.getMessage());
                     } finally {
                         // Delete the output.
-                        streamStore.deleteTarget(streamTarget);
+                        streamTarget.logicallyDelete();
                     }
                 }
-
             } catch (final RuntimeException e) {
-
                 // Delete the target.
-                streamStore.deleteTarget(streamTarget);
-
+                streamTarget.logicallyDelete();
                 // Log the error.
                 fatal("Terminated");
-
                 throw e;
             }
         }

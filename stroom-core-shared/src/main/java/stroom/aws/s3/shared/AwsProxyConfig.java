@@ -95,9 +95,12 @@ public class AwsProxyConfig {
             return false;
         }
         final AwsProxyConfig that = (AwsProxyConfig) o;
-        return port == that.port && Objects.equals(host, that.host) && Objects.equals(scheme,
-                that.scheme) && Objects.equals(username, that.username) && Objects.equals(password,
-                that.password) && Objects.equals(useSystemPropertyValues, that.useSystemPropertyValues);
+        return port == that.port
+               && Objects.equals(host, that.host)
+               && Objects.equals(scheme, that.scheme)
+               && Objects.equals(username, that.username)
+               && Objects.equals(password, that.password)
+               && Objects.equals(useSystemPropertyValues, that.useSystemPropertyValues);
     }
 
     @Override
@@ -108,14 +111,18 @@ public class AwsProxyConfig {
     @Override
     public String toString() {
         return "AwsProxyConfig{" +
-                "host='" + host + '\'' +
-                ", port=" + port +
-                ", scheme='" + scheme + '\'' +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", useSystemPropertyValues=" + useSystemPropertyValues +
-                '}';
+               "host='" + host + '\'' +
+               ", port=" + port +
+               ", scheme='" + scheme + '\'' +
+               ", username='" + username + '\'' +
+               ", password='" + password + '\'' +
+               ", useSystemPropertyValues=" + useSystemPropertyValues +
+               '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

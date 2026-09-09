@@ -44,9 +44,14 @@ public interface Target extends Closeable {
     AttributeMap getAttributes();
 
     /**
-     * Get a supplier of output streams.
+     * Get a supplier of output streams for the next part.
      *
      * @return a supplier of output streams.
      */
     OutputStreamProvider next();
+
+    /**
+     * Logically delete this target, i.e. mark the associated meta record as DELETED
+     */
+    void logicallyDelete();
 }

@@ -18,6 +18,8 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.standard.FileSystemUtil;
+import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.meta.api.MetaService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -85,8 +87,8 @@ class FsOrphanFileFinder {
 
             if (!Files.isDirectory(directory)) {
                 LOGGER.debug(() -> "scanDirectory() - " +
-                        FileUtil.getCanonicalPath(directory) +
-                        " - Skipping as root is not a directory !!");
+                                   FileUtil.getCanonicalPath(directory) +
+                                   " - Skipping as root is not a directory !!");
                 return result;
             }
             LOGGER.debug(() -> LogUtil.message("{} - Scanning directory {} with oldestDirTime {}",
@@ -143,7 +145,7 @@ class FsOrphanFileFinder {
 
                                 // Process only raw zip repo files, i.e. files that have not already been created
                                 // by the fragmenting process.
-                                final long id = fileSystemStreamPathHelper.getId(file);
+                                final long id = FsPathHelper.getId(file);
                                 LOGGER.trace(() -> "Got id = " + id + " for file " + FileUtil.getCanonicalPath(file));
 
                                 if (id == -1) {
@@ -189,7 +191,7 @@ class FsOrphanFileFinder {
         if (metaIdSet.size() != fileMap.size()) {
             LOGGER.debug(() -> LogUtil.message(
                     "metaIdSet is is different size to file map: " +
-                            "metaIdSet.size(): {}, fileMap.size(): {}, batch size {}",
+                    "metaIdSet.size(): {}, fileMap.size(): {}, batch size {}",
                     metaIdSet.size(), fileMap.size(), BATCH_SIZE));
 
             // Determine which files are orphans.

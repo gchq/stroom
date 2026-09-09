@@ -35,6 +35,13 @@ public class TestGuardPerformance {
     private final int threadCount = Integer.highestOneBit(Runtime.getRuntime().availableProcessors());
     private volatile Object env = new Object();
 
+    private IntStream buildThreadCountStream() {
+        return IntStream.iterate(
+                1,
+                i -> i <= 128,
+                i -> i * 2);
+    }
+
     @Test
     @Disabled
     public void perfTest() {

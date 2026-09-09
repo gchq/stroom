@@ -25,6 +25,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 /**
  * State of a volume.
  */
@@ -128,8 +130,24 @@ public class FsVolumeState {
             sb.append(percentUsed);
             sb.append("%");
         }
-
         return sb.toString();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final FsVolumeState that = (FsVolumeState) o;
+        return id == that.id && version == that.version && Objects.equals(bytesUsed,
+                that.bytesUsed) && Objects.equals(bytesFree, that.bytesFree) && Objects.equals(
+                bytesTotal,
+                that.bytesTotal) && Objects.equals(updateTimeMs, that.updateTimeMs);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, version, bytesUsed, bytesFree, bytesTotal, updateTimeMs);
     }
 
     public Builder copy() {

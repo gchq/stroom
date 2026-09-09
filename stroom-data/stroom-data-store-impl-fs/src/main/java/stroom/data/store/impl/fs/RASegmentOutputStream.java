@@ -18,6 +18,8 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.util.io.CloseableUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -25,11 +27,14 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 /**
- * This class implements the <code>SegmentOutputStream</code> interface and
- * produces output that will be readable with a <code>SegmentInputStream</code>
+ * <p>Random Access Segment Output Stream</p>
+ * This class implements the {@link SegmentOutputStream} interface and
+ * produces output that will be readable with a {@link stroom.data.store.api.SegmentInputStream}
  * that opens files for random access.
  */
-class RASegmentOutputStream extends SegmentOutputStream {
+public class RASegmentOutputStream extends SegmentOutputStream {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RASegmentOutputStream.class);
 
     private static final int LONG_BYTES = 8;
 
@@ -41,8 +46,8 @@ class RASegmentOutputStream extends SegmentOutputStream {
     private long position;
     private long lastBoundary;
 
-    RASegmentOutputStream(final OutputStream dataOutputStream,
-                          final SupplierWithIO<OutputStream> indexOutputStreamSupplier) {
+    public RASegmentOutputStream(final OutputStream dataOutputStream,
+                                 final SupplierWithIO<OutputStream> indexOutputStreamSupplier) {
         this.dataOutputStream = dataOutputStream;
         this.indexOutputStreamSupplier = indexOutputStreamSupplier;
     }
@@ -50,7 +55,7 @@ class RASegmentOutputStream extends SegmentOutputStream {
     /**
      * Adds a segment boundary to the output stream. All bytes written between
      * the start of the output or the last boundary will be considered a segment
-     * by the <code>RASegmentInputStream</code>.
+     * by the {@link stroom.data.store.api.SegmentInputStream}.
      */
     @Override
     public void addSegment() throws IOException {
@@ -60,12 +65,13 @@ class RASegmentOutputStream extends SegmentOutputStream {
     /**
      * Adds a segment boundary to the output stream at a given byte position.
      * All bytes written between the start of the output or the last boundary
-     * will be considered a segment by the <code>SegmentInputStream</code>.
+     * will be considered a segment by the {@link stroom.data.store.api.SegmentInputStream}.
      *
      * @param position The byte position of the end of the segment.
      */
     @Override
     public void addSegment(final long position) throws IOException {
+        LOGGER.debug("addSegment() - position: {}, lastBoundary: {}", position, lastBoundary);
         if (position < lastBoundary) {
             throw new IOException("The boundary position cannot be less than the previous boundary position.");
         }
@@ -73,6 +79,7 @@ class RASegmentOutputStream extends SegmentOutputStream {
 
         // Lazily initialise index output stream provider.
         if (indexOutputStream == null) {
+            LOGGER.debug("addSegment() - creating indexOutputStream");
             indexOutputStream = indexOutputStreamSupplier.getWithIO();
             buffer = new byte[LONG_BYTES];
             longBuffer = ByteBuffer.wrap(buffer).asLongBuffer();
@@ -104,6 +111,7 @@ class RASegmentOutputStream extends SegmentOutputStream {
      */
     @Override
     public void flush() throws IOException {
+        LOGGER.debug("flush() - position: {}, lastBoundary: {}", position, lastBoundary);
         try {
             dataOutputStream.flush();
         } finally {
@@ -121,7 +129,7 @@ class RASegmentOutputStream extends SegmentOutputStream {
      * @param off the start offset in the data.
      * @param len the number of bytes to write.
      * @throws IOException if an I/O error occurs. In particular, an
-     *                     <code>IOException</code> is thrown if the output stream is
+     *                     {@link IOException}IOException</code> is thrown if the output stream is
      *                     closed.
      */
     @SuppressWarnings("NullableProblems")
@@ -159,15 +167,15 @@ class RASegmentOutputStream extends SegmentOutputStream {
     @Override
     public String toString() {
         return "RASegmentOutputStream" +
-                "\ndata = " +
-                dataOutputStream +
+               "\ndata = " +
+               dataOutputStream +
 //                if (indexOutputStream != null) {
 //                    "\nindex = " +
 //                            indexOutputStream +
 //                }
-                "\nposition = " +
-                position +
-                "\nlastBoundary = " +
-                lastBoundary;
+               "\nposition = " +
+               position +
+               "\nlastBoundary = " +
+               lastBoundary;
     }
 }

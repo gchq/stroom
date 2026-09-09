@@ -16,10 +16,13 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.impl.fs.shared.DataVolume;
+import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.util.shared.ResultPage;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface DataVolumeDao {
 
@@ -27,18 +30,10 @@ public interface DataVolumeDao {
 
     DataVolume findDataVolume(long metaId);
 
+    List<DataVolume> findDataVolumes(Collection<Long> metaIds);
+
     DataVolume createDataVolume(long metaId, FsVolume volume);
 
     int delete(Collection<Long> metaIdList);
 
-
-    // --------------------------------------------------------------------------------
-
-
-    interface DataVolume {
-
-        long getMetaId();
-
-        FsVolume getVolume();
-    }
 }

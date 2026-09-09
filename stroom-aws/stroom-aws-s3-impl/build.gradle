@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 ext.moduleName = 'stroom.aws.s3.impl'
 
 dependencies {
+    implementation project(':stroom-aws:stroom-aws-client')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
@@ -26,6 +27,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-pipeline')
+    implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util')
@@ -37,7 +39,18 @@ dependencies {
     implementation libs.guice
     implementation libs.restygwt
 
+    testImplementation project(':stroom-bytebuffer')
+    testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-test-common')
+    testImplementation project(':stroom-lmdb') // For UnsignedBytes
+
+    testImplementation libs.zstd.jni
+    testImplementation libs.data.faker
+    testImplementation libs.eventLogging
     testImplementation libs.mbknor.jackson.jsonSchema
+    testImplementation libs.vavr
+
+    testImplementation libs.bundles.common.test.implementation
 
     testRuntimeOnly libs.bundles.common.test.runtime
 }

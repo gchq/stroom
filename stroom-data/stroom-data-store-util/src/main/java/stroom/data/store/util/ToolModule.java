@@ -21,6 +21,7 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docstore.impl.dao.MockDocDependencyModule;
 import stroom.docstore.mock.MockDocFinderModule;
 import stroom.node.mock.MockNodeServiceModule;
 import stroom.security.mock.MockSecurityContextModule;
@@ -35,6 +36,7 @@ import stroom.util.io.StroomPathConfig;
 import stroom.util.metrics.Metrics;
 import stroom.util.metrics.MetricsImpl;
 import stroom.util.servlet.MockServletModule;
+import stroom.util.string.TemplateUtil.ContextVariableResolver;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.AbstractModule;
@@ -55,12 +57,18 @@ public class ToolModule extends AbstractModule {
         install(new MockTaskModule());
         install(new MockWordListProviderModule());
         install(new MockDocFinderModule());
+        install(new MockDocDependencyModule());
         install(new stroom.activity.mock.MockActivityModule());
+        install(new stroom.aws.s3.client.S3ClientModule());
+//        install(new stroom.aws.s3.impl.S3ConfigModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
+        install(new stroom.data.store.impl.fs.s3v2.ZstdModule());
         install(new stroom.data.store.impl.fs.dao.FsDataStoreDaoModule());
         install(new stroom.data.store.impl.fs.dao.FsDataStoreDaoModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
+//        install(new stroom.docstore.impl.DocStoreModule());
+        install(new stroom.docstore.impl.db.DocStoreDBPersistenceDbModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.meta.impl.MetaModule());
         install(new stroom.meta.impl.dao.MetaDaoModule());
@@ -70,6 +78,7 @@ public class ToolModule extends AbstractModule {
         bind(PathConfig.class).to(StroomPathConfig.class);
         bind(Metrics.class).toInstance(new MetricsImpl(new MetricRegistry()));
         bind(DataRetentionRulesProvider.class).toInstance(createDataRetentionRulesProvider());
+        bind(ContextVariableResolver.class).toInstance(ContextVariableResolver.NO_OP);
         install(new DirProvidersModule());
     }
 

@@ -16,8 +16,10 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.DataVolume;
+import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.SimpleMeta;
 import stroom.task.api.TaskContext;
@@ -52,14 +54,14 @@ class FsOrphanMetaFinder {
 
     private final FsPathHelper fsPathHelper;
     private final MetaService metaService;
-    private final DataVolumeService dataVolumeService;
+    private final DataVolumeServiceImpl dataVolumeService;
     private final Provider<FsVolumeConfig> fsVolumeConfigProvider;
     private final PathCreator pathCreator;
 
     @Inject
     public FsOrphanMetaFinder(final FsPathHelper fsPathHelper,
                               final MetaService metaService,
-                              final DataVolumeService dataVolumeService,
+                              final DataVolumeServiceImpl dataVolumeService,
                               final Provider<FsVolumeConfig> fsVolumeConfigProvider,
                               final PathCreator pathCreator) {
         this.fsPathHelper = fsPathHelper;
@@ -86,8 +88,8 @@ class FsOrphanMetaFinder {
         progress.log();
 
         while (minId != -1
-                && !Thread.currentThread().isInterrupted()
-                && !taskContext.isTerminated()) {
+               && !Thread.currentThread().isInterrupted()
+               && !taskContext.isTerminated()) {
             minId = scanBatch(minId, maxId, orphanConsumer, progress, taskContext);
         }
         if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
@@ -150,8 +152,8 @@ class FsOrphanMetaFinder {
             // root file to check existence.
             for (final DataVolume dataVolume : dataVolumes) {
                 if (!isTerminated(taskContext) &&
-                        FsVolumeType.STANDARD.equals(dataVolume.getVolume().getVolumeType())) {
-                    final long metaId = dataVolume.getMetaId();
+                    FsVolumeType.STANDARD.equals(dataVolume.volume().getVolumeType())) {
+                    final long metaId = dataVolume.metaId();
                     // Should never be null as we used the metaMap keys to find the data vols
                     final SimpleMeta meta = metaIdToMetaMap.get(metaId);
                     final String streamTypeName = meta.getTypeName();
@@ -161,7 +163,7 @@ class FsOrphanMetaFinder {
                     // ...042.evt.bgz.seg.dat
                     // ...042.evt.bgz.mf.dat
 
-                    final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
+                    final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
                     final TimedResult<Path> rootFileResult = getRootPathIterationTimer.measureIf(
                             LOGGER.isDebugEnabled(),
                             () -> fsPathHelper.getRootPath(

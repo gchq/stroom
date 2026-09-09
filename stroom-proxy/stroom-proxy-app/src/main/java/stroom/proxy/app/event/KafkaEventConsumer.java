@@ -21,6 +21,7 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FeedKey;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -100,7 +101,7 @@ public class KafkaEventConsumer implements EventConsumer {
                 headers.add(header);
             });
 
-            final FeedKey feedKey = FeedKey.from(attributeMap);
+            final FeedKey feedKey = FeedKeyEncoder.from(attributeMap);
 
             final String string = eventSerialiser.serialise(
                     receiptId,
@@ -111,7 +112,7 @@ public class KafkaEventConsumer implements EventConsumer {
             final String topic = config.getTopic();
             final Integer partition = null;
             final Long timestamp = System.currentTimeMillis();
-            final byte[] key = createKey(FeedKey.from(attributeMap));
+            final byte[] key = createKey(FeedKeyEncoder.from(attributeMap));
             final byte[] value = string.getBytes(StandardCharsets.UTF_8);
 
             final ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(

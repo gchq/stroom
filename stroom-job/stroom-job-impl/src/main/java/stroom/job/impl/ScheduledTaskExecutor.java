@@ -18,7 +18,6 @@ package stroom.job.impl;
 
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.job.api.ScheduledJob;
-import stroom.job.impl.db.jooq.tables.Job;
 import stroom.job.shared.JobNode;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
@@ -189,7 +188,7 @@ class ScheduledTaskExecutor {
                         } else {
                             unManagedTaskCount++;
                         }
-                        final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
+                        final Runnable runnable = taskContextFactory.context(taskName, ignored -> {
                             try {
                                 // Run the task
                                 LOGGER.logDurationIfDebugEnabled(
@@ -202,7 +201,7 @@ class ScheduledTaskExecutor {
 
                         CompletableFuture
                                 .runAsync(runnable, executor)
-                                .whenComplete((r, t) ->
+                                .whenComplete((ignoredResult, ignoredThrowable) ->
                                         function.getRunning().set(false));
                     } else {
                         LOGGER.trace(() -> LogUtil.message(
@@ -318,7 +317,8 @@ class ScheduledTaskExecutor {
     }
 
     private AtomicBoolean getRunningState(final ScheduledJob scheduledJob) {
-        return runningMapOfScheduledJobs.computeIfAbsent(scheduledJob, k -> new AtomicBoolean(false));
+        return runningMapOfScheduledJobs.computeIfAbsent(scheduledJob, ignored ->
+                new AtomicBoolean(false));
     }
 
 

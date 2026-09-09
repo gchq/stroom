@@ -22,6 +22,7 @@ import stroom.proxy.app.event.model.Header;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.FeedKey;
 
 import java.io.IOException;
 import java.util.List;

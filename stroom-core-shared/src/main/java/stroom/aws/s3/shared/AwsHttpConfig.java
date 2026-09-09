@@ -113,9 +113,9 @@ public class AwsHttpConfig {
             return false;
         }
         final AwsHttpConfig that = (AwsHttpConfig) o;
-        return Objects.equals(connectionTimeout, that.connectionTimeout) && Objects.equals(
-                trustAllCertificatesEnabled,
-                that.trustAllCertificatesEnabled) && Objects.equals(proxyConfiguration, that.proxyConfiguration);
+        return Objects.equals(connectionTimeout, that.connectionTimeout)
+               && Objects.equals(trustAllCertificatesEnabled, that.trustAllCertificatesEnabled)
+               && Objects.equals(proxyConfiguration, that.proxyConfiguration);
     }
 
     @Override
@@ -126,11 +126,15 @@ public class AwsHttpConfig {
     @Override
     public String toString() {
         return "AwsHttpConfig{" +
-                "connectionTimeout='" + connectionTimeout + '\'' +
-                ", trustAllCertificatesEnabled=" + trustAllCertificatesEnabled +
-                ", proxyConfiguration=" + proxyConfiguration +
-                '}';
+               "connectionTimeout='" + connectionTimeout + '\'' +
+               ", trustAllCertificatesEnabled=" + trustAllCertificatesEnabled +
+               ", proxyConfiguration=" + proxyConfiguration +
+               '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

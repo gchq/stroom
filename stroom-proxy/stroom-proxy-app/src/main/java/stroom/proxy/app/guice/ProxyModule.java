@@ -33,6 +33,7 @@ import stroom.proxy.app.event.EventResourceImpl;
 import stroom.proxy.app.handler.ForwarderModule;
 import stroom.proxy.app.handler.RemoteFeedStatusClient;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
+import stroom.proxy.app.handler.RemoteS3EventClient;
 import stroom.proxy.app.metrics.ProxyAppInfoProvider;
 import stroom.proxy.app.security.ProxyApiKeyCheckClient;
 import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
@@ -106,7 +107,8 @@ public class ProxyModule extends AbstractModule {
                 .bind(ProxyConfigHealthCheck.class)
                 .bind(ProxyApiKeyCheckClient.class)
                 .bind(ReceiveDataRuleSetClient.class)
-                .bind(RemoteFeedStatusClient.class);
+                .bind(RemoteFeedStatusClient.class)
+                .bind(RemoteS3EventClient.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),

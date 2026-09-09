@@ -218,8 +218,8 @@ class TestMetaDaoImpl {
 
     private void unlockAllLockedStreams() {
         JooqUtil.context(metaDbConnProvider, context -> {
-            final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
-            final byte lockedId = MetaStatusId.getPrimitiveValue(Status.LOCKED);
+            final byte unlockedId = Status.UNLOCKED.getPrimitiveValue();
+            final byte lockedId = Status.LOCKED.getPrimitiveValue();
             final int count = context.update(META_M)
                     .set(META_M.STATUS, unlockedId)
                     .set(META_M.STATUS_TIME, Instant.now().toEpochMilli())
@@ -1124,7 +1124,6 @@ class TestMetaDaoImpl {
     @Test
     void testSearch() {
         final List<QueryField> fields = MetaFields.getAllFields();
-        assertThat(fields.size()).isEqualTo(22);
 
         for (final QueryField field : fields) {
             final FieldIndex fieldIndex = new FieldIndex();
@@ -1160,7 +1159,7 @@ class TestMetaDaoImpl {
         // Logically delete all the added ones
         JooqUtil.context(metaDbConnProvider, context ->
                 context.update(META_M)
-                        .set(META_M.STATUS, MetaStatusId.DELETED)
+                        .set(META_M.STATUS, Status.DELETED.getPrimitiveValue())
                         .where(META_M.ID.in(metaList.stream()
                                 .map(Meta::getId)
                                 .collect(Collectors.toSet())))

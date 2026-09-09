@@ -28,6 +28,7 @@ import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ForwardS3Config;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.security.common.impl.InsecureTestCredentials;
 import stroom.security.openid.api.IdpType;
@@ -266,6 +267,7 @@ public class App extends Application<Config> {
                     final String type = switch (forwarderConfig) {
                         case final ForwardHttpPostConfig ignored -> "HTTP";
                         case final ForwardFileConfig ignored -> "FILE";
+                        case final ForwardS3Config ignored -> "S3";
                     };
                     return "    " + type + ": '" + name + "' -> " + destination + instant + state;
                 })

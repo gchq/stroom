@@ -19,6 +19,7 @@ ext.moduleName = 'stroom.meta.api'
 dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data:stroom-data-retention-api')
+    implementation project(':stroom-docref') // Just for HasDisplayValue
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')

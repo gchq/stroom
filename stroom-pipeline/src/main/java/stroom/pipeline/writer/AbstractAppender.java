@@ -28,10 +28,12 @@ import stroom.util.shared.Severity;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class AbstractAppender extends AbstractDestinationProvider implements Destination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractAppender.class);
+    private static final long INITIAL_SEQUENCE_NUMBER = 1L;
 
     private final ErrorReceiverProxy errorReceiverProxy;
 
@@ -43,6 +45,11 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     private Long sizeBytes = null;
     boolean splitAggregatedStreams;
     boolean splitRecords;
+
+    /**
+     * One based, like partNo
+     */
+    protected AtomicLong sequenceNumber = new AtomicLong(INITIAL_SEQUENCE_NUMBER);
 
     public AbstractAppender(final ErrorReceiverProxy errorReceiverProxy) {
         this.errorReceiverProxy = errorReceiverProxy;

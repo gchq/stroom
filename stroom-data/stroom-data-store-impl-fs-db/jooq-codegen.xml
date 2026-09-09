@@ -21,7 +21,7 @@
             <name>org.jooq.meta.mysql.MySQLDatabase</name>
             <inputSchema>__INPUT_SCHEMA__</inputSchema>
             <outputSchema>stroom</outputSchema>
-            <includes>fs.volume|fs.volume.group|fs.volume.state|fs.feed.path|fs.type.path|fs.meta.volume|fs.orphaned.meta.tracker</includes>
+            <includes>fs.volume|fs.volume.group|fs.volume.state|fs.feed.path|fs.type.path|fs.meta.volume|fs.orphaned.meta.tracker|zstd.dictionary|zstd.dictionary.task|fs_meta_s3_location</includes>
             <excludes>fs.schema.history</excludes>
             <recordVersionFields>version</recordVersionFields>
         </database>

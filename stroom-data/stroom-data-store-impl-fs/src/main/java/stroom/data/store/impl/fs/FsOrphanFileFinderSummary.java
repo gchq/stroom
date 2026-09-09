@@ -16,12 +16,14 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.FsPathHelper.DecodedPath;
+import stroom.data.store.impl.fs.standard.FsPathHelper;
+import stroom.data.store.impl.fs.standard.FsPathHelper.DecodedPath;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.ExceptionStringUtil;
 
 import java.io.IOException;
@@ -89,7 +91,7 @@ public class FsOrphanFileFinderSummary {
     @Override
     public String toString() {
         final StringBuilder summary = new StringBuilder();
-        if (summaryMap.size() > 0) {
+        if (NullSafe.hasEntries(summaryMap)) {
             summary.append("Summary:\n");
 
             final List<Entry<SummaryLine, AtomicLong>> sortedEntries = summaryMap.entrySet()
@@ -102,13 +104,18 @@ public class FsOrphanFileFinderSummary {
 
             summary.append("\n");
             summary.append(AsciiTable.builder(sortedEntries)
-                    .withColumn(Column.of("Type", entry2 -> entry2.getKey().getType()))
-                    .withColumn(Column.of("File/Directory", entry2 -> entry2.getKey().isDirectory
-                            ? "Dir"
-                            : "File"))
-                    .withColumn(Column.of("Feed (if present)", entry2 -> entry2.getKey().getFeed()))
-                    .withColumn(Column.of("Date", entry2 -> entry2.getKey().getDate()))
-                    .withColumn(Column.integer("Orphan Count", entry2 -> entry2.getValue().get()))
+                    .withColumn(Column.of("Type",
+                            entry2 -> entry2.getKey().getType()))
+                    .withColumn(Column.of("File/Directory",
+                            entry2 -> entry2.getKey().isDirectory
+                                    ? "Dir"
+                                    : "File"))
+                    .withColumn(Column.of("Feed (if present)",
+                            entry2 -> entry2.getKey().getFeed()))
+                    .withColumn(Column.of("Date",
+                            entry2 -> entry2.getKey().getDate()))
+                    .withColumn(Column.integer("Orphan Count",
+                            entry2 -> entry2.getValue().get()))
                     .build());
             summary.append("\n");
         }

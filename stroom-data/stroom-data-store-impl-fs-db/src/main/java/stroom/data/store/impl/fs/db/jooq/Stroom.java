@@ -13,12 +13,15 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SchemaImpl;
 
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsMetaS3Location;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
 import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeGroup;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
+import stroom.data.store.impl.fs.db.jooq.tables.ZstdDictionary;
+import stroom.data.store.impl.fs.db.jooq.tables.ZstdDictionaryTask;
 
 
 /**
@@ -38,6 +41,11 @@ public class Stroom extends SchemaImpl {
      * The table <code>stroom.fs_feed_path</code>.
      */
     public final FsFeedPath FS_FEED_PATH = FsFeedPath.FS_FEED_PATH;
+
+    /**
+     * The table <code>stroom.fs_meta_s3_location</code>.
+     */
+    public final FsMetaS3Location FS_META_S3_LOCATION = FsMetaS3Location.FS_META_S3_LOCATION;
 
     /**
      * The table <code>stroom.fs_meta_volume</code>.
@@ -70,6 +78,16 @@ public class Stroom extends SchemaImpl {
     public final FsVolumeState FS_VOLUME_STATE = FsVolumeState.FS_VOLUME_STATE;
 
     /**
+     * The table <code>stroom.zstd_dictionary</code>.
+     */
+    public final ZstdDictionary ZSTD_DICTIONARY = ZstdDictionary.ZSTD_DICTIONARY;
+
+    /**
+     * The table <code>stroom.zstd_dictionary_task</code>.
+     */
+    public final ZstdDictionaryTask ZSTD_DICTIONARY_TASK = ZstdDictionaryTask.ZSTD_DICTIONARY_TASK;
+
+    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -86,12 +104,15 @@ public class Stroom extends SchemaImpl {
     public final List<Table<?>> getTables() {
         return Arrays.asList(
             FsFeedPath.FS_FEED_PATH,
+            FsMetaS3Location.FS_META_S3_LOCATION,
             FsMetaVolume.FS_META_VOLUME,
             FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER,
             FsTypePath.FS_TYPE_PATH,
             FsVolume.FS_VOLUME,
             FsVolumeGroup.FS_VOLUME_GROUP,
-            FsVolumeState.FS_VOLUME_STATE
+            FsVolumeState.FS_VOLUME_STATE,
+            ZstdDictionary.ZSTD_DICTIONARY,
+            ZstdDictionaryTask.ZSTD_DICTIONARY_TASK
         );
     }
 }

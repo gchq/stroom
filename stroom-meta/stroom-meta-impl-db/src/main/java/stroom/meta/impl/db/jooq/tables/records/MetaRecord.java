@@ -172,6 +172,20 @@ public class MetaRecord extends UpdatableRecordImpl<MetaRecord> {
         return (Long) get(10);
     }
 
+    /**
+     * Setter for <code>stroom.meta.is_read_only</code>.
+     */
+    public void setIsReadOnly(Boolean value) {
+        set(11, value);
+    }
+
+    /**
+     * Getter for <code>stroom.meta.is_read_only</code>.
+     */
+    public Boolean getIsReadOnly() {
+        return (Boolean) get(11);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -195,7 +209,7 @@ public class MetaRecord extends UpdatableRecordImpl<MetaRecord> {
     /**
      * Create a detached, initialised MetaRecord
      */
-    public MetaRecord(Long id, Long createTime, Long effectiveTime, Long parentId, Byte status, Long statusTime, Integer feedId, Integer typeId, Integer processorId, Integer processorFilterId, Long processorTaskId) {
+    public MetaRecord(Long id, Long createTime, Long effectiveTime, Long parentId, Byte status, Long statusTime, Integer feedId, Integer typeId, Integer processorId, Integer processorFilterId, Long processorTaskId, Boolean isReadOnly) {
         super(Meta.META);
 
         setId(id);
@@ -209,6 +223,7 @@ public class MetaRecord extends UpdatableRecordImpl<MetaRecord> {
         setProcessorId(processorId);
         setProcessorFilterId(processorFilterId);
         setProcessorTaskId(processorTaskId);
+        setIsReadOnly(isReadOnly);
         resetTouchedOnNotNull();
     }
 }

@@ -16,12 +16,12 @@
 
 package stroom.proxy.app.handler;
 
-import stroom.proxy.repo.FeedKey;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.FeedKey;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.StringIdUtil;
 
