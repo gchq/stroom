@@ -664,9 +664,9 @@ public class S3Manager {
                                                         final Meta meta) {
         final ZonedDateTime time = switch (timeBasis) {
             case CURRENT_TIME -> ZonedDateTime.now();
-            case META_CREATION_TIME ->
-                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(Objects.requireNonNull(meta).getCreateMs()),
-                            ZoneOffset.UTC);
+            case META_CREATION_TIME -> ZonedDateTime.ofInstant(
+                    Instant.ofEpochMilli(Objects.requireNonNull(meta).getCreateMs()),
+                    ZoneOffset.UTC);
             case null -> ZonedDateTime.now();
         };
 

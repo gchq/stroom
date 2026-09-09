@@ -16,6 +16,8 @@
 
 package com.google.gwt.user.cellview.client;
 
+import stroom.util.shared.NullSafe;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.Scheduler;
@@ -425,12 +427,12 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
         }
 
         // Select the new index.
-        int newPageStart = pageStart;
-        int newPageSize = pageSize;
         final PendingState<T> pending = ensurePendingState();
         pending.keyboardSelectedRow = 0;
         pending.keyboardSelectedRowValue = null;
         pending.keyboardSelectedRowChanged = true;
+        int newPageStart = pageStart;
+        int newPageSize = pageSize;
         if (index >= 0 && index < pageSize) {
             pending.keyboardSelectedRow = index;
             pending.keyboardSelectedRowValue = index < pending.getRowDataSize()
@@ -774,9 +776,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
             pendingStateLoop = 0; // Let user code handle exception and try
             // again.
             throw new IllegalStateException("A possible infinite loop has been detected in a Cell Widget. This "
-                    + "usually happens when your SelectionModel triggers a "
-                    + "SelectionChangeEvent when SelectionModel.isSelection() is "
-                    + "called, which causes the table to redraw continuously.");
+                                            + "usually happens when your SelectionModel triggers a "
+                                            + "SelectionChangeEvent when SelectionModel.isSelection() is "
+                                            + "called, which causes the table to redraw continuously.");
         }
 
         // Swap the states in case user code triggers more changes, which will
@@ -835,7 +837,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
         // at least once. This prevents values from being selected by default.
         try {
             if (KeyboardSelectionPolicy.BOUND_TO_SELECTION == keyboardSelectionPolicy && selectionModel != null
-                    && newState.viewTouched) {
+                && newState.viewTouched) {
                 final T oldValue = oldState.getSelectedValue();
                 final Object oldKey = getRowValueKey(oldValue);
                 final T newValue = rowDataCount > 0
@@ -879,8 +881,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
 
         // If the keyboard row changes, add it to the modified set.
         final boolean keyboardRowChanged = newState.keyboardSelectedRowChanged
-                || (oldState.getKeyboardSelectedRow() != newState.keyboardSelectedRow)
-                || (oldState.getKeyboardSelectedRowValue() == null && newState.keyboardSelectedRowValue != null);
+                                           || (oldState.getKeyboardSelectedRow() != newState.keyboardSelectedRow)
+                                           || (oldState.getKeyboardSelectedRowValue() == null
+                                               && newState.keyboardSelectedRowValue != null);
 
         // Resolve selection. Check the selection status of all row values in
         // the pending state and compare them to the status in the old state. If
@@ -909,7 +912,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
                     // END OF INSERTED CODE
                     // ------------------------------------------------------------------------------------
                     final boolean isSelected = (rowValue != null && selectionModel != null
-                            && selectionModel.isSelected(rowValue));
+                                                && selectionModel.isSelected(rowValue));
 
                     // Compare to the old selection state.
                     final boolean wasSelected = oldState.isRowSelected(i);
@@ -990,9 +993,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
 
         // Calculate the modified ranges.
         final List<Range> modifiedRanges = calculateModifiedRanges(modifiedRows, pageStart, pageEnd);
-        final Range range0 = modifiedRanges.size() > 0
-                ? modifiedRanges.get(0)
-                : null;
+        final Range range0 = NullSafe.first(modifiedRanges);
         final Range range1 = modifiedRanges.size() > 1
                 ? modifiedRanges.get(1)
                 : null;
@@ -1013,7 +1014,7 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
             // Redraw if we have trimmed the row data.
             redrawRequired = true;
         } else if (range1 == null && range0 != null && range0.getStart() == pageStart
-                && (replaceDiff >= oldRowDataCount || replaceDiff > oldPageSize)) {
+                   && (replaceDiff >= oldRowDataCount || replaceDiff > oldPageSize)) {
             // Redraw if the new data completely overlaps the old data.
             redrawRequired = true;
         } else if (replaceDiff >= REDRAW_MINIMUM && replaceDiff > REDRAW_THRESHOLD * oldRowDataCount) {
@@ -1028,24 +1029,29 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
             redrawRequired = true;
         } else {
             for (final Range r : modifiedRanges) {
-               if (r.getStart() >= newState.rowData.size() || r.getStart() + r.getLength() >= newState.rowData.size()) {
-                   redrawRequired = true;
-                   break;
-               }
-            }
-
-            if (!redrawRequired && range0 != null) {
-                final int absStart = range0.getStart();
-                final int relStart = absStart - pageStart;
-                if (newState.rowData.size() <= relStart || newState.rowData.size() < relStart + range0.getLength()) {
+                if (r.getStart() >= newState.rowData.size()
+                    || r.getStart() + r.getLength() >= newState.rowData.size()) {
                     redrawRequired = true;
+                    break;
                 }
             }
-            if (!redrawRequired && range1 != null) {
-                final int absStart = range1.getStart();
-                final int relStart = absStart - pageStart;
-                if (newState.rowData.size() <= relStart || newState.rowData.size() < relStart + range1.getLength()) {
-                    redrawRequired = true;
+
+            if (!redrawRequired) {
+                if (range0 != null) {
+                    final int absStart = range0.getStart();
+                    final int relStart = absStart - pageStart;
+                    if (newState.rowData.size() <= relStart
+                        || newState.rowData.size() < relStart + range0.getLength()) {
+                        redrawRequired = true;
+                    }
+                }
+                if (range1 != null) {
+                    final int absStart = range1.getStart();
+                    final int relStart = absStart - pageStart;
+                    if (newState.rowData.size() <= relStart
+                        || newState.rowData.size() < relStart + range1.getLength()) {
+                        redrawRequired = true;
+                    }
                 }
             }
         }

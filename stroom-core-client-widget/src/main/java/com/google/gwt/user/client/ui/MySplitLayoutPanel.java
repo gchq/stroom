@@ -488,7 +488,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
                             // Reach the max for this split so don't resize anymore
                             allowResize = false;
                         }
-                    } else if (newVSplit > currVSplit && index == 0){
+                    } else if (newVSplit > currVSplit && index == 0) {
                         // Top split moving down
 
                         // Not the last split (from top) so need to make sure our split does not

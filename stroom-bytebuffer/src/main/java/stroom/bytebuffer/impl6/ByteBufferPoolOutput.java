@@ -72,9 +72,13 @@ public class ByteBufferPoolOutput extends UnsafeByteBufferOutput {
                 return true;
             } else if (required > this.maxCapacity - this.position) {
                 if (required > this.maxCapacity) {
-                    throw new KryoBufferOverflowException("Buffer overflow. Max capacity: " + this.maxCapacity + ", required: " + required);
+                    throw new KryoBufferOverflowException(
+                            "Buffer overflow. Max capacity: " + this.maxCapacity + ", required: " + required);
                 } else {
-                    throw new KryoBufferOverflowException("Buffer overflow. Available: " + (this.maxCapacity - this.position) + ", required: " + required);
+                    throw new KryoBufferOverflowException(
+                            "Buffer overflow. Available: "
+                            + (this.maxCapacity - this.position)
+                            + ", required: " + required);
                 }
             } else {
                 if (this.capacity == 0) {

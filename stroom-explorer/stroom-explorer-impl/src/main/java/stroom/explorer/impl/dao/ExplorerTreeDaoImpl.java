@@ -25,7 +25,6 @@ import stroom.explorer.impl.ExplorerTreePath;
 import stroom.explorer.impl.NodeTagSerialiser;
 import stroom.explorer.impl.TreeModel;
 import stroom.explorer.impl.db.ExplorerDbConnProvider;
-import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerPathRecord;
 import stroom.explorer.shared.ExplorerConstants;
@@ -162,18 +161,28 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
      */
     @Override
     public ExplorerTreeNode getRoot(final ExplorerTreeNode node) {
-        return JooqUtil.contextResult(explorerDbConnProvider, context -> Optional.ofNullable(context
-                        .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS, p.DEPTH)
-                        .from(n.innerJoin(p).on(n.ID.eq(p.ANCESTOR)))
-                        .where(p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
-                        .orderBy(p.DEPTH.desc())
-                        .fetchAny()).map(r ->
-                        new ExplorerTreeNode(r.get(n.ID),
-                                r.get(n.TYPE),
-                                r.get(n.UUID),
-                                r.get(n.NAME),
-                                NodeTagSerialiser.deserialise(r.get(n.TAGS))))
-                .orElse(node));
+        return JooqUtil.contextResult(explorerDbConnProvider, context -> {
+            //noinspection VariableTypeCanBeExplicit // Too many generics
+            final var record = context.select(
+                            n.ID,
+                            n.TYPE,
+                            n.UUID,
+                            n.NAME,
+                            n.TAGS,
+                            p.DEPTH)
+                    .from(n.innerJoin(p).on(n.ID.eq(p.ANCESTOR)))
+                    .where(p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
+                    .orderBy(p.DEPTH.desc())
+                    .fetchAny();
+            return Optional.ofNullable(record)
+                    .map(r -> new ExplorerTreeNode(
+                            r.get(n.ID),
+                            r.get(n.TYPE),
+                            r.get(n.UUID),
+                            r.get(n.NAME),
+                            NodeTagSerialiser.deserialise(r.get(n.TAGS))))
+                    .orElse(node);
+        });
     }
 
     @Override
@@ -193,7 +202,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .and(p2.DEPTH.gt(0))
                 )
                 .fetch(p.ANCESTOR));
-        if (roots.size() > 0) {
+        if (!roots.isEmpty()) {
             final Map<Integer, ExplorerNode> nodeMap = JooqUtil.contextResult(explorerDbConnProvider,
                             context -> context
                                     .selectFrom(n)
@@ -317,8 +326,8 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                 .map(this::mapRecord);
 
         if (parents.size() == 1) {
-            return parents.get(0);
-        } else if (parents.size() == 0) {
+            return parents.getFirst();
+        } else if (parents.isEmpty()) {
             return null;
         } else {
             throw new IllegalArgumentException("More than one parent found: " + parents);
@@ -565,7 +574,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                 throw new IllegalArgumentException("Sibling seems not to be a child but a root: " + sibling);
             }
 
-            position = pathsToClone.get(0).getOrderIndex();
+            position = pathsToClone.getFirst().getOrderIndex();
 
             assert position >= 0 : "Position of first path is not valid: " + pathsToClone;
         }
@@ -684,7 +693,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
             throw new RuntimeException("Found more than 1 tree node with uuid=" + uuid);
         }
 
-        return list.get(0);
+        return list.getFirst();
     }
 
     @Override

@@ -177,7 +177,6 @@ public class DistributedTaskFetcher {
 
     private int doFetch(final TaskContext taskContext) {
         LOGGER.trace("doFetch()");
-        int executingTaskCount = 0;
         info(taskContext, () -> "Starting task fetch");
 
         // Get the trackers.
@@ -192,6 +191,7 @@ public class DistributedTaskFetcher {
         int totalTaskLimit = getTotalTaskLimit(trackers);
 
         // If there are some tasks we need to get then get them.
+        int executingTaskCount = 0;
         if (totalTaskLimit > 0) {
             if (targetNodeSetFactory.isClusterStateInitialised()) {
                 for (final Entry<String, DistributedTaskFactory> entry :

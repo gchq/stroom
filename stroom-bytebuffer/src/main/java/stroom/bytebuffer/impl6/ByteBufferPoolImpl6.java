@@ -151,9 +151,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
             // ArrayBlockingQueue seems to be marginally faster than a LinkedBlockingQueue
             // If the configuredCount is 0 it means we will allocate on demand so no need to hold the queue/counter
             pooledBufferQueues[i] = configuredCount > 1
-                    ? new PooledByteBufferQueue(
-                    configuredCount,
-                    bufferCapacity)
+                    ? new PooledByteBufferQueue(configuredCount, bufferCapacity)
                     : null;
         }
 
@@ -174,20 +172,18 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
      */
     static boolean isPowerOf10(final int n) {
         return switch (n) {
-            case 1:
-            case 10:
-            case 100:
-            case 1_000:
-            case 10_000:
-            case 100_000:
-            case 1_000_000:
-            case 10_000_000:
-            case 100_000_000:
-            case 1_000_000_000:
-                yield true;
-                // fall-through (Comment to tell checkstyle we want to fall through cases)
-            default:
-                yield false;
+            case 1,
+                 10,
+                 100,
+                 1_000,
+                 10_000,
+                 100_000,
+                 1_000_000,
+                 10_000_000,
+                 100_000_000,
+                 1_000_000_000 -> true;
+            // fall-through (Comment to tell checkstyle we want to fall through cases)
+            default -> false;
         };
     }
 
@@ -299,7 +295,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
         }
 
         LOGGER.info("Cleared the following buffers from the pool (buffer size:number cleared) - " +
-                String.join(", ", msgs));
+                    String.join(", ", msgs));
     }
 
     @Override

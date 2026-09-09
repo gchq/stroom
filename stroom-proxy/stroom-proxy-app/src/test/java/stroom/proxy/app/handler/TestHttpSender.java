@@ -119,8 +119,8 @@ class TestHttpSender {
                                                         + " - "
                                                         + stroomStatusCode.getMessage());
                                 }
-                                case StandardHeaderArguments.STROOM_STATUS ->
-                                        TestHeader.of(String.valueOf(stroomStatusCode.getCode()));
+                                case StandardHeaderArguments.STROOM_STATUS -> TestHeader.of(
+                                        String.valueOf(stroomStatusCode.getCode()));
                                 default -> throw new RuntimeException("Unexpected header " + header);
                             };
                         })
@@ -212,8 +212,8 @@ class TestHttpSender {
                                                         + " - "
                                                         + stroomStatusCode.getMessage());
                                 }
-                                case StandardHeaderArguments.STROOM_STATUS ->
-                                        TestHeader.of(String.valueOf(stroomStatusCode.getCode()));
+                                case StandardHeaderArguments.STROOM_STATUS -> TestHeader.of(
+                                        String.valueOf(stroomStatusCode.getCode()));
                                 default -> throw new RuntimeException("Unexpected header " + header);
                             };
                         })
@@ -280,8 +280,8 @@ class TestHttpSender {
                                                         + " - "
                                                         + stroomStatusCode.getMessage());
                                 }
-                                case StandardHeaderArguments.STROOM_STATUS ->
-                                        TestHeader.of(String.valueOf(stroomStatusCode.getCode()));
+                                case StandardHeaderArguments.STROOM_STATUS -> TestHeader.of(
+                                        String.valueOf(stroomStatusCode.getCode()));
                                 default -> throw new RuntimeException("Unexpected header " + headerKey);
                             };
                             LOGGER.info("headerKey: {}, header: {}", headerKey, header);
@@ -356,8 +356,8 @@ class TestHttpSender {
                                                         + " - "
                                                         + stroomStatusCode.getMessage());
                                 }
-                                case StandardHeaderArguments.STROOM_STATUS ->
-                                        TestHeader.of(String.valueOf(stroomStatusCode.getCode()));
+                                case StandardHeaderArguments.STROOM_STATUS -> TestHeader.of(
+                                        String.valueOf(stroomStatusCode.getCode()));
                                 default -> throw new RuntimeException("Unexpected header " + header);
                             };
                         })

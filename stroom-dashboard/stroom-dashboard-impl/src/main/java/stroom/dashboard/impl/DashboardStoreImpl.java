@@ -35,6 +35,7 @@ import stroom.util.shared.Version;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,25 +128,8 @@ class DashboardStoreImpl
                     final List<ComponentConfig> newComponents = new ArrayList<>();
 
                     components.forEach(componentConfig -> {
-                        ComponentSettings componentSettings = componentConfig.getSettings();
-                        if (componentSettings != null) {
-                            switch (componentSettings) {
-                                case final QueryComponentSettings queryComponentSettings ->
-                                        componentSettings = remapQueryComponentSettings(queryComponentSettings,
-                                                dependencyRemapper);
-                                case final TableComponentSettings tableComponentSettings ->
-                                        componentSettings = remapTableComponentSettings(tableComponentSettings,
-                                                dependencyRemapper);
-                                case final VisComponentSettings visComponentSettings ->
-                                        componentSettings = remapVisComponentSettings(visComponentSettings,
-                                                dependencyRemapper);
-                                case final TextComponentSettings textComponentSettings ->
-                                        componentSettings = remapTextComponentSettings(textComponentSettings,
-                                                dependencyRemapper);
-                                default -> {
-                                }
-                            }
-                        }
+                        final ComponentSettings componentSettings = remapComponentSettings(
+                                dependencyRemapper, componentConfig);
 
                         final ComponentConfig newConfig = componentConfig
                                 .copy()
@@ -166,6 +150,25 @@ class DashboardStoreImpl
             }
             return updated;
         };
+    }
+
+    private @Nullable ComponentSettings remapComponentSettings(final DependencyRemapper dependencyRemapper,
+                                                               final ComponentConfig componentConfig) {
+        ComponentSettings componentSettings = componentConfig.getSettings();
+        if (componentSettings != null) {
+            componentSettings = switch (componentSettings) {
+                case final QueryComponentSettings queryComponentSettings -> remapQueryComponentSettings(
+                        queryComponentSettings, dependencyRemapper);
+                case final TableComponentSettings tableComponentSettings -> remapTableComponentSettings(
+                        tableComponentSettings, dependencyRemapper);
+                case final VisComponentSettings visComponentSettings -> remapVisComponentSettings(
+                        visComponentSettings, dependencyRemapper);
+                case final TextComponentSettings textComponentSettings -> remapTextComponentSettings(
+                        textComponentSettings, dependencyRemapper);
+                default -> componentSettings;
+            };
+        }
+        return componentSettings;
     }
 
     private QueryComponentSettings remapQueryComponentSettings(final QueryComponentSettings queryComponentSettings,

@@ -110,20 +110,16 @@ class ParseDateTime extends StroomExtensionFunctionCall {
         return result;
     }
 
-    private DateTimeValue convertToStandardDateFormat(final String functionName, final XPathContext context,
-                                               final Sequence[] arguments) throws XPathException {
-        DateTimeValue result = null;
+    private DateTimeValue convertToStandardDateFormat(final String functionName,
+                                                      final XPathContext context,
+                                                      final Sequence[] arguments) throws XPathException {
         final String value = getSafeString(functionName, context, arguments, 0);
-
-        String pattern = null;
-        if (arguments.length >= 2) {
-            pattern = getSafeString(functionName, context, arguments, 1);
-        }
-
-        String timeZone = null;
-        if (arguments.length == 3) {
-            timeZone = getSafeString(functionName, context, arguments, 2);
-        }
+        final String pattern = arguments.length >= 2
+                ? getSafeString(functionName, context, arguments, 1)
+                : null;
+        final String timeZone = arguments.length == 3
+                ? getSafeString(functionName, context, arguments, 2)
+                : null;
 
         // Parse the supplied date.
         Instant instant = null;
@@ -141,12 +137,7 @@ class ParseDateTime extends StroomExtensionFunctionCall {
             sb.append(")");
             outputWarning(context, sb, e);
         }
-
-        if (instant != null) {
-            result = DateTimeValue.fromJavaInstant(instant);
-        }
-
-        return result;
+        return NullSafe.get(instant, DateTimeValue::fromJavaInstant);
     }
 
     private Instant parseDate(final XPathContext context, final String value, final String pattern,
@@ -163,8 +154,8 @@ class ParseDateTime extends StroomExtensionFunctionCall {
     }
 
     private Function<String, Instant> createParser(final XPathContext context,
-                                                final String pattern,
-                                                final String timeZone) {
+                                                   final String pattern,
+                                                   final String timeZone) {
         final ZoneId zoneId = getTimeZone(context, timeZone);
         final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
                 .parseLenient()
@@ -195,8 +186,8 @@ class ParseDateTime extends StroomExtensionFunctionCall {
      * cope with conflicting default values for fields.
      */
     private Function<String, Instant> createWeekBasedParser(final FieldSet fieldSet,
-                                                         final DateTimeFormatterBuilder builder,
-                                                         final ZoneId zoneId) {
+                                                            final DateTimeFormatterBuilder builder,
+                                                            final ZoneId zoneId) {
         final ZonedDateTime referenceDateTime = getBaseTime().atZone(zoneId);
 
         if (!fieldSet.contains(WEEK_BASED_YEAR)
@@ -225,8 +216,8 @@ class ParseDateTime extends StroomExtensionFunctionCall {
     }
 
     private Function<String, Instant> createRegularParser(final FieldSet fieldSet,
-                                                       final DateTimeFormatterBuilder builder,
-                                                       final ZoneId zoneId) {
+                                                          final DateTimeFormatterBuilder builder,
+                                                          final ZoneId zoneId) {
         // Don't use the defaulting formatter if we can help it.
         if ((fieldSet.contains(YEAR) || fieldSet.contains(YEAR_OF_ERA))
             && fieldSet.contains(MONTH_OF_YEAR)
