@@ -118,9 +118,7 @@ public class HeapBufferPool implements BufferPool, HasSystemInfo {
             // ArrayBlockingQueue seems to be marginally faster than a LinkedBlockingQueue
             // If the configuredCount is 0 it means we will allocate on demand so no need to hold the queue/counter
             pooledBufferQueues[i] = configuredCount > 1
-                    ? new BufferQueue(
-                    configuredCount,
-                    bufferCapacity)
+                    ? new BufferQueue(configuredCount, bufferCapacity)
                     : null;
         }
 

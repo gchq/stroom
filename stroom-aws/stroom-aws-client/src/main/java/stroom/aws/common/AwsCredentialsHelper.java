@@ -111,17 +111,17 @@ public class AwsCredentialsHelper {
         final AwsCredentialsProvider credentialsProvider = switch (awsCredentials) {
             case null -> getDefaultCredentialsProvider();
             case final AwsAnonymousCredentials ignored -> getAnonCredentialsProvider();
-            case final stroom.aws.common.shared.AwsBasicCredentials awsBasicCredentials ->
-                    getBasicCredentialsProvider(awsBasicCredentials);
+            case final stroom.aws.common.shared.AwsBasicCredentials
+                         awsBasicCredentials -> getBasicCredentialsProvider(awsBasicCredentials);
             case final AwsDefaultCredentials ignored -> getDefaultCredentialsProvider();
             case final AwsEnvironmentVariableCredentials ignored -> getEnvironmentVariableCredentialsProvider();
-            case final AwsProfileCredentials awsProfileCredentials ->
-                    getProfileCredentialsProvider(awsProfileCredentials);
-            case final stroom.aws.common.shared.AwsSessionCredentials awsSessionCredentials ->
-                    getSessionCredentialsProvider(awsSessionCredentials);
+            case final AwsProfileCredentials awsProfileCredentials -> getProfileCredentialsProvider(
+                    awsProfileCredentials);
+            case final stroom.aws.common.shared.AwsSessionCredentials
+                         awsSessionCredentials -> getSessionCredentialsProvider(awsSessionCredentials);
             case final AwsSystemPropertyCredentials ignored -> getSystemPropertyCredentialsProvider();
-            case final AwsWebCredentials awsWebCredentials ->
-                    getWebIdentityTokenFileCredentialsProvider(awsWebCredentials);
+            case final AwsWebCredentials awsWebCredentials -> getWebIdentityTokenFileCredentialsProvider(
+                    awsWebCredentials);
         };
         LOGGER.debug("credentialsProvider() - returning: {}", credentialsProvider);
         return credentialsProvider;
