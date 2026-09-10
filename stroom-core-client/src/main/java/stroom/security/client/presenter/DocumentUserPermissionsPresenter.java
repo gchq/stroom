@@ -59,6 +59,7 @@ public class DocumentUserPermissionsPresenter
     private final ButtonView docEdit;
     private final SelectionBox<PermissionShowLevel> permissionVisibility;
     private DocRef docRef;
+    private int detailsRequestId;
 
     @Inject
     public DocumentUserPermissionsPresenter(
@@ -113,11 +114,12 @@ public class DocumentUserPermissionsPresenter
                 documentUserPermissionsListPresenter.getSelectionModel().getSelected();
         if (selected != null) {
             documentUserPermissionsEditPresenterProvider.get().show(
-                    docRef, selected, documentUserPermissionsListPresenter::refresh, this);
+                    docRef, selected, this::refresh, this);
         }
     }
 
     public void setDocRef(final DocRef docRef) {
+        detailsRequestId++;
         this.docRef = docRef;
         documentUserPermissionsListPresenter.setDocRef(docRef);
         documentUserPermissionsListPresenter.refresh();
@@ -149,13 +151,23 @@ public class DocumentUserPermissionsPresenter
 //                .fire();
 //    }
 
+    private void refresh() {
+        documentUserPermissionsListPresenter.refresh();
+        updateDetails();
+    }
+
     private void updateDetails() {
+        final int requestId = ++detailsRequestId;
+        final DocRef requestedDocRef = docRef;
         final DocumentUserPermissions selection = documentUserPermissionsListPresenter
                 .getSelectionModel()
                 .getSelected();
         // Fetch detailed permissions report.
         if (selection != null) {
-            docPermissionClient.getDocUserPermissionsReport(docRef, selection.getUserRef(), response -> {
+            docPermissionClient.getDocUserPermissionsReport(requestedDocRef, selection.getUserRef(), response -> {
+                if (requestId != detailsRequestId || !Objects.equals(requestedDocRef, docRef)) {
+                    return;
+                }
                 final SafeHtml details = getDetails(response);
                 getView().setUserRef(selection.getUserRef());
                 getView().setDetails(details);
