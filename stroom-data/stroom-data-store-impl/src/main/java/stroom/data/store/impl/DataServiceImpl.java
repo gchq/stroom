@@ -20,6 +20,7 @@ import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataInfoSection.Entry;
 import stroom.data.shared.UploadDataRequest;
 import stroom.data.store.api.AttributeMapFactory;
+import stroom.data.store.api.DataNotFoundException;
 import stroom.data.store.api.DataService;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.fs.shared.DataVolume;
@@ -278,9 +279,20 @@ class DataServiceImpl implements DataService {
             final List<DataInfoSection.Entry> attributeEntries = new ArrayList<>();
 
             final Map<String, String> attributeMap = metaRow.getAttributes();
-            final Map<String, String> additionalAttributes = attributeMapFactory.getAttributes(meta.getId());
-            final String files = additionalAttributes.remove("Files");
-            attributeMap.putAll(additionalAttributes);
+            final Map<String, String> additionalAttributes;
+            String files = null;
+            try {
+                additionalAttributes = attributeMapFactory.getAttributes(meta.getId());
+                files = additionalAttributes.remove("Files");
+                attributeMap.putAll(additionalAttributes);
+            } catch (final DataNotFoundException e) {
+                LOGGER.debug(() -> LogUtil.message("Error getting additional attributes for meta {} - {}",
+                        meta.getId(), LogUtil.exceptionMessage(e)));
+                final String msg = NullSafe.isNonBlankString(e.getMessage())
+                        ? " - " + e.getMessage()
+                        : "";
+                attributeMap.put("ERROR", "Unable to retrieve additional attributes" + msg);
+            }
 
             final List<String> sortedKeys = attributeMap
                     .keySet()

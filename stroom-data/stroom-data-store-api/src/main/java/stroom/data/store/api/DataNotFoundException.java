@@ -17,19 +17,15 @@
 package stroom.data.store.api;
 
 /**
- * Unchecked error in the data store.
+ * Unchecked error in the data store when the requested data cannot be found.
  */
-public class DataException extends RuntimeException {
+public class DataNotFoundException extends DataException {
 
-    public DataException(final String msg) {
+    public DataNotFoundException(final String msg) {
         super(msg);
     }
 
-    public DataException(final Throwable throwable) {
-        super(throwable.getMessage(), throwable);
-    }
-
-    public DataException(final String message, final Throwable throwable) {
+    public DataNotFoundException(final Throwable throwable) {
         super(throwable.getMessage(), throwable);
     }
 }

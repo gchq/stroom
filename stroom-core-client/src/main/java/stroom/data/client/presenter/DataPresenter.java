@@ -596,8 +596,13 @@ public class DataPresenter
                                 currentAvailableStreamTypes = availableChildStreamTypes;
                                 update(fireEvents, streamTypeName, availableChildStreamTypes);
                             })
-                            .onFailure(caught ->
-                                    itemNavigatorPresenter.setRefreshing(false))
+                            .onFailure(caught -> {
+                                itemNavigatorPresenter.setRefreshing(false);
+                                showSimpleError(caught.getMessage());
+                                final Set<String> availableChildStreamTypes = Collections.emptySet();
+                                currentAvailableStreamTypes = availableChildStreamTypes;
+                                update(fireEvents, streamTypeName, availableChildStreamTypes);
+                            })
                             .taskMonitorFactory(dataView)
                             .exec();
                 } else {
@@ -971,7 +976,7 @@ public class DataPresenter
     }
 
     private void setActiveTab(final TabData tab, final String streamType) {
-//        GWT.log("Setting active tab to " + tab.getLabel());
+        GWT.log("Setting active tab to " + tab.getLabel());
         dataView.getTabBar().selectTab(tab);
         currentTabName = tab.getLabel();
         updateEditorDisplay();
@@ -1251,6 +1256,12 @@ public class DataPresenter
 
         dataView.setSourceLinkVisible(false, false);
         setErrorText(title, errorText);
+        showTextPresenter();
+    }
+
+    private void showSimpleError(final String errorText) {
+        dataView.setSourceLinkVisible(false, false);
+        setErrorText("Unable to display source", errorText);
         showTextPresenter();
     }
 

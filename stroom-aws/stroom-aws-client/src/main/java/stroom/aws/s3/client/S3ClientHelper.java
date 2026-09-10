@@ -374,8 +374,9 @@ public class S3ClientHelper {
                     s3Metadata);
         } catch (final NoSuchKeyException e) {
             error("Error getting object info: ", bucketName, key, e);
-            throw new RuntimeException(LogUtil.message("No data found for using key: {}, bucket: {}",
-                    key, bucketName), e);
+            throw new RuntimeException(LogUtil.message(
+                    "No data found on S3 for key: {} in bucket: {} and region: {}. Has the data been deleted?",
+                    key, bucketName, regionName), e);
         } catch (final RuntimeException e) {
             error("Error getting object info: ", bucketName, key, e);
             throw e;
