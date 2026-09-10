@@ -58,12 +58,21 @@ public class DataInfoSection {
         private final String key;
         @JsonProperty
         private final String value;
+        @JsonProperty
+        private final String helpText;
+
+        public Entry(final String key,
+                     final String value) {
+            this(key, value, null);
+        }
 
         @JsonCreator
         public Entry(@JsonProperty("key") final String key,
-                     @JsonProperty("value") final String value) {
+                     @JsonProperty("value") final String value,
+                     @JsonProperty("helpText") final String helpText) {
             this.key = key;
             this.value = value;
+            this.helpText = helpText;
         }
 
         public String getKey() {
@@ -72,6 +81,10 @@ public class DataInfoSection {
 
         public String getValue() {
             return value;
+        }
+
+        public String getHelpText() {
+            return helpText;
         }
     }
 }
