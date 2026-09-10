@@ -543,6 +543,15 @@
             <property name="braceAdjustment" value="0"/>
             <property name="caseIndent" value="4"/>
             <property name="throwsIndent" value="4"/>
+
+            <!--
+              Ideally we would set this to 8 so that wrapped lines have a larger indent
+              to subsequent lines. However the IJ project settings currently have "Align when multiline"
+              set to True for a number of types (see Editor -> Cose Style -> Java).
+              Setting these to false and setting this prop to 8 improves things, but results in other
+              issues where CS and IJ formatting don't agree. It also makes the formatting of braced lambda
+              arguments a bit grim. Needs more thought.
+            -->
             <!-- Set to 4 not 8 to allow for IJ aligning method args -->
             <property name="lineWrappingIndentation" value="4"/>
 
