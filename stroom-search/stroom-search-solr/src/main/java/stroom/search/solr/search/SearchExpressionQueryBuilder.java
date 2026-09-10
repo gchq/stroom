@@ -503,8 +503,6 @@ public class SearchExpressionQueryBuilder {
     private Query getSubQuery(final IndexField field,
                               final String value,
                               final Set<String> terms) {
-        Query query = null;
-
         // Store terms for hit highlighting.
         String highlight = value;
         highlight = NON_WORD.matcher(highlight).replaceAll(" ");
@@ -544,6 +542,7 @@ public class SearchExpressionQueryBuilder {
 //            }
 //
 //        } else {
+        Query query = null;
         if (!val.isEmpty()) {
             // As this is just indexed as a keyword we only want to search
             // for the term.
@@ -560,7 +559,6 @@ public class SearchExpressionQueryBuilder {
             }
         }
 //        }
-
         return query;
     }
 

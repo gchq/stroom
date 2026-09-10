@@ -30,12 +30,13 @@ import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestSearchExpressionQueryBuilder {
 
@@ -66,13 +67,13 @@ public class TestSearchExpressionQueryBuilder {
         expressionBuilder.addTerm(answerField.getFldName(), Condition.EQUALS, answerFieldValue.toString());
         ElasticQueryParams queryBuilder = builder.buildQuery(expressionBuilder.build());
 
-        Assertions.assertTrue(queryBuilder.getQuery().isBool(), "Is a `bool` query");
+        assertThat(queryBuilder.getQuery().isBool()).as("Is a `bool` query").isTrue();
         BoolQuery boolQuery = queryBuilder.getQuery().bool();
-        Assertions.assertEquals(1, boolQuery.must().size(), "Bool query contains exactly one item");
+        assertThat(boolQuery.must().size()).as("Bool query contains exactly one item").isEqualTo(1);
 
         final TermQuery termQuery = boolQuery.must().getFirst().term();
-        Assertions.assertEquals(answerField.getFldName(), termQuery.field(), "Field name is correct");
-        Assertions.assertEquals(answerFieldValue, termQuery.value().longValue(), "Query value is correct");
+        assertThat(termQuery.field()).as("Field name is correct").isEqualTo(answerField.getFldName());
+        assertThat(termQuery.value().longValue()).as("Query value is correct").isEqualTo(answerFieldValue);
 
         // Add a second text EQUALS condition
         final ElasticIndexField nameField = ElasticIndexField
@@ -96,9 +97,9 @@ public class TestSearchExpressionQueryBuilder {
 
         // Parse the date/time. Must specify UTC for `timeZoneId`, otherwise the local system timezone will be used
         final Optional<ZonedDateTime> expectedDate = DateExpressionParser.parse(nowStr);
-        Assertions.assertTrue(expectedDate.isPresent(), "Date was parsed");
+        assertThat(expectedDate.isPresent()).as("Date was parsed").isTrue();
         final long dateFieldValue = expectedDate.get().toInstant().toEpochMilli();
-        Assertions.assertEquals(expectedParsedDateFieldValue, dateFieldValue, "Parsed date value is correct");
+        assertThat(dateFieldValue).as("Parsed date value is correct").isEqualTo(expectedParsedDateFieldValue);
 
         final ExpressionOperator notOperator = ExpressionOperator.builder()
                 .op(Op.NOT)
@@ -109,13 +110,13 @@ public class TestSearchExpressionQueryBuilder {
         queryBuilder = builder.buildQuery(expressionBuilder.build());
 
         boolQuery = queryBuilder.getQuery().bool();
-        Assertions.assertEquals(2, boolQuery.must().size(), "Bool query contains exactly two items");
+        assertThat(boolQuery.must().size()).as("Bool query contains exactly two items").isEqualTo(2);
         final BoolQuery innerBoolQuery = boolQuery.must().get(1).bool();
-        Assertions.assertEquals(1, innerBoolQuery.mustNot().size(),
-                "Inner bool query contains one item");
+        assertThat(innerBoolQuery.mustNot().size())
+                .as("Inner bool query contains one item").isEqualTo(1);
 
         final RangeQuery firstRangeQuery = innerBoolQuery.mustNot().getFirst().range();
-        Assertions.assertEquals(dateField.getFldName(), firstRangeQuery.untyped().field(),
-                "Field name of first range query is correct");
+        assertThat(firstRangeQuery.untyped().field())
+                .as("Field name of first range query is correct").isEqualTo(dateField.getFldName());
     }
 }

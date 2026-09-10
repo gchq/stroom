@@ -227,8 +227,8 @@ public class TracePredicate implements Predicate<Trace> {
         return switch (current) {
             case null -> false;
             case final NanoTimeValue nanoTimeValue -> Objects.equals(nanoTimeValue.getValue(), value);
-            case final NanoTimeRange timeRange ->
-                    timeRange.getMin().isLessThanEquals(value) && timeRange.getMax().isGreaterThanEquals(value);
+            case final NanoTimeRange timeRange -> timeRange.getMin().isLessThanEquals(value)
+                                                  && timeRange.getMax().isGreaterThanEquals(value);
             default -> current instanceof AnyTypeValue;
         };
     }
@@ -255,7 +255,7 @@ public class TracePredicate implements Predicate<Trace> {
     }
 
     private boolean checkLongConstraint(final ConstraintValue current,
-                                       final long value) {
+                                        final long value) {
         switch (current) {
             case null -> {
                 return false;

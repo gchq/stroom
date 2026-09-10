@@ -126,7 +126,6 @@ public class RollingFileDestination extends RollingDestination {
 
     @Override
     protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
-        boolean success = false;
 
         // TODO change to use TemplateCache
         String destFileName = rolledFileName;
@@ -146,6 +145,7 @@ public class RollingFileDestination extends RollingDestination {
         // Create destination path.
         Path dest = destFile;
 
+        boolean success = false;
         // If we have got valid paths for source and dest then attempt move.
         if (source != null) {
             if (Files.isRegularFile(dest)) {

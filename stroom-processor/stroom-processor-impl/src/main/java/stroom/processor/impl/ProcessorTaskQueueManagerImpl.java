@@ -57,7 +57,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -658,7 +657,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private int doQueueNewTasks(final TaskContext taskContext,
                                 final boolean isEmptyReportRequired) {
         LOGGER.trace("queueNewTasks() - Starting");
-        int totalAdded = 0;
 
         // We need to make sure that only 1 thread at a time is allowed to
         // create tasks. This should always be the case in production but some
@@ -687,6 +685,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         // Now fill the stream task store with tasks for each filter.
         // The aim is to create N tasks in total where N is processorConfig.getQueueSize
         // Also need to ensure each filter queue has no more than N in it.
+        int totalAdded = 0;
         try {
             if (processorConfig.isFillTaskQueue()) {
                 final StroomDuration skipEmptyFilterFetchDuration =

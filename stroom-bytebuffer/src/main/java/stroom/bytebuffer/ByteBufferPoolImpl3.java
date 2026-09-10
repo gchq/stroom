@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -71,7 +72,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
 
     private static final int MAX_BYTES_IN_POOL = 500 * 1024;
 
-    private final TreeMap<Key, ByteBuffer> bufferMap = new TreeMap<>();
+    private final NavigableMap<Key, ByteBuffer> bufferMap = new TreeMap<>();
 
 //    private final ConcurrentMap<Integer, AtomicInteger> requestsMap = new ConcurrentHashMap<>();
 //    private final AtomicInteger getCount = new AtomicInteger();
@@ -159,9 +160,10 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
 //            }
 //            // Not certain we need to zero the buffer if clear is called as any users of it
 //            // should be immediately writing to part of it and setting the limit/pos
-////            for (int i = buffer.position(); i < buffer.limit(); i++) {
-////                buffer.put((byte)0);
-////            }
+
+    /// /            for (int i = buffer.position(); i < buffer.limit(); i++) {
+    /// /                buffer.put((byte)0);
+    /// /            }
 //            buffer.clear();
 //
 //            try {
@@ -179,7 +181,6 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
 //            releaseCount.incrementAndGet();
 //        }
 //    }
-
     private synchronized void release(final ByteBuffer buffer) {
         if (buffer != null && buffer.isDirect()) {
             for (int i = buffer.position(); i < buffer.limit(); i++) {
@@ -280,8 +281,8 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
     @Override
     public String toString() {
         return "ByteBufferPool{" +
-                "bufferMap=" + bufferMap +
-                '}';
+               "bufferMap=" + bufferMap +
+               '}';
     }
 
     @Override
@@ -370,7 +371,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
             }
             final Key key = (Key) o;
             return capacity == key.capacity &&
-                    insertionTime == key.insertionTime;
+                   insertionTime == key.insertionTime;
         }
 
         @Override
@@ -382,9 +383,9 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
         @Override
         public String toString() {
             return "Key{" +
-                    "capacity=" + capacity +
-                    ", insertionTime=" + insertionTime +
-                    '}';
+                   "capacity=" + capacity +
+                   ", insertionTime=" + insertionTime +
+                   '}';
         }
     }
 }

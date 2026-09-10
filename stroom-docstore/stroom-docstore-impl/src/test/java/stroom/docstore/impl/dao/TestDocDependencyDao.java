@@ -18,18 +18,18 @@ package stroom.docstore.impl.dao;
 
 import stroom.collection.api.CollectionService;
 import stroom.db.util.JooqUtil;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreDBPersistenceDbModule;
 import stroom.docstore.impl.db.DocStoreDbConnProvider;
 import stroom.docstore.mock.MockDocFinderModule;
-import stroom.dictionary.api.WordListProvider;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.shared.CriteriaFieldSort;
-import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;

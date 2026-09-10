@@ -563,8 +563,6 @@ public class FlexLayout extends Composite {
                                    final MutableTabLayoutConfig targetTabLayoutConfig,
                                    final Pos targetPos) {
 //        GWT.log("moveTabOutside");
-        boolean moved = false;
-
         // Ensure we have a parent.
         MutableSplitLayoutConfig parent = targetTabLayoutConfig.getParent();
         if (parent == null) {
@@ -621,7 +619,8 @@ public class FlexLayout extends Composite {
         }
 
         // If tabs have been moved to the new tab layout then add the new layout.
-        if (newTabLayout.getTabs().size() > 0) {
+        boolean moved = false;
+        if (NullSafe.hasItems(newTabLayout.getTabs())) {
             // Recalculate the sizes for the parent so that
             // the target layout is resized.
             recalculateSingleLayout(parent);

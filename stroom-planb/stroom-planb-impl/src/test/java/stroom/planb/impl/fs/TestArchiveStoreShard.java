@@ -31,7 +31,6 @@ import stroom.planb.shared.StateSettings;
 import stroom.planb.shared.StateType;
 import stroom.task.api.ExecutorProvider;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -143,8 +142,9 @@ class TestArchiveStoreShard {
 
             // Refreshing the copy in place needed exclusive access, so this used to block until the
             // reader above released, however long that took.
-            Assertions.assertTimeoutPreemptively(Duration.ofSeconds(10), () ->
-                    shardManager.getArchive(doc, SHARD_INDEX, ref, db -> null));
+            assertThat(CompletableFuture.supplyAsync(() ->
+                    shardManager.getArchive(doc, SHARD_INDEX, ref, db -> null)
+            )).succeedsWithin(Duration.ofSeconds(10));
         } finally {
             releaseReader.countDown();
             holder.join();

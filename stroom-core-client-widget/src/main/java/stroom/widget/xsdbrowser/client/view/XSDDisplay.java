@@ -510,7 +510,6 @@ public class XSDDisplay extends Composite {
             Widget image = null;
             XSDNodeLabel lblName = null;
             Label lblOccurrence = null;
-            Label lblType = null;
 
             String name = node.getName();
             String valueType = null;
@@ -553,9 +552,10 @@ public class XSDDisplay extends Composite {
             if (name != null) {
                 lblName = new XSDNodeLabel(name, map, model, node, refNode);
             }
-            if (valueType != null) {
-                lblType = new Label(valueType, false);
-            }
+
+            final Label lblType = valueType != null
+                    ? new Label(valueType, false)
+                    : null;
 
             final int colCount = layout.getColumnCount();
 

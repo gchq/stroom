@@ -152,8 +152,8 @@ public class ExpressionParser {
 
                 // Add a special case for the NOT keyword that can exist as a function in the context of an expression.
                 if (LOGICAL_OPERATORS.contains(keywordGroup.getTokenType())
-                        && keywordGroup.getChildren().size() == 1
-                        && keywordGroup.getChildren().get(0) instanceof final TokenGroup tokenGroup) {
+                    && keywordGroup.getChildren().size() == 1
+                    && keywordGroup.getChildren().get(0) instanceof final TokenGroup tokenGroup) {
                     final String functionName = keywordGroup.getTokenType().toString().toLowerCase(Locale.ROOT);
                     final Function function = getFunction(
                             keywordGroup,
@@ -180,8 +180,8 @@ public class ExpressionParser {
         for (final Object object : output) {
             if (object instanceof final Token token) {
                 if (TokenType.COMMA.equals(token.getTokenType())
-                        || TokenType.WHITESPACE.equals(token.getTokenType())
-                        || TokenType.UNKNOWN.equals(token.getTokenType())) {
+                    || TokenType.WHITESPACE.equals(token.getTokenType())
+                    || TokenType.UNKNOWN.equals(token.getTokenType())) {
                     throw new TokenException(token, "Unexpected token found");
                 }
             }
@@ -405,7 +405,7 @@ public class ExpressionParser {
                         final Object previousToken = result.get(i - 1);
                         if (previousToken instanceof final Token signToken) {
                             if (TokenType.PLUS.equals(signToken.getTokenType()) ||
-                                    TokenType.MINUS.equals(signToken.getTokenType())) {
+                                TokenType.MINUS.equals(signToken.getTokenType())) {
 
                                 // If there were no tokens before that or the token before was an operator then
                                 // apply sign.
@@ -424,20 +424,18 @@ public class ExpressionParser {
                                     if (TokenType.MINUS.equals(signToken.getTokenType())) {
                                         // If there is no left param and we have a minus sign then negate the param.
                                         if (param instanceof final Val val) {
-                                            switch (val.type()) {
-                                                case INTEGER ->
-                                                        param = ValInteger.create(-((ValInteger) param).toInteger());
-                                                case LONG -> param = ValLong.create(-((ValLong) param).toLong());
-                                                case FLOAT -> param = ValFloat.create(-((ValFloat) param).toFloat());
-                                                case DOUBLE ->
-                                                        param = ValDouble.create(-((ValDouble) param).toDouble());
+                                            param = switch (val.type()) {
+                                                case INTEGER -> ValInteger.create(-((ValInteger) param).toInteger());
+                                                case LONG -> ValLong.create(-((ValLong) param).toLong());
+                                                case FLOAT -> ValFloat.create(-((ValFloat) param).toFloat());
+                                                case DOUBLE -> ValDouble.create(-((ValDouble) param).toDouble());
                                                 case DURATION -> {
                                                     final ValDuration valDuration = (ValDuration) param;
-                                                    param = ValDuration.create(-valDuration.toLong());
+                                                    yield ValDuration.create(-valDuration.toLong());
                                                 }
                                                 default -> throw new TokenException(signToken,
                                                         "Illegal negation of " + val.type().getName());
-                                            }
+                                            };
                                         } else {
                                             try {
                                                 param = negate(param);
