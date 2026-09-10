@@ -237,6 +237,7 @@ public class RetryingForwardDestination implements ForwardDestination {
         try {
             delegateDestination.add(sourceDir);
         } catch (final Exception e) {
+            addError(sourceDir, e);
             LOGGER.error(
                     "Error sending '" + FileUtil.getCanonicalPath(sourceDir)
                     + "' to " + getDestinationType() + " forward destination '"
@@ -500,6 +501,14 @@ public class RetryingForwardDestination implements ForwardDestination {
             if (e.getMessage() != null) {
                 sb.append(" - ");
                 sb.append(e.getMessage().replace('\n', ' '));
+            }
+            if (e instanceof final ForwardException forwardException) {
+                sb.append(" - Stroom status: ");
+                sb.append(forwardException.getStroomStatusCode().getCode());
+                sb.append(" - ");
+                sb.append(forwardException.getStroomStatusCode().getMessage());
+                sb.append(" - HTTP status: ");
+                sb.append(forwardException.getHttpResponseCode());
             }
             sb.append("\n");
             final Path errorPath = getErrorLogFile(dir);
