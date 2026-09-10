@@ -16,6 +16,7 @@
 
 package stroom.proxy.app.guice;
 
+import stroom.aws.s3.client.S3ClientModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
@@ -39,6 +40,7 @@ import stroom.proxy.app.event.EventStoreModule;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyReceiptIdGenerator;
 import stroom.proxy.app.handler.ProxyRequestHandler;
+import stroom.proxy.app.handler.ProxyS3EventConsumer;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.app.handler.ReceiverFactoryProvider;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
@@ -58,6 +60,7 @@ import stroom.receive.common.ReceiveAllAttributeMapFilter;
 import stroom.receive.common.ReceiveDataRuleSetService;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.receive.common.RequestHandler;
+import stroom.receive.common.S3EventConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
@@ -92,6 +95,7 @@ public class ProxyCoreModule extends AbstractModule {
         install(new ProxyCacheServiceModule());
         install(new QueueModule());
         install(new StoreModule());
+        install(new S3ClientModule());
 
         bind(ProxyId.class).asEagerSingleton();
         bind(ReceiptIdGenerator.class).to(ProxyReceiptIdGenerator.class).asEagerSingleton();
@@ -113,6 +117,7 @@ public class ProxyCoreModule extends AbstractModule {
         bind(DocDependencyService.class).to(MockDocDependencyService.class);
         bind(DataDirProvider.class).to(DataDirProviderImpl.class);
         bind(ProgressLog.class).to(ProgressLogImpl.class);
+        bind(S3EventConsumer.class).to(ProxyS3EventConsumer.class);
     }
 
     @SuppressWarnings("unused")

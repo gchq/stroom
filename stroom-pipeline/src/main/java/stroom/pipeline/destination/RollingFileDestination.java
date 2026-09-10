@@ -127,6 +127,7 @@ public class RollingFileDestination extends RollingDestination {
     @Override
     protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
 
+        // TODO change to use TemplateCache
         String destFileName = rolledFileName;
         destFileName = pathCreator.replaceTimeVars(destFileName);
         destFileName = pathCreator.replaceUUIDVars(destFileName);

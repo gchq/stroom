@@ -373,6 +373,10 @@ class DynamicTestBuilder {
                                 actualThrowable.getMessage());
                         Assertions.assertThat(actualThrowable)
                                 .isInstanceOf(expectedThrowableType);
+
+                        NullSafe.consume(testOutcome.getThrowableMessageSubString(), subStr ->
+                                Assertions.assertThat(actualThrowable)
+                                        .hasMessageContaining(subStr));
                     } else {
                         LOGGER.debug("Test did not throw an exception but we were expecting it to throw: {}. " +
                                      "Actual output: '{}'",
@@ -487,7 +491,29 @@ class DynamicTestBuilder {
         public CasesBuilder<I, O> addThrowsCase(final I input,
                                                 final Class<? extends Throwable> expectedThrowableType) {
 
-            final TestCase<I, O> testCase = (TestCase<I, O>) TestCase.throwing(input, expectedThrowableType);
+            final TestCase<I, O> testCase = (TestCase<I, O>) TestCase.throwing(
+                    input, expectedThrowableType, null);
+            addCase(testCase);
+            return this;
+        }
+
+        /**
+         * Add a test case to the {@link DynamicTest} {@link Stream} that is expected to throw
+         * an exception with type expectedThrowableType. The exception assertion will be done for
+         * you and any with*Assertion* steps will not be called.
+         *
+         * @param input                 The input to the test case.
+         * @param expectedThrowableType The expected class of the exception that will be thrown.
+         * @param throwableSubString    The test case will assert that the expected throwable
+         *                              contains throwableSubString.
+         */
+        @SuppressWarnings("unused")
+        public CasesBuilder<I, O> addThrowsCaseContaining(final I input,
+                                                          final Class<? extends Throwable> expectedThrowableType,
+                                                          final String throwableSubString) {
+
+            final TestCase<I, O> testCase = (TestCase<I, O>) TestCase.throwing(
+                    input, expectedThrowableType, throwableSubString);
             addCase(testCase);
             return this;
         }
@@ -506,7 +532,31 @@ class DynamicTestBuilder {
                                                      final I input,
                                                      final Class<? extends Throwable> expectedThrowableType) {
 
-            final TestCase<I, O> testCase = (TestCase<I, O>) TestCase.throwing(name, input, expectedThrowableType);
+            final TestCase<I, O> testCase = (TestCase<I, O>) TestCase.throwing(
+                    name, input, expectedThrowableType, null);
+            addCase(testCase);
+            return this;
+        }
+
+        /**
+         * Add a test case to the {@link DynamicTest} {@link Stream} that is expected to throw
+         * an exception with type expectedThrowableType. The exception assertion will be done for
+         * you and any with*Assertion* steps will not be called.
+         *
+         * @param name                  The name of the test case.
+         * @param input                 The input to the test case.
+         * @param expectedThrowableType The expected class of the exception that will be thrown.
+         * @param throwableSubString    The test case will assert that the expected throwable
+         *                              contains throwableSubString.
+         */
+        @SuppressWarnings("unused")
+        public CasesBuilder<I, O> addNamedThrowsCaseContaining(final String name,
+                                                               final I input,
+                                                               final Class<? extends Throwable> expectedThrowableType,
+                                                               final String throwableSubString) {
+
+            final TestCase<I, O> testCase = (TestCase<I, O>) TestCase.throwing(
+                    name, input, expectedThrowableType, throwableSubString);
             addCase(testCase);
             return this;
         }

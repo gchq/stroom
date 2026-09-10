@@ -154,7 +154,14 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
 
     @Override
     public Meta create(final MetaProperties metaProperties) {
+        LOGGER.debug("create() - metaProperties: {}", metaProperties);
         return metaDao.create(metaProperties);
+    }
+
+    @Override
+    public Meta create(final MetaProperties metaProperties, final Status status) {
+        LOGGER.debug("create() - metaProperties: {}, status: {}", metaProperties, status);
+        return metaDao.create(metaProperties, status);
     }
 
     @Override
@@ -263,6 +270,17 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
                     System.currentTimeMillis(),
                     usesUniqueIds);
         });
+    }
+
+    @Override
+    public AttributeMap getAttributes(final Meta meta) {
+        Objects.requireNonNull(meta);
+        final Map<Long, Map<String, String>> map = metaValueDao.getAttributes(List.of(meta));
+        return NullSafe.getOrElseGet(
+                map,
+                aMap -> aMap.get(meta.getId()),
+                AttributeMap::new,
+                AttributeMap::new);
     }
 
     @Override

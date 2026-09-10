@@ -109,6 +109,7 @@ public class CIKeys {
     // kebab case keys
     public static final CIKey CONTENT___ENCODING;
     public static final CIKey CONTENT___LENGTH;
+    public static final CIKey CONTENT___TYPE;
     public static final CIKey TRANSFER___ENCODING;
     public static final CIKey USER___AGENT;
     public static final CIKey X___FORWARDED___FOR;
@@ -262,6 +263,7 @@ public class CIKeys {
         // kebab case keys
         CONTENT___ENCODING = func.apply("content-encoding");
         CONTENT___LENGTH = func.apply("content-length");
+        CONTENT___TYPE = func.apply("content-type");
         TRANSFER___ENCODING = func.apply("transfer-encoding");
         USER___AGENT = func.apply("user-agent");
         X___FORWARDED___FOR = func.apply("X-Forwarded-For");

@@ -18,7 +18,9 @@ package stroom.data.store.impl.fs;
 
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.impl.DataVolumeService;
 import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
+import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
 import stroom.db.util.JooqUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.impl.db.MetaDbConnProvider;
@@ -28,6 +30,7 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
@@ -49,8 +52,6 @@ import static stroom.meta.impl.db.jooq.tables.Meta.META;
 class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestPhysicalDeleteExecutor.class);
-
-    private static final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("m");
 
     @Inject
     private FsFileFinder fileFinder;
@@ -168,8 +169,8 @@ class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
 
         final List<Meta> metas = IntStream.rangeClosed(1, totalMetaCount)
                 .boxed()
-                .map(i -> create(feedName))
-                .collect(Collectors.toList());
+                .map(ignored -> create(feedName))
+                .toList();
 
         for (final Meta meta : metas) {
             final List<Path> files = fileFinder.findAllStreamFile(meta);
@@ -177,15 +178,21 @@ class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
             countDataVolume(meta, 1);
         }
 
+        // Delete 12 metas
         final List<Meta> deletedMetas = metas.stream()
                 .limit(deletedMetaCount)
-                .peek(meta -> metaService.delete(meta.getId()))
+                .peek(meta -> {
+                    LOGGER.debug("Deleting meta {}", meta);
+                    metaService.delete(meta.getId());
+                })
                 .collect(Collectors.toList());
+        LOGGER.debug(() -> LogUtil.message("deletedMetas: {}", deletedMetas.stream().map(Meta::getId).toList()));
 
         final List<Meta> unlockedMetas = metas
                 .stream()
                 .filter(meta -> !deletedMetas.contains(meta))
-                .collect(Collectors.toList());
+                .toList();
+        LOGGER.debug(() -> LogUtil.message("unlockedMetas: {}", unlockedMetas.stream().map(Meta::getId).toList()));
 
         assertThat(deletedMetas)
                 .hasSize(deletedMetaCount);
@@ -196,7 +203,7 @@ class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
             countDataVolume(meta, 1);
         }
 
-        // Run twice to ensure the end state is the same and it copes with being re-run
+        // Run twice to ensure the end state is the same, and it copes with being re-run
         for (int i = 1; i <= 2; i++) {
             LOGGER.info("Run {}", i);
 
@@ -215,7 +222,7 @@ class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
                         .isEqualTo(0); // 2 files per meta
                 assertThat(progress.getBatchCount())
                         .isEqualTo(3); // 5, 5, 2
-            } else if (i == 2) {
+            } else {
                 // 2nd pass so nowt to do
                 assertThat(progress.getSuccessCount())
                         .isEqualTo(0);
@@ -255,8 +262,8 @@ class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
 
         final List<Meta> metas = IntStream.rangeClosed(1, totalMetaCount)
                 .boxed()
-                .map(i -> create(feedName))
-                .collect(Collectors.toList());
+                .map(ignored -> create(feedName))
+                .toList();
 
         for (final Meta meta : metas) {
             final List<Path> files = fileFinder.findAllStreamFile(meta);
@@ -283,7 +290,7 @@ class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
         final List<Meta> unlockedMetas = metas
                 .stream()
                 .filter(meta -> !deletedMetas.contains(meta))
-                .collect(Collectors.toList());
+                .toList();
 
         assertThat(deletedMetas)
                 .hasSize(deletedMetaCount);
@@ -317,7 +324,7 @@ class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
                         .isEqualTo(0); // 2 files per meta
                 assertThat(progress.getBatchCount())
                         .isEqualTo(2); // 5, 5
-            } else if (i == 2) {
+            } else {
                 // 2nd pass so nowt to do
                 assertThat(progress.getSuccessCount())
                         .isEqualTo(0);

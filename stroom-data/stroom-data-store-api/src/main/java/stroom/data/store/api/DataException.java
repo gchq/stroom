@@ -26,6 +26,10 @@ public class DataException extends RuntimeException {
     }
 
     public DataException(final Throwable throwable) {
-        super(throwable);
+        super(throwable.getMessage(), throwable);
+    }
+
+    public DataException(final String message, final Throwable throwable) {
+        super(throwable.getMessage(), throwable);
     }
 }

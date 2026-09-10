@@ -63,6 +63,8 @@ public interface MetaDao {
 
     Meta create(MetaProperties metaProperties);
 
+    Meta create(MetaProperties metaProperties, Status status);
+
     void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
 
     int count(FindMetaCriteria criteria);

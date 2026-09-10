@@ -12,19 +12,25 @@ import org.jooq.impl.Internal;
 import org.jooq.impl.QOM.ForeignKeyRule;
 
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsMetaS3Location;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
 import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeGroup;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
+import stroom.data.store.impl.fs.db.jooq.tables.ZstdDictionary;
+import stroom.data.store.impl.fs.db.jooq.tables.ZstdDictionaryTask;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsFeedPathRecord;
+import stroom.data.store.impl.fs.db.jooq.tables.records.FsMetaS3LocationRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsMetaVolumeRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsOrphanedMetaTrackerRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsTypePathRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeGroupRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeRecord;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeStateRecord;
+import stroom.data.store.impl.fs.db.jooq.tables.records.ZstdDictionaryRecord;
+import stroom.data.store.impl.fs.db.jooq.tables.records.ZstdDictionaryTaskRecord;
 
 
 /**
@@ -40,6 +46,8 @@ public class Keys {
 
     public static final UniqueKey<FsFeedPathRecord> KEY_FS_FEED_PATH_NAME = Internal.createUniqueKey(FsFeedPath.FS_FEED_PATH, DSL.name("KEY_fs_feed_path_name"), new TableField[] { FsFeedPath.FS_FEED_PATH.NAME }, true);
     public static final UniqueKey<FsFeedPathRecord> KEY_FS_FEED_PATH_PRIMARY = Internal.createUniqueKey(FsFeedPath.FS_FEED_PATH, DSL.name("KEY_fs_feed_path_PRIMARY"), new TableField[] { FsFeedPath.FS_FEED_PATH.ID }, true);
+    public static final UniqueKey<FsMetaS3LocationRecord> KEY_FS_META_S3_LOCATION_FS_META_S3_LOCATION_META_S3_HASH_IDX = Internal.createUniqueKey(FsMetaS3Location.FS_META_S3_LOCATION, DSL.name("KEY_fs_meta_s3_location_fs_meta_s3_location_meta_s3_hash_idx"), new TableField[] { FsMetaS3Location.FS_META_S3_LOCATION.META_ID, FsMetaS3Location.FS_META_S3_LOCATION.S3_HASH }, true);
+    public static final UniqueKey<FsMetaS3LocationRecord> KEY_FS_META_S3_LOCATION_PRIMARY = Internal.createUniqueKey(FsMetaS3Location.FS_META_S3_LOCATION, DSL.name("KEY_fs_meta_s3_location_PRIMARY"), new TableField[] { FsMetaS3Location.FS_META_S3_LOCATION.ID }, true);
     public static final UniqueKey<FsMetaVolumeRecord> KEY_FS_META_VOLUME_PRIMARY = Internal.createUniqueKey(FsMetaVolume.FS_META_VOLUME, DSL.name("KEY_fs_meta_volume_PRIMARY"), new TableField[] { FsMetaVolume.FS_META_VOLUME.META_ID, FsMetaVolume.FS_META_VOLUME.FS_VOLUME_ID }, true);
     public static final UniqueKey<FsOrphanedMetaTrackerRecord> KEY_FS_ORPHANED_META_TRACKER_PRIMARY = Internal.createUniqueKey(FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER, DSL.name("KEY_fs_orphaned_meta_tracker_PRIMARY"), new TableField[] { FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER.ID }, true);
     public static final UniqueKey<FsTypePathRecord> KEY_FS_TYPE_PATH_NAME = Internal.createUniqueKey(FsTypePath.FS_TYPE_PATH, DSL.name("KEY_fs_type_path_name"), new TableField[] { FsTypePath.FS_TYPE_PATH.NAME }, true);
@@ -49,6 +57,9 @@ public class Keys {
     public static final UniqueKey<FsVolumeGroupRecord> KEY_FS_VOLUME_GROUP_NAME = Internal.createUniqueKey(FsVolumeGroup.FS_VOLUME_GROUP, DSL.name("KEY_fs_volume_group_name"), new TableField[] { FsVolumeGroup.FS_VOLUME_GROUP.NAME }, true);
     public static final UniqueKey<FsVolumeGroupRecord> KEY_FS_VOLUME_GROUP_PRIMARY = Internal.createUniqueKey(FsVolumeGroup.FS_VOLUME_GROUP, DSL.name("KEY_fs_volume_group_PRIMARY"), new TableField[] { FsVolumeGroup.FS_VOLUME_GROUP.ID }, true);
     public static final UniqueKey<FsVolumeStateRecord> KEY_FS_VOLUME_STATE_PRIMARY = Internal.createUniqueKey(FsVolumeState.FS_VOLUME_STATE, DSL.name("KEY_fs_volume_state_PRIMARY"), new TableField[] { FsVolumeState.FS_VOLUME_STATE.ID }, true);
+    public static final UniqueKey<ZstdDictionaryRecord> KEY_ZSTD_DICTIONARY_PRIMARY = Internal.createUniqueKey(ZstdDictionary.ZSTD_DICTIONARY, DSL.name("KEY_zstd_dictionary_PRIMARY"), new TableField[] { ZstdDictionary.ZSTD_DICTIONARY.ID }, true);
+    public static final UniqueKey<ZstdDictionaryTaskRecord> KEY_ZSTD_DICTIONARY_TASK_PRIMARY = Internal.createUniqueKey(ZstdDictionaryTask.ZSTD_DICTIONARY_TASK, DSL.name("KEY_zstd_dictionary_task_PRIMARY"), new TableField[] { ZstdDictionaryTask.ZSTD_DICTIONARY_TASK.ID }, true);
+    public static final UniqueKey<ZstdDictionaryTaskRecord> KEY_ZSTD_DICTIONARY_TASK_ZSTD_DICT_TASK_FEED_STREAM_TYPE_CHILD_TYPE_META_ID_IDX = Internal.createUniqueKey(ZstdDictionaryTask.ZSTD_DICTIONARY_TASK, DSL.name("KEY_zstd_dictionary_task_zstd_dict_task_feed_stream_type_child_type_meta_id_idx"), new TableField[] { ZstdDictionaryTask.ZSTD_DICTIONARY_TASK.FEED_NAME, ZstdDictionaryTask.ZSTD_DICTIONARY_TASK.STREAM_TYPE_NAME, ZstdDictionaryTask.ZSTD_DICTIONARY_TASK.CHILD_STREAM_TYPE_NAME, ZstdDictionaryTask.ZSTD_DICTIONARY_TASK.META_ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions

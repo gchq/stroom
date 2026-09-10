@@ -101,7 +101,8 @@ public class JobBootstrap {
                 // We only add managed jobs to the DB as only managed ones can accept user changes.
                 if (scheduledJob.isManaged()) {
                     if (validJobNames.contains(scheduledJob.getName())) {
-                        LOGGER.error("Duplicate job name detected: {}", scheduledJob.getName());
+                        LOGGER.error("Duplicate job name detected: jobName: '{}', scheduledJob: '{}'",
+                                scheduledJob.getName(), scheduledJob);
                         throw new RuntimeException("Duplicate job name detected: " + scheduledJob.getName());
                     }
                     validJobNames.add(scheduledJob.getName());
@@ -159,7 +160,8 @@ public class JobBootstrap {
             // Distributed Jobs done a different way
             distributedTaskFactoryRegistry.getFactoryMap().forEach((jobName, factory) -> {
                 if (validJobNames.contains(jobName)) {
-                    LOGGER.error("Duplicate job name detected: {}", jobName);
+                    LOGGER.error("Duplicate job name detected: jobName: '{}', factory: '{}'",
+                            jobName, NullSafe.get(factory, Object::getClass, Class::getSimpleName));
                     throw new RuntimeException("Duplicate job name detected: " + jobName);
                 }
                 validJobNames.add(jobName);

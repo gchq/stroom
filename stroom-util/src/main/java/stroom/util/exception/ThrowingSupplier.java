@@ -29,6 +29,8 @@ public interface ThrowingSupplier<T, E extends Throwable> {
      * Wraps a function that throws a checked exception with a catch block that will wrap
      * any thrown exception with a {@link RuntimeException}, thus making it unchecked and
      * usable in a lambda.
+     * If the exception thrown is an {@link IOException} it will wrap it in an
+     * {@link UncheckedIOException} instead.
      */
     static <T, E extends Throwable> Supplier<T> unchecked(final ThrowingSupplier<T, E> s) {
         return () -> {

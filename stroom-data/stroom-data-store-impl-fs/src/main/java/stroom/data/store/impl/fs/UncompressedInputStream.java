@@ -35,7 +35,8 @@ import java.nio.file.StandardOpenOption;
  * <p>
  * if lazy it is assumed that a missing file means a blank stream.
  */
-class UncompressedInputStream extends InputStream implements SeekableInputStream {
+public class UncompressedInputStream extends InputStream implements SeekableInputStream {
+
     private final FileChannel raFile;
     private final BlockBufferedInputStream streamAdaptor;
     private long position;
@@ -44,7 +45,7 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
     // Use to help track non-closed streams
     private final StreamCloser streamCloser = new BasicStreamCloser();
 
-    UncompressedInputStream(final Path file, final boolean lazy) throws IOException {
+    public UncompressedInputStream(final Path file, final boolean lazy) throws IOException {
         FileChannel fileChannel = null;
         BlockBufferedInputStream blockBufferedInputStream = null;
 

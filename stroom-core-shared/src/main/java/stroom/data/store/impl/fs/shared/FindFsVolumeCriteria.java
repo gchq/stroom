@@ -21,6 +21,7 @@ import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Selection;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class FindFsVolumeCriteria extends BaseCriteria {
@@ -57,12 +59,18 @@ public class FindFsVolumeCriteria extends BaseCriteria {
 
     @JsonCreator
     public FindFsVolumeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                @JsonProperty("group")  final FsVolumeGroup group,
+                                @JsonProperty("group") final FsVolumeGroup group,
                                 @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                 @JsonProperty("selection") final Selection<VolumeUseStatus> selection) {
         super(pageRequest, sortList);
         this.group = group;
-        this.selection = selection;
+        this.selection = Objects.requireNonNull(selection);
+    }
+
+    @SerialisationTestConstructor
+    FindFsVolumeCriteria() {
+        group = null;
+        selection = Selection.selectAll();
     }
 
     public FsVolumeGroup getGroup() {

@@ -57,6 +57,7 @@ include 'stroom-contentstore:stroom-contentstore-api'
 include 'stroom-contentstore:stroom-contentstore-impl'
 
 // AWS
+include 'stroom-aws:stroom-aws-client'
 include 'stroom-aws:stroom-aws-s3-impl'
 
 // App.

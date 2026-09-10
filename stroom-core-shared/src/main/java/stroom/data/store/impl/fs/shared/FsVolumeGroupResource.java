@@ -53,6 +53,14 @@ public interface FsVolumeGroupResource extends RestResource, DirectRestService,
             @Parameter(description = "request", required = true) ExpressionCriteria request);
 
     @POST
+    @Path("findExtended")
+    @Operation(
+            summary = "Finds data volume groups matching request with extended row data",
+            operationId = "findExtendedFsVolumeGroups")
+    ResultPage<FsVolumeGroupRow> findExtended(
+            @Parameter(description = "request", required = true) ExpressionCriteria request);
+
+    @POST
     @Operation(
             summary = "Creates a data volume group",
             operationId = "createFsVolumeGroup")

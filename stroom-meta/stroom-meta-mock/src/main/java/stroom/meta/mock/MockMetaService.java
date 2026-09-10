@@ -101,6 +101,11 @@ public class MockMetaService implements MetaService, Clearable {
 
     @Override
     public Meta create(final MetaProperties properties) {
+        return create(properties, null);
+    }
+
+    @Override
+    public Meta create(final MetaProperties properties, final Status status) {
         feeds.add(properties.getFeedName());
         types.add(properties.getTypeName());
 
@@ -112,7 +117,7 @@ public class MockMetaService implements MetaService, Clearable {
         builder.createMs(properties.getCreateMs());
         builder.effectiveMs(properties.getEffectiveMs());
         builder.statusMs(properties.getStatusMs());
-        builder.status(Status.LOCKED);
+        builder.status(Objects.requireNonNullElse(status, Status.LOCKED));
 
         currentId++;
         builder.id(currentId);
@@ -160,6 +165,11 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public int updateStatus(final FindMetaCriteria criteria, final Status currentStatus, final Status newStatus) {
         return 0;
+    }
+
+    @Override
+    public AttributeMap getAttributes(final Meta meta) {
+        return new AttributeMap();
     }
 
     @Override

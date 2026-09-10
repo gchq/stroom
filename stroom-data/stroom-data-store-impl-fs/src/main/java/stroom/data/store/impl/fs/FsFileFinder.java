@@ -16,7 +16,9 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.DataVolumeService;
+import stroom.data.store.impl.fs.shared.DataVolume;
+import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
 import stroom.util.io.PathCreator;
@@ -56,8 +58,8 @@ public class FsFileFinder {
 
 
     Optional<Path> findRootStreamFile(final SimpleMeta meta, final DataVolume dataVolume) {
-        if (dataVolume != null && dataVolume.getVolume().getPath() != null) {
-            final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
+        if (dataVolume != null && dataVolume.volume().getPath() != null) {
+            final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
             final Path rootFile = fileSystemStreamPathHelper.getRootPath(
                     volumePath,
                     meta,

@@ -20,6 +20,20 @@ import stroom.util.logging.LogUtil;
 
 public class StringIdUtil {
 
+    public static int MAX_LONG_DIGITS = Long.toString(Long.MAX_VALUE).length();
+    public static int MAX_INTEGER_DIGITS = Integer.toString(Integer.MAX_VALUE).length();
+    public static final int PAD_SIZE = 3;
+    private static final String[] PAD_ARRAY = new String[MAX_LONG_DIGITS];
+
+    static {
+        final StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < PAD_ARRAY.length; i++) {
+            PAD_ARRAY[i] = stringBuilder.toString();
+            stringBuilder.append("0");
+        }
+    }
+
+
     /**
      * Convert id into a zero padded string that has a length that is divisible by three.
      * The length will be the shortest possible to fit the id value.
@@ -37,7 +51,7 @@ public class StringIdUtil {
             throw new IllegalArgumentException("Negative IDs not supported");
         }
         final String idStr = String.valueOf(id);
-        final int remainder = idStr.length() % 3;
+        final int remainder = idStr.length() % PAD_SIZE;
         return switch (remainder) {
             case 0 -> idStr; // Length is OK as is
             case 1 -> "00" + idStr;
@@ -56,7 +70,7 @@ public class StringIdUtil {
             return false;
         } else {
             final int len = idString.length();
-            if (len >= 3 && len % 3 == 0) {
+            if (len >= PAD_SIZE && len % PAD_SIZE == 0) {
                 for (final char chr : idString.toCharArray()) {
                     if (!Character.isDigit(chr)) {
                         return false;
@@ -76,13 +90,36 @@ public class StringIdUtil {
      */
     public static int getDigitCountAsId(final long id) {
         final int baseDigitCount = StringUtil.getDigitCount(id);
-        final int mod = baseDigitCount % 3;
+        final int mod = baseDigitCount % PAD_SIZE;
         return switch (mod) {
             case 0 -> baseDigitCount;
             case 1 -> baseDigitCount + 2;
             case 2 -> baseDigitCount + 1;
             default -> throw new IllegalStateException("Unexpected value: " + mod);
         };
+    }
+
+    /**
+     * @return The metaId as a directory path with one dir for 1000 metaIds.
+     * e.g.
+     * <ul>
+     *     <li>{@code 999 => ""}</li>
+     *     <li>{@code 4,321 => "004"}</li>
+     *     <li>{@code 123,456,789 => "123/456"}</li>
+     * </ul>
+     */
+    public static String getIdPath(final long metaId) {
+        final String idStr = idToString(metaId);
+        final StringBuilder sb = new StringBuilder();
+        final int endIdxExc = idStr.length() - PAD_SIZE;
+        for (int i = 0; i < endIdxExc; i += PAD_SIZE) {
+            final String part = idStr.substring(i, i + PAD_SIZE);
+            if (!sb.isEmpty()) {
+                sb.append("/");
+            }
+            sb.append(part);
+        }
+        return sb.toString();
     }
 
 }

@@ -51,6 +51,15 @@ public class PrimitiveValueConverterMapImpl<E extends HasPrimitiveValue>
         return mapByPrimitiveValue.get(i);
     }
 
+    @Override
+    public E fromPrimitiveValueOrThrow(final byte i) {
+        final E value = mapByPrimitiveValue.get(i);
+        if (value == null) {
+            throw new RuntimeException("Unknown primitive value " + i + " in " + itemType.getSimpleName());
+        }
+        return value;
+    }
+
     public E fromPrimitiveValue(final Byte i) {
         if (i == null) {
             return null;

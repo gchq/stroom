@@ -16,7 +16,9 @@
 
 package stroom.proxy.app.handler;
 
-public interface ForwardFileDestinationFactory {
+public interface ForwardFileDestinationFactory extends ForwardDestinationFactory<ForwardFileConfig> {
 
-    ForwardDestination create(ForwardFileConfig config);
+    default Class<ForwardFileConfig> getConfigClass() {
+        return ForwardFileConfig.class;
+    }
 }

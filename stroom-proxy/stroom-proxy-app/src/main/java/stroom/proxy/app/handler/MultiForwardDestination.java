@@ -84,7 +84,7 @@ final class MultiForwardDestination implements ForwardDestination {
                             copyDir, destination.asString(), LogUtil.exceptionMessage(e), e);
                     exceptions.add(new RuntimeException(LogUtil.message(
                             "Error adding {} to destination {}",
-                            copyDir, destination.asString())));
+                            copyDir, destination.asString()), e));
                 }
             }
             if (exceptions.isEmpty()) {

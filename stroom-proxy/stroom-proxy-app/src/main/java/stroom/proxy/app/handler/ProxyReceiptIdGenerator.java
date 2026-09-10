@@ -52,7 +52,7 @@ public class ProxyReceiptIdGenerator implements ReceiptIdGenerator {
      */
     public ProxyReceiptIdGenerator(final Supplier<String> nodeIdSupplier) {
         final String nodeId = Objects.requireNonNull(nodeIdSupplier).get();
-        LOGGER.info("Creating receiptIdGenerator for proxyId '{}'", nodeId);
+        LOGGER.info("Creating receiptIdGenerator for nodeId '{}'", nodeId);
         receiptIdGenerator = new UniqueIdGenerator(NODE_TYPE, nodeId);
     }
 

@@ -45,6 +45,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.function.Consumer;
@@ -95,7 +97,8 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
                             .create(FS_VOLUME_RESOURCE)
-                            .method(resource -> resource.find(criteria))
+                            .method(resource ->
+                                    resource.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(errorHandler)
                             .taskMonitorFactory(getView())
@@ -112,14 +115,25 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
         if (volume == null) {
             return null;
         }
-        if (FsVolumeType.S3.equals(volume.getVolumeType())) {
-            return NullSafe.getOrElse(
-                    volume.getS3ClientConfig(),
-                    S3ClientConfig::getBucketName,
-                    S3ClientConfig.DEFAULT_BUCKET_NAME);
+        if (FsVolumeType.isS3VolumeType(volume.getVolumeType()) && volume.getS3ClientConfig() != null) {
+            final S3ClientConfig s3ClientConfig = volume.getS3ClientConfig();
+            final List<String> parts = new ArrayList<>();
+            NullSafe.consumeNonBlankString(
+                    s3ClientConfig.getRegion(),
+                    region -> "region: " + region,
+                    parts::add);
+            NullSafe.consumeNonBlankString(
+                    s3ClientConfig.getBucketName(),
+                    region -> "bucket: " + region,
+                    parts::add);
+            NullSafe.consumeNonBlankString(
+                    s3ClientConfig.getKeyPattern(),
+                    region -> "key: " + region,
+                    parts::add);
+            return String.join(", ", parts);
+        } else {
+            return volume.getPath();
         }
-
-        return volume.getPath();
     }
 
     private boolean isEnabled(final FsVolume volume) {
@@ -146,9 +160,10 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                         .enabledWhen(this::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Type")
-                        .withToolTip("The type of file system in use. Either Standard or S3.")
+                        .withToolTip("The type of volume, either a Standard file system or another " +
+                                     "file/object store like S3.")
                         .build(),
-                90);
+                150);
 
         // Status.
         dataGrid.addResizableColumn(
@@ -169,7 +184,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                         .build(),
                 DataGridUtil.headingBuilder("Total")
                         .rightAligned()
-                        .withToolTip("The total size of the volume.")
+                        .withToolTip("The total size of the volume. Not supported for S3 based volumes.")
                         .build(),
                 ColumnSizeConstants.BYTE_SIZE_COL);
 
@@ -182,7 +197,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                 DataGridUtil.headingBuilder("Limit")
                         .rightAligned()
                         .withToolTip("The optional limit set on the volume. The volume will be considered full " +
-                                     "when the limit is reached.")
+                                     "when the limit is reached. Not supported for S3 based volumes.")
                         .build(),
                 ColumnSizeConstants.BYTE_SIZE_COL);
 
@@ -195,7 +210,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                         .build(),
                 DataGridUtil.headingBuilder("Used")
                         .rightAligned()
-                        .withToolTip("The amount of the volume that is in use.")
+                        .withToolTip("The amount of the volume that is in use. Not supported for S3 based volumes.")
                         .build(),
                 ColumnSizeConstants.BYTE_SIZE_COL);
 
@@ -209,7 +224,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                 DataGridUtil.headingBuilder("Free")
                         .rightAligned()
                         .withToolTip("The amount of the volume that is free. If a limit is set then only free " +
-                                     "space up to the limit is considered.")
+                                     "space up to the limit is considered. Not supported for S3 based volumes.")
                         .build(),
                 ColumnSizeConstants.BYTE_SIZE_COL);
 
@@ -223,7 +238,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                         .build(),
                 DataGridUtil.headingBuilder("Use%")
                         .withToolTip("The percentage of the volume that is in use. If a limit is set then the " +
-                                     "percentage is relative to the limit.")
+                                     "percentage is relative to the limit. Not supported for S3 based volumes.")
                         .build(),
                 ColumnSizeConstants.SMALL_COL);
 
@@ -236,7 +251,7 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                         .centerAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Full")
-                        .withToolTip("Whether this volume is full or not.")
+                        .withToolTip("Whether this volume is full or not. Not supported for S3 based volumes.")
                         .centerAligned()
                         .build(),
                 50);
@@ -249,7 +264,8 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                         .enabledWhen(this::isEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Usage Date")
-                        .withToolTip("The date/time this volume was last written to.")
+                        .withToolTip(
+                                "The date/time this volume was last written to. Not supported for S3 based volumes.")
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
     }

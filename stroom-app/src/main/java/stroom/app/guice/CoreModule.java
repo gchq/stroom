@@ -16,9 +16,13 @@
 
 package stroom.app.guice;
 
+import stroom.data.store.impl.S3EventPollManager;
 import stroom.index.lucene.LuceneModule;
+import stroom.job.api.ScheduledJobsBinder;
+import stroom.util.RunnableWrapper;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public class CoreModule extends AbstractModule {
 
@@ -35,8 +39,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.contentstore.impl.ContentStoreModule());
         install(new stroom.credentials.impl.CredentialsModule());
         install(new stroom.credentials.impl.dao.CredentialsDaoModule());
-        install(new stroom.aws.s3.impl.S3ConfigHandlerModule());
-        install(new stroom.aws.s3.impl.S3ConfigModule());
+        install(new stroom.aws.s3.impl.S3AllModules());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.cache.service.impl.CacheServiceModule());
         install(new stroom.cache.service.impl.CacheResourceModule());
@@ -65,6 +68,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.data.retention.impl.DataRetentionModule());
         install(new stroom.data.store.impl.DataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
+        install(new stroom.data.store.impl.fs.s3v2.ZstdModule());
         install(new stroom.data.store.impl.fs.FsDataStoreTaskHandlerModule());
         install(new stroom.data.store.impl.fs.dao.FsDataStoreDaoModule());
         install(new stroom.dictionary.impl.DictionaryHandlerModule());
@@ -143,5 +147,28 @@ public class CoreModule extends AbstractModule {
         install(new stroom.task.impl.TaskModule());
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
         install(new stroom.view.impl.ViewModule());
+
+        // We have to define this here rather than in RemoteFeedModule as that is common to
+        // both stroom and proxy.
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(S3EventNotificationsRunnable.class, builder -> builder
+                        .name("S3 Event Notifications Poll")
+                        .description("Polls an AWS SQS for S3 event notifications.")
+                        .frequencySchedule("1s") // Essentially to run continuously
+                        .enabled(false)
+                        .enabledOnBootstrap(false)
+                        .advanced(true));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class S3EventNotificationsRunnable extends RunnableWrapper {
+
+        @Inject
+        S3EventNotificationsRunnable(final S3EventPollManager s3EventPollManager) {
+            super(s3EventPollManager::poll);
+        }
     }
 }

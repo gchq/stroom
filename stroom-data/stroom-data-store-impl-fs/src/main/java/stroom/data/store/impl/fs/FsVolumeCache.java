@@ -30,7 +30,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-@EntityEventHandler(type = FsVolumeService.ENTITY_TYPE, action = {
+@EntityEventHandler(type = FsVolumeServiceImpl.ENTITY_TYPE, action = {
         EntityAction.UPDATE,
         EntityAction.DELETE})
 @Singleton

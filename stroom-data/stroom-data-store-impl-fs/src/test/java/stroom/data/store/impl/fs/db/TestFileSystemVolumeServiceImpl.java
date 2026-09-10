@@ -16,19 +16,28 @@
 
 package stroom.data.store.impl.fs.db;
 
+
+import stroom.cache.impl.CacheManagerImpl;
+import stroom.cache.impl.TemplateCacheImpl;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeGroupDao;
 import stroom.data.store.impl.fs.FsVolumeGroupServiceImpl;
 import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.data.store.impl.fs.FsVolumeServiceImpl;
 import stroom.data.store.impl.fs.FsVolumeStateDao;
+import stroom.data.store.impl.fs.StoreImpl;
+import stroom.data.store.impl.fs.StreamStore;
 import stroom.data.store.impl.fs.dao.FsVolumeDaoImpl;
 import stroom.data.store.impl.fs.dao.FsVolumeGroupDaoImpl;
 import stroom.data.store.impl.fs.dao.FsVolumeStateDaoImpl;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.node.api.NodeInfo;
 import stroom.node.mock.MockNodeInfo;
 import stroom.security.api.SecurityContext;
@@ -45,6 +54,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -79,11 +90,16 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 //            FileUtil.getCanonicalPath(tempDir.resolve("PUBLIC_2B")),
 //            FsVolumeState.create(0, 1000));
 //    //    private final SecurityContext securityContext = new MockSecurityContext();
-////    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
+    /// /    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
     private FsVolumeService volumeService = null;
+    private FsVolumeGroupService volumeGroupService = null;
 
     @TempDir
     static Path tempDir;
+    @Mock
+    private StoreImpl mockStoreImpl;
+    @Mock
+    private StreamStore mockStreamStore;
 
     @BeforeEach
     void init() {
@@ -103,16 +119,16 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 
         final FsVolumeDao fsVolumeDao = new FsVolumeDaoImpl(fsDataStoreDbConnProvider);
         final FsVolumeGroupDao fsVolumeGroupDao = new FsVolumeGroupDaoImpl(fsDataStoreDbConnProvider);
-        final FsVolumeGroupService fsVolumeGroupService = new FsVolumeGroupServiceImpl(
+        volumeGroupService = new FsVolumeGroupServiceImpl(
                 fsVolumeGroupDao,
                 securityContext,
                 FsVolumeConfig::new,
                 null);
         final FsVolumeStateDao fsVolumeStateDao = new FsVolumeStateDaoImpl(fsDataStoreDbConnProvider);
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
-        volumeService = new FsVolumeService(
+        volumeService = new FsVolumeServiceImpl(
                 fsVolumeDao,
-                fsVolumeGroupService,
+                volumeGroupService,
                 fsVolumeStateDao,
                 securityContext,
                 FsVolumeConfig::new,
@@ -120,43 +136,62 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
                 null,
                 null,
                 pathCreator,
+                new TemplateCacheImpl(new CacheManagerImpl()),
+                mockStoreImpl,
                 nodeInfo,
                 new SimpleTaskContextFactory(),
-                new HasCapacitySelectorFactory());
+                new HasCapacitySelectorFactory(),
+                new CacheManagerImpl());
 
 //        volumeService.volumeList = volumeList;
     }
 
     @Test
     void test() {
-        List<FsVolume> list = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
+        Mockito.when(mockStoreImpl.getStreamStore(Mockito.any(FsVolumeType.class)))
+                .thenReturn(mockStreamStore);
+        Mockito.when(mockStreamStore.validateVolume(Mockito.any(FsVolume.class), Mockito.any(), Mockito.any()))
+                .thenReturn(ValidationResult.ok());
+        List<FsVolume> list = volumeService.find(FindFsVolumeCriteria.matchAll())
+                .getValues();
         list.forEach(v -> volumeService.delete(v.getId()));
 
-        list = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
-        assertThat(list.size()).isZero();
+        list = volumeService.find(FindFsVolumeCriteria.matchAll())
+                .getValues();
+        assertThat(list.size())
+                .isZero();
 
         // Create
+        final FsVolumeGroup volumeGroup = volumeGroupService.create("My Volume");
         final FsVolume public1a = FsVolume.create(
+                volumeGroup,
                 FileUtil.getCanonicalPath(tempDir.resolve("PUBLIC_1A")),
                 FsVolumeState.create(0, 1000));
-        FsVolume fileVolume = volumeService.create(public1a).copy().byteLimit(2000000L).build();
+        FsVolume fileVolume = volumeService.create(public1a)
+                .copy()
+                .byteLimit(2000000L)
+                .build();
 
         // Update
         fileVolume = volumeService.update(fileVolume);
 
         // Find
-        list = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
+        list = volumeService.find(FindFsVolumeCriteria.matchAll())
+                .getValues();
         assertThat(list.size()).isOne();
         assertThat(list.getFirst()).isEqualTo(fileVolume);
 
         // Fetch
-        assertThat(volumeService.fetch(fileVolume.getId())).isEqualTo(fileVolume);
+        assertThat(volumeService.fetch(fileVolume.getId()))
+                .isEqualTo(fileVolume);
 
         // Delete
         final int count = volumeService.delete(fileVolume.getId());
         assertThat(count).isOne();
-        list = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
-        assertThat(list.size()).isZero();
+        list = volumeService.find(FindFsVolumeCriteria.matchAll())
+                .getValues();
+        assertThat(list.size())
+                .isZero();
     }
 
 

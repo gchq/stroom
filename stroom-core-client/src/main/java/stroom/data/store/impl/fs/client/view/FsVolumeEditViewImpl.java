@@ -51,6 +51,7 @@ public class FsVolumeEditViewImpl extends ViewImpl implements FsVolumeEditView {
         widget = binder.createAndBindUi(this);
     }
 
+
     @Override
     public Widget asWidget() {
         return widget;
@@ -85,6 +86,10 @@ public class FsVolumeEditViewImpl extends ViewImpl implements FsVolumeEditView {
     public void setConfigView(final View view) {
         configEditorContainer.setWidget(view.asWidget());
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, FsVolumeEditViewImpl> {
 

@@ -17,7 +17,10 @@
 package stroom.data.store.api;
 
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,9 +34,12 @@ public interface FsVolumeGroupService {
 
     List<FsVolumeGroup> getAll();
 
+    ResultPage<FsVolumeGroupRow> findExtended(ExpressionCriteria criteria);
+
     FsVolumeGroup create(String name);
 
     FsVolumeGroup getOrCreate(String name);
+
 
     FsVolumeGroup update(FsVolumeGroup indexVolumeGroup);
 
@@ -45,5 +51,12 @@ public interface FsVolumeGroupService {
 
     void ensureDefaultVolumes();
 
-    Optional<String> getDefaultVolumeGroup();
+    /// @return The default volume group if the default volume group name has been configured.
+    default Optional<FsVolumeGroup> getOrCreateDefaultVolumeGroup() {
+        return getDefaultVolumeGroupName()
+                .map(this::getOrCreate);
+    }
+
+    /// @return The default volume group name if it has been configured.
+    Optional<String> getDefaultVolumeGroupName();
 }

@@ -43,6 +43,10 @@ public class PrimitiveValueConverterArrayImpl<E extends HasPrimitiveValue>
         this.itemType = itemType;
         for (final HasPrimitiveValue value : values) {
             final int idx = value.getPrimitiveValue();
+            final HasPrimitiveValue currVal = sparseArray[idx];
+            if (currVal != null) {
+                throw new IllegalArgumentException(("Duplicate primitive value " + currVal));
+            }
             sparseArray[idx] = value;
         }
     }
@@ -50,6 +54,29 @@ public class PrimitiveValueConverterArrayImpl<E extends HasPrimitiveValue>
     @Override
     public E fromPrimitiveValue(final byte i) {
         return getValue(i);
+    }
+
+    @Override
+    public E fromPrimitiveValueOrThrow(final byte i) {
+        try {
+            final HasPrimitiveValue value = sparseArray[i];
+            if (value == null) {
+                // An unknown primitive value
+                throw new RuntimeException("Unknown primitive value " + i + " in " + itemType.getSimpleName());
+            } else {
+                try {
+                    //noinspection unchecked // GWT, so limited options for checking type of items
+                    return (E) value;
+                } catch (final Exception e) {
+                    throw new RuntimeException(
+                            "Unable to cast " + value.getClass().getName()
+                            + " to " + itemType.getName(), e);
+                }
+            }
+        } catch (final IndexOutOfBoundsException e) {
+            // An unknown primitive value
+            throw new RuntimeException("Unknown primitive value " + i + " in " + itemType.getSimpleName());
+        }
     }
 
     public E fromPrimitiveValue(final Byte i) {
