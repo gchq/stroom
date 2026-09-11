@@ -1157,8 +1157,17 @@ public class DataPresenter
                     .forEach(entry -> {
                         final String key = entry.getKey();
                         final String value = entry.getValue();
+                        final String helpText = entry.getHelpText();
+                        final SafeHtml keyHtml;
+                        if (helpText == null || helpText.isEmpty()) {
+                            keyHtml = SafeHtmlUtils.fromString(key);
+                        } else {
+                            final HtmlBuilder keyHtmlBuilder = new HtmlBuilder();
+                            keyHtmlBuilder.span(key, Attribute.title(helpText));
+                            keyHtml = keyHtmlBuilder.toSafeHtml();
+                        }
 
-                        tableBuilder.row(SafeHtmlUtils.fromString(key), toHtmlLineBreaks(key, value));
+                        tableBuilder.row(keyHtml, toHtmlLineBreaks(key, value));
                     });
         }
 
