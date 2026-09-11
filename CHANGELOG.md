@@ -13,6 +13,27 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.2] - 2026-09-11
+
+* Change all uses of `Math.random()` to instead use `ThreadLocalRandom` instead. Affects `random` xslt/expr funcs, appender output path selection and data/index volume selection.
+
+* Fix the random distribution of `outputPaths` values in `(File|HDFS|Rolling)Appender`. First and last items in the list were getting a lower share than other values.
+
+* Fix NPE if `outputPaths` is null on `(Rolling|Hdfs|File)Appender`.
+
+* Uplift AWS SDK to v2.40.5.
+
+* Feature **#5771** : Traces: store, publish and browse as a first-class document type on a shared fs.
+
+* Feature **#5775** : Add `dropwizard-json-logging` runtime dependency so that JSON format app/request logging can be used. See https://www.dropwizard.io/en/stable/manual/configuration.html#json-layout for details of the YAML configuration required to enable it. Add new proxy config property `proxyConfig.logStream.useMappedDiagnosticContext` to support structured JSON logging. Add `type` to the `proxyConfig.logStream.metaKeys` default list so the stream type gets logged.
+
+* Bug : Fix error handling in stream viewer when data does not exist in S3.
+
+* Feature **#5546** : Add an S3 forwarder to proxy to forward proxy format ZIPs to S3. Add an SQS consumer to Stroom to consume S3 create events and create a meta record for the S3 based file. Add the volume type `S3 v1 (Read only)` for reading data from an S3 store that Stroom only has read access to.
+
+* Feature **#5279** : Add experimental volume type `S3 v2 (Experimental)` that uses framed ZStandard compression. This is work in progress and not for production use.
+
+
 ## [v7.14-beta.1] - 2026-09-03
 
 * Feature **#5662** : Add stepping data store to cache stepping data and improve stepping performance.
@@ -2566,7 +2587,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.2...HEAD
+[v7.14-beta.2]: https://github.com/gchq/stroom/compare/v7.14-beta.1...v7.14-beta.2
 [v7.14-beta.1]: https://github.com/gchq/stroom/compare/v7.13-beta.15...v7.14-beta.1
 [v7.13-beta.15]: https://github.com/gchq/stroom/compare/v7.13-beta.14...v7.13-beta.15
 [v7.13-beta.14]: https://github.com/gchq/stroom/compare/v7.13-beta.13...v7.13-beta.14
