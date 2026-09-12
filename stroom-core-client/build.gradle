@@ -35,5 +35,6 @@ dependencies {
     testImplementation libs.slf4j.api
 
     testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.javax.inject.gwt
     testRuntimeOnly libs.bundles.common.test.runtime
 }
