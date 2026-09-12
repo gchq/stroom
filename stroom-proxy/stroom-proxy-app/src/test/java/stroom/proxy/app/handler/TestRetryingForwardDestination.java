@@ -18,6 +18,8 @@ package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.proxy.StroomStatusCode;
+import stroom.proxy.app.handler.HttpSender.ResponseStatus;
 import stroom.proxy.repo.ProxyServices;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
@@ -36,18 +38,23 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -227,6 +234,91 @@ class TestRetryingForwardDestination {
         assertThat(callCount)
                 .hasValue(2);
         proxyServices.stop();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void test_errorLogIncludesStroomStatus(final boolean queueAndRetryEnabled) throws Exception {
+        final ForwardException exception = ForwardException.nonRecoverable(
+                new ResponseStatus(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA,
+                        null, "Not Acceptable", 406),
+                new AttributeMap());
+
+        final String errorLog = readFailureLog(exception, queueAndRetryEnabled);
+
+        assertThat(errorLog)
+                .contains(" - ForwardException - Not Acceptable")
+                .contains("Stroom status: 110 - Feed is not set to receive data")
+                .contains("HTTP status: 406");
+        assertThat(errorLog.lines().count())
+                .isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void test_errorLogPreservesUnknownStatusDetails(final boolean queueAndRetryEnabled) throws Exception {
+        final ForwardException exception = ForwardException.recoverable(
+                new ResponseStatus(StroomStatusCode.UNKNOWN_ERROR, null,
+                        "Downstream unavailable\nPlease try later", 503),
+                new AttributeMap());
+
+        final String errorLog = readFailureLog(exception, queueAndRetryEnabled);
+
+        assertThat(errorLog)
+                .contains("Downstream unavailable Please try later")
+                .contains("Stroom status: " + StroomStatusCode.UNKNOWN_ERROR.getCode())
+                .contains(StroomStatusCode.UNKNOWN_ERROR.getMessage())
+                .contains("HTTP status: 503");
+        assertThat(errorLog.lines().count())
+                .isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void test_errorLogPreservesOtherExceptions(final boolean queueAndRetryEnabled) throws Exception {
+        final String errorLog = readFailureLog(new IllegalStateException("Connection failed"), queueAndRetryEnabled);
+
+        assertThat(errorLog)
+                .endsWith(" - IllegalStateException - Connection failed\n")
+                .doesNotContain("Stroom status", "HTTP status");
+    }
+
+    private String readFailureLog(final Exception exception,
+                                  final boolean queueAndRetryEnabled) throws Exception {
+        final ForwardHttpQueueConfig config = ForwardHttpQueueConfig.builder()
+                .forwardDelay(queueAndRetryEnabled)
+                .maxRetryAge(StroomDuration.ZERO)
+                .build();
+        final RetryingForwardDestination destination = new RetryingForwardDestination(
+                config, mockDelegateDestination, this::getDataDir,
+                new SimplePathCreator(() -> homeDir, () -> tempDir),
+                dirQueueFactory, proxyServices, mockFileStores);
+        Mockito.doThrow(exception)
+                .when(mockDelegateDestination)
+                .add(Mockito.any());
+        proxyServices.start();
+        try {
+            destination.add(createSourceDir(1));
+            TestUtil.waitForIt(
+                    () -> findErrorLogs(destination.getFailureDir()).size(),
+                    1,
+                    () -> "failure error.log to be written",
+                    Duration.ofSeconds(5),
+                    Duration.ofMillis(20),
+                    Duration.ofSeconds(1));
+            return Files.readString(findErrorLogs(destination.getFailureDir()).getFirst());
+        } finally {
+            proxyServices.stop();
+        }
+    }
+
+    private List<Path> findErrorLogs(final Path failureDir) {
+        try (final Stream<Path> paths = Files.walk(failureDir)) {
+            return paths.filter(path -> path.getFileName().toString().equals("error.log"))
+                    .toList();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private Path getDataDir() {
