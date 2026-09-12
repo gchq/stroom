@@ -49,6 +49,7 @@ import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -344,12 +345,15 @@ public class ApiKeysListPresenter
         dataGrid.addColumn(enabledColumn, "State", ColumnSizeConstants.SMALL_COL);
 
         // Expires on
-        final Column<HashedApiKey, String> expiresOnColumn = DataGridUtil.textColumnBuilder(
-                        (HashedApiKey key) -> dateTimeFormatter.formatWithDuration(key.getExpireTimeMs()))
+        final Column<HashedApiKey, SafeHtml> expiresOnColumn = DataGridUtil.htmlColumnBuilder(
+                        (HashedApiKey key) -> ApiKeyExpiryFormatter.format(
+                                key.getExpireTimeMs(),
+                                System.currentTimeMillis(),
+                                dateTimeFormatter.formatWithDuration(key.getExpireTimeMs())))
                 .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_EXPIRE_TIME)
                 .build();
-        dataGrid.addColumn(expiresOnColumn, "Expires On", ColumnSizeConstants.DATE_AND_DURATION_COL);
+        dataGrid.addResizableColumn(expiresOnColumn, "Expires On", ColumnSizeConstants.DATE_AND_DURATION_COL + 100);
         dataGrid.sort(expiresOnColumn);
 
         // Hash algorithm
