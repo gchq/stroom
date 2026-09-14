@@ -387,13 +387,14 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
      * state.
      */
     public Stream<ForwarderConfig> streamAllForwarders() {
-        return Stream.concat(
-                NullSafe.stream(getForwardFileDestinations())
-                        .filter(Objects::nonNull)
-                        .map(config -> (ForwarderConfig) config),
-                NullSafe.stream(getForwardHttpDestinations())
-                        .filter(Objects::nonNull)
-                        .map(config -> (ForwarderConfig) config));
+        return Stream.of(
+                        getForwardFileDestinations(),
+                        getForwardHttpDestinations(),
+                        getForwardS3Destinations())
+                .filter(NullSafe::hasItems)
+                .flatMap(List::stream)
+                .filter(Objects::nonNull) // null item
+                .map(config -> (ForwarderConfig) config);
     }
 
     /**
