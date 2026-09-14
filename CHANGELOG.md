@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.3] - 2026-09-14
+
+* Bug **#5793** : Fix `No enabled forward destinations are configured` error when booting proxy with only an S3 forward destination enabled.
+
+
 ## [v7.14-beta.2] - 2026-09-11
 
 * Change all uses of `Math.random()` to instead use `ThreadLocalRandom` instead. Affects `random` xslt/expr funcs, appender output path selection and data/index volume selection.
@@ -2587,7 +2592,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.3...HEAD
+[v7.14-beta.3]: https://github.com/gchq/stroom/compare/v7.14-beta.2...v7.14-beta.3
 [v7.14-beta.2]: https://github.com/gchq/stroom/compare/v7.14-beta.1...v7.14-beta.2
 [v7.14-beta.1]: https://github.com/gchq/stroom/compare/v7.13-beta.15...v7.14-beta.1
 [v7.13-beta.15]: https://github.com/gchq/stroom/compare/v7.13-beta.14...v7.13-beta.15
