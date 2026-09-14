@@ -88,9 +88,15 @@ public class EditApiKeyPresenter
         reset();
     }
 
+    /// Shows the API key dialog, optionally scoped to a particular owner.
+    ///
+    /// @param mode the dialog mode
+    /// @param onChangeHandler called after an API key changes
+    /// @param owner the fixed owner, or null to default to the current user and allow
+    ///              users with Manage Users permission to select another owner
     public void showCreateDialog(final Mode mode,
                                  final Runnable onChangeHandler,
-                                 final boolean allowOwnerSelection) {
+                                 final UserRef owner) {
         GWT.log("showCreateDialog called");
         this.onChangeHandler = onChangeHandler;
         setMode(mode);
@@ -100,9 +106,11 @@ public class EditApiKeyPresenter
 
         if (Mode.PRE_CREATE.equals(mode)) {
             caption = "Create new API key";
-            // Default to current user
-            ownerPresenter.setSelected(securityContext.getUserRef());
-            ownerPresenter.setEnabled(allowOwnerSelection);
+            final boolean canManageUsers = securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION);
+            ownerPresenter.setSelected(owner != null && canManageUsers
+                    ? owner
+                    : securityContext.getUserRef());
+            ownerPresenter.setEnabled(owner == null && canManageUsers);
         } else if (Mode.POST_CREATE.equals(mode)) {
             caption = "View created API key";
         } else {
