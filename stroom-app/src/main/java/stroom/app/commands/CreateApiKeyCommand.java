@@ -154,7 +154,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                             if (outputApiKey(response, outputPath)) {
                                 final String msg = LogUtil.message("API key successfully created for user '{}'",
                                         userId);
-                                LOGGER.info(msg);
+                                info(LOGGER, msg);
                                 System.exit(0);
                             } else {
                                 final String msg = LogUtil.message("API key for user '{}' could not be output",
@@ -186,7 +186,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 namespace.get(HASH_ALGORITHM_ARG_NAME),
                 HashAlgorithm.DEFAULT);
 
-        LOGGER.info("Creating API key for user '{}' using algorithm '{}'",
+        info(LOGGER, "Creating API key for user '{}' using algorithm '{}'",
                 userRef.toInfoString(),
                 hashAlgorithm.getDisplayValue());
 
@@ -226,7 +226,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 writer.close();
 
                 final File fileInfo = new File(path);
-                LOGGER.info("Wrote API key for user '{}' to file '{}'",
+                info(LOGGER, "Wrote API key for user '{}' to file '{}'",
                         createHashedApiKeyResponse.getHashedApiKey().getOwner().toInfoString(),
                         fileInfo.getAbsolutePath());
             } catch (final IOException e) {
@@ -240,7 +240,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
             }
         } else {
             // Output API key to standard out
-            LOGGER.info("Generated API key for user '{}': '{}'",
+            info(LOGGER, "Generated API key for user '{}': '{}'",
                     createHashedApiKeyResponse.getHashedApiKey().getOwner().toInfoString(),
                     createHashedApiKeyResponse.getApiKey());
         }
