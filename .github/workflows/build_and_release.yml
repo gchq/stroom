@@ -20,7 +20,7 @@ jobs:
 
       - name: Checkout code
         id: checkout_code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
         with:
           # Set this so it gets the annotated commit, not the commit being tagged.
           # Which means we can get the release msg
@@ -30,7 +30,7 @@ jobs:
         # Make sure the wrapper jar has not been tampered with
       - name: Validate gradle wrapper jar
         id: validate_gradle_wrapper
-        uses: gradle/actions/wrapper-validation@v4
+        uses: gradle/actions/wrapper-validation@v6
 
         # Set variables in github's special env file which are then automatically 
         # read into env vars in each subsequent step
@@ -128,7 +128,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Unit Test Results
           path: "**/test-results/**/*.xml"
