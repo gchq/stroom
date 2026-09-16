@@ -16,14 +16,21 @@
 
 package stroom.proxy.app.event;
 
-import stroom.meta.api.AttributeMap;
+import stroom.receive.common.InputStreamUtils;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 
 @Singleton
 public class EventResourceImpl implements EventResource {
@@ -32,35 +39,33 @@ public class EventResourceImpl implements EventResource {
 
     private final EventStore eventStore;
     private final ReceiveDataHelper receiveDataHelper;
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
 
     @Inject
     public EventResourceImpl(final EventStore eventStore,
-                             final ReceiveDataHelper receiveDataHelper) {
+                             final ReceiveDataHelper receiveDataHelper,
+                             final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         this.eventStore = eventStore;
         this.receiveDataHelper = receiveDataHelper;
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
     }
 
     @Override
     public String event(final HttpServletRequest request,
-                        final String event) {
-        final UniqueId receiptId = receiveDataHelper.process(
-                request,
-                (req, attributeMap, receiptId2) ->
-                        consume(attributeMap, receiptId2, event),
-                this::drop);
+                        final InputStream body) {
+        final UniqueId receiptId = receiveDataHelper.process(request, (req, attributeMap, id) -> {
+            LOGGER.debug("event() - receiptId: {}, attributeMap: {}", id, attributeMap);
+            // Read only after authentication, and no more than a receipt may hold: a rolled file is
+            // one receipt, and the receiver bounds a body by maxRequestSize.
+            final String event;
+            try (final InputStream bounded = InputStreamUtils.getBoundedInputStream(
+                    body, receiveDataConfigProvider.get().getMaxRequestSize())) {
+                event = new String(bounded.readAllBytes(), StandardCharsets.UTF_8);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            eventStore.accept(attributeMap, id, event);
+        });
         return receiptId.toString();
-    }
-
-    private void consume(final AttributeMap attributeMap,
-                         final UniqueId receiptId,
-                         final String event) {
-        LOGGER.debug("consume() - receiptId: {}, attributeMap: {}\n{}", receiptId, attributeMap, event);
-        eventStore.consume(attributeMap, receiptId, event);
-    }
-
-    private void drop(final HttpServletRequest request,
-                      final AttributeMap attributeMap,
-                      final UniqueId receiptId) {
-        LOGGER.debug("drop() - receiptId: {}, attributeMap: {}", receiptId, attributeMap);
     }
 }

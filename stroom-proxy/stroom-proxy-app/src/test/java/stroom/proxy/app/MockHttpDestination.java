@@ -22,10 +22,10 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
-import stroom.proxy.repo.AggregatorConfig;
 import stroom.receive.common.FeedStatusResourceV2;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.security.shared.ApiKeyCheckResource;
@@ -65,6 +65,7 @@ import org.assertj.core.api.Assertions;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -84,7 +85,44 @@ public class MockHttpDestination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MockHttpDestination.class);
 
-    private static final int DEFAULT_STROOM_PORT = 8080;
+    /**
+     * The port the mocked downstream stroom listens on. <strong>Chosen at run time, and never
+     * 8080.</strong>
+     * <p>
+     * It was the literal 8080, and until the {@code options()} merge in {@link #createExtension()}
+     * that value was never applied anyway - WireMock's own default happened to be the same number,
+     * which is why nobody noticed. The consequence was that the end-to-end tests could not start on
+     * any machine with a local Stroom up, which is the ordinary development setup, so they failed to
+     * bind and were quietly written off as environmental.
+     * </p>
+     * <p>
+     * A second fixed number would only move the collision, so the port is asked of the OS instead:
+     * bind port 0, read what was allocated, release it, and use it. There is a gap between releasing
+     * and WireMock binding, but it is a moment on a loopback port the OS has just handed out, and the
+     * alternative - resolving the port only after WireMock starts - does not work here, because the
+     * proxy config that has to point at this port is built from the constant before then.
+     * </p>
+     * <p>
+     * One port per JVM, so {@code TestResourceLocks.STROOM_APP_PORT_8080} still does real work in
+     * serialising the classes that share it. Its name no longer matches the number; it is a lock
+     * identity declared in {@code stroom-test-common} and shared, so it is left alone rather than
+     * renamed for a proxy-local reason.
+     * </p>
+     */
+    private static final int DEFAULT_STROOM_PORT = findFreePort();
+
+    /**
+     * @return A port the OS reports as free, so tests can run alongside anything already listening.
+     */
+    private static int findFreePort() {
+        try (final ServerSocket serverSocket = new ServerSocket(0)) {
+            final int port = serverSocket.getLocalPort();
+            LOGGER.info("Mock downstream stroom will listen on port {}", port);
+            return port;
+        } catch (final IOException e) {
+            throw new UncheckedIOException("Unable to find a free port for the mock stroom", e);
+        }
+    }
 
     // Can be changed by subclasses, e.g. if one test is noisy but others are not
     private volatile boolean isRequestLoggingEnabled = true;
@@ -98,46 +136,56 @@ public class MockHttpDestination {
 
     private WireMockExtension wireMockExtension;
 
+    /**
+     * Note the single {@code options()} call. There used to be two - one setting the port, one adding
+     * the listener - and the second REPLACED the first, so {@code DEFAULT_STROOM_PORT} was never
+     * applied and these tests bound 8080 only because that is WireMock's own default. The constant
+     * looked like it chose the port and did not, so nothing here could be moved off a port a
+     * developer running Stroom locally always holds.
+     */
     public WireMockExtension createExtension() {
         this.wireMockExtension = WireMockExtension.newInstance()
-                .options(WireMockConfiguration.wireMockConfig().port(DEFAULT_STROOM_PORT))
-                .options(WireMockConfiguration.wireMockConfig().extensions(new ServeEventListener() {
-                    @Override
-                    public String getName() {
-                        return "Request logging action";
-                    }
-
-                    @Override
-                    public void beforeResponseSent(final ServeEvent serveEvent, final Parameters parameters) {
-                        responseTimes.set(System.currentTimeMillis());
-                    }
-
-                    @Override
-                    public void afterComplete(final ServeEvent serveEvent, final Parameters parameters) {
-                        try {
-                            if (serveEvent.getResponse().getStatus() == 200) {
-                                if (isRequestLoggingEnabled) {
-                                    dumpWireMockEvent(serveEvent);
-                                }
-                                if (serveEvent.getRequest().getUrl().equals(getDataFeedPath())) {
-                                    captureDataFeedRequest(serveEvent);
-                                }
-                            } else {
-                                LOGGER.error(serveEvent.toString());
+                .options(WireMockConfiguration.wireMockConfig()
+                        .port(DEFAULT_STROOM_PORT)
+                        .extensions(new ServeEventListener() {
+                            @Override
+                            public String getName() {
+                                return "Request logging action";
                             }
 
-                        } finally {
-                            final long startTime = responseTimes.get();
-                            responseTimes.remove();
-                            LOGGER.info(() -> "Responding with " +
-                                              serveEvent.getResponse().getStatus() +
-                                              " after " +
-                                              Duration.ofMillis(System.currentTimeMillis() - startTime).toString() +
-                                              " count = " +
-                                              count.incrementAndGet());
-                        }
-                    }
-                }))
+                            @Override
+                            public void beforeResponseSent(final ServeEvent serveEvent, final Parameters parameters) {
+                                responseTimes.set(System.currentTimeMillis());
+                            }
+
+                            @Override
+                            public void afterComplete(final ServeEvent serveEvent, final Parameters parameters) {
+                                try {
+                                    if (serveEvent.getResponse().getStatus() == 200) {
+                                        if (isRequestLoggingEnabled) {
+                                            dumpWireMockEvent(serveEvent);
+                                        }
+                                        if (serveEvent.getRequest().getUrl().equals(getDataFeedPath())) {
+                                            captureDataFeedRequest(serveEvent);
+                                        }
+                                    } else {
+                                        LOGGER.error(serveEvent.toString());
+                                    }
+
+                                } finally {
+                                    final long startTime = responseTimes.get();
+                                    responseTimes.remove();
+                                    final String elapsed = Duration.ofMillis(
+                                            System.currentTimeMillis() - startTime).toString();
+                                    LOGGER.info(() -> "Responding with "
+                                                      + serveEvent.getResponse().getStatus()
+                                                      + " after "
+                                                      + elapsed
+                                                      + " count = "
+                                                      + count.incrementAndGet());
+                                }
+                            }
+                        }))
                 .build();
         return wireMockExtension;
     }
@@ -556,7 +604,7 @@ public class MockHttpDestination {
                 this::getDataFeedPostsToStroomCount,
                 expectedRequestCount,
                 () -> "Forward to stroom datafeed POST count",
-                Duration.ofMinutes(1),
+                Duration.ofMinutes(2),
                 Duration.ofMillis(100),
                 Duration.ofSeconds(1));
 
@@ -577,7 +625,7 @@ public class MockHttpDestination {
                 },
                 (long) count,
                 () -> "Received item count",
-                Duration.ofMinutes(1),
+                Duration.ofMinutes(2),
                 Duration.ofMillis(100),
                 Duration.ofSeconds(1));
 
@@ -615,7 +663,8 @@ public class MockHttpDestination {
                         .count())
                 .toList();
 
-        final AggregatorConfig aggregatorConfig = config.getProxyConfig().getAggregatorConfig();
+        final AggregateStageConfig aggregatorConfig =
+                config.getProxyConfig().getPipelineConfig().getStages().getAggregate();
         final int maxItemsPerAggregate = aggregatorConfig.getMaxItemsPerAggregate();
 
         // Each agg should be no bigger than configured max

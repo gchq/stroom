@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,22 +31,31 @@ import stroom.security.shared.AppPermissionSet;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
+/**
+ * Feed status as the downstream reports it, cached per feed so that receipt never waits on the
+ * downstream for a feed it has seen before.
+ * <p>
+ * The first request for a feed loads its status synchronously, because there is nothing to answer
+ * from. After that a request reads what is cached, and {@link #refreshStale()} - a registry
+ * schedule, {@code feed-status-refresh}, every {@link #REFRESH_INTERVAL} - reloads any entry
+ * older than {@link #MAX_AGE} that has been read since it was loaded, so what is refreshed is what
+ * is in use and a feed nobody asks about costs nothing until someone does. A reload that fails
+ * keeps the previous answer, or falls back to the configured default, and says so at ERROR. The
+ * service owns no threads.
+ * </p>
+ */
 @Singleton
-public class RemoteFeedStatusService implements FeedStatusService, Managed {
+public class RemoteFeedStatusService implements FeedStatusService {
+
+    public static final Duration REFRESH_INTERVAL = Duration.ofSeconds(30);
+    static final Duration MAX_AGE = Duration.ofMinutes(1);
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteFeedStatusService.class);
 
@@ -56,12 +65,11 @@ public class RemoteFeedStatusService implements FeedStatusService, Managed {
 
     private static final String CACHE_NAME = "Remote Feed Status Response Cache";
 
-    private final LoadingStroomCache<GetFeedStatusRequestV2, FeedStatusUpdater> updaters;
+    private final LoadingStroomCache<GetFeedStatusRequestV2, CachedStatus> statuses;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final Provider<CommonSecurityContext> securityContextProvider;
     private final RemoteFeedStatusClient remoteFeedStatusClient;
     private final GetFeedStatusRequestAdapter getFeedStatusRequestAdapter;
-    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Inject
     RemoteFeedStatusService(final Provider<FeedStatusConfig> feedStatusConfigProvider,
@@ -74,19 +82,10 @@ public class RemoteFeedStatusService implements FeedStatusService, Managed {
         this.securityContextProvider = securityContextProvider;
         this.remoteFeedStatusClient = remoteFeedStatusClient;
         this.getFeedStatusRequestAdapter = getFeedStatusRequestAdapter;
-        this.updaters = cacheManager.createLoadingCache(
+        this.statuses = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> feedStatusConfigProvider.get().getFeedStatusCache(),
-                k -> new FeedStatusUpdater(executorService));
-    }
-
-    @Override
-    public void start() {
-    }
-
-    @Override
-    public void stop() {
-        executorService.shutdownNow();
+                CachedStatus::new);
     }
 
     /**
@@ -103,55 +102,52 @@ public class RemoteFeedStatusService implements FeedStatusService, Managed {
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
         return securityContextProvider.get().secureResult(REQUIRED_PERM_SET, () -> {
-            final FeedStatus defaultFeedStatus = getDefaultFeedStatus();
-
-            // If remote feed status checking is disabled then return the default status.
             if (!remoteFeedStatusClient.isDownstreamEnabled()) {
-                // We shouldn't come in here anyway as the feed status filter will not be used
-                // if feed status check is not enabled in config.
-                return GetFeedStatusResponse.createOKResponse(defaultFeedStatus);
-            } else {
-                final FeedStatusUpdater feedStatusUpdater = updaters.get(request);
-                final CachedResponse cachedResponse = feedStatusUpdater.get(lastResponse -> {
-                    CachedResponse result;
-                    try {
-                        final GetFeedStatusResponse response = remoteFeedStatusClient.callFeedStatus(request);
-                        result = new CachedResponse(Instant.now(), response);
-
-                    } catch (final Exception e) {
-                        LOGGER.debug("Unable to check remote feed service", e);
-                        // Get the last response we received.
-                        if (lastResponse != null) {
-                            result = new CachedResponse(Instant.now(), lastResponse.getResponse());
-                            LOGGER.error(
-                                    "Unable to check remote feed service ({}).... will use last response ({}) - {}",
-                                    request, result, e.getMessage());
-
-                        } else {
-                            // Revert to default behaviour.
-                            result = new CachedResponse(Instant.now(),
-                                    GetFeedStatusResponse.createOKResponse(defaultFeedStatus));
-                            LOGGER.error(
-                                    "Unable to check remote feed service ({}).... will assume OK ({}) - {}",
-                                    request, result, e.getMessage());
-                        }
-                    }
-                    return result;
-                });
-                return cachedResponse.getResponse();
+                // The feed status filter is not used when the check is disabled, so this is a fallback.
+                return GetFeedStatusResponse.createOKResponse(getDefaultFeedStatus());
             }
+            return statuses.get(request).get();
         });
     }
 
-//    private boolean isFeedStatusCheckEnabled() {
-//        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-//        final boolean hasUrl = NullSafe.isNonBlankString(feedStatusConfig.getFeedStatusUrl());
-//        if (!hasUrl) {
-//            LOGGER.debug("Feed status check requested but property '{}' not configured.",
-//                    feedStatusConfig.getFullPath(FeedStatusConfig.PROP_NAME_URL));
-//        }
-//        return hasUrl;
-//    }
+    /**
+     * Reload every cached status older than {@link #MAX_AGE}. Runs on the registry's schedule.
+     */
+    public void refreshStale() {
+        refreshOlderThan(MAX_AGE);
+    }
+
+    void refreshOlderThan(final Duration age) {
+        if (!remoteFeedStatusClient.isDownstreamEnabled()) {
+            return;
+        }
+        final Instant start = Instant.now();
+        final int[] refreshed = {0};
+        statuses.forEach((request, status) -> {
+            if (status.refreshIfOlderThan(age)) {
+                refreshed[0]++;
+            }
+        });
+        LOGGER.debug(() -> "Refreshed " + refreshed[0] + " feed statuses in " + Duration.between(start, Instant.now()));
+    }
+
+    private GetFeedStatusResponse fetch(final GetFeedStatusRequestV2 request,
+                                        final GetFeedStatusResponse previous) {
+        try {
+            return remoteFeedStatusClient.callFeedStatus(request);
+        } catch (final Exception e) {
+            LOGGER.debug("Unable to check remote feed service", e);
+            if (previous != null) {
+                LOGGER.error("Unable to check remote feed service ({}).... will use last response ({}) - {}",
+                        request, previous, e.getMessage());
+                return previous;
+            }
+            final GetFeedStatusResponse fallback = GetFeedStatusResponse.createOKResponse(getDefaultFeedStatus());
+            LOGGER.error("Unable to check remote feed service ({}).... will assume OK ({}) - {}",
+                    request, fallback, e.getMessage());
+            return fallback;
+        }
+    }
 
     private FeedStatus getDefaultFeedStatus() {
         final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
@@ -174,75 +170,55 @@ public class RemoteFeedStatusService implements FeedStatusService, Managed {
     // --------------------------------------------------------------------------------
 
 
-    private static class FeedStatusUpdater {
+    /**
+     * One feed's cached status. The first read loads it under the monitor so concurrent first
+     * requests make one call; a refresh runs outside the monitor, on the schedule's thread, so a
+     * slow downstream never holds up a request that has an answer to read. Only an entry read since
+     * it was loaded is refreshed.
+     */
+    private class CachedStatus {
 
-        private final Executor executor;
-        private final AtomicBoolean updating = new AtomicBoolean();
-        private volatile CachedResponse cachedResponse;
+        private final GetFeedStatusRequestV2 request;
+        private volatile GetFeedStatusResponse response;
+        private volatile Instant loadedAt;
+        private volatile boolean readSinceLoad;
 
-        public FeedStatusUpdater(final Executor executor) {
-            this.executor = executor;
+        CachedStatus(final GetFeedStatusRequestV2 request) {
+            this.request = request;
         }
 
-        public CachedResponse get(final Function<CachedResponse, CachedResponse> function) {
-            if (cachedResponse == null) {
+        GetFeedStatusResponse get() {
+            GetFeedStatusResponse current = response;
+            if (current == null) {
                 synchronized (this) {
-                    if (cachedResponse == null) {
-                        setCachedResponse(function.apply(cachedResponse));
+                    current = response;
+                    if (current == null) {
+                        current = fetch(request, null);
+                        set(current);
                     }
                 }
             }
+            readSinceLoad = true;
+            return current;
+        }
 
-            if (cachedResponse.isOld()) {
-                LOGGER.debug("Response is old {}", cachedResponse);
-                if (updating.compareAndSet(false, true)) {
-                    CompletableFuture
-                            .runAsync(() ->
-                                    setCachedResponse(function.apply(cachedResponse)), executor)
-                            .whenComplete((v, t) ->
-                                    updating.set(false));
-                }
-            } else {
-                LOGGER.debug("Response is fresh {}", cachedResponse);
+        /**
+         * @return True if the status was reloaded.
+         */
+        boolean refreshIfOlderThan(final Duration age) {
+            final Instant at = loadedAt;
+            if (at == null || !readSinceLoad || at.isAfter(Instant.now().minus(age))) {
+                return false;
             }
-
-            return cachedResponse;
+            LOGGER.debug("Refreshing feed status for {}", request);
+            set(fetch(request, response));
+            return true;
         }
 
-        private synchronized void setCachedResponse(final CachedResponse cachedResponse) {
-            LOGGER.debug("Setting cachedResponse to {}", cachedResponse);
-            this.cachedResponse = cachedResponse;
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class CachedResponse {
-
-        private final Instant creationTime;
-        private final GetFeedStatusResponse response;
-
-        CachedResponse(final Instant creationTime, final GetFeedStatusResponse response) {
-            this.creationTime = creationTime;
-            this.response = response;
-        }
-
-        public boolean isOld() {
-            return creationTime.isBefore(Instant.now().minus(1, ChronoUnit.MINUTES));
-        }
-
-        public GetFeedStatusResponse getResponse() {
-            return response;
-        }
-
-        @Override
-        public String toString() {
-            return "CachedResponse{" +
-                   "creationTime=" + creationTime +
-                   ", response=" + response +
-                   '}';
+        private void set(final GetFeedStatusResponse loaded) {
+            response = loaded;
+            loadedAt = Instant.now();
+            readSinceLoad = false;
         }
     }
 }

@@ -16,7 +16,7 @@
 
 package stroom.proxy.app;
 
-import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.app.pipeline.config.PipelineConfigs;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.security.openid.api.IdpType;
@@ -54,11 +54,10 @@ public class TestEndToEndStoreAndForwardToFileNoDownstream extends AbstractEndTo
                         .openIdConfig(new ProxyOpenIdConfig()
                                 .withIdentityProviderType(IdpType.NO_IDP))
                         .build()))
-                .aggregatorConfig(AggregatorConfig.builder()
-                        .maxUncompressedByteSizeString("1G")
-                        .aggregationFrequency(StroomDuration.ofSeconds(5))
-                        .maxItemsPerAggregate(MAX_ITEMS_PER_AGG)
-                        .build())
+                .pipelineConfig(PipelineConfigs.fullPipelineWithAggregateBounds(
+                        MAX_ITEMS_PER_AGG,
+                        "1G",
+                        StroomDuration.ofSeconds(5)))
                 .addForwardFileDestination(MockFileDestination.createForwardFileConfig())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
                 // No downstream, just an isolated proxy
@@ -91,8 +90,8 @@ public class TestEndToEndStoreAndForwardToFileNoDownstream extends AbstractEndTo
             postDataHelper.sendFeed2TestData();
         }
 
-        assertThat(postDataHelper.getPostCount())
-                .isEqualTo(reqCount);
+        // Accepted, not merely sent: getPostCount() counts requests SENT, which only says the loop ran.
+        postDataHelper.assertAllPostsAccepted(reqCount);
 
         mockFileDestination.assertReceivedItemCount(getConfig(), reqCount);
 
@@ -126,8 +125,8 @@ public class TestEndToEndStoreAndForwardToFileNoDownstream extends AbstractEndTo
             postDataHelper.sendZipTestData2(4);
         }
 
-        Assertions.assertThat(postDataHelper.getPostCount())
-                .isEqualTo(8);
+        // As above: accepted, not sent.
+        postDataHelper.assertAllPostsAccepted(8);
 
         // Assert the contents of the files.
         mockFileDestination.assertFileContents(getConfig(), 12);

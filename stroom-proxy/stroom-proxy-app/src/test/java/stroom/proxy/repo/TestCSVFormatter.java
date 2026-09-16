@@ -35,7 +35,13 @@ class TestCSVFormatter {
                 .addCase("", "")
                 .addCase("\"", "\"\"")
                 .addCase("foo", "foo")
-                .addCase("foo,bar", "foo,bar")
+                // Was ("foo,bar", "foo,bar") — it pinned the defect. LogStream joins the
+                // top-level fields of every receive-log line with commas and does not quote them, so
+                // an unescaped comma in a URL, a receipt id or an error message shifted every column
+                // after it. A log that changes shape when the data contains a comma is worse than no
+                // log, because it still parses.
+                .addCase("foo,bar", "foo\\,bar")
+                .addCase("a=b,c\"d", "a\\=b\\,c\"\"d")
                 .build();
     }
 }

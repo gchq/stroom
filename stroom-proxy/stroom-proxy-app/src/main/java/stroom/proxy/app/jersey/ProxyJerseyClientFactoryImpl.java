@@ -47,10 +47,12 @@ class ProxyJerseyClientFactoryImpl extends AbstractJerseyClientFactory {
                 NullSafe.map(config.getJerseyClients()));
     }
 
+    @Override
     public String getJerseyClientNamePrefix() {
         return JERSEY_CLIENT_NAME_PREFIX;
     }
 
+    @Override
     public String getJerseyClientUserAgentPrefix() {
         return JERSEY_CLIENT_USER_AGENT_PREFIX;
     }

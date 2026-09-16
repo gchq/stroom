@@ -72,8 +72,9 @@ public class ProxyAuthenticationConfig extends AbstractConfig implements IsProxy
 
     @Override
     public String toString() {
-        return "AuthenticationConfig{" +
-               ", authenticationRequired=" + authenticationRequired +
+        return "ProxyAuthenticationConfig{" +
+               "authenticationRequired=" + authenticationRequired +
+               ", openIdConfig=" + openIdConfig +
                '}';
     }
 

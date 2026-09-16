@@ -1,0 +1,161 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.proxy.app.pipeline.runtime;
+
+import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.handler.Durability;
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.queue.FileGroupQueue;
+import stroom.proxy.app.pipeline.queue.FileGroupQueueMessageCodec;
+import stroom.proxy.app.pipeline.queue.QueueDefinition;
+import stroom.proxy.app.pipeline.queue.kafka.KafkaFileGroupQueue;
+import stroom.proxy.app.pipeline.queue.local.LocalFileGroupQueue;
+import stroom.proxy.app.pipeline.queue.sqs.SqsFileGroupQueue;
+import stroom.util.io.PathCreator;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Factory for logical file-group queues.
+ */
+public class FileGroupQueueFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FileGroupQueueFactory.class);
+
+    private static final String DEFAULT_QUEUE_ROOT = "data/pipeline/queues";
+
+    private final Map<String, QueueDefinition> queueDefinitions;
+    private final Durability durability;
+    private final Duration longestForwardRetryAge;
+    private final PathCreator pathCreator;
+    private final Map<String, FileGroupQueue> queueCache = new ConcurrentHashMap<>();
+
+    public FileGroupQueueFactory(final ProxyPipelineConfig pipelineConfig,
+                                 final PathCreator pathCreator) {
+        this(
+                Objects.requireNonNull(pipelineConfig, "pipelineConfig").getQueues(),
+                pathCreator);
+    }
+
+    public FileGroupQueueFactory(final Map<String, QueueDefinition> queueDefinitions,
+                                 final PathCreator pathCreator) {
+        this(queueDefinitions, pathCreator, ProxyConfig.DEFAULT_DURABILITY);
+    }
+
+    public FileGroupQueueFactory(final Map<String, QueueDefinition> queueDefinitions,
+                                 final PathCreator pathCreator,
+                                 final Durability durability) {
+        this(queueDefinitions, pathCreator, durability, null);
+    }
+
+    /**
+     * @param longestForwardRetryAge The longest {@code maxRetryAge} among the forward destinations,
+     *                               which a broker's retention must exceed; null when none is known.
+     */
+    public FileGroupQueueFactory(final Map<String, QueueDefinition> queueDefinitions,
+                                 final PathCreator pathCreator,
+                                 final Durability durability,
+                                 final Duration longestForwardRetryAge) {
+        this.durability = Objects.requireNonNull(durability, "durability");
+        this.longestForwardRetryAge = longestForwardRetryAge;
+        this.queueDefinitions = Map.copyOf(Objects.requireNonNull(queueDefinitions, "queueDefinitions"));
+        this.pathCreator = Objects.requireNonNull(pathCreator, "pathCreator");
+    }
+
+    public FileGroupQueue getQueue(final String queueName) {
+        final String nonBlankQueueName = requireNonBlank(queueName, "queueName");
+        final QueueDefinition definition = queueDefinitions.get(nonBlankQueueName);
+
+        if (definition == null) {
+            throw new IllegalArgumentException("No queue definition exists for logical queue "
+                                               + nonBlankQueueName + "");
+        }
+
+        return queueCache.computeIfAbsent(nonBlankQueueName, ignored -> createQueue(nonBlankQueueName, definition));
+    }
+
+    public boolean hasQueue(final String queueName) {
+        return queueDefinitions.containsKey(queueName);
+    }
+
+    private FileGroupQueue createQueue(final String queueName,
+                                       final QueueDefinition definition) {
+        try {
+            return switch (definition.getType()) {
+                case LOCAL_FILESYSTEM -> new LocalFileGroupQueue(
+                        queueName,
+                        getLocalFilesystemQueuePath(queueName, definition),
+                        new FileGroupQueueMessageCodec(),
+                        definition.getMaxDeliveryAttempts(),
+                        durability);
+                case KAFKA -> new KafkaFileGroupQueue(queueName, definition, new FileGroupQueueMessageCodec());
+                case SQS -> new SqsFileGroupQueue(
+                        queueName, definition, new FileGroupQueueMessageCodec(), longestForwardRetryAge);
+            };
+        } catch (final IOException e) {
+            throw new UncheckedIOException("Unable to create queue " + queueName, e);
+        }
+    }
+
+    private Path getLocalFilesystemQueuePath(final String queueName,
+                                             final QueueDefinition definition) {
+        final String configuredPath = definition.getPath();
+        final String path = configuredPath == null
+                ? DEFAULT_QUEUE_ROOT + "/" + queueName
+                : configuredPath;
+        return pathCreator.toAppPath(path);
+    }
+
+    private static String requireNonBlank(final String value,
+                                          final String fieldName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " must not be blank");
+        }
+        return value;
+    }
+
+    /**
+     * Close everything this factory has built so far, for a caller abandoning a partial assembly
+     *.
+     * <p>
+     * <strong>Must not throw.</strong> It runs on a failure path, and a throw here would replace the
+     * exception explaining why assembly was abandoned with one about tidying up after it.
+     * </p>
+     */
+    public void closeBuilt() {
+        queueCache.values().forEach(item -> {
+            try {
+                item.close();
+            } catch (final Exception e) {
+                LOGGER.error(() -> LogUtil.message(
+                        "Unable to close {} while abandoning a partial pipeline assembly: {}",
+                        item, LogUtil.exceptionMessage(e)), e);
+            }
+        });
+        queueCache.clear();
+    }
+
+}

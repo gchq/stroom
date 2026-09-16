@@ -99,8 +99,7 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
         LOGGER.debug("uniqueIdentity: '{}', displayName: '{}', fullName: '{}', claims: {}",
                 uniqueIdentity, displayName, fullName, jwtClaims);
 
-        return Optional.of(new ProxyClientUserIdentity(
-                uniqueIdentity, displayName, fullName, jwtContext));
+        return Optional.of(new ProxyClientUserIdentity(uniqueIdentity, displayName, fullName));
     }
 
     @Override
@@ -151,7 +150,10 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
             final Optional<UserIdentity> optIdentity = optUserDesc.map(userDesc ->
                     new ApiKeyUserIdentity(apiKey, userDesc));
 
-            LOGGER.debug("fetchApiKeyUserIdentity() - Returning {} for apiKey: {}", optIdentity, apiKey);
+            // Never log the whole key. ApiKeyUserIdentity.toString() truncates, but this site
+            // interpolated the raw value directly, which the toString fix did not cover.
+            LOGGER.debug("fetchApiKeyUserIdentity() - Returning {} for apiKey: {}",
+                    optIdentity, NullSafe.subString(apiKey, 0, 15));
             return optIdentity;
         } else {
             LOGGER.debug("fetchApiKeyUserIdentity() - No API key in request");
@@ -162,6 +164,20 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
     private String extractApiKey(final HttpServletRequest request) {
         return NullSafe.get(
                 request.getHeader(HttpHeaders.AUTHORIZATION),
-                header -> header.replace(JwtUtil.BEARER_PREFIX, ""));
+                ProxyUserIdentityFactory::stripBearerPrefix);
+    }
+
+    /**
+     * RFC 7235 makes the auth scheme case-insensitive, so {@code bearer} is as valid as
+     * {@code Bearer}. This also strips the scheme only where it appears as a prefix - the previous
+     * implementation used {@link String#replace} which is both case-sensitive and would have removed
+     * the text from anywhere in the credential.
+     */
+    static String stripBearerPrefix(final String authorizationHeader) {
+        final String trimmed = authorizationHeader.trim();
+        if (trimmed.regionMatches(true, 0, JwtUtil.BEARER_PREFIX, 0, JwtUtil.BEARER_PREFIX.length())) {
+            return trimmed.substring(JwtUtil.BEARER_PREFIX.length()).trim();
+        }
+        return trimmed;
     }
 }

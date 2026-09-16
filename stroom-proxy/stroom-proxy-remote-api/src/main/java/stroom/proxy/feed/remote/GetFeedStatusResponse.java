@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class GetFeedStatusResponse extends RemoteResponse {
 
@@ -36,8 +38,14 @@ public class GetFeedStatusResponse extends RemoteResponse {
     @JsonProperty
     private StroomStatusCode stroomStatusCode;
 
+    /**
+     * For frameworks that require a no-arg constructor. It deliberately does <strong>not</strong>
+     * default the status: this constructor used to default to {@link FeedStatus#Receive} while
+     * the {@link JsonCreator} one below - the only route by which a status-less object is actually
+     * built - left it null, so the class had two contradictory answers to "what does absent mean?"
+     * and no caller of this one. Absent is now not an answer at all; see the creator.
+     */
     public GetFeedStatusResponse() {
-        this.status = FeedStatus.Receive;
     }
 
     private GetFeedStatusResponse(final FeedStatus status,
@@ -49,11 +57,19 @@ public class GetFeedStatusResponse extends RemoteResponse {
         }
     }
 
+    /**
+     * @param status Required. A response that does not say what to do with the feed is not a usable
+     *               answer, and the one consumer switches on it, so a null here previously became an
+     *               opaque NPE deep in the receive path. Refusing it at the boundary instead turns a
+     *               malformed downstream response into a {@code FeedStatusUnavailableException}, which
+     *               is what the last-good-response and {@code fallbackReceiveAction} paths exist to
+     *               handle - the operator's configured choice rather than an accident.
+     */
     @JsonCreator
     public GetFeedStatusResponse(@JsonProperty("status") final FeedStatus status,
                                  @JsonProperty("message") final String message,
                                  @JsonProperty("stroomStatusCode") final StroomStatusCode stroomStatusCode) {
-        this.status = status;
+        this.status = Objects.requireNonNull(status, "A feed status response must state a status");
         this.message = message;
         this.stroomStatusCode = stroomStatusCode;
     }

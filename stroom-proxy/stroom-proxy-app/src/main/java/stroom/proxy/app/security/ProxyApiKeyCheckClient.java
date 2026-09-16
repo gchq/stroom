@@ -101,9 +101,13 @@ public class ProxyApiKeyCheckClient extends AbstractDownstreamClient implements 
                     optUserDesc = Optional.empty();
                     lastSuccessfulCall.set(System.currentTimeMillis());
                 } else {
-                    LOGGER.error("Error fetching API Key validity using url '{}', " +
-                                 "got response {} - {}, request: {}",
-                            url, statusInfo.getStatusCode(), statusInfo.getReasonPhrase(), request);
+                    // Anything else is a downstream fault, not a verdict on the key. Returning empty
+                    // here would be indistinguishable from a 404 'no such key', which would reject
+                    // every client and - because the caller's offline fallback and its back-off both
+                    // live in a catch block - would also stop either from ever engaging.
+                    throw new RuntimeException(LogUtil.message(
+                            "Error fetching API Key validity using url '{}', got response {} - {}",
+                            url, statusInfo.getStatusCode(), statusInfo.getReasonPhrase()));
                 }
             } catch (final NotFoundException e) {
                 LOGGER.debug("fetchApiKeyValidity() - Not found exception");

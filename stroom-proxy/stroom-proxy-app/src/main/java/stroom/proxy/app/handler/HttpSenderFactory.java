@@ -18,7 +18,6 @@ package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DownstreamHostConfig;
 import stroom.proxy.repo.LogStream;
-import stroom.proxy.repo.ProxyServices;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientFactory;
@@ -47,7 +46,6 @@ public class HttpSenderFactory {
     private final String defaultUserAgent;
     private final UserIdentityFactory userIdentityFactory;
     private final HttpClientFactory httpClientFactory;
-    private final ProxyServices proxyServices;
     private final Metrics metrics;
     private final DownstreamHostConfig downstreamHostConfig;
 
@@ -57,12 +55,10 @@ public class HttpSenderFactory {
                              final UserIdentityFactory userIdentityFactory,
                              final HttpClientFactory httpClientFactory,
                              final Metrics metrics,
-                             final ProxyServices proxyServices,
                              final DownstreamHostConfig downstreamHostConfig) {
         this.logStream = logStream;
         this.userIdentityFactory = userIdentityFactory;
         this.httpClientFactory = httpClientFactory;
-        this.proxyServices = proxyServices;
         this.metrics = metrics;
 
         // Construct something like
@@ -99,7 +95,6 @@ public class HttpSenderFactory {
                 userAgentString,
                 userIdentityFactory,
                 httpClient,
-                metrics,
-                proxyServices);
+                metrics);
     }
 }

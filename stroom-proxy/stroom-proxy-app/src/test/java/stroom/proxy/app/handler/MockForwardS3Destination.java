@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class MockForwardS3Destination implements ForwardS3Destination {
+public class MockForwardS3Destination implements Destination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MockForwardS3Destination.class);
 
@@ -66,19 +66,14 @@ public class MockForwardS3Destination implements ForwardS3Destination {
     }
 
     @Override
-    public void add(final Path sourceDir) {
+    public void deliver(final Path sourceDir) throws IOException {
         // Record the sequence id for future use.
         final long commitId = writeId.incrementAndGet();
         final Path targetDir = DirUtil.createPath(storeDir, commitId);
-        try {
-            move(sourceDir, targetDir);
-            addedPaths.add(targetDir);
-            if (countDownLatch != null) {
-                countDownLatch.countDown();
-            }
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-            throw new UncheckedIOException(e);
+        move(sourceDir, targetDir);
+        addedPaths.add(targetDir);
+        if (countDownLatch != null) {
+            countDownLatch.countDown();
         }
     }
 
@@ -101,7 +96,7 @@ public class MockForwardS3Destination implements ForwardS3Destination {
     }
 
     @Override
-    public String getDestinationDescription() {
+    public String getDescription() {
         return "mock-s3-destination";
     }
 

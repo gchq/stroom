@@ -20,8 +20,6 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
-import stroom.receive.common.AttributeMapFilter;
-import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.StroomStreamException;
@@ -50,7 +48,6 @@ public class ReceiveDataHelper {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataHelper.class);
 
     private final RequestAuthenticator requestAuthenticator;
-    private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final CertificateExtractor certificateExtractor;
     private final CommonSecurityContext commonSecurityContext;
     private final LogStream logStream;
@@ -60,14 +57,12 @@ public class ReceiveDataHelper {
 
     @Inject
     public ReceiveDataHelper(final RequestAuthenticator requestAuthenticator,
-                             final AttributeMapFilterFactory attributeMapFilterFactory,
                              final CertificateExtractor certificateExtractor,
                              final CommonSecurityContext commonSecurityContext,
                              final LogStream logStream,
                              final ReceiptIdGenerator receiptIdGenerator,
                              final Metrics metrics) {
         this.requestAuthenticator = requestAuthenticator;
-        this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.certificateExtractor = certificateExtractor;
         this.commonSecurityContext = commonSecurityContext;
         this.logStream = logStream;
@@ -85,9 +80,12 @@ public class ReceiveDataHelper {
                 .createAndRegister();
     }
 
+    /**
+     * Authenticate the sender, build the attribute map with a fresh receipt id, and run the handler
+     * as the processing user, mapping anything it throws to the status the sender should see.
+     */
     public UniqueId process(final HttpServletRequest request,
-                            final Handler consumeHandler,
-                            final Handler dropHandler) throws StroomStreamException {
+                            final Handler handler) throws StroomStreamException {
         final Instant startTime = Instant.now();
         // Create a new proxy id for the request, so we can track progress and report back the UUID to the sender,
         final UniqueId receiptId = receiptIdGenerator.generateId();
@@ -105,18 +103,10 @@ public class ReceiveDataHelper {
                 LOGGER.debug("process() - userIdentity: {}", userIdentity);
 
                 receiveHandleTimer.time(() -> {
-                    // Test to see if we are going to accept this stream or drop the data.
-                    // We have authenticated the user to accept the data, but from here on,
-                    // we run as the processing user as the request user won't have perms to do
-                    // things like check feed status.
-                    commonSecurityContext.asProcessingUser(() -> {
-                        final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
-                        if (attributeMapFilter.filter(attributeMap)) {
-                            consumeHandler.handle(request, attributeMap, receiptId);
-                        } else {
-                            dropHandler.handle(request, attributeMap, receiptId);
-                        }
-                    });
+                    // The sender is authenticated; from here on run as the processing user, because
+                    // the receipt policy checks feed status and the sender has no right to.
+                    commonSecurityContext.asProcessingUser(() ->
+                            handler.handle(request, attributeMap, receiptId));
                 });
             });
         } catch (final Throwable e) {

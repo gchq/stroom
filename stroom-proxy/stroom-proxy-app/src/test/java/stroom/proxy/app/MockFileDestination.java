@@ -22,8 +22,8 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FileGroup;
 import stroom.proxy.app.handler.ForwardFileConfig;
-import stroom.proxy.app.handler.ForwardFileQueueConfig;
-import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.app.handler.PathTemplateConfig;
+import stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig;
 import stroom.test.common.TestUtil;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
@@ -73,8 +73,11 @@ public class MockFileDestination {
                 false,
                 "My forward file",
                 "forward_dest",
+                // A flat tree, which is what the assertions below walk.
+                PathTemplateConfig.DISABLED,
                 null,
-                new ForwardFileQueueConfig(),
+                null,
+                null,
                 null,
                 null,
                 null);
@@ -240,7 +243,8 @@ public class MockFileDestination {
                         .count())
                 .toList();
 
-        final AggregatorConfig aggregatorConfig = config.getProxyConfig().getAggregatorConfig();
+        final AggregateStageConfig aggregatorConfig =
+                config.getProxyConfig().getPipelineConfig().getStages().getAggregate();
         final int maxItemsPerAggregate = aggregatorConfig.getMaxItemsPerAggregate();
 
         // Each agg should be no bigger than configured max

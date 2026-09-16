@@ -84,7 +84,7 @@ logging:
         archivedLogFilenamePattern: logs/receive/receive-%d{yyyy-MM-dd'T'HH:mm}.log.gz
         # One week using minute files
         archivedFileCount: 10080
-        logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %msg %n"
+        logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %X{stageName} %X{fileGroupId} %X{messageId} %X{traceId} %msg %n"
 #
     # Logger and appender for proxy send audit logs
     "send":
@@ -98,7 +98,7 @@ logging:
         archivedLogFilenamePattern: logs/send/send-%d{yyyy-MM-dd'T'HH:mm}.log.gz
         # One week using minute files
         archivedFileCount: 10080
-        logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %msg %n"
+        logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %X{stageName} %X{fileGroupId} %X{messageId} %X{traceId} %msg %n"
 
   appenders:
 
@@ -107,7 +107,7 @@ logging:
     # stdout for docker
   - type: console
     # Multi-coloured log format for console output
-    logFormat: "%highlight(%-6level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%green(%t)] %cyan(%logger) - %X{code} %msg %n"
+    logFormat: "%highlight(%-6level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%green(%t)] %cyan(%logger) - %X{code} %X{stageName} %X{fileGroupId} %X{messageId} %X{traceId} %msg %n"
     timeZone: UTC
 {% endif %}
 #
@@ -118,7 +118,7 @@ logging:
     archivedLogFilenamePattern: logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log.gz
     # One week using minute files
     archivedFileCount: 10080
-    logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
+    logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %X{stageName} %X{fileGroupId} %X{messageId} %X{traceId} %msg %n"
 {% if distribution == "zip" %}
 #
     # Size rolled logs for admins (10x100M), not curl'd to stroom
@@ -129,7 +129,7 @@ logging:
     archivedLogFilenamePattern: logs/app-%i.log
     archivedFileCount: 10
     maxFileSize: "100MB"
-    logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %msg %n"
+    logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %X{stageName} %X{fileGroupId} %X{messageId} %X{traceId} %msg %n"
 {% endif %}
 #
 # This section contains the Stroom Proxy configuration properties
@@ -167,11 +167,49 @@ proxyConfig:
 {% endif %}
     apiKey: "{{ '' | envVar('DOWNSTREAM_API_KEY') }}"
 
-  # If we are storing data in a proxy repository we can aggregate it before forwarding.
-  aggregator:
-    maxItemsPerAggregate: 1000
-    maxUncompressedByteSize: "1G"
-    aggregationFrequency: 10m
+  # The pipeline is explicit or fail: the mode, every queue, every file store and every stage
+  # must be stated. Nothing is filled in for an omitted block; the proxy refuses to start and
+  # says what is missing. This is the standard single-node pipeline; see
+  # designs/deployments/ for the distributed shapes.
+  pipeline:
+    mode: LOCAL
+    queues:
+      splitZipInput:
+        type: LOCAL_FILESYSTEM
+      aggregateInput:
+        type: LOCAL_FILESYSTEM
+      forwardingInput:
+        type: LOCAL_FILESYSTEM
+    fileStores:
+      receiveStore:
+        type: LOCAL_FILESYSTEM
+      splitStore:
+        type: LOCAL_FILESYSTEM
+      aggregateStore:
+        type: LOCAL_FILESYSTEM
+    stages:
+      receive:
+        enabled: true
+        fileStore: receiveStore
+        outputQueue: aggregateInput
+        splitZipQueue: splitZipInput
+      splitZip:
+        enabled: true
+        inputQueue: splitZipInput
+        fileStore: splitStore
+        outputQueue: aggregateInput
+      aggregate:
+        enabled: true
+        inputQueue: aggregateInput
+        fileStore: aggregateStore
+        outputQueue: forwardingInput
+        # When an aggregate closes. Targets, not guarantees: an aggregate closes smaller on age.
+        maxItemsPerAggregate: 1000
+        maxUncompressedByteSize: "1G"
+        aggregationFrequency: 10m
+      forward:
+        enabled: true
+        inputQueue: forwardingInput
 
   # If you want multiple forward destinations then you will need to edit this file directly
   # instead of using env var substitution

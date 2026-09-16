@@ -16,7 +16,7 @@
 
 package stroom.proxy.app;
 
-import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.app.pipeline.config.PipelineConfigs;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.logging.LambdaLogger;
@@ -48,11 +48,13 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
                         .openIdConfig(new ProxyOpenIdConfig()
                                 .withIdentityProviderType(IdpType.NO_IDP))
                         .build()))
-                .aggregatorConfig(AggregatorConfig.builder()
-                        .maxUncompressedByteSizeString("1G")
-                        .aggregationFrequency(StroomDuration.ofSeconds(5))
-                        .maxItemsPerAggregate(3)
-                        .build())
+                // Two destinations, so the forward stage fans out to a queue and a store per destination.
+                .pipelineConfig(PipelineConfigs.fullPipelineWithFanOut(
+                        3,
+                        "1G",
+                        StroomDuration.ofSeconds(5),
+                        MockFileDestination.createForwardFileConfig().getName(),
+                        MockHttpDestination.createForwardHttpPostConfig(false).getName()))
                 .downstreamHostConfig(MockHttpDestination.createDownstreamHostConfig())
                 .addForwardFileDestination(MockFileDestination.createForwardFileConfig()) // forward to file and http
                 .addForwardHttpDestination(MockHttpDestination.createForwardHttpPostConfig(false))
@@ -84,8 +86,8 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
             postDataHelper.sendFeed2TestData();
         }
 
-        assertThat(postDataHelper.getPostCount())
-                .isEqualTo(reqCount);
+        // Accepted, not merely sent: getPostCount() counts requests SENT, which only says the loop ran.
+        postDataHelper.assertAllPostsAccepted(reqCount);
 
         mockFileDestination.assertReceivedItemCount(getConfig(), reqCount);
         mockFileDestination.assertReceiptIds(getConfig(), postDataHelper.getReceiptIds());

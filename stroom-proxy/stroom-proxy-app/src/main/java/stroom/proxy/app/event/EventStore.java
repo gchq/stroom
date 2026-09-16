@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,325 +16,413 @@
 
 package stroom.proxy.app.event;
 
-import stroom.cache.api.CacheManager;
-import stroom.cache.api.StroomCache;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.DataDirProvider;
-import stroom.proxy.app.handler.ReceiverFactory;
+import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.event.model.Event;
+import stroom.proxy.app.handler.Receiver;
+import stroom.proxy.app.handler.RefusingReceiver;
 import stroom.proxy.repo.store.FileStores;
+import stroom.receive.common.AttributeMapFilterFactory;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.common.StroomStreamException;
 import stroom.security.api.CommonSecurityContext;
-import stroom.util.concurrent.ThreadUtil;
-import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.concurrent.UniqueId;
+import stroom.util.io.ByteSize;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.metrics.Metrics;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.FeedKey;
+import stroom.util.shared.NullSafe;
 
-import com.codahale.metrics.Timer;
-import io.dropwizard.lifecycle.Managed;
-import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
+/**
+ * Batches single events into files the receiver can take ({@code designs/infrastructure/events.md}).
+ * <p>
+ * {@link #accept} applies the receipt policy and appends the event to its feed's open file, and
+ * returns only when the bytes are as durable as the configured durability says. {@link #tryRoll},
+ * a registry schedule, closes every open file that is due and then hands every closed file in the
+ * directory to the receiver as a plain body, deleting it when the receiver returns. A file is open
+ * while it carries {@link EventAppender#OPEN_SUFFIX} and closed once renamed, so what is on disk
+ * says which is which and nothing is queued in memory: a file a previous run left behind is
+ * renamed closed at construction and received on the first tick like any other.
+ * </p>
+ * <p>
+ * A file the receiver refuses for a reason that will not change - a rejected feed, a bad body - is
+ * moved to {@code failed/} after three attempts. A file that fails for any other reason, which is
+ * the store or the queue being unavailable, is tried again every tick until it succeeds: the data
+ * is safe where it is, and nobody else will retry it.
+ * </p>
+ */
 @Singleton
-public class EventStore implements EventConsumer, Managed {
+public class EventStore {
+
+    static final int MAX_REFUSALS = 3;
+    static final String FAILED_DIR_NAME = "failed";
+    static final String SOURCE = "event-store";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventStore.class);
-    private static final String CACHE_NAME = "Event Store Open Appenders";
-    public static final String EVENT_STORE_NAME_PART = "eventStore";
 
-    private final ReceiverFactory receiverFactory;
+    private final Receiver receiver;
     private final CommonSecurityContext securityContext;
-    private final Path dir;
+    private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final Provider<EventStoreConfig> eventStoreConfigProvider;
-    private final StroomCache<FeedKey, EventAppender> openAppendersCache;
-    private final Map<FeedKey, EventAppender> stores;
-    private final EventSerialiser eventSerialiser;
-    private final LinkedBlockingQueue<Path> forwardQueue;
-    private final Timer handleTimer;
-    private final AtomicBoolean shutdown = new AtomicBoolean(false);
+    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
+    private final Provider<ProxyConfig> proxyConfigProvider;
+    private final Path dir;
+    private final Path failedDir;
+    private final Map<FeedKey, EventAppender> open = new ConcurrentHashMap<>();
+    private final Map<Path, Integer> refusals = new ConcurrentHashMap<>();
+    private final EventSerialiser eventSerialiser = new EventSerialiser();
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     @Inject
-    public EventStore(final ReceiverFactory receiverFactory,
+    public EventStore(final Receiver receiver,
                       final CommonSecurityContext securityContext,
+                      final AttributeMapFilterFactory attributeMapFilterFactory,
                       final Provider<EventStoreConfig> eventStoreConfigProvider,
+                      final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                      final Provider<ProxyConfig> proxyConfigProvider,
                       final DataDirProvider dataDirProvider,
-                      final FileStores fileStores,
-                      final CacheManager cacheManager,
-                      final Metrics metrics) {
-        this.eventStoreConfigProvider = eventStoreConfigProvider;
-        final EventStoreConfig eventStoreConfig = eventStoreConfigProvider.get();
-        this.forwardQueue = new LinkedBlockingQueue<>(eventStoreConfig.getForwardQueueSize());
-        final Path dataDir = dataDirProvider.get();
-
-        // Create the data directory
-        ensureDirExists(dataDir);
-
-        // Create the event directory.
-        dir = dataDir.resolve("event");
-        ensureDirExists(dir);
-        fileStores.add(0, "Event Store", dir);
-
-        this.receiverFactory = receiverFactory;
+                      final FileStores fileStores) {
+        this.receiver = receiver;
         this.securityContext = securityContext;
-
-        this.openAppendersCache = cacheManager.create(
-                CACHE_NAME,
-                () -> eventStoreConfigProvider.get().getOpenFilesCache(),
-                this::onCacheRemoval);
-
-        this.stores = new ConcurrentHashMap<>();
-        this.eventSerialiser = new EventSerialiser();
-
-        this.handleTimer = metrics.registrationBuilder(getClass())
-                .addNamePart(EVENT_STORE_NAME_PART)
-                .addNamePart(Metrics.HANDLE)
-                .timer()
-                .createAndRegister();
-
-        forwardOldFiles();
+        this.attributeMapFilterFactory = attributeMapFilterFactory;
+        this.eventStoreConfigProvider = eventStoreConfigProvider;
+        this.receiveDataConfigProvider = receiveDataConfigProvider;
+        this.proxyConfigProvider = proxyConfigProvider;
+        this.dir = dataDirProvider.get().resolve("event");
+        this.failedDir = dir.resolve(FAILED_DIR_NAME);
+        ensureDirExists(dir);
+        closeLeftovers();
+        fileStores.add(0, "Event Store", dir);
     }
 
-    private void checkState() {
-        if (shutdown.get()) {
-            throw new IllegalStateException("Event Store has been shut down");
+    /**
+     * Apply the receipt policy and, if it accepts, append the event to its feed's open file. The
+     * caller runs as the processing user, because the policy consults feed status.
+     *
+     * @return False if the policy dropped the event, in which case nothing is written.
+     * @throws StroomStreamException If the policy rejected it, or this proxy does not receive.
+     */
+    public boolean accept(final AttributeMap attributeMap,
+                          final UniqueId receiptId,
+                          final String event) {
+        if (receiver instanceof RefusingReceiver) {
+            // A node that does not receive must say so here too, or every file it rolled would be
+            // refused later with nobody left to tell.
+            throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, attributeMap, RefusingReceiver.MESSAGE);
         }
-    }
+        if (!attributeMapFilterFactory.create().filter(attributeMap)) {
+            LOGGER.debug("Dropped event {} by the receipt policy: {}", receiptId, attributeMap);
+            return false;
+        }
+        // After the policy: it may have named the feed itself.
+        final FeedKey feedKey = FeedKeyEncoder.from(attributeMap);
+        final byte[] bytes;
+        try {
+            bytes = (eventSerialiser.serialise(receiptId, feedKey, attributeMap, event) + "\n")
+                    .getBytes(StandardCharsets.UTF_8);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
 
-    private void ensureDirExists(final Path path) {
-        if (!Files.isDirectory(path)) {
+        // The write happens under the map's lock for this key, which is what keeps two writers
+        // of one feed off the same file; a feed sharing a bin with another waits for its write.
+        open.compute(feedKey, (key, current) -> {
+            if (closed.get()) {
+                throw new IllegalStateException("The event store has been closed");
+            }
+            EventAppender appender = current;
+            if (appender != null && appender.shouldRoll(bytes.length)) {
+                closeQuietly(appender);
+                appender = null;
+            }
+            if (appender == null) {
+                appender = newAppender(key);
+            }
             try {
-                Files.createDirectories(path);
+                appender.write(bytes);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
-        }
+            return appender;
+        });
+        return true;
     }
 
-    private void forwardOldFiles() {
-        try (final Stream<Path> stream = Files.list(dir)) {
-            stream.forEach(this::forward);
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-            throw new UncheckedIOException(e);
-        }
-    }
-
+    /**
+     * Close every open file that is due, then receive every closed file. Runs on the registry's
+     * schedule, so one tick receives at most what the previous tick left plus what just rolled.
+     */
     public void tryRoll() {
-        stores.keySet().forEach(feedKey -> {
-            LOGGER.debug("Try rolling: {}", feedKey);
-            stores.compute(feedKey, (ignored, v) -> {
-                EventAppender eventAppender = v;
-                if (eventAppender != null) {
-                    if (eventAppender.shouldRoll(0)) {
-                        try {
-                            forwardQueue.put(eventAppender.closeAndGetFile());
-                            eventAppender = null;
-                        } catch (final InterruptedException e) {
-                            throw UncheckedInterruptedException.create(e);
-                        }
-                    }
-                }
-                return eventAppender;
-            });
-        });
-    }
-
-    public void roll() {
-        stores.keySet().forEach(feedKey -> {
-            LOGGER.debug("Rolling: {}", feedKey);
-            stores.compute(feedKey, (k, v) -> {
-                if (v != null) {
-                    try {
-                        forwardQueue.put(v.closeAndGetFile());
-                    } catch (final InterruptedException e) {
-                        throw UncheckedInterruptedException.create(e);
-                    }
-                }
+        open.keySet().forEach(feedKey -> open.computeIfPresent(feedKey, (key, appender) -> {
+            if (appender.shouldRoll(0)) {
+                closeQuietly(appender);
                 return null;
-            });
-        });
+            }
+            return appender;
+        }));
+        receiveClosedFiles();
     }
 
-    public void forwardAll() {
-        try {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    final Path file = forwardQueue.take();
-                    forward(file);
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
-                }
-            }
-        } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(e);
+    /**
+     * Close the open files. Called once every writer and the schedule have stopped; an event
+     * accepted after this is refused, and the files are the next start's.
+     */
+    public void close() {
+        if (closed.compareAndSet(false, true)) {
+            open.keySet().forEach(feedKey -> open.computeIfPresent(feedKey, (key, appender) -> {
+                closeQuietly(appender);
+                return null;
+            }));
         }
     }
 
-    private void forward(final Path file) {
-        LOGGER.debug("Forwarding: {}", file);
-        if (Files.isRegularFile(file)) {
-            final FeedKey feedKey = EventStoreFile.getFeedKey(file);
-
-            final AttributeMap attributeMap = new AttributeMap();
-            if (feedKey.feed() != null) {
-                attributeMap.put(StandardHeaderArguments.FEED, feedKey.feed());
-            }
-            if (feedKey.type() != null) {
-                attributeMap.put(StandardHeaderArguments.TYPE, feedKey.type());
-            }
-
-            // Consume the data
-            handleTimer.time(() -> {
-                final AtomicBoolean success = new AtomicBoolean();
-                try (final BufferedInputStream inputStream = new BufferedInputStream(Files.newInputStream(file))) {
-                    // The request that produced these events was authenticated and filtered long ago,
-                    // under ReceiveDataHelper's elevation. This runs later, on the forwarding thread
-                    // (and at startup for files left behind), so no user is in scope - yet receive()
-                    // filters again and the feed status lookup needs an identity. Elevate for the same
-                    // reason the datafeed and dir-scanner entry points do.
-                    securityContext.asProcessingUser(() ->
-                            receiverFactory
-                                    .get(attributeMap)
-                                    .receive(Instant.now(), attributeMap, "event-store", () -> inputStream));
-                    success.set(true);
-                } catch (final IOException e) {
-                    LOGGER.error(e::getMessage, e);
-                    throw new UncheckedIOException(e);
-                }
-
-                try {
-                    if (success.get()) {
-                        Files.delete(file);
-                    }
-                } catch (final IOException e) {
-                    LOGGER.error(e::getMessage, e);
-                    throw new UncheckedIOException(e);
-                }
-            });
-        }
-    }
-
-    public void onCacheRemoval(@Nullable final FeedKey feedKey,
-                               @Nullable final EventAppender appender) {
+    /**
+     * A close that fails is logged and the appender still let go: every write was forced already,
+     * so the file is complete, and keeping a closed appender would refuse the feed for ever. A file
+     * left under its open name is renamed at the next start.
+     */
+    private static void closeQuietly(final EventAppender appender) {
         try {
-            if (appender != null) {
-                appender.close();
-            }
+            appender.close();
         } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new UncheckedIOException(e);
+            LOGGER.error(() -> "Error closing " + appender + ": " + e.getMessage(), e);
         }
     }
 
-    @Override
-    public void consume(final AttributeMap attributeMap,
-                        final UniqueId receiptId,
-                        final String data) {
-        try {
-            checkState();
-            final FeedKey feedKey = FeedKeyEncoder.from(attributeMap);
-            final String string = eventSerialiser.serialise(
-                    receiptId,
-                    feedKey,
-                    attributeMap,
-                    data) + "\n";
-            final byte[] bytes = string.getBytes(StandardCharsets.UTF_8);
-            put(feedKey, bytes);
-
-        } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new UncheckedIOException(e);
-        }
+    private EventAppender newAppender(final FeedKey feedKey) {
+        Path file;
+        do {
+            file = EventStoreFile.createNew(dir, feedKey, Instant.now());
+        } while (Files.exists(file) || Files.exists(EventAppender.openFileOf(file)));
+        final EventStoreConfig config = eventStoreConfigProvider.get();
+        // A closed file is one receipt, and the receiver bounds a body by maxRequestSize.
+        final ByteSize maxRequestSize = receiveDataConfigProvider.get().getMaxRequestSize();
+        final long maxByteCount = maxRequestSize == null
+                ? config.getMaxByteCount()
+                : Math.min(config.getMaxByteCount(), maxRequestSize.getBytes());
+        return new EventAppender(
+                file,
+                Instant.now(),
+                config.getMaxAge().getDuration(),
+                config.getMaxEventCount(),
+                maxByteCount,
+                proxyConfigProvider.get().getDurability());
     }
 
-    private void put(final FeedKey feedKey,
-                     final byte[] bytes) {
-        stores.compute(feedKey, (k, v) -> {
-            EventAppender eventAppender = v;
-
-            // Roll the current appender if we have one if it is time to roll.
-            if (eventAppender != null && eventAppender.shouldRoll(bytes.length)) {
-                try {
-                    // Add the appender to the forward queue.
-                    forwardQueue.put(eventAppender.closeAndGetFile());
-                    // Invalidate the cache item that keeps the appender open.
-                    openAppendersCache.invalidate(k);
-                    eventAppender = null;
-                } catch (final InterruptedException e) {
-                    throw UncheckedInterruptedException.create(e);
-                }
-            }
-
-            if (eventAppender == null) {
-                // Create a new appender and add it to the cache of open items.
-                Instant now = null;
-                Path file = null;
-                boolean success = false;
-
-                while (!success) {
-                    now = Instant.now();
-                    file = EventStoreFile.createNew(dir, k, now);
-                    // Ensure file doesn't already exist.
-                    if (Files.isRegularFile(file)) {
-                        LOGGER.debug("File already exists: {}", file);
-                        ThreadUtil.sleep(1);
-                    } else {
-                        success = true;
-                    }
-                }
-
-                // Config is fixed until next roll
-                eventAppender = new EventAppender(file, now, eventStoreConfigProvider.get());
-                openAppendersCache.put(k, eventAppender);
-
-            } else {
-                // Keep the existing appender open by keeping its cache entry fresh.
-                openAppendersCache.getIfPresent(feedKey);
-            }
-
+    /**
+     * A previous run's open files: nothing holds them, so they are closed.
+     */
+    private void closeLeftovers() {
+        for (final Path openFile : list(EventAppender.OPEN_SUFFIX)) {
+            final String name = openFile.getFileName().toString();
+            final Path file = openFile.resolveSibling(
+                    name.substring(0, name.length() - EventAppender.OPEN_SUFFIX.length()));
             try {
-                // Write to the appender.
-                eventAppender.write(bytes);
+                Files.move(openFile, file);
             } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new UncheckedIOException(e);
+                LOGGER.error(() -> LogUtil.message("Unable to close the event file '{}' a previous run left open: {}",
+                        openFile, e.getMessage()), e);
             }
-
-            return eventAppender;
-        });
+        }
     }
 
-    @Override
-    public void stop() throws Exception {
-        if (shutdown.compareAndSet(false, true)) {
-            stores.values()
-                    .stream()
-                    .filter(Objects::nonNull)
-                    .forEach(eventAppender -> {
-                        try {
-                            eventAppender.close();
-                        } catch (final IOException e) {
-                            LOGGER.error("Error closing eventAppender {}", eventAppender, e);
-                        }
-                    });
+    private void receiveClosedFiles() {
+        for (final Path file : list(EventStoreFile.LOG_EXTENSION)) {
+            receive(file);
+        }
+    }
+
+    private List<Path> list(final String suffix) {
+        try (final Stream<Path> stream = Files.list(dir)) {
+            return stream
+                    .filter(Files::isRegularFile)
+                    .filter(file -> file.getFileName().toString().endsWith(suffix))
+                    .sorted(Comparator.comparing(file -> file.getFileName().toString()))
+                    .toList();
+        } catch (final IOException e) {
+            LOGGER.error(() -> "Unable to list the event directory " + dir + ": " + e.getMessage(), e);
+            return List.of();
+        }
+    }
+
+    private void receive(final Path file) {
+        final AttributeMap attributeMap;
+        try {
+            trimPartialLine(file);
+            if (Files.size(file) == 0) {
+                // Created for a write that never completed; nothing was acknowledged.
+                Files.delete(file);
+                return;
+            }
+            attributeMap = readAttributeMap(file);
+            // The request that produced these events was authenticated and filtered under its own
+            // elevation, long gone by now; the receiver filters again and needs an identity for it.
+            securityContext.asProcessingUser(() ->
+                    receiver.receive(Instant.now(), attributeMap, SOURCE, () -> Files.newInputStream(file)));
+        } catch (final IOException | RuntimeException e) {
+            failed(file, e);
+            return;
+        }
+
+        try {
+            Files.delete(file);
+            refusals.remove(file);
+        } catch (final IOException e) {
+            LOGGER.error(() -> LogUtil.message(
+                    "Event file '{}' was received as {} but could not be deleted: {}. It will be received "
+                    + "again, as a duplicate, on the next tick.",
+                    file, attributeMap.get(StandardHeaderArguments.RECEIPT_ID), e.getMessage()), e);
+        }
+    }
+
+    /**
+     * A refusal - a status the sender would have been told - will not change with time, so it is
+     * bounded and then quarantined. Anything else is the store or the queue being unavailable, and
+     * the file waits for them.
+     */
+    private void failed(final Path file, final Exception cause) {
+        final boolean refused = cause instanceof StroomStreamException streamException
+                                && streamException.getStroomStatusCode().getHttpCode() < 500;
+        if (!refused) {
+            LOGGER.error(() -> LogUtil.message(
+                    "Event file '{}' could not be received and will be tried again: {}",
+                    file, LogUtil.exceptionMessage(cause)), cause);
+            return;
+        }
+        final int refusal = refusals.merge(file, 1, Integer::sum);
+        if (refusal < MAX_REFUSALS) {
+            LOGGER.error(() -> LogUtil.message(
+                    "Event file '{}' was refused (refusal {} of {}): {}",
+                    file, refusal, MAX_REFUSALS, LogUtil.exceptionMessage(cause)), cause);
+        } else if (quarantine(file, refusal, cause)) {
+            refusals.remove(file);
+        }
+    }
+
+    /**
+     * A file is written one whole line per synchronous write, so the only damage a power cut can
+     * do is a torn last line, and it was never acknowledged.
+     */
+    private static void trimPartialLine(final Path file) throws IOException {
+        try (final RandomAccessFile raf = new RandomAccessFile(file.toFile(), "rw")) {
+            final long length = raf.length();
+            if (length == 0) {
+                return;
+            }
+            raf.seek(length - 1);
+            if (raf.read() == '\n') {
+                return;
+            }
+            long end = length - 1;
+            while (end > 0) {
+                raf.seek(end - 1);
+                if (raf.read() == '\n') {
+                    break;
+                }
+                end--;
+            }
+            final long keep = end;
+            LOGGER.warn(() -> LogUtil.message(
+                    "Event file '{}' ends in a partial line, which a previous run never acknowledged; "
+                    + "truncating it from {} to {} bytes", file, length, keep));
+            raf.setLength(keep);
+        }
+    }
+
+    /**
+     * What the receiver's policy should see: the headers the sender sent with the first event,
+     * its feed and type, which the file is keyed on, and its receipt id, so the chain continues.
+     */
+    private static AttributeMap readAttributeMap(final Path file) throws IOException {
+        try (final BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            final String firstLine = reader.readLine();
+            if (firstLine == null) {
+                throw new IOException("Event file is empty");
+            }
+            final Event event = JsonUtil.readValue(firstLine, Event.class);
+            final AttributeMap attributeMap = new AttributeMap();
+            NullSafe.list(event.getHeaders()).forEach(header ->
+                    attributeMap.put(header.getName(), header.getValue()));
+            // The file is plain text whatever the sender said its event was.
+            attributeMap.remove(StandardHeaderArguments.COMPRESSION);
+            if (event.getFeed() != null) {
+                attributeMap.put(StandardHeaderArguments.FEED, event.getFeed());
+            }
+            if (event.getType() != null) {
+                attributeMap.put(StandardHeaderArguments.TYPE, event.getType());
+            }
+            if (event.getEventId() != null) {
+                attributeMap.put(StandardHeaderArguments.RECEIPT_ID, event.getEventId());
+            }
+            return attributeMap;
+        } catch (final RuntimeException e) {
+            // Not a file this proxy wrote; the sender of a real one would have been told a status.
+            throw new StroomStreamException(StroomStatusCode.INVALID_FORMAT, new AttributeMap(), LogUtil.message(
+                    "Unable to read the first event of '{}': {}", file, LogUtil.exceptionMessage(e)));
+        }
+    }
+
+    /**
+     * @return True if the file was moved. Never throws: this is the schedule's only error path, and
+     * a file that cannot be moved is no worse off left where it is, to be tried again next tick.
+     */
+    private boolean quarantine(final Path file, final int refusals, final Exception cause) {
+        try {
+            ensureDirExists(failedDir);
+            Path destination = failedDir.resolve(file.getFileName());
+            for (int n = 1; ; n++) {
+                try {
+                    Files.move(file, destination);
+                    break;
+                } catch (final FileAlreadyExistsException e) {
+                    destination = failedDir.resolve(file.getFileName() + "." + n);
+                }
+            }
+            final Path moved = destination;
+            LOGGER.error(() -> LogUtil.message(
+                    "Event file '{}' was refused {} times and has been moved to '{}'. It will not be tried "
+                    + "again; its data is intact and needs a decision. Last refusal: {}",
+                    file, refusals, moved, LogUtil.exceptionMessage(cause)));
+            return true;
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.error(() -> LogUtil.message(
+                    "Event file '{}' was refused {} times and could not be moved to '{}': {}. The move will be "
+                    + "tried again next tick. Last refusal: {}",
+                    file, refusals, failedDir, LogUtil.exceptionMessage(e), LogUtil.exceptionMessage(cause)), e);
+            return false;
+        }
+    }
+
+    private static void ensureDirExists(final Path path) {
+        try {
+            Files.createDirectories(path);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

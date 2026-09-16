@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,80 +16,48 @@
 
 package stroom.proxy.app.handler;
 
-import stroom.proxy.app.DataDirProvider;
-import stroom.proxy.repo.ProxyServices;
-import stroom.proxy.repo.store.FileStores;
+import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.pipeline.config.PipelineMode;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.nio.file.Path;
-import java.util.Objects;
 
 @Singleton
 public class ForwardFileDestinationFactoryImpl implements ForwardFileDestinationFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardFileDestinationFactoryImpl.class);
 
-    private final ProxyServices proxyServices;
-    private final DirQueueFactory dirQueueFactory;
-    private final DataDirProvider dataDirProvider;
     private final PathCreator pathCreator;
-    private final FileStores fileStores;
+    private final Provider<ProxyConfig> proxyConfigProvider;
 
     @Inject
-    public ForwardFileDestinationFactoryImpl(final ProxyServices proxyServices,
-                                             final DirQueueFactory dirQueueFactory,
-                                             final DataDirProvider dataDirProvider,
-                                             final PathCreator pathCreator,
-                                             final FileStores fileStores) {
-        this.proxyServices = proxyServices;
-        this.dirQueueFactory = dirQueueFactory;
-        this.dataDirProvider = dataDirProvider;
+    public ForwardFileDestinationFactoryImpl(final PathCreator pathCreator,
+                                             final Provider<ProxyConfig> proxyConfigProvider) {
         this.pathCreator = pathCreator;
-        this.fileStores = fileStores;
+        this.proxyConfigProvider = proxyConfigProvider;
     }
 
     @Override
-    public ForwardDestination create(final ForwardFileConfig config) {
-        // Create the store directory.
+    public Destination create(final ForwardFileConfig config) {
         final Path storeDir = pathCreator.toAppPath(config.getPath());
         DirUtil.ensureDirExists(storeDir);
 
-        final ForwardFileDestinationImpl forwardFileDestination = new ForwardFileDestinationImpl(
-                storeDir,
-                config,
-                pathCreator);
-
-        final ForwardDestination destination = getWrappedForwardDestination(config, forwardFileDestination);
-
-        LOGGER.info("Created {} '{}' at {} with getSubPathTemplate '{}' (isInstant: {})",
+        // In shared mode a file destination may be a mount every node delivers into, so each
+        // process numbers under a writer root of its own (FileDestination).
+        final FileDestination destination = new FileDestination(
+                storeDir, config, pathCreator, PipelineMode.isShared(proxyConfigProvider.get().getPipelineConfig()));
+        LOGGER.info("Created {} '{}' at {} with subPathTemplate '{}' (isInstant: {})",
                 destination.getClass().getSimpleName(),
                 config.getName(),
-                config.getPath(),
+                destination.getWriterRoot(),
                 config.getSubPathTemplate(),
                 config.isInstant());
-
         return destination;
-    }
-
-    private ForwardDestination getWrappedForwardDestination(final ForwardFileConfig config,
-                                                            final ForwardFileDestinationImpl forwardFileDestination) {
-        final ForwardQueueConfig forwardQueueConfig = config.getForwardQueueConfig();
-        Objects.requireNonNull(forwardQueueConfig, () -> LogUtil.message(
-                "No forwardQueueConfig set for destination '{}'", config.getName()));
-        // We have queue config so wrap out ultimate destination with some queue/retry logic
-        return new RetryingForwardDestination(
-                forwardQueueConfig,
-                forwardFileDestination,
-                dataDirProvider,
-                pathCreator,
-                dirQueueFactory,
-                proxyServices,
-                fileStores);
     }
 }

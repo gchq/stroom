@@ -21,20 +21,24 @@ import stroom.util.io.PathSegmentUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.FeedKey;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.StringIdUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -135,32 +139,6 @@ public class DirUtil {
             if (Character.isDigit(chr)) {
                 final int numericValue = Character.getNumericValue(chr);
                 return numericValue >= 0 && numericValue <= MAX_DEPTH;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * @return True if the part of a path is a valid branch part when view in isolation
-     * i.e. ignoring other path parts. A valid branch part may also be a valid leaf
-     * part for leaf parts of length 3.
-     */
-    static boolean isValidBranchOrLeafPart(final String branchPart) {
-        if (branchPart != null) {
-            final int len = branchPart.length();
-            if (len % 3 == 0) {
-                boolean isAllNumeric = true;
-                for (int i = 0; i < len; i++) {
-                    final char chr = branchPart.charAt(i);
-                    if (!Character.isDigit(chr)) {
-                        isAllNumeric = false;
-                        break;
-                    }
-                }
-                return isAllNumeric;
             } else {
                 return false;
             }
@@ -406,27 +384,7 @@ public class DirUtil {
         return dirId;
     }
 
-    /**
-     * IDs are in blocks of 1000 (0-999) so return the lowest ID in the next block of 1000, e.g.
-     * <pre>
-     * 123 -> 1000
-     * 999 -> 1000
-     * 1000 -> 2000
-     * 1001 -> 2000
-     * </pre>
-     */
-    static long getIdInNextBlock(final long id) {
-        final long remainder = id % 1000;
-        return remainder == 0
-                ? id + 1000
-                : id + (1000 - remainder);
-    }
-
-    static long getNumberInDir(final long id) {
-        return id % 1000;
-    }
-
-    static Long getIdFromIncompleteBranch(final Path rootDir,
+        static Long getIdFromIncompleteBranch(final Path rootDir,
                                           final Path path,
                                           final Mode mode) {
         final Path relPath = rootDir.relativize(path);
@@ -645,6 +603,157 @@ public class DirUtil {
         }
     }
 
+    /**
+     * Name parts for the staging directory {@link #moveDirAcrossFileStores} builds on the target's
+     * filesystem before renaming it into place. Dot-prefixed so it does not read as a published file
+     * group to whatever consumes the destination, and never numeric, so {@link #getMaxDirId} ignores it.
+     */
+    static final String CROSS_DEVICE_PREFIX = ".";
+    static final String CROSS_DEVICE_SUFFIX = ".xdev";
+
+    /**
+     * Force a directory's own entries to stable storage.
+     * <p>
+     * <strong>Forcing a file is not enough.</strong> A file's
+     * bytes reaching the disk says nothing about the directory entry that <em>names</em> it: after a
+     * rename, the data can be durable while the name that publishes it is still only in the page
+     * cache, so a power cut leaves a committed file group with nothing pointing at it, or a queue
+     * message that was published and then was not. Both are the "silently unreachable" failure, and
+     * both need the parent directory forced as well as the file.
+     * </p>
+     * <p>
+     * Opening a directory read-only and forcing it is the POSIX way to do this and works on Linux and
+     * macOS. Some platforms - Windows among them - refuse to open a directory as a channel at all;
+     * there the call is skipped with a debug line rather than failing the commit, because on those
+     * platforms this guarantee is not available by this means and pretending otherwise by throwing
+     * would stop the proxy running rather than tell anyone anything true.
+     * </p>
+     */
+    public static void fsyncDir(final Path dir) throws IOException {
+        if (dir == null) {
+            return;
+        }
+        try (final FileChannel channel = FileChannel.open(dir, StandardOpenOption.READ)) {
+            channel.force(true);
+        } catch (final IOException e) {
+            // A directory channel cannot be opened on every platform. Distinguish that from a real
+            // failure to force: the former is a platform limit, the latter is a durability failure
+            // the caller needs to know about.
+            if (!Files.isDirectory(dir)) {
+                throw e;
+            }
+            LOGGER.debug(() -> LogUtil.message(
+                    "fsyncDir() - this platform does not support opening '{}' as a channel, so its "
+                    + "directory entries were not forced: {}", dir, LogUtil.exceptionMessage(e)), e);
+        }
+    }
+
+    /**
+     * Force every regular file in a tree, then the directories that name them.
+     * <p>
+     * Used before the rename that publishes a file group, so the rename cannot make visible a name
+     * whose contents are still only in the page cache. Deepest-first, so a directory is forced after
+     * everything inside it.
+     * </p>
+     */
+    public static void fsyncRecursively(final Path root) throws IOException {
+        if (root == null || !Files.exists(root)) {
+            return;
+        }
+        final List<Path> paths;
+        try (final Stream<Path> stream = Files.walk(root)) {
+            paths = stream.sorted(Comparator.reverseOrder()).toList();
+        }
+        for (final Path path : paths) {
+            if (Files.isDirectory(path)) {
+                fsyncDir(path);
+            } else {
+                try (final FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
+                    channel.force(true);
+                }
+            }
+        }
+    }
+
+
+    /**
+     * A staging path beside {@code target}, unique to this attempt.
+     * <p>
+     * It must not be derived from the target alone. Commit ids are handed out from a counter that is
+     * reloaded from disk by scanning for the highest <em>numeric</em> directory name, and a file group
+     * being copied here is not yet numeric - so two movers can legitimately be given the same target,
+     * and a shared staging path would let one delete or merge into the other's half-copied tree. A
+     * unique name reduces that back to a losing {@code ATOMIC_MOVE}, which fails cleanly and is
+     * retried under a fresh id.
+     * </p>
+     * <p>Package private so the uniqueness can be asserted directly.</p>
+     */
+    static Path stagingPathFor(final Path target) {
+        return target.resolveSibling(
+                CROSS_DEVICE_PREFIX + target.getFileName() + "." + UUID.randomUUID() + CROSS_DEVICE_SUFFIX);
+    }
+
+    /**
+     * Move a directory across filesystems, where a rename cannot: copy the tree to a staging directory
+     * beside the target, so the rename that publishes it is within one filesystem and atomic, and
+     * delete the source only once that rename has succeeded, so an interruption duplicates rather than
+     * loses. Called by {@link FileDestination} when its atomic move is refused or disabled.
+     * Package private so it can be exercised without two filesystems to hand.
+     */
+    static void moveDirAcrossFileStores(final Path source, final Path target) throws IOException {
+        final Path staging = stagingPathFor(target);
+
+        // ATOMIC_MOVE fails when the target's parent is absent, and the two paths of this method must
+        // agree. copyRecursively would otherwise conjure the parent, so a layout mistake would surface
+        // on one filesystem and be silently accommodated on another.
+        final Path targetParent = target.getParent();
+        if (targetParent != null && !Files.isDirectory(targetParent)) {
+            throw new NoSuchFileException(
+                    FileUtil.getCanonicalPath(target),
+                    null,
+                    "Target parent directory does not exist");
+        }
+
+        try {
+            copyRecursively(source, staging);
+
+            // Beside the target, so this rename is within one filesystem and is atomic.
+            Files.move(staging, target, StandardCopyOption.ATOMIC_MOVE);
+
+        } catch (final IOException | RuntimeException e) {
+            if (!FileUtil.deleteDir(staging)) {
+                LOGGER.warn(() -> LogUtil.message(
+                        "moveDirAcrossFileStores() - failed to clean up staging dir '{}' after a failed move", staging));
+            }
+            throw e;
+        }
+
+        // The target is now in place, so losing the source loses nothing.
+        if (!FileUtil.deleteDir(source)) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "moveDirAcrossFileStores() - '{}' was copied to '{}' but the source could not be deleted. The data is "
+                    + "safe; the source may be picked up again and duplicated downstream.", source, target));
+        }
+    }
+
+    private static void copyRecursively(final Path source, final Path target) throws IOException {
+        try (final Stream<Path> stream = Files.walk(source)) {
+            // Iterated rather than forEach'd because Files.copy throws IOException, and rather than
+            // collected because the tree can be any size.
+            final Iterator<Path> iterator = stream.iterator();
+            while (iterator.hasNext()) {
+                final Path path = iterator.next();
+                final Path destination = target.resolve(source.relativize(path).toString());
+                if (Files.isDirectory(path)) {
+                    Files.createDirectories(destination);
+                } else {
+                    Files.createDirectories(destination.getParent());
+                    Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
+    }
+
     public static void ensureDirExists(final Path path) {
         try {
             Files.createDirectories(path);
@@ -660,24 +769,6 @@ public class DirUtil {
      */
     public static String makeSafeName(final String string) {
         return NullSafe.get(string, PathSegmentUtil::toLegacyMixedCaseName);
-    }
-
-    /**
-     * @param feedKey
-     * @return A dir name like '{@code <feed>__<type>}',
-     * where {@link DirUtil#makeSafeName(String)} has been called for each part.
-     */
-    public static String makeSafeName(final FeedKey feedKey) {
-        // Make a dir name.
-        final StringBuilder sb = new StringBuilder();
-        if (feedKey.feed() != null) {
-            sb.append(DirUtil.makeSafeName(feedKey.feed()));
-        }
-        sb.append("__");
-        if (feedKey.type() != null) {
-            sb.append(DirUtil.makeSafeName(feedKey.type()));
-        }
-        return sb.toString();
     }
 
     /**

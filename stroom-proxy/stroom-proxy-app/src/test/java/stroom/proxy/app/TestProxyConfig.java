@@ -16,7 +16,14 @@
 
 package stroom.proxy.app;
 
+import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.docref.DocRef;
+import stroom.proxy.app.handler.ForwardFileConfig;
+import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ForwardS3Config;
+import stroom.proxy.app.handler.ForwarderConfig;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
 import stroom.util.config.AbstractConfigUtil;
 import stroom.util.config.ConfigValidator.Result;
@@ -72,10 +79,22 @@ class TestProxyConfig {
                 .withHome(testingHomeAndTempProvidersModule.getHomeDir().toAbsolutePath().toString())
                 .withTemp(tempDir.toAbsolutePath().toString());
 
+        // A vanilla config is no longer valid on its own. receiptCheckMode defaults to
+        // FEED_STATUS and downstreamHost.enabled to true, but hostname defaults to null - and a
+        // receipt check that cannot reach its downstream admits everything. Supplying the hostname
+        // here keeps this test's original subject ("the default config validates") while
+        // testAReceiptCheckWithNoDownstreamHostnameIsRejected pins the new rule.
+        final DownstreamHostConfig downstreamHostConfig = DownstreamHostConfig.copy(
+                        vanillaAppConfig.getDownstreamHostConfig())
+                .withHostname("downstream.example.com")
+                .build();
+
         final ProxyConfig proxyConfig = AbstractConfigUtil.mutateTree(
                 vanillaAppConfig,
                 ProxyConfig.ROOT_PROPERTY_PATH,
-                Map.of(ProxyConfig.ROOT_PROPERTY_PATH.merge(ProxyConfig.PROP_NAME_PATH), modifiedPathConfig));
+                Map.of(ProxyConfig.ROOT_PROPERTY_PATH.merge(ProxyConfig.PROP_NAME_PATH), modifiedPathConfig,
+                        ProxyConfig.ROOT_PROPERTY_PATH.merge(ProxyConfig.PROP_NAME_DOWNSTREAM_HOST),
+                        downstreamHostConfig));
 
         // create the dirs so they validate ok
         Files.createDirectories(tempDir);
@@ -89,6 +108,82 @@ class TestProxyConfig {
 
         Assertions.assertThat(result.hasErrorsOrWarnings())
                 .isFalse();
+    }
+
+    /**
+     * The shipped default is {@code receiptCheckMode: FEED_STATUS} with
+     * {@code downstreamHost.enabled: true} and {@code hostname: null}. That combination passed
+     * validation, built a hostless URI, failed every feed-status call, and the client then answered
+     * Receive for every feed - a receipt policy that reports itself working while admitting
+     * everything. It must now be a validation error.
+     */
+    @Test
+    void testEveryKindOfForwardDestinationIsAForwarder() {
+        final ProxyConfig proxyConfig = ProxyConfig.builder()
+                .addForwardFileDestination(ForwardFileConfig.builder().enabled().withName("file").build())
+                .addForwardHttpDestination(ForwardHttpPostConfig.builder().enabled(true).name("http").build())
+                .addForwardS3Destination(new ForwardS3Config(
+                        true, false, null, "s3", S3ClientConfig.builder().build(), null, null, null, null))
+                .build();
+
+        org.assertj.core.api.Assertions.assertThat(proxyConfig.streamAllForwarders().map(ForwarderConfig::getName))
+                .as("the S3 list is a forwarder list like the other two")
+                .containsExactlyInAnyOrder("file", "http", "s3");
+        org.assertj.core.api.Assertions.assertThat(proxyConfig.streamAllEnabledForwarders().count()).isEqualTo(3);
+        org.assertj.core.api.Assertions.assertThat(proxyConfig.getDirScannerConfig())
+                .as("defaulted, like every other block")
+                .isNotNull();
+    }
+
+    @Test
+    void testAReceiptCheckWithNoDownstreamHostnameIsRejected() {
+        final ProxyConfig proxyConfig = new ProxyConfig();
+
+        // The default really is the vulnerable combination - if any of these change, this test is
+        // asserting something other than it claims.
+        Assertions.assertThat(proxyConfig.getReceiveDataConfig().getReceiptCheckMode())
+                .isEqualTo(ReceiptCheckMode.FEED_STATUS);
+        Assertions.assertThat(proxyConfig.getDownstreamHostConfig().isEnabled())
+                .isTrue();
+        Assertions.assertThat(proxyConfig.getDownstreamHostConfig().getHostname())
+                .isNull();
+
+        Assertions.assertThat(proxyConfig.isDownstreamHostnameValid())
+                .as("a receipt check with no downstream hostname must not validate")
+                .isFalse();
+    }
+
+    @Test
+    void testAReceiptCheckWithADownstreamHostnameIsAccepted() {
+        final ProxyConfig vanilla = new ProxyConfig();
+        final ProxyConfig proxyConfig = AbstractConfigUtil.mutateTree(
+                vanilla,
+                ProxyConfig.ROOT_PROPERTY_PATH,
+                Map.of(ProxyConfig.ROOT_PROPERTY_PATH.merge(ProxyConfig.PROP_NAME_DOWNSTREAM_HOST),
+                        DownstreamHostConfig.copy(vanilla.getDownstreamHostConfig())
+                                .withHostname("downstream.example.com")
+                                .build()));
+
+        Assertions.assertThat(proxyConfig.isDownstreamHostnameValid())
+                .isTrue();
+    }
+
+    /**
+     * A mode that does not consult the downstream needs no hostname.
+     */
+    @Test
+    void testAModeThatDoesNotUseTheDownstreamNeedsNoHostname() {
+        final ProxyConfig vanilla = new ProxyConfig();
+        final ProxyConfig proxyConfig = AbstractConfigUtil.mutateTree(
+                vanilla,
+                ProxyConfig.ROOT_PROPERTY_PATH,
+                Map.of(ProxyConfig.ROOT_PROPERTY_PATH.merge(ProxyConfig.PROP_NAME_RECEIVE),
+                        ReceiveDataConfig.copy(vanilla.getReceiveDataConfig())
+                                .withReceiptCheckMode(ReceiptCheckMode.RECEIVE_ALL)
+                                .build()));
+
+        Assertions.assertThat(proxyConfig.isDownstreamHostnameValid())
+                .isTrue();
     }
 
     /**

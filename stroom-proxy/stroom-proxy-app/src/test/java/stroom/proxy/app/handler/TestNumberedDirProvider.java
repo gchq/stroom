@@ -43,7 +43,7 @@ public class TestNumberedDirProvider extends StroomUnitTest {
 
     @Test
     void test() throws Exception {
-        final Path dir = Files.createTempDirectory("test");
+        final Path dir = Files.createTempDirectory(getCurrentTestDir(), "test");
 
         NumberedDirProvider numberedDirProvider = new NumberedDirProvider(dir);
         assertThat(numberedDirProvider.get().getFileName().toString())

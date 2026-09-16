@@ -60,7 +60,7 @@ public class ProxyRequestHandler implements RequestHandler {
 
     private final RequestAuthenticator requestAuthenticator;
     private final CertificateExtractor certificateExtractor;
-    private final ReceiverFactory receiverFactory;
+    private final Receiver receiver;
     private final ReceiptIdGenerator receiptIdGenerator;
     private final DataReceiptMetrics dataReceiptMetrics;
     private final CommonSecurityContext commonSecurityContext;
@@ -69,14 +69,14 @@ public class ProxyRequestHandler implements RequestHandler {
     @Inject
     public ProxyRequestHandler(final RequestAuthenticator requestAuthenticator,
                                final CertificateExtractor certificateExtractor,
-                               final ReceiverFactory receiverFactory,
+                               final Receiver receiver,
                                final ReceiptIdGenerator receiptIdGenerator,
                                final DataReceiptMetrics dataReceiptMetrics,
                                final CommonSecurityContext commonSecurityContext,
                                final LogStream logStream) {
         this.requestAuthenticator = requestAuthenticator;
         this.certificateExtractor = certificateExtractor;
-        this.receiverFactory = receiverFactory;
+        this.receiver = receiver;
         this.receiptIdGenerator = receiptIdGenerator;
         this.dataReceiptMetrics = dataReceiptMetrics;
         this.commonSecurityContext = commonSecurityContext;
@@ -125,33 +125,25 @@ public class ProxyRequestHandler implements RequestHandler {
                     compressionVal -> new StroomStreamException(
                             StroomStatusCode.UNKNOWN_COMPRESSION, finAttributeMap, compressionVal));
 
-            final Receiver receiver;
             final String contentLength = attributeMap.get(StandardHeaderArguments.CONTENT_LENGTH);
             dataReceiptMetrics.recordContentLength(contentLength);
             if (ZERO_CONTENT.equals(contentLength)) {
                 LOGGER.warn("process() - Skipping Zero Content " + attributeMap);
-                receiver = null;
             } else {
-                // We have authenticated the user to accept the data, but from here on,
-                // we run as the processing user as the request user won't have perms to do
-                // things like check feed status.
-                receiver = commonSecurityContext.asProcessingUserResult(() -> {
-                    final Receiver receiver2 = receiverFactory.get(finAttributeMap);
-                    receiver2.receive(
-                            receiveTime,
-                            finAttributeMap,
-                            request.getRequestURI(),
-                            request::getInputStream);
-                    return receiver2;
-                });
+                // The sender is authenticated; from here on run as the processing user, because the
+                // receipt policy checks feed status and the sender has no right to.
+                commonSecurityContext.asProcessingUser(() -> receiver.receive(
+                        receiveTime,
+                        finAttributeMap,
+                        request.getRequestURI(),
+                        request::getInputStream));
             }
 
             response.setStatus(HttpStatus.SC_OK);
 
             LOGGER.debug(() -> LogUtil.message(
-                    "Writing proxy receipt id {} to response. Receiver: {}, duration: {}, compression: '{}'",
+                    "Writing proxy receipt id {} to response. Duration: {}, compression: '{}'",
                     receiptId,
-                    NullSafe.get(receiver, Object::getClass, Class::getSimpleName),
                     Duration.between(receiveTime, Instant.now()),
                     compression));
             try (final PrintWriter writer = response.getWriter()) {

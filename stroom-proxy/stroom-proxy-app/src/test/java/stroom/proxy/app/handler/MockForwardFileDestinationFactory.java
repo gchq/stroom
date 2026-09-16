@@ -28,7 +28,7 @@ public class MockForwardFileDestinationFactory implements ForwardFileDestination
     }
 
     @Override
-    public ForwardDestination create(final ForwardFileConfig config) {
+    public Destination create(final ForwardFileConfig config) {
         return forwardFileDestination;
     }
 

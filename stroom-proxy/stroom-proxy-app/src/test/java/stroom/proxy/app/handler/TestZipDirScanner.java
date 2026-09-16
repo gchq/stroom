@@ -52,7 +52,7 @@ class TestZipDirScanner {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestZipDirScanner.class);
 
     @Mock
-    private ZipReceiver mockZipReceiver;
+    private Receiver mockReceiver;
     @Mock
     private CommonSecurityContext mockSecurityContext;
 
@@ -78,7 +78,7 @@ class TestZipDirScanner {
      * already elevates to the processing user before filtering; this path must do the same.
      */
     @Test
-    void testScan_receiveRunsAsProcessingUser() {
+    void testScanRunsReceiveAsTheProcessingUser() {
         final Path ingestDir = testDir.resolve("ingest");
         final Path failureDir = testDir.resolve("failure");
         final DirScannerConfig config = new DirScannerConfig(
@@ -97,15 +97,60 @@ class TestZipDirScanner {
             receiveSawProcessingUser.set(inProcessingUser.get());
             return null;
         })
-                .when(mockZipReceiver)
-                .receive(Mockito.any(), Mockito.any());
+                .when(mockReceiver)
+                .receiveZip(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
         zipDirScanner.scan();
 
-        Mockito.verify(mockZipReceiver).receive(Mockito.any(), Mockito.any());
+        Mockito.verify(mockReceiver).receiveZip(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
         assertThat(receiveSawProcessingUser)
                 .withFailMessage("receive() must be invoked as the processing user")
                 .isTrue();
+    }
+
+    /**
+     * Two defects together, which is why they belong in one test: the fixtures only ever created
+     * {@code .zip}, {@code .txt} and extensionless files, so {@code isSidecarFile} could only take its
+     * {@code return false} branch and the sidecar path was <strong>dead under test</strong>. That is
+     * how the second survived — {@code SIDECAR_EXTENSIONS} held the FILE NAME "proxy.entries" in a set
+     * compared against an extension, so it never matched, and nothing exercised it.
+     * <p>
+     * This is the replay case from {@code data-path.md}: an operator moves a failed group back into
+     * the scan directory, sidecars and all. Its {@code proxy.entries} must be recognised as part of
+     * the group, not counted as an unknown file and moved to quarantine while its own zip succeeds.
+     * </p>
+     */
+    @Test
+    void testAMovedInGroupsSidecarsAreNotCountedAsUnknownFiles() {
+        final Path ingestDir = testDir.resolve("ingest-sidecars");
+        final Path failureDir = testDir.resolve("failure-sidecars");
+        final DirScannerConfig config = new DirScannerConfig(
+                List.of(ingestDir.toString()),
+                failureDir.toString(),
+                true,
+                StroomDuration.ofSeconds(1));
+
+        final ZipDirScanner zipDirScanner = createZipDirScanner(config);
+
+        // A group as it appears in 03_failure, moved back in for replay.
+        TestUtil.createFiles(
+                ingestDir.resolve("proxy.zip"),
+                ingestDir.resolve("proxy.meta"),
+                ingestDir.resolve("proxy.entries"),
+                ingestDir.resolve("error.log"));
+
+        zipDirScanner.scan();
+
+        // An unknown file is moved to the failure directory by postVisitDirectory; a recognised
+        // sidecar is consumed with its group. So what is left in the failure area is the observable
+        // form of the classification. ScanResult itself is private, and asserting the effect is the
+        // better test anyway - the count is a symptom, the quarantined file is the harm.
+        assertThat(failureDir)
+                .withFailMessage("a successful re-ingest must quarantine nothing; proxy.entries was "
+                                 + "counted unknown because the extension set held a filename")
+                .satisfiesAnyOf(
+                        dir -> assertThat(dir).doesNotExist(),
+                        dir -> assertThat(dir).isEmptyDirectory());
     }
 
     @Test
@@ -130,8 +175,8 @@ class TestZipDirScanner {
         TestUtil.createFiles(file1, file2, file3, file4, file5, file6);
 
         Mockito.doNothing()
-                .when(mockZipReceiver)
-                .receive(zipFileCaptor.capture(), attributeMapCaptor.capture());
+                .when(mockReceiver)
+                .receiveZip(Mockito.any(), attributeMapCaptor.capture(), Mockito.any(), zipFileCaptor.capture());
 
         zipDirScanner.scan();
 
@@ -167,7 +212,7 @@ class TestZipDirScanner {
     }
 
     @Test
-    void testScan_multipleDirs() {
+    void testScanMultipleDirs() {
         final Path ingestDir1 = testDir.resolve("ingest1");
         final Path ingestDir2 = testDir.resolve("ingest2");
         final Path failureDir = testDir.resolve("failure");
@@ -199,8 +244,8 @@ class TestZipDirScanner {
                 file21, file22, file23, file24, file25, file26);
 
         Mockito.doNothing()
-                .when(mockZipReceiver)
-                .receive(zipFileCaptor.capture(), attributeMapCaptor.capture());
+                .when(mockReceiver)
+                .receiveZip(Mockito.any(), attributeMapCaptor.capture(), Mockito.any(), zipFileCaptor.capture());
 
         zipDirScanner.scan();
 
@@ -249,7 +294,7 @@ class TestZipDirScanner {
     }
 
     @Test
-    void testScan_badZip() {
+    void testScanBadZip() {
         final Path ingestDir1 = testDir.resolve("ingest1");
         final Path ingestDir2 = testDir.resolve("ingest2");
         final Path failureDir = testDir.resolve("failure");
@@ -285,15 +330,15 @@ class TestZipDirScanner {
         final List<Path> zipFiles = new ArrayList<>();
         Mockito.doAnswer(
                         invocation -> {
-                            final Path zipFile = invocation.getArgument(0, Path.class);
+                            final Path zipFile = invocation.getArgument(3, Path.class);
                             zipFiles.add(zipFile);
                             if (zipFile.getFileName().toString().contains("bad")) {
                                 throw new RuntimeException("bad zip");
                             }
                             return null;
                         })
-                .when(mockZipReceiver)
-                .receive(Mockito.any(), Mockito.any());
+                .when(mockReceiver)
+                .receiveZip(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
         zipDirScanner.scan();
 
@@ -365,7 +410,7 @@ class TestZipDirScanner {
         return new ZipDirScanner(
                 () -> config,
                 pathCreator,
-                mockZipReceiver,
+                mockReceiver,
                 new ProxyReceiptIdGenerator(() -> "test-node"),
                 mockSecurityContext);
     }

@@ -101,7 +101,8 @@ public class PathTemplateConfig extends AbstractConfig implements IsProxyConfig 
     @Override
     public String toString() {
         return "PathTemplateConfig{" +
-               "pathTemplate='" + pathTemplate + '\'' +
+               "enabled=" + enabled +
+               ", pathTemplate='" + pathTemplate + '\'' +
                ", templatingMode=" + templatingMode +
                '}';
     }
@@ -115,15 +116,19 @@ public class PathTemplateConfig extends AbstractConfig implements IsProxyConfig 
             return false;
         }
         final PathTemplateConfig that = (PathTemplateConfig) o;
-        return Objects.equals(pathTemplate, that.pathTemplate) && templatingMode == that.templatingMode;
+        // Enabled decides whether the template is used at all, so two configs differing only in
+        // it are not the same configuration - it was in none of these three.
+        return enabled == that.enabled
+               && Objects.equals(pathTemplate, that.pathTemplate)
+               && templatingMode == that.templatingMode;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pathTemplate, templatingMode);
+        return Objects.hash(enabled, pathTemplate, templatingMode);
     }
 
-    @ValidationMethod(message = "If templatingMode is not DISABLED, pathTemplate must be a non-blank sting.")
+    @ValidationMethod(message = "If enabled, pathTemplate must be a non-blank string.")
     boolean isPathTemplateValid() {
         return !enabled
                || NullSafe.isNonEmptyString(pathTemplate);

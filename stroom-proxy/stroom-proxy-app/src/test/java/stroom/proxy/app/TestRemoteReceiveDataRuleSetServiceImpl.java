@@ -327,20 +327,42 @@ class TestRemoteReceiveDataRuleSetServiceImpl {
             final String json = Files.readString(jsonFile);
             LOGGER.debug("json:\n{}", json);
 
-            // Simulate an outage of the remote, so it should be able to read from the file
+            // This test is named for reading the file and did not read it. readFromDisk() is
+            // reachable only in the else of `if (isInitialised.get())`, and this service set that
+            // flag when the remote succeeded above - so an outage returns the value already in
+            // memory, and the original assertion (isSameAs the first bundle) passed *because* the
+            // file was never opened. Had it been read, deserialisation would have produced a
+            // different instance and the assertion would have failed. It asserted the opposite of
+            // its own name.
+            //
+            // Reading from disk is what a proxy does when it restarts while the remote is down, so
+            // that is what is built here: a SECOND service over the same content directory, whose
+            // remote is empty from the start, so isInitialised is false and the else branch is the
+            // only way it can answer at all.
             Mockito.when(mockReceiveDataRuleSetClient.getHashedReceiveDataRules())
                     .thenReturn(Optional.empty());
 
-            // Wait for the cached bundle to age off
-            sleep(2_000);
+            final RemoteReceiveDataRuleSetServiceImpl restarted = new RemoteReceiveDataRuleSetServiceImpl(
+                    mockReceiveDataRuleSetClient,
+                    MockCommonSecurityContext::new,
+                    () -> mockProxyReceiptPolicyConfig,
+                    () -> mockProxyConfig,
+                    () -> mockReceiveDataConfig,
+                    temporaryPathCreator,
+                    hashFunctionFactory,
+                    wordListProviderFactory);
 
-            service.getBundledRules();
+            final BundledRules fromDisk = restarted.getBundledRules();
 
-            sleep(100);
-
-            final BundledRules bundledRules3 = service.getBundledRules();
-            assertThat(bundledRules3.receiveDataRules())
-                    .isSameAs(bundledRules1.receiveDataRules());
+            assertThat(fromDisk)
+                    .as("with the remote down from the start, the rules must come from the file")
+                    .isNotNull();
+            assertThat(fromDisk.receiveDataRules())
+                    .as("and be a different object, because they were deserialised rather than held")
+                    .isNotSameAs(bundledRules1.receiveDataRules());
+            assertThat(fromDisk.receiveDataRules().getUuid())
+                    .as("and be the same rules")
+                    .isEqualTo(bundledRules1.receiveDataRules().getUuid());
         }
     }
 

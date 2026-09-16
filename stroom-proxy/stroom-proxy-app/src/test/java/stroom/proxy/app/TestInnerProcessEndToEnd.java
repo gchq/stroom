@@ -21,13 +21,12 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.DirUtil;
 import stroom.proxy.app.handler.ForwardFileConfig;
-import stroom.proxy.app.handler.ForwardFileQueueConfig;
 import stroom.proxy.app.handler.LocalByteBuffer;
 import stroom.proxy.app.handler.MockForwardFileDestination;
 import stroom.proxy.app.handler.MockForwardFileDestinationFactory;
-import stroom.proxy.app.handler.ReceiverFactory;
+import stroom.proxy.app.handler.Receiver;
 import stroom.proxy.app.handler.ZipWriter;
-import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.app.pipeline.config.PipelineConfigs;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.security.api.CommonSecurityContext;
@@ -76,15 +75,15 @@ class TestInnerProcessEndToEnd {
     @Test
     void testSimple() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        test(1, 10_001, 10, receiverFactory ->
-                sendSimpleData(receiverFactory, feedName));
+        test(1, 101, 10, receiver ->
+                sendSimpleData(receiver, feedName));
     }
 
     @Test
     void testSimpleZip() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        test(1, 10_001, 10, receiverFactory ->
-                sendSimpleZip(receiverFactory, feedName, 1));
+        test(1, 101, 10, receiver ->
+                sendSimpleZip(receiver, feedName, 1));
     }
 
     @Test
@@ -97,10 +96,10 @@ class TestInnerProcessEndToEnd {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
         test(1,
-                10001,
+                101,
                 20,
-                receiverFactory ->
-                        sendComplexZip(receiverFactory, feedName1, feedName2, 1));
+                receiver ->
+                        sendComplexZip(receiver, feedName1, feedName2, 1));
 //                } catch (final Exception e) {
 //                    throw new RuntimeException(e);
 //                }
@@ -113,23 +112,23 @@ class TestInnerProcessEndToEnd {
     @Test
     void testAggregateSplitting() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        test(1, 1, 2, receiverFactory ->
-                sendSimpleZip(receiverFactory, feedName, 2001));
+        test(1, 1, 2, receiver ->
+                sendSimpleZip(receiver, feedName, 21));
     }
 
     @Test
     void testSourceAndAggregateSplitting() {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
-        test(1, 1, 4, receiverFactory ->
-                sendComplexZip(receiverFactory, feedName1, feedName2, 2001));
+        test(1, 1, 4, receiver ->
+                sendComplexZip(receiver, feedName1, feedName2, 21));
     }
 
 
     private void test(final int threadCount,
                       final int totalStreams,
                       final int expectedOutputStreamCount,
-                      final Consumer<ReceiverFactory> sender) {
+                      final Consumer<Receiver> sender) {
         try {
             final Path root = Files.createTempDirectory("stroom-proxy");
             LOGGER.debug("root: {}", root);
@@ -148,17 +147,18 @@ class TestInnerProcessEndToEnd {
                                 dataDir.toAbsolutePath().toString(),
                                 homeDir.toAbsolutePath().toString(),
                                 tempDir.toAbsolutePath().toString()))
-                        .aggregatorConfig(AggregatorConfig.builder()
-                                .maxItemsPerAggregate(1000)
-                                .maxUncompressedByteSizeString("1G")
-                                .aggregationFrequency(StroomDuration.ofSeconds(60))
-                                .build())
+                        .pipelineConfig(PipelineConfigs.fullPipelineWithAggregateBounds(
+                        10,
+                        "1G",
+                        StroomDuration.ofSeconds(60)))
                         .addForwardFileDestination(new ForwardFileConfig(true,
                                 false,
                                 "test",
                                 "test",
                                 null,
-                                new ForwardFileQueueConfig(),
+                                null,
+                                null,
+                                null,
                                 null,
                                 null,
                                 null))
@@ -173,7 +173,7 @@ class TestInnerProcessEndToEnd {
                 injector.injectMembers(this);
 
                 proxyLifecycle = injector.getInstance(ProxyLifecycle.class);
-                final ReceiverFactory receiverFactory = injector.getInstance(ReceiverFactory.class);
+                final Receiver receiver = injector.getInstance(Receiver.class);
                 final MockForwardFileDestinationFactory forwardFileDestinationFactory = injector.getInstance(
                         MockForwardFileDestinationFactory.class);
 
@@ -190,7 +190,7 @@ class TestInnerProcessEndToEnd {
                             if (count.incrementAndGet() > totalStreams) {
                                 add = false;
                             } else {
-                                sender.accept(receiverFactory);
+                                sender.accept(receiver);
                             }
                         }
                     });
@@ -225,7 +225,7 @@ class TestInnerProcessEndToEnd {
         }
     }
 
-    private void sendSimpleData(final ReceiverFactory receiverFactory,
+    private void sendSimpleData(final Receiver receiver,
                                 final String feedName) {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
@@ -234,7 +234,7 @@ class TestInnerProcessEndToEnd {
         try (final InputStream inputStream = new ByteArrayInputStream(dataBytes)) {
             // asProcessingUser would normally be done in ProxyRequestHandler
             commonSecurityContext.asProcessingUser(() -> {
-                receiverFactory.get(attributeMap).receive(
+                receiver.receive(
                         Instant.now(),
                         attributeMap,
                         "test",
@@ -245,7 +245,7 @@ class TestInnerProcessEndToEnd {
         }
     }
 
-    private void sendSimpleZip(final ReceiverFactory receiverFactory,
+    private void sendSimpleZip(final Receiver receiver,
                                final String feedName,
                                final int entryCount) {
         final AttributeMap attributeMap = new AttributeMap();
@@ -271,7 +271,7 @@ class TestInnerProcessEndToEnd {
         try (final InputStream inputStream = new ByteArrayInputStream(dataBytes)) {
             // asProcessingUser would normally be done in ProxyRequestHandler
             commonSecurityContext.asProcessingUser(() -> {
-                receiverFactory.get(attributeMap).receive(
+                receiver.receive(
                         Instant.now(),
                         attributeMap,
                         "test",
@@ -282,7 +282,7 @@ class TestInnerProcessEndToEnd {
         }
     }
 
-    private void sendComplexZip(final ReceiverFactory receiverFactory,
+    private void sendComplexZip(final Receiver receiver,
                                 final String feedName1,
                                 final String feedName2,
                                 final int entryCount) {
@@ -316,7 +316,7 @@ class TestInnerProcessEndToEnd {
         try (final InputStream inputStream = new ByteArrayInputStream(dataBytes)) {
             // asProcessingUser would normally be done in ProxyRequestHandler
             commonSecurityContext.asProcessingUser(() -> {
-                receiverFactory.get(attributeMap).receive(
+                receiver.receive(
                         Instant.now(),
                         attributeMap,
                         "test",

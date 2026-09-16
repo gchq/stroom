@@ -32,6 +32,7 @@ import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
+import io.dropwizard.jersey.validation.Validators;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -57,7 +58,7 @@ public class ProxyYamlUtil {
         return configurationFactoryFactory
                 .create(
                         Config.class,
-                        io.dropwizard.jersey.validation.Validators.newValidator(),
+                        Validators.newValidator(),
                         Jackson.newObjectMapper(),
                         "dw");
     }

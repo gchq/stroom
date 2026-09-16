@@ -1,0 +1,158 @@
+# Deployment: Distributed on AWS — SQS queues, S3 file stores
+#
+# Use case: receive-tier and processing-tier scale independently, in separate
+# processes or containers, possibly in different availability zones. Nodes may
+# be scaled away at any time and never return.
+#
+# `mode: SHARED` says so, and the validator holds every queue and store to it:
+# queues must be SQS or Kafka, stores must be S3 or SHARED_FILESYSTEM, and a
+# node-local queue or store is refused at start-up rather than warned about.
+# A message published by one process is consumed by another, and every
+# location it carries must resolve from any node.
+#
+# Objects a crash leaves unreferenced in the bucket are not swept by the proxy.
+# Configure an S3 lifecycle rule on each prefix that expires objects older than
+# the longest a live group can legitimately wait (a queue backlog, the forward
+# retry window) - at least twice maxRetryAge and twice aggregationFrequency, the
+# margin a SHARED_FILESYSTEM store's orphanAge is validated to. A group expired
+# while still named is acknowledged as done on redelivery, silently.
+#
+# This file is the config every node shares. Per-node differences go in the
+# `stages` block — see split-stage-workers.yml.
+
+proxyConfig:
+
+  # Required: receiptCheckMode defaults to FEED_STATUS, which admits data only if the
+  # downstream says so - so the proxy must know where the downstream is. Without a hostname the
+  # check cannot run, and before 2026-09-02 it silently answered "receive" for every feed. It is
+  # now a validation error, so a proxy configured to check receipts but not told where to check
+  # refuses to start.
+  #
+  # Set receiptCheckMode: RECEIVE_ALL (or downstreamHost.enabled: false) if this proxy is not
+  # meant to consult a downstream at all.
+  downstreamHost:
+    enabled: true
+    hostname: "stroom.example.com"
+
+  pipeline:
+    mode: SHARED
+    queues:
+      splitZipInput:
+        type: SQS
+        queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/proxy-split-zip-input"
+        visibilityTimeout: "PT5M"
+        waitTime: "PT20S"
+      aggregateInput:
+        type: SQS
+        queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/proxy-aggregate-input"
+        visibilityTimeout: "PT5M"
+        waitTime: "PT20S"
+      forwardingInput:
+        type: SQS
+        queueUrl: "https://sqs.eu-west-2.amazonaws.com/123456789012/proxy-forwarding-input"
+        visibilityTimeout: "PT15M"
+        waitTime: "PT20S"
+
+    fileStores:
+      receiveStore:
+        type: S3
+        region: "eu-west-2"
+        bucket: "example-proxy-pipeline"
+        keyPrefix: "receive/"
+        credentialsType: "default"
+        localCachePath: "data/pipeline/file-stores/s3-receiveStore"
+      splitStore:
+        type: S3
+        region: "eu-west-2"
+        bucket: "example-proxy-pipeline"
+        keyPrefix: "split/"
+        credentialsType: "default"
+      aggregateStore:
+        type: S3
+        region: "eu-west-2"
+        bucket: "example-proxy-pipeline"
+        keyPrefix: "aggregate/"
+        credentialsType: "default"
+
+    stages:
+      receive:
+        enabled: true
+        fileStore: receiveStore
+        outputQueue: aggregateInput
+        splitZipQueue: splitZipInput
+      splitZip:
+        enabled: true
+        inputQueue: splitZipInput
+        outputQueue: aggregateInput
+        fileStore: splitStore
+        threads:
+          consumerThreads: 4
+      # An open aggregate is the set of inputs this node holds claimed on aggregateInput; the
+      # SQS queue keeps them invisible (the proxy heartbeats each one) until the aggregate is
+      # published. SQS has no routing, so every aggregating node holds its own partial aggregate
+      # for every feed it happens to receive, and a cluster of N nodes closes N aggregates per
+      # feed per aggregationFrequency. SQS also caps messages in flight per queue (120,000 on a
+      # standard queue at the time of writing); a node's share is the inputs in its open
+      # aggregates, so on SQS aggregationFrequency is the knob that bounds them.
+      aggregate:
+        enabled: true
+        inputQueue: aggregateInput
+        outputQueue: forwardingInput
+        fileStore: aggregateStore
+        maxItemsPerAggregate: 1000
+        maxUncompressedByteSize: "1G"
+        aggregationFrequency: "PT10M"
+        threads:
+          consumerThreads: 1   # one claimer per node; more is refused on SQS
+          mergeThreads: 4      # merge workers overlap the S3 round trips of a close
+      forward:
+        enabled: true
+        inputQueue: forwardingInput
+        threads:
+          consumerThreads: 8
+
+  forwardHttpDestinations:
+    - name: "downstream-stroom"
+      enabled: true
+      forwardUrl: "https://stroom.example.com/stroom/datafeed"
+      retry:
+        retryDelay: "PT1M"
+        retryDelayGrowthFactor: 2
+        maxRetryDelay: "PT30M"
+        maxRetryAge: "P3D"
+      # Give-up data must be somewhere every node sees: the node that gives up on a
+      # group may never be asked again. An S3 bucket, or a directory at least two
+      # levels below a SHARED_FILESYSTEM store's path (<store path>/give-up/<name>);
+      # a node-local directory is refused at start-up.
+      failureDestination:
+        type: "S3"
+        s3Client:
+          region: "eu-west-2"
+          bucketName: "proxy-give-up"
+          keyPattern: "downstream-stroom/${feed}/${year}${month}${day}/${uuid}.zip"
+      threads:
+        consumerThreads: 10
+
+# Sizing notes
+#
+# visibilityTimeout must exceed the worst-case processing time for one item on
+# that stage, or SQS will redeliver an item that is still being worked on. The
+# SQS queue implementation extends visibility with a heartbeat while an item is
+# in flight (see infrastructure/queues.md §3.5), but the initial timeout should
+# still be generous. `forwardingInput` gets the longest because a slow
+# downstream stretches the forward stage most.
+#
+# waitTime enables long polling. PT20S is the SQS maximum and gives the lowest
+# empty-poll cost; the `polls.empty` / `polls.total` metrics show whether it is
+# doing its job.
+#
+# Give-up on SQS is the queue's own: configure a redrive policy on every queue, whose
+# maxReceiveCount is the bound and whose dead-letter queue is where a human acts. The proxy counts
+# nothing and writes nothing to local disk for an SQS queue - a node may be scaled away with its
+# disk - and refuses `maxDeliveryAttempts` on an SQS queue as a validation error.
+# Size maxReceiveCount to at least maxRetryAge ÷ retryDelay (10,080 at the defaults).
+#
+# Set MessageRetentionPeriod on every queue above the longest maxRetryAge - 14 days, the
+# maximum, is the safe choice; AWS's default of 4 days is shorter than the default maxRetryAge
+# of 7. The proxy reads both attributes when it builds each SQS queue and refuses to start
+# without a redrive policy or with a retention that does not exceed the retry window.

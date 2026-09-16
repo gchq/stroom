@@ -1,0 +1,147 @@
+# Deployment: One process per stage role
+#
+# Use case: separate the receive tier from the processing tier so each scales
+# on its own axis — receive scales with inbound connection count, aggregate
+# with data volume, forward with downstream throughput.
+#
+# The mechanism is `enabled`. Every process is given the *same* queues and
+# fileStores definitions, and differs only in which stages it enables. A
+# disabled stage creates no worker and consumes nothing; its queues still exist
+# for whichever process does enable it.
+#
+# This file holds three variants. Use one per process — they are shown together
+# so the shared parts are obviously identical. In practice, put the common
+# `queues` and `fileStores` in a base file and overlay just the `stages` block.
+#
+# These are fragments: each variant's `pipeline` block states only `mode` and
+# `stages`, and must be overlaid on the shared `queues` and `fileStores` blocks
+# of sqs-s3-distributed.yml or kafka-distributed.yml before it will start. With
+# LOCAL_FILESYSTEM queues these processes cannot see each other's work at all.
+
+# ---------------------------------------------------------------------------
+# Variant A — receive tier. Runs the HTTP endpoint and nothing else.
+# Scale horizontally behind a load balancer.
+# ---------------------------------------------------------------------------
+proxyConfig:
+
+  # Required: receiptCheckMode defaults to FEED_STATUS, which admits data only if the
+  # downstream says so - so the proxy must know where the downstream is. Without a hostname the
+  # check cannot run, and before 2026-09-02 it silently answered "receive" for every feed. It is
+  # now a validation error, so a proxy configured to check receipts but not told where to check
+  # refuses to start.
+  #
+  # Set receiptCheckMode: RECEIVE_ALL (or downstreamHost.enabled: false) if this proxy is not
+  # meant to consult a downstream at all.
+  downstreamHost:
+    enabled: true
+    hostname: "stroom.example.com"
+  pipeline:
+    mode: SHARED
+    stages:
+      receive:
+        enabled: true
+        fileStore: receiveStore
+        outputQueue: aggregateInput
+        splitZipQueue: splitZipInput
+      splitZip:
+        enabled: false
+      aggregate:
+        enabled: false
+      forward:
+        enabled: false
+
+# ---------------------------------------------------------------------------
+# Variant B — processing tier. Splits and aggregates.
+# Scale with data volume. Accepts no HTTP data.
+# ---------------------------------------------------------------------------
+# proxyConfig:
+#   # A node that does not receive must not scan a directory either: the scanner is on by
+#   # default and hands what it finds to a receiver that would refuse it. Validation refuses
+#   # the combination at start-up.
+#   dirScanner:
+#     enabled: false
+#   pipeline:
+#     mode: SHARED
+#     stages:
+#       receive:
+#         enabled: false
+#       splitZip:
+#         enabled: true
+#         inputQueue: splitZipInput
+#         outputQueue: aggregateInput
+#         fileStore: splitStore
+#         threads:
+#           consumerThreads: 8
+#       aggregate:
+#         enabled: true
+#         inputQueue: aggregateInput
+#         outputQueue: forwardingInput
+#         fileStore: aggregateStore
+#         maxItemsPerAggregate: 1000
+#         maxUncompressedByteSize: "1G"
+#         aggregationFrequency: "PT10M"
+#         threads:
+#           consumerThreads: 1   # one claimer; more only on Kafka
+#           mergeThreads: 8
+#       forward:
+#         enabled: false
+
+# ---------------------------------------------------------------------------
+# Variant C — forward tier. Drains forwardingInput to the downstream.
+# Scale with downstream throughput and outage tolerance.
+# ---------------------------------------------------------------------------
+# proxyConfig:
+#   dirScanner:
+#     enabled: false
+#   pipeline:
+#     mode: SHARED
+#     stages:
+#       receive:
+#         enabled: false
+#       splitZip:
+#         enabled: false
+#       aggregate:
+#         enabled: false
+#       forward:
+#         enabled: true
+#         inputQueue: forwardingInput
+#         threads:
+#           consumerThreads: 16
+#   forwardHttpDestinations:
+#     - name: "downstream-stroom"
+#       enabled: true
+#       forwardUrl: "https://stroom.example.com/stroom/datafeed"
+#       # Shared, as the notes below say: an S3 bucket, or a directory at least two levels
+#       # below a SHARED_FILESYSTEM store's path.
+#       failureDestination:
+#         type: "S3"
+#         s3Client:
+#           region: "eu-west-2"
+#           bucketName: "proxy-give-up"
+#           keyPattern: "downstream-stroom/${feed}/${year}${month}${day}/${uuid}.zip"
+
+# Notes
+#
+# Any number of processes may own the forward stage: a group stays claimed on the
+# shared forward queue until a destination has accepted it or the stage has given
+# up on it, and nothing of forwarding is on a node's disk. In shared mode each
+# destination's failureDestination must be shared too - an S3 bucket, or a
+# directory at least two levels below a SHARED_FILESYSTEM store's path, such as
+# <store path>/give-up/<name> - so that given-up data is in one place whichever
+# node gave up; a node-local one is refused at start-up.
+#
+# Only the receive tier needs to be reachable by data senders. The processing
+# and forward tiers need no inbound HTTP at all beyond the admin port.
+#
+# An open aggregate is the set of inputs a processing-tier node holds claimed
+# on aggregateInput; nothing of it is on the node's disk, so a node that dies
+# loses nothing. On Kafka the feed is the record key and a feed's inputs reach
+# one consumer, so aggregates fill across the cluster. On SQS every node holds
+# its own partial aggregate for every feed it happens to receive, so running
+# several processing-tier processes spreads a feed's data across more, smaller
+# aggregates. On SQS scale the processing tier for throughput, not for
+# aggregate quality.
+#
+# A stage disabled everywhere silently strands its input queue. Nothing warns
+# about this — the messages simply accumulate. Check that the union of enabled
+# stages across all processes covers the whole pipeline.

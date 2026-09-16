@@ -43,6 +43,68 @@ public class TestZipEntryGroup extends StroomUnitTest {
 
     private static final int ENTRIES = 100;
 
+    /**
+     * Entry sizes are whatever the zip declared, so two large claims must not wrap the total
+     * negative - a negative total makes PreAggregator's byte limit unreachable and the aggregate
+     * then never closes on size.
+     */
+    @Test
+    void testTheTotalSaturatesInsteadOfOverflowingToNegative() {
+        final FeedKey feedKey = FeedKey.of("test_feed", "test_type");
+        final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(feedKey);
+        zipEntryGroup.setMetaEntry(new Entry("1.meta", Long.MAX_VALUE));
+        zipEntryGroup.setDataEntry(new Entry("1.dat", Long.MAX_VALUE));
+
+        // Plain addition here would give -2.
+        assertThat(zipEntryGroup.getTotalUncompressedSize())
+                .isEqualTo(Long.MAX_VALUE);
+    }
+
+    /**
+     * All four slots populated, so every term in the sum is exercised rather than just one pair.
+     */
+    @Test
+    void testTheTotalSaturatesAcrossAllFourEntryTypes() {
+        final FeedKey feedKey = FeedKey.of("test_feed", "test_type");
+        final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(feedKey);
+        final long quarter = Long.MAX_VALUE / 2;
+        zipEntryGroup.setManifestEntry(new Entry("1.mf", quarter));
+        zipEntryGroup.setMetaEntry(new Entry("1.meta", quarter));
+        zipEntryGroup.setContextEntry(new Entry("1.ctx", quarter));
+        zipEntryGroup.setDataEntry(new Entry("1.dat", quarter));
+
+        assertThat(zipEntryGroup.getTotalUncompressedSize())
+                .isEqualTo(Long.MAX_VALUE);
+    }
+
+    /**
+     * A negative declared size must not <em>reduce</em> the running total, which is what made
+     * the byte limit recede as entries were added.
+     */
+    @Test
+    void testANegativeEntrySizeDoesNotReduceTheTotal() {
+        final FeedKey feedKey = FeedKey.of("test_feed", "test_type");
+        final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(feedKey);
+        zipEntryGroup.setMetaEntry(new Entry("1.meta", 100));
+        zipEntryGroup.setDataEntry(new Entry("1.dat", -1_000));
+
+        assertThat(zipEntryGroup.getTotalUncompressedSize())
+                .isEqualTo(100);
+    }
+
+    @Test
+    void testTheOrdinaryTotalIsUnchanged() {
+        final FeedKey feedKey = FeedKey.of("test_feed", "test_type");
+        final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(feedKey);
+        zipEntryGroup.setManifestEntry(new Entry("1.mf", 123));
+        zipEntryGroup.setMetaEntry(new Entry("1.meta", 234));
+        zipEntryGroup.setContextEntry(new Entry("1.ctx", 345));
+        zipEntryGroup.setDataEntry(new Entry("1.dat", 456));
+
+        assertThat(zipEntryGroup.getTotalUncompressedSize())
+                .isEqualTo(123 + 234 + 345 + 456);
+    }
+
     @Test
     void test() throws IOException {
         final String data;

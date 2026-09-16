@@ -88,7 +88,6 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
 
     private final CachedValue<RuleState, Void> cachedRuleState;
     private final AtomicBoolean isInitialised = new AtomicBoolean(false);
-    private final Duration noFetchIntervalAfterFailure = Duration.ofSeconds(30);
 
     private Instant earliestNextFetchTime = Instant.EPOCH;
 
@@ -141,9 +140,15 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
      */
     @Override
     public HashedReceiveDataRules getHashedReceiveDataRules() {
+        // The cached state is null whenever we have never successfully fetched rules - the
+        // supplier returns the previous value, and at start-up against an unreachable upstream that
+        // value is null ("a null return will mean a receive-all filter", below). So an upstream proxy
+        // asking us for rules while our own upstream is down got an NPE instead of the null that
+        // means "we have none". getBundledRules() twenty lines down has always guarded it.
         return commonSecurityContextProvider.get().secureResult(REQUIRED_PERMISSION_SET, () ->
-                cachedRuleState.getValueAsync()
-                        .hashedReceiveDataRules());
+                NullSafe.get(
+                        cachedRuleState.getValueAsync(),
+                        RuleState::hashedReceiveDataRules));
     }
 
     @Override
@@ -204,7 +209,18 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
         if (Instant.now().isAfter(earliestNextFetchTime)) {
             optHashedReceiveDataRules = receiveDataRuleSetClient.getHashedReceiveDataRules();
             if (optHashedReceiveDataRules.isEmpty()) {
-                earliestNextFetchTime = Instant.now().plus(noFetchIntervalAfterFailure);
+                // Read from config rather than a hard-coded 30 seconds. The property sat
+                // there configured and unread - so it worked for API-key checks, which do read it,
+                // and silently did nothing for rule-set fetches. An operator lengthening it to spare
+                // a struggling downstream changed one of the two. Reached through the ProxyConfig
+                // provider this class already holds, so no wiring changes.
+                // Null-guarded to the same default DownstreamHostConfig itself uses. This runs on
+                // the path where the remote is already down, which is the worst possible place to
+                // introduce an NPE - and the first version of this fix did exactly that.
+                earliestNextFetchTime = Instant.now().plus(NullSafe.getOrElse(
+                        proxyConfigProvider.get().getDownstreamHostConfig(),
+                        DownstreamHostConfig::getNoFetchIntervalAfterFailure,
+                        DownstreamHostConfig.DEFAULT_NO_FETCH_INTERVAL).getDuration());
                 LOGGER.warn("Failed to get rules from remote '{}', will not try again for: {}. " +
                             "Is the remote down? Will try to use previous rules or read them from disk.",
                         receiveDataRuleSetClient.getFullUrl(),
@@ -244,45 +260,6 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
         return optHashedReceiveDataRules.orElse(null);
     }
 
-//    private HashedReceiveDataRules getRemoteHashedReceiveDataRules(
-//            final HashedReceiveDataRules currHashedReceiveDataRules) {
-//
-//        Optional<HashedReceiveDataRules> optHashedReceiveDataRules = Optional.empty();
-//
-//        final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
-//        final String url = contentSyncConfig.getReceiveDataRulesUrl();
-//        if (NullSafe.isNonBlankString(url)) {
-//            try {
-//                final WebTarget webTarget = jerseyClientFactory.createWebTarget(JerseyClientName.CONTENT_SYNC, url)
-//                        .path(GET_FEED_STATUS_PATH);
-//                try (Response response = getResponse(contentSyncConfig, webTarget)) {
-//                    final StatusType statusInfo = response.getStatusInfo();
-//                    if (statusInfo.getStatusCode() != Status.OK.getStatusCode()) {
-//                        LOGGER.error("Error fetching receive data rules using url '{}', got response {} - {}",
-//                                url, statusInfo.getStatusCode(), statusInfo.getReasonPhrase());
-//                    } else {
-//                        optHashedReceiveDataRules = Optional.ofNullable(
-//                                response.readEntity(HashedReceiveDataRules.class));
-//                        // Update our value on disk in so if proxy reboots and upstream is
-//                        // not available, we have the latest.
-//                        optHashedReceiveDataRules.ifPresent(this::writeToDisk);
-//                    }
-//                }
-//            } catch (Throwable e) {
-//                LOGGER.error("Error fetching receive data rules using url '{}': {}",
-//                        url, LogUtil.exceptionMessage(e), e);
-//            }
-//        }
-//
-//        // Couldn't get a value from the remote, so try to get one from disk if this is our first time
-//        if (optHashedReceiveDataRules.isEmpty()
-//            && isInitialised.compareAndSet(false, true)) {
-//            optHashedReceiveDataRules = readFromDisk();
-//        }
-//
-//        // Fall back on the last held value, which may be null if there is no file
-//        return optHashedReceiveDataRules.orElse(currHashedReceiveDataRules);
-//    }
 
     private Path getJsonFilePath() {
         final String contentDir = proxyConfigProvider.get().getContentDir();
@@ -409,12 +386,22 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
                             // We have to have a suffixed version because the expr tree may contain
                             // a mix of hashed and non-hashed values for the same field.
                             fieldNameToSaltMap.forEach((fieldName, salt) -> {
-                                final String suffixedFieldName = HashedReceiveDataRules.markFieldAsHashed(fieldName);
                                 final String unHashedVal = newAttrMap.get(fieldName);
-                                final String hashedVal = NullSafe.get(
-                                        unHashedVal,
-                                        val -> hashFunction.hash(val, salt));
-                                newAttrMap.put(suffixedFieldName, hashedVal);
+                                // This put unconditionally, and hashedVal is null whenever the
+                                // field is absent - so a field the sender never set acquired a
+                                // "Field___!hashed!" entry with a null value. requiresMapping only
+                                // checks that AT LEAST ONE salted field is present, so every absent
+                                // sibling got one too.
+                                //
+                                // A present-but-null entry is not the same thing as an absent one to
+                                // an expression tree, and the difference decides receipt policy. An
+                                // absent field stays absent in its hashed form.
+                                if (unHashedVal != null) {
+                                    final String suffixedFieldName =
+                                            HashedReceiveDataRules.markFieldAsHashed(fieldName);
+                                    newAttrMap.put(suffixedFieldName,
+                                            hashFunction.hash(unHashedVal, salt));
+                                }
                             });
                         },
                         "Hash attributeMap values");

@@ -22,6 +22,7 @@ import stroom.proxy.app.handler.ZipWriter;
 import stroom.util.concurrent.UniqueId;
 
 import com.google.common.base.Strings;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
@@ -37,6 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Helper class for posting data to /datafeed on a proxy
@@ -194,6 +197,40 @@ public class PostDataHelper {
 
     public long getPostCount() {
         return postToProxyCount.sum();
+    }
+
+    /**
+     * Assert that the proxy <strong>accepted</strong> every POST this helper sent.
+     * <p>
+     * Every end-to-end test asserted {@code getPostCount()} instead, and that
+     * counter is incremented immediately before the response is read — so it counts requests
+     * <em>sent</em>, not requests accepted, and the assertion reduced to "the loop ran the number of
+     * times the loop ran". Six tests could not have told a proxy that rejected everything from one
+     * that worked; {@code getPostResponses()}, which holds the actual answers, had no caller at all.
+     * </p>
+     * <p>
+     * It matters more since the port fix, because before it these tests could not bind their port and so
+     * had never run at all. A tautology in a test that does not execute is invisible twice over.
+     * </p>
+     *
+     * @param expectedCount The number of POSTs the test sent.
+     */
+    public void assertAllPostsAccepted(final int expectedCount) {
+        assertThat(postToProxyCount.sum())
+                .as("every POST the test made must have been sent")
+                .isEqualTo(expectedCount);
+        assertThat(postResponses)
+                .as("and the proxy must have answered every one of them")
+                .hasSize(expectedCount);
+        assertThat(postResponses)
+                .as("with 200, rather than merely answering")
+                .allSatisfy(postResponse -> assertThat(postResponse.status())
+                        .withFailMessage("POST answered %d: %s",
+                                postResponse.status(), postResponse.responseText())
+                        .isEqualTo(HttpServletResponse.SC_OK));
+        assertThat(postResponses)
+                .as("and a receipt id, which is what makes the acceptance traceable")
+                .allSatisfy(postResponse -> assertThat(postResponse.receiptId()).isNotNull());
     }
 
     public List<PostResponse> getPostResponses() {

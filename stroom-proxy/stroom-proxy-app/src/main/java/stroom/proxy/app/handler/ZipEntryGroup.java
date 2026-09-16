@@ -174,16 +174,32 @@ public class ZipEntryGroup {
 
     @JsonIgnore
     public long getTotalUncompressedSize() {
-        return getUncompressedSize(manifestEntry)
-               + getUncompressedSize(metaEntry)
-               + getUncompressedSize(contextEntry)
-               + getUncompressedSize(dataEntry);
+        return addSaturating(
+                addSaturating(getUncompressedSize(manifestEntry), getUncompressedSize(metaEntry)),
+                addSaturating(getUncompressedSize(contextEntry), getUncompressedSize(dataEntry)));
     }
 
     private static long getUncompressedSize(final Entry entry) {
-        return entry != null
+        // Negative sizes are meaningless and would reduce the total rather than raise it.
+        // See addSaturating() for why these values cannot be trusted.
+        return entry != null && entry.uncompressedSize > 0
                 ? entry.uncompressedSize
                 : 0;
+    }
+
+    /**
+     * Adds two byte counts, saturating at {@link Long#MAX_VALUE} instead of overflowing to a
+     * negative. The sizes are what a zip declares in its central directory, so a corrupt or hostile
+     * archive can claim anything; a total that wrapped negative would make every size bound compare
+     * false for ever, and saturating keeps a bound monotonic: an absurd claim closes an aggregate
+     * early rather than disabling the check.
+     */
+    public static long addSaturating(final long a, final long b) {
+        final long sum = a + b;
+        // Callers pass non-negative values only, so a negative sum can only mean overflow.
+        return sum < 0
+                ? Long.MAX_VALUE
+                : sum;
     }
 
     @Override

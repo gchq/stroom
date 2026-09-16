@@ -131,8 +131,15 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                                 // Remove just in case
                                 verifiedKeysMap.remove(request);
                                 // Try to hit the downstream to verify it
-                                final VerifiedApiKey verifiedApiKey = doApiKeyVerification(request)
-                                        .orElse(null);
+                                final VerifiedApiKey verifiedApiKey;
+                                try {
+                                    verifiedApiKey = doApiKeyVerification(request).orElse(null);
+                                } catch (final DownstreamUnavailableException e) {
+                                    // Nothing authoritative to cache. Leave the map untouched so the
+                                    // next request retries once the back-off has elapsed.
+                                    LOGGER.debug(e::getMessage, e);
+                                    return Optional.empty();
+                                }
                                 final DatedValue<VerifiedApiKey> newDatedVerifiedApiKey = verifiedApiKey != null
                                         ? DatedValue.create(verifiedApiKey.getLastVerified(), verifiedApiKey)
                                         : DatedValue.create(null);
@@ -140,7 +147,11 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                                         newDatedVerifiedApiKey);
                                 // Cache the outcome
                                 verifiedKeysMap.put(request, newDatedVerifiedApiKey);
-                                updateFile(verifiedApiKey, request);
+                                if (verifiedApiKey != null || isInFile(request)) {
+                                    // Only rewrite the persisted file when it actually changes. An
+                                    // unknown key that was never in the file needs no write.
+                                    updateFile(verifiedApiKey, request);
+                                }
                                 return Optional.ofNullable(verifiedApiKey)
                                         .map(VerifiedApiKey::getUserDesc);
                             } else {
@@ -177,8 +188,10 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
     }
 
     private boolean isTooOld(final DatedValue<VerifiedApiKey> datedVerifiedApiKey) {
+        // A negative verdict is cached too, and ages like a positive one. Otherwise an unauthenticated
+        // caller sending well-formed but unknown keys would force a downstream verification and a
+        // rewrite of the persisted key file per request, serialised on this instance's monitor.
         final boolean isTooOld = datedVerifiedApiKey == null
-                                 || datedVerifiedApiKey.hasNullValue()
                                  || datedVerifiedApiKey.isOlderThan(
                 downstreamHostConfigProvider.get().getMaxCachedKeyAge().getDuration());
         LOGGER.debug(() -> LogUtil.message("isTooOld() - isTooOld: {}, age: {}, instant: {}",
@@ -186,6 +199,17 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                 NullSafe.get(datedVerifiedApiKey, DatedValue::getAge, Duration::toString),
                 NullSafe.get(datedVerifiedApiKey, DatedValue::getInstant, Instant::toString)));
         return isTooOld;
+    }
+
+    /**
+     * Signals that the downstream could not be reached and no local verdict was available, so whether
+     * the key is valid is unknown. Distinct from an authoritative "no such key", which IS cached.
+     */
+    private static class DownstreamUnavailableException extends RuntimeException {
+
+        DownstreamUnavailableException(final String message, final Throwable cause) {
+            super(message, cause);
+        }
     }
 
     private synchronized Optional<VerifiedApiKey> doApiKeyVerification(final VerifyApiKeyRequest request) {
@@ -214,6 +238,15 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                     // See if we can verify based on what we had in the file.
                     verifiedApiKey = verifyLocally(request)
                             .orElse(null);
+                    if (verifiedApiKey == null) {
+                        // The downstream did not answer and we have nothing on disk, so we do not know
+                        // whether this key is valid. Say so rather than returning an empty Optional,
+                        // which the caller would cache as an authoritative "invalid" for
+                        // maxCachedKeyAge and go on rejecting a good key after the downstream recovers.
+                        throw new DownstreamUnavailableException(
+                                "Unable to verify API key - the downstream is unavailable and there is "
+                                + "no locally cached verdict for it", e);
+                    }
                 }
             } else {
                 LOGGER.debug(() -> LogUtil.message(
@@ -221,6 +254,16 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                         earliestNextFetchTime, TimeUtils.durationUntil(earliestNextFetchTime)));
                 verifiedApiKey = verifyLocally(request)
                         .orElse(null);
+                if (verifiedApiKey == null) {
+                    // Same reasoning as the fault path above: we are inside the post-failure back-off,
+                    // so the downstream is known to be unavailable and we have nothing on disk. We do
+                    // not know whether this key is valid, and must not let the caller cache "no" as
+                    // authoritative for maxCachedKeyAge - that kept rejecting good keys for ten
+                    // minutes after the downstream recovered.
+                    throw new DownstreamUnavailableException(
+                            "Unable to verify API key - within the post-failure back-off and there is "
+                            + "no locally cached verdict for it", null);
+                }
             }
             return Optional.ofNullable(verifiedApiKey);
         } else {
@@ -228,6 +271,17 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
             LOGGER.debug("doVerifyApiKey() - Api key '{}' does not look like an API key", apiKey);
             return Optional.empty();
         }
+    }
+
+    /**
+     * @return true if the persisted key file currently holds an entry for this request, so that a
+     * null verdict only rewrites the file when it has something to remove.
+     */
+    private synchronized boolean isInFile(final VerifyApiKeyRequest request) {
+        return NullSafe.set(NullSafe.get(verifiedApiKeysFromFile, VerifiedApiKeys::getVerifiedApiKeys))
+                .stream()
+                .anyMatch(verifiedApiKey ->
+                        ApiKeyGenerator.prefixesMatch(request.getApiKey(), verifiedApiKey.getPrefix()));
     }
 
     private synchronized void updateFile(final VerifiedApiKey verifiedApiKey, final VerifyApiKeyRequest request) {
@@ -423,7 +477,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
 
         @JsonIgnore
         public Instant getSnapshotTime() {
-            return java.time.Instant.ofEpochMilli(snapshotTimeEpochMs);
+            return Instant.ofEpochMilli(snapshotTimeEpochMs);
         }
 
         public boolean contains(final VerifiedApiKey verifiedApiKey) {
@@ -433,7 +487,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
         @Override
         public String toString() {
             return "VerifiedApiKeys{" +
-                   "snapshotTimeEpochMs=" + java.time.Instant.ofEpochMilli(snapshotTimeEpochMs) +
+                   "snapshotTimeEpochMs=" + Instant.ofEpochMilli(snapshotTimeEpochMs) +
                    ", verifiedApiKeys='" + verifiedApiKeys + '\'' +
                    '}';
         }
@@ -502,12 +556,12 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
 
         @JsonIgnore
         public Instant getLastVerified() {
-            return java.time.Instant.ofEpochMilli(lastVerifiedEpochMs);
+            return Instant.ofEpochMilli(lastVerifiedEpochMs);
         }
 
         @JsonIgnore
         public boolean isOlderThan(final Duration age) {
-            return getLastVerified().isBefore(java.time.Instant.now().minus(age));
+            return getLastVerified().isBefore(Instant.now().minus(age));
         }
 
         // Don't include lastVerifiedEpochMs
@@ -540,7 +594,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                    ", prefix='" + prefix + '\'' +
                    ", hashedApiKey='" + hashedApiKey + '\'' +
                    ", requiredAppPermissions=" + requiredAppPermissions +
-                   ", lastVerifiedEpochMs=" + java.time.Instant.ofEpochMilli(lastVerifiedEpochMs) +
+                   ", lastVerifiedEpochMs=" + Instant.ofEpochMilli(lastVerifiedEpochMs) +
                    ", userDesc=" + userDesc +
                    '}';
         }

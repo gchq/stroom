@@ -1,0 +1,74 @@
+# Stroom Proxy — Pipeline Configuration Reference
+#
+# This file documents the full pipeline configuration block. The pipeline is
+# explicit or fail: the mode, every queue, every file store and every stage
+# must be stated, and a stage must say whether it is enabled. Nothing is
+# filled in for an omitted block - the proxy refuses to start and says what
+# is missing. Values within a stated entry do have defaults (a queue's type,
+# a store's path), and those are noted where they apply.
+#
+# To use: copy the `pipeline` block into your proxy.yml configuration.
+#
+# For complete worked configurations — distributed SQS/S3, Kafka, and one
+# process per stage role — see ../designs/deployments/. For the architecture
+# behind them see ../designs/README.md.
+
+pipeline:
+  # Required. How this proxy is deployed: LOCAL (one node, local queues and
+  # local file stores) or SHARED (many nodes, SQS or Kafka queues and S3 or
+  # SHARED_FILESYSTEM file stores). Every queue and store must fit the mode;
+  # a mixture is refused at start-up.
+  mode: LOCAL
+
+  # Every queue the stages use, by name. A queue's type defaults to
+  # LOCAL_FILESYSTEM and must fit the mode.
+  queues:
+    splitZipInput:
+      type: LOCAL_FILESYSTEM
+      # path: data/pipeline/queues/splitZipInput  # auto-derived if omitted
+    aggregateInput:
+      type: LOCAL_FILESYSTEM
+    forwardingInput:
+      type: LOCAL_FILESYSTEM
+
+  # Every file store the stages use, by name. A store's type defaults to
+  # LOCAL_FILESYSTEM and must fit the mode; its path is derived from the
+  # store name if omitted.
+  fileStores:
+    receiveStore:
+      # path: data/pipeline/file-stores/receiveStore
+    splitStore: {}
+    aggregateStore: {}
+
+  # Every stage, and whether it is enabled. Required.
+  #
+  stages:
+    receive:
+      enabled: true
+      outputQueue: aggregateInput
+      splitZipQueue: splitZipInput
+      fileStore: receiveStore
+    splitZip:
+      enabled: true
+      inputQueue: splitZipInput
+      outputQueue: aggregateInput
+      fileStore: splitStore
+      threads:
+        consumerThreads: 1
+    aggregate:
+      enabled: true
+      inputQueue: aggregateInput
+      outputQueue: forwardingInput
+      fileStore: aggregateStore
+      # When an aggregate closes. Targets, not guarantees: an aggregate closes smaller on age.
+      maxItemsPerAggregate: 1000
+      maxUncompressedByteSize: "1G"
+      aggregationFrequency: "PT10M"
+      threads:
+        consumerThreads: 1   # claimers; more than one only with a Kafka input queue
+        mergeThreads: 1      # merge workers
+    forward:
+      enabled: true
+      inputQueue: forwardingInput
+      threads:
+        consumerThreads: 1

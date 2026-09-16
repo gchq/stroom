@@ -28,6 +28,7 @@ public class CSVFormatter {
     private static final String ESCAPED_DOUBLE_QUOTE = "\"\"";
     private static final String EQUALS = "=";
     private static final String ESCAPED_EQUALS = "\\=";
+    private static final String ESCAPED_COMMA = "\\,";
 
     public static String format(final Map<String, String> map, final boolean sortByKey) {
         final List<String> keys = new ArrayList<>(map.keySet());
@@ -54,12 +55,27 @@ public class CSVFormatter {
         return sb.toString();
     }
 
+    /**
+     * The comma escape is the one that matters. {@code LogStream} builds each
+     * receive-log line with {@code String.join(",", …)} over fields escaped by this method, and those
+     * top-level fields are <em>not</em> quoted - so a comma in a URL, a receipt id or an error message
+     * shifted every column after it, including the attribute map at the end. An audit log that
+     * silently changes shape when the data contains a comma is worse than no audit log, because it
+     * still parses.
+     * <p>
+     * Escaped as {@code \,} to match the {@code \=} convention already in this class rather than by
+     * quoting the field, which would change the shape of every line to fix the lines that are wrong.
+     * Commas inside a {@code key=value} pair were already contained by the quotes {@code format} puts
+     * around each pair; they are now escaped as well, so one rule holds everywhere.
+     * </p>
+     */
     public static String escape(final String value) {
         if (value == null) {
             return "";
         } else {
             return value.replace("\"", ESCAPED_DOUBLE_QUOTE)
-                    .replace("=", ESCAPED_EQUALS);
+                    .replace("=", ESCAPED_EQUALS)
+                    .replace(",", ESCAPED_COMMA);
         }
     }
 }

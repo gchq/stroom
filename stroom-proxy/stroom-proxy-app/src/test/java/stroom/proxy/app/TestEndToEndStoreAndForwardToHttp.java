@@ -16,7 +16,7 @@
 
 package stroom.proxy.app;
 
-import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.app.pipeline.config.PipelineConfigs;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.time.StroomDuration;
@@ -44,11 +44,10 @@ public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
                         .build()))
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())
-                .aggregatorConfig(AggregatorConfig.builder()
-                        .maxUncompressedByteSizeString("1G")
-                        .aggregationFrequency(StroomDuration.ofSeconds(5))
-                        .maxItemsPerAggregate(3)
-                        .build())
+                .pipelineConfig(PipelineConfigs.fullPipelineWithAggregateBounds(
+                        3,
+                        "1G",
+                        StroomDuration.ofSeconds(5)))
                 .addForwardHttpDestination(MockHttpDestination.createForwardHttpPostConfig(false))
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
                 .downstreamHostConfig(MockHttpDestination.createDownstreamHostConfig())
@@ -77,8 +76,8 @@ public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
             postDataHelper.sendFeed2TestData();
         }
 
-        Assertions.assertThat(postDataHelper.getPostCount())
-                .isEqualTo(reqCount);
+        // Accepted, not merely sent: getPostCount() counts requests SENT, which only says the loop ran.
+        postDataHelper.assertAllPostsAccepted(reqCount);
 
         mockHttpDestination.assertReceivedItemCount(reqCount);
         mockHttpDestination.assertReceiptIds(postDataHelper.getReceiptIds());
@@ -106,8 +105,8 @@ public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
         }
 
         // Assert that we posted 8 files.
-        Assertions.assertThat(postDataHelper.getPostCount())
-                .isEqualTo(8);
+        // As above: accepted, not sent.
+        postDataHelper.assertAllPostsAccepted(8);
 
         // Check number of forwarded files.
         mockHttpDestination.assertRequestCount(4);

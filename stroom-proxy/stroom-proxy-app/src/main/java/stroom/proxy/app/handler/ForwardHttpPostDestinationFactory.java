@@ -18,7 +18,7 @@ package stroom.proxy.app.handler;
 
 public interface ForwardHttpPostDestinationFactory extends ForwardDestinationFactory<ForwardHttpPostConfig> {
 
-    ForwardDestination create(ForwardHttpPostConfig forwardHttpPostConfig);
+    Destination create(ForwardHttpPostConfig forwardHttpPostConfig);
 
     default Class<ForwardHttpPostConfig> getConfigClass() {
         return ForwardHttpPostConfig.class;

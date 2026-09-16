@@ -32,9 +32,9 @@ import stroom.proxy.app.ReceiveDataRuleSetClient;
 import stroom.proxy.app.event.EventResourceImpl;
 import stroom.proxy.app.handler.ForwarderModule;
 import stroom.proxy.app.handler.RemoteFeedStatusClient;
-import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.handler.RemoteS3EventClient;
 import stroom.proxy.app.metrics.ProxyAppInfoProvider;
+import stroom.proxy.app.pipeline.monitor.PipelineHealthChecks;
 import stroom.proxy.app.security.ProxyApiKeyCheckClient;
 import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
@@ -46,7 +46,6 @@ import stroom.receive.common.FeedStatusResourceImpl;
 import stroom.receive.common.FeedStatusResourceV2Impl;
 import stroom.receive.common.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.common.ReceiveDataServlet;
-import stroom.security.common.impl.RefreshManager;
 import stroom.util.guice.AdminServletBinder;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
@@ -108,7 +107,8 @@ public class ProxyModule extends AbstractModule {
                 .bind(ProxyApiKeyCheckClient.class)
                 .bind(ReceiveDataRuleSetClient.class)
                 .bind(RemoteFeedStatusClient.class)
-                .bind(RemoteS3EventClient.class);
+                .bind(RemoteS3EventClient.class)
+                .bind(PipelineHealthChecks.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
@@ -130,10 +130,10 @@ public class ProxyModule extends AbstractModule {
                 .bind(FeedStatusResourceV2Impl.class)
                 .bind(EventResourceImpl.class);
 
+        // ProxyLifecycle starts and stops RemoteFeedStatusService and RefreshManager itself, around
+        // the work registry; Dropwizard would order them alphabetically.
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
-                .addBinding(ProxyLifecycle.class)
-                .addBinding(RemoteFeedStatusService.class)
-                .addBinding(RefreshManager.class);
+                .addBinding(ProxyLifecycle.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(PermissionExceptionMapper.class)

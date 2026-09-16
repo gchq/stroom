@@ -436,40 +436,6 @@ class TestDirUtil {
                 .build();
     }
 
-    @TestFactory
-    Stream<DynamicTest> testGetNumberInDir() {
-        return TestUtil.buildDynamicTestStream()
-                .withInputAndOutputType(long.class)
-                .withSingleArgTestFunction(DirUtil::getNumberInDir)
-                .withSimpleEqualityAssertion()
-                .addCase(0L, 0L)
-                .addCase(1L, 1L)
-                .addCase(999L, 999L)
-                .addCase(1000L, 0L)
-                .addCase(1001L, 1L)
-                .addCase(1999L, 999L)
-                .addCase(2000L, 0L)
-                .addCase(2001L, 1L)
-                .addCase(123456789L, 789L)
-                .build();
-    }
-
-    @TestFactory
-    Stream<DynamicTest> testGetIdInNextBlock() {
-        return TestUtil.buildDynamicTestStream()
-                .withInputAndOutputType(long.class)
-                .withSingleArgTestFunction(DirUtil::getIdInNextBlock)
-                .withSimpleEqualityAssertion()
-                .addCase(0L, 1000L)
-                .addCase(1L, 1000L)
-                .addCase(999L, 1000L)
-                .addCase(1000L, 2000L)
-                .addCase(1999L, 2000L)
-                .addCase(9999L, 10000L)
-                .build();
-    }
-
-
     // --------------------------------------------------------------------------------
 
 

@@ -97,6 +97,7 @@ public class DirScannerConfig extends AbstractConfig implements IsProxyConfig {
     public String toString() {
         return "DirScannerConfig{" +
                "dirs=" + dirs +
+               ", failureDir='" + failureDir + '\'' +
                ", enabled=" + enabled +
                ", scanFrequency=" + scanFrequency +
                '}';
@@ -111,13 +112,14 @@ public class DirScannerConfig extends AbstractConfig implements IsProxyConfig {
             return false;
         }
         final DirScannerConfig that = (DirScannerConfig) object;
-        return enabled == that.enabled && Objects.equals(dirs, that.dirs) && Objects.equals(
-                scanFrequency,
-                that.scanFrequency);
+        return enabled == that.enabled
+               && Objects.equals(dirs, that.dirs)
+               && Objects.equals(failureDir, that.failureDir)
+               && Objects.equals(scanFrequency, that.scanFrequency);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dirs, enabled, scanFrequency);
+        return Objects.hash(dirs, failureDir, enabled, scanFrequency);
     }
 }

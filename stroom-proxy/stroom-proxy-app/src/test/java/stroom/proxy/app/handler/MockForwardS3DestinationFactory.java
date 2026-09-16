@@ -29,7 +29,7 @@ public class MockForwardS3DestinationFactory implements ForwardS3DestinationFact
     }
 
     @Override
-    public ForwardDestination create(final ForwardS3Config forwardS3Config) {
+    public Destination create(final ForwardS3Config forwardS3Config) {
         return mockForwardS3Destination;
     }
 

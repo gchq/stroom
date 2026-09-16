@@ -21,6 +21,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.PathWithAttributes;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.metrics.Metrics;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
@@ -160,6 +161,18 @@ public class FileStores {
         return sb.toString();
     }
 
+    /**
+     * This used {@code FileUtil.deepListContents(..).size()}, which builds a {@link java.util.List}
+     * of every regular file under the store purely to call {@code size()} on it - the predicate was
+     * already doing the real work as a side effect, and the list was discarded. On a store holding a
+     * large backlog that is one {@code PathWithAttributes} allocated per file, on a gauge that runs
+     * every time the metric is read. Counted in the predicate instead, so nothing is retained.
+     * <p>
+     * The {@code key} parameter was also unread. Kept, because it is what identifies the store this
+     * count belongs to and it is worth having in a failure message; previously it was accepted and
+     * ignored, which reads as an oversight rather than a decision.
+     * </p>
+     */
     private static void addRegularFileCountAndSizes(final Key key,
                                                     final Path path,
                                                     final LongAdder sizeAdder,
@@ -168,13 +181,18 @@ public class FileStores {
             final boolean isRegularFile = pathWithAttributes.isRegularFile();
             if (isRegularFile) {
                 sizeAdder.add(pathWithAttributes.size());
+                fileCountAdder.increment();
             }
-            return isRegularFile;
+            // Always false: the predicate is being used as a visitor, so nothing needs collecting.
+            return false;
         };
 
-        final long fileCount = FileUtil.deepListContents(path, true, isFilePredicate)
-                .size();
-        fileCountAdder.add(fileCount);
+        try {
+            FileUtil.deepListContents(path, true, isFilePredicate);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Could not size file store {} at {}", key, path), e);
+        }
     }
 
 

@@ -22,11 +22,22 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotBlank;
 
 import java.util.Objects;
 
+/**
+ * Configuration for an SQS ingest connector.
+ * <p>
+ * {@code awsProfileName} and {@code queueName} were removed because neither was
+ * wired to anything: credentials come from the default AWS provider chain, and the
+ * queue-name-to-URL lookup existed only as commented-out code, so {@code queueUrl}
+ * was always required in practice. {@code awsProfileName} was additionally
+ * unsettable - its builder method assigned {@code queueName} instead.
+ * </p>
+ */
 @JsonPropertyOrder(alphabetic = true)
 public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig {
 
@@ -34,18 +45,12 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
     @JsonProperty
     private final String awsRegionName;
     @JsonProperty
-    private final String awsProfileName;
-    @JsonProperty
-    private final String queueName;
-    @JsonProperty
     private final String queueUrl;
     @JsonProperty
     private final StroomDuration pollFrequency;
 
     public SqsConnectorConfig() {
         awsRegionName = null;
-        awsProfileName = null;
-        queueName = null;
         queueUrl = null;
         pollFrequency = DEFAULT_POLL_FREQUENCY;
     }
@@ -53,40 +58,30 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
     @SuppressWarnings("unused")
     @JsonCreator
     public SqsConnectorConfig(@JsonProperty("awsRegionName") final String awsRegionName,
-                              @JsonProperty("awsProfileName") final String awsProfileName,
-                              @JsonProperty("queueName") final String queueName,
                               @JsonProperty("queueUrl") final String queueUrl,
                               @JsonProperty("pollFrequency") final StroomDuration pollFrequency) {
         this.awsRegionName = awsRegionName;
-        this.awsProfileName = awsProfileName;
-        this.queueName = queueName;
         this.queueUrl = queueUrl;
         this.pollFrequency = Objects.requireNonNullElse(pollFrequency, DEFAULT_POLL_FREQUENCY);
     }
 
     @NotBlank
     @JsonProperty
+    @JsonPropertyDescription("The AWS region of the SQS queue, e.g. 'eu-west-2'.")
     public String getAwsRegionName() {
         return awsRegionName;
     }
 
-    @JsonProperty
-    public String getAwsProfileName() {
-        return awsProfileName;
-    }
-
-    @JsonProperty
-    public String getQueueName() {
-        return queueName;
-    }
-
     @NotBlank
     @JsonProperty
+    @JsonPropertyDescription("The URL of the SQS queue whose messages are received as events into the event " +
+                             "store, one message per event.")
     public String getQueueUrl() {
         return queueUrl;
     }
 
     @JsonProperty
+    @JsonPropertyDescription("How often the queue is polled for messages.")
     public StroomDuration getPollFrequency() {
         return pollFrequency;
     }
@@ -102,23 +97,11 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
     public static class Builder {
 
         private String awsRegionName;
-        private String awsProfileName;
-        private String queueName;
         private String queueUrl;
         private StroomDuration pollFrequency = StroomDuration.ofSeconds(10);
 
         public Builder awsRegionName(final String awsRegionName) {
             this.awsRegionName = awsRegionName;
-            return this;
-        }
-
-        public Builder awsProfileName(final String awsProfileName) {
-            this.awsProfileName = awsProfileName;
-            return this;
-        }
-
-        public Builder queueName(final String queueName) {
-            this.queueName = queueName;
             return this;
         }
 
@@ -135,8 +118,6 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
         public SqsConnectorConfig build() {
             return new SqsConnectorConfig(
                     awsRegionName,
-                    awsProfileName,
-                    queueName,
                     queueUrl,
                     pollFrequency);
         }

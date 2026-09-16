@@ -21,6 +21,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.Unauthenticated;
 import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
@@ -34,6 +35,18 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Set;
 
+/**
+ * Explicitly unauthenticated. This servlet has always been served without
+ * credentials, but it got that by default rather than by declaration: {@link ProxySecurityFilter}
+ * passed every non-API request through whatever the bypass checker said. Now that the filter acts on
+ * the annotation, the intent has to be stated, and this annotation preserves the existing behaviour
+ * rather than changing it.
+ * <p>
+ * Whether the welcome page <em>should</em> be reachable without credentials is a separate, still-open
+ * question, decided when the filter was tightened. Removing this annotation is how to change it.
+ * </p>
+ */
+@Unauthenticated
 public class ProxyWelcomeServlet extends HttpServlet implements IsServlet {
 
     public static final String PATH_PART = "/ui";

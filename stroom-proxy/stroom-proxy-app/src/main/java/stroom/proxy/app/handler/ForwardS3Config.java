@@ -19,6 +19,7 @@ package stroom.proxy.app.handler;
 
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.proxy.app.DownstreamHostConfig;
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
@@ -46,6 +47,8 @@ public final class ForwardS3Config
 
     public static final boolean DEFAULT_IS_ENABLED = true;
     public static final boolean DEFAULT_IS_INSTANT = false;
+    /** Five, as the forward thread count was before the retry tier went. */
+    public static final ConsumerStageThreadsConfig DEFAULT_THREADS = new ConsumerStageThreadsConfig(5);
     public static final NotificationType DEFAULT_NOTIFICATION_TYPE = NotificationType.S3_EVENT;
 
     private final boolean enabled;
@@ -53,7 +56,9 @@ public final class ForwardS3Config
     private final NotificationType notificationType;
     private final String name;
     private final S3ClientConfig clientConfig;
-    private final ForwardS3QueueConfig forwardQueueConfig;
+    private final ForwardRetryConfig retry;
+    private final FailureDestinationConfig failureDestination;
+    private final ConsumerStageThreadsConfig threads;
     private final Set<String> additionalMetaKeysAllowSet;
 
     public ForwardS3Config() {
@@ -62,30 +67,37 @@ public final class ForwardS3Config
         notificationType = DEFAULT_NOTIFICATION_TYPE;
         name = null;
         clientConfig = null;
-        forwardQueueConfig = new ForwardS3QueueConfig();
+        retry = new ForwardRetryConfig();
+        failureDestination = null;
+        threads = DEFAULT_THREADS;
         additionalMetaKeysAllowSet = Collections.emptySet();
     }
 
     @JsonCreator
     public ForwardS3Config(
-            @JsonProperty("enabled") final boolean enabled,
-            @JsonProperty("instant") final boolean instant,
+            @JsonProperty("enabled") final Boolean enabled,
+            @JsonProperty("instant") final Boolean instant,
             @JsonProperty("notificationType") final NotificationType notificationType,
             @JsonProperty("name") final String name,
             @JsonProperty("client") final S3ClientConfig clientConfig,
-            @JsonProperty("queue") final ForwardS3QueueConfig forwardQueueConfig,
+            @JsonProperty("retry") final ForwardRetryConfig retry,
+            @JsonProperty("failureDestination") final FailureDestinationConfig failureDestination,
+            @JsonProperty("threads") final ConsumerStageThreadsConfig threads,
             @JsonProperty("additionalMetaKeysAllowSet") final Set<String> additionalMetaKeysAllowSet) {
 
-        if (instant) {
+        if (Boolean.TRUE.equals(instant)) {
             throw new IllegalArgumentException("instant is not supported by the S3 forwarder");
         } else {
             this.instant = DEFAULT_IS_INSTANT;
         }
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_IS_ENABLED);
         this.notificationType = Objects.requireNonNullElse(notificationType, DEFAULT_NOTIFICATION_TYPE);
         this.name = name;
         this.clientConfig = clientConfig;
-        this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardS3QueueConfig::new);
+        this.retry = Objects.requireNonNullElseGet(retry, ForwardRetryConfig::new);
+        // Null means the default: <data>/50_forwarding/<name>/03_failure in the proxy's data directory.
+        this.failureDestination = failureDestination;
+        this.threads = Objects.requireNonNullElse(threads, DEFAULT_THREADS);
         this.additionalMetaKeysAllowSet = NullSafe.unmodifialbeSet(additionalMetaKeysAllowSet);
     }
 
@@ -101,8 +113,9 @@ public final class ForwardS3Config
     @Override
     @NotNull
     @JsonProperty("instant")
-    @JsonPropertyDescription("Should data be forwarded instantly during the receipt process, i.e. must we" +
-                             " successfully forward before returning a success response to the sender.")
+    @JsonPropertyDescription("Not supported for an S3 destination: setting it true is refused at start-up. " +
+                             "Instant forwarding, where the sender is answered only once the destination has " +
+                             "accepted the data, is available for HTTP and file destinations.")
     public boolean isInstant() {
         return instant;
     }
@@ -110,9 +123,10 @@ public final class ForwardS3Config
     @Override
     @NotEmpty
     @JsonProperty("name")
-    @JsonPropertyDescription("The unique name of the destination (across all file/http forward destinations. " +
-                             "The name is used in the directories on the file system, so do not change the name " +
-                             "once proxy has processed data. Must be provided.")
+    @JsonPropertyDescription("The unique name of the destination, across file, HTTP and S3 forward destinations. " +
+                             "It names the destination's default give-up directory and, when more than one " +
+                             "destination is enabled, its forward-<name> queue and file store, so do not change " +
+                             "it once the proxy has processed data. Must be provided.")
     public String getName() {
         return name;
     }
@@ -124,9 +138,27 @@ public final class ForwardS3Config
     }
 
     @Override
-    @JsonProperty("queue")
-    public ForwardS3QueueConfig getForwardQueueConfig() {
-        return forwardQueueConfig;
+    @JsonProperty("retry")
+    @JsonPropertyDescription("How this destination retries a group it could not deliver and when it gives up.")
+    public ForwardRetryConfig getRetry() {
+        return retry;
+    }
+
+    @Override
+    @JsonProperty("failureDestination")
+    @JsonPropertyDescription("Where this destination writes data it has given up on, with an error.log " +
+                             "beside each group. Configured independently of where it forwards to. When " +
+                             "unset, a '03_failure' directory under 50_forwarding/<name> in the proxy's " +
+                             "data directory is used.")
+    public FailureDestinationConfig getFailureDestination() {
+        return failureDestination;
+    }
+
+    @Override
+    @JsonProperty("threads")
+    @JsonPropertyDescription("How many threads deliver to this destination.")
+    public ConsumerStageThreadsConfig getThreads() {
+        return threads;
     }
 
     @JsonProperty("notificationType")

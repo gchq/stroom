@@ -30,6 +30,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 
+import java.io.InputStream;
+
 @Tag(name = "Event")
 @Path(EventResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
@@ -43,5 +45,5 @@ public interface EventResource extends RestResource {
             summary = "Log an event. The response contains a unique receipt ID of the form '<proxy ID>_<UUID>'.",
             operationId = "log_event")
     String event(@Context @NotNull HttpServletRequest request,
-                 @Parameter(description = "event", required = true) String event);
+                 @Parameter(description = "event", required = true) InputStream event);
 }

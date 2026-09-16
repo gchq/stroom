@@ -54,7 +54,6 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
     public static final String PROP_NAME_API_KEY = "apiKey";
     public static final String DEFAULT_SCHEME = "https";
     public static final String PROP_NAME_API_KEY_VERIFICATION_URL = "apiKeyVerificationUrl";
-    public static final String PROP_NAME_VERIFIED_KEYS_CACHE = "verifiedApiKeysCache";
     public static final boolean DEFAULT_ENABLED = true;
 
     private final boolean enabled;
@@ -135,6 +134,9 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
 
     @Override
     @JsonProperty(UriConfig.PROP_NAME_HOSTNAME)
+    @JsonPropertyDescription("The host name of the downstream stroom/stroom-proxy. Required when " +
+                             "receiptCheckMode is FEED_STATUS or RECEIPT_POLICY, and the base every " +
+                             "default downstream URL is built on.")
     public String getHostname() {
         return super.getHostname();
     }
@@ -147,14 +149,12 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
 
     @JsonPropertyDescription(
             "The URL/path to use for verifying API keys. " +
-            "If not set the downstreamHost configuration will be combined with the default API " +
-            "path (/api/apikey/v2/verifyApiKey)." +
-            "If this property is not set, the downstreamHost configuration will be combined with the default API " +
-            "path (/status). " +
-            "If this property is just a path, it will be combined with the downstreamHost configuration. " +
+            "If not set, the downstreamHost configuration is combined with the default API " +
+            "path (/api/apikey/v2/verifyApiKey). " +
+            "If this property is just a path, it is combined with the downstreamHost configuration. " +
             "Only set this property if you wish to use a non-default path " +
             "or you want to use a different host/port/scheme to that defined in downstreamHost. " +
-            "This property is also only needed when identityProviderType is NO_IDP.")
+            "Only used when identityProviderType is NO_IDP.")
     @JsonProperty
     public String getApiKeyVerificationUrl() {
         return apiKeyVerificationUrl;
@@ -169,21 +169,31 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
     }
 
     @JsonProperty
+    @JsonPropertyDescription("The hash algorithm used for the API keys persisted to disk after the " +
+                             "downstream has verified them, so that verification can continue from disk " +
+                             "while the downstream is unreachable. Only used when identityProviderType is NO_IDP.")
     public HashAlgorithm getPersistedKeysHashAlgorithm() {
         return persistedKeysHashAlgorithm;
     }
 
     @JsonProperty
+    @JsonPropertyDescription("How long a verified API key is trusted in memory before it is verified " +
+                             "with the downstream again. Only used when identityProviderType is NO_IDP.")
     public StroomDuration getMaxCachedKeyAge() {
         return maxCachedKeyAge;
     }
 
     @JsonProperty
+    @JsonPropertyDescription("How long a verified API key persisted to disk is trusted when the downstream " +
+                             "cannot be reached to verify it again. Only used when identityProviderType is NO_IDP.")
     public StroomDuration getMaxPersistedKeyAge() {
         return maxPersistedKeyAge;
     }
 
     @JsonProperty
+    @JsonPropertyDescription("How long to wait after a failed call to the downstream, for API key " +
+                             "verification or receipt policy rules, before trying it again. Meanwhile the " +
+                             "persisted keys and rules are used.")
     public StroomDuration getNoFetchIntervalAfterFailure() {
         return noFetchIntervalAfterFailure;
     }
@@ -292,7 +302,11 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
         private String hostname;
         private Integer port;
         private String pathPrefix;
-        private boolean enabled;
+        // Initialised from the same default the no-arg constructor and the @JsonCreator use.
+        // A plain `private boolean enabled;` meant builder().build() produced a DISABLED downstream
+        // while every other construction path produced an enabled one - the builder quietly disagreed
+        // with the class about its own default.
+        private boolean enabled = DEFAULT_ENABLED;
         private String apiKey;
         private String apiKeyVerificationUrl;
         private HashAlgorithm persistedKeysHashAlgorithm;

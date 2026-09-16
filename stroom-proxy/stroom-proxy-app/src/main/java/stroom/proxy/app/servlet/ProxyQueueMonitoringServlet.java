@@ -16,7 +16,8 @@
 
 package stroom.proxy.app.servlet;
 
-import stroom.proxy.repo.queue.QueueMonitors;
+import stroom.proxy.app.pipeline.monitor.PipelineMonitorProvider;
+import stroom.proxy.app.pipeline.monitor.PipelineMonitorSnapshot;
 import stroom.proxy.repo.store.FileStores;
 import stroom.util.shared.IsAdminServlet;
 import stroom.util.shared.Unauthenticated;
@@ -38,20 +39,19 @@ public class ProxyQueueMonitoringServlet extends HttpServlet implements IsAdminS
     private static final Set<String> PATH_SPECS = Set.of("/queues");
     private static final String DISPLAY_NAME = "Queue Monitoring Servlet";
 
-    private final Provider<QueueMonitors> queueMonitorsProvider;
     private final Provider<FileStores> fileStoresProvider;
+    private final Provider<PipelineMonitorProvider> pipelineMonitorProvider;
 
     @Inject
-    public ProxyQueueMonitoringServlet(final Provider<QueueMonitors> queueMonitorsProvider,
-                                       final Provider<FileStores> fileStoresProvider) {
-        this.queueMonitorsProvider = queueMonitorsProvider;
+    public ProxyQueueMonitoringServlet(final Provider<FileStores> fileStoresProvider,
+                                       final Provider<PipelineMonitorProvider> pipelineMonitorProvider) {
         this.fileStoresProvider = fileStoresProvider;
+        this.pipelineMonitorProvider = pipelineMonitorProvider;
     }
 
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
-        final QueueMonitors queueMonitors = queueMonitorsProvider.get();
         final Writer writer = response.getWriter();
         writer.write("<html>\n" +
                      "<head>\n" +
@@ -62,22 +62,53 @@ public class ProxyQueueMonitoringServlet extends HttpServlet implements IsAdminS
                      "</style>\n" +
                      "</head>\n" +
                      "<body>\n");
-        writer.write("<h1>Queues</h1>");
-        writer.write(queueMonitors.log());
         writer.write("<h1>File Stores</h1>");
         writer.write(fileStoresProvider.get().log());
+
+        // Pipeline monitoring section (only shown when pipeline is enabled).
+        writePipelineSection(writer);
 
         writer.write("</body>\n" +
                      "</html>");
         writer.close();
     }
 
-    private String getURL(final HttpServletRequest request) {
-        String url = request.getRequestURL().toString();
-        if (!url.endsWith("/")) {
-            url += "/";
+    private void writePipelineSection(final Writer writer) throws IOException {
+        final PipelineMonitorSnapshot snapshot = pipelineMonitorProvider.get().snapshot();
+
+        writer.write("<h1>Pipeline Stages</h1>\n<ul>\n");
+        for (final PipelineMonitorSnapshot.StageSnapshot stage : snapshot.stages()) {
+            final String errorClass = stage.counters() != null && stage.counters().hasErrors()
+                    ? " style=\"color: red;\""
+                    : "";
+            writer.write("<li" + errorClass + ">" + escapeHtml(stage.toSummary()) + "</li>\n");
         }
-        return url;
+        writer.write("</ul>\n");
+
+        writer.write("<h1>Pipeline Queues</h1>\n<ul>\n");
+        for (final PipelineMonitorSnapshot.QueueSnapshot queue : snapshot.queues()) {
+            final String healthIcon = queue.healthy() ? "&#10003; " : "&#10007; ";
+            final String itemClass = queue.healthy() ? "" : " style=\"color: red;\"";
+            writer.write("<li" + itemClass + ">" + healthIcon + escapeHtml(queue.toSummary()) + "</li>\n");
+        }
+        writer.write("</ul>\n");
+
+        writer.write("<h1>Pipeline File Stores</h1>\n<ul>\n");
+        for (final PipelineMonitorSnapshot.FileStoreSnapshot store : snapshot.fileStores()) {
+            final String healthIcon = store.healthy() ? "&#10003; " : "&#10007; ";
+            final String itemClass = store.healthy() ? "" : " style=\"color: red;\"";
+            writer.write("<li" + itemClass + ">" + healthIcon + escapeHtml(store.toSummary()) + "</li>\n");
+        }
+        writer.write("</ul>\n");
+    }
+
+    private static String escapeHtml(final String text) {
+        if (text == null) {
+            return "";
+        }
+        return text.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;");
     }
 
     /**

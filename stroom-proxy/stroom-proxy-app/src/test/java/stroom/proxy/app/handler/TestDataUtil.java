@@ -52,6 +52,27 @@ import java.util.stream.Stream;
 
 public class TestDataUtil {
 
+    /**
+     * Write a real {@code proxy.entries} — one JSON line per group, produced by the same
+     * {@link ZipEntryGroup#write(java.io.Writer)} the proxy itself uses.
+     * <p>
+     * Fixtures used to hand-write this file in invented formats
+     * ({@code "FEED_A:Raw Events"}, {@code "TEST,RAW_EVENTS,1"}), and a fixture that <em>imitates</em>
+     * a format is worse than an obvious placeholder: it validates whatever parser happens to match
+     * it. That is exactly how C8 survived — a hand-rolled parser and a fixture shaped to suit it,
+     * agreeing with each other and with nothing else. Anything that needs a parseable entries file
+     * should use this rather than invent a third format.
+     * </p>
+     */
+    public static void writeEntries(final Path entriesFile, final FeedKey... feedKeys)
+            throws IOException {
+        try (final Writer writer = Files.newBufferedWriter(entriesFile)) {
+            for (final FeedKey feedKey : feedKeys) {
+                new ZipEntryGroup(feedKey).write(writer);
+            }
+        }
+    }
+
     public static Path writeZip(final FeedKey... feedKeys) throws IOException {
         final Path tempDir = Files.createTempDirectory("temp");
         final FileGroup fileGroup = new FileGroup(tempDir);

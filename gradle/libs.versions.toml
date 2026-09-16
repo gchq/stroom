@@ -22,6 +22,7 @@ openai = "4.41.0"
 poi = "5.4.1"
 simple-java-mail = "8.8.0"
 swagger = "2.2.42"
+testcontainers = "1.20.6"
 
 [libraries]
 #------Stroom-libs---------------
@@ -183,6 +184,10 @@ vavr = { module = "io.vavr:vavr", version = "0.10.4" }
 # Wiremock 3.13.2 works with jetty 11 by default, but DW 5.0.1 is using Jetty 12, so we have to use
 # wiremock-jetty12
 wiremock = { module = "org.wiremock:wiremock-jetty12", version = "3.13.2" }
+testcontainers-core = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+testcontainers-localstack = { module = "org.testcontainers:localstack", version.ref = "testcontainers" }
+testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
 ws-rs-api = { module = "jakarta.ws.rs:jakarta.ws.rs-api" } # version controlled by dropwizard-dependencies
 ws-rs-api-gwt = { module = "javax.ws.rs:javax.ws.rs-api", version = "2.1.1" } # For GWT compilation
 xerces = { module = "xerces:xercesImpl", version = "2.12.2" }

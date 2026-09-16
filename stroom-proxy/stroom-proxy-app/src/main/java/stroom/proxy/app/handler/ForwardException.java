@@ -29,18 +29,15 @@ public class ForwardException extends RuntimeException {
     private final StroomStatusCode stroomStatusCode;
     private final String feedName;
     private final boolean isRecoverable;
-    private final int httpResponseCode; // In the case of UNKNOWN_ERROR, this may differ from 999
 
     private ForwardException(final StroomStatusCode stroomStatusCode,
                              final AttributeMap attributeMap,
                              final String message,
-                             final int httpResponseCode,
                              final boolean isRecoverable,
                              final Throwable cause) {
         super(message, cause);
         this.isRecoverable = isRecoverable;
         this.stroomStatusCode = stroomStatusCode;
-        this.httpResponseCode = httpResponseCode;
         this.feedName = NullSafe.get(
                 attributeMap,
                 attrMap -> attrMap.get(StandardHeaderArguments.FEED));
@@ -54,7 +51,6 @@ public class ForwardException extends RuntimeException {
                 stroomStatusCode,
                 attributeMap,
                 message,
-                stroomStatusCode.getHttpCode(),
                 true,
                 cause);
     }
@@ -67,7 +63,6 @@ public class ForwardException extends RuntimeException {
                 stroomStatusCode,
                 attributeMap,
                 Objects.requireNonNullElse(responseStatus.message(), stroomStatusCode.getMessage()),
-                responseStatus.httpResponseCode(),
                 true,
                 null);
     }
@@ -80,7 +75,6 @@ public class ForwardException extends RuntimeException {
                 stroomStatusCode,
                 attributeMap,
                 message,
-                stroomStatusCode.getHttpCode(),
                 false,
                 cause);
     }
@@ -93,7 +87,6 @@ public class ForwardException extends RuntimeException {
                 stroomStatusCode,
                 attributeMap,
                 Objects.requireNonNullElse(responseStatus.message(), stroomStatusCode.getMessage()),
-                responseStatus.httpResponseCode(),
                 false,
                 null);
     }
@@ -102,11 +95,11 @@ public class ForwardException extends RuntimeException {
         return isRecoverable;
     }
 
-    public String getFeedName() {
-        return feedName;
+    public StroomStatusCode getStroomStatusCode() {
+        return stroomStatusCode;
     }
 
-    public int getHttpResponseCode() {
-        return httpResponseCode;
+    public String getFeedName() {
+        return feedName;
     }
 }

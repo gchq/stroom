@@ -81,8 +81,11 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
             final ObjectMapper mapper = YamlV2Util.getVanillaObjectMapper();
             final JsonNode rootNode = mapper.readTree(in);
 
+            // The placeholder had no argument, so the boot-path message that tells an operator
+            // which file is empty printed the braces instead of the path. This is the one of its
+            // four sites still live; the other three now have matching counts.
             Objects.requireNonNull(rootNode, () ->
-                    LogUtil.message("Config file {} appears to be empty or contains no YAML"));
+                    LogUtil.message("Config file {} appears to be empty or contains no YAML", path));
 
             // Parse the yaml to find out if the home/temp props have been set so
             // we can construct a PathCreator to do the path substitution on the drop wiz
@@ -122,13 +125,22 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
             throw new RuntimeException("No config node found at " + PROXY_CONFIG_JSON_POINTER);
         }
 
+        // The whole `pipeline` block is kept out of the merge. The pipeline is explicit or fail: its
+        // mode, queues, stores and stages are what the operator wrote and nothing else, and a block
+        // that is absent is reported absent by the validator. Merging defaults in here would make
+        // that impossible - a merged-in mode can never be "not stated", and a merged-in queue is one
+        // the operator never wrote. Scalar defaults within an entry still apply, through the
+        // constructors, when the entry itself was stated.
+        final ObjectNode defaultsToMerge = (ObjectNode) objectMapper.valueToTree(defaultConfig);
+        defaultsToMerge.remove(ProxyConfig.PROP_NAME_PIPELINE);
+
         // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
         YamlV2Util.mergeYamlNodeTrees(
                 objectMapper,
                 objectMapper2 ->
                         proxyConfigNode,
                 objectMapper2 ->
-                        objectMapper.valueToTree(defaultConfig));
+                        defaultsToMerge);
     }
 
 //    private void dumpYamlDiff(final String path,
@@ -157,11 +169,9 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
                              final String jsonPointerExpr,
                              final List<String> names,
                              final Function<String, String> valueMutator) {
+        // Both Dropwizard blocks are optional; a file without one has nothing here to rewrite.
         final JsonNode parentNode = rootNode.at(jsonPointerExpr);
-        if (parentNode.isMissingNode()) {
-            throw new RuntimeException(LogUtil.message("jsonPointerExpr {}, not found in yaml",
-                    jsonPointerExpr));
-        } else {
+        if (!parentNode.isMissingNode()) {
             mutateNodes(parentNode, names, valueMutator, jsonPointerExpr);
         }
     }

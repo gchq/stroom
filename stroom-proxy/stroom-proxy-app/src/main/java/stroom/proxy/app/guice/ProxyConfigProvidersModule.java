@@ -128,20 +128,21 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.handler.ThreadConfig getThreadConfig(
+    stroom.proxy.app.pipeline.config.ProxyPipelineConfig getProxyPipelineConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.handler.ThreadConfig.class);
+                stroom.proxy.app.pipeline.config.ProxyPipelineConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.repo.AggregatorConfig getAggregatorConfig(
+    stroom.proxy.app.pipeline.config.PipelineStagesConfig getPipelineStagesConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.repo.AggregatorConfig.class);
+                stroom.proxy.app.pipeline.config.PipelineStagesConfig.class);
     }
+
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
@@ -285,10 +286,10 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.handler.ForwardQueueConfig getForwardQueueConfigButThrow(
+    stroom.proxy.app.handler.ForwardRetryConfig getForwardRetryConfigButThrow(
             final ProxyConfigProvider proxyConfigProvider) {
         throw new UnsupportedOperationException(
-                "stroom.proxy.app.handler.ForwardQueueConfig cannot be injected directly. "
+                "stroom.proxy.app.handler.ForwardRetryConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
@@ -305,10 +306,80 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.proxy.app.handler.FailureDestinationConfig getFailureDestinationConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.handler.FailureDestinationConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.proxy.app.handler.PathTemplateConfig getPathTemplateConfigButThrow(
             final ProxyConfigProvider proxyConfigProvider) {
         throw new UnsupportedOperationException(
                 "stroom.proxy.app.handler.PathTemplateConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig getConsumerStageThreadsConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig getAggregateStageConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.pipeline.stage.aggregate.AggregateStageConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.pipeline.stage.aggregate.AggregateStageThreadsConfig getAggregateStageThreadsConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.pipeline.stage.aggregate.AggregateStageThreadsConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig getForwardStageConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.pipeline.stage.forward.ForwardStageConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig getReceiveStageConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig getSplitZipStageConfigButThrow(
+            final ProxyConfigProvider proxyConfigProvider) {
+        throw new UnsupportedOperationException(
+                "stroom.proxy.app.pipeline.stage.splitzip.SplitZipStageConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

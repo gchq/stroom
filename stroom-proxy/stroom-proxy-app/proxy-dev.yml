@@ -43,7 +43,7 @@ logging:
           archivedLogFilenamePattern: logs/receive/receive-%d{yyyy-MM-dd'T'HH:mm}.log
           archivedFileCount: 100
           timeZone: UTC
-          logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %msg %n"
+          logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %X{stageName} %X{fileGroupId} %X{messageId} %X{traceId} %msg %n"
     "send":
       level: INFO
       additive: false
@@ -57,7 +57,7 @@ logging:
           archivedLogFilenamePattern: logs/send/send-%d{yyyy-MM-dd'T'HH:mm}.log
           archivedFileCount: 100
           timeZone: UTC
-          logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %msg %n"
+          logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %X{stageName} %X{fileGroupId} %X{messageId} %X{traceId} %msg %n"
     # Log the dropwizard metrics out to a minute rolled file.
     # Metrics get sampled every min by default
 #    "metrics":
@@ -88,7 +88,7 @@ logging:
       archivedLogFilenamePattern: logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log
       archivedFileCount: 100
       timeZone: UTC
-      logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
+      logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %X{stageName} %X{fileGroupId} %X{messageId} %X{traceId} %msg %n"
 
 jerseyClients:
   default:
@@ -118,6 +118,59 @@ jerseyClients:
 
 proxyConfig:
 
+  # The pipeline is explicit or fail: the mode, every queue, every file store and every stage
+  # must be stated, and a stage must say whether it is enabled. Nothing is filled in for an
+  # omitted block; the proxy refuses to start and says what is missing. This is the standard
+  # single-node pipeline.
+  pipeline:
+    mode: LOCAL
+    queues:
+      splitZipInput:
+        type: LOCAL_FILESYSTEM
+      aggregateInput:
+        type: LOCAL_FILESYSTEM
+      forwardingInput:
+        type: LOCAL_FILESYSTEM
+      # Two forward destinations are enabled, so the forward stage fans out: a queue and a
+      # file store per destination, named forward-<destination name>.
+      "forward-Local filesystem":
+        type: LOCAL_FILESYSTEM
+      forward-downstream:
+        type: LOCAL_FILESYSTEM
+    fileStores:
+      receiveStore:
+        type: LOCAL_FILESYSTEM
+      splitStore:
+        type: LOCAL_FILESYSTEM
+      aggregateStore:
+        type: LOCAL_FILESYSTEM
+      "forward-Local filesystem":
+        type: LOCAL_FILESYSTEM
+      forward-downstream:
+        type: LOCAL_FILESYSTEM
+    stages:
+      receive:
+        enabled: true
+        fileStore: receiveStore
+        outputQueue: aggregateInput
+        splitZipQueue: splitZipInput
+      splitZip:
+        enabled: true
+        inputQueue: splitZipInput
+        fileStore: splitStore
+        outputQueue: aggregateInput
+      aggregate:
+        enabled: true
+        inputQueue: aggregateInput
+        fileStore: aggregateStore
+        outputQueue: forwardingInput
+        maxItemsPerAggregate: 1000
+        maxUncompressedByteSize: "1G"
+        aggregationFrequency: 10s
+      forward:
+        enabled: true
+        inputQueue: forwardingInput
+
   path:
     # Versioned dirs for dev to allow running multiple proxy instances
     home: "${STROOM_PROXY_HOME:-~/.stroom-proxy-local/v7}"
@@ -142,13 +195,6 @@ proxyConfig:
       - DATA_FEED_KEY
      # - TOKEN
 
-  # Do we want to aggregate before forwarding
-  aggregator:
-    enabled: true
-    maxItemsPerAggregate: 1000
-    maxUncompressedByteSize: "1G"
-    aggregationFrequency: 10s
-
   forwardFileDestinations:
     - enabled: true
       name: "Local filesystem"
@@ -163,7 +209,7 @@ proxyConfig:
 #      forwardUrl: "http://localhost:8080/datafeed"
 #      livenessCheckUrl: "http://localhost:8080/status"
       apiKey: ""
-      queue:
+      retry:
         retryDelay: "PT2S"
         maxRetryAge: "PT10S"
         retryDelayGrowthFactor: 1

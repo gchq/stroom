@@ -69,7 +69,8 @@ public class S3EventConfig extends AbstractConfig implements IsStroomConfig, IsP
     @Override
     public String toString() {
         return "S3EventConfig{" +
-               "sqs=" + sqs +
+               "rePollDuration=" + rePollDuration +
+               ", sqs=" + sqs +
                '}';
     }
 

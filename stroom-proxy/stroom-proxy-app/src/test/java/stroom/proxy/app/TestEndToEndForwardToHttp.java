@@ -72,8 +72,8 @@ public class TestEndToEndForwardToHttp extends AbstractEndToEndTest {
 
         final int expectedRequestCount = 2;
 
-        assertThat(postDataHelper.getPostCount())
-                .isEqualTo(expectedRequestCount);
+        // Accepted, not merely sent: getPostCount() counts requests SENT, which only says the loop ran.
+        postDataHelper.assertAllPostsAccepted(expectedRequestCount);
 
         mockHttpDestination.assertRequestCount(expectedRequestCount);
         final List<LoggedRequest> postsToStroomDataFeed = mockHttpDestination.getPostsToStroomDataFeed();
@@ -125,8 +125,8 @@ public class TestEndToEndForwardToHttp extends AbstractEndToEndTest {
 
         final int expectedRequestCount = 2;
 
-        assertThat(postDataHelper.getPostCount())
-                .isEqualTo(expectedRequestCount);
+        // Accepted, not merely sent: getPostCount() counts requests SENT, which only says the loop ran.
+        postDataHelper.assertAllPostsAccepted(expectedRequestCount);
 
         mockHttpDestination.assertRequestCount(expectedRequestCount);
 

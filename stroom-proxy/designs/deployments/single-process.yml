@@ -1,0 +1,83 @@
+# Deployment: Single Process, All Stages, Local Everything
+#
+# Use case: "Receive + Store + Aggregate + Forward" — one proxy does the whole
+# job on one machine. This is the default shape; the pipeline is always active
+# and every stage is enabled unless you say otherwise.
+#
+# The `pipeline` block is explicit or fail: its mode, queues, file stores and
+# stages must all be stated, and an omitted one is a validation error rather
+# than a default. Queue and store paths, and per-entry scalars, do default.
+#
+# Queue paths default to   data/pipeline/queues/<queueName>
+# Store paths default to   data/pipeline/file-stores/<storeName>
+#
+# Merge this under the `proxyConfig` key of your proxy.yml, alongside the
+# `server`, `logging` and `jerseyClients` blocks.
+
+proxyConfig:
+
+  # Required: receiptCheckMode defaults to FEED_STATUS, which admits data only if the
+  # downstream says so - so the proxy must know where the downstream is. Without a hostname the
+  # check cannot run, and before 2026-09-02 it silently answered "receive" for every feed. It is
+  # now a validation error, so a proxy configured to check receipts but not told where to check
+  # refuses to start.
+  #
+  # Set receiptCheckMode: RECEIVE_ALL (or downstreamHost.enabled: false) if this proxy is not
+  # meant to consult a downstream at all.
+  downstreamHost:
+    enabled: true
+    hostname: "stroom.example.com"
+
+  pipeline:
+    mode: LOCAL
+    queues:
+      splitZipInput:
+        type: LOCAL_FILESYSTEM
+      aggregateInput:
+        type: LOCAL_FILESYSTEM
+      forwardingInput:
+        type: LOCAL_FILESYSTEM
+
+    fileStores:
+      receiveStore:
+        type: LOCAL_FILESYSTEM
+      splitStore:
+        type: LOCAL_FILESYSTEM
+      aggregateStore:
+        type: LOCAL_FILESYSTEM
+
+    stages:
+      receive:
+        enabled: true
+        fileStore: receiveStore
+        outputQueue: aggregateInput
+        splitZipQueue: splitZipInput
+      splitZip:
+        enabled: true
+        inputQueue: splitZipInput
+        outputQueue: aggregateInput
+        fileStore: splitStore
+        threads:
+          consumerThreads: 1
+      aggregate:
+        enabled: true
+        inputQueue: aggregateInput
+        outputQueue: forwardingInput
+        fileStore: aggregateStore
+        # When an aggregate closes. Targets, not guarantees: an aggregate closes smaller on age.
+        maxItemsPerAggregate: 1000
+        maxUncompressedByteSize: "1G"
+        aggregationFrequency: "PT10M"
+        threads:
+          consumerThreads: 1   # one claimer holds every open aggregate on the node
+          mergeThreads: 1      # merge workers close them
+      forward:
+        enabled: true
+        inputQueue: forwardingInput
+        threads:
+          consumerThreads: 1
+
+  forwardHttpDestinations:
+    - name: "downstream-stroom"
+      enabled: true
+      forwardUrl: "https://stroom.example.com/stroom/datafeed"

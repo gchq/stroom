@@ -17,9 +17,9 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DownstreamHostConfig;
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.receive.common.ReceiveDataServlet;
-import stroom.util.collections.CollectionUtil;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.AbstractConfig;
@@ -48,6 +48,8 @@ public final class ForwardHttpPostConfig
     public static final boolean DEFAULT_IS_ENABLED = true;
     public static final boolean DEFAULT_LIVENESS_CHECK_ENABLED = true;
     public static final boolean DEFAULT_IS_INSTANT = false;
+    /** Five, as the forward thread count was before the retry tier went. */
+    public static final ConsumerStageThreadsConfig DEFAULT_THREADS = new ConsumerStageThreadsConfig(5);
 
     public static final String DEFAULT_FORWARD_PATH = ReceiveDataServlet.DATA_FEED_PATH_PART;
     public static final String DEFAULT_LIVENESS_CHECK_PATH = ProxyStatusServlet.PATH_PART;
@@ -61,7 +63,9 @@ public final class ForwardHttpPostConfig
     private final String apiKey;
     private final boolean addOpenIdAccessToken;
     private final HttpClientConfiguration httpClient;
-    private final ForwardHttpQueueConfig forwardQueueConfig;
+    private final ForwardRetryConfig retry;
+    private final FailureDestinationConfig failureDestination;
+    private final ConsumerStageThreadsConfig threads;
     private final Set<String> forwardHeadersAdditionalAllowSet;
 
     public ForwardHttpPostConfig() {
@@ -74,7 +78,9 @@ public final class ForwardHttpPostConfig
         apiKey = null;
         addOpenIdAccessToken = DEFAULT_ADD_OPEN_ID_ACCESS_TOKEN;
         httpClient = createDefaultHttpClientConfiguration();
-        forwardQueueConfig = new ForwardHttpQueueConfig();
+        retry = new ForwardRetryConfig();
+        failureDestination = null;
+        threads = DEFAULT_THREADS;
         forwardHeadersAdditionalAllowSet = Collections.emptySet();
     }
 
@@ -90,7 +96,9 @@ public final class ForwardHttpPostConfig
             @JsonProperty("apiKey") final String apiKey,
             @JsonProperty("addOpenIdAccessToken") final Boolean addOpenIdAccessToken,
             @JsonProperty("httpClient") final HttpClientConfiguration httpClient,
-            @JsonProperty("queue") final ForwardHttpQueueConfig forwardQueueConfig,
+            @JsonProperty("retry") final ForwardRetryConfig retry,
+            @JsonProperty("failureDestination") final FailureDestinationConfig failureDestination,
+            @JsonProperty("threads") final ConsumerStageThreadsConfig threads,
             @JsonProperty("forwardHeadersAdditionalAllowSet") final Set<String> forwardHeadersAdditionalAllowSet) {
 
         this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_IS_ENABLED);
@@ -102,7 +110,10 @@ public final class ForwardHttpPostConfig
         this.apiKey = apiKey;
         this.addOpenIdAccessToken = Objects.requireNonNullElse(addOpenIdAccessToken, DEFAULT_ADD_OPEN_ID_ACCESS_TOKEN);
         this.httpClient = Objects.requireNonNullElseGet(httpClient, this::createDefaultHttpClientConfiguration);
-        this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardHttpQueueConfig::new);
+        this.retry = Objects.requireNonNullElseGet(retry, ForwardRetryConfig::new);
+        // Null means the default: <data>/50_forwarding/<name>/03_failure in the proxy's data directory.
+        this.failureDestination = failureDestination;
+        this.threads = Objects.requireNonNullElse(threads, DEFAULT_THREADS);
         this.forwardHeadersAdditionalAllowSet = NullSafe.unmodifialbeSet(forwardHeadersAdditionalAllowSet);
     }
 
@@ -137,9 +148,10 @@ public final class ForwardHttpPostConfig
     @Override
     @NotNull
     @JsonProperty
-    @JsonPropertyDescription("The unique name of the destination (across all file/http forward destinations. " +
-                             "The name is used in the directories on the file system, so do not change the name " +
-                             "once proxy has processed data. Must be provided.")
+    @JsonPropertyDescription("The unique name of the destination, across file, HTTP and S3 forward destinations. " +
+                             "It names the destination's default give-up directory and, when more than one " +
+                             "destination is enabled, its forward-<name> queue and file store, so do not change " +
+                             "it once the proxy has processed data. Must be provided.")
     public String getName() {
         return name;
     }
@@ -147,13 +159,10 @@ public final class ForwardHttpPostConfig
     @JsonProperty
     @JsonPropertyDescription(
             "The URL/path to forward on to. " +
-            "If this property is not set, the downstreamHost configuration will be combined with the default API " +
-            "path (/datafeed). " +
-            "If this property is just a path, it will be combined with the downstreamHost configuration. " +
-            "Only set this property if you wish to use a non-default path. " +
-            "This is pass-through mode if instant is set. " +
-            "This property must be set and does NOT fallback to downstreamHost " +
-            "or you want to use a different host/port/scheme to that defined in downstreamHost.")
+            "If not set, the downstreamHost configuration is combined with the default API path (/datafeed). " +
+            "If this property is just a path, it is combined with the downstreamHost configuration. " +
+            "Only set this property if you wish to use a non-default path " +
+            "or a different host/port/scheme to that defined in downstreamHost.")
     public String getForwardUrl() {
         return forwardUrl;
     }
@@ -164,19 +173,18 @@ public final class ForwardHttpPostConfig
             "to a GET request for the destination to be considered live. " +
             "If the response from the liveness check is not a 200, forwarding " +
             "will be paused at least until the next liveness check is performed. " +
-            "If this property is not set, the downstreamHost configuration will be combined with the default API " +
-            "path (/status). " +
-            "If this property is just a path, it will be combined with the downstreamHost configuration. " +
-            "Only set this property if you wish to use a non-default path. " +
-            "or you want to use a different host/port/scheme to that defined in downstreamHost.")
+            "If not set, the downstreamHost configuration is combined with the default API path (/status). " +
+            "If this property is just a path, it is combined with the downstreamHost configuration. " +
+            "Only set this property if you wish to use a non-default path " +
+            "or a different host/port/scheme to that defined in downstreamHost.")
     public String getLivenessCheckUrl() {
         return livenessCheckUrl;
     }
 
     @JsonProperty
     @JsonPropertyDescription(
-            "Whether liveness checking of the HTTP destination will take place. The queue property " +
-            "must also be configured for liveness checking to happen.")
+            "Whether liveness checking of the HTTP destination will take place, every " +
+            "retry.livenessCheckInterval. Forwarding to this destination is paused while the check fails.")
     public boolean isLivenessCheckEnabled() {
         return livenessCheckEnabled;
     }
@@ -187,31 +195,46 @@ public final class ForwardHttpPostConfig
         return apiKey;
     }
 
-    /**
-     * If true, add Open ID authentication headers to the request. Only works if the identityProviderType
-     * is EXTERNAL_IDP and the destination is in the same Open ID Connect realm as the OIDC client that this
-     * proxy instance is using.
-     */
     @JsonProperty
+    @JsonPropertyDescription("If true, an Open ID access token is added to each forward request. Only works " +
+                             "when identityProviderType is EXTERNAL_IDP and the destination is in the same Open " +
+                             "ID Connect realm as the client this proxy uses.")
     public boolean isAddOpenIdAccessToken() {
         return addOpenIdAccessToken;
     }
 
-    /**
-     * Get the configuration for the HttpClient.
-     */
     @JsonProperty("httpClient")
+    @JsonPropertyDescription("The HTTP client used to post to this destination: timeouts, TLS, proxy, " +
+                             "connection limits.")
     public HttpClientConfiguration getHttpClient() {
         return httpClient;
     }
 
     @Override
-    @NotNull // HTTP forwarder needs a queued mechanism to cope with failure
-    @JsonProperty("queue")
-    @JsonPropertyDescription("Adds multi-threading and retry control to this forwarder. " +
-                             "This is required for a HTTP forwarder as requests may fail.")
-    public ForwardHttpQueueConfig getForwardQueueConfig() {
-        return forwardQueueConfig;
+    @NotNull
+    @JsonProperty("retry")
+    @JsonPropertyDescription("How this destination retries a group it could not deliver and when it gives up.")
+    public ForwardRetryConfig getRetry() {
+        return retry;
+    }
+
+    @Override
+    @JsonProperty("failureDestination")
+    @JsonPropertyDescription("Where this destination writes data it has given up on, with an error.log " +
+                             "beside each group. Configured independently of where it forwards to, so an " +
+                             "HTTP forwarder can quarantine to a directory or to S3. When unset, a " +
+                             "'03_failure' directory under 50_forwarding/<name> in the proxy's data directory is " +
+                             "used.")
+    public FailureDestinationConfig getFailureDestination() {
+        return failureDestination;
+    }
+
+    @Override
+    @NotNull
+    @JsonProperty("threads")
+    @JsonPropertyDescription("How many threads deliver to this destination.")
+    public ConsumerStageThreadsConfig getThreads() {
+        return threads;
     }
 
     @JsonProperty
@@ -245,6 +268,9 @@ public final class ForwardHttpPostConfig
 
     @Override
     public boolean equals(final Object o) {
+        // ForwardHeadersAdditionalAllowSet is a live builder field that widens which headers are
+        // forwarded - a security-relevant setting - and it was in none of these three, so two configs
+        // differing only in it compared equal.
         if (this == o) {
             return true;
         }
@@ -261,7 +287,10 @@ public final class ForwardHttpPostConfig
                && livenessCheckEnabled == that.livenessCheckEnabled
                && Objects.equals(apiKey, that.apiKey)
                && Objects.equals(httpClient, that.httpClient)
-               && Objects.equals(forwardQueueConfig, that.forwardQueueConfig);
+               && Objects.equals(retry, that.retry)
+               && Objects.equals(failureDestination, that.failureDestination)
+               && Objects.equals(threads, that.threads)
+               && Objects.equals(forwardHeadersAdditionalAllowSet, that.forwardHeadersAdditionalAllowSet);
     }
 
     @Override
@@ -275,7 +304,10 @@ public final class ForwardHttpPostConfig
                 apiKey,
                 addOpenIdAccessToken,
                 httpClient,
-                forwardQueueConfig);
+                retry,
+                failureDestination,
+                threads,
+                forwardHeadersAdditionalAllowSet);
     }
 
     @Override
@@ -290,12 +322,11 @@ public final class ForwardHttpPostConfig
                ", apiKey='" + apiKey + '\'' +
                ", addOpenIdAccessToken=" + addOpenIdAccessToken +
                ", httpClient=" + httpClient +
-               ", forwardQueueConfig=" + forwardQueueConfig +
+               ", retry=" + retry +
+               ", failureDestination=" + failureDestination +
+               ", threads=" + threads +
+               ", forwardHeadersAdditionalAllowSet=" + forwardHeadersAdditionalAllowSet +
                '}';
-    }
-
-    private static Set<String> normaliseFields(final Set<String> fields) {
-        return CollectionUtil.cleanItems(fields, s -> s.trim().toLowerCase());
     }
 
     // --------------------------------------------------------------------------------
@@ -312,7 +343,9 @@ public final class ForwardHttpPostConfig
         private String apiKey;
         private Boolean addOpenIdAccessToken;
         private HttpClientConfiguration httpClient;
-        private ForwardHttpQueueConfig forwardQueueConfig;
+        private ForwardRetryConfig retry;
+        private FailureDestinationConfig failureDestination;
+        private ConsumerStageThreadsConfig threads;
         private Set<String> forwardHeadersAdditionalAllowSet;
 
         private Builder() {
@@ -330,7 +363,9 @@ public final class ForwardHttpPostConfig
             this.apiKey = forwardHttpPostConfig.apiKey;
             this.addOpenIdAccessToken = forwardHttpPostConfig.addOpenIdAccessToken;
             this.httpClient = forwardHttpPostConfig.httpClient;
-            this.forwardQueueConfig = forwardHttpPostConfig.forwardQueueConfig;
+            this.retry = forwardHttpPostConfig.retry;
+            this.failureDestination = forwardHttpPostConfig.failureDestination;
+            this.threads = forwardHttpPostConfig.threads;
             this.forwardHeadersAdditionalAllowSet = NullSafe.mutableSet(
                     forwardHttpPostConfig.forwardHeadersAdditionalAllowSet);
         }
@@ -380,8 +415,18 @@ public final class ForwardHttpPostConfig
             return this;
         }
 
-        public Builder forwardQueueConfig(final ForwardHttpQueueConfig forwardQueueConfig) {
-            this.forwardQueueConfig = forwardQueueConfig;
+        public Builder retry(final ForwardRetryConfig retry) {
+            this.retry = retry;
+            return this;
+        }
+
+        public Builder failureDestination(final FailureDestinationConfig failureDestination) {
+            this.failureDestination = failureDestination;
+            return this;
+        }
+
+        public Builder threads(final ConsumerStageThreadsConfig threads) {
+            this.threads = threads;
             return this;
         }
 
@@ -407,7 +452,9 @@ public final class ForwardHttpPostConfig
                     apiKey,
                     addOpenIdAccessToken,
                     httpClient,
-                    forwardQueueConfig,
+                    retry,
+                    failureDestination,
+                    threads,
                     forwardHeadersAdditionalAllowSet);
         }
     }

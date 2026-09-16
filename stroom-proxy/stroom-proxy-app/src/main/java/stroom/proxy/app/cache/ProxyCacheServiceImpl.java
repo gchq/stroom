@@ -18,7 +18,8 @@ package stroom.proxy.app.cache;
 
 import stroom.cache.api.StroomCache;
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.proxy.repo.ProxyServices;
+import stroom.proxy.app.execution.Phase;
+import stroom.proxy.app.execution.WorkRegistry;
 import stroom.util.HasAdminTasks;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -48,13 +49,10 @@ public class ProxyCacheServiceImpl implements ProxyCacheService, HasAdminTasks {
 
     @Inject
     public ProxyCacheServiceImpl(final CacheManagerImpl cacheManager,
-                                 final ProxyServices proxyServices) {
+                                 final WorkRegistry workRegistry) {
         this.cacheManager = cacheManager;
 
-        proxyServices.addFrequencyExecutor(
-                "Caches - evict expired",
-                () -> this::evictExpired,
-                Duration.ofMinutes(1).toMillis());
+        workRegistry.schedule("caches-evict-expired", Phase.HOUSEKEEPING, Duration.ofMinutes(1), this::evictExpired);
     }
 
     @Override

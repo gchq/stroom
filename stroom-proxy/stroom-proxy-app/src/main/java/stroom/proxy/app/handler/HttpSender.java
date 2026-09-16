@@ -22,7 +22,6 @@ import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.DownstreamHostConfig;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
-import stroom.proxy.repo.ProxyServices;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.io.ByteCountInputStream;
@@ -43,6 +42,7 @@ import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.ProtocolException;
 import org.apache.hc.core5.http.io.entity.BasicHttpEntity;
@@ -70,7 +70,6 @@ public class HttpSender implements StreamDestination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HttpSender.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
-    private static final int ONE_SECOND = 1_000;
 
     // TODO Consider whether a UNKNOWN_ERROR(500) is recoverable or not
     private static final Set<StroomStatusCode> NON_RECOVERABLE_STATUS_CODES = EnumSet.of(
@@ -87,7 +86,6 @@ public class HttpSender implements StreamDestination {
     private final String forwardUrl;
     private final String livenessCheckUrl;
     private final String forwarderName;
-    private final ProxyServices proxyServices;
     private final Timer sendTimer;
     private final Set<CIKey> headerAllowSet;
 
@@ -97,8 +95,7 @@ public class HttpSender implements StreamDestination {
                       final String userAgent,
                       final UserIdentityFactory userIdentityFactory,
                       final HttpClient httpClient,
-                      final Metrics metrics,
-                      final ProxyServices proxyServices) {
+                      final Metrics metrics) {
         this.logStream = logStream;
         this.forwardHttpPostConfig = forwardHttpPostConfig;
         this.userAgent = userAgent;
@@ -107,7 +104,6 @@ public class HttpSender implements StreamDestination {
         this.forwardUrl = forwardHttpPostConfig.createForwardUrl(downstreamHostConfig);
         this.livenessCheckUrl = forwardHttpPostConfig.createLivenessCheckUrl(downstreamHostConfig);
         this.forwarderName = forwardHttpPostConfig.getName();
-        this.proxyServices = proxyServices;
         this.sendTimer = metrics.registrationBuilder(getClass())
                 .addNamePart(forwarderName)
                 .addNamePart(Metrics.SEND)
@@ -120,7 +116,12 @@ public class HttpSender implements StreamDestination {
     public void send(final AttributeMap attributeMap,
                      final InputStream inputStream) throws ForwardException {
         if (NullSafe.isEmptyString(attributeMap.get(StandardHeaderArguments.FEED))) {
-            throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
+            // A group with no feed will not grow one, so this is a refusal, not something to retry
+            // for the full maxRetryAge. The receive path still answers the sender with
+            // StroomStreamException; this is the forward path, where the only reader of the
+            // outcome is the forward stage's permanent-or-transient decision.
+            throw ForwardException.nonRecoverable(
+                    StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap, null, null);
         }
 
         attributeMap.putRandomUuidIfAbsent(StandardHeaderArguments.GUID);
@@ -421,20 +422,6 @@ public class HttpSender implements StreamDestination {
         return null;
     }
 
-    private int getHeaderInt(final ClassicHttpResponse response,
-                             final String headerName,
-                             final int def) {
-        try {
-            final String value = getHeader(response, headerName);
-            if (value != null) {
-                return Integer.parseInt(value);
-            }
-        } catch (final NumberFormatException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-        return def;
-    }
-
     private StroomStatusCode getStroomStatusCode(
             final ClassicHttpResponse response) {
         final String header = StandardHeaderArguments.STROOM_STATUS;
@@ -495,7 +482,7 @@ public class HttpSender implements StreamDestination {
                             stroomStatusCode.getMessage());
                 }
             }
-            return new ResponseStatus(stroomStatusCode, receiptId, responseMessage, httpResponseCode);
+            return new ResponseStatus(stroomStatusCode, receiptId, responseMessage);
         } catch (final Exception ioEx) {
             LOGGER.debug(() -> LogUtil.message("Error sending to forwardUrl '{}': {}",
                     forwardUrl, LogUtil.exceptionMessage(ioEx)));
@@ -509,7 +496,14 @@ public class HttpSender implements StreamDestination {
 
     private void consumeAndCloseResponseContent(final ClassicHttpResponse response) {
         final byte[] buffer = new byte[1024];
-        try (final InputStream inputStream = response.getEntity().getContent()) {
+        // GetEntity() is null for a bodiless response - a 204, or a 500 from a proxy in front of
+        // the downstream - and the NPE that produced escaped the catch below, which only handles
+        // IOException. Draining a response that has no body is a no-op, not an error.
+        final HttpEntity entity = response.getEntity();
+        if (entity == null) {
+            return;
+        }
+        try (final InputStream inputStream = entity.getContent()) {
             if (inputStream != null) {
                 //noinspection StatementWithEmptyBody
                 while (inputStream.read(buffer) > 0) {
@@ -521,8 +515,15 @@ public class HttpSender implements StreamDestination {
     }
 
     private String readResponseContent(final ClassicHttpResponse response) {
+        // The same guard, and this site is the one that mattered: readResponseContent is called from
+        // checkConnectionResponse, whose catch rethrows - so a bodiless response turned into an NPE
+        // propagating out of the forward attempt instead of an empty body.
+        final HttpEntity entity = response.getEntity();
+        if (entity == null) {
+            return "";
+        }
 
-        try (final InputStream inputStream = response.getEntity().getContent()) {
+        try (final InputStream inputStream = entity.getContent()) {
             if (inputStream != null) {
                 return NullSafe.trim(IOUtils.toString(inputStream, StandardCharsets.UTF_8));
             }
@@ -556,8 +557,7 @@ public class HttpSender implements StreamDestination {
 
     public record ResponseStatus(StroomStatusCode stroomStatusCode,
                                  String receiptId,
-                                 String message,
-                                 int httpResponseCode) {
+                                 String message) {
 
     }
 }

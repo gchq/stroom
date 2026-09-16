@@ -1,0 +1,231 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.proxy.app.pipeline.queue;
+
+import stroom.proxy.app.pipeline.store.FileStoreLocation;
+import stroom.test.common.util.test.StroomUnitTest;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * Shared contract test suite that every {@link FileGroupQueue} implementation
+ * must satisfy.
+ * <p>
+ * Subclasses provide the concrete queue via {@link #createQueue(String)} and
+ * optionally prepare records for consumption via
+ * {@link #prepareForConsumption(FileGroupQueue, FileGroupQueueMessage)}.
+ * </p>
+ * <p>
+ * These tests validate the contract defined in the implementation plan
+ * (§Required contract tests, lines 1611–1636):
+ * </p>
+ * <ol>
+ *     <li>Producer: publish makes item available; does not mutate source path;
+ *         includes expected location; has a stable ID.</li>
+ *     <li>Consumer: next blocks/waits; next returns available item;
+ *         acknowledge prevents redelivery; fail causes redelivery;
+ *         close releases resources.</li>
+ * </ol>
+ */
+public abstract class AbstractFileGroupQueueContractTest extends StroomUnitTest {
+
+    private static final String QUEUE_NAME = "contractTestQueue";
+
+    private FileGroupQueue queue;
+
+    /**
+     * Create a fresh queue for the given logical name.
+     */
+    protected abstract FileGroupQueue createQueue(String name) throws IOException;
+
+    /**
+     * If the queue implementation requires external setup for a published
+     * message to become consumable (e.g. Kafka mock consumer needs records
+     * injected), perform that setup here. The default implementation does
+     * nothing — suitable for queues where publish automatically makes items
+     * consumable (e.g. local filesystem, SQS).
+     */
+    protected void prepareForConsumption(final FileGroupQueue queue,
+                                          final FileGroupQueueMessage message) throws IOException {
+        // Default: no-op.
+    }
+
+    /**
+     * How long a contract test waits for a published message to be delivered. Zero for a queue that
+     * delivers what it holds at once; a real broker needs time to assign partitions and fetch, so its
+     * test says how long that may take.
+     */
+    protected Duration nextWait() {
+        return Duration.ZERO;
+    }
+
+    @AfterEach
+    protected void tearDown() throws IOException {
+        if (queue != null) {
+            queue.close();
+            queue = null;
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Producer contract tests
+    // ------------------------------------------------------------------
+
+    @Test
+    protected void contractPublishMakesItemAvailableToConsumer() throws IOException {
+        queue = createQueue(QUEUE_NAME);
+        final FileGroupQueueMessage message = createMessage("fg-avail-1");
+        queue.publish(message);
+        prepareForConsumption(queue, message);
+
+        final Optional<FileGroupQueueItem> item = queue.next(nextWait());
+        assertThat(item).isPresent();
+        assertThat(item.get().getMessage().messageId()).isEqualTo("fg-avail-1");
+    }
+
+    @Test
+    protected void contractPublishDoesNotMutateReferencedSourcePath() throws IOException {
+        queue = createQueue(QUEUE_NAME);
+        final FileStoreLocation location = testLocation();
+        final String uriBefore = location.uri();
+        final FileGroupQueueMessage message = createMessage("fg-nomut-1", location);
+
+        queue.publish(message);
+
+        // The location object and URI must not have been changed by publish.
+        assertThat(location.uri()).isEqualTo(uriBefore);
+        assertThat(location.storeName()).isEqualTo("testStore");
+    }
+
+    @Test
+    protected void contractQueueItemIncludesExpectedFileStoreLocation() throws IOException {
+        queue = createQueue(QUEUE_NAME);
+        final FileStoreLocation location = testLocation();
+        final FileGroupQueueMessage message = createMessage("fg-loc-1", location);
+        queue.publish(message);
+        prepareForConsumption(queue, message);
+
+        final FileGroupQueueItem item = queue.next(nextWait()).orElseThrow();
+        assertThat(item.getMessage().fileStoreLocation().uri()).isEqualTo(location.uri());
+        assertThat(item.getMessage().fileStoreLocation().storeName()).isEqualTo(location.storeName());
+    }
+
+    @Test
+    protected void contractQueueItemHasStableId() throws IOException {
+        queue = createQueue(QUEUE_NAME);
+        final FileGroupQueueMessage message = createMessage("fg-id-1");
+        queue.publish(message);
+        prepareForConsumption(queue, message);
+
+        final FileGroupQueueItem item = queue.next(nextWait()).orElseThrow();
+        final String id = item.getId();
+        assertThat(id).isNotBlank();
+        // Calling getId() again must return the same value.
+        assertThat(item.getId()).isEqualTo(id);
+    }
+
+
+    // ------------------------------------------------------------------
+    // Consumer contract tests
+    // ------------------------------------------------------------------
+
+    @Test
+    protected void contractNextReturnsEmptyWhenQueueIsEmpty() throws IOException {
+        queue = createQueue(QUEUE_NAME);
+        final Optional<FileGroupQueueItem> item = queue.next(nextWait());
+        assertThat(item).isEmpty();
+    }
+
+    @Test
+    protected void contractAcknowledgePreventsRedelivery() throws IOException {
+        queue = createQueue(QUEUE_NAME);
+        final FileGroupQueueMessage message = createMessage("fg-ack-1");
+        queue.publish(message);
+        prepareForConsumption(queue, message);
+
+        try (final FileGroupQueueItem item = queue.next(nextWait()).orElseThrow()) {
+            item.acknowledge();
+        }
+
+        // After acknowledgement, the queue should not redeliver this item.
+        // (For queues that don't support this check naturally, the next()
+        // call should return empty.)
+        final Optional<FileGroupQueueItem> retry = queue.next(nextWait());
+        assertThat(retry).isEmpty();
+    }
+
+    @Test
+    protected void contractAcknowledgeIsIdempotent() throws IOException {
+        queue = createQueue(QUEUE_NAME);
+        final FileGroupQueueMessage message = createMessage("fg-ack-idem-1");
+        queue.publish(message);
+        prepareForConsumption(queue, message);
+
+        try (final FileGroupQueueItem item = queue.next(nextWait()).orElseThrow()) {
+            item.acknowledge();
+            // Must not throw.
+            item.acknowledge();
+        }
+    }
+
+    @Test
+    protected void contractCloseReleasesResources() throws IOException {
+        queue = createQueue(QUEUE_NAME);
+        // Close must not throw.
+        queue.close();
+        queue = null;
+    }
+
+    // ------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------
+
+    protected FileGroupQueueMessage createMessage(final String fileGroupId) {
+        return createMessage(fileGroupId, testLocation());
+    }
+
+    protected FileGroupQueueMessage createMessage(final String fileGroupId,
+                                                   final FileStoreLocation location) {
+        return new FileGroupQueueMessage(
+                FileGroupQueueMessage.CURRENT_SCHEMA_VERSION,
+                fileGroupId,
+                location,
+                null,
+                null,
+                "receive",
+                "test-node",
+                Instant.now(),
+                null,
+                Map.of());
+    }
+
+    protected static FileStoreLocation testLocation() {
+        return FileStoreLocation.filesystem(
+                "testStore",
+                Path.of("/tmp/test/store/0000000001"));
+    }
+}

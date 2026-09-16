@@ -30,6 +30,7 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.net.HostNameUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -43,6 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -61,15 +63,34 @@ import java.util.stream.Stream;
 public class ZipDirScanner {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZipDirScanner.class);
+    /**
+     * This held {@code FileGroup.ENTRIES_FILE}, which is the FILE NAME "proxy.entries", in a set
+     * compared against {@code FileNameUtils.getExtension(path)} - so it never matched, and every
+     * {@code proxy.entries} moved in for replay was counted as an unknown file. It survives in
+     * practice only because {@code createZipGroup} resolves that file correctly by a different route
+     * and deletes it before the failure-move runs, at which point the move fails and logs at ERROR:
+     * a SUCCESSFUL re-ingest reporting unknown files and move errors.
+     * <p>
+     * The reason to fix it rather than leave it cosmetic is {@code unknownFiles}: it is a deque scoped
+     * to the whole walk, not to one directory, and {@code postVisitDirectory} drains all of it - so a
+     * file queued as unknown in a parent can be moved away while a subdirectory is being visited. That
+     * is harmless today only because the mis-classified files happen to be ones nothing reads. The
+     * same typo on {@code META_EXTENSION} would ingest a group without its headers, silently.
+     */
     private static final Set<String> SIDECAR_EXTENSIONS = Set.of(
             FileGroup.META_EXTENSION,
-            FileGroup.ENTRIES_FILE);
-    private static final Set<String> SIDECAR_FILENAMES = Set.of(
-            "error.log");
+            FileGroup.ENTRIES_EXTENSION);
+    /**
+     * {@code error.log} is written beside a group the forward stage gives up on, so it travels with
+     * the group into the give-up directory and comes back with it when an operator replays that
+     * directory. It is part of the group here, so that a successful replay consumes it rather than
+     * counting it unknown and leaving it behind.
+     */
+    private static final Set<String> SIDECAR_FILENAMES = Set.of(FileGroup.ERROR_LOG_FILE_NAME);
 
     private final Provider<DirScannerConfig> dirScannerConfigProvider;
     private final PathCreator pathCreator;
-    private final ZipReceiver zipReceiver;
+    private final Receiver receiver;
     private final ReceiptIdGenerator receiptIdGenerator;
     private final CommonSecurityContext securityContext;
     private final NestedNumberedDirProvider failureDirProvider;
@@ -78,12 +99,12 @@ public class ZipDirScanner {
     @Inject
     public ZipDirScanner(final Provider<DirScannerConfig> dirScannerConfigProvider,
                          final PathCreator pathCreator,
-                         final ZipReceiver zipReceiver,
+                         final Receiver receiver,
                          final ReceiptIdGenerator receiptIdGenerator,
                          final CommonSecurityContext securityContext) {
         this.dirScannerConfigProvider = dirScannerConfigProvider;
         this.pathCreator = pathCreator;
-        this.zipReceiver = zipReceiver;
+        this.receiver = receiver;
         this.receiptIdGenerator = receiptIdGenerator;
         this.securityContext = securityContext;
 
@@ -156,7 +177,8 @@ public class ZipDirScanner {
             // That last point becomes a real constraint if a receipt policy is ever able to
             // discriminate on sender identity: such a policy would be vacuous here, and this path
             // would need its own answer rather than a blanket elevation.
-            securityContext.asProcessingUser(() -> zipReceiver.receive(zipFile, attributeMap));
+            securityContext.asProcessingUser(() ->
+                    receiver.receiveZip(Instant.now(), attributeMap, pathToUri(zipFile), zipFile));
             // receive will have cloned our zip, so as there were no problems, we can now delete it
             // and the other files in the group
             deleteZipGroup(zipGroup);
@@ -164,8 +186,11 @@ public class ZipDirScanner {
             LOGGER.info("Ingested ZIP file {}", zipFile);
         } catch (final Exception e) {
             scanResult.incrementFailCount();
-            final Path destDir = failureDirProvider.createNumberedPath();
+            // A numbered failure directory is created only once there is something to move into it:
+            // a failure with nothing to move - the zip already consumed, or never there - must not
+            // leave an empty directory among the real failures.
             if (Files.exists(zipFile)) {
+                final Path destDir = failureDirProvider.createNumberedPath();
                 LOGGER.error("Error processing zipFile {}, moving it (and any associated sidecar files) into {} - {}",
                         zipFile, destDir, LogUtil.exceptionMessage(e), e);
                 // Move the zip and its associated sidecar files to a failure dir
@@ -183,6 +208,13 @@ public class ZipDirScanner {
                 LOGGER.debug("processZipFile() - zipFile {} doesn't exist", zipFile);
             }
         }
+    }
+
+    /**
+     * What the receive log records as the source of a scanned file.
+     */
+    static String pathToUri(final Path path) {
+        return "file://" + HostNameUtil.determineHostName() + path.toAbsolutePath();
     }
 
     private void deleteZipGroup(final ZipGroup zipGroup) {
@@ -215,7 +247,7 @@ public class ZipDirScanner {
             metaFile = null;
         }
         // This one has a specific name
-        Path errorFile = parentDir.resolve(RetryingForwardDestination.ERROR_LOG_FILENAME);
+        Path errorFile = parentDir.resolve(FileGroup.ERROR_LOG_FILE_NAME);
         if (!Files.isRegularFile(errorFile)) {
             errorFile = null;
         }
@@ -224,6 +256,7 @@ public class ZipDirScanner {
         if (!Files.isRegularFile(entriesFile)) {
             entriesFile = null;
         }
+
         final ZipGroup zipGroup = new ZipGroup(zipFile, metaFile, errorFile, entriesFile);
         LOGGER.debug("createZipGroup() - zipGroup: {}", zipGroup);
         return zipGroup;
@@ -336,26 +369,6 @@ public class ZipDirScanner {
         return null;
     }
 
-    private void deleteDirectoryIfEmpty(final Path dir) {
-        try {
-            if (Files.isDirectory(dir) && Files.isWritable(dir)) {
-                final boolean isEmpty;
-                try (final Stream<Path> entries = Files.list(dir)) {
-                    isEmpty = entries.findAny().isEmpty();
-                }
-                if (isEmpty) {
-                    // May fail if something has been dropped in since we checked, but that is OK
-                    // as we will check it again on next run.
-                    Files.delete(dir);
-                }
-            }
-        } catch (final IOException e) {
-            // Just swallow it
-            LOGGER.debug(() -> LogUtil.message("Unable to delete directory {} - ",
-                    dir, LogUtil.exceptionMessage(e), e));
-        }
-    }
-
     private boolean isZipFile(final Path path) {
         Objects.requireNonNull(path);
         return FileGroup.ZIP_EXTENSION.equalsIgnoreCase(FileNameUtils.getExtension(path))
@@ -461,7 +474,10 @@ public class ZipDirScanner {
     // --------------------------------------------------------------------------------
 
 
-    private record ZipGroup(Path zipFile, Path metaFile, Path errorFile, Path entriesFile) {
+    private record ZipGroup(Path zipFile,
+                            Path metaFile,
+                            Path errorFile,
+                            Path entriesFile) {
 
         private ZipGroup {
             Objects.requireNonNull(zipFile);

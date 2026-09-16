@@ -1,10 +1,4 @@
 proxyConfig:
-  aggregator:
-    aggregationFrequency: "PT10M"
-    enabled: true
-    maxItemsPerAggregate: 1000
-    maxUncompressedByteSize: "1.0G"
-    splitSources: true
   contentDir: "content"
   dirScanner:
     dirs:
@@ -24,17 +18,11 @@ proxyConfig:
     persistedKeysHashAlgorithm: "SHA2_512"
     port: null
     scheme: "https"
+  durability: "FULL"
   eventStore:
-    forwardQueueSize: 1000
     maxAge: "PT1M"
     maxByteCount: 9223372036854775807
     maxEventCount: 9223372036854775807
-    openFilesCache:
-      expireAfterAccess: null
-      expireAfterWrite: null
-      maximumSize: 100
-      refreshAfterWrite: null
-      statisticsMode: "DROPWIZARD_METRICS"
     rollFrequency: "PT10S"
   feedStatus:
     feedStatusCache:
@@ -47,30 +35,29 @@ proxyConfig:
   forwardFileDestinations:
   - atomicMoveEnabled: true
     enabled: true
+    failureDestination: null
     instant: false
     livenessCheckMode: "READ"
     livenessCheckPath: null
     name: null
     path: null
-    queue:
-      errorSubPathTemplate:
-        enabled: true
-        pathTemplate: "${year}${month}${day}/${feed}"
-        templatingMode: "REPLACE_UNKNOWN_PARAMS"
-      forwardDelay: "PT0S"
-      forwardRetryThreadCount: 1
-      forwardThreadCount: 5
+    retry:
       livenessCheckInterval: "PT1M"
       maxRetryAge: "P7D"
-      maxRetryDelay: "P1D"
-      queueAndRetryEnabled: false
+      maxRetryDelay: "PT1H"
       retryDelay: "PT10M"
       retryDelayGrowthFactor: 1.0
-    subPathTemplate: null
+    subPathTemplate:
+      enabled: true
+      pathTemplate: "${year}${month}${day}/${feed}"
+      templatingMode: "REPLACE_UNKNOWN_PARAMS"
+    threads:
+      consumerThreads: 5
   forwardHttpDestinations:
   - addOpenIdAccessToken: false
     apiKey: null
     enabled: true
+    failureDestination: null
     forwardHeadersAdditionalAllowSet: []
     forwardUrl: null
     httpClient:
@@ -92,22 +79,15 @@ proxyConfig:
     livenessCheckEnabled: true
     livenessCheckUrl: null
     name: null
-    queue:
-      errorSubPathTemplate:
-        enabled: true
-        pathTemplate: "${year}${month}${day}/${feed}"
-        templatingMode: "REPLACE_UNKNOWN_PARAMS"
-      forwardDelay: "PT0S"
-      forwardRetryThreadCount: 1
-      forwardThreadCount: 5
+    retry:
       livenessCheckInterval: "PT1M"
       maxRetryAge: "P7D"
-      maxRetryDelay: "P1D"
-      queueAndRetryEnabled: true
+      maxRetryDelay: "PT1H"
       retryDelay: "PT10M"
       retryDelayGrowthFactor: 1.0
+    threads:
+      consumerThreads: 5
   forwardS3Destinations: []
-  haltBootOnConfigValidationFailure: true
   logStream:
     metaKeys:
     - "GUID"
@@ -126,6 +106,111 @@ proxyConfig:
     data: "data"
     home: null
     temp: null
+  pipeline:
+    fileStores:
+      aggregateStore:
+        accessKeyId: null
+        bucket: null
+        credentialsType: null
+        durability: null
+        endpointOverride: null
+        keyPrefix: null
+        localCachePath: null
+        orphanAge: null
+        path: null
+        region: null
+        secretAccessKey: null
+        type: "LOCAL_FILESYSTEM"
+      receiveStore:
+        accessKeyId: null
+        bucket: null
+        credentialsType: null
+        durability: null
+        endpointOverride: null
+        keyPrefix: null
+        localCachePath: null
+        orphanAge: null
+        path: null
+        region: null
+        secretAccessKey: null
+        type: "LOCAL_FILESYSTEM"
+      splitStore:
+        accessKeyId: null
+        bucket: null
+        credentialsType: null
+        durability: null
+        endpointOverride: null
+        keyPrefix: null
+        localCachePath: null
+        orphanAge: null
+        path: null
+        region: null
+        secretAccessKey: null
+        type: "LOCAL_FILESYSTEM"
+    mode: "LOCAL"
+    queues:
+      aggregateInput:
+        bootstrapServers: null
+        consumer: {}
+        maxDeliveryAttempts: 100
+        path: null
+        producer: {}
+        queueUrl: null
+        topic: null
+        type: "LOCAL_FILESYSTEM"
+        visibilityTimeout: null
+        waitTime: null
+      forwardingInput:
+        bootstrapServers: null
+        consumer: {}
+        maxDeliveryAttempts: 100
+        path: null
+        producer: {}
+        queueUrl: null
+        topic: null
+        type: "LOCAL_FILESYSTEM"
+        visibilityTimeout: null
+        waitTime: null
+      splitZipInput:
+        bootstrapServers: null
+        consumer: {}
+        maxDeliveryAttempts: 100
+        path: null
+        producer: {}
+        queueUrl: null
+        topic: null
+        type: "LOCAL_FILESYSTEM"
+        visibilityTimeout: null
+        waitTime: null
+    stages:
+      aggregate:
+        aggregationFrequency: "PT10M"
+        enabled: true
+        fileStore: "aggregateStore"
+        inputQueue: "aggregateInput"
+        maxItemsPerAggregate: 1000
+        maxUncompressedByteSize: "1.0G"
+        outputQueue: "forwardingInput"
+        threads:
+          consumerThreads: 1
+          mergeThreads: 1
+      forward:
+        enabled: true
+        inputQueue: "forwardingInput"
+        threads:
+          consumerThreads: 1
+      receive:
+        enabled: true
+        fileStore: "receiveStore"
+        outputQueue: "aggregateInput"
+        splitZipQueue: "splitZipInput"
+      splitZip:
+        enabled: true
+        fileStore: "splitStore"
+        inputQueue: "splitZipInput"
+        outputQueue: "aggregateInput"
+        threads:
+          consumerThreads: 1
   proxyId: null
   receiptPolicy:
     receiveDataRulesUrl: null
@@ -204,13 +289,6 @@ proxyConfig:
         validIssuers: []
         validateAudience: true
   sqsConnectors:
-  - awsProfileName: null
-    awsRegionName: null
+  - awsRegionName: null
     pollFrequency: "PT10S"
-    queueName: null
     queueUrl: null
-  threads:
-    aggregateInputQueueThreadCount: 1
-    forwardingInputQueueThreadCount: 1
-    preAggregateInputQueueThreadCount: 1
-    zipSplittingInputQueueThreadCount: 1

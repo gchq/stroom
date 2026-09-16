@@ -17,9 +17,13 @@
 package stroom.proxy.app.handler;
 
 
+/**
+ * Builds the {@link Destination} a forward destination's configuration describes. The destination
+ * is the delivery mechanism alone; retry, back-off and give-up are the forward stage's.
+ */
 public interface ForwardDestinationFactory<T extends ForwarderConfig> {
 
-    ForwardDestination create(T config);
+    Destination create(T config);
 
     Class<T> getConfigClass();
 

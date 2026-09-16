@@ -16,13 +16,25 @@
 
 package stroom.proxy.app.security;
 
+import stroom.proxy.app.DownstreamHostConfig;
+import stroom.proxy.app.ProxyConfig;
 import stroom.security.api.HashFunction;
 import stroom.security.common.impl.ApiKeyGenerator;
+import stroom.security.mock.MockCommonSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.HashAlgorithm;
+import stroom.security.shared.VerifyApiKeyRequest;
+import stroom.util.io.SimplePathCreator;
+import stroom.util.shared.UserDesc;
+import stroom.util.time.StroomDuration;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
+
+import java.nio.file.Path;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -85,4 +97,80 @@ class TestProxyApiKeyServiceImpl {
                 TEST_HASH))
                 .isFalse();
     }
+
+    /**
+     * No test constructed this class - all three above call the package-private static
+     * {@code localEntryMatches}, which pins the permission-escalation guard and nothing else. The two
+     * behaviours that landed were exercised by nothing at all, and both are about what the
+     * proxy does when it cannot get an authoritative answer, which is exactly where a security
+     * component must not guess.
+     * <p>
+     * <strong>A negative verdict is cached.</strong> {@code isTooOld} used to treat every entry with a
+     * null value as permanently stale, so an unauthenticated caller sending well-formed but unknown
+     * keys forced one downstream verification <em>and one full rewrite of the persisted key file</em>
+     * per request, all serialised on this instance's monitor. A free denial-of-service against a
+     * proxy's own downstream.
+     * </p>
+     */
+    @Test
+    void testAnUnknownKeyIsVerifiedOnceAndThenAnsweredFromCache(@TempDir final Path tempDir)
+            throws Exception {
+        final ProxyApiKeyCheckClient client = Mockito.mock(ProxyApiKeyCheckClient.class);
+        Mockito.when(client.fetchApiKeyValidity(Mockito.any())).thenReturn(Optional.empty());
+
+        final ProxyApiKeyServiceImpl service = createService(tempDir, client, StroomDuration.ofMinutes(5));
+        final VerifyApiKeyRequest request = new VerifyApiKeyRequest(apiKey, AppPermissionSet.empty());
+
+        assertThat(service.verifyApiKey(request)).isEmpty();
+        assertThat(service.verifyApiKey(request)).isEmpty();
+
+        Mockito.verify(client, Mockito.times(1)).fetchApiKeyValidity(Mockito.any());
+    }
+
+    /**
+     * The other half, and the more dangerous one. When the downstream cannot answer and there
+     * is nothing on disk, the proxy does <strong>not</strong> know the key is invalid — and caching
+     * that "no" as authoritative would go on rejecting a good key for {@code maxCachedKeyAge} after
+     * the downstream recovered. Nothing is cached, so the next attempt asks again.
+     */
+    @Test
+    void testAnUnavailableDownstreamIsNotCachedAsAnInvalidKey(@TempDir final Path tempDir)
+            throws Exception {
+        final ProxyApiKeyCheckClient client = Mockito.mock(ProxyApiKeyCheckClient.class);
+        Mockito.when(client.fetchApiKeyValidity(Mockito.any()))
+                .thenThrow(new RuntimeException("downstream unavailable"))
+                .thenReturn(Optional.of(UserDesc.builder("someone").build()));
+
+        // No back-off, so the second attempt is allowed to reach the downstream at once.
+        final ProxyApiKeyServiceImpl service = createService(tempDir, client, StroomDuration.ZERO);
+        final VerifyApiKeyRequest request = new VerifyApiKeyRequest(apiKey, AppPermissionSet.empty());
+
+        assertThat(service.verifyApiKey(request))
+                .as("the downstream could not answer, so neither can the proxy")
+                .isEmpty();
+        assertThat(service.verifyApiKey(request))
+                .as("and the recovered downstream must be believed, not a cached guess")
+                .isPresent();
+    }
+
+    private ProxyApiKeyServiceImpl createService(final Path tempDir,
+                                                 final ProxyApiKeyCheckClient client,
+                                                 final StroomDuration noFetchIntervalAfterFailure) {
+        final DownstreamHostConfig downstreamHostConfig = DownstreamHostConfig.builder()
+                .withEnabled(true)
+                .withHostname("downstream.example.com")
+                .withMaxCachedKeyAge(StroomDuration.ofMinutes(5))
+                .withNoFetchIntervalAfterFailure(noFetchIntervalAfterFailure)
+                .build();
+
+        return new ProxyApiKeyServiceImpl(
+                () -> downstreamHostConfig,
+                new ApiKeyGenerator(),
+                () -> ProxyConfig.builder().build(),
+                MockCommonSecurityContext::new,
+                () -> client,
+                algorithm -> TEST_HASH,
+                new SimplePathCreator(() -> tempDir, () -> tempDir));
+    }
+
 }

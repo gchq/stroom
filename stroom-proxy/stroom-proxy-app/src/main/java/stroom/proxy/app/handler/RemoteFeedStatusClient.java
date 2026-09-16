@@ -98,13 +98,20 @@ public class RemoteFeedStatusClient extends AbstractDownstreamClient implements 
                 final String fullUrl = getFullUrl();
                 LOGGER.errorAndDebug(e, "Error fetching feed status/existence receive using url '{}': {}",
                         fullUrl, LogUtil.exceptionMessage(e));
+                throw new FeedStatusUnavailableException(LogUtil.message(
+                        "Error fetching feed status/existence using url '{}': {}",
+                        fullUrl, LogUtil.exceptionMessage(e)), e);
             }
         } else {
             LOGGER.warn("No url configured for feed status/existence checking.");
         }
         if (feedStatusResponse == null) {
-            // If we can't get a feed status response then we will assume ok.
-            feedStatusResponse = GetFeedStatusResponse.createOKReceiveResponse();
+            // No response is a failure, not an assumed "receive". Failing here does not decide the
+            // outcome: the caller falls back to the last good response and then to the operator's
+            // fallbackReceiveAction, which is the only thing that may decide it - an operator who set
+            // REJECT to fail closed during a downstream outage must get REJECT.
+            throw new FeedStatusUnavailableException(LogUtil.message(
+                    "No feed status/existence response available using url '{}'", url));
         }
         return feedStatusResponse;
     }
@@ -143,5 +150,29 @@ public class RemoteFeedStatusClient extends AbstractDownstreamClient implements 
             }
         }
         return builder.build();
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Thrown when a feed status could not be obtained from the downstream.
+     * <p>
+     * The point of this type is that it is <em>not</em> a decision. It tells
+     * {@link RemoteFeedStatusService} that the check did not happen, so that the caller can apply
+     * the last good response, and failing that the operator's configured
+     * {@code fallbackReceiveAction}. Substituting a permissive answer here instead is what made
+     * that configuration unreachable.
+     * </p>
+     */
+    public static class FeedStatusUnavailableException extends RuntimeException {
+
+        public FeedStatusUnavailableException(final String message) {
+            super(message);
+        }
+
+        public FeedStatusUnavailableException(final String message, final Throwable cause) {
+            super(message, cause);
+        }
     }
 }

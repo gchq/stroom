@@ -23,7 +23,6 @@ import stroom.proxy.app.DownstreamHostConfig;
 import stroom.proxy.app.MockHttpDestination;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
-import stroom.proxy.repo.ProxyServices;
 import stroom.security.api.UserIdentityFactory;
 import stroom.test.common.MockMetrics;
 import stroom.test.common.TestResourceLocks;
@@ -62,6 +61,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ResourceLock(TestResourceLocks.STROOM_APP_PORT_8080)
 @ExtendWith(MockitoExtension.class)
@@ -79,9 +79,6 @@ class TestHttpSender {
     private ClassicHttpResponse mockHttpResponse;
     @Mock
     private HttpEntity mockHttpEntity;
-    @Mock
-    private ProxyServices mockProxyServices;
-
     final MockHttpDestination mockHttpDestination = new MockHttpDestination();
     // Use RegisterExtension instead of @WireMockTest so we can set up the req listener
     @SuppressWarnings("unused")
@@ -95,6 +92,34 @@ class TestHttpSender {
     @BeforeEach
     void setup() {
 //        mockHttpDestination.clear();
+    }
+
+    /**
+     * A group with no {@code Feed} header can never be forwarded: no amount of retrying will give it
+     * one. It must be a non-recoverable {@link ForwardException}, which the HTTP destination turns
+     * into a refusal, rather than a {@link stroom.receive.common.StroomStreamException} that the
+     * forward stage would treat as transient and retry for the full {@code maxRetryAge}.
+     * <p>
+     * The receive path still answers a sender with {@code StroomStreamException}; this is the forward
+     * path, where the only reader of the outcome is the retry decision.
+     * </p>
+     */
+    @Test
+    void testAGroupWithNoFeedIsRejectedAsPermanentRatherThanRetriedForSevenDays() {
+        final HttpSender httpSender = new HttpSender(
+                mockLogStream,
+                MockHttpDestination.createDownstreamHostConfig(),
+                MockHttpDestination.createForwardHttpPostConfig(false),
+                "my-user-agent",
+                mockUserIdentityFactory,
+                mockHttpClient,
+                new MockMetrics());
+
+        assertThatThrownBy(() -> httpSender.send(new AttributeMap(), InputStream.nullInputStream()))
+                .isInstanceOf(ForwardException.class)
+                .satisfies(thrown -> assertThat(((ForwardException) thrown).isRecoverable())
+                        .as("a group with no feed will not grow one, so retrying it is pointless")
+                        .isFalse());
     }
 
     @Test
@@ -154,8 +179,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 mockHttpClient,
-                new MockMetrics(),
-                mockProxyServices);
+                new MockMetrics());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 "FeEd", "MY_FEED",
                 "type", "MY_TYPE",
@@ -194,7 +218,6 @@ class TestHttpSender {
                 .instant(false)
                 .forwardUrl("http://notused:8080/datafeed")
                 .name("Mock Stroom datafeed")
-//                .forwardDelay(StroomDuration.ofMillis(500))
                 .build();
         final DownstreamHostConfig downstreamHostConfig = MockHttpDestination.createDownstreamHostConfig();
         final StroomStatusCode stroomStatusCode = StroomStatusCode.OK;
@@ -242,8 +265,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 mockHttpClient,
-                new MockMetrics(),
-                mockProxyServices);
+                new MockMetrics());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.FEED, "MY_FEED"
         ));
@@ -312,8 +334,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 mockHttpClient,
-                new MockMetrics(),
-                mockProxyServices);
+                new MockMetrics());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.FEED, "MY_FEED"
         ));
@@ -384,8 +405,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 mockHttpClient,
-                new MockMetrics(),
-                mockProxyServices);
+                new MockMetrics());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.FEED, "MY_FEED"
         ));
@@ -431,8 +451,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 mockHttpClient,
-                new MockMetrics(),
-                mockProxyServices);
+                new MockMetrics());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.FEED, "MY_FEED"
         ));
@@ -478,8 +497,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 httpClient,
-                new MockMetrics(),
-                mockProxyServices);
+                new MockMetrics());
 
         assertLivenessCheck(httpSender, true);
     }
@@ -504,8 +522,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 httpClient,
-                new MockMetrics(),
-                mockProxyServices);
+                new MockMetrics());
 
         assertLivenessCheck(httpSender, true);
     }
@@ -530,8 +547,7 @@ class TestHttpSender {
                 "my-user-agent",
                 mockUserIdentityFactory,
                 httpClient,
-                new MockMetrics(),
-                mockProxyServices);
+                new MockMetrics());
 
         assertLivenessCheck(httpSender, false);
     }

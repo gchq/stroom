@@ -85,6 +85,8 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
 
     @NotNull
     @JsonProperty
+    @JsonPropertyDescription("How often the receipt policy rules are fetched from the downstream. Only used " +
+                             "when receive.receiptCheckMode is RECEIPT_POLICY.")
     public StroomDuration getSyncFrequency() {
         return syncFrequency;
     }
@@ -126,7 +128,10 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
     public static final class Builder {
 
         private String receiveDataRulesUrl;
-        private StroomDuration syncFrequency;
+        // Initialised, like the constructors. Uninitialised it was null, and the getter is
+        // annotated @NotNull - so a config built through the builder failed validation on a field the
+        // builder itself had left unset.
+        private StroomDuration syncFrequency = DEFAULT_SYNC_FREQUENCY;
 
         private Builder() {
         }

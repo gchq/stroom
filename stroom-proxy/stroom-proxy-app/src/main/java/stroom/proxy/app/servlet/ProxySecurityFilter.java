@@ -53,8 +53,6 @@ import java.util.regex.Pattern;
 public class ProxySecurityFilter implements Filter {
 
     private static final String IGNORE_URI_REGEX = "ignoreUri";
-    private static final String BEARER = "Bearer ";
-    private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String EVENT_RESOURCE_PATH = ResourcePaths.buildAuthenticatedApiPath(
             EventResource.BASE_RESOURCE_PATH);
 
@@ -142,50 +140,43 @@ public class ProxySecurityFilter implements Filter {
             LOGGER.debug("Bypassed URI, servletName: {}, fullPath: {}, servletPath: {}",
                     servletName, fullPath, servletPath);
             chain.doFilter(request, response);
+        } else if (isApiRequest(servletPath) && isEventResourceRequest(fullPath)) {
+            // Allow all event requests through as security is applied elsewhere.
+            chain.doFilter(request, response);
+
         } else {
-            if (isApiRequest(servletPath)) {
-                if (isEventResourceRequest(fullPath)) {
-                    // Allow all event requests through as security is applied elsewhere.
-                    chain.doFilter(request, response);
-                } else {
-                    // All other rest API resources so authenticate them
-                    final Optional<UserIdentity> optUserIdentity = userIdentityFactory.getApiUserIdentity(request);
+            // Everything that reaches here must be authenticated, whether or not it is under /api.
+            // @Unauthenticated is the one declaration of the trust boundary this application has,
+            // and an endpoint that must be reachable without credentials has to say so with it
+            // rather than get it by default: the proxy runs at various trust positions in different
+            // modes (contracts.md §1.1), so a control that looks vacuous in one deployment is
+            // load-bearing in another.
+            authenticateOrReject(request, response, chain, fullPath, servletPath);
+        }
+    }
 
-                    if (optUserIdentity.isPresent()) {
-                        LOGGER.debug("Authenticated request to fullPath: {}, servletPath: {}, userIdentity: {}",
-                                fullPath, servletPath, optUserIdentity.get());
+    private void authenticateOrReject(final HttpServletRequest request,
+                                      final HttpServletResponse response,
+                                      final FilterChain chain,
+                                      final String fullPath,
+                                      final String servletPath) {
+        final Optional<UserIdentity> optUserIdentity = userIdentityFactory.getApiUserIdentity(request);
 
-                        securityContextProvider.get().asUser(optUserIdentity.get(), () ->
-                                process(request, response, chain));
-                    } else {
-                        LOGGER.debug("Unauthorised request to fullPath: {}, servletPath: {}", fullPath, servletPath);
-                        response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
-                    }
-                }
-            } else {
-                chain.doFilter(request, response);
-            }
+        if (optUserIdentity.isPresent()) {
+            LOGGER.debug("Authenticated request to fullPath: {}, servletPath: {}, userIdentity: {}",
+                    fullPath, servletPath, optUserIdentity.get());
+
+            securityContextProvider.get().asUser(optUserIdentity.get(), () ->
+                    process(request, response, chain));
+        } else {
+            LOGGER.debug("Unauthorised request to fullPath: {}, servletPath: {}", fullPath, servletPath);
+            response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
         }
     }
 
 
     private boolean ignoreUri(final String uri) {
         return pattern != null && pattern.matcher(uri).matches();
-    }
-
-    private String getJWS(final HttpServletRequest request) {
-        final String bearerString = request.getHeader(AUTHORIZATION_HEADER);
-        String jws = null;
-        if (bearerString != null && !bearerString.isEmpty()) {
-            if (bearerString.startsWith(BEARER)) {
-                // This chops out 'Bearer' so we get just the token.
-                jws = bearerString.substring(BEARER.length());
-            } else {
-                jws = bearerString;
-            }
-            LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
-        }
-        return jws;
     }
 
     private boolean shouldBypassAuthentication(final HttpServletRequest servletRequest,

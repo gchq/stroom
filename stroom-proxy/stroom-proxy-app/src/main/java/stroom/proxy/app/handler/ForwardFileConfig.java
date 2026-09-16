@@ -17,6 +17,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DownstreamHostConfig;
+import stroom.proxy.app.pipeline.config.ConsumerStageThreadsConfig;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
@@ -40,20 +41,21 @@ public final class ForwardFileConfig
 
     public static final String PROP_NAME_SUB_PATH_TEMPLATE = "subPathTemplate";
     public static final String PROP_NAME_ATOMIC_MOVE_ENABLED = "atomicMoveEnabled";
-    public static final TemplatingMode DEFAULT_TEMPLATING_MODE = TemplatingMode.REPLACE_UNKNOWN_PARAMS;
-
-    private static final String DEFAULT_SUB_PATH_TEMPLATE = "${year}${month}${day}/${feed}";
     private static final boolean DEFAULT_IS_ATOMIC_MOVE_ENABLED = true;
     private static final LivenessCheckMode DEFAULT_LIVENESS_CHECK_MODE = LivenessCheckMode.READ;
     public static final boolean DEFAULT_IS_ENABLED = true;
     public static final boolean DEFAULT_IS_INSTANT = false;
+    /** Five, as the forward thread count was before the retry tier went. */
+    public static final ConsumerStageThreadsConfig DEFAULT_THREADS = new ConsumerStageThreadsConfig(5);
 
     private final boolean enabled;
     private final boolean instant;
     private final String name;
     private final String path;
     private final PathTemplateConfig subPathTemplate;
-    private final ForwardFileQueueConfig forwardQueueConfig;
+    private final ForwardRetryConfig retry;
+    private final FailureDestinationConfig failureDestination;
+    private final ConsumerStageThreadsConfig threads;
     private final String livenessCheckPath;
     private final LivenessCheckMode livenessCheckMode;
     private final boolean atomicMoveEnabled;
@@ -63,8 +65,10 @@ public final class ForwardFileConfig
         instant = DEFAULT_IS_INSTANT;
         name = null;
         path = null;
-        subPathTemplate = null;
-        forwardQueueConfig = new ForwardFileQueueConfig();
+        subPathTemplate = PathTemplateConfig.DEFAULT;
+        retry = new ForwardRetryConfig();
+        failureDestination = null;
+        threads = DEFAULT_THREADS;
         livenessCheckPath = null;
         livenessCheckMode = DEFAULT_LIVENESS_CHECK_MODE;
         atomicMoveEnabled = DEFAULT_IS_ATOMIC_MOVE_ENABLED;
@@ -72,21 +76,27 @@ public final class ForwardFileConfig
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ForwardFileConfig(@JsonProperty("enabled") final boolean enabled,
-                             @JsonProperty("instant") final boolean instant,
+    public ForwardFileConfig(@JsonProperty("enabled") final Boolean enabled,
+                             @JsonProperty("instant") final Boolean instant,
                              @JsonProperty("name") final String name,
                              @JsonProperty("path") final String path,
                              @JsonProperty(PROP_NAME_SUB_PATH_TEMPLATE) final PathTemplateConfig subPathTemplate,
-                             @JsonProperty("queue") final ForwardFileQueueConfig forwardQueueConfig,
+                             @JsonProperty("retry") final ForwardRetryConfig retry,
+                             @JsonProperty("failureDestination") final FailureDestinationConfig failureDestination,
+                             @JsonProperty("threads") final ConsumerStageThreadsConfig threads,
                              @JsonProperty("livenessCheckPath") final String livenessCheckPath,
                              @JsonProperty("livenessCheckMode") final LivenessCheckMode livenessCheckMode,
                              @JsonProperty(PROP_NAME_ATOMIC_MOVE_ENABLED) final Boolean atomicMoveEnabled) {
-        this.enabled = enabled;
-        this.instant = instant;
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_IS_ENABLED);
+        this.instant = Objects.requireNonNullElse(instant, DEFAULT_IS_INSTANT);
         this.name = name;
         this.path = path;
-        this.subPathTemplate = Objects.requireNonNullElse(subPathTemplate, PathTemplateConfig.DISABLED);
-        this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardFileQueueConfig::new);
+        // The documented default: date and feed sub-directories. A flat tree is subPathTemplate.enabled: false.
+        this.subPathTemplate = Objects.requireNonNullElse(subPathTemplate, PathTemplateConfig.DEFAULT);
+        this.retry = Objects.requireNonNullElseGet(retry, ForwardRetryConfig::new);
+        // Null means the default: <data>/50_forwarding/<name>/03_failure in the proxy's data directory.
+        this.failureDestination = failureDestination;
+        this.threads = Objects.requireNonNullElse(threads, DEFAULT_THREADS);
         this.livenessCheckPath = livenessCheckPath;
         this.livenessCheckMode = Objects.requireNonNullElse(livenessCheckMode, DEFAULT_LIVENESS_CHECK_MODE);
         this.atomicMoveEnabled = Objects.requireNonNullElse(atomicMoveEnabled, DEFAULT_IS_ATOMIC_MOVE_ENABLED);
@@ -98,7 +108,9 @@ public final class ForwardFileConfig
         name = builder.name;
         path = builder.path;
         subPathTemplate = builder.subPathTemplate;
-        forwardQueueConfig = builder.forwardQueueConfig;
+        retry = builder.retry;
+        failureDestination = builder.failureDestination;
+        threads = builder.threads;
         livenessCheckPath = builder.livenessCheckPath;
         livenessCheckMode = builder.livenessCheckMode;
         atomicMoveEnabled = builder.atomicMoveEnabled;
@@ -125,9 +137,10 @@ public final class ForwardFileConfig
     @Override
     @NotNull
     @JsonProperty
-    @JsonPropertyDescription("The unique name of the destination (across all file/http forward destinations. " +
-                             "The name is used in the directories on the file system, so do not change the name " +
-                             "once proxy has processed data. Must be provided.")
+    @JsonPropertyDescription("The unique name of the destination, across file, HTTP and S3 forward destinations. " +
+                             "It names the destination's default give-up directory and, when more than one " +
+                             "destination is enabled, its forward-<name> queue and file store, so do not change " +
+                             "it once the proxy has processed data. Must be provided.")
     public String getName() {
         return name;
     }
@@ -149,8 +162,9 @@ public final class ForwardFileConfig
      * Must be a relative path.
      */
     @NotNull
-    @JsonPropertyDescription("The templated relative sub-path of path. " +
-                             "The default path template is '" + PathTemplateConfig.DATE_AND_FEED_TEMPLATE + "'. " +
+    @JsonPropertyDescription("The templated relative sub-path of path. When omitted, the template '" +
+                             PathTemplateConfig.DATE_AND_FEED_TEMPLATE + "' is used; set enabled: false " +
+                             "within it for a flat tree directly under path. " +
                              "Cannot be an absolute path and must resolve to a descendant of path.")
     @JsonProperty
     public PathTemplateConfig getSubPathTemplate() {
@@ -159,13 +173,27 @@ public final class ForwardFileConfig
 
     @NotNull
     @Override
-    @JsonProperty("queue")
-    @JsonPropertyDescription("Adds multi-threading and retry control to this forwarder. Can be set to null " +
-                             "for a local file forwarder, but should be populated if the file forwarder is " +
-                             "forwarding to a remote file system that may fail. Defaults to null as a " +
-                             "local file forwarder is assumed.")
-    public ForwardFileQueueConfig getForwardQueueConfig() {
-        return forwardQueueConfig;
+    @JsonProperty("retry")
+    @JsonPropertyDescription("How this destination retries a group it could not deliver and when it gives up.")
+    public ForwardRetryConfig getRetry() {
+        return retry;
+    }
+
+    @Override
+    @JsonProperty("failureDestination")
+    @JsonPropertyDescription("Where this destination writes data it has given up on, with an error.log " +
+                             "beside each group. Configured independently of where it forwards to, so a " +
+                             "file forwarder can quarantine to S3. When unset, a '03_failure' directory " +
+                             "under 50_forwarding/<name> in the proxy's data directory is used.")
+    public FailureDestinationConfig getFailureDestination() {
+        return failureDestination;
+    }
+
+    @Override
+    @JsonProperty("threads")
+    @JsonPropertyDescription("How many threads deliver to this destination.")
+    public ConsumerStageThreadsConfig getThreads() {
+        return threads;
     }
 
     @JsonIgnore
@@ -186,7 +214,7 @@ public final class ForwardFileConfig
 
     @JsonProperty
     @JsonPropertyDescription("The path to use for regular liveness checking of this forward destination. " +
-                             "If null, empty or if the 'queue' property is not configured, then no liveness check " +
+                             "If null or empty, no liveness check " +
                              "will be performed and the destination will be " +
                              "assumed to be healthy. If livenessCheckMode is READ, livenessCheckPath can be a " +
                              "directory or a file and stroom-proxy will attempt to check it can read the " +
@@ -208,13 +236,16 @@ public final class ForwardFileConfig
     }
 
     @JsonPropertyDescription(
-            "Stroom-Proxy will attempt to move files onto the forward destination using an atomic move. " +
-            "This ensures that the move does not happen more than once. If an atomic move is not possible, " +
-            "e.g. the destination is a remote file system that does not support an atomic move, then it will " +
-            "fall back to a non-atomic move with the risk of it happening more than once. If you see warnings " +
-            "in the logs or know the file system will not support atomic moves then set this to false. " +
-            "This property only affects moves to the directory defined by 'path' and 'subPathTemplate', not " +
-            "retry/error directories.")
+            "Stroom-Proxy will attempt to move file groups onto the forward destination using an atomic " +
+            "move. This ensures that the move does not happen more than once. If an atomic move is not " +
+            "possible, e.g. the destination is a remote file system that does not support an atomic move, " +
+            "then the file group is copied to a staging directory beside the target and that copy is " +
+            "renamed into place, so publishing it remains atomic. The source is only deleted once that " +
+            "rename has succeeded, so an interruption can duplicate the file group but cannot lose it. " +
+            "If you see warnings in the logs or know the file system will not support atomic moves then " +
+            "set this to false, which skips the atomic attempt and goes straight to the copy. " +
+            "This property only affects moves to the directory defined by 'path' and 'subPathTemplate'; " +
+            "the failure destination always attempts the atomic move first.")
     public boolean isAtomicMoveEnabled() {
         return atomicMoveEnabled;
     }
@@ -233,7 +264,9 @@ public final class ForwardFileConfig
                && Objects.equals(name, that.name)
                && Objects.equals(path, that.path)
                && Objects.equals(subPathTemplate, that.subPathTemplate)
-               && Objects.equals(forwardQueueConfig, that.forwardQueueConfig)
+               && Objects.equals(retry, that.retry)
+               && Objects.equals(failureDestination, that.failureDestination)
+               && Objects.equals(threads, that.threads)
                && Objects.equals(livenessCheckPath, that.livenessCheckPath)
                && livenessCheckMode == that.livenessCheckMode
                && atomicMoveEnabled == that.atomicMoveEnabled;
@@ -246,7 +279,9 @@ public final class ForwardFileConfig
                 name,
                 path,
                 subPathTemplate,
-                forwardQueueConfig,
+                retry,
+                failureDestination,
+                threads,
                 livenessCheckPath,
                 livenessCheckMode,
                 atomicMoveEnabled);
@@ -260,7 +295,9 @@ public final class ForwardFileConfig
                ", name='" + name + '\'' +
                ", path='" + path + '\'' +
                ", subPathTemplate='" + subPathTemplate + '\'' +
-               ", forwardQueueConfig=" + forwardQueueConfig +
+               ", retry=" + retry +
+               ", failureDestination=" + failureDestination +
+               ", threads=" + threads +
                ", livenessCheckPath='" + livenessCheckPath + '\'' +
                ", livenessCheckMode=" + livenessCheckMode +
                ", atomicMoveEnabled=" + atomicMoveEnabled +
@@ -278,7 +315,9 @@ public final class ForwardFileConfig
         builder.name = copy.getName();
         builder.path = copy.getPath();
         builder.subPathTemplate = copy.getSubPathTemplate();
-        builder.forwardQueueConfig = copy.getForwardQueueConfig();
+        builder.retry = copy.getRetry();
+        builder.failureDestination = copy.getFailureDestination();
+        builder.threads = copy.getThreads();
         builder.livenessCheckPath = copy.getLivenessCheckPath();
         builder.livenessCheckMode = copy.getLivenessCheckMode();
         builder.atomicMoveEnabled = copy.isAtomicMoveEnabled();
@@ -299,7 +338,9 @@ public final class ForwardFileConfig
         private String name;
         private String path;
         private PathTemplateConfig subPathTemplate;
-        private ForwardFileQueueConfig forwardQueueConfig;
+        private ForwardRetryConfig retry;
+        private FailureDestinationConfig failureDestination;
+        private ConsumerStageThreadsConfig threads;
 
         private Builder() {
         }
@@ -344,8 +385,18 @@ public final class ForwardFileConfig
             return this;
         }
 
-        public Builder withForwardQueueConfig(final ForwardFileQueueConfig forwardQueueConfig) {
-            this.forwardQueueConfig = forwardQueueConfig;
+        public Builder withRetry(final ForwardRetryConfig retry) {
+            this.retry = retry;
+            return this;
+        }
+
+        public Builder withFailureDestination(final FailureDestinationConfig failureDestination) {
+            this.failureDestination = failureDestination;
+            return this;
+        }
+
+        public Builder withThreads(final ConsumerStageThreadsConfig threads) {
+            this.threads = threads;
             return this;
         }
 

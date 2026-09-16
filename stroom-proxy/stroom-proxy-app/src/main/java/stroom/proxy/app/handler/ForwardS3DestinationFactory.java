@@ -22,5 +22,5 @@ public interface ForwardS3DestinationFactory extends ForwardDestinationFactory<F
         return ForwardS3Config.class;
     }
 
-    ForwardDestination create(ForwardS3Config forwardS3Config);
+    Destination create(ForwardS3Config forwardS3Config);
 }

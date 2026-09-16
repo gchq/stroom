@@ -17,14 +17,17 @@
 package stroom.proxy.app;
 
 import stroom.proxy.app.event.EventStoreConfig;
+import stroom.proxy.app.handler.Durability;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.ForwardS3Config;
 import stroom.proxy.app.handler.ForwarderConfig;
 import stroom.proxy.app.handler.ProxyId;
-import stroom.proxy.app.handler.ThreadConfig;
-import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.app.pipeline.config.PipelineStagesConfig;
+import stroom.proxy.app.pipeline.config.ProxyPipelineConfig;
+import stroom.proxy.app.pipeline.runtime.PipelineStageName;
+import stroom.proxy.app.pipeline.stage.receive.ReceiveStageConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.ReceiptCheckMode;
@@ -36,7 +39,6 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
-import stroom.util.shared.validation.ValidationSeverity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -44,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
-import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 
 import java.util.ArrayList;
@@ -61,7 +63,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("proxyConfig");
 
-    public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
+    public static final String PROP_NAME_DURABILITY = "durability";
     public static final String PROP_NAME_PROXY_ID = "proxyId";
     public static final String PROP_NAME_CONTENT_DIR = "contentDir";
     public static final String PROP_NAME_DOWNSTREAM_HOST = "downstreamHost";
@@ -69,21 +71,22 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_RECEIVE = "receive";
     public static final String PROP_NAME_RECEIPT_POLICY = "receiptPolicy";
     public static final String PROP_NAME_EVENT_STORE = "eventStore";
-    public static final String PROP_NAME_AGGREGATOR = "aggregator";
     public static final String PROP_NAME_DIR_SCANNER = "dirScanner";
     public static final String PROP_NAME_FORWARD_FILE_DESTINATIONS = "forwardFileDestinations";
     public static final String PROP_NAME_FORWARD_HTTP_DESTINATIONS = "forwardHttpDestinations";
     public static final String PROP_NAME_FORWARD_S3_DESTINATIONS = "forwardS3Destinations";
     public static final String PROP_NAME_LOG_STREAM = "logStream";
     public static final String PROP_NAME_FEED_STATUS = "feedStatus";
-    public static final String PROP_NAME_THREADS = "threads";
     public static final String PROP_NAME_SECURITY = "security";
     public static final String PROP_NAME_SQS_CONNECTORS = "sqsConnectors";
+    public static final String PROP_NAME_PIPELINE = "pipeline";
 
-    protected static final boolean DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = true;
+
+    /** R1 requires power-loss durability; the cost of it is configurable, not the guarantee. */
+    public static final Durability DEFAULT_DURABILITY = Durability.FULL;
     protected static final String DEFAULT_CONTENT_DIR = "content";
 
-    private final boolean haltBootOnConfigValidationFailure;
+    private final Durability durability;
     private final String proxyId;
     private final String contentDir;
 
@@ -92,19 +95,18 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final ProxyReceiptPolicyConfig receiptPolicyConfig;
     private final DownstreamHostConfig downstreamHostConfig;
     private final EventStoreConfig eventStoreConfig;
-    private final AggregatorConfig aggregatorConfig;
     private final DirScannerConfig dirScannerConfig;
     private final List<ForwardFileConfig> forwardFileDestinations;
     private final List<ForwardHttpPostConfig> forwardHttpDestinations;
     private final List<ForwardS3Config> forwardS3Destinations;
     private final LogStreamConfig logStreamConfig;
     private final FeedStatusConfig feedStatusConfig;
-    private final ThreadConfig threadConfig;
     private final ProxySecurityConfig proxySecurityConfig;
     private final List<SqsConnectorConfig> sqsConnectors;
+    private final ProxyPipelineConfig pipelineConfig;
 
     public ProxyConfig() {
-        this(DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE,
+        this(DEFAULT_DURABILITY,
                 null,
                 DEFAULT_CONTENT_DIR,
                 new ProxyPathConfig(),
@@ -112,22 +114,21 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                 new ProxyReceiptPolicyConfig(),
                 new DownstreamHostConfig(),
                 new EventStoreConfig(),
-                new AggregatorConfig(),
                 new DirScannerConfig(),
                 new ArrayList<>(),
                 new ArrayList<>(),
                 new ArrayList<>(),
                 new LogStreamConfig(),
                 new FeedStatusConfig(),
-                new ThreadConfig(),
                 new ProxySecurityConfig(),
-                new ArrayList<>());
+                new ArrayList<>(),
+                new ProxyPipelineConfig());
     }
 
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public ProxyConfig(
-            @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final Boolean haltBootOnConfigValidationFailure,
+            @JsonProperty(PROP_NAME_DURABILITY) final Durability durability,
             @JsonProperty(PROP_NAME_PROXY_ID) final String proxyId,
             @JsonProperty(PROP_NAME_CONTENT_DIR) final String contentDir,
             @JsonProperty(PROP_NAME_PATH) final ProxyPathConfig pathConfig,
@@ -135,19 +136,17 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_RECEIPT_POLICY) final ProxyReceiptPolicyConfig receiptPolicyConfig,
             @JsonProperty(PROP_NAME_DOWNSTREAM_HOST) final DownstreamHostConfig downstreamHostConfig,
             @JsonProperty(PROP_NAME_EVENT_STORE) final EventStoreConfig eventStoreConfig,
-            @JsonProperty(PROP_NAME_AGGREGATOR) final AggregatorConfig aggregatorConfig,
             @JsonProperty(PROP_NAME_DIR_SCANNER) final DirScannerConfig dirScannerConfig,
             @JsonProperty(PROP_NAME_FORWARD_FILE_DESTINATIONS) final List<ForwardFileConfig> forwardFileDestinations,
             @JsonProperty(PROP_NAME_FORWARD_HTTP_DESTINATIONS) final List<ForwardHttpPostConfig> forwardHttpDestinations,
             @JsonProperty(PROP_NAME_FORWARD_S3_DESTINATIONS) final List<ForwardS3Config> forwardS3Destinations,
             @JsonProperty(PROP_NAME_LOG_STREAM) final LogStreamConfig logStreamConfig,
             @JsonProperty(PROP_NAME_FEED_STATUS) final FeedStatusConfig feedStatusConfig,
-            @JsonProperty(PROP_NAME_THREADS) final ThreadConfig threadConfig,
             @JsonProperty(PROP_NAME_SECURITY) final ProxySecurityConfig proxySecurityConfig,
-            @JsonProperty(PROP_NAME_SQS_CONNECTORS) final List<SqsConnectorConfig> sqsConnectors) {
+            @JsonProperty(PROP_NAME_SQS_CONNECTORS) final List<SqsConnectorConfig> sqsConnectors,
+            @JsonProperty(PROP_NAME_PIPELINE) final ProxyPipelineConfig pipelineConfig) {
 
-        this.haltBootOnConfigValidationFailure = Objects.requireNonNullElse(
-                haltBootOnConfigValidationFailure, DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE);
+        this.durability = Objects.requireNonNullElse(durability, DEFAULT_DURABILITY);
         this.proxyId = proxyId;
         this.contentDir = NullSafe.nonBlankStringElse(contentDir, DEFAULT_CONTENT_DIR);
         this.pathConfig = Objects.requireNonNullElseGet(pathConfig, ProxyPathConfig::new);
@@ -155,36 +154,38 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.receiptPolicyConfig = Objects.requireNonNullElseGet(receiptPolicyConfig, ProxyReceiptPolicyConfig::new);
         this.downstreamHostConfig = Objects.requireNonNullElseGet(downstreamHostConfig, DownstreamHostConfig::new);
         this.eventStoreConfig = Objects.requireNonNullElseGet(eventStoreConfig, EventStoreConfig::new);
-        this.aggregatorConfig = Objects.requireNonNullElseGet(aggregatorConfig, AggregatorConfig::new);
-        this.dirScannerConfig = dirScannerConfig;
+        this.dirScannerConfig = Objects.requireNonNullElseGet(dirScannerConfig, DirScannerConfig::new);
         this.forwardFileDestinations = NullSafe.list(forwardFileDestinations);
         this.forwardHttpDestinations = NullSafe.list(forwardHttpDestinations);
         this.forwardS3Destinations = NullSafe.list(forwardS3Destinations);
         this.logStreamConfig = Objects.requireNonNullElseGet(logStreamConfig, LogStreamConfig::new);
         this.feedStatusConfig = Objects.requireNonNullElseGet(feedStatusConfig, FeedStatusConfig::new);
-        this.threadConfig = Objects.requireNonNullElseGet(threadConfig, ThreadConfig::new);
         this.proxySecurityConfig = Objects.requireNonNullElseGet(proxySecurityConfig, ProxySecurityConfig::new);
         this.sqsConnectors = NullSafe.list(sqsConnectors);
+        // Explicit or fail: no pipeline block is an unconfigured pipeline for validation to report.
+        this.pipelineConfig = Objects.requireNonNullElseGet(pipelineConfig, ProxyPipelineConfig::unconfigured);
     }
 
-    @AssertTrue(
-            message = "proxyConfig." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. " +
-                      "If there is invalid configuration the system may behave in unexpected ways. This setting is " +
-                      "not advised.",
-            payload = ValidationSeverity.Warning.class)
-    @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE)
-    @JsonPropertyDescription("If true, Stroom-Proxy will halt on start up if any errors are found in the YAML " +
-                             "configuration file. If false, the errors will simply be logged. Setting this to " +
-                             "false is not advised.")
-    public boolean isHaltBootOnConfigValidationFailure() {
-        return haltBootOnConfigValidationFailure;
+    @JsonProperty(PROP_NAME_DURABILITY)
+    @JsonPropertyDescription(
+            "How much the proxy forces to stable storage for queue messages, and for event-store " +
+            "files before a receipt is answered, before treating a step as committed. FULL (the " +
+            "default) forces the message " +
+            "and the directory entry that publishes it - the only mode that does not depend on the " +
+            "filesystem's own ordering. QUEUE_ONLY is the same for queues. FILESYSTEM forces nothing " +
+            "and is correct only where the storage genuinely provides the ordering itself. File " +
+            "stores are not governed by this: each has its own durability, defaulting by store type " +
+            "(pipeline.fileStores.<name>.durability).")
+    public Durability getDurability() {
+        return durability;
     }
 
     @Pattern(regexp = ProxyId.PROXY_ID_REGEX)
     @JsonProperty
-    @JsonPropertyDescription("The unique id for this proxy instance. Must match the pattern '^[A-Za-z0-9-]$' and " +
-                             "be unique within the whole chain of proxies. It is used in the receipt ID that " +
-                             "is generated for each received stream. If not set a Proxy ID will be generated and " +
+    @JsonPropertyDescription("The unique id for this proxy instance: letters, digits and '-' only, and " +
+                             "unique within the whole chain of proxies. It is used in the receipt ID that " +
+                             "is generated for each received stream, and as the producer id on every " +
+                             "pipeline message this node publishes. If not set a Proxy ID will be generated " +
                              "and stored in the file 'proxy-id.txt'.")
     public String getProxyId() {
         return proxyId;
@@ -192,6 +193,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     @RequiresProxyRestart
     @JsonProperty
+    @JsonPropertyDescription("The directory the receipt policy rules, dictionaries and verified API keys " +
+                             "fetched from the downstream are persisted in, so that they survive a restart " +
+                             "and an unreachable downstream. Relative to path.home unless absolute.")
     public String getContentDir() {
         return contentDir;
     }
@@ -221,28 +225,32 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return eventStoreConfig;
     }
 
-    @JsonProperty(PROP_NAME_AGGREGATOR)
-    public AggregatorConfig getAggregatorConfig() {
-        return aggregatorConfig;
-    }
-
     @JsonProperty(PROP_NAME_DIR_SCANNER)
     public DirScannerConfig getDirScannerConfig() {
         return dirScannerConfig;
     }
 
+    // @Valid is load-bearing on the config lists in this class. Bean validation does
+    // not descend into a collection without it, and the proxy's recursive config
+    // walker explicitly skips collections (PropertyUtil.walkObjectTree). Without it
+    // every constraint inside ForwardFileConfig, ForwardHttpPostConfig and
+    // SqsConnectorConfig is silently unenforced, and a destination missing a required
+    // field starts cleanly then fails later at runtime.
+    @Valid
     @RequiresProxyRestart
     @JsonProperty(PROP_NAME_FORWARD_FILE_DESTINATIONS)
     public List<ForwardFileConfig> getForwardFileDestinations() {
         return forwardFileDestinations;
     }
 
+    @Valid
     @RequiresProxyRestart
     @JsonProperty(PROP_NAME_FORWARD_HTTP_DESTINATIONS)
     public List<ForwardHttpPostConfig> getForwardHttpDestinations() {
         return forwardHttpDestinations;
     }
 
+    @Valid
     @RequiresProxyRestart
     @JsonProperty(PROP_NAME_FORWARD_S3_DESTINATIONS)
     public List<ForwardS3Config> getForwardS3Destinations() {
@@ -257,6 +265,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                         forwardS3Destinations)
                 .filter(Objects::nonNull)
                 .flatMap(NullSafe::stream)
+                .filter(Objects::nonNull) // an empty list entry in YAML is a null item
                 .collect(Collectors.toList());
     }
 
@@ -270,21 +279,23 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return feedStatusConfig;
     }
 
-    @JsonProperty(PROP_NAME_THREADS)
-    public ThreadConfig getThreadConfig() {
-        return threadConfig;
-    }
 
     @JsonProperty(PROP_NAME_SECURITY)
     public ProxySecurityConfig getProxySecurityConfig() {
         return proxySecurityConfig;
     }
 
-    @JsonPropertyDescription("Configurations for AWS SQS connectors used for the" +
+    @Valid
+    @JsonPropertyDescription("Configurations for AWS SQS connectors used for the " +
                              "EventStore (not S3 event notifications)")
     @JsonProperty
     public List<SqsConnectorConfig> getSqsConnectors() {
         return sqsConnectors;
+    }
+
+    @JsonProperty(PROP_NAME_PIPELINE)
+    public ProxyPipelineConfig getPipelineConfig() {
+        return pipelineConfig;
     }
 
     @JsonIgnore
@@ -358,47 +369,91 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             "downstreamHost.enabled must be set to true if receiptCheckMode is RECEIPT_POLICY " +
             "or FEED_STATUS.")
     public boolean isDownstreamValid() {
+        return !isDownstreamRequired()
+               || NullSafe.getOrElse(
+                getDownstreamHostConfig(),
+                DownstreamHostConfig::isEnabled,
+                false);
+    }
+
+    /**
+     * A node that does not receive must not be fed. The directory scanner and the SQS connectors
+     * hand everything they find to the receiver, and on such a node the receiver refuses; the
+     * result would be every scanned zip in the failure directory and every SQS message quarantined.
+     * Instant forwarding receives without the stage, so it is exempt.
+     */
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message =
+            "pipeline.stages.receive.enabled is false but dirScanner is enabled or an sqsConnector is " +
+            "configured. A node that does not receive must not scan a directory or poll SQS: disable " +
+            "them on this node, or enable the receive stage.")
+    public boolean isReceiveStageEnabledForSources() {
+        final boolean instant = streamAllEnabledForwarders().anyMatch(ForwarderConfig::isInstant);
+        if (instant) {
+            return true;
+        }
+        final PipelineStagesConfig stages = pipelineConfig == null
+                ? null
+                : pipelineConfig.getStages();
+        // An unstated stage is the pipeline validator's to report, not this rule's.
+        final ReceiveStageConfig receive = stages != null
+                                           && stages.getConfiguredStages().contains(PipelineStageName.RECEIVE)
+                ? stages.getReceive()
+                : null;
+        final boolean receiveDisabled = receive != null && receive.isEnabledSpecified() && !receive.isEnabled();
+        if (!receiveDisabled) {
+            return true;
+        }
+        final boolean scanner = dirScannerConfig != null && dirScannerConfig.isEnabled();
+        final boolean sqs = sqsConnectors != null && !sqsConnectors.isEmpty();
+        return !scanner && !sqs;
+    }
+
+    /**
+     * {@link #isDownstreamValid()} asserts only that the downstream is <em>enabled</em>, never that
+     * it can be reached, and that is not enough to make the receipt check a check.
+     * {@link DownstreamHostConfig}'s no-arg constructor gives {@code enabled = true} with a
+     * {@code null} hostname, and {@link ReceiptCheckMode#getDefault()} is {@code FEED_STATUS}: a
+     * proxy configured to check receipts but given no hostname would build a hostless URI, fail
+     * every call, and admit every feed silently. A security control failing open is a hard
+     * validation failure, not a warning.
+     */
+    @JsonIgnore
+    @SuppressWarnings("unused")
+    @ValidationMethod(message =
+            "downstreamHost.hostname must be set if receiptCheckMode is RECEIPT_POLICY or " +
+            "FEED_STATUS, else the receipt check cannot reach the downstream and would admit " +
+            "all data.")
+    public boolean isDownstreamHostnameValid() {
+        return !isDownstreamRequired()
+               || NullSafe.isNonBlankString(NullSafe.get(
+                getDownstreamHostConfig(),
+                DownstreamHostConfig::getHostname));
+    }
+
+    /**
+     * @return True if the receipt check mode means data admission depends on the downstream.
+     */
+    @JsonIgnore
+    private boolean isDownstreamRequired() {
         final ReceiptCheckMode receiptCheckMode = NullSafe.get(
                 getReceiveDataConfig(),
                 ReceiveDataConfig::getReceiptCheckMode);
-        if (receiptCheckMode == ReceiptCheckMode.RECEIPT_POLICY
-            || receiptCheckMode == ReceiptCheckMode.FEED_STATUS) {
-            return NullSafe.getOrElse(
-                    getDownstreamHostConfig(),
-                    DownstreamHostConfig::isEnabled,
-                    false);
-        } else {
-            return true;
-        }
+        return receiptCheckMode == ReceiptCheckMode.RECEIPT_POLICY
+               || receiptCheckMode == ReceiptCheckMode.FEED_STATUS;
     }
-
-//    @JsonIgnore
-//    @SuppressWarnings("unused")
-//    @ValidationMethod(message = "Only one forwarder is permitted if any forwarder has instant=true.")
-//    public boolean isForwarderCountValid() {
-//        final long allEnabledForwardersCount = streamAllForwarders()
-//                .filter(ForwarderConfig::isEnabled)
-//                .count();
-//        return allEnabledForwardersCount >= 1;
-//    }
 
     /**
      * @return A {@link Stream} of all forward destination config objects regardless of enabled
      * state.
      */
     public Stream<ForwarderConfig> streamAllForwarders() {
-        return Stream.of(
-                        getForwardFileDestinations(),
-                        getForwardHttpDestinations(),
-                        getForwardS3Destinations())
-                .filter(NullSafe::hasItems)
-                .flatMap(List::stream)
-                .filter(Objects::nonNull) // null item
-                .map(config -> (ForwarderConfig) config);
+        return getAllForwardDestinations().stream();
     }
 
     /**
-     * @return A {@link Stream} of all enabed forward destination config objects.
+     * @return A {@link Stream} of all enabled forward destination config objects.
      */
     public Stream<ForwarderConfig> streamAllEnabledForwarders() {
         return streamAllForwarders()
@@ -422,7 +477,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     public static class Builder {
 
-        private Boolean haltBootOnConfigValidationFailure = DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE;
+        private Durability durability = DEFAULT_DURABILITY;
         private String proxyId;
         private String contentDir = DEFAULT_CONTENT_DIR;
 
@@ -431,23 +486,22 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private ProxyReceiptPolicyConfig receiptPolicyConfig = new ProxyReceiptPolicyConfig();
         private DownstreamHostConfig downstreamHostConfig;
         private EventStoreConfig eventStoreConfig = new EventStoreConfig();
-        private AggregatorConfig aggregatorConfig = new AggregatorConfig();
         private DirScannerConfig dirScannerConfig = new DirScannerConfig();
         private final List<ForwardFileConfig> forwardFileDestinations = new ArrayList<>();
         private final List<ForwardHttpPostConfig> forwardHttpDestinations = new ArrayList<>();
         private final List<ForwardS3Config> forwardS3Destinations = new ArrayList<>();
         private LogStreamConfig logStreamConfig = new LogStreamConfig();
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
-        private ThreadConfig threadConfig = new ThreadConfig();
         private ProxySecurityConfig proxySecurityConfig = new ProxySecurityConfig();
         private final List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
+        private ProxyPipelineConfig pipelineConfig = new ProxyPipelineConfig();
 
         private Builder() {
 
         }
 
-        public Builder haltBootOnConfigValidationFailure(final Boolean haltBootOnConfigValidationFailure) {
-            this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
+        public Builder durability(final Durability durability) {
+            this.durability = durability;
             return this;
         }
 
@@ -483,11 +537,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         public Builder eventStoreConfig(final EventStoreConfig eventStoreConfig) {
             this.eventStoreConfig = eventStoreConfig;
-            return this;
-        }
-
-        public Builder aggregatorConfig(final AggregatorConfig aggregatorConfig) {
-            this.aggregatorConfig = aggregatorConfig;
             return this;
         }
 
@@ -545,10 +594,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
-        public Builder threadConfig(final ThreadConfig threadConfig) {
-            this.threadConfig = threadConfig;
-            return this;
-        }
 
         public Builder securityConfig(final ProxySecurityConfig proxySecurityConfig) {
             this.proxySecurityConfig = proxySecurityConfig;
@@ -560,9 +605,14 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
+        public Builder pipelineConfig(final ProxyPipelineConfig pipelineConfig) {
+            this.pipelineConfig = pipelineConfig;
+            return this;
+        }
+
         public ProxyConfig build() {
             return new ProxyConfig(
-                    haltBootOnConfigValidationFailure,
+                    durability,
                     proxyId,
                     contentDir,
                     pathConfig,
@@ -570,16 +620,15 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     receiptPolicyConfig,
                     downstreamHostConfig,
                     eventStoreConfig,
-                    aggregatorConfig,
                     dirScannerConfig,
                     forwardFileDestinations,
                     forwardHttpDestinations,
                     forwardS3Destinations,
                     logStreamConfig,
                     feedStatusConfig,
-                    threadConfig,
                     proxySecurityConfig,
-                    sqsConnectors);
+                    sqsConnectors,
+                    pipelineConfig);
         }
     }
 }
