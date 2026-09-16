@@ -384,7 +384,7 @@ public class DirUtil {
         return dirId;
     }
 
-        static Long getIdFromIncompleteBranch(final Path rootDir,
+    static Long getIdFromIncompleteBranch(final Path rootDir,
                                           final Path path,
                                           final Mode mode) {
         final Path relPath = rootDir.relativize(path);
@@ -723,7 +723,8 @@ public class DirUtil {
         } catch (final IOException | RuntimeException e) {
             if (!FileUtil.deleteDir(staging)) {
                 LOGGER.warn(() -> LogUtil.message(
-                        "moveDirAcrossFileStores() - failed to clean up staging dir '{}' after a failed move", staging));
+                        "moveDirAcrossFileStores() - failed to clean up staging dir '{}' after a failed move",
+                        staging));
             }
             throw e;
         }
@@ -731,8 +732,9 @@ public class DirUtil {
         // The target is now in place, so losing the source loses nothing.
         if (!FileUtil.deleteDir(source)) {
             LOGGER.warn(() -> LogUtil.message(
-                    "moveDirAcrossFileStores() - '{}' was copied to '{}' but the source could not be deleted. The data is "
-                    + "safe; the source may be picked up again and duplicated downstream.", source, target));
+                    "moveDirAcrossFileStores() - '{}' was copied to '{}' but the source could not be deleted. "
+                    + "The data is safe; the source may be picked up again and duplicated downstream.",
+                    source, target));
         }
     }
 

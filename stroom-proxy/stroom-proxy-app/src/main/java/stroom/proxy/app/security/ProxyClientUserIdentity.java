@@ -18,7 +18,6 @@ package stroom.proxy.app.security;
 
 import stroom.security.api.UserIdentity;
 
-
 import java.util.Objects;
 import java.util.Optional;
 
