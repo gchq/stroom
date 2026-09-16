@@ -307,6 +307,20 @@ class TestZstdSegmentOutputStream {
         assertThat(ZstdSeekTable.parse(compressedBuffer).orElseThrow().getFrameCount()).isEqualTo(iterations);
     }
 
+    /**
+     * A zero-length write is no write: on its own it produces nothing, not even a seek table.
+     */
+    @Test
+    void test_zeroLengthWriteIsNoWrite() throws IOException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
+                byteArrayOutputStream, null, new HeapBufferPool(ByteBufferPoolConfig::new), COMPRESSION_LEVEL)) {
+            segmentOutputStream.write(new byte[0]);
+            segmentOutputStream.write(new byte[10], 3, 0);
+        }
+        assertThat(byteArrayOutputStream.size()).isZero();
+    }
+
     @Test
     void test_allEmptySegments() throws IOException {
         final int iterations = 10;

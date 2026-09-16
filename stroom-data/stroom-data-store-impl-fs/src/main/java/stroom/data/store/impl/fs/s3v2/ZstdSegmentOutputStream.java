@@ -279,15 +279,14 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
 
     @Override
     public void write(final byte @NonNull [] b, final int off, final int len) throws IOException {
-        hasWrites = true;
-        if (len == 0) {
-            // Nothing to compress, so no stream is created: a segment that only ever sees
-            // zero-length writes has no frame, the same as one written to not at all.
-            return;
+        // A zero-length write is no write: no stream is created for it, no frame results from it,
+        // and on its own it does not make this a stream with anything in it.
+        if (len > 0) {
+            hasWrites = true;
+            zstdOutputStream = Objects.requireNonNullElseGet(zstdOutputStream, this::createZstdOutputStream);
+            zstdOutputStream.write(b, off, len);
+            position += len;
         }
-        zstdOutputStream = Objects.requireNonNullElseGet(zstdOutputStream, this::createZstdOutputStream);
-        zstdOutputStream.write(b, off, len);
-        position += len;
     }
 
     @Override
