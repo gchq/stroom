@@ -18,6 +18,7 @@ package stroom.proxy.feed.remote;
 
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.remote.RemoteResponse;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -39,13 +40,13 @@ public class GetFeedStatusResponse extends RemoteResponse {
     private StroomStatusCode stroomStatusCode;
 
     /**
-     * For frameworks that require a no-arg constructor. It deliberately does <strong>not</strong>
-     * default the status: this constructor used to default to {@link FeedStatus#Receive} while
-     * the {@link JsonCreator} one below - the only route by which a status-less object is actually
-     * built - left it null, so the class had two contradictory answers to "what does absent mean?"
-     * and no caller of this one. Absent is now not an answer at all; see the creator.
+     * For {@code TestJsonSerialisation}, which round-trips every JSON type through its creator and
+     * needs a valid instance to start from; the creator refuses a null status, so it cannot supply one.
+     * Not a default: a response with no status is not an answer, and nothing else builds one.
      */
-    public GetFeedStatusResponse() {
+    @SerialisationTestConstructor
+    private GetFeedStatusResponse() {
+        this(FeedStatus.Receive, null, null);
     }
 
     private GetFeedStatusResponse(final FeedStatus status,
