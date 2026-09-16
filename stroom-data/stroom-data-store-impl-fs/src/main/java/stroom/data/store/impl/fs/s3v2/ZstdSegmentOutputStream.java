@@ -24,7 +24,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import com.github.luben.zstd.ZstdDictCompress;
-import com.github.luben.zstd.ZstdOutputStream;
+import com.github.luben.zstd.ZstdOutputStreamNoFinalizer;
 import com.google.common.io.CountingOutputStream;
 import org.jspecify.annotations.NonNull;
 
@@ -112,9 +112,9 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
     private final CountingOutputStream compressedBytesCountingOutputStream;
     private final List<FrameInfo> frameInfoList = new ArrayList<>();
     private final HeapBufferPool heapBufferPool;
-    private final Supplier<ZstdOutputStream> zstdOutputStreamFactory;
+    private final Supplier<ZstdOutputStreamNoFinalizer> zstdOutputStreamFactory;
 
-    private ZstdOutputStream zstdOutputStream = null;
+    private ZstdOutputStreamNoFinalizer zstdOutputStream = null;
 
     private int currentSegmentIndex = 0;
     // Tracks the un-compressed bytes written to the stream. This is the index that will
@@ -143,7 +143,7 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
         this.heapBufferPool = heapBufferPool;
         this.dataOutputStream = dataOutputStream;
         // Wrap the delegate dataOutputStream in a IgnoreCloseOutputStream so that we can
-        // close the ZstdOutputStream without closing the underlying output streams.
+        // close the ZstdOutputStreamNoFinalizer without closing the underlying output streams.
         // compressedBytesCountingOutputStream tracks the count of compressed bytes written.
         this.compressedBytesCountingOutputStream = new CountingOutputStream(
                 new IgnoreCloseOutputStream(dataOutputStream));
@@ -156,11 +156,11 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
         this.zstdOutputStreamFactory = createZstdOutputStreamFactory();
     }
 
-    private Supplier<ZstdOutputStream> createZstdOutputStreamFactory() {
+    private Supplier<ZstdOutputStreamNoFinalizer> createZstdOutputStreamFactory() {
         if (heapBufferPool != null) {
             if (zstdDictionary != null) {
                 return ThrowingSupplier.unchecked(() -> {
-                    final ZstdOutputStream zstdOutputStream = new ZstdOutputStream(
+                    final ZstdOutputStreamNoFinalizer zstdOutputStream = new ZstdOutputStreamNoFinalizer(
                             compressedBytesCountingOutputStream,
                             heapBufferPool);
                     zstdOutputStream.setDict(zstdDictCompress);
@@ -168,7 +168,7 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
                 });
             } else {
                 return ThrowingSupplier.unchecked(() -> {
-                    final ZstdOutputStream zstdOutputStream = new ZstdOutputStream(
+                    final ZstdOutputStreamNoFinalizer zstdOutputStream = new ZstdOutputStreamNoFinalizer(
                             compressedBytesCountingOutputStream,
                             heapBufferPool);
                     zstdOutputStream.setLevel(compressionLevel);
@@ -178,13 +178,15 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
         } else {
             if (zstdDictionary != null) {
                 return ThrowingSupplier.unchecked(() -> {
-                    final ZstdOutputStream zstdOutputStream = new ZstdOutputStream(compressedBytesCountingOutputStream);
+                    final ZstdOutputStreamNoFinalizer zstdOutputStream =
+                            new ZstdOutputStreamNoFinalizer(compressedBytesCountingOutputStream);
                     zstdOutputStream.setDict(zstdDictCompress);
                     return zstdOutputStream;
                 });
             } else {
                 return ThrowingSupplier.unchecked(() -> {
-                    final ZstdOutputStream zstdOutputStream = new ZstdOutputStream(compressedBytesCountingOutputStream);
+                    final ZstdOutputStreamNoFinalizer zstdOutputStream =
+                            new ZstdOutputStreamNoFinalizer(compressedBytesCountingOutputStream);
                     zstdOutputStream.setLevel(compressionLevel);
                     return zstdOutputStream;
                 });
@@ -198,9 +200,9 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
         }
     }
 
-    private ZstdOutputStream createZstdOutputStream() {
+    private ZstdOutputStreamNoFinalizer createZstdOutputStream() {
         try {
-            final ZstdOutputStream zstdOutputStream = zstdOutputStreamFactory.get();
+            final ZstdOutputStreamNoFinalizer zstdOutputStream = zstdOutputStreamFactory.get();
             // We may not have a dict if this is the first stream and thus have not had
             // a chance to create a dict from training data yet.
             if (zstdDictCompress != null) {
@@ -221,7 +223,12 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
     public void addSegment() throws IOException {
         hasWrites = true;
         closeSegment();
-        zstdOutputStream = createZstdOutputStream();
+        // The next segment's stream is created by the first write to it, not here: one created for
+        // a segment that is then never written to would be dropped unclosed by the next
+        // closeSegment(), leaking its native context. (With the finalizing ZstdOutputStream it was
+        // worse - the finalizer closed it later and wrote an empty frame into the delegate at an
+        // arbitrary point, corrupting the stream and its seek table - which is why this class uses
+        // ZstdOutputStreamNoFinalizer and never leaves a stream unclosed.)
     }
 
     @Override
@@ -232,22 +239,20 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
 
 
     private void closeSegment() throws IOException {
-        // Ensure all uncompressed bytes are compressed and the frame closed
+        // Ensure all uncompressed bytes are compressed and the frame closed. A segment nothing was
+        // written to has no ZstdOutputStreamNoFinalizer, so no Zstd frame is written for it - not even the
+        // 9-byte header of an empty frame. This does mean a mismatch between the frames that Zstd
+        // knows about and the frames described in the seek table, but if we have a lot of empty
+        // segments it means we don't waste space. It does however mean that we must use our seek
+        // table as the source of truth.
         if (zstdOutputStream != null) {
-            if (position == lastBoundary) {
-                // No data has been written, so don't flush the zstdOutputStream else we will get an
-                // empty Zstd frame with just a header (9 bytes).
-                // This does mean a mismatch between the frames that Zstd knows about and the frames described
-                // in the seek table, but if we have a lot of empty segments it means we don't waste space.
-                // It does however mean that we must use our seek table as the source of truth.
-                LOGGER.debug("No data written, won't write Zstd frame. position: {}, currentSegmentIndex: {}",
-                        position, currentSegmentIndex);
-            } else {
-                zstdOutputStream.flush();
-                zstdOutputStream.close(); // This won't close its delegate, compressedBytesCountingOutputStream
-                compressedBytesCountingOutputStream.flush();
-            }
+            zstdOutputStream.flush();
+            zstdOutputStream.close(); // This won't close its delegate, compressedBytesCountingOutputStream
+            compressedBytesCountingOutputStream.flush();
             zstdOutputStream = null;
+        } else {
+            LOGGER.debug("No data written, won't write Zstd frame. position: {}, currentSegmentIndex: {}",
+                    position, currentSegmentIndex);
         }
 
         final long segmentUncompressedSize = position - lastBoundary;
@@ -275,6 +280,11 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
     @Override
     public void write(final byte @NonNull [] b, final int off, final int len) throws IOException {
         hasWrites = true;
+        if (len == 0) {
+            // Nothing to compress, so no stream is created: a segment that only ever sees
+            // zero-length writes has no frame, the same as one written to not at all.
+            return;
+        }
         zstdOutputStream = Objects.requireNonNullElseGet(zstdOutputStream, this::createZstdOutputStream);
         zstdOutputStream.write(b, off, len);
         position += len;
@@ -282,10 +292,7 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
 
     @Override
     public void write(final byte @NonNull [] b) throws IOException {
-        hasWrites = true;
-        zstdOutputStream = Objects.requireNonNullElseGet(zstdOutputStream, this::createZstdOutputStream);
-        zstdOutputStream.write(b);
-        position += b.length;
+        write(b, 0, b.length);
     }
 
     @Override

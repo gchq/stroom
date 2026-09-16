@@ -5958,6 +5958,36 @@
         "tags" : [ "Data Volume Groups" ]
       }
     },
+    "/fsVolume/volumeGroup/v2/findExtended" : {
+      "post" : {
+        "operationId" : "findExtendedFsVolumeGroups",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExpressionCriteria"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageFsVolumeGroupRow"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Finds data volume groups matching request with extended row data",
+        "tags" : [ "Data Volume Groups" ]
+      }
+    },
     "/fsVolume/volumeGroup/v2/{id}" : {
       "delete" : {
         "operationId" : "deleteFsVolumeGroup",
@@ -11051,6 +11081,32 @@
         "tags" : [ "S3" ]
       }
     },
+    "/s3event/v1/notify" : {
+      "post" : {
+        "operationId" : "notify",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/S3EventNotificationRequest"
+              }
+            }
+          },
+          "description" : "S3EventRequest",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Submit a notification of the presence of a data file on S3",
+        "tags" : [ "S3 Event Resource" ]
+      }
+    },
     "/scheduledTime/v1" : {
       "post" : {
         "operationId" : "getScheduledTimes",
@@ -12651,62 +12707,6 @@
         "tags" : [ "Token Revocation" ]
       }
     },
-    "/traces/v1/getTrace" : {
-      "post" : {
-        "operationId" : "tracesGetTrace",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/GetTraceRequest"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/Trace"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Gets trace from a remote Plan B store.",
-        "tags" : [ "Traces Query" ]
-      }
-    },
-    "/traces/v1/getTraces" : {
-      "post" : {
-        "operationId" : "tracesGetTraces",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/FindTraceCriteria"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/TracesResultPage"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Gets traces from a remote Plan B store.",
-        "tags" : [ "Traces Query" ]
-      }
-    },
     "/traces/v2/findTrace" : {
       "post" : {
         "operationId" : "findTrace",
@@ -12764,6 +12764,159 @@
           }
         },
         "summary" : "Find traces",
+        "tags" : [ "Traces" ]
+      }
+    },
+    "/traces/v2/findTracesWithHistogram" : {
+      "post" : {
+        "operationId" : "findTracesWithHistogram",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindTracesWithHistogramCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TracesResultPage"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find traces and a histogram of the same window from one read",
+        "tags" : [ "Traces" ]
+      }
+    },
+    "/traces/v2/getSpans" : {
+      "post" : {
+        "operationId" : "getSpans",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GetSpansRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TraceSpanPage"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get a tree-order page of a trace's spans",
+        "tags" : [ "Traces" ]
+      }
+    },
+    "/traces/v2/getTraceOverview" : {
+      "post" : {
+        "operationId" : "getTraceOverview",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GetTraceOverviewRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TraceOverview"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get a downsampled overview of a large trace",
+        "tags" : [ "Traces" ]
+      }
+    },
+    "/tracesDoc/v1/{uuid}" : {
+      "get" : {
+        "operationId" : "fetchTracesDoc",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TracesDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch a traces doc by its UUID",
+        "tags" : [ "Traces" ]
+      },
+      "put" : {
+        "operationId" : "updateTracesDoc",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TracesDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TracesDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update a traces doc",
         "tags" : [ "Traces" ]
       }
     },
@@ -14241,17 +14394,8 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "overwrite" : {
-            "type" : "boolean"
-          },
           "retention" : {
             "$ref" : "#/components/schemas/RetentionSettings"
-          },
-          "snapshotSettings" : {
-            "$ref" : "#/components/schemas/SnapshotSettings"
-          },
-          "synchroniseMerge" : {
-            "type" : "boolean"
           },
           "type" : {
             "type" : "string"
@@ -18179,6 +18323,9 @@
       "DurationSetting" : {
         "type" : "object",
         "properties" : {
+          "checkInterval" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
           "duration" : {
             "$ref" : "#/components/schemas/SimpleDuration"
           },
@@ -20202,6 +20349,21 @@
           },
           "temporalOrderingTolerance" : {
             "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "timeRange" : {
+            "$ref" : "#/components/schemas/TimeRange"
+          }
+        }
+      },
+      "FindTracesWithHistogramCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "bucketCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "criteria" : {
+            "$ref" : "#/components/schemas/FindTraceCriteria"
           }
         }
       },
@@ -20389,16 +20551,15 @@
             "type" : "integer",
             "format" : "int32"
           },
-          "volumeGroupId" : {
-            "type" : "integer",
-            "format" : "int32"
+          "volumeGroup" : {
+            "$ref" : "#/components/schemas/FsVolumeGroup"
           },
           "volumeState" : {
             "$ref" : "#/components/schemas/FsVolumeState"
           },
           "volumeType" : {
             "type" : "string",
-            "enum" : [ "STANDARD", "S3" ]
+            "enum" : [ "STANDARD", "S3_V1", "S3_V2", "S3_V1_READ_ONLY" ]
           }
         }
       },
@@ -20429,6 +20590,25 @@
           "version" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "FsVolumeGroupRow" : {
+        "type" : "object",
+        "properties" : {
+          "group" : {
+            "$ref" : "#/components/schemas/FsVolumeGroup"
+          },
+          "volumeCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "volumeTypes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "STANDARD", "S3_V1", "S3_V2", "S3_V1_READ_ONLY" ]
+            }
           }
         }
       },
@@ -20609,11 +20789,67 @@
           }
         }
       },
+      "GetSpansRequest" : {
+        "type" : "object",
+        "properties" : {
+          "cursor" : {
+            "type" : "string"
+          },
+          "dataSourceRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "groupSelection" : {
+            "$ref" : "#/components/schemas/GroupSelection"
+          },
+          "limit" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "offset" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "startTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "GetTraceOverviewRequest" : {
+        "type" : "object",
+        "properties" : {
+          "dataSourceRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "fromMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "maxBars" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "toMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        }
+      },
       "GetTraceRequest" : {
         "type" : "object",
         "properties" : {
           "dataSourceRef" : {
             "$ref" : "#/components/schemas/DocRef"
+          },
+          "startTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
           },
           "temporalOrderingTolerance" : {
             "$ref" : "#/components/schemas/SimpleDuration"
@@ -20874,6 +21110,15 @@
             "keySchema" : {
               "$ref" : "#/components/schemas/HistogramKeySchema"
             },
+            "overwrite" : {
+              "type" : "boolean"
+            },
+            "snapshotSettings" : {
+              "$ref" : "#/components/schemas/SnapshotSettings"
+            },
+            "synchroniseMerge" : {
+              "type" : "boolean"
+            },
             "valueSchema" : {
               "$ref" : "#/components/schemas/HistogramValueSchema"
             }
@@ -20886,6 +21131,17 @@
           "valueType" : {
             "type" : "string",
             "enum" : [ "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT" ]
+          }
+        }
+      },
+      "HoldingAreaSettings" : {
+        "type" : "object",
+        "properties" : {
+          "compactionFrequency" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "maxWaitForData" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
           }
         }
       },
@@ -22161,6 +22417,9 @@
           "processorUuid" : {
             "type" : "string"
           },
+          "readOnly" : {
+            "type" : "boolean"
+          },
           "status" : {
             "type" : "string",
             "enum" : [ "UNLOCKED", "LOCKED", "DELETED" ]
@@ -22220,6 +22479,15 @@
           "properties" : {
             "keySchema" : {
               "$ref" : "#/components/schemas/MetricKeySchema"
+            },
+            "overwrite" : {
+              "type" : "boolean"
+            },
+            "snapshotSettings" : {
+              "$ref" : "#/components/schemas/SnapshotSettings"
+            },
+            "synchroniseMerge" : {
+              "type" : "boolean"
             },
             "valueSchema" : {
               "$ref" : "#/components/schemas/MetricValueSchema"
@@ -24577,6 +24845,15 @@
             "keySchema" : {
               "$ref" : "#/components/schemas/RangeKeySchema"
             },
+            "overwrite" : {
+              "type" : "boolean"
+            },
+            "snapshotSettings" : {
+              "$ref" : "#/components/schemas/SnapshotSettings"
+            },
+            "synchroniseMerge" : {
+              "type" : "boolean"
+            },
             "valueSchema" : {
               "$ref" : "#/components/schemas/StateValueSchema"
             }
@@ -25411,6 +25688,21 @@
           }
         }
       },
+      "ResultPageFsVolumeGroupRow" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FsVolumeGroupRow"
+            }
+          }
+        }
+      },
       "ResultPageHashedApiKey" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -25805,6 +26097,9 @@
       "RetentionSettings" : {
         "type" : "object",
         "properties" : {
+          "checkInterval" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
           "duration" : {
             "$ref" : "#/components/schemas/SimpleDuration"
           },
@@ -25950,6 +26245,37 @@
             "type" : "string"
           },
           "version" : {
+            "type" : "string"
+          }
+        }
+      },
+      "S3EventNotificationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "entityTag" : {
+            "type" : "string"
+          },
+          "metaData" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "s3Location" : {
+            "$ref" : "#/components/schemas/S3Location"
+          }
+        }
+      },
+      "S3Location" : {
+        "type" : "object",
+        "properties" : {
+          "bucketName" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "regionName" : {
             "type" : "string"
           }
         }
@@ -26391,6 +26717,10 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "readOnlyCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "statusCount" : {
             "type" : "integer",
             "format" : "int64"
@@ -26532,6 +26862,15 @@
             },
             "keySchema" : {
               "$ref" : "#/components/schemas/SessionKeySchema"
+            },
+            "overwrite" : {
+              "type" : "boolean"
+            },
+            "snapshotSettings" : {
+              "$ref" : "#/components/schemas/SnapshotSettings"
+            },
+            "synchroniseMerge" : {
+              "type" : "boolean"
             }
           }
         } ]
@@ -26639,6 +26978,18 @@
             "type" : "string"
           },
           "output" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SharedFileStoreSettings" : {
+        "type" : "object",
+        "properties" : {
+          "shardCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "sharedPath" : {
             "type" : "string"
           }
         }
@@ -27153,6 +27504,9 @@
           "spanId" : {
             "type" : "string"
           },
+          "startTimeUnixNano" : {
+            "type" : "string"
+          },
           "traceId" : {
             "type" : "string"
           }
@@ -27352,6 +27706,15 @@
           "properties" : {
             "keySchema" : {
               "$ref" : "#/components/schemas/StateKeySchema"
+            },
+            "overwrite" : {
+              "type" : "boolean"
+            },
+            "snapshotSettings" : {
+              "$ref" : "#/components/schemas/SnapshotSettings"
+            },
+            "synchroniseMerge" : {
+              "type" : "boolean"
             },
             "valueSchema" : {
               "$ref" : "#/components/schemas/StateValueSchema"
@@ -28394,6 +28757,15 @@
             "keySchema" : {
               "$ref" : "#/components/schemas/TemporalRangeKeySchema"
             },
+            "overwrite" : {
+              "type" : "boolean"
+            },
+            "snapshotSettings" : {
+              "$ref" : "#/components/schemas/SnapshotSettings"
+            },
+            "synchroniseMerge" : {
+              "type" : "boolean"
+            },
             "valueSchema" : {
               "$ref" : "#/components/schemas/StateValueSchema"
             }
@@ -28445,6 +28817,15 @@
             },
             "keySchema" : {
               "$ref" : "#/components/schemas/TemporalStateKeySchema"
+            },
+            "overwrite" : {
+              "type" : "boolean"
+            },
+            "snapshotSettings" : {
+              "$ref" : "#/components/schemas/SnapshotSettings"
+            },
+            "synchroniseMerge" : {
+              "type" : "boolean"
             },
             "valueSchema" : {
               "$ref" : "#/components/schemas/StateValueSchema"
@@ -28723,6 +29104,51 @@
           }
         }
       },
+      "TraceHistogram" : {
+        "type" : "object",
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "bucketWidthMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "counts" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "drillable" : {
+            "type" : "boolean"
+          },
+          "fromMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "maxWindowMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "toMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "TraceOverview" : {
+        "type" : "object",
+        "properties" : {
+          "spans" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Span"
+            }
+          }
+        }
+      },
       "TraceRoot" : {
         "type" : "object",
         "properties" : {
@@ -28733,8 +29159,21 @@
           "endTime" : {
             "$ref" : "#/components/schemas/NanoTime"
           },
+          "error" : {
+            "type" : "boolean"
+          },
+          "lastActivityMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "name" : {
             "type" : "string"
+          },
+          "orphan" : {
+            "type" : "boolean"
+          },
+          "rootEndTime" : {
+            "$ref" : "#/components/schemas/NanoTime"
           },
           "services" : {
             "type" : "integer",
@@ -28749,6 +29188,9 @@
           },
           "traceId" : {
             "type" : "string"
+          },
+          "truncated" : {
+            "type" : "boolean"
           }
         }
       },
@@ -28756,11 +29198,115 @@
         "type" : "object",
         "allOf" : [ {
           "$ref" : "#/components/schemas/AbstractPlanBSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "granularity" : {
+              "type" : "string",
+              "enum" : [ "HOUR", "DAY", "WEEK" ]
+            },
+            "holdingArea" : {
+              "$ref" : "#/components/schemas/HoldingAreaSettings"
+            },
+            "maxQueryTimeRange" : {
+              "$ref" : "#/components/schemas/SimpleDuration"
+            },
+            "maxSpansPerTrace" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "sharedFileStore" : {
+              "$ref" : "#/components/schemas/SharedFileStoreSettings"
+            }
+          }
         } ]
+      },
+      "TraceSpanPage" : {
+        "type" : "object",
+        "properties" : {
+          "more" : {
+            "type" : "boolean"
+          },
+          "nextCursor" : {
+            "type" : "string"
+          },
+          "rows" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TraceSpanRow"
+            }
+          },
+          "totalSpans" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "TraceSpanRow" : {
+        "type" : "object",
+        "properties" : {
+          "depth" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "hasChildren" : {
+            "type" : "boolean"
+          },
+          "span" : {
+            "$ref" : "#/components/schemas/Span"
+          }
+        }
+      },
+      "TracesDoc" : {
+        "type" : "object",
+        "properties" : {
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "hasSharedFileStoreData" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "settings" : {
+            "$ref" : "#/components/schemas/AbstractPlanBSettings"
+          },
+          "stateType" : {
+            "type" : "string",
+            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION", "HISTOGRAM", "METRIC", "TRACE" ]
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
       },
       "TracesResultPage" : {
         "type" : "object",
         "properties" : {
+          "histogram" : {
+            "$ref" : "#/components/schemas/TraceHistogram"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
