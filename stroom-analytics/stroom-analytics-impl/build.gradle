@@ -17,6 +17,7 @@
 ext.moduleName = 'stroom.analytics.impl'
 
 dependencies {
+    implementation project(':stroom-ai:stroom-ai-api')
     implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-analytics:stroom-analytics-impl-db')
     implementation project(':stroom-bytebuffer')

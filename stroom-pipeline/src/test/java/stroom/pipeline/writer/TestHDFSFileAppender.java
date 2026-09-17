@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,6 +160,10 @@ class TestHDFSFileAppender extends StroomUnitTest {
         provider.setConf(conf);
         return provider;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class MockFileSystem extends DistributedFileSystem {
 

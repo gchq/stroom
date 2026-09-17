@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,7 +155,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                 .processor(processor)
                 .queryData(request.getQueryData())
                 .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
-                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs())
+                .maxTaskCreationDelay(request.getMaxTaskCreationDelay());
         setRunAs(request, builder);
         return create(builder.build());
     }
@@ -208,6 +209,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                 .queryData(queryData)
                 .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
                 .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs())
+                .maxTaskCreationDelay(request.getMaxTaskCreationDelay())
                 .stampAudit(securityContext);
         setRunAs(request, builder);
         if (processorFilterDocRef != null) {
@@ -566,12 +568,16 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     }
 
     @Override
-    public ProcessorFilter restore(final DocRef processorFilterDocRef, final boolean resetTracker) {
+    public ProcessorFilter restore(final DocRef processorFilterDocRef) {
         final ProcessorFilter processorFilter = fetchByUuid(processorFilterDocRef.getUuid())
                 .orElseThrow(() ->
                         new RuntimeException("No processor filter found for docRef " + processorFilterDocRef));
 
-        return processorFilterDao.restoreProcessorFilter(processorFilter, resetTracker);
+        final ProcessorFilter restored = processorFilterDao.restoreProcessorFilter(processorFilter);
+        // The replica holds the doc ref's uuid now, so the dependency edges recorded against it
+        // are the replica's.
+        updateDocDependencies(restored);
+        return restored;
     }
 
     @Override

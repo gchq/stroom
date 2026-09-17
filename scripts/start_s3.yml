@@ -1,0 +1,18 @@
+---
+# Docker compose file for starting minio for use as an s3 service
+services:
+  minio-s3:
+    image: quay.io/minio/minio
+    container_name: "minio-s3"
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    # environment:
+      # MINIO_ROOT_USER: minioadmin
+      # MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+
+volumes:
+  minio-data:

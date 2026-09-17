@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package stroom.datagen.client.view;
 
-import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
 import stroom.datagen.client.presenter.DataGenProcessingPresenter.DataGenProcessingView;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -25,10 +24,13 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 
+/**
+ * Lays out the Execution tab, which is a single panel holding the shared scheduling editor's view.
+ */
 public class DataGenProcessingViewImpl
-        extends ViewWithUiHandlers<AnalyticProcessingUiHandlers>
+        extends ViewImpl
         implements DataGenProcessingView {
 
     private final Widget widget;

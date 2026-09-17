@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,13 +114,15 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
                     null,
                     request.getExpression());
             final ResultPage<ProcessorFilter> resultPage = processorFilterService.find(criteria);
-            resultPage.getValues().stream().forEach(filter -> {
+            resultPage.forEach(filter -> {
                 switch (request.getChange()) {
                     case ENABLE -> processorFilterService.setEnabled(filter.getId(), true);
                     case DISABLE -> processorFilterService.setEnabled(filter.getId(), false);
                     case DELETE -> processorFilterService.delete(filter.getId());
-                    case SET_RUN_AS_USER ->
-                            processorFilterService.update(filter.copy().runAsUser(request.getUserRef()).build());
+                    case SET_RUN_AS_USER -> processorFilterService.update(
+                            filter.copy()
+                                    .runAsUser(request.getUserRef())
+                                    .build());
                 }
             });
         });

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@ import stroom.processor.impl.ProcessorProfileCache.ProfileResult;
 import stroom.processor.impl.ProcessorTaskDao.FilterTaskCounts;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
-import stroom.processor.impl.db.jooq.tables.Processor;
+import stroom.processor.impl.ProgressMonitor.SkipReason;
+import stroom.processor.impl.QueueProcessTasksState.ProfileQueueState;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
@@ -50,12 +51,12 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
+import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,6 +99,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final PrioritisedFilters prioritisedFilters;
     private final ProcessorProfileCache processorProfileCache;
+    private final FilterFetchBackoff filterFetchBackoff;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -125,8 +127,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
      */
     private volatile boolean allowTaskQueueFill = false;
 
-    private final Map<String, Instant> lastNodeContactTime = new ConcurrentHashMap<>();
-    private Instant lastDisownedTasks = Instant.now();
 
     @Inject
     ProcessorTaskQueueManagerImpl(final ProcessorTaskDao processorTaskDao,
@@ -139,7 +139,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                   final SecurityContext securityContext,
                                   final TargetNodeSetFactory targetNodeSetFactory,
                                   final PrioritisedFilters prioritisedFilters,
-                                  final ProcessorProfileCache processorProfileCache) {
+                                  final ProcessorProfileCache processorProfileCache,
+                                  final FilterFetchBackoff filterFetchBackoff) {
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
@@ -150,6 +151,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.prioritisedFilters = prioritisedFilters;
         this.processorProfileCache = processorProfileCache;
+        this.filterFetchBackoff = filterFetchBackoff;
 
         executor = executorProvider.get(THREAD_POOL);
     }
@@ -599,49 +601,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         return size;
     }
 
-    public void disownDeadTasks() {
-        LOGGER.trace(() -> "disownDeadTasks()");
-        try {
-            final String node = nodeInfo.getThisNodeName();
-            final String masterNode = targetNodeSetFactory.getMasterNode();
-            if (node != null && node.equals(masterNode)) {
-                // If this is the master node then see if there are any nodes that we haven't had contact with
-                // for some time.
-
-                // If we haven't had contact with a node for 10 minutes then forcibly release the tasks owned
-                // by that node.
-                final Instant now = Instant.now();
-                final Set<String> activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now));
-                final Instant disownTaskAge = now.minus(processorConfigProvider.get().getDisownDeadTasksAfter());
-                if (lastDisownedTasks.isBefore(disownTaskAge)) {
-                    lastDisownedTasks = now;
-
-                    // Remove nodes we haven't had contact with for 10 minutes.
-                    lastNodeContactTime.forEach((k, v) -> {
-                        if (v.isBefore(disownTaskAge)) {
-                            lastNodeContactTime.remove(k);
-                        }
-                    });
-
-                    // Retain all tasks that have had their status updated in the last 10 minutes or belong to
-                    // nodes we know have been active in the last 10 minutes.
-                    final DurationTimer durationTimer = DurationTimer.start();
-                    final long count = processorTaskDao.retainOwnedTasks(lastNodeContactTime.keySet(), disownTaskAge);
-                    if (count > 0) {
-                        LOGGER.warn(() ->
-                                "Removed task ownership for dead nodes (count = " +
-                                count +
-                                ") in " +
-                                durationTimer.get());
-                    }
-                }
-            }
-        } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
-    }
-
     public synchronized void releaseOldQueuedTasks() {
         LOGGER.trace(() -> "releaseOldQueuedTasks()");
         if (!queueMap.isEmpty()) {
@@ -698,7 +657,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private int doQueueNewTasks(final TaskContext taskContext,
                                 final boolean isEmptyReportRequired) {
         LOGGER.trace("queueNewTasks() - Starting");
-        int totalAdded = 0;
 
         // We need to make sure that only 1 thread at a time is allowed to
         // create tasks. This should always be the case in production but some
@@ -709,8 +667,11 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         // Update the stream task store.
         final List<ProcessorFilter> filters = prioritisedFilters.get();
         final ProcessorConfig processorConfig = processorConfigProvider.get();
-        final QueueProcessTasksState queueProcessTasksState =
-                new QueueProcessTasksState(getTaskQueueSize(), processorConfig.getQueueSize());
+        // Each processing profile gets its own queueing budget, as do the filters that have no
+        // profile, so that a busy profile can't fill the queue on every pass and leave another
+        // profile's nodes asking for work that never gets queued.
+        final QueueProcessTasksState queueProcessTasksState = new QueueProcessTasksState(
+                filters, getTaskQueueSize(), processorConfig.getQueueSize());
         final ProgressMonitor progressMonitor = new ProgressMonitor(filters.size());
 
         final String nodeName = nodeInfo.getThisNodeName();
@@ -718,28 +679,48 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             throw new NullPointerException("Node is null");
         }
 
+        // Don't remember filters we are no longer considering, e.g. disabled or deleted ones.
+        filterFetchBackoff.retainAll(filters);
+
         // Now fill the stream task store with tasks for each filter.
         // The aim is to create N tasks in total where N is processorConfig.getQueueSize
         // Also need to ensure each filter queue has no more than N in it.
+        int totalAdded = 0;
         try {
             if (processorConfig.isFillTaskQueue()) {
-                for (final ProcessorFilter filter : filters) {
-                    final ProcessorTaskQueue queue = queueMap.computeIfAbsent(
-                            filter,
-                            k -> new ProcessorTaskQueue());
+                final StroomDuration skipEmptyFilterFetchDuration =
+                        processorConfig.getSkipEmptyFilterFetchDuration();
 
-                    // If we have enough tasks queued then stop trying to add more to the queues.
-                    if (!queueProcessTasksState.keepAddingTasks()) {
-                        break;
+                for (final ProcessorFilter filter : filters) {
+                    // If we have enough tasks queued for this filter's profile then move on to the
+                    // next filter rather than stopping altogether, as another profile's nodes can't
+                    // process anything queued for this one. Only stop once every profile has enough
+                    // queued, so we don't needlessly consider the rest of the filters.
+                    final ProfileQueueState profileQueueState = queueProcessTasksState.getState(filter);
+                    if (!profileQueueState.keepAddingTasks()) {
+                        progressMonitor.logSkippedFilter(filter, SkipReason.QUEUE_FULL_FOR_PROFILE);
+                        if (queueProcessTasksState.isEveryQueueFull()) {
+                            break;
+                        }
+
+                    } else if (!filterFetchBackoff.isFetchDue(filter, skipEmptyFilterFetchDuration)) {
+                        // We looked for tasks for this filter recently and there were none. A
+                        // profile with nothing to do never has enough tasks queued, so without this
+                        // every fill would query for every one of its filters.
+                        progressMonitor.logSkippedFilter(filter, SkipReason.NO_TASKS_ON_LAST_FETCH);
 
                     } else {
+                        final ProcessorTaskQueue queue = queueMap.computeIfAbsent(
+                                filter,
+                                k -> new ProcessorTaskQueue());
                         totalAdded += queueTasksForFilter(
                                 taskContext,
                                 nodeName,
                                 filter,
                                 progressMonitor,
                                 queue,
-                                queueProcessTasksState);
+                                profileQueueState,
+                                skipEmptyFilterFetchDuration);
                     }
                 }
             }
@@ -884,7 +865,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                     final ProcessorFilter filter,
                                     final ProgressMonitor progressMonitor,
                                     final ProcessorTaskQueue queue,
-                                    final QueueProcessTasksState queueProcessTasksState) {
+                                    final ProfileQueueState profileQueueState,
+                                    final StroomDuration skipEmptyFilterFetchDuration) {
         try {
             LOGGER.debug("queueTasksForFilter() - processorFilter {}", filter.getFilterInfo());
 
@@ -922,9 +904,10 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                         nodeName,
                         filter,
                         queue,
-                        queueProcessTasksState,
+                        profileQueueState,
                         filterProgressMonitor,
-                        maxConcurrentTasks);
+                        maxConcurrentTasks,
+                        skipEmptyFilterFetchDuration);
                 filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS, durationTimer, count);
                 return count;
             }
@@ -938,24 +921,33 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                   final String nodeName,
                                   final ProcessorFilter filter,
                                   final ProcessorTaskQueue queue,
-                                  final QueueProcessTasksState queueProcessTasksState,
+                                  final ProfileQueueState profileQueueState,
                                   final FilterProgressMonitor filterProgressMonitor,
-                                  final int maxConcurrentTasks) {
+                                  final int maxConcurrentTasks,
+                                  final StroomDuration skipEmptyFilterFetchDuration) {
         // Queue tasks for this filter.
         final int initialQueueSize = queue.size();
-        queueProcessTasksState.addCurrentlyQueuedTasks(initialQueueSize);
+        profileQueueState.addCurrentlyQueuedTasks(initialQueueSize);
 
         int totalTasks = 0;
         int totalAddedTasks = 0;
-        int tasksToAdd = queueProcessTasksState.getRequiredTaskCount() - initialQueueSize;
+        int tasksToAdd = profileQueueState.getRequiredTaskCount() - initialQueueSize;
         final int batchSize = Math.max(BATCH_SIZE, tasksToAdd);
         long lastTaskId = 0;
+        // Only what we learn from actually looking tells us whether to look again soon. A filter
+        // whose queue is already full hasn't been looked at, so it must not be backed off, or it
+        // wouldn't be refilled promptly once its queue drains.
+        boolean fetched = false;
+        // Read before we look so that we can tell whether task creation has produced anything for
+        // this filter while we were looking, in which case finding nothing means nothing.
+        final long creationVersion = filterFetchBackoff.getCreationVersion(filter);
 
         try {
             // Keep adding tasks until we have reached the requested number.
             while (tasksToAdd > 0) {
 
                 // Look for any existing tasks we have created.
+                fetched = true;
                 DurationTimer durationTimer = DurationTimer.start();
                 final List<ExistingCreatedTask> existingCreatedTasks = processorTaskDao
                         .findExistingCreatedTasks(lastTaskId, filter.getId(), batchSize);
@@ -1029,6 +1021,16 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                 LOGGER.debug("doCreateTasks() - Added {} tasks that are no longer locked", totalAddedTasks);
             }
 
+            if (fetched) {
+                if (totalTasks == 0) {
+                    // There is nothing created for this filter, so leave it alone for a while
+                    // rather than asking again on every fill.
+                    filterFetchBackoff.recordEmptyFetch(filter, skipEmptyFilterFetchDuration, creationVersion);
+                } else {
+                    filterFetchBackoff.recordFetchedTasks(filter);
+                }
+            }
+
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -1037,10 +1039,10 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             // If the number of tasks that can be processed at once is limited, either by the filter or by its
             // processing profile, then limit the number we report as being added to the queue otherwise we
             // might stop adding other tasks early.
-            queueProcessTasksState
+            profileQueueState
                     .addTotalQueuedTasks(Math.min(maxConcurrentTasks, initialQueueSize + totalAddedTasks));
         } else {
-            queueProcessTasksState.addTotalQueuedTasks(initialQueueSize + totalAddedTasks);
+            profileQueueState.addTotalQueuedTasks(initialQueueSize + totalAddedTasks);
         }
 
         return totalAddedTasks;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.receive.common;
 
+import stroom.aws.s3.shared.S3EventResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
@@ -32,10 +33,12 @@ public class RemoteFeedModule extends AbstractModule {
         bind(DataFeedKeyService.class).to(DataFeedKeyServiceImpl.class);
         bind(DataFeedIdentityService.class).to(DataFeedIdentityServiceImpl.class);
         bind(CertificateIdentityService.class).to(CertificateIdentityServiceImpl.class);
+        bind(S3EventResource.class).to(S3EventResourceImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(FeedStatusResourceImpl.class)
-                .bind(FeedStatusResourceV2Impl.class);
+                .bind(FeedStatusResourceV2Impl.class)
+                .bind(S3EventResourceImpl.class);
 
 //        ServletBinder.create(binder())
 //                .bind(RemoteFeedServiceRPC.class);

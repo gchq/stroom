@@ -17,4 +17,4 @@
             <tickbox:CustomCheckBox ui:field="useSnapshotsForQuery" addStyleNames="allow-focus"/>
         </form:FormGroup>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

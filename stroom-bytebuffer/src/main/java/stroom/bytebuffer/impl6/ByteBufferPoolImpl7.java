@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,7 +191,7 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
 
     private static class NonPooledByteBuffer implements PooledByteBuffer {
 
-        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(stroom.bytebuffer.impl6.NonPooledByteBuffer.class);
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NonPooledByteBuffer.class);
 
         private ByteBuffer byteBuffer;
 
@@ -258,8 +258,8 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
         @Override
         public String toString() {
             return "NonPooledByteBuffer{" +
-                    "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
-                    '}';
+                   "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
+                   '}';
         }
     }
 
@@ -331,8 +331,8 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
         @Override
         public String toString() {
             return "PooledByteBuffer{" +
-                    "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
-                    '}';
+                   "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
+                   '}';
         }
     }
 }

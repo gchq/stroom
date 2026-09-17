@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
+import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.ResultPage;
@@ -39,6 +40,11 @@ class FsVolumeGroupResourceImpl implements FsVolumeGroupResource {
     @Override
     public ResultPage<FsVolumeGroup> find(final ExpressionCriteria request) {
         return ResultPage.createUnboundedList(volumeGroupServiceProvider.get().getAll());
+    }
+
+    @Override
+    public ResultPage<FsVolumeGroupRow> findExtended(final ExpressionCriteria request) {
+        return volumeGroupServiceProvider.get().findExtended(request);
     }
 
     @Override

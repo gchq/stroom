@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class VariableValTimeSerde implements ValTimeSerde {
                 yield ValSerdeUtil.read(valSlice);
             }
             case UID_LOOKUP -> {
-                // Read via UI lookup.
+                // Read via UID lookup.
                 final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, valSlice);
                 yield ValSerdeUtil.read(valueByteBuffer);
             }

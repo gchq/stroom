@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,14 @@ import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
+import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
+import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.store.ValueConsumerId;
+import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
+import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
@@ -35,6 +41,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.om.NodeInfo;
+import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +59,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -364,6 +374,224 @@ class TestBitmapLookup extends AbstractXsltFunctionTest<BitmapLookup> {
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
 //        assertLoggedTopLevelSeverity(Severity.INFO, "success");
+    }
+
+    @Test
+    void doLookup_multipleValues_spaceDelimited() throws Exception {
+        // Key of "74" is 1001010 in binary so bit positions 1, 3 and 6 are set.
+        // The docs state that the values for all matched bit positions are returned
+        // as a space delimited list, e.g. "Manage_Users View_Data Manage_Volumes".
+        final Sequence sequence = doLookupWithRealSequenceMaker(
+                "74",
+                Map.of(
+                        "1", "Manage_Users",
+                        "3", "View_Data",
+                        "6", "Manage_Volumes"));
+
+        Assertions.assertThat(sequence)
+                .isInstanceOf(NodeInfo.class);
+        Assertions.assertThat(((NodeInfo) sequence).getStringValue())
+                .isEqualTo("Manage_Users View_Data Manage_Volumes");
+    }
+
+    @Test
+    void doLookup_multipleValues_unmatchedBit_spaceDelimited() throws Exception {
+        // Bit positions 1, 3 and 6 are set but position 3 has no entry in the map,
+        // so no delimiter should be added for it, i.e. no double/trailing spaces.
+        final Sequence sequence = doLookupWithRealSequenceMaker(
+                "74",
+                Map.of(
+                        "1", "Manage_Users",
+                        "6", "Manage_Volumes"));
+
+        Assertions.assertThat(sequence)
+                .isInstanceOf(NodeInfo.class);
+        Assertions.assertThat(((NodeInfo) sequence).getStringValue())
+                .isEqualTo("Manage_Users Manage_Volumes");
+    }
+
+    @Test
+    void doLookup_multipleValues_unmatchedLastBit_noTrailingDelimiter() throws Exception {
+        // Bit positions 1, 3 and 6 are set but position 6 has no entry in the map,
+        // so there should be no trailing delimiter.
+        final Sequence sequence = doLookupWithRealSequenceMaker(
+                "74",
+                Map.of(
+                        "1", "Manage_Users",
+                        "3", "View_Data"));
+
+        Assertions.assertThat(sequence)
+                .isInstanceOf(NodeInfo.class);
+        Assertions.assertThat(((NodeInfo) sequence).getStringValue())
+                .isEqualTo("Manage_Users View_Data");
+    }
+
+    @Test
+    void doLookup_singleValue_noDelimiter() throws Exception {
+        // Key of "2" is 10 in binary so only bit position 1 is set.
+        final Sequence sequence = doLookupWithRealSequenceMaker(
+                "2",
+                Map.of("1", "Manage_Users"));
+
+        Assertions.assertThat(sequence)
+                .isInstanceOf(NodeInfo.class);
+        Assertions.assertThat(((NodeInfo) sequence).getStringValue())
+                .isEqualTo("Manage_Users");
+    }
+
+    @Test
+    void doLookup_multipleValues_customDelimiter() throws Exception {
+        // The optional 6th argument sets the delimiter used between the values.
+        final Sequence sequence = doLookupWithRealSequenceMaker(
+                "74",
+                Map.of(
+                        "1", "Manage_Users",
+                        "3", "View_Data",
+                        "6", "Manage_Volumes"),
+                ",");
+
+        Assertions.assertThat(sequence)
+                .isInstanceOf(NodeInfo.class);
+        Assertions.assertThat(((NodeInfo) sequence).getStringValue())
+                .isEqualTo("Manage_Users,View_Data,Manage_Volumes");
+    }
+
+    @Test
+    void doLookup_multipleValues_emptyDelimiter() throws Exception {
+        // An explicit empty delimiter concatenates the values with nothing between
+        // them, i.e. the behaviour before space delimiting was fixed.
+        final Sequence sequence = doLookupWithRealSequenceMaker(
+                "74",
+                Map.of(
+                        "1", "Manage_Users",
+                        "3", "View_Data",
+                        "6", "Manage_Volumes"),
+                "");
+
+        Assertions.assertThat(sequence)
+                .isInstanceOf(NodeInfo.class);
+        Assertions.assertThat(((NodeInfo) sequence).getStringValue())
+                .isEqualTo("Manage_UsersView_DataManage_Volumes");
+    }
+
+    @Test
+    void doLookup_multipleValues_multiCharDelimiter() throws Exception {
+        final Sequence sequence = doLookupWithRealSequenceMaker(
+                "74",
+                Map.of(
+                        "1", "Manage_Users",
+                        "3", "View_Data",
+                        "6", "Manage_Volumes"),
+                " | ");
+
+        Assertions.assertThat(sequence)
+                .isInstanceOf(NodeInfo.class);
+        Assertions.assertThat(((NodeInfo) sequence).getStringValue())
+                .isEqualTo("Manage_Users | View_Data | Manage_Volumes");
+    }
+
+    /**
+     * Run a lookup through a real {@link SequenceMaker} (i.e. a real Saxon
+     * {@link net.sf.saxon.tree.tiny.TinyBuilder} fed by the real on-heap value consumers)
+     * so the test sees the sequence exactly as the XSLT would.
+     *
+     * @param key            The bitmap lookup key.
+     * @param bitPosToValue  Map of bit position (as a string key) to the reference data
+     *                       value for that bit position. Bit positions absent from the
+     *                       map behave as a failed lookup for that key.
+     * @param extraArgs      Any arguments to pass after the standard five, e.g. the
+     *                       optional delimiter.
+     */
+    private Sequence doLookupWithRealSequenceMaker(final String key,
+                                                   final Map<String, String> bitPosToValue,
+                                                   final Object... extraArgs) {
+        pipelineReferences = List.of(
+                new PipelineReference(
+                        PipelineDoc.buildDocRef().randomUuid().name("MyPipe").build(),
+                        FeedDoc.buildDocRef().randomUuid().name("MY_FEED").build(),
+                        StreamTypeNames.REFERENCE));
+
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                123L);
+
+        initRealSequenceMaker();
+
+        Mockito.doAnswer(
+                        invocation -> {
+                            final LookupIdentifier lookupIdentifier = invocation.getArgument(1);
+                            final ReferenceDataResult result = invocation.getArgument(2);
+
+                            // Add one effective stream
+                            result.addEffectiveStream(pipelineReferences.get(0), refStreamDefinition);
+
+                            final ReferenceDataResult resultSpy = Mockito.spy(result);
+                            final String value = bitPosToValue.get(lookupIdentifier.getKey());
+                            final RefDataValueProxy refDataValueProxy = createStringValueProxy(value);
+
+                            Mockito.doReturn(Optional.of(refDataValueProxy))
+                                    .when(resultSpy).getRefDataValueProxy();
+
+                            return resultSpy;
+                        }).when(mockReferenceData)
+                .ensureReferenceDataAvailability(Mockito.any(), Mockito.any(), Mockito.any());
+
+        final List<Object> args = new ArrayList<>(
+                List.of(MAP, key, Instant.now(), false, false));
+        args.addAll(List.of(extraArgs));
+        return callFunctionWithSimpleArgs(args.toArray());
+    }
+
+    /**
+     * @param value The value the proxy will supply, or null to simulate the key
+     *              not being found in the map.
+     */
+    private RefDataValueProxy createStringValueProxy(final String value) {
+        final RefDataValueProxy refDataValueProxy = Mockito.mock(RefDataValueProxy.class);
+        if (value == null) {
+            // Key not found so nothing is consumed
+            Mockito.when(refDataValueProxy.consumeValue(Mockito.any()))
+                    .thenReturn(false);
+        } else {
+            // Emulate what SingleRefDataValueProxy does for an on-heap store, i.e.
+            // delegate to the real on-heap consumer chain.
+            Mockito.when(refDataValueProxy.supplyValue())
+                    .thenReturn(Optional.of(StringValue.of(value)));
+            Mockito.when(refDataValueProxy.consumeValue(Mockito.any()))
+                    .thenAnswer(invocation -> {
+                        final RefDataValueProxyConsumerFactory consumerFactory =
+                                invocation.getArgument(0);
+                        return consumerFactory.getConsumer(RefDataStore.StorageType.ON_HEAP)
+                                .consume(refDataValueProxy);
+                    });
+        }
+        return refDataValueProxy;
+    }
+
+    private void initRealSequenceMaker() {
+        final Configuration configuration = new Configuration();
+        Mockito.when(getMockXPathContext().getConfiguration())
+                .thenReturn(configuration);
+
+        final OnHeapRefDataValueProxyConsumer.Factory onHeapConsumerFactory =
+                (receiver, pipelineConfiguration) -> new OnHeapRefDataValueProxyConsumer(
+                        receiver,
+                        pipelineConfiguration,
+                        Map.of(
+                                new ValueConsumerId(StringValue.TYPE_ID),
+                                new StringValueConsumer.Factory()));
+
+        final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory =
+                (receiver, pipelineConfiguration) -> new RefDataValueProxyConsumerFactory(
+                        receiver,
+                        pipelineConfiguration,
+                        onHeapConsumerFactory,
+                        (receiver2, pipelineConfiguration2) -> null);
+
+        Mockito.when(mockSequenceMakerFactory.create(Mockito.any()))
+                .thenAnswer(invocation ->
+                        new SequenceMaker(invocation.getArgument(0), consumerFactoryFactory));
     }
 
     private void assertLoggedTopLevelSeverity(final Severity expectedTopLevelSeverity) {

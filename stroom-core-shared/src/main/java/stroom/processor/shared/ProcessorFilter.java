@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -126,6 +127,28 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
     @JsonProperty
     private final Long maxMetaCreateTimeMs;
 
+    /**
+     * How long this filter will wait, at most, before task creation polls it again after polls
+     * that created no tasks. Overrides the cluster wide skipNonProducingFiltersMaxDuration
+     * property so that latency sensitive filters, e.g. those raising alerts from infrequent data,
+     * can be polled more eagerly than the rest. Null means use the cluster wide property.
+     */
+    @JsonProperty
+    private final SimpleDuration maxTaskCreationDelay;
+
+    /**
+     * The filter this one was made from, where it replaced an existing filter rather than being
+     * created outright, e.g. restoring a deleted filter so that its range is processed again.
+     * Processing a range again makes a new filter rather than resetting an existing filter's
+     * tracker, so that a filter id always means the same body of work; this is what keeps the
+     * history visible once it does. Null for a filter that replaced nothing.
+     * <p>
+     * A soft reference: the parent is physically deleted once its tasks have gone, and this is
+     * then left dangling rather than the parent being kept alive by its descendants.
+     */
+    @JsonProperty
+    private final Integer parentFilterId;
+
     @JsonCreator
     public ProcessorFilter(@JsonProperty("id") final Integer id,
                            @JsonProperty("version") final Integer version,
@@ -150,7 +173,9 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                            @JsonProperty("pipelineName") final String pipelineName,
                            @JsonProperty("runAsUser") final UserRef runAsUser,
                            @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
-                           @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs) {
+                           @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
+                           @JsonProperty("maxTaskCreationDelay") final SimpleDuration maxTaskCreationDelay,
+                           @JsonProperty("parentFilterId") final Integer parentFilterId) {
 
         this.id = id;
         this.version = version;
@@ -185,6 +210,8 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
         this.runAsUser = runAsUser;
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
+        this.maxTaskCreationDelay = maxTaskCreationDelay;
+        this.parentFilterId = parentFilterId;
     }
 
     @Override
@@ -234,6 +261,21 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
 
     public String getProfileName() {
         return profileName;
+    }
+
+    /**
+     * Null means use the cluster wide skipNonProducingFiltersMaxDuration property.
+     */
+    public SimpleDuration getMaxTaskCreationDelay() {
+        return maxTaskCreationDelay;
+    }
+
+    /**
+     * Null unless this filter replaced another, e.g. a deleted filter restored so that its range
+     * is processed again. May refer to a filter that has since been physically deleted.
+     */
+    public Integer getParentFilterId() {
+        return parentFilterId;
     }
 
     @JsonIgnore
@@ -383,6 +425,8 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                ", export=" + export +
                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
+               ", maxTaskCreationDelay=" + maxTaskCreationDelay +
+               ", parentFilterId=" + parentFilterId +
                '}';
     }
 
@@ -443,6 +487,8 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
         private boolean export;
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
+        private SimpleDuration maxTaskCreationDelay;
+        private Integer parentFilterId;
 
         public Builder() {
 
@@ -475,6 +521,8 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
             this.export = filter.export;
             this.minMetaCreateTimeMs = filter.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = filter.maxMetaCreateTimeMs;
+            this.maxTaskCreationDelay = filter.maxTaskCreationDelay;
+            this.parentFilterId = filter.parentFilterId;
         }
 
         public Builder id(final Integer id) {
@@ -592,6 +640,23 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
             return self();
         }
 
+        /**
+         * Null means use the cluster wide skipNonProducingFiltersMaxDuration property.
+         */
+        public Builder maxTaskCreationDelay(final SimpleDuration maxTaskCreationDelay) {
+            this.maxTaskCreationDelay = maxTaskCreationDelay;
+            return self();
+        }
+
+        /**
+         * The filter this one replaced, e.g. the deleted filter it was restored from. Null for a
+         * filter that replaced nothing.
+         */
+        public Builder parentFilterId(final Integer parentFilterId) {
+            this.parentFilterId = parentFilterId;
+            return self();
+        }
+
         protected Builder self() {
             return this;
         }
@@ -621,7 +686,9 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                     pipelineName,
                     runAsUser,
                     minMetaCreateTimeMs,
-                    maxMetaCreateTimeMs);
+                    maxMetaCreateTimeMs,
+                    maxTaskCreationDelay,
+                    parentFilterId);
         }
     }
 }

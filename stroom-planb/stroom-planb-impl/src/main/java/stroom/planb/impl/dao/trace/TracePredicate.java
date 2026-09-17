@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ public class TracePredicate implements Predicate<Trace> {
             return true;
         }
 
-        // Set or expand duration range.
+        // Check the span's own duration against the node's duration constraint.
         final NanoTime startTime = NanoTime.fromString(span.getStartTimeUnixNano());
         final NanoTime endTime = NanoTime.fromString(span.getEndTimeUnixNano());
         final NanoTime duration = endTime.subtract(startTime);
@@ -141,12 +141,12 @@ public class TracePredicate implements Predicate<Trace> {
             return false;
         }
 
-        // Set or expand flags.
+        // Check flags.
         if (!checkConstraint(constraints, "flags", span.getFlags())) {
             return false;
         }
 
-        // Set or expand kind.
+        // Check kind.
         if (!checkConstraint(constraints, "kind", span.getKind().name())) {
             return false;
         }
@@ -166,7 +166,7 @@ public class TracePredicate implements Predicate<Trace> {
             return false;
         }
 
-        // Set or expand attributes.
+        // Check every attribute the span carries against the node's constraint for it.
         return attributes.entrySet().stream().allMatch(entry -> {
             final String key = entry.getKey();
             final KeyValue value = entry.getValue();
@@ -227,8 +227,8 @@ public class TracePredicate implements Predicate<Trace> {
         return switch (current) {
             case null -> false;
             case final NanoTimeValue nanoTimeValue -> Objects.equals(nanoTimeValue.getValue(), value);
-            case final NanoTimeRange timeRange ->
-                    timeRange.getMin().isLessThanEquals(value) && timeRange.getMax().isGreaterThanEquals(value);
+            case final NanoTimeRange timeRange -> timeRange.getMin().isLessThanEquals(value)
+                                                  && timeRange.getMax().isGreaterThanEquals(value);
             default -> current instanceof AnyTypeValue;
         };
     }
@@ -255,7 +255,7 @@ public class TracePredicate implements Predicate<Trace> {
     }
 
     private boolean checkLongConstraint(final ConstraintValue current,
-                                       final long value) {
+                                        final long value) {
         switch (current) {
             case null -> {
                 return false;

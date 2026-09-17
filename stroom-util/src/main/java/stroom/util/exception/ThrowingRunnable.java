@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,10 @@ public interface ThrowingRunnable<E extends Throwable> {
 
     /**
      * Wraps a runnable that throws a checked exception with a catch block that will wrap
-     * any thrown exception with either a {@link UncheckedIOException} or {@link RuntimeException},
-     * thus making it unchecked and usable in a lambda.
+     * any thrown exception with a {@link RuntimeException}, thus making it unchecked and
+     * usable in a lambda.
+     * If the exception thrown is an {@link IOException} it will wrap it in an
+     * {@link UncheckedIOException} instead.
      */
     static <E extends Throwable> Runnable unchecked(final ThrowingRunnable<E> runnable) {
         return () -> {

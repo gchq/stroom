@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,12 +36,14 @@ public class MockProcessorModule extends AbstractModule {
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
         bind(ProcessorFilterDao.class).to(MockProcessorFilterDao.class);
         bind(ProcessorTaskDao.class).to(MockProcessorTaskDao.class);
+        bind(ProcessorProfileDao.class).to(MockProcessorProfileDao.class);
         bind(ClusterLockService.class).to(MockClusterLockService.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(MockProcessorDao.class)
                 .addBinding(MockProcessorFilterDao.class)
                 .addBinding(MockProcessorTaskDao.class)
+                .addBinding(MockProcessorProfileDao.class)
                 .addBinding(ProcessorFilterCache.class);
     }
 }

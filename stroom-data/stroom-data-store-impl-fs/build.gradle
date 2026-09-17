@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 ext.moduleName = 'stroom.data.store.impl.fs'
 
 dependencies {
+    implementation project(':stroom-aws:stroom-aws-client')
     implementation project(':stroom-aws:stroom-aws-s3-impl')
+    implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
@@ -42,20 +44,29 @@ dependencies {
     implementation libs.aws.s3.transfer.manager
     implementation libs.commons.compress
     implementation libs.eventLogging
+    implementation libs.fastutil.core
+    implementation libs.guava
     implementation libs.guice
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
+    implementation libs.jakarta.inject
     implementation libs.jooq
+    implementation libs.kryo
     implementation libs.restygwt
     implementation libs.vavr
+    implementation libs.ws.rs.api
+    implementation libs.zstd.jni
+    implementation libs.zero.allocation.hashing
 
     runtimeOnly libs.mysql.connector.java
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-data:stroom-data-store-mock')
     testImplementation project(':stroom-node:stroom-node-mock')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation
+    testImplementation libs.data.faker
     testRuntimeOnly libs.bundles.common.test.runtime
 }

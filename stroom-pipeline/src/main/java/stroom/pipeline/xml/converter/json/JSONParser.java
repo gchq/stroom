@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,11 +106,11 @@ public class JSONParser extends AbstractParser {
                     // We have had cases of VERY large strings that have caused OOM, so stream the value
                     case JsonTokenId.ID_STRING -> streamDataElement(XML_ELEMENT_STRING, jp.currentName(), jp);
                     case JsonTokenId.ID_NUMBER_INT,
-                         JsonTokenId.ID_NUMBER_FLOAT ->
-                            dataElement(XML_ELEMENT_NUMBER, jp.currentName(), jp.getValueAsString());
+                         JsonTokenId.ID_NUMBER_FLOAT -> dataElement(
+                            XML_ELEMENT_NUMBER, jp.currentName(), jp.getValueAsString());
                     case JsonTokenId.ID_FALSE,
-                         JsonTokenId.ID_TRUE ->
-                            dataElement(XML_ELEMENT_BOOLEAN, jp.currentName(), jp.getValueAsString());
+                         JsonTokenId.ID_TRUE -> dataElement(
+                            XML_ELEMENT_BOOLEAN, jp.currentName(), jp.getValueAsString());
                     case JsonTokenId.ID_NULL -> dataElement(XML_ELEMENT_NULL, jp.currentName(), null);
                 }
             }

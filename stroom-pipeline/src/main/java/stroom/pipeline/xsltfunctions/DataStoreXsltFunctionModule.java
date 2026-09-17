@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,13 +40,14 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
             super(
                     BitmapLookup.FUNCTION_NAME,
                     2,
-                    5,
+                    6,
                     new SequenceType[]{
                             SequenceType.SINGLE_STRING,
                             SequenceType.SINGLE_STRING,
                             SequenceType.OPTIONAL_STRING,
                             SequenceType.OPTIONAL_BOOLEAN,
-                            SequenceType.OPTIONAL_BOOLEAN},
+                            SequenceType.OPTIONAL_BOOLEAN,
+                            SequenceType.OPTIONAL_STRING},
                     SequenceType.NODE_SEQUENCE,
                     functionCallProvider);
         }

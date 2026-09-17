@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import stroom.planb.impl.dao.PlanBEnv;
 import stroom.planb.impl.dao.UidLookupDb;
 import stroom.planb.impl.dao.UidLookupRecorder;
 import stroom.planb.impl.dao.UsedLookupsRecorder;
-import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.value.Session;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.keyprefix.Tag;
 import stroom.planb.impl.serde.time.TimeSerde;

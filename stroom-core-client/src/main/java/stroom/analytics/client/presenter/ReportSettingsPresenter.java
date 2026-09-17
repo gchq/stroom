@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,23 +24,41 @@ import stroom.config.global.client.presenter.ConfigDefaultSetter;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.openai.shared.OpenAIModelDoc;
+import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.View;
 
 public class ReportSettingsPresenter
         extends AbstractSettingsPresenter<ReportSettingsView, ReportDoc> {
+
+    private final DocSelectionBoxPresenter aiSummaryModelPresenter;
 
     @Inject
     public ReportSettingsPresenter(final EventBus eventBus,
                                    final ReportSettingsView view,
                                    final DocSelectionBoxPresenter errorFeedPresenter,
+                                   final DocSelectionBoxPresenter aiSummaryModelPresenter,
                                    final UiConfigCache uiConfigCache,
                                    final ConfigDefaultSetter configDefaultSetter) {
         super(eventBus, view, errorFeedPresenter, uiConfigCache, configDefaultSetter);
+        this.aiSummaryModelPresenter = aiSummaryModelPresenter;
+
+        view.setAiSummaryModelView(aiSummaryModelPresenter.getView());
+        aiSummaryModelPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
+        // Use, not View - a report needs to be able to ask the model, not to read its settings.
+        aiSummaryModelPresenter.setRequiredPermissions(DocumentPermission.USE);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(aiSummaryModelPresenter.addDataSelectionHandler(event -> onChange()));
     }
 
     @Override
@@ -58,6 +76,23 @@ public class ReportSettingsPresenter
                 ReportDoc::getReportSettings,
                 ReportSettings::isSendEmptyReports,
                 false));
+        getView().setAiSummaryEnabled(NullSafe.getOrElse(
+                document,
+                ReportDoc::getReportSettings,
+                ReportSettings::isAiSummaryEnabled,
+                false));
+        aiSummaryModelPresenter.setSelectedEntityReference(NullSafe.get(
+                document,
+                ReportDoc::getReportSettings,
+                ReportSettings::getAiSummaryModel), true);
+        // Shown empty rather than pre-filled with the default, so that reading and writing the document
+        // round trips. Filling the box in would make an untouched report look dirty as soon as it was
+        // opened, and would bake the default text into the document on the next save.
+        getView().setAiSummaryPrompt(NullSafe.getOrElse(
+                document,
+                ReportDoc::getReportSettings,
+                ReportSettings::getAiSummaryPrompt,
+                ""));
     }
 
     @Override
@@ -66,6 +101,12 @@ public class ReportSettingsPresenter
                 .builder()
                 .fileType(getView().getFileType())
                 .sendEmptyReports(getView().isSendEmptyReports())
+                .aiSummaryEnabled(getView().isAiSummaryEnabled())
+                .aiSummaryModel(aiSummaryModelPresenter.getSelectedEntityReference())
+                // Blank means "use the default", which is what a null prompt says.
+                .aiSummaryPrompt(NullSafe.isBlankString(getView().getAiSummaryPrompt())
+                        ? null
+                        : getView().getAiSummaryPrompt())
                 .build();
         return document.copy()
                 .reportSettings(reportSettings)
@@ -85,5 +126,15 @@ public class ReportSettingsPresenter
         boolean isSendEmptyReports();
 
         void setSendEmptyReports(boolean sendEmptyReports);
+
+        boolean isAiSummaryEnabled();
+
+        void setAiSummaryEnabled(boolean aiSummaryEnabled);
+
+        void setAiSummaryModelView(View view);
+
+        String getAiSummaryPrompt();
+
+        void setAiSummaryPrompt(String aiSummaryPrompt);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,11 @@ package stroom.ai.impl.mock;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
+import stroom.ai.api.TableSummariser;
+import stroom.ai.impl.AiProviderImpl;
 import stroom.ai.impl.OpenAIModelStoreImpl;
+import stroom.ai.impl.TableSummariserImpl;
+import stroom.query.language.functions.AiProvider;
 
 import com.google.inject.AbstractModule;
 
@@ -28,6 +32,10 @@ public class MockAiModule extends AbstractModule {
     protected void configure() {
         // Services
         bind(AiService.class).to(MockAiService.class);
+        bind(TableSummariser.class).to(TableSummariserImpl.class);
+
+        // Backs the ai() StroomQL function, see ExpressionContextFactory.
+        bind(AiProvider.class).to(AiProviderImpl.class);
 
         // OpenAI Model
         bind(OpenAIModelStore.class).to(OpenAIModelStoreImpl.class);

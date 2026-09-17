@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,11 +118,10 @@ public class ExtractionTaskHandler {
                 SearchProgressLog.add(queryKey, SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT_EVENTS, eventIds.length);
 
                 taskContext.reset();
-                taskContext.info(() -> "" +
-                        "Extracting " +
-                        eventIds.length +
-                        " records from stream_id=" +
-                        streamId);
+                taskContext.info(() -> "Extracting " +
+                                       eventIds.length +
+                                       " records from stream_id=" +
+                                       streamId);
 
                 meta = source.getMeta();
 
@@ -148,7 +147,7 @@ public class ExtractionTaskHandler {
 
                 // Ensure count is the same.
                 if (eventIds.length != extractionState.getCount()) {
-                    LOGGER.debug(() -> "Extraction count mismatch");
+                    LOGGER.debug("Extraction count mismatch");
                 }
             }
         } catch (final IOException e) {
@@ -208,7 +207,7 @@ public class ExtractionTaskHandler {
             } else {
                 // Something went wrong extracting data from this stream.
                 throw new ExtractionException("Unable to extract data from stream source with id: " +
-                        source.getMeta().getId() + " - " + e.getMessage(), e);
+                                              source.getMeta().getId() + " - " + e.getMessage(), e);
             }
         }
     }

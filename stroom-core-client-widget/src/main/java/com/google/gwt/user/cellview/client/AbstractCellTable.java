@@ -1259,7 +1259,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * @param footer      the associated footer (as a {@link Header} object)
      * @throws IndexOutOfBoundsException if the index is out of range
      */
-    public void insertColumn(final int beforeIndex, final Column<T, ?> col, final Header<?> header, final Header<?> footer) {
+    public void insertColumn(final int beforeIndex,
+                             final Column<T, ?> col,
+                             final Header<?> header,
+                             final Header<?> footer) {
         // Allow insert at the end.
         if (beforeIndex != getColumnCount()) {
             checkColumnBounds(beforeIndex);
@@ -1685,7 +1688,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * Sets the skipRowHoverStyleUpdate flag. If set, the CellTable will not update
      * the row's style on row-level hover events (MOUSEOVER and MOUSEOUT).
      *
-     * @param skipRowHoverCheck the new flag value
+     * @param skipRowHoverStyleUpdate the new flag value
      */
     public void setSkipRowHoverStyleUpdate(final boolean skipRowHoverStyleUpdate) {
         this.skipRowHoverStyleUpdate = skipRowHoverStyleUpdate;
@@ -1898,7 +1901,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         final TableRowElement targetTableRow = targetTableCell.getParentElement().cast();
         final String eventType = event.getType();
         final boolean isSelect = BrowserEvents.CLICK.equals(eventType)
-                                 || (BrowserEvents.KEYDOWN.equals(eventType) && event.getKeyCode() == KeyCodes.KEY_ENTER);
+                                 || (BrowserEvents.KEYDOWN.equals(eventType)
+                                     && event.getKeyCode() == KeyCodes.KEY_ENTER);
 
         final int col = targetTableCell.getCellIndex();
         if (targetTableSection == thead || targetTableSection == tfoot) {
@@ -2137,7 +2141,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     @Deprecated
     protected final void renderRowValuesLegacy(final SafeHtmlBuilder sb, final List<T> values, final int start,
                                                final SelectionModel<? super T> selectionModel) {
-        final int keyboardSelectedRow = getKeyboardSelectedRow() + getPageStart();
         final String evenRowStyle = style.evenRow();
         final String oddRowStyle = style.oddRow();
         final String cellStyle = style.cell();
@@ -2152,10 +2155,9 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
         final int end = start + length;
         for (int i = start; i < end; i++) {
             final T value = values.get(i - start);
-            final boolean isSelected =
-                    (selectionModel == null || value == null)
-                            ? false
-                            : selectionModel.isSelected(value);
+            final boolean isSelected = (selectionModel == null || value == null)
+                    ? false
+                    : selectionModel.isSelected(value);
             final boolean isEven = i % 2 == 0;
             String trClasses = isEven
                     ? evenRowStyle
@@ -2711,7 +2713,10 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      * @param cellStyle the style to apply to the cells
      * @param add       true to add the style, false to remove
      */
-    private void setRowStyleName(final TableRowElement tr, final String rowStyle, final String cellStyle, final boolean add) {
+    private void setRowStyleName(final TableRowElement tr,
+                                 final String rowStyle,
+                                 final String cellStyle,
+                                 final boolean add) {
         setStyleName(tr, rowStyle, add);
         final NodeList<TableCellElement> cells = tr.getCells();
         for (int i = 0; i < cells.getLength(); i++) {

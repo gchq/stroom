@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,5 +47,10 @@ class ClusterLockServiceImpl implements ClusterLockService {
     @Override
     public void tryLock(final String lockName, final Runnable runnable) {
         dbClusterLock.tryLock(lockName, runnable);
+    }
+
+    @Override
+    public void deleteLocks(final String prefix) {
+        dbClusterLock.deleteLocks(prefix);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,10 @@ import jakarta.inject.Inject;
 
 import java.io.IOException;
 
+/**
+ * Converts a {@link DataGenDoc} to and from its stored JSON form, for both the document store and
+ * import/export. The template is held inline in that JSON rather than as a separate file.
+ */
 public class DataGenSerialiser implements DocumentSerialiser2<DataGenDoc> {
 
     private final Serialiser2<DataGenDoc> delegate;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import stroom.planb.impl.dao.UidLookupDb;
 import stroom.planb.impl.dao.UsedLookupsRecorder;
 import stroom.planb.impl.dao.UsedLookupsRecorderProxy;
 import stroom.planb.impl.dao.VariableUsedLookupsRecorder;
-import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.value.Session;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.val.ValSerdeUtil;
@@ -83,7 +83,7 @@ public class VariableSessionSerde implements SessionSerde {
                 yield ValSerdeUtil.read(keySlice);
             }
             case UID_LOOKUP -> {
-                // Read via UI lookup.
+                // Read via UID lookup.
                 final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, keySlice);
                 yield ValSerdeUtil.read(valueByteBuffer);
             }

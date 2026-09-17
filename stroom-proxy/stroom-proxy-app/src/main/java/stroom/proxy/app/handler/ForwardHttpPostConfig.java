@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -216,7 +216,7 @@ public final class ForwardHttpPostConfig
 
     @JsonProperty
     @JsonPropertyDescription("Set of HTTP headers that should be added to the request when proxy forwards data. " +
-                             "THis set is in addition to the base set of allowed headers.")
+                             "This set is in addition to the base set of allowed headers.")
     public Set<String> getForwardHeadersAdditionalAllowSet() {
         return forwardHeadersAdditionalAllowSet;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class LookupSerdeImpl implements LookupSerde {
                 yield bytes;
             }
             case UID_LOOKUP -> {
-                // Read via UI lookup.
+                // Read via UID lookup.
                 final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, getIdSlice(byteBuffer));
                 yield ByteBufferUtils.getBytes(valueByteBuffer);
             }
@@ -159,7 +159,7 @@ public class LookupSerdeImpl implements LookupSerde {
                 yield false;
             }
             case UID_LOOKUP -> {
-                // Read via UI lookup.
+                // Read via UID lookup.
                 getIdSlice(byteBuffer);
                 yield true;
             }
@@ -203,7 +203,7 @@ public class LookupSerdeImpl implements LookupSerde {
                     ByteBufferUtils.skip(byteBuffer, len);
                 }
                 case UID_LOOKUP -> {
-                    // Read via UI lookup.
+                    // Read via UID lookup.
                     uidLookupRecorder.recordUsed(writer, getIdSlice(byteBuffer));
                 }
                 case HASH_LOOKUP -> {

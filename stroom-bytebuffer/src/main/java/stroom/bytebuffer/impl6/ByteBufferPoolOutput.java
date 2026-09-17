@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,9 +72,13 @@ public class ByteBufferPoolOutput extends UnsafeByteBufferOutput {
                 return true;
             } else if (required > this.maxCapacity - this.position) {
                 if (required > this.maxCapacity) {
-                    throw new KryoBufferOverflowException("Buffer overflow. Max capacity: " + this.maxCapacity + ", required: " + required);
+                    throw new KryoBufferOverflowException(
+                            "Buffer overflow. Max capacity: " + this.maxCapacity + ", required: " + required);
                 } else {
-                    throw new KryoBufferOverflowException("Buffer overflow. Available: " + (this.maxCapacity - this.position) + ", required: " + required);
+                    throw new KryoBufferOverflowException(
+                            "Buffer overflow. Available: "
+                            + (this.maxCapacity - this.position)
+                            + ", required: " + required);
                 }
             } else {
                 if (this.capacity == 0) {

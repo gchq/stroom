@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ForwardS3Config;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.security.common.impl.InsecureTestCredentials;
 import stroom.security.openid.api.IdpType;
@@ -266,6 +267,7 @@ public class App extends Application<Config> {
                     final String type = switch (forwarderConfig) {
                         case final ForwardHttpPostConfig ignored -> "HTTP";
                         case final ForwardFileConfig ignored -> "FILE";
+                        case final ForwardS3Config ignored -> "S3";
                     };
                     return "    " + type + ": '" + name + "' -> " + destination + instant + state;
                 })

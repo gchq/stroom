@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,15 @@ package stroom.data.store.impl.fs.dao;
 
 import stroom.data.store.impl.fs.DataVolumeDao;
 import stroom.data.store.impl.fs.FsFeedPathDao;
+import stroom.data.store.impl.fs.FsMetaS3LocationDao;
 import stroom.data.store.impl.fs.FsOrphanedMetaDao;
 import stroom.data.store.impl.fs.FsTypePathDao;
 import stroom.data.store.impl.fs.FsVolumeCache;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeGroupDao;
 import stroom.data.store.impl.fs.FsVolumeStateDao;
+import stroom.data.store.impl.fs.s3v2.ZstdDictionaryDao;
+import stroom.data.store.impl.fs.s3v2.ZstdDictionaryTaskDao;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
@@ -36,12 +39,15 @@ public class FsDataStoreDaoModule extends AbstractModule {
         super.configure();
 
         bind(DataVolumeDao.class).to(DataVolumeDaoImpl.class);
+        bind(FsMetaS3LocationDao.class).to(FsMetaS3LocationDaoImpl.class);
         bind(FsFeedPathDao.class).to(FsFeedPathDaoImpl.class);
         bind(FsTypePathDao.class).to(FsTypePathDaoImpl.class);
         bind(FsVolumeDao.class).to(FsVolumeDaoImpl.class);
         bind(FsVolumeGroupDao.class).to(FsVolumeGroupDaoImpl.class);
         bind(FsVolumeStateDao.class).to(FsVolumeStateDaoImpl.class);
         bind(FsOrphanedMetaDao.class).to(FsOrphanedMetaDaoImpl.class);
+        bind(ZstdDictionaryDao.class).to(ZstdDictionaryDaoImpl.class);
+        bind(ZstdDictionaryTaskDao.class).to(ZstdDictionaryTaskDaoImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(FsVolumeCache.class);

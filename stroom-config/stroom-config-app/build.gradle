@@ -105,3 +105,14 @@ tasks.register('generateConfigDefaultsYamlFile', JavaExec) {
     mainClass = 'stroom.config.app.GenerateExpectedYaml'
     args = [configDefaultsFile, configSchemaFile]
 }
+
+// Regenerates the checked-in expected.yaml that TestStroomYamlUtil diffs the config tree against.
+// Unlike generateConfigDefaultsYamlFile above, this passes no args, which makes the generator target the
+// test resource rather than the example file. Run it after adding/removing a config property.
+tasks.register('generateExpectedYaml', JavaExec) {
+    dependsOn compileJava
+    dependsOn compileTestJava
+
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'stroom.config.app.GenerateExpectedYaml'
+}

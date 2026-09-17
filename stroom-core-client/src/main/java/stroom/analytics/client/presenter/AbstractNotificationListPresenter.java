@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,12 +154,12 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                     if (result) {
                         final NotificationConfig selected = selectionModel.getSelected();
                         if (selected != null) {
-                            int index = list.indexOf(selected);
                             list.remove(selected);
                             onChange();
                             refresh();
 
                             // Select next item.
+                            int index = list.indexOf(selected);
                             if (NullSafe.hasItems(list)) {
                                 index = Math.max(index, 0);
                                 index = Math.min(index, list.size() - 1);

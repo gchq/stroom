@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
         pollFrequency = DEFAULT_POLL_FREQUENCY;
     }
 
-    @SuppressWarnings({"unused", "checkstyle:LineLength"})
+    @SuppressWarnings("unused")
     @JsonCreator
     public SqsConnectorConfig(@JsonProperty("awsRegionName") final String awsRegionName,
                               @JsonProperty("awsProfileName") final String awsProfileName,
@@ -113,7 +113,7 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
         }
 
         public Builder awsProfileName(final String awsProfileName) {
-            this.queueName = awsProfileName;
+            this.awsProfileName = awsProfileName;
             return this;
         }
 
