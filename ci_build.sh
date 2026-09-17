@@ -323,7 +323,7 @@ format_manifest_file() {
 releaseToDockerHub() {
   # echo "releaseToDockerHub called with args [$@]"
 
-  if [ $# -lt 3 ]; then
+  if [[ $# -lt 3 ]]; then
     echo "Incorrect args, expecting at least 3"
     exit 1
   fi
@@ -336,7 +336,7 @@ releaseToDockerHub() {
   local allTagArgs=()
 
   for tagVersionPart in "$@"; do
-    if [ "x${tagVersionPart}" != "x" ]; then
+    if [[ -n "${tagVersionPart}" ]]; then
       # echo -e "Adding docker tag [${GREEN}${tagVersionPart}${NC}]"
       allTagArgs+=("--tag=${dockerRepo}:${tagVersionPart}")
     fi
@@ -504,7 +504,7 @@ check_for_out_of_date_puml_svgs() {
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # establish what version of stroom we are building
-if [ -n "$BUILD_TAG" ]; then
+if [[ -n "$BUILD_TAG" ]]; then
   # Tagged commit so use that as our stroom version, e.g. v6.0.0
   BUILD_VERSION="${BUILD_TAG}"
 else
@@ -530,10 +530,10 @@ echo -e "git version:                   [${GREEN}$(git --version)${NC}]"
 extraBuildArgs=()
 allDockerTags=()
 
-if [ "$BUILD_IS_PULL_REQUEST" = "true" ]; then
+if [[ "$BUILD_IS_PULL_REQUEST" = "true" ]]; then
   # Pull request so no build required
   doDockerBuild=false
-elif [ -n "$BUILD_TAG" ]; then
+elif [[ -n "$BUILD_TAG" ]]; then
   # Tagged release so we want docker builds
   # If tag is v7.1.2 then we want the following docker tags
   # v7.1.2 (fixed tag)
@@ -546,13 +546,13 @@ elif [ -n "$BUILD_TAG" ]; then
 
   # Extract the major version part for a floating tag
   majorVer=$(echo "${BUILD_TAG}" | grep -oP "^v[0-9]+")
-  if [ -n "${majorVer}" ]; then
+  if [[ -n "${majorVer}" ]]; then
     MAJOR_VER_FLOATING_TAG="${majorVer}${LATEST_SUFFIX}"
   fi
 
   # Extract the minor version part for a floating tag
   minorVer=$(echo "${BUILD_TAG}" | grep -oP "^v[0-9]+\.[0-9]+")
-  if [ -n "${minorVer}" ]; then
+  if [[ -n "${minorVer}" ]]; then
     MINOR_VER_FLOATING_TAG="${minorVer}${LATEST_SUFFIX}"
   fi
 
@@ -616,10 +616,10 @@ export BUILD_VERSION
 
 # MAX_WORKERS env var should be set in travis/github actions settings to
 # control max gradle/gwt workers
-./container_build/runInJavaDocker.sh GRADLE_BUILD
+./container_build/runInJavaDocker.sh "GRADLE_BUILD"
 
 # Don't do a docker build for pull requests
-if [ "$doDockerBuild" = true ]; then
+if [[ "$doDockerBuild" = true ]]; then
 
   echo "::group::DockerHub release"
   # build and release stroom image to dockerhub
@@ -634,11 +634,18 @@ if [ "$doDockerBuild" = true ]; then
     "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
   echo "::endgroup::"
+else
+  # Not a release so just check our dockerfiles will build locally.
+  # skipGradle we have already done a gradle build so the jar will
+  # be in place for this to pick up and include in the image.
+  echo "::group::Dockerfile test build"
+  ./buildDockerImages.sh skipGradle
+  echo "::endgroup::"
 fi
 
 # If it is a tagged build copy all the files needed for the github release
 # artefacts
-if [ -n "$BUILD_TAG" ]; then
+if [[ -n "$BUILD_TAG" ]]; then
   copy_swagger_ui_content
 
   generate_ddl_dump
