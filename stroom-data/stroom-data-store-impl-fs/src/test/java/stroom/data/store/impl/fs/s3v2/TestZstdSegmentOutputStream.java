@@ -254,6 +254,73 @@ class TestZstdSegmentOutputStream {
         }
     }
 
+    /**
+     * {@code ZstdOutputStream} closes itself in a finalizer, and closing one that was never written
+     * to writes an empty frame. A stream created for a segment and then dropped unclosed because
+     * the segment stayed empty would therefore write nine bytes into the delegate whenever the GC
+     * got round to it - in the middle of a later segment, or after the seek table - and the stream
+     * and its seek table would no longer agree. Never seen in isolation, seen in a full build as
+     * {@code test_allEmptySegments} failing by a multiple of nine bytes. This test forces the GC to
+     * make it deterministic: no stream may be left for a finalizer to close.
+     */
+    @Test
+    @SuppressWarnings("removal") // runFinalization is deprecated, and is exactly what this test needs
+    void test_emptySegmentsLeaveNothingForAFinalizerToWrite() throws IOException {
+        final int iterations = 10;
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
+                byteArrayOutputStream,
+                null,
+                new HeapBufferPool(ByteBufferPoolConfig::new),
+                COMPRESSION_LEVEL)) {
+            for (int i = 1; i < iterations; i++) {
+                segmentOutputStream.addSegment();
+            }
+            // Anything a segment left behind unclosed is finalised here, while the stream is open.
+            for (int i = 0; i < 3; i++) {
+                System.gc();
+                System.runFinalization();
+            }
+            segmentOutputStream.write("last".getBytes(StandardCharsets.UTF_8));
+        }
+        for (int i = 0; i < 3; i++) {
+            System.gc();
+            System.runFinalization();
+        }
+
+        final byte[] compressedBytes = byteArrayOutputStream.toByteArray();
+
+        // The same one data frame, written on its own, says how big it is.
+        final ByteArrayOutputStream reference = new ByteArrayOutputStream();
+        try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
+                reference, null, new HeapBufferPool(ByteBufferPoolConfig::new), COMPRESSION_LEVEL)) {
+            segmentOutputStream.write("last".getBytes(StandardCharsets.UTF_8));
+        }
+        final int oneDataFrame = reference.size() - ZstdSegmentUtil.calculateSeekTableFrameSize(1);
+
+        assertThat(compressedBytes.length)
+                .as("one data frame plus the seek table, and not a byte written by a finalizer")
+                .isEqualTo(oneDataFrame + ZstdSegmentUtil.calculateSeekTableFrameSize(iterations));
+        final ByteBuffer compressedBuffer = ByteBuffer.allocateDirect(compressedBytes.length);
+        ByteBufferUtils.copy(ByteBuffer.wrap(compressedBytes), compressedBuffer);
+        assertThat(ZstdSeekTable.parse(compressedBuffer).orElseThrow().getFrameCount()).isEqualTo(iterations);
+    }
+
+    /**
+     * A zero-length write is no write: on its own it produces nothing, not even a seek table.
+     */
+    @Test
+    void test_zeroLengthWriteIsNoWrite() throws IOException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
+                byteArrayOutputStream, null, new HeapBufferPool(ByteBufferPoolConfig::new), COMPRESSION_LEVEL)) {
+            segmentOutputStream.write(new byte[0]);
+            segmentOutputStream.write(new byte[10], 3, 0);
+        }
+        assertThat(byteArrayOutputStream.size()).isZero();
+    }
+
     @Test
     void test_allEmptySegments() throws IOException {
         final int iterations = 10;
