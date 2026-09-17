@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package stroom.processor.impl.db.migration;
 
 import stroom.db.util.AbstractFlyWayDbModule;
-import stroom.processor.impl.ProcessorConfig.ProcessorDbConfig;
+import stroom.processor.impl.db.ProcessorDbConfig;
 import stroom.processor.impl.db.ProcessorDbConnProvider;
 import stroom.processor.impl.db.ProcessorDbModule;
 import stroom.test.common.util.db.AbstractSingleFlywayMigrationTest;

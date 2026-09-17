@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,5 +24,13 @@ public interface ProcessorFilterTrackerDao {
 
     Optional<ProcessorFilterTracker> fetch(int id);
 
+    /**
+     * Update the tracker. Updates are subject to optimistic locking on version so the version of the supplied
+     * tracker is incremented to match the DB once the update is committed, allowing the same instance to be
+     * updated more than once.
+     *
+     * @param processorFilterTracker The tracker to update. Its version will be incremented on success.
+     * @return The number of rows updated.
+     */
     int update(ProcessorFilterTracker processorFilterTracker);
 }

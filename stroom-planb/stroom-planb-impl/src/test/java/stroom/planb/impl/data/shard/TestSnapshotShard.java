@@ -1,0 +1,1536 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.planb.impl.data.shard;
+
+import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.lmdb2.KV;
+import stroom.node.api.NodeCallException;
+import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBPaths;
+import stroom.planb.impl.dao.Db;
+import stroom.planb.impl.dao.LmdbWriter;
+import stroom.planb.impl.dao.PlanBEnv.Usage;
+import stroom.planb.impl.data.SnapshotNotFoundException;
+import stroom.planb.impl.data.shard.SnapshotShard.DbFactory;
+import stroom.planb.impl.rest.FileTransferClient;
+import stroom.planb.impl.rest.NotModifiedException;
+import stroom.planb.shared.AbstractPlanBSettings;
+import stroom.planb.shared.PlanBDoc;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ValuesConsumer;
+import stroom.util.concurrent.Guard;
+import stroom.util.concurrent.Guard.TryAgainException;
+import stroom.util.concurrent.StripedGuard;
+import stroom.util.concurrent.ThreadUtil;
+import stroom.util.io.FileUtil;
+import stroom.util.time.StroomDuration;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.lmdbjava.Env.AlreadyClosedException;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.OptionalLong;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+class TestSnapshotShard {
+
+    private static final DbFactory DB_FACTORY = (
+            doc,
+            dbDir,
+            byteBuffers,
+            byteBufferFactory,
+            readOnly) ->
+            new TestDb();
+    private static ExecutorService executorService;
+
+    @TempDir
+    Path tempDir;
+
+    @Mock
+    private ByteBuffers byteBuffers;
+    @Mock
+    private ByteBufferFactory byteBufferFactory;
+    @Mock
+    private FileTransferClient fileTransferClient;
+
+    private PlanBConfig config;
+    private PlanBPaths planBPaths;
+    private PlanBDoc doc;
+    private AutoCloseable mocks;
+
+    @BeforeAll
+    static void beforeAll() {
+        executorService = Executors.newCachedThreadPool();
+    }
+
+    @AfterAll
+    static void afterAll() {
+        executorService.shutdown();
+    }
+
+    @BeforeEach
+    void setUp() {
+        mocks = MockitoAnnotations.openMocks(this);
+
+        // Create config with short durations for testing
+        config = PlanBConfig
+                .builder()
+                .nodeList(Collections.singletonList("test-node"))
+                .minTimeToKeepSnapshots(StroomDuration.ofSeconds(10))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofSeconds(1))
+                // This also bounds how long a read with no snapshot yet waits for its first fetch,
+                // so a test must only shorten it if it is exercising the retry window itself. A
+                // cold JVM can take tens of milliseconds to complete a first fetch.
+                .snapshotRetryFetchInterval(StroomDuration.ofSeconds(2))
+                .build();
+
+        planBPaths = new PlanBPaths(tempDir);
+        doc = PlanBDoc.builder().uuid("test-uuid").name("test-shard").build();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (mocks != null) {
+            mocks.close();
+        }
+        FileUtil.deleteDir(tempDir);
+    }
+
+    @Test
+    void testConcurrentReads() throws Exception {
+        // Given: A snapshot shard that returns successful fetches
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenReturn(Instant.now());
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // When: Multiple threads read concurrently
+        final int threadCount = 50;
+        final int readsPerThread = 100;
+        try (final ExecutorService executor = Executors.newFixedThreadPool(threadCount)) {
+            final CountDownLatch startLatch = new CountDownLatch(1);
+            final AtomicInteger successCount = new AtomicInteger(0);
+            final List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+            for (int i = 0; i < threadCount; i++) {
+                futures.add(CompletableFuture.runAsync(() -> {
+                    try {
+                        startLatch.await();
+                        for (int j = 0; j < readsPerThread; j++) {
+                            final String info = shard.getInfo();
+                            if (info != null) {
+                                successCount.incrementAndGet();
+                            }
+                        }
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }, executor));
+            }
+
+            startLatch.countDown();
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(30, TimeUnit.SECONDS);
+
+            // Then: All reads should succeed
+            assertThat(successCount.get()).isEqualTo(threadCount * readsPerThread);
+        }
+    }
+
+    @Test
+    void testSnapshotRotation() throws Exception {
+        // Given: A snapshot that will expire quickly
+        config = config.copy().minTimeToKeepSnapshots(StroomDuration.ofMillis(100)).build();
+
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // Initial fetch happens on the first read, not construction.
+        final String initial = shard.get(db -> "read");
+        assertThat(initial).isEqualTo("read");
+        assertThat(fetchCount.get()).isEqualTo(1);
+
+        // When: We wait for expiry and trigger a read
+        Thread.sleep(150);
+        shard.getInfo();
+
+        // Give rotation time to complete
+        Thread.sleep(200);
+
+        // Then: A new snapshot should have been fetched
+        assertThat(fetchCount.get()).isGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void testOnlyOneRotationAtATime() throws Exception {
+        // Given: A snapshot with slow fetch
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .build();
+
+        final CountDownLatch fetchStarted = new CountDownLatch(1);
+        final CountDownLatch proceedFetch = new CountDownLatch(1);
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    final int count = fetchCount.incrementAndGet();
+                    if (count == 2) {
+                        fetchStarted.countDown();
+                        proceedFetch.await();
+                    }
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // Initial fetch happens on the first read.
+        shard.get(db -> "read");
+
+        // When: We expire the snapshot and trigger multiple reads
+        Thread.sleep(150);
+
+        try (final ExecutorService executor = Executors.newFixedThreadPool(10)) {
+            for (int i = 0; i < 10; i++) {
+                executor.submit(() -> {
+                    try {
+                        shard.getInfo();
+                    } catch (final Exception e) {
+                        // Ignore
+                    }
+                });
+            }
+
+            // Wait for rotation to start
+            assertThat(fetchStarted.await(2, TimeUnit.SECONDS)).isTrue();
+
+            // Then: Only one rotation should be in progress
+            assertThat(fetchCount.get()).isEqualTo(2); // Initial + one rotation
+
+            proceedFetch.countDown();
+        }
+    }
+
+    @Test
+    void testFailedFetchExtendsExpiry() throws Exception {
+        // Given: A snapshot that fails to fetch
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .snapshotRetryFetchInterval(StroomDuration.ofSeconds(5))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    final int count = fetchCount.incrementAndGet();
+                    if (count == 1) {
+                        return Instant.now();
+                    } else {
+                        throw new RuntimeException("Fetch failed");
+                    }
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // When: We wait for expiry and trigger reads
+        Thread.sleep(150);
+        shard.getInfo();
+        Thread.sleep(200);
+
+        // Trigger another read quickly
+        shard.getInfo();
+        Thread.sleep(200);
+
+        // Then: Should not keep retrying due to extended expiry
+        // Should be 2: initial + one failed rotation
+        assertThat(fetchCount.get()).isEqualTo(2);
+    }
+
+    @Test
+    void testGuardPreventsUseAfterDestroy() {
+        // Given: A guard with a destroy callback
+        final AtomicBoolean destroyed = new AtomicBoolean(false);
+        final Guard guard = new StripedGuard(() -> destroyed.set(true), 64);
+
+        // When: We destroy the guard
+        guard.destroy();
+
+        // Then: Subsequent acquires should throw TryAgainException
+        assertThatThrownBy(() -> guard.acquire(() -> "test"))
+                .isInstanceOf(TryAgainException.class);
+
+        // And the callback should have been called
+        assertThat(destroyed.get()).isTrue();
+    }
+
+    @Test
+    void testGuardReferenceCountingWithConcurrency() throws Exception {
+        // Given: A guard with multiple concurrent acquisitions
+        final AtomicInteger destroyCount = new AtomicInteger(0);
+        final AtomicInteger maxConcurrent = new AtomicInteger(0);
+        final AtomicInteger currentConcurrent = new AtomicInteger(0);
+
+        final Guard guard = new StripedGuard(destroyCount::incrementAndGet, 64);
+
+        final int threadCount = 20;
+        final CyclicBarrier barrier = new CyclicBarrier(threadCount);
+        try (final ExecutorService executor = Executors.newFixedThreadPool(threadCount)) {
+            final CountDownLatch completeLatch = new CountDownLatch(threadCount);
+
+            // When: Multiple threads acquire and hold the guard
+            for (int i = 0; i < threadCount; i++) {
+                executor.submit(() -> {
+                    try {
+                        barrier.await(); // Synchronise start
+                        guard.acquire(() -> {
+                            final int concurrent = currentConcurrent.incrementAndGet();
+                            maxConcurrent.updateAndGet(max -> Math.max(max, concurrent));
+                            ThreadUtil.sleep(50); // Hold for a bit
+                            currentConcurrent.decrementAndGet();
+                            return null;
+                        });
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        completeLatch.countDown();
+                    }
+                });
+            }
+
+            // Wait for all acquisitions to complete
+            assertThat(completeLatch.await(5, TimeUnit.SECONDS)).isTrue();
+
+            // Then: Destroy should work
+            guard.destroy();
+            assertThat(destroyCount.get()).isEqualTo(1);
+            assertThat(maxConcurrent.get()).isGreaterThan(1); // Verify concurrency happened
+        }
+    }
+
+    @Test
+    void testGuardDoubleDestroyIsIdempotent() {
+        // Given: A guard
+        final AtomicInteger destroyCount = new AtomicInteger(0);
+        final Guard guard = new StripedGuard(destroyCount::incrementAndGet, 64);
+
+        // When: We destroy it twice
+        guard.destroy();
+        guard.destroy(); // Should not throw
+
+        // Then: Callback should only be called once
+        assertThat(destroyCount.get()).isEqualTo(1);
+    }
+
+    @Test
+    void testRetryLogicWithTryAgainException() {
+        // Given: a fetch that always succeeds. Nothing here throws TryAgainException, so despite the
+        // method name this only covers the ordinary getInfo path — testGuardPreventsUseAfterDestroy
+        // covers TryAgainException itself.
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenReturn(Instant.now());
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // When/Then: Normal operation should succeed
+        final String info = shard.getInfo();
+        assertThat(info).isNotNull();
+    }
+
+    @Test
+    void testCleanupReportsIdleAfterTimeout() throws Exception {
+        // Given: A snapshot with very short idle timeout
+        config = config
+                .copy()
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofMillis(100))
+                .build();
+
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenReturn(Instant.now());
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // Access the DB
+        shard.getInfo();
+
+        // When: Checked immediately — should NOT be idle
+        assertThat(shard.isIdle()).isFalse();
+
+        // When: We wait past the idle timeout
+        Thread.sleep(150);
+
+        // Then: Should report as idle
+        assertThat(shard.isIdle()).isTrue();
+
+        // When: We access it again — should reset the idle timer
+        shard.getInfo();
+        assertThat(shard.isIdle()).isFalse();
+    }
+
+    @Test
+    void testDeleteDestroysSnapshot() {
+        // Given: A snapshot
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenReturn(Instant.now());
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // When: We delete it
+        final boolean deleted = shard.delete();
+
+        // Then: Should return true
+        assertThat(deleted).isTrue();
+    }
+
+    @Test
+    void testUnsupportedOperations() {
+        // Given: A snapshot shard
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenReturn(Instant.now());
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // When/Then: Unsupported operations throw
+        assertThatThrownBy(() -> shard.merge(tempDir))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("not supported");
+
+        assertThat(shard.runRetention(doc)).isEqualTo(0L);
+        assertThat(shard.condense(doc)).isEqualTo(0L);
+
+        // These should not throw
+        shard.compact();
+    }
+
+    @Test
+    void testGetDoc() {
+        // Given: A snapshot shard
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenReturn(Instant.now());
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // When/Then: getDoc returns the correct document
+        assertThat(shard.getDoc()).isEqualTo(doc);
+    }
+
+    @Test
+    void testConcurrentRotationAndReads() throws Exception {
+        // Given: A snapshot that expires quickly
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(50))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    Thread.sleep(100); // Slow fetch
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        final AtomicInteger successCount = new AtomicInteger(0);
+        final AtomicReference<Throwable> firstError = new AtomicReference<>();
+
+        // When: We hammer it with reads while rotation is happening
+        try (final ExecutorService executor = Executors.newFixedThreadPool(10)) {
+            for (int i = 0; i < 100; i++) {
+                executor.submit(() -> {
+                    try {
+                        shard.getInfo();
+                        successCount.incrementAndGet();
+                    } catch (final Throwable t) {
+                        firstError.compareAndSet(null, t);
+                    }
+                });
+                Thread.sleep(10);
+            }
+        }
+
+        // Then: All reads should succeed despite rotation
+        assertThat(firstError.get()).isNull();
+        assertThat(successCount.get()).isEqualTo(100);
+    }
+
+    @Test
+    void testRaceConditionBetweenDestroyAndAcquire() throws Exception {
+        // Given: A guard being destroyed while threads try to acquire
+        final AtomicInteger destroyCount = new AtomicInteger(0);
+        final Guard guard = new StripedGuard(destroyCount::incrementAndGet, 64);
+        final CountDownLatch startLatch = new CountDownLatch(1);
+        final AtomicInteger tryAgainCount = new AtomicInteger(0);
+        final AtomicInteger successCount = new AtomicInteger(0);
+
+        final int threadCount = 50;
+        try (final ExecutorService executor = Executors.newFixedThreadPool(threadCount)) {
+            // When: Some threads destroy while others try to acquire
+            for (int i = 0; i < threadCount; i++) {
+                final int index = i;
+                executor.submit(() -> {
+                    try {
+                        startLatch.await();
+                        if (index == 0) {
+                            guard.destroy();
+                        } else {
+                            try {
+                                guard.acquire(() -> {
+                                    successCount.incrementAndGet();
+                                    return null;
+                                });
+                            } catch (final TryAgainException e) {
+                                tryAgainCount.incrementAndGet();
+                            }
+                        }
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
+
+            startLatch.countDown();
+        }
+
+        // Then: Destroy should be called exactly once
+        assertThat(destroyCount.get()).isEqualTo(1);
+        // And some attempts should have failed with TryAgainException
+        assertThat(tryAgainCount.get()).isGreaterThan(0);
+    }
+
+    @Test
+    void testReadsDuringRotationRetryGracefully() throws Exception {
+        // This test verifies that when rotation replaces the current instance,
+        // any concurrent readers that got the old instance reference and find
+        // the guard destroyed will get TryAgainException and retry successfully
+        // with the new instance.
+
+        // Given: A snapshot with short expiry
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // Access the DB
+        shard.getInfo();
+
+        // Wait for expiry and trigger rotation
+        Thread.sleep(150);
+        shard.getInfo(); // triggers rotation asynchronously
+
+        // Wait for rotation to complete
+        Thread.sleep(300);
+
+        // When/Then: Subsequent reads should succeed (via the new instance)
+        // and NOT throw any exception
+        final String info = shard.getInfo();
+        assertThat(info).isNotNull();
+        assertThat(fetchCount.get()).isGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void testFailedRotationCleansUpAbandonedDirectory() throws Exception {
+        // Given: A snapshot where rotation fetches will fail
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .snapshotRetryFetchInterval(StroomDuration.ofSeconds(5))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    final int count = fetchCount.incrementAndGet();
+                    if (count == 1) {
+                        return Instant.now(); // First fetch succeeds
+                    } else {
+                        throw new RuntimeException("Fetch failed");
+                    }
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // When: We wait for expiry and trigger a failed rotation
+        Thread.sleep(150);
+        shard.getInfo(); // triggers rotation
+        Thread.sleep(300); // wait for rotation to complete
+
+        // Then: The snapshot dir should NOT accumulate abandoned directories.
+        // Count the directories under the snapshot/uuid path.
+        final Path snapshotUuidDir = planBPaths.getSnapshotDir().resolve(doc.getUuid());
+        if (Files.exists(snapshotUuidDir)) {
+            try (final Stream<Path> dirs = Files.list(snapshotUuidDir).filter(Files::isDirectory)) {
+                final long dirCount = dirs.count();
+                // Should have at most 1 directory (the active instance).
+                // The failed rotation's directory should have been cleaned up.
+                assertThat(dirCount).isLessThanOrEqualTo(1);
+            }
+        }
+    }
+
+    private static final class TestDb implements Db<String, String> {
+
+        private final AtomicBoolean closed = new AtomicBoolean();
+
+        @Override
+        public void insert(final LmdbWriter writer, final KV<String, String> kv) {
+            ensureOpen();
+        }
+
+        @Override
+        public String get(final String key) {
+            ensureOpen();
+            return "";
+        }
+
+        @Override
+        public void search(final ExpressionCriteria criteria,
+                           final FieldIndex fieldIndex,
+                           final DateTimeSettings dateTimeSettings,
+                           final ExpressionPredicateFactory expressionPredicateFactory,
+                           final ValuesConsumer consumer) {
+            ensureOpen();
+        }
+
+        @Override
+        public void merge(final Path source) {
+            ensureOpen();
+        }
+
+        @Override
+        public long runRetention(final Instant deleteBefore, final boolean useStateTime) {
+            ensureOpen();
+            return 0;
+        }
+
+        @Override
+        public long condense(final Instant condenseBefore) {
+            ensureOpen();
+            return 0;
+        }
+
+        @Override
+        public void compact(final Path destination) {
+            ensureOpen();
+        }
+
+        @Override
+        public void writeWith(final LmdbWriter writer, final Runnable operation) {
+            ensureOpen();
+            operation.run();
+        }
+
+        @Override
+        public Usage getUsage() {
+            ensureOpen();
+            return new Usage(0L, AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
+        }
+
+
+        @Override
+        public LmdbWriter createWriter() {
+            ensureOpen();
+            return null;
+        }
+
+        @Override
+        public void write(final Consumer<LmdbWriter> consumer) {
+            ensureOpen();
+        }
+
+        @Override
+        public void lock(final Runnable runnable) {
+            ensureOpen();
+        }
+
+        @Override
+        public String getInstanceUuid() {
+            ensureOpen();
+            return "test-instance-uuid";
+        }
+
+        @Override
+        public void writeSourceMetaId(final long metaId) {
+            ensureOpen();
+        }
+
+        @Override
+        public OptionalLong getSourceMetaId() {
+            ensureOpen();
+            return OptionalLong.empty();
+        }
+
+        @Override
+        public void close() {
+            if (!closed.compareAndSet(false, true)) {
+                throw new AlreadyClosedException();
+            }
+        }
+
+        @Override
+        public long count() {
+            ensureOpen();
+            return 0;
+        }
+
+        @Override
+        public String getInfoString() {
+            ensureOpen();
+            return "";
+        }
+
+        private void ensureOpen() {
+            if (closed.get()) {
+                throw new AlreadyClosedException();
+            }
+        }
+    }
+
+    @Test
+    void testDeleteDuringRotationDoesNotLeak() throws Exception {
+        // Given: A snapshot with short expiry and slow fetch to simulate in-flight rotation
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .build();
+
+        final CountDownLatch fetchStarted = new CountDownLatch(1);
+        final CountDownLatch proceedFetch = new CountDownLatch(1);
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    final int count = fetchCount.incrementAndGet();
+                    if (count == 2) {
+                        // Block the rotation fetch so delete() runs mid-flight
+                        fetchStarted.countDown();
+                        proceedFetch.await(5, TimeUnit.SECONDS);
+                    }
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // Initial fetch happens on the first read.
+        shard.get(db -> "read");
+
+        // When: We wait for expiry, trigger rotation, then delete mid-rotation
+        Thread.sleep(150);
+        shard.getInfo(); // triggers async rotation
+
+        // Wait for rotation fetch to start
+        assertThat(fetchStarted.await(2, TimeUnit.SECONDS)).isTrue();
+
+        // Now delete while rotation is blocked
+        final boolean deleted = shard.delete();
+        assertThat(deleted).isTrue();
+
+        // Let the rotation finish
+        proceedFetch.countDown();
+        Thread.sleep(300); // give rotation time to complete and clean up
+
+        // Then: No directories should be leaked — the rotation's new instance should
+        // be destroyed because the CAS will fail (snapshotRef is null).
+        final Path snapshotUuidDir = planBPaths.getSnapshotDir().resolve(doc.getUuid());
+        if (Files.exists(snapshotUuidDir)) {
+            try (final Stream<Path> dirs = Files.list(snapshotUuidDir).filter(Files::isDirectory)) {
+                final long dirCount = dirs.count();
+                assertThat(dirCount).as("No snapshot directories should remain after delete").isEqualTo(0);
+            }
+        }
+    }
+
+    @Test
+    void testDeleteFailsFastOnSubsequentReads() throws Exception {
+        // Given: A snapshot shard
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenReturn(Instant.now());
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // Access works before delete
+        assertThat(shard.getInfo()).isNotNull();
+
+        // When: We delete it
+        shard.delete();
+
+        // Then: Subsequent reads should fail immediately (not after 100 retries)
+        final long start = System.nanoTime();
+        assertThatThrownBy(shard::getInfo)
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("closed");
+        final long elapsed = System.nanoTime() - start;
+
+        // Should fail almost instantly (well under 1 second)
+        assertThat(elapsed).isLessThan(1_000_000_000L);
+    }
+
+    @Test
+    void testDeleteDoesNotTriggerNewRotation() throws Exception {
+        // Given: A snapshot that has expired
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // Wait for expiry
+        Thread.sleep(150);
+
+        final int countBefore = fetchCount.get();
+
+        // When: We delete the expired shard
+        shard.delete();
+
+        // Give time for any rotation that might have been triggered
+        Thread.sleep(300);
+
+        // Then: No new fetch should have been triggered by delete()
+        assertThat(fetchCount.get()).isEqualTo(countBefore);
+    }
+
+    @Test
+    void testConcurrentDeleteAndReads() throws Exception {
+        // Given: A snapshot shard
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenReturn(Instant.now());
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // When: Multiple readers and a deleter race
+        final int readerCount = 20;
+        final CyclicBarrier barrier = new CyclicBarrier(readerCount + 1);
+        final AtomicInteger successCount = new AtomicInteger(0);
+        final AtomicInteger closedCount = new AtomicInteger(0);
+        final AtomicReference<Throwable> unexpectedError = new AtomicReference<>();
+
+        try (final ExecutorService executor = Executors.newFixedThreadPool(readerCount + 1)) {
+            // Start readers
+            for (int i = 0; i < readerCount; i++) {
+                executor.submit(() -> {
+                    try {
+                        barrier.await(5, TimeUnit.SECONDS);
+                        for (int j = 0; j < 50; j++) {
+                            try {
+                                shard.getInfo();
+                                successCount.incrementAndGet();
+                            } catch (final RuntimeException e) {
+                                if (e.getMessage() != null && e.getMessage().contains("closed")) {
+                                    closedCount.incrementAndGet();
+                                    break; // Stop reading after shard is closed
+                                } else {
+                                    unexpectedError.compareAndSet(null, e);
+                                }
+                            }
+                        }
+                    } catch (final Exception e) {
+                        unexpectedError.compareAndSet(null, e);
+                    }
+                });
+            }
+
+            // Start deleter
+            executor.submit(() -> {
+                try {
+                    barrier.await(5, TimeUnit.SECONDS);
+                    Thread.sleep(10); // Let some reads happen first
+                    shard.delete();
+                } catch (final Exception e) {
+                    unexpectedError.compareAndSet(null, e);
+                }
+            });
+        }
+
+        // Then: No unexpected errors should have occurred
+        assertThat(unexpectedError.get()).isNull();
+        // Some reads should have succeeded before delete
+        assertThat(successCount.get()).isGreaterThan(0);
+    }
+
+    /**
+     * When the initial fetch fails there is no usable snapshot, so every read fails with the cached fetch
+     * exception until the retry interval elapses. Once the remote node can supply a snapshot again a read
+     * should get it rather than replaying the cached failure. See gh-5689.
+     */
+    @Test
+    void testFailedFetchRecoversOnNextRead() throws Exception {
+        config = config
+                .copy()
+                .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
+                .build();
+
+        final AtomicBoolean fail = new AtomicBoolean(true);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    if (fail.get()) {
+                        throw new RuntimeException("404 Not Found - No snapshot has been created yet");
+                    }
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // The initial fetch failed so reads fail.
+        assertThatThrownBy(() -> shard.get(db -> "read")).isInstanceOf(RuntimeException.class);
+
+        // The remote node can now supply a snapshot.
+        fail.set(false);
+        Thread.sleep(100);
+
+        // The read waits for the retry rather than replaying the cached failure.
+        final String result = shard.get(db -> "read");
+        assertThat(result).isEqualTo("read");
+    }
+
+    /**
+     * A read that has to wait must report the most recent failure, not a stale one from the first attempt.
+     */
+    @Test
+    void testRepeatedFailureReportsLatestError() throws Exception {
+        config = config
+                .copy()
+                .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    throw new RuntimeException("failure " + fetchCount.incrementAndGet());
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        assertThatThrownBy(() -> shard.get(db -> "read")).hasMessageContaining("failure 1");
+
+        Thread.sleep(100);
+
+        assertThatThrownBy(() -> shard.get(db -> "read"))
+                .hasMessageContaining("failure")
+                .hasMessageNotContaining("failure 1");
+    }
+
+    /**
+     * A healthy snapshot must keep serving reads when a rotation fails, rather than the failure replacing it.
+     */
+    @Test
+    void testFailedRotationKeepsServingExistingSnapshot() throws Exception {
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(50))
+                .build();
+
+        final AtomicBoolean fail = new AtomicBoolean(false);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    if (fail.get()) {
+                        throw new RuntimeException("fetch failed");
+                    }
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        final String initial = shard.get(db -> "read");
+        assertThat(initial).isEqualTo("read");
+
+        // Rotations from now on fail, but we already have a usable snapshot.
+        fail.set(true);
+        for (int i = 0; i < 5; i++) {
+            Thread.sleep(60);
+            final String result = shard.get(db -> "read");
+            assertThat(result).isEqualTo("read");
+        }
+    }
+
+    /**
+     * Every configured node is sent a copy of all the data, so if a node can't be reached another can supply
+     * the snapshot. See gh-5689.
+     */
+    @Test
+    void testFailsOverWhenNodeUnreachable() {
+        config = config.copy().nodeList(List.of("node1", "node2")).build();
+
+        final List<String> tried = Collections.synchronizedList(new ArrayList<>());
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    final String node = inv.getArgument(0);
+                    tried.add(node);
+                    if ("node1".equals(node)) {
+                        throw new NodeCallException(node, "http://node1", "Connection refused");
+                    }
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        final String result = shard.get(db -> "read");
+        assertThat(result).isEqualTo("read");
+        assertThat(tried).containsExactly("node1", "node2");
+    }
+
+    /**
+     * A node that answers has given us the answer for the whole cluster, so we must not ask another node and
+     * hide the real reason behind a slower, noisier failure.
+     */
+    @Test
+    void testDoesNotFailOverWhenNodeAnswersWithError() {
+        config = config.copy().nodeList(List.of("node1", "node2")).build();
+
+        final List<String> tried = Collections.synchronizedList(new ArrayList<>());
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    tried.add(inv.getArgument(0));
+                    throw new SnapshotNotFoundException("404 Not Found - No snapshot has been created yet");
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        assertThatThrownBy(() -> shard.get(db -> "read"))
+                .hasMessageContaining("No snapshot has been created yet");
+        assertThat(tried).containsExactly("node1");
+    }
+
+    /**
+     * If no node can be reached the failure should name what was tried rather than reporting only the last node.
+     */
+    @Test
+    void testAllNodesUnreachableReportsNodesTried() {
+        config = config.copy().nodeList(List.of("node1", "node2")).build();
+
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    final String node = inv.getArgument(0);
+                    throw new NodeCallException(node, "http://" + node, "Connection refused");
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        assertThatThrownBy(() -> shard.get(db -> "read"))
+                .hasMessageContaining("node1")
+                .hasMessageContaining("node2");
+    }
+
+    /**
+     * A fetch that fails must not be retried until the retry interval has elapsed, however many reads
+     * arrive. The first read triggers the fetch and waits for it, the rest fail fast. See gh-5689.
+     */
+    @Test
+    void testFailedFetchIsNotRetriedWithinRetryWindow() {
+        config = config
+                .copy()
+                .snapshotRetryFetchInterval(StroomDuration.ofSeconds(10))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    throw new RuntimeException("fetch failed");
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        for (int i = 0; i < 5; i++) {
+            assertThatThrownBy(() -> shard.get(db -> "read")).hasMessageContaining("fetch failed");
+        }
+        assertThat(fetchCount.get()).isEqualTo(1);
+    }
+
+    /**
+     * A fetch can hang indefinitely, as there is no client side timeout. The first read waits the bounded
+     * retry interval then fails, and subsequent reads must fail fast rather than each waiting a full
+     * interval against the same hung fetch. See gh-5689.
+     */
+    @Test
+    void testHungFetchDoesNotBlockEveryRead() {
+        config = config
+                .copy()
+                .snapshotRetryFetchInterval(StroomDuration.ofSeconds(2))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    ThreadUtil.sleep(60_000);
+                    throw new RuntimeException("hung");
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // The first read waits the bounded interval then times out.
+        assertThatThrownBy(() -> shard.get(db -> "read")).hasMessageContaining("Timed out");
+
+        // Subsequent reads fail fast rather than each waiting the interval.
+        for (int i = 0; i < 3; i++) {
+            final long startMs = System.currentTimeMillis();
+            assertThatThrownBy(() -> shard.get(db -> "read")).isInstanceOf(RuntimeException.class);
+            assertThat(System.currentTimeMillis() - startMs).isLessThan(1_000);
+        }
+        assertThat(fetchCount.get()).isEqualTo(1);
+    }
+
+    /**
+     * NOT_MODIFIED from the store node means the data we hold is current. It must be treated as a successful
+     * confirmation that resets staleness, not as a fetch failure, or an unchanged store would age out of
+     * servability despite being perfectly correct. See gh-5689.
+     */
+    @Test
+    void testNotModifiedConfirmsSnapshotIsCurrent() throws Exception {
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofMillis(400))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    if (fetchCount.incrementAndGet() == 1) {
+                        return Instant.now();
+                    }
+                    throw new NotModifiedException();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        final String initial = shard.get(db -> "read");
+        assertThat(initial).isEqualTo("read");
+
+        // Keep reading well past the staleness bound measured from the original fetch. The NOT_MODIFIED
+        // responses keep confirming the data is current, so it must keep being served.
+        final Instant end = Instant.now().plusMillis(1_000);
+        while (Instant.now().isBefore(end)) {
+            final String result = shard.get(db -> "read");
+            assertThat(result).isEqualTo("read");
+            Thread.sleep(50);
+        }
+        assertThat(fetchCount.get()).isGreaterThanOrEqualTo(2);
+    }
+
+    /**
+     * Data past the staleness bound must not be served, but with no recent failed attempt, e.g. after a long
+     * idle gap, a read must not fail either. It behaves like a first fetch: block on a refresh and serve the
+     * result. See gh-5689.
+     */
+    @Test
+    void testTooStaleReadBlocksAndRefreshesLikeFirstFetch() throws Exception {
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(50))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofMillis(200))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        final String initial = shard.get(db -> "read");
+        assertThat(initial).isEqualTo("read");
+        assertThat(fetchCount.get()).isEqualTo(1);
+
+        // Idle past the staleness bound. No reads means no refreshes and no failures.
+        Thread.sleep(400);
+
+        // The data is too stale to serve but nothing has failed, so the read blocks on a refresh.
+        final String refreshed = shard.get(db -> "read");
+        assertThat(refreshed).isEqualTo("read");
+        assertThat(fetchCount.get()).isEqualTo(2);
+    }
+
+    /**
+     * While refreshes fail, data within the staleness bound keeps being served without blocking, and data
+     * beyond it errors rather than being served very stale. See gh-5689.
+     */
+    @Test
+    void testStalenessBoundStopsServingEventually() throws Exception {
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(50))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofSeconds(5))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    if (fetchCount.incrementAndGet() == 1) {
+                        return Instant.now();
+                    }
+                    throw new RuntimeException("node down");
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        final String initial = shard.get(db -> "read");
+        assertThat(initial).isEqualTo("read");
+
+        // Within the bound reads keep being served despite failing refreshes.
+        Thread.sleep(100);
+        final String stale = shard.get(db -> "read");
+        assertThat(stale).isEqualTo("read");
+
+        // Beyond the bound reads error rather than serve very stale data. Bring the bound below the age of
+        // the data we already hold, rather than waiting for that data to age past a fixed bound, so a slow
+        // machine cannot overshoot the window the assertion above depends on.
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(1))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofMillis(1))
+                .build();
+        assertThatThrownBy(() -> shard.get(db -> "read")).hasMessageContaining("node down");
+    }
+
+    /**
+     * The shard info listing must show why a shard has no data. A bland placeholder leaves a broken shard
+     * looking benign. See gh-5689.
+     */
+    @Test
+    void testGetInfoReportsFetchFailure() {
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenThrow(new RuntimeException("404 Not Found - No snapshot has been created yet"));
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // Trigger the fetch via a read, which fails, then getInfo must show why.
+        assertThatThrownBy(() -> shard.get(db -> "read")).isInstanceOf(RuntimeException.class);
+        assertThat(shard.getInfo()).contains("No snapshot has been created yet");
+    }
+
+    /**
+     * getInfo() renders a listing, so it must not wait for an in flight fetch. It may still trigger one, but
+     * waiting would stall the listing for the retry interval for every failing shard. See gh-5689.
+     */
+    @Test
+    void testGetInfoDoesNotWaitForAFetch() throws Exception {
+        config = config
+                .copy()
+                .snapshotRetryFetchInterval(StroomDuration.ofMillis(50))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger();
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    ThreadUtil.sleep(5_000);
+                    throw new RuntimeException("fetch failed");
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                planBPaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // getInfo() must trigger the fetch but report the state we are in and return, rather than wait
+        // the retry interval for the in flight fetch.
+        final long startMs = System.currentTimeMillis();
+        assertThat(shard.getInfo()).contains("No data");
+        final long durationMs = System.currentTimeMillis() - startMs;
+
+        assertThat(durationMs).isLessThan(2_000);
+        Thread.sleep(200);
+        assertThat(fetchCount.get()).isEqualTo(1);
+    }
+}

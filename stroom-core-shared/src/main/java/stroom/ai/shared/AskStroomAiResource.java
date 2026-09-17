@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Get the default config to use for asking questions",
             operationId = "getDefaultConfig")
-    AskStroomAIConfig getDefaultConfig();
+    AskStroomAiConfig getDefaultConfig();
 
     @POST
     @Path("/setDefaultAskStroomAIConfig")
@@ -65,7 +65,7 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             summary = "Set the default Stroom AI config to use for asking questions",
             operationId = "setDefaultAskStroomAIConfig")
     Boolean setDefaultAskStroomAIConfig(
-            @Parameter(description = "config", required = true) AskStroomAIConfig config);
+            @Parameter(description = "config", required = true) AskStroomAiConfig config);
 
     @POST
     @Path("/createChat")
@@ -95,6 +95,21 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             summary = "Delete an AI chat conversation",
             operationId = "deleteChat")
     Boolean deleteChat(@PathParam("chatId") int chatId);
+
+    @POST
+    @Path("/deleteMessage/{chatId}/{messageId}")
+    @Operation(
+            summary = "Delete a message from an AI chat conversation",
+            operationId = "deleteMessage")
+    Boolean deleteMessage(@PathParam("chatId") int chatId,
+                          @PathParam("messageId") int messageId);
+
+    @POST
+    @Path("/deleteAllMessages/{chatId}")
+    @Operation(
+            summary = "Delete all messages and attachments from an AI chat conversation",
+            operationId = "deleteAllMessages")
+    Boolean deleteAllMessages(@PathParam("chatId") int chatId);
 
     @POST
     @Path("/getMessages/{chatId}")
@@ -134,4 +149,12 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             operationId = "downloadChatHistory")
     ResourceGeneration downloadChatHistory(
             @Parameter(description = "request", required = true) DownloadChatHistoryRequest request);
+
+    @POST
+    @Path("/getAttachmentData")
+    @Operation(
+            summary = "Get a page of attachment table data",
+            operationId = "getAttachmentData")
+    AiAttachmentDataPage getAttachmentData(
+            @Parameter(description = "request", required = true) GetAttachmentDataRequest request);
 }

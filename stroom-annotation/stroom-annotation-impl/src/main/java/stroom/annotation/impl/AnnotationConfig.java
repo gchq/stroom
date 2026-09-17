@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,10 @@
 
 package stroom.annotation.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
+import stroom.annotation.impl.db.AnnotationDBConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
@@ -150,24 +147,5 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
                              "result decoration")
     public CacheConfig getAnnotationValStringCache() {
         return annotationValStringCache;
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    @BootStrapConfig
-    public static class AnnotationDBConfig extends AbstractDbConfig {
-
-        public AnnotationDBConfig() {
-            super();
-        }
-
-        @JsonCreator
-        public AnnotationDBConfig(
-                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
-                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
-            super(connectionConfig, connectionPoolConfig);
-        }
     }
 }

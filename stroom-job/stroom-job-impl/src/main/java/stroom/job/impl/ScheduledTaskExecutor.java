@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,7 +188,7 @@ class ScheduledTaskExecutor {
                         } else {
                             unManagedTaskCount++;
                         }
-                        final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
+                        final Runnable runnable = taskContextFactory.context(taskName, ignored -> {
                             try {
                                 // Run the task
                                 LOGGER.logDurationIfDebugEnabled(
@@ -201,7 +201,7 @@ class ScheduledTaskExecutor {
 
                         CompletableFuture
                                 .runAsync(runnable, executor)
-                                .whenComplete((r, t) ->
+                                .whenComplete((ignoredResult, ignoredThrowable) ->
                                         function.getRunning().set(false));
                     } else {
                         LOGGER.trace(() -> LogUtil.message(
@@ -317,7 +317,8 @@ class ScheduledTaskExecutor {
     }
 
     private AtomicBoolean getRunningState(final ScheduledJob scheduledJob) {
-        return runningMapOfScheduledJobs.computeIfAbsent(scheduledJob, k -> new AtomicBoolean(false));
+        return runningMapOfScheduledJobs.computeIfAbsent(scheduledJob, ignored ->
+                new AtomicBoolean(false));
     }
 
 

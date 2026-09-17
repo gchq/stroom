@@ -24,8 +24,7 @@
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-# NOTE: Using alpine 3.21 because there are critical CVEs on 3.23 at the moment
-FROM eclipse-temurin:25.0.3_9-jdk-alpine-3.23@sha256:cf4889d54497a5919c592d81aa6f75c9aecc9f55469ab9e16de1a691c2bb0374 AS common-base-stage
+FROM eclipse-temurin:25.0.3_9-jdk-alpine-3.23@sha256:5ecfde8e5ecde5954ea3721155b345ef56c1d579b940c761318ad4c05959a151 AS stroom-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
@@ -63,7 +62,7 @@ WORKDIR /stroom-proxy
 EXPOSE 8090
 EXPOSE 8091
 
-# run entrypoint script inside tini for better unix process handling, 
+# run entrypoint script inside tini for better unix process handling,
 # see https://github.com/krallin/tini/issues/8
 ENTRYPOINT [ \
   "/sbin/tini", \

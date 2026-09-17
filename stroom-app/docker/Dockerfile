@@ -24,7 +24,7 @@
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.3_9-jdk-alpine-3.23@sha256:cf4889d54497a5919c592d81aa6f75c9aecc9f55469ab9e16de1a691c2bb0374 AS common-base-stage
+FROM eclipse-temurin:25.0.3_9-jdk-alpine-3.23@sha256:5ecfde8e5ecde5954ea3721155b345ef56c1d579b940c761318ad4c05959a151 AS stroom-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
@@ -72,7 +72,7 @@ WORKDIR /stroom
 EXPOSE 8080
 EXPOSE 8081
 
-# run entrypoint script inside tini for better unix process handling, 
+# run entrypoint script inside tini for better unix process handling,
 # see https://github.com/krallin/tini/issues/8
 ENTRYPOINT [ \
   "/sbin/tini", \
@@ -107,6 +107,7 @@ RUN \
     mkdir -p /stroom/config && \
     mkdir -p /stroom/config_fallback && \
     mkdir -p /stroom/content_pack_import && \
+    mkdir -p /stroom/content_index && \
     mkdir -p /stroom/data_feed_identities && \
     mkdir -p /stroom/git_repo && \
     mkdir -p /stroom/lmdb && \
@@ -143,7 +144,7 @@ COPY \
   *.sh \
   /stroom/
 
-# This config file is a fallback for use in development 
+# This config file is a fallback for use in development
 # (or when a stack with the config bind mount is not available)
 COPY \
   --chown=$USER_ID:$GROUP_ID \
@@ -177,7 +178,9 @@ LABEL \
 
 # A Bind mount volume RO to the container for config files.
 VOLUME /stroom/config/
-# Create Docker volume for the content_pack_import dir as this will be mutated on 
+# Create Docker volume for indexed doc content.
+VOLUME /stroom/content_index/
+# Create Docker volume for the content_pack_import dir as this will be mutated on
 VOLUME /stroom/content_pack_import/
 # Create Docker volume for data feed idenity files to be dropped into
 VOLUME /stroom/data_feed_identities/

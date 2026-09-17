@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,19 @@ package stroom.planb.impl.serde.temporalkey;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.Db;
-import stroom.planb.impl.db.HashLookupDb;
-import stroom.planb.impl.db.PlanBEnv;
-import stroom.planb.impl.db.UidLookupDb;
-import stroom.planb.impl.db.UsedLookupsRecorder;
-import stroom.planb.impl.db.UsedLookupsRecorderProxy;
-import stroom.planb.impl.db.VariableUsedLookupsRecorder;
+import stroom.planb.impl.dao.Db;
+import stroom.planb.impl.dao.HashLookupDb;
+import stroom.planb.impl.dao.PlanBEnv;
+import stroom.planb.impl.dao.UidLookupDb;
+import stroom.planb.impl.dao.UsedLookupsRecorder;
+import stroom.planb.impl.dao.UsedLookupsRecorderProxy;
+import stroom.planb.impl.dao.VariableUsedLookupsRecorder;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.time.TimeSerde;
 import stroom.planb.impl.serde.val.ValSerdeUtil;
 import stroom.planb.impl.serde.val.ValSerdeUtil.Addition;
 import stroom.planb.impl.serde.val.VariableValType;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.query.language.functions.Val;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -50,14 +50,14 @@ public class VariableKeySerde implements TemporalKeySerde {
 
     private static final int USE_HASH_LOOKUP_THRESHOLD = Db.MAX_KEY_LENGTH;
 
-    private final PlanBDoc doc;
+    private final PlanBDocument doc;
     private final int uidLookupThreshold;
     private final UidLookupDb uidLookupDb;
     private final HashLookupDb hashLookupDb;
     private final ByteBuffers byteBuffers;
     private final TimeSerde timeSerde;
 
-    public VariableKeySerde(final PlanBDoc doc,
+    public VariableKeySerde(final PlanBDocument doc,
                             final UidLookupDb uidLookupDb,
                             final HashLookupDb hashLookupDb,
                             final ByteBuffers byteBuffers,
@@ -94,7 +94,7 @@ public class VariableKeySerde implements TemporalKeySerde {
                     yield ValSerdeUtil.read(nameSlice);
                 }
                 case UID_LOOKUP -> {
-                    // Read via UI lookup.
+                    // Read via UID lookup.
                     final ByteBuffer valueByteBuffer = uidLookupDb.getValue(txn, nameSlice);
                     yield ValSerdeUtil.read(valueByteBuffer);
                 }

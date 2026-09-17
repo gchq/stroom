@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,20 @@ public class PipelineProperties extends AbstractAddRemove<PipelineProperty> {
     public PipelineProperties(@JsonProperty("add") final List<PipelineProperty> add,
                               @JsonProperty("remove") final List<PipelineProperty> remove) {
         super(add, remove);
+    }
+
+    /**
+     * Properties are keyed by element and name, so their order carries no meaning and lists are
+     * compared ignoring it.
+     */
+    @Override
+    protected boolean listsEqual(final List<PipelineProperty> list, final List<PipelineProperty> other) {
+        return unorderedEquals(list, other, PipelineProperty::equals);
+    }
+
+    @Override
+    protected int listHashCode(final List<PipelineProperty> list) {
+        return unorderedHashCode(list, PipelineProperty::hashCode);
     }
 
 

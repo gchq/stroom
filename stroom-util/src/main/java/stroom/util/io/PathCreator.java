@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.util.io;
 
 import com.google.inject.ImplementedBy;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -36,7 +37,7 @@ public interface PathCreator {
      * Turns an application relative path into an absolute path making use of the home directory location set for the
      * application and performing any other system property replacement that may be needed.
      */
-    Path toAppPath(String pathString);
+    Path toAppPath(@Nullable String pathString);
 
     String replaceUUIDVars(String path);
 
@@ -65,6 +66,10 @@ public interface PathCreator {
 
     String replaceAll(String path);
 
+    /**
+     * Replacements depend on the implementation of the PathCreator used. It may be a no-op.
+     * The implementation may also depend on being in a pipeline scope to work fully.
+     */
     String replaceContextVars(String path);
 
     @Override

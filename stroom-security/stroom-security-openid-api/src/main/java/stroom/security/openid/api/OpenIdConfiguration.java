@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 package stroom.security.openid.api;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -79,6 +81,11 @@ public interface OpenIdConfiguration {
     String getClientSecret();
 
     /**
+     * @see AbstractOpenIdConfig#getRequiredAccessTokenType()
+     */
+    String getRequiredAccessTokenType();
+
+    /**
      * @see AbstractOpenIdConfig#isFormTokenRequest()
      */
     boolean isFormTokenRequest();
@@ -97,6 +104,13 @@ public interface OpenIdConfiguration {
      * @see AbstractOpenIdConfig#isAudienceClaimRequired()
      */
     boolean isAudienceClaimRequired();
+
+    /**
+     * @see AbstractOpenIdConfig#isValidateAudience()
+     */
+    default boolean isValidateAudience() {
+        return true;
+    }
 
     /**
      * @see AbstractOpenIdConfig#getAllowedAudiences()
@@ -137,4 +151,16 @@ public interface OpenIdConfiguration {
      * @see AbstractOpenIdConfig#getPublicKeyUriPattern()
      */
     String getPublicKeyUriPattern();
+
+    /**
+     * Extra query parameters to append to the OIDC authentication request, e.g. Google's
+     * {@code access_type=offline} (without which Google issues no refresh token).
+     * Default method so that implementations sourced from a discovery document (which cannot
+     * carry these) need not implement it.
+     *
+     * @see AbstractOpenIdConfig#getAuthenticationRequestExtraParams()
+     */
+    default Map<String, String> getAuthenticationRequestExtraParams() {
+        return Collections.emptyMap();
+    }
 }

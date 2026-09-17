@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,22 @@ import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.FindTracesWithHistogramCriteria;
+import stroom.pathways.shared.GetSpansRequest;
+import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
 import stroom.pathways.shared.PathwaysDoc;
+import stroom.pathways.shared.TraceOverview;
 import stroom.pathways.shared.TracePersistence;
+import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TraceWriter;
+import stroom.pathways.shared.TracesResultPage;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
-import stroom.planb.impl.db.LmdbWriter;
-import stroom.planb.impl.db.trace.PathwaysDb;
-import stroom.planb.impl.db.trace.TraceDb;
+import stroom.planb.impl.dao.LmdbWriter;
+import stroom.planb.impl.dao.trace.PathwaysDb;
+import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.TraceSettings;
 import stroom.util.logging.LambdaLogger;
@@ -70,6 +76,22 @@ public class TestPathwayProcessor {
                 }
 
                 @Override
+                public TraceSpanPage getSpans(final GetSpansRequest request) {
+                    return null;
+                }
+
+                @Override
+                public TraceOverview getTraceOverview(final GetTraceOverviewRequest request) {
+                    return null;
+                }
+
+                @Override
+                public TracesResultPage findTracesWithHistogram(
+                        final FindTracesWithHistogramCriteria criteria) {
+                    return traceDb.findTraces(criteria.getCriteria());
+                }
+
+                @Override
                 public TraceWriter createWriter() {
                     return new TraceWriter() {
                         private final LmdbWriter writer = traceDb.createWriter();
@@ -87,21 +109,23 @@ public class TestPathwayProcessor {
                 }
             };
 
-            // Load pathways DB for doc
-            final PathwaysDb pathwaysDb = PathwaysDb
-                    .create(pathwaysDir, BYTE_BUFFERS, false);
+            // Load pathways DB for doc. Try-with-resources so its env is closed before JUnit
+            // deletes the @TempDir.
+            try (final PathwaysDb pathwaysDb = PathwaysDb
+                    .create(pathwaysDir, BYTE_BUFFERS, false)) {
 
-            // Insert traces
-            new TraceLoader().load(tracesStore);
+                // Insert traces
+                new TraceLoader().load(tracesStore);
 
-            // Build and test pathways
-            testPathways(pathwaysDb, traceDb);
+                // Build and test pathways
+                testPathways(pathwaysDb, traceDb);
 
-            // Insert one more trace
-            new TraceLoader().addOneMore(tracesStore);
+                // Insert one more trace
+                new TraceLoader().addOneMore(tracesStore);
 
-            // Build and test more pathways
-            testPathways(pathwaysDb, traceDb);
+                // Build and test more pathways
+                testPathways(pathwaysDb, traceDb);
+            }
         }
     }
 
@@ -118,11 +142,11 @@ public class TestPathwayProcessor {
         try (final LmdbWriter writer = pathwaysDb.createWriter()) {
             final TraceProcessor traceProcessor =
                     new TraceProcessor(BYTE_BUFFERS, new PathwaySerde(BYTE_BUFFER_FACTORY));
-            traceDb.iterateTraces((traceId, function) ->
+            traceDb.iterateTraces((traceId, ignored) ->
                     traceProcessor.processTrace(writer,
                             pathwaysDb,
                             traceId,
-                            function,
+                            traceDb::findTrace,
                             PathwaysDoc.builder().uuid(UUID.randomUUID().toString()).build(),
                             messageReceiver));
             writer.commit();

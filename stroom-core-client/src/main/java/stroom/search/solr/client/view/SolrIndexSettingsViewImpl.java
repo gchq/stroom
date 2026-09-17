@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,6 +193,8 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         useZk.setEnabled(!readOnly);
         zkHosts.setEnabled(!readOnly);
         zkPath.setEnabled(!readOnly);
+        collection.setEnabled(!readOnly);
+        timeField.setEnabled(!readOnly);
     }
 
     @UiHandler("testConnection")

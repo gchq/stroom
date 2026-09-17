@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,12 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.FeedDependencies;
 import stroom.processor.shared.FeedDependency;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.ExpressionOperator;
@@ -41,6 +43,8 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
@@ -48,6 +52,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -158,6 +163,73 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
     }
 
     @Test
+    void testLaggedMaxMetaId() {
+        // Ensure we can create tasks immediately after changes.
+        processorConfig.setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
+        processorConfig.setUseMaxMetaIdFromPreviousPoll(true);
+
+        final DocRef pipeline = DocRef
+                .builder()
+                .type(PipelineDoc.TYPE)
+                .uuid(UUID.randomUUID().toString())
+                .name("test")
+                .build();
+        final String eventFeed = FileSystemTestUtil.getUniqueTestString();
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+
+        final Meta meta = commonTestScenarioCreator.createSample2LineRawFile(
+                eventFeed,
+                StreamTypeNames.RAW_EVENTS,
+                refTime);
+
+        final QueryData findStreamQueryData = QueryData.builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(ExpressionOperator.builder()
+                        .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .build())
+                .build();
+        final ProcessorFilter filter = processorFilterService.create(CreateProcessFilterRequest
+                .builder()
+                .processorType(ProcessorType.PIPELINE)
+                .pipeline(pipeline)
+                .queryData(findStreamQueryData)
+                .autoPriority(true)
+                .enabled(true)
+                .minMetaCreateTimeMs(0L)
+                .maxMetaCreateTimeMs(Long.MAX_VALUE)
+                .build());
+
+        // The first poll has no previous max meta id to bound task creation with, so it must create
+        // nothing and only establish the max for subsequent polls to use.
+        pollForTasks(filter);
+        assertThat(taskCount()).isZero();
+        assertThat(getTracker(filter).getPrevMaxMetaId()).isEqualTo(meta.getId());
+        // It must not have moved the tracker on, or we would skip the whole meta table.
+        assertThat(getTracker(filter).getMinMetaId()).isZero();
+
+        // The second poll bounds task creation with the max established by the first.
+        pollForTasks(filter);
+        assertThat(taskCount()).isEqualTo(1);
+
+        // A meta that arrives after the last poll read the max id is not picked up until a further poll
+        // has established a max that includes it. This is what gives a meta that was inserted but not
+        // yet committed time to become visible before the tracker moves past it.
+        final Meta laterMeta = commonTestScenarioCreator.createSample2LineRawFile(
+                eventFeed,
+                StreamTypeNames.RAW_EVENTS,
+                refTime.plusMillis(1));
+
+        pollForTasks(filter);
+        assertThat(taskCount()).isEqualTo(1);
+        assertThat(getTracker(filter).getPrevMaxMetaId()).isEqualTo(laterMeta.getId());
+        // The tracker must not have jumped over the new meta.
+        assertThat(getTracker(filter).getMinMetaId()).isEqualTo(meta.getId() + 1);
+
+        pollForTasks(filter);
+        assertThat(taskCount()).isEqualTo(2);
+    }
+
+    @Test
     void testFeedDependency() {
         // Ensure we can create tasks immediately after changes.
         processorConfig.setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
@@ -234,14 +306,105 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
         assertThat(taskCount()).isEqualTo(1);
     }
 
-    private void createTasks(final ProcessorFilter filter) {
+    @Test
+    void testMinProcessingDelay() {
+        // Ensure we can create tasks immediately after changes.
+        processorConfig.setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
+
+        final DocRef pipeline = DocRef
+                .builder()
+                .type(PipelineDoc.TYPE)
+                .uuid(UUID.randomUUID().toString())
+                .name("test")
+                .build();
+        final String eventFeed = FileSystemTestUtil.getUniqueTestString();
+        final Instant now = Instant.now();
+
+        // A stream old enough to get past a one day processing delay.
+        commonTestScenarioCreator.createSample2LineRawFile(
+                eventFeed,
+                StreamTypeNames.RAW_EVENTS,
+                now.minus(Duration.ofDays(2)));
+
+        final FeedDependencies feedDependencies = FeedDependencies
+                .builder()
+                .minProcessingDelay(SimpleDuration.builder()
+                        .time(1)
+                        .timeUnit(TimeUnit.DAYS)
+                        .build())
+                .build();
+        final QueryData findStreamQueryData = QueryData.builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(ExpressionOperator.builder()
+                        .addTextTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .build())
+                .feedDependencies(feedDependencies)
+                .build();
+        final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                .builder()
+                .processorType(ProcessorType.PIPELINE)
+                .pipeline(pipeline)
+                .queryData(findStreamQueryData)
+                .autoPriority(true)
+                .enabled(true)
+                .minMetaCreateTimeMs(0L)
+                .maxMetaCreateTimeMs(Long.MAX_VALUE)
+                .build();
+        final ProcessorFilter filter = processorFilterService.create(request);
+
+        // The old enough stream gets a task.
+        final ProgressMonitor processingMonitor = createTasks(filter);
+        assertThat(taskCount()).isEqualTo(1);
+        assertThat(getReport(processingMonitor))
+                .doesNotContain(Phase.WAIT_FOR_READY_STREAMS.getPhaseName());
+
+        final long minMetaIdAfterProcessing = getTracker(filter).getMinMetaId();
+        assertThat(minMetaIdAfterProcessing).isGreaterThan(0L);
+
+        // Now add a stream that is too new to get past the delay.
+        commonTestScenarioCreator.createSample2LineRawFile(
+                eventFeed,
+                StreamTypeNames.RAW_EVENTS,
+                now);
+
+        final ProgressMonitor waitingMonitor = createTasks(filter);
+
+        // No task for the stream we aren't allowed to process yet, and the tracker stays where it is. Winding
+        // it back would make us create tasks for every stream all over again.
+        assertThat(taskCount()).isEqualTo(1);
+        // The filter reports that it is waiting rather than saying nothing at all about what it did.
+        assertThat(getReport(waitingMonitor))
+                .contains(Phase.WAIT_FOR_READY_STREAMS.getPhaseName());
+        assertThat(getTracker(filter).getMinMetaId()).isEqualTo(minMetaIdAfterProcessing);
+    }
+
+    private ProgressMonitor createTasks(final ProcessorFilter filter) {
+        // These tests create tasks in a single poll, so they can't afford to spend one establishing the
+        // max meta id. testLaggedMaxMetaId() covers the lagged behaviour itself.
+        processorConfig.setUseMaxMetaIdFromPreviousPoll(false);
+        return pollForTasks(filter);
+    }
+
+    private ProgressMonitor pollForTasks(final ProcessorFilter filter) {
+        final ProgressMonitor progressMonitor = new ProgressMonitor(1);
         processorTaskCreator.createTasksForFilter(
                 new SimpleTaskContext(),
                 filter,
-                new ProgressMonitor(1),
+                progressMonitor,
                 100,
                 new LongAdder(),
                 processorConfig);
+        return progressMonitor;
+    }
+
+    private String getReport(final ProgressMonitor progressMonitor) {
+        return progressMonitor.getFullReport("test", null, true, true, true);
+    }
+
+    private ProcessorFilterTracker getTracker(final ProcessorFilter filter) {
+        return processorFilterService.fetch(filter.getId())
+                .orElseThrow()
+                .getProcessorFilterTracker();
     }
 
     private int taskCount() {
@@ -250,7 +413,7 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
 
     private void runSelectMetaQuery(final ExpressionOperator expression,
                                     final int expected) {
-        final long maxId = metaService.getMaxId();
+        final long maxId = metaService.getMaxId().orElse(0L);
         assertThat(processorTaskCreator.runSelectMetaQuery(expression,
                 0,
                 maxId,

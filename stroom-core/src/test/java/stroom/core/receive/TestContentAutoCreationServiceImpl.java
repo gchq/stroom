@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.core.receive;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.feed.api.FeedStore;
@@ -65,6 +66,8 @@ class TestContentAutoCreationServiceImpl {
     private UserService mockUserService;
     @Mock
     private SecurityContext mockSecurityContext;
+    @Mock
+    private DocFinder docFinder;
 
     @Test
     void testFeedAlreadyExists() {
@@ -82,7 +85,7 @@ class TestContentAutoCreationServiceImpl {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
 
-        Mockito.when(mockFeedStore.findByName(Mockito.eq(feedName)))
+        Mockito.when(docFinder.findByName(Mockito.eq(FeedDoc.TYPE), Mockito.eq(feedName)))
                 .thenReturn(List.of(docRef));
         Mockito.when(mockFeedStore.readDocument(Mockito.eq(docRef)))
                 .thenReturn(feedDoc);
@@ -92,6 +95,29 @@ class TestContentAutoCreationServiceImpl {
 
         assertThat(optFeedDoc)
                 .hasValue(feedDoc);
+    }
+
+    @Test
+    void testFeedNotExist_NoTemplatesDoc() {
+
+        final String feedName = "FEED_X";
+        final UserDesc userDesc = UserDesc.forSubjectId("user1");
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StandardHeaderArguments.FEED, feedName);
+        final ContentTemplates contentTemplates = ContentTemplates.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("Templates")
+                .build();
+        Mockito.when(docFinder.findByName(Mockito.eq(FeedDoc.TYPE), Mockito.eq(feedName)))
+                .thenReturn(List.of());
+        Mockito.when(mockContentTemplateStore.get())
+                .thenReturn(Optional.empty());
+
+        final Optional<FeedDoc> optFeedDoc = contentAutoCreationService.tryCreateFeed(
+                feedName, userDesc, attributeMap);
+
+        assertThat(optFeedDoc)
+                .isEmpty();
     }
 
     @Test
@@ -105,10 +131,10 @@ class TestContentAutoCreationServiceImpl {
                 .uuid(UUID.randomUUID().toString())
                 .name("Templates")
                 .build();
-        Mockito.when(mockFeedStore.findByName(Mockito.eq(feedName)))
+        Mockito.when(docFinder.findByName(Mockito.eq(FeedDoc.TYPE), Mockito.eq(feedName)))
                 .thenReturn(List.of());
-        Mockito.when(mockContentTemplateStore.getOrCreate())
-                .thenReturn(contentTemplates);
+        Mockito.when(mockContentTemplateStore.get())
+                .thenReturn(Optional.of(contentTemplates));
 
         final Optional<FeedDoc> optFeedDoc = contentAutoCreationService.tryCreateFeed(
                 feedName, userDesc, attributeMap);
@@ -137,10 +163,10 @@ class TestContentAutoCreationServiceImpl {
                                 .build())
                         .build()))
                 .build();
-        Mockito.when(mockFeedStore.findByName(Mockito.eq(feedName)))
+        Mockito.when(docFinder.findByName(Mockito.eq(FeedDoc.TYPE), Mockito.eq(feedName)))
                 .thenReturn(List.of());
-        Mockito.when(mockContentTemplateStore.getOrCreate())
-                .thenReturn(contentTemplates);
+        Mockito.when(mockContentTemplateStore.get())
+                .thenReturn(Optional.of(contentTemplates));
 
         final Optional<FeedDoc> optFeedDoc = contentAutoCreationService.tryCreateFeed(
                 feedName, userDesc, attributeMap);
@@ -170,10 +196,10 @@ class TestContentAutoCreationServiceImpl {
                                 .build())
                         .build()))
                 .build();
-        Mockito.when(mockFeedStore.findByName(Mockito.eq(feedName)))
+        Mockito.when(docFinder.findByName(Mockito.eq(FeedDoc.TYPE), Mockito.eq(feedName)))
                 .thenReturn(List.of());
-        Mockito.when(mockContentTemplateStore.getOrCreate())
-                .thenReturn(contentTemplates);
+        Mockito.when(mockContentTemplateStore.get())
+                .thenReturn(Optional.of(contentTemplates));
         Mockito.when(mockExpressionMatcherFactory.create(Mockito.any()))
                 .thenReturn(mockExpressionMatcher);
         Mockito.when(mockExpressionMatcher.match(Mockito.any(), Mockito.any()))

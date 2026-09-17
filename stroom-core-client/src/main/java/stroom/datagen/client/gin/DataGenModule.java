@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ import stroom.datagen.client.presenter.DataGenSettingsPresenter.DataGenSettingsV
 import stroom.datagen.client.view.DataGenProcessingViewImpl;
 import stroom.datagen.client.view.DataGenSettingsViewImpl;
 
+/**
+ * GIN bindings for the data generator's client-side plugin, presenters and views.
+ */
 public class DataGenModule extends PluginModule {
 
     @Override

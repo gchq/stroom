@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import stroom.util.time.TimePeriod;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface MetaService {
@@ -42,16 +43,21 @@ public interface MetaService {
     /**
      * Get the current maximum id of any data.
      *
-     * @return The maximum id of any data item or null if there is no data.
+     * @return The maximum id of any data item or an empty optional if there is no data.
      */
-    Long getMaxId();
+    Optional<Long> getMaxId();
 
     /**
-     * Get the current maximum id of any data with a create time less than or equal to the supplied time.
+     * Get the current maximum id of any data with an id greater than or equal to the supplied id and a create
+     * time less than or equal to the supplied time.
      *
-     * @return The maximum id of any data item or null if there is no data.
+     * @param minId           The lowest id to consider. Bounding the search matters because the database finds
+     *                        the maximum id by working back down from the highest id there is, so without a
+     *                        lower bound it reads the whole table when nothing matches.
+     * @param maxCreateTimeMs The latest create time to consider.
+     * @return The maximum id of any matching data item or an empty optional if there is none.
      */
-    Long getMaxId(long maxCreateTimeMs);
+    Optional<Long> getMaxId(long minId, long maxCreateTimeMs);
 
     /**
      * Create meta data with the supplied properties.
@@ -60,6 +66,15 @@ public interface MetaService {
      * @return A new locked meta data ready to associate written data with.
      */
     Meta create(MetaProperties properties);
+
+    /**
+     * Create meta data with the supplied properties.
+     *
+     * @param properties The properties that the newly created meta data will have.
+     * @param status     The status that the newly created meta data will have.
+     * @return A new locked meta data ready to associate written data with.
+     */
+    Meta create(MetaProperties properties, Status status);
 
     /**
      * Get meta data from the meta service by id.
@@ -99,6 +114,13 @@ public interface MetaService {
      */
     int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status status);
 
+    /**
+     * Get the meta stored on the database for the stream identified by meta.
+     *
+     * @param meta The stream to get attributes for.
+     * @return An {@link AttributeMap} containing the attributes, or an empty {@link AttributeMap}
+     */
+    AttributeMap getAttributes(Meta meta);
 
     /**
      * Add some additional attributes to meta data.
@@ -172,7 +194,7 @@ public interface MetaService {
      * Return true if the passed meta type name is a 'raw' type, i.e. used for receipt of
      * raw data.
      */
-    default boolean isRaw(String typeName) {
+    default boolean isRaw(final String typeName) {
         return typeName != null
                && getRawTypes().contains(typeName);
     }

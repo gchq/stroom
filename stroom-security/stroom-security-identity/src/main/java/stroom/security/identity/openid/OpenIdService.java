@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,18 @@ import stroom.security.identity.authenticate.api.AuthenticationService.AuthStatu
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.config.TokenConfig;
 import stroom.security.identity.exceptions.BadRequestException;
+import stroom.security.identity.token.MintedToken;
+import stroom.security.identity.token.OAuthToken;
+import stroom.security.identity.token.OAuthTokenDao;
+import stroom.security.identity.token.OAuthTokenType;
 import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClient;
 import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.security.openid.api.Pkce;
 import stroom.security.openid.api.TokenResponse;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResourcePaths;
 
 import event.logging.AuthenticateOutcomeReason;
 import jakarta.annotation.Nullable;
@@ -39,14 +46,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.TemporalAmount;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Pattern;
+import java.util.UUID;
 
 
 class OpenIdService {
@@ -56,8 +66,9 @@ class OpenIdService {
     private static final String UNKNOWN_SUBJECT = "Unknown";
 
     private final AccessCodeCache accessCodeCache;
-    private final RefreshTokenCache refreshTokenCache;
+    private final RefreshTokenStore refreshTokenStore;
     private final TokenBuilderFactory tokenBuilderFactory;
+    private final OAuthTokenDao oAuthTokenDao;
     private final AuthenticationService authenticationService;
     private final OpenIdClientFactory openIdClientDetailsFactory;
     private final IdentityConfig identityConfig;
@@ -65,15 +76,17 @@ class OpenIdService {
 
     @Inject
     OpenIdService(final AccessCodeCache accessCodeCache,
-                  final RefreshTokenCache refreshTokenCache,
+                  final RefreshTokenStore refreshTokenStore,
                   final TokenBuilderFactory tokenBuilderFactory,
+                  final OAuthTokenDao oAuthTokenDao,
                   final AuthenticationService authenticationService,
                   final OpenIdClientFactory openIdClientDetailsFactory,
                   final IdentityConfig identityConfig,
                   final UriFactory uriFactory) {
         this.accessCodeCache = accessCodeCache;
-        this.refreshTokenCache = refreshTokenCache;
+        this.refreshTokenStore = refreshTokenStore;
         this.tokenBuilderFactory = tokenBuilderFactory;
+        this.oAuthTokenDao = oAuthTokenDao;
         this.authenticationService = authenticationService;
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
         this.identityConfig = identityConfig;
@@ -87,35 +100,43 @@ class OpenIdService {
                            final String redirectUri,
                            @Nullable final String nonce,
                            @Nullable final String state,
-                           @Nullable final String prompt) {
+                           @Nullable final String prompt,
+                           @Nullable final String codeChallenge,
+                           @Nullable final String codeChallengeMethod) {
         final URI result;
         AuthStatus authStatus = null;
 
-        final OpenIdClient oAuth2Client = openIdClientDetailsFactory.getClient(clientId);
+        // Reject the request up front if the client id is not one we recognise, before sending the user
+        // through sign in. Throws if it is unknown.
+        openIdClientDetailsFactory.getClient(clientId);
+
         // After sign in attempts we want to come back here.
         final String postSignInRedirectUri = getPostSignInRedirectUri(request);
 
-        final Pattern pattern = Pattern.compile(oAuth2Client.getUriPattern());
-        if (!pattern.matcher(redirectUri).matches()) {
-            authStatus = new AuthStatus() {
+        if (!isRedirectUriAllowed(redirectUri)) {
+            authStatus = badAuthRequest("Redirect URI is not allowed");
+            result = authenticationService.createSignInUri(postSignInRedirectUri);
 
-                @Override
-                public Optional<AuthState> getAuthState() {
-                    return Optional.empty();
-                }
+        } else if (!OpenId.RESPONSE_TYPE__CODE.equals(responseType)) {
+            // The only flow this provider implements, and the only one its discovery document advertises.
+            // Taking the parameter and never reading it left an authorize request able to ask for anything.
+            authStatus = badAuthRequest("Only the 'code' response type is supported");
+            result = authenticationService.createSignInUri(postSignInRedirectUri);
 
-                @Override
-                public Optional<BadRequestException> getError() {
-                    return Optional.of(new BadRequestException(UNKNOWN_SUBJECT,
-                            AuthenticateOutcomeReason.OTHER, "Redirect URI is not allowed"));
-                }
+        } else if (!hasOpenIdScope(scope)) {
+            // Without it this is not an OpenID Connect request at all, whatever else it asks for.
+            authStatus = badAuthRequest("The 'openid' scope is required");
+            result = authenticationService.createSignInUri(postSignInRedirectUri);
 
-                @Override
-                public boolean isNew() {
-                    return true;
-                }
-            };
+        } else if (NullSafe.isBlankString(nonce)) {
+            // The nonce is what ties the id token this flow produces back to this request, so accepting a
+            // request without one gives away the replay protection the token's nonce claim exists for.
+            authStatus = badAuthRequest("A nonce is required");
+            result = authenticationService.createSignInUri(postSignInRedirectUri);
 
+        } else if (!isValidS256Pkce(codeChallenge, codeChallengeMethod)) {
+            // PKCE (RFC 7636) is required. Only S256 is accepted; 'plain' is not.
+            authStatus = badAuthRequest("A valid S256 PKCE code challenge is required");
             result = authenticationService.createSignInUri(postSignInRedirectUri);
 
         } else {
@@ -166,7 +187,8 @@ class OpenIdService {
                                 authState.getSubject(),
                                 nonce,
                                 state,
-                                prompt);
+                                prompt,
+                                codeChallenge);
                         accessCodeCache.put(accessCode, accessCodeRequest);
 
                         result = buildRedirectionUrl(redirectUri, accessCode, state);
@@ -226,27 +248,32 @@ class OpenIdService {
 
         final OpenIdClient oAuth2Client = openIdClientDetailsFactory.getClient(clientId);
 
-        if (!Objects.equals(clientSecret, oAuth2Client.getClientSecret())) {
+        if (!secretsMatch(clientSecret, oAuth2Client.getClientSecret())) {
             throw new BadRequestException(oAuth2Client.getName(), AuthenticateOutcomeReason.OTHER,
                     "Incorrect secret");
         }
 
-        final Pattern pattern = Pattern.compile(oAuth2Client.getUriPattern());
-        if (!pattern.matcher(redirectUri).matches()) {
+        if (!isRedirectUriAllowed(redirectUri)) {
             throw new BadRequestException(oAuth2Client.getName(), AuthenticateOutcomeReason.OTHER,
                     "Redirect URI is not allowed");
         }
 
-        final TokenResponse tokenResponse = createTokenResponse(
+        // PKCE: the caller must prove it began the flow by presenting the verifier for the stored
+        // challenge. The challenge is always present because the authorization endpoint requires it.
+        final String codeVerifier = formParams.getFirst(OpenId.CODE_VERIFIER);
+        if (!isCodeVerifierValid(codeVerifier, accessCodeRequest.getCodeChallenge())) {
+            throw new BadRequestException(oAuth2Client.getName(), AuthenticateOutcomeReason.OTHER,
+                    "Invalid PKCE code verifier");
+        }
+
+        // This is a fresh login, so the authentication time is now and this token starts a new family.
+        return createTokenResponse(
                 clientId,
                 accessCodeRequest.getSubject(),
                 accessCodeRequest.getNonce(),
-                accessCodeRequest.getState());
-
-        refreshTokenCache.put(tokenResponse.getRefreshToken(),
-                new TokenProperties(accessCodeRequest.getClientId(), accessCodeRequest.getSubject()));
-
-        return tokenResponse;
+                accessCodeRequest.getScope(),
+                Instant.now().getEpochSecond(),
+                UUID.randomUUID().toString());
     }
 
     public TokenResponse refreshIdToken(final MultivaluedMap<String, String> formParams) {
@@ -259,30 +286,36 @@ class OpenIdService {
                     AuthenticateOutcomeReason.OTHER, "No refresh token has been supplied");
         }
 
-        final Optional<TokenProperties> tokenPropertiesOptional = refreshTokenCache.getAndRemove(refreshToken);
-        if (tokenPropertiesOptional.isEmpty()) {
-            throw new BadRequestException("Unknown refresh token",
-                    AuthenticateOutcomeReason.OTHER, "Refresh token already used or no longer remembered");
-        }
-
+        // Authenticate the client before touching the token store, so only a caller that holds the client
+        // secret can redeem or, by replaying a spent token, trigger revocation of a token family.
         final OpenIdClient oAuth2Client = openIdClientDetailsFactory.getClient(clientId);
-
-        if (!Objects.equals(clientSecret, oAuth2Client.getClientSecret())) {
+        if (!secretsMatch(clientSecret, oAuth2Client.getClientSecret())) {
             throw new BadRequestException(oAuth2Client.getName(), AuthenticateOutcomeReason.OTHER,
                     "Incorrect secret");
         }
 
-        final TokenProperties tokenProperties = tokenPropertiesOptional.get();
-        final TokenResponse tokenResponse = createTokenResponse(
-                tokenProperties.getClientId(),
-                tokenProperties.getSubject(),
+        // Consuming the presented token and issuing its successor happen in a single transaction inside the
+        // store, so there is no window in which the client's token is spent but it has no replacement.
+        final TokenConfig tokenConfig = identityConfig.getTokenConfig();
+        final TemporalAmount refreshTokenExpiresIn = tokenConfig.getRefreshTokenExpiration();
+        final RefreshTokenStore.Rotation rotation = refreshTokenStore
+                .rotate(refreshToken, Instant.now().plus(refreshTokenExpiresIn).toEpochMilli())
+                .orElseThrow(() -> new BadRequestException("Unknown refresh token",
+                        AuthenticateOutcomeReason.OTHER,
+                        "Refresh token already used, revoked or expired"));
+        final RefreshTokenRecord record = rotation.record();
+
+        // A refreshed id token reports the original login time, not now, and the successor stays in the
+        // same rotation family. There is no fresh nonce as this is not a new authentication.
+        return buildTokenResponse(
+                record.clientId(),
+                record.subject(),
                 null,
-                null);
-
-        refreshTokenCache.put(tokenResponse.getRefreshToken(),
-                new TokenProperties(tokenProperties.getClientId(), tokenProperties.getSubject()));
-
-        return tokenResponse;
+                record.scope(),
+                record.authTimeEpochSecond(),
+                record.familyId(),
+                rotation.successorToken(),
+                refreshTokenExpiresIn);
     }
 
     private URI buildRedirectionUrl(final String redirectUri, final String code, final String state) {
@@ -291,6 +324,70 @@ class OpenIdService {
                 .replaceQueryParam(OpenId.CODE, code)
                 .replaceQueryParam(OpenId.STATE, state)
                 .build();
+    }
+
+    // Package-private for testing.
+    // An OpenID Connect authorization request has to ask for the 'openid' scope; without it this is a plain
+    // OAuth request and the id token this flow issues was never asked for.
+    static boolean hasOpenIdScope(final String scope) {
+        return scope != null
+               && Arrays.asList(scope.split(" ")).contains(OpenId.SCOPE__OPENID);
+    }
+
+    // Package-private for testing.
+    // PKCE (RFC 7636) is mandatory and only the S256 method is accepted, so an authorization request must
+    // carry a code challenge and name the S256 method.
+    boolean isValidS256Pkce(final String codeChallenge, final String codeChallengeMethod) {
+        return codeChallenge != null
+               && !codeChallenge.isBlank()
+               && OpenId.CODE_CHALLENGE_METHOD__S256.equals(codeChallengeMethod);
+    }
+
+    // Package-private for testing.
+    // Verify a presented code_verifier against the code_challenge stored with the code: the S256 hash of
+    // the verifier must equal the challenge.
+    boolean isCodeVerifierValid(final String codeVerifier, final String codeChallenge) {
+        if (codeVerifier == null || codeChallenge == null) {
+            return false;
+        }
+        return codeChallenge.equals(Pkce.createS256Challenge(codeVerifier));
+    }
+
+    private AuthStatus badAuthRequest(final String message) {
+        return new AuthStatus() {
+
+            @Override
+            public Optional<AuthState> getAuthState() {
+                return Optional.empty();
+            }
+
+            @Override
+            public Optional<BadRequestException> getError() {
+                return Optional.of(new BadRequestException(UNKNOWN_SUBJECT,
+                        AuthenticateOutcomeReason.OTHER, message));
+            }
+
+            @Override
+            public boolean isNew() {
+                return true;
+            }
+        };
+    }
+
+    // Package-private for testing.
+    // The internal identity provider accepts a single redirect_uri, matched exactly: the application's own
+    // OIDC sign-in callback (the BFF endpoint the IdP redirects back to). The relying party (this same
+    // application) always sends exactly this value, so any other is rejected. This mirrors how a client's
+    // redirect_uri is pre-registered and exact-matched at Keycloak, Duende and other providers.
+    boolean isRedirectUriAllowed(final String redirectUri) {
+        final String allowedRedirectUri = uriFactory.publicUri(
+                ResourcePaths.buildSignInOidcCallbackPath()).toString();
+        final boolean allowed = Objects.equals(redirectUri, allowedRedirectUri);
+        if (!allowed) {
+            LOGGER.warn("Rejecting redirect_uri '{}'; the only permitted value is '{}'",
+                    redirectUri, allowedRedirectUri);
+        }
+        return allowed;
     }
 
     private String getPostSignInRedirectUri(final HttpServletRequest request) {
@@ -311,48 +408,122 @@ class OpenIdService {
         return uriBuilder.build().toString();
     }
 
+    /**
+     * Mint a fresh set of tokens at initial authentication, including a brand new refresh token starting a
+     * new rotation family. A refresh takes {@link #buildTokenResponse} directly, because its successor
+     * refresh token has already been issued as part of consuming the predecessor.
+     */
     private TokenResponse createTokenResponse(final String clientId,
                                               final String subject,
                                               final String nonce,
-                                              final String state) {
+                                              final String scope,
+                                              final long authTimeEpochSecond,
+                                              final String familyId) {
+        final TokenConfig tokenConfig = identityConfig.getTokenConfig();
+        final TemporalAmount refreshTokenExpiresIn = tokenConfig.getRefreshTokenExpiration();
+
+        // The refresh token is an opaque string backed by a durable row, never a JWT.
+        final String refreshToken = refreshTokenStore.issue(new RefreshTokenRecord(
+                clientId,
+                subject,
+                scope,
+                authTimeEpochSecond,
+                familyId,
+                Instant.now().plus(refreshTokenExpiresIn).toEpochMilli()));
+
+        return buildTokenResponse(clientId, subject, nonce, scope, authTimeEpochSecond, familyId,
+                refreshToken, refreshTokenExpiresIn);
+    }
+
+    private TokenResponse buildTokenResponse(final String clientId,
+                                             final String subject,
+                                             final String nonce,
+                                             final String scope,
+                                             final long authTimeEpochSecond,
+                                             final String familyId,
+                                             final String refreshToken,
+                                             final TemporalAmount refreshTokenExpiresIn) {
         final TokenConfig tokenConfig = identityConfig.getTokenConfig();
         final Instant now = Instant.now();
 
-        final String idToken = tokenBuilderFactory.builder()
+        // The nonce and auth_time belong to the id token; nonce binds it to this authentication request.
+        final MintedToken idToken = tokenBuilderFactory.builder()
                 .expirationTime(now.plus(tokenConfig.getIdTokenExpiration()))
                 .clientId(clientId)
                 .subject(subject)
                 .nonce(nonce)
-                .state(state)
+                .authTime(authTimeEpochSecond)
                 .build();
 
-        final String accessToken = tokenBuilderFactory.builder()
+        final MintedToken accessToken = tokenBuilderFactory.builder()
                 .expirationTime(now.plus(tokenConfig.getAccessTokenExpiration()))
                 .clientId(clientId)
                 .subject(subject)
-                .nonce(nonce)
-                .state(state)
+                .scope(scope)
+                // Mark this as an access token so it, and not the id or refresh token, may be presented
+                // as a bearer credential.
+                .type(OpenId.TOKEN_TYPE__ACCESS)
                 .build();
 
-        final TemporalAmount refreshTokenExpiresIn = tokenConfig.getRefreshTokenExpiration();
-        final String refreshToken = tokenBuilderFactory.builder()
-                .expirationTime(now.plus(refreshTokenExpiresIn))
-                .clientId(clientId)
-                .subject(subject)
-                .nonce(nonce)
-                .state(state)
-                .build();
+        recordInInventory(OAuthTokenType.ID, idToken, clientId, subject, scope, authTimeEpochSecond, familyId);
+        recordInInventory(
+                OAuthTokenType.ACCESS, accessToken, clientId, subject, scope, authTimeEpochSecond, familyId);
+
         final Long refreshTokenExpiresInSeconds = Duration.from(refreshTokenExpiresIn).toMillis() / 1000;
 
         final long expiresInSeconds = tokenConfig.getIdTokenExpiration().toMillis() / 1000;
 
         return TokenResponse.builder()
-                .idToken(idToken)
-                .accessToken(accessToken)
+                .idToken(idToken.token())
+                .accessToken(accessToken.token())
                 .refreshToken(refreshToken)
                 .expiresIn(expiresInSeconds)
                 .refreshTokenExpiresIn(refreshTokenExpiresInSeconds)
                 .build();
+    }
+
+    /**
+     * Record a minted JWT in the token inventory so that it can later be listed and revoked.
+     * <p>
+     * Only a reference is stored - the {@code jti}, never the token itself. Nothing reads these rows yet;
+     * they exist so that the revoked-jti denylist has something to be built from.
+     * </p>
+     */
+    private void recordInInventory(final OAuthTokenType tokenType,
+                                   final MintedToken mintedToken,
+                                   final String clientId,
+                                   final String subject,
+                                   final String scope,
+                                   final long authTimeEpochSecond,
+                                   final String familyId) {
+        oAuthTokenDao.create(OAuthToken.newJwt(
+                tokenType,
+                mintedToken.jti(),
+                subject,
+                clientId,
+                // Same family as the refresh token from the same grant, so revoking a family kills the
+                // access and id tokens it produced as well as its refresh lineage.
+                familyId,
+                scope,
+                authTimeEpochSecond * 1000L,
+                System.currentTimeMillis(),
+                // One second beyond the exp claim - see MintedToken.inventoryExpiresMs().
+                mintedToken.inventoryExpiresMs()));
+    }
+
+    /**
+     * Compares a supplied client secret against the stored one in constant time, so the time taken does
+     * not reveal how many leading characters matched - which would let the secret be recovered a character
+     * at a time. A null on either side fails closed: the stored secret is never null ({@link OpenIdClient}
+     * requires it), and a request that omits the secret must not authenticate.
+     */
+    private static boolean secretsMatch(final String supplied, final String expected) {
+        if (supplied == null || expected == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(
+                supplied.getBytes(StandardCharsets.UTF_8),
+                expected.getBytes(StandardCharsets.UTF_8));
     }
 
     static class AuthResult {

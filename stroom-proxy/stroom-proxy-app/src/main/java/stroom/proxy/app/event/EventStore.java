@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.repo.store.FileStores;
+import stroom.security.api.CommonSecurityContext;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.metrics.Metrics;
+import stroom.util.shared.FeedKey;
 
 import com.codahale.metrics.Timer;
 import io.dropwizard.lifecycle.Managed;
@@ -59,6 +61,7 @@ public class EventStore implements EventConsumer, Managed {
     public static final String EVENT_STORE_NAME_PART = "eventStore";
 
     private final ReceiverFactory receiverFactory;
+    private final CommonSecurityContext securityContext;
     private final Path dir;
     private final Provider<EventStoreConfig> eventStoreConfigProvider;
     private final StroomCache<FeedKey, EventAppender> openAppendersCache;
@@ -70,6 +73,7 @@ public class EventStore implements EventConsumer, Managed {
 
     @Inject
     public EventStore(final ReceiverFactory receiverFactory,
+                      final CommonSecurityContext securityContext,
                       final Provider<EventStoreConfig> eventStoreConfigProvider,
                       final DataDirProvider dataDirProvider,
                       final FileStores fileStores,
@@ -89,6 +93,7 @@ public class EventStore implements EventConsumer, Managed {
         fileStores.add(0, "Event Store", dir);
 
         this.receiverFactory = receiverFactory;
+        this.securityContext = securityContext;
 
         this.openAppendersCache = cacheManager.create(
                 CACHE_NAME,
@@ -135,7 +140,7 @@ public class EventStore implements EventConsumer, Managed {
     public void tryRoll() {
         stores.keySet().forEach(feedKey -> {
             LOGGER.debug("Try rolling: {}", feedKey);
-            stores.compute(feedKey, (k, v) -> {
+            stores.compute(feedKey, (ignored, v) -> {
                 EventAppender eventAppender = v;
                 if (eventAppender != null) {
                     if (eventAppender.shouldRoll(0)) {
@@ -200,9 +205,15 @@ public class EventStore implements EventConsumer, Managed {
             handleTimer.time(() -> {
                 final AtomicBoolean success = new AtomicBoolean();
                 try (final BufferedInputStream inputStream = new BufferedInputStream(Files.newInputStream(file))) {
-                    receiverFactory
-                            .get(attributeMap)
-                            .receive(Instant.now(), attributeMap, "event-store", () -> inputStream);
+                    // The request that produced these events was authenticated and filtered long ago,
+                    // under ReceiveDataHelper's elevation. This runs later, on the forwarding thread
+                    // (and at startup for files left behind), so no user is in scope - yet receive()
+                    // filters again and the feed status lookup needs an identity. Elevate for the same
+                    // reason the datafeed and dir-scanner entry points do.
+                    securityContext.asProcessingUser(() ->
+                            receiverFactory
+                                    .get(attributeMap)
+                                    .receive(Instant.now(), attributeMap, "event-store", () -> inputStream));
                     success.set(true);
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
@@ -239,7 +250,7 @@ public class EventStore implements EventConsumer, Managed {
                         final String data) {
         try {
             checkState();
-            final FeedKey feedKey = FeedKey.from(attributeMap);
+            final FeedKey feedKey = FeedKeyEncoder.from(attributeMap);
             final String string = eventSerialiser.serialise(
                     receiptId,
                     feedKey,

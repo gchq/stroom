@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,20 @@ public class MarkdownTarget implements SearchResultWriter.Target {
     public void end() throws IOException {
         writer.flush();
         writer.close();
+    }
+
+    /**
+     * Writes a section of prose after the table. Nothing is written if the text is null or blank.
+     */
+    public void writeSection(final String heading, final String text) throws IOException {
+        if (text == null || text.isBlank()) {
+            return;
+        }
+        writer.write("\n## ");
+        writer.write(heading);
+        writer.write("\n\n");
+        writer.write(text);
+        writer.write("\n");
     }
 
     @Override

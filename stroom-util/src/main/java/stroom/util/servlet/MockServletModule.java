@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.util.servlet;
 
 import com.google.inject.AbstractModule;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class MockServletModule extends AbstractModule {
 
@@ -25,6 +26,7 @@ public class MockServletModule extends AbstractModule {
     protected void configure() {
         final SessionIdProvider sessionIdProvider = () -> "mockSessionId";
         bind(HttpServletRequest.class).toProvider(HttpServletRequestHolder.class);
+        bind(HttpServletResponse.class).toProvider(HttpServletResponseHolder.class);
         bind(SessionIdProvider.class).toInstance(sessionIdProvider);
     }
 }

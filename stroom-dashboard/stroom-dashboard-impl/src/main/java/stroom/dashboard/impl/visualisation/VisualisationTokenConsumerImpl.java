@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import stroom.query.api.token.KeywordGroup;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenGroup;
 import stroom.query.api.token.TokenType;
-import stroom.query.language.DocResolver;
+import stroom.query.language.DataSourceResolver;
 import stroom.query.language.VisualisationTokenConsumer;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
@@ -58,13 +58,13 @@ import java.util.stream.Collectors;
 
 public class VisualisationTokenConsumerImpl implements VisualisationTokenConsumer {
 
-    private final DocResolver docResolver;
+    private final DataSourceResolver dataSourceResolver;
     private final VisualisationStore visualisationStore;
 
     @Inject
-    public VisualisationTokenConsumerImpl(final DocResolver docResolver,
+    public VisualisationTokenConsumerImpl(final DataSourceResolver dataSourceResolver,
                                           final VisualisationStore visualisationStore) {
-        this.docResolver = docResolver;
+        this.dataSourceResolver = dataSourceResolver;
         this.visualisationStore = visualisationStore;
     }
 
@@ -172,7 +172,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         final VisualisationDoc visualisationDoc;
 
         // Load visualisation.
-        final DocRef docRef = docResolver.resolveDocRef(VisualisationDoc.TYPE, visName);
+        final DocRef docRef = dataSourceResolver.findVisualisationDoc(visName);
         try {
             visualisationDoc = visualisationStore.readDocument(docRef);
             if (visualisationDoc == null) {

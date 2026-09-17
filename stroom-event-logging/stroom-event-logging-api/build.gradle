@@ -24,5 +24,4 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.jackson.annotations
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,10 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.util.io.HomeDirProvider;
+import stroom.util.io.PathSegmentUtil;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -35,6 +37,7 @@ public class ExtendedPathCreator extends SimplePathCreator {
     private final Provider<MetaHolder> metaHolder;
     private final Provider<SearchIdHolder> searchIdHolder;
     private final Provider<NodeInfo> nodeInfo;
+    private final PipelineScopeRunnable pipelineScopeRunnable;
 
     @Inject
     ExtendedPathCreator(final HomeDirProvider homeDirProvider,
@@ -43,40 +46,52 @@ public class ExtendedPathCreator extends SimplePathCreator {
                         final Provider<PipelineHolder> pipelineHolder,
                         final Provider<MetaHolder> metaHolder,
                         final Provider<SearchIdHolder> searchIdHolder,
-                        final Provider<NodeInfo> nodeInfo) {
+                        final Provider<NodeInfo> nodeInfo,
+                        final PipelineScopeRunnable pipelineScopeRunnable) {
         super(homeDirProvider, tempDirProvider);
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
         this.metaHolder = metaHolder;
         this.searchIdHolder = searchIdHolder;
         this.nodeInfo = nodeInfo;
+        this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
     @Override
     public String replaceContextVars(String path) {
-        if (feedHolder != null && feedHolder.get().getFeedName() != null) {
-            path = replace(path, "feed", () -> feedHolder.get().getFeedName());
-        }
-        if (pipelineHolder != null && pipelineHolder.get().getPipeline() != null) {
-            path = replace(path, "pipeline", () -> pipelineHolder.get().getPipeline().getName());
-        }
-        if (metaHolder != null && metaHolder.get().getMeta() != null) {
-            path = replace(path, "sourceId", () -> metaHolder.get().getMeta().getId(), 0);
 
-            // TODO : DEPRECATED ALIAS FOR SOURCE ID.
-            path = replace(path, "streamId", () -> metaHolder.get().getMeta().getId(), 0);
-        }
-        if (metaHolder != null) {
-            path = replace(path, "partNo", () -> String.valueOf(metaHolder.get().getPartNo()));
+        // These providers are all for @PipelineScoped things, so we can only use them
+        // if we have an active pipeline scope
+        if (pipelineScopeRunnable.isScopeActive()) {
+            // Names become a single path segment, so strip anything that could escape it (e.g. '/', '\', '..').
+            if (feedHolder != null && feedHolder.get().getFeedName() != null) {
+                path = replace(path, "feed", () -> PathSegmentUtil.cleanSegment(feedHolder.get().getFeedName()));
+            }
+            if (pipelineHolder != null && pipelineHolder.get().getPipeline() != null) {
+                path = replace(path, "pipeline",
+                        () -> PathSegmentUtil.cleanSegment(pipelineHolder.get().getPipeline().getName()));
+            }
+            if (metaHolder != null && metaHolder.get().getMeta() != null) {
+                path = replace(path, "sourceId", () -> metaHolder.get().getMeta().getId(), 0);
 
-            // TODO : DEPRECATED ALIAS FOR PART NO.
-            path = replace(path, "streamNo", () -> String.valueOf(metaHolder.get().getPartNo()));
+                // TODO : DEPRECATED ALIAS FOR SOURCE ID.
+                path = replace(path, "streamId", () -> metaHolder.get().getMeta().getId(), 0);
+            }
+            if (metaHolder != null) {
+                path = replace(path, "partNo", () -> String.valueOf(metaHolder.get().getPartNo()));
+
+                // TODO : DEPRECATED ALIAS FOR PART NO.
+                path = replace(path, "streamNo", () -> String.valueOf(metaHolder.get().getPartNo()));
+            }
+            if (searchIdHolder != null && searchIdHolder.get().getSearchId() != null) {
+                path = replace(path, "searchId",
+                        () -> PathSegmentUtil.cleanSegment(searchIdHolder.get().getSearchId()));
+            }
         }
-        if (searchIdHolder != null && searchIdHolder.get().getSearchId() != null) {
-            path = replace(path, "searchId", () -> searchIdHolder.get().getSearchId());
-        }
+
+        // Non @PipelineScoped things go here
         if (nodeInfo != null) {
-            path = replace(path, "node", () -> nodeInfo.get().getThisNodeName());
+            path = replace(path, "node", () -> PathSegmentUtil.cleanSegment(nodeInfo.get().getThisNodeName()));
         }
 
         return path;

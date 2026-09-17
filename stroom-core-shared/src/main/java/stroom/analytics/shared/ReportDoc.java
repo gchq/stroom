@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
+import stroom.query.shared.QueryTablePreferences;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -68,9 +69,8 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                      @JsonProperty("suppressDuplicateNotifications") final Boolean suppressDuplicateNotifications,
                      @JsonProperty("duplicateNotificationConfig")
                          final DuplicateNotificationConfig duplicateNotificationConfig,
-                     @JsonProperty("reportSettings") final ReportSettings reportSettings,
-                     @JsonProperty("level") final String level,
-                     @JsonProperty("status") final String status) {
+                     @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences,
+                     @JsonProperty("reportSettings") final ReportSettings reportSettings) {
         super(TYPE, uuid,
                 name,
                 version,
@@ -91,8 +91,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 rememberNotifications,
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig,
-                level,
-                status);
+                queryTablePreferences);
 
         this.reportSettings = Objects.requireNonNullElseGet(reportSettings,
                 () -> ReportSettings.builder().build());
@@ -162,16 +161,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
             return self();
         }
 
-        public Builder level(final String level) {
-            this.level = level;
-            return self();
-        }
-
-        public Builder status(final String status) {
-            this.status = status;
-            return self();
-        }
-
         @Override
         protected Builder self() {
             return this;
@@ -200,9 +189,8 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                     false,
                     false,
                     duplicateNotificationConfig,
-                    reportSettings,
-                    level,
-                    status);
+                    queryTablePreferences,
+                    reportSettings);
         }
     }
 }

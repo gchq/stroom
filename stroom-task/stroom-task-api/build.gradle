@@ -21,10 +21,8 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
-    implementation libs.jackson.annotations
     implementation libs.jakarta.inject
     implementation libs.slf4j.api
 
-    testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }

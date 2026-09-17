@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,7 @@ public class UserListPresenter
         this.uiConfigCache = uiConfigCache;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Users");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
@@ -151,7 +152,7 @@ public class UserListPresenter
                             .build(),
                     DataGridUtil.headingBuilder("Enabled")
                             .withToolTip("The enabled state of the user. A disabled user effectively has no " +
-                                         "permissions and cannot login.")
+                                         "permissions and cannot sign in.")
                             .build(),
                     ColumnSizeConstants.ENABLED_COL);
 
@@ -300,8 +301,6 @@ public class UserListPresenter
                 actionMenuCol,
                 "",
                 ColumnSizeConstants.ICON_COL + 10);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private boolean isExternalIdp() {

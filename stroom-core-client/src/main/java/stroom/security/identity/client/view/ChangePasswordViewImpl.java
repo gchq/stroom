@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -119,10 +118,6 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
             valid = false;
         } else if (password.getValue().length() < passwordPolicyConfig.getMinimumPasswordLength()) {
             passwordFeedback.setText("Password is short");
-            password.addStyleName("invalid");
-            valid = false;
-        } else if (!RegExp.compile(passwordPolicyConfig.getPasswordComplexityRegex()).test(password.getValue())) {
-            passwordFeedback.setText("Password is invalid");
             password.addStyleName("invalid");
             valid = false;
         } else if (getPasswordStrength(password.getValue()) < passwordPolicyConfig.getMinimumPasswordStrength()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package stroom.data.store.api;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+// TODO - Not currently used other than in tests. Do we need it?
 
 /**
  * Stream that works like a zip input stream in that you can iterate over nested

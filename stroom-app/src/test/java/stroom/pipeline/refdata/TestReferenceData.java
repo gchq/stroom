@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteSize;
-import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Range;
@@ -62,11 +61,9 @@ import io.vavr.Tuple3;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.lmdbjava.Env;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -74,9 +71,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -92,7 +86,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceData.class);
 
-    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(5);
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(50);
 
     private static final String USER_1 = "user1";
     private static final String USER_2 = "user2";
@@ -107,9 +101,6 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     private static final String IP_TO_LOC_MAP_NAME = "IP_TO_LOC_MAP_NAME";
     public static final String DUMMY_FEED = "DUMMY_FEED";
     public static final String DUMMY_TYPE = "DummyType";
-
-    private Env<ByteBuffer> lmdbEnv = null;
-    private Path dbDir = null;
 
     @Mock
     private DocumentPermissionCache mockDocumentPermissionCache;
@@ -126,7 +117,6 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineSerialiser pipelineSerialiser;
 
-    private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private RefDataStore refDataStore;
 
     @SuppressWarnings("unused")
@@ -153,37 +143,20 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     private TaskContextFactory taskContextFactory;
 
     @BeforeEach
-    void setup() throws IOException {
+    void setup() {
+        // The feed specific store and staging store envs are created lazily on first use,
+        // reading the config at that point, so this mapper takes effect for every env this
+        // test creates. The production defaults are 50GiB/10GiB.
+        setConfigValueMapper(ReferenceDataConfig.class, config -> config
+                .withLmdbConfig(config.getLmdbConfig()
+                        .withMaxStoreSize(DB_MAX_SIZE))
+                .withStagingLmdbConfig(config.getStagingLmdbConfig()
+                        .withMaxStoreSize(DB_MAX_SIZE)));
 
-        dbDir = Files.createTempDirectory("stroom");
-        LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}",
-                getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
-
-        lmdbEnv = Env.create()
-                .setMapSize(getMaxSizeBytes().getBytes())
-                .setMaxDbs(10)
-                .open(dbDir.toFile());
-
-        LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
-
-        referenceDataConfig.getLmdbConfig().setLocalDir(getDbDir().toAbsolutePath().toString());
-
-        setDbMaxSizeProperty(DB_MAX_SIZE);
         refDataStore = refDataStoreFactory.getOffHeapStore();
 
         Mockito.when(mockDocumentPermissionCache.canUseDocument(Mockito.any()))
                 .thenReturn(true);
-    }
-
-    @AfterEach
-    void teardown() {
-        if (lmdbEnv != null) {
-            lmdbEnv.close();
-        }
-        lmdbEnv = null;
-        if (Files.isDirectory(dbDir)) {
-            FileUtil.deleteDir(dbDir);
-        }
     }
 
     @Test
@@ -758,19 +731,6 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
         } else {
             return Optional.empty();
         }
-    }
-
-    private void setDbMaxSizeProperty(final ByteSize size) {
-        referenceDataConfig = referenceDataConfig.withLmdbConfig(referenceDataConfig.getLmdbConfig()
-                .withMaxStoreSize(size));
-    }
-
-    private Path getDbDir() {
-        return dbDir;
-    }
-
-    private ByteSize getMaxSizeBytes() {
-        return DB_MAX_SIZE;
     }
 
     private EffectiveMeta buildEffectiveMeta(final long id, final String effectiveTimeStr) {

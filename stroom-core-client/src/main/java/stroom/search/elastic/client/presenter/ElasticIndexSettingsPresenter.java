@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,6 +127,7 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
         getView().setSearchScrollSize(index.getSearchScrollSize());
         getView().setTimeField(index.getTimeField());
         getView().setRerankTextFieldSuffix(index.getRerankTextFieldSuffix());
+        getView().setRerankScoreFieldSuffix(index.getRerankScoreFieldSuffix());
         getView().setRerankScoreMinimum(index.getRerankScoreMinimum());
 
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
@@ -144,6 +145,7 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
                 .searchScrollSize(getView().getSearchScrollSize())
                 .timeField(getView().getTimeField())
                 .rerankTextFieldSuffix(getView().getRerankTextFieldSuffix())
+                .rerankScoreFieldSuffix(getView().getRerankScoreFieldSuffix())
                 .rerankScoreMinimum(getView().getRerankScoreMinimum())
                 .defaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference())
                 .build();
@@ -179,6 +181,10 @@ public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSett
         String getRerankTextFieldSuffix();
 
         void setRerankTextFieldSuffix(String rerankTextFieldSuffix);
+
+        String getRerankScoreFieldSuffix();
+
+        void setRerankScoreFieldSuffix(String rerankScoreFieldSuffix);
 
         Float getRerankScoreMinimum();
 

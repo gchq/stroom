@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,9 +151,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
             // ArrayBlockingQueue seems to be marginally faster than a LinkedBlockingQueue
             // If the configuredCount is 0 it means we will allocate on demand so no need to hold the queue/counter
             pooledBufferQueues[i] = configuredCount > 1
-                    ? new PooledByteBufferQueue(
-                    configuredCount,
-                    bufferCapacity)
+                    ? new PooledByteBufferQueue(configuredCount, bufferCapacity)
                     : null;
         }
 
@@ -174,20 +172,18 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
      */
     static boolean isPowerOf10(final int n) {
         return switch (n) {
-            case 1:
-            case 10:
-            case 100:
-            case 1_000:
-            case 10_000:
-            case 100_000:
-            case 1_000_000:
-            case 10_000_000:
-            case 100_000_000:
-            case 1_000_000_000:
-                yield true;
-                // fall-through (Comment to tell checkstyle we want to fall through cases)
-            default:
-                yield false;
+            case 1,
+                 10,
+                 100,
+                 1_000,
+                 10_000,
+                 100_000,
+                 1_000_000,
+                 10_000_000,
+                 100_000_000,
+                 1_000_000_000 -> true;
+            // fall-through (Comment to tell checkstyle we want to fall through cases)
+            default -> false;
         };
     }
 
@@ -225,7 +221,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
     @Override
     public void release(final ByteBuffer byteBuffer) {
         if (byteBuffer != null && byteBuffer.isDirect()) {
-            final int offset = getOffset(byteBuffer.capacity());
+            final int offset = getOffset(byteBuffer);
             if (isUnPooled(offset)) {
                 ByteBufferSupport.unmap(byteBuffer);
             } else {
@@ -299,7 +295,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
         }
 
         LOGGER.info("Cleared the following buffers from the pool (buffer size:number cleared) - " +
-                String.join(", ", msgs));
+                    String.join(", ", msgs));
     }
 
     @Override
@@ -360,7 +356,29 @@ public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
         }
     }
 
-    private int getOffset(final int minCapacity) {
+    /**
+     * The switch approach seems to be a lot quicker than {@link Math#log10(double)}
+     * <strong>IF</strong> we expect the values to be exactly a power of 10, which they ought to be
+     * for buffers coming back to the pool (because we created them with power of ten sizes).
+     */
+    private static int getOffset(final ByteBuffer byteBuffer) {
+        final int capacity = byteBuffer.capacity();
+        return switch (capacity) {
+            case 1 -> 0;
+            case 10 -> 1;
+            case 100 -> 2;
+            case 1_000 -> 3;
+            case 10_000 -> 4;
+            case 100_000 -> 5;
+            case 1_000_000 -> 6;
+            case 10_000_000 -> 7;
+            case 100_000_000 -> 8;
+            case 1_000_000_000 -> 9;
+            default -> (int) Math.ceil(Math.log10(capacity));
+        };
+    }
+
+    private static int getOffset(final int minCapacity) {
         if (minCapacity <= 10) {
             // Optimisation for ints/longs
             return minCapacity <= 1

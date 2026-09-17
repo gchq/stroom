@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -190,6 +191,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             }
             case final AddAllPermissionsFrom req -> {
                 Objects.requireNonNull(req.getSourceDocRef(), "Null sourceDocRef");
+                // Copying a source doc's permissions exposes them on the destination (which the caller can
+                // then read), so require permission to read the source's permissions too.
+                checkGetPermission(req.getSourceDocRef());
                 documentPermissionDao.addDocumentPermissions(
                         req.getSourceDocRef().getUuid(),
                         docRef.getUuid());
@@ -203,6 +207,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             }
             case final SetAllPermissionsFrom req -> {
                 Objects.requireNonNull(req.getSourceDocRef(), "Null sourceDocRef");
+                // Copying a source doc's permissions exposes them on the destination (which the caller can
+                // then read), so require permission to read the source's permissions too.
+                checkGetPermission(req.getSourceDocRef());
                 documentPermissionDao.setDocumentPermissions(
                         req.getSourceDocRef().getUuid(),
                         docRef.getUuid());
@@ -334,17 +341,15 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 convertToPaths(inheritedCreatePermissions));
     }
 
-    private <T> Map<String, List<String>> convertToPaths(final Map<T, List<List<UserRef>>> map) {
+    private <T> Map<T, List<String>> convertToPaths(final Map<T, List<List<UserRef>>> map) {
         return map.entrySet()
                 .stream()
-                .collect(Collectors.toMap(entry -> entry.getKey().toString(), entry -> {
-                    return entry.getValue()
-                            .stream()
-                            .map(list -> list.stream()
-                                    .map(UserRef::toDisplayString)
-                                    .collect(Collectors.joining(" --> ")))
-                            .toList();
-                }));
+                .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue()
+                        .stream()
+                        .map(list -> list.stream()
+                                .map(UserRef::toDisplayString)
+                                .collect(Collectors.joining(" --> ")))
+                        .toList()));
     }
 
     private void addDeepPermissionsAndPaths(final UserRef userRef,

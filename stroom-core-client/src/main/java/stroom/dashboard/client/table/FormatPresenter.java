@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,21 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatView> implements FormatUihandlers {
+
+    /**
+     * What a column with no date/time settings shows. Matches {@link DateTimeFormatSettings.Builder}'s
+     * own default, so opening a column that has never been formatted shows the value it would save.
+     */
+    private static final boolean DEFAULT_USE_PREFERENCES = true;
+
+    /**
+     * What a column with no number settings shows, and the fallback when it has them but they are
+     * null — {@link NumberFormatSettings}'s {@code @JsonCreator} assigns both fields raw, so a
+     * deserialised instance can hold nulls where the view takes primitives. Values match that class's
+     * own defaults.
+     */
+    private static final int DEFAULT_DECIMAL_PLACES = 0;
+    private static final boolean DEFAULT_USE_SEPARATOR = false;
 
     private final TimeZones timeZones;
     private Type type;
@@ -116,13 +131,14 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     }
 
     private void setNumberSettings(final FormatSettings settings) {
-        if (!(settings instanceof NumberFormatSettings)) {
-            getView().setDecimalPlaces(0);
-            getView().setUseSeparator(false);
+        if (settings instanceof final NumberFormatSettings numberFormatSettings) {
+            getView().setDecimalPlaces(Objects.requireNonNullElse(
+                    numberFormatSettings.getDecimalPlaces(), DEFAULT_DECIMAL_PLACES));
+            getView().setUseSeparator(Objects.requireNonNullElse(
+                    numberFormatSettings.getUseSeparator(), DEFAULT_USE_SEPARATOR));
         } else {
-            final NumberFormatSettings numberFormatSettings = (NumberFormatSettings) settings;
-            getView().setDecimalPlaces(numberFormatSettings.getDecimalPlaces());
-            getView().setUseSeparator(numberFormatSettings.getUseSeparator());
+            getView().setDecimalPlaces(DEFAULT_DECIMAL_PLACES);
+            getView().setUseSeparator(DEFAULT_USE_SEPARATOR);
         }
     }
 
@@ -133,15 +149,15 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     private void setDateTimeSettings(final FormatSettings settings) {
         UserTimeZone timeZone = UserTimeZone.utc();
 
-        if (!(settings instanceof DateTimeFormatSettings)) {
-            getView().setPattern(null);
-        } else {
-            final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) settings;
+        if (settings instanceof final DateTimeFormatSettings dateTimeFormatSettings) {
+            getView().setUsePreferences(dateTimeFormatSettings.isUsePreferences());
             getView().setPattern(dateTimeFormatSettings.getPattern());
-
             if (dateTimeFormatSettings.getTimeZone() != null) {
                 timeZone = dateTimeFormatSettings.getTimeZone();
             }
+        } else {
+            getView().setUsePreferences(DEFAULT_USE_PREFERENCES);
+            getView().setPattern(null);
         }
 
         setTimeZone(timeZone);

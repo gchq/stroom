@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,19 +28,16 @@ import stroom.security.api.UserService;
 import stroom.security.common.impl.ContentSecurityFilter;
 import stroom.security.common.impl.DelegatingServiceUserFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
-import stroom.security.common.impl.ExternalServiceUserFactory;
 import stroom.security.common.impl.HashFunctionFactoryImpl;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.RefreshManager;
-import stroom.security.common.impl.TestCredentialsServiceUserFactory;
 import stroom.security.impl.apikey.ApiKeyObjectInfoProvider;
 import stroom.security.impl.apikey.ApiKeyResourceImpl;
 import stroom.security.impl.apikey.CreateHashedApiKeyResponseObjectInfoProvider;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
-import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.HashedApiKey;
@@ -84,15 +81,9 @@ public class SecurityModule extends AbstractModule {
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);
 
-        // TODO: 26/07/2023 Remove these
-//        bind(ProcessingUserIdentityProvider.class).to(DelegatingProcessingUserIdentityProvider.class);
-//        GuiceUtil.buildMapBinder(binder(), IdpType.class, ProcessingUserIdentityProvider.class)
-//                .addBinding(IdpType.EXTERNAL_IDP, ExternalProcessingUserIdentityProvider.class);
-
         bind(ServiceUserFactory.class).to(DelegatingServiceUserFactory.class);
-        GuiceUtil.buildMapBinder(binder(), IdpType.class, ServiceUserFactory.class)
-                .addBinding(IdpType.EXTERNAL_IDP, ExternalServiceUserFactory.class)
-                .addBinding(IdpType.TEST_CREDENTIALS, TestCredentialsServiceUserFactory.class);
+        // INTERNAL_IDP and EXTERNAL_IDP both map to the internal service-user factory (bound in
+        // AccountModule) so the inter-node processing user is a cluster-internal credential in every mode.
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
@@ -122,8 +113,10 @@ public class SecurityModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(ApiKeyResourceImpl.class)
                 .bind(AppPermissionResourceImpl.class)
+                .bind(AuthFlowResourceImpl.class)
                 .bind(DocPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
+                .bind(UserAccessResourceImpl.class)
                 .bind(UserResourceImpl.class)
                 .bind(UserRefResourceImpl.class)
                 .bind(UserInfoResourceImpl.class)

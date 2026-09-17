@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,7 +230,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                                 .text("Delete Rule")
                                 .command(() ->
                                         deleteRule(rule)))
-                .withIconMenuItemIf(!isDefaultRule && rule.getRuleNumber() > 0, itemBuilder ->
+                .withIconMenuItemIf(!isDefaultRule && rule.getRuleNumber() > 1, itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.UP)
                                 .text("Move Rule Up")
@@ -516,7 +516,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Edit Rule")
-                .onShow(e -> listPresenter.focus())
+                .onShow(e -> editRulePresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final DataRetentionRule rule = editRulePresenter.write();

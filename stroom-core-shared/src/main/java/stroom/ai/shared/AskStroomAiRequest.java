@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ public class AskStroomAiRequest {
     @JsonProperty
     private final AiChat aiChat;
     @JsonProperty
-    private final AskStroomAIConfig config;
+    private final AskStroomAiConfig config;
     @JsonProperty
     private final AskStroomAiContext context;
     @JsonProperty
@@ -35,7 +35,7 @@ public class AskStroomAiRequest {
 
     @JsonCreator
     public AskStroomAiRequest(@JsonProperty("aiChat") final AiChat aiChat,
-                              @JsonProperty("config") final AskStroomAIConfig config,
+                              @JsonProperty("config") final AskStroomAiConfig config,
                               @JsonProperty("context") final AskStroomAiContext context,
                               @JsonProperty("message") final String message) {
         this.aiChat = aiChat;
@@ -48,7 +48,7 @@ public class AskStroomAiRequest {
         return aiChat;
     }
 
-    public AskStroomAIConfig getConfig() {
+    public AskStroomAiConfig getConfig() {
         return config;
     }
 

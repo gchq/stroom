@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,5 +28,6 @@ public interface StoreFactory {
             DocumentSerialiser2<D> serialiser,
             String type,
             Supplier<B> builderSupplier,
-            Function<D, B> builderFunction);
+            Function<D, B> builderFunction,
+            Supplier<DependencyRemapFunction<D>> dependencyRemapFunctionSupplier);
 }

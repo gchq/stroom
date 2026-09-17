@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -35,7 +35,6 @@ import stroom.pipeline.shared.stepping.FindElementDocRequest;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
-import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
@@ -69,7 +68,7 @@ import java.util.stream.Collectors;
 
 public class ElementPresenter
         extends MyPresenterWidget<ElementView>
-        implements HasDirtyHandlers, ClassificationUiHandlers {
+        implements HasChangeHandlers, ClassificationUiHandlers {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
@@ -77,7 +76,6 @@ public class ElementPresenter
     private final Provider<EditorPresenter> editorProvider;
     private final DocumentPluginRegistry documentPluginRegistry;
     private final RestFactory restFactory;
-    private final PipelineElementTypesFactory pipelineElementTypesFactory;
 
     private PipelineModel pipelineModel;
     private PipelineElement element;
@@ -86,7 +84,7 @@ public class ElementPresenter
     private String pipelineName;
     private boolean refreshRequired = true;
     private boolean loaded;
-    private boolean dirtyCode;
+    private boolean dirty;
     private DocRef docRef;
     private Document document;
     private final EnumMap<IndicatorType, EditorPresenter> presenterMap = new EnumMap<>(IndicatorType.class);
@@ -110,14 +108,12 @@ public class ElementPresenter
                             final Provider<ClassificationWrapperView> classificationWrapperViewProvider,
                             final Provider<EditorPresenter> editorProvider,
                             final DocumentPluginRegistry documentPluginRegistry,
-                            final RestFactory restFactory,
-                            final PipelineElementTypesFactory pipelineElementTypesFactory) {
+                            final RestFactory restFactory) {
         super(eventBus, view);
         this.classificationWrapperViewProvider = classificationWrapperViewProvider;
         this.editorProvider = editorProvider;
         this.documentPluginRegistry = documentPluginRegistry;
         this.restFactory = restFactory;
-        this.pipelineElementTypesFactory = pipelineElementTypesFactory;
     }
 
     public void load(final Consumer<Boolean> consumer) {
@@ -141,7 +137,6 @@ public class ElementPresenter
                             .method(res -> res.findElementDoc(findElementDocRequest))
                             .onSuccess(result -> loadEntityRef(result, consumer))
                             .onFailure(caught -> {
-                                dirtyCode = false;
                                 setCode(caught.getMessage());
                                 clearAllIndicators();
                                 consumer.accept(false);
@@ -250,13 +245,11 @@ public class ElementPresenter
                     result -> {
                         docRef = entityRef;
                         document = result;
-                        dirtyCode = false;
                         read();
 
                         future.accept(true);
                     },
                     caught -> {
-                        dirtyCode = false;
                         setCode(caught.getMessage());
                         clearAllIndicators();
                         future.accept(false);
@@ -268,15 +261,15 @@ public class ElementPresenter
     }
 
     public void save(final Runnable onComplete) {
-        if (loaded && document != null && dirtyCode) {
-            write();
+        if (loaded && isDirty()) {
+            final Document toSave = write();
 
             final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(docRef.getType(),
                     Document.class);
-            documentPlugin.save(docRef, document,
+            documentPlugin.save(docRef, toSave,
                     result -> {
                         document = result;
-                        dirtyCode = false;
+                        refreshDirty();
                         onComplete.run();
                     },
                     throwable -> {
@@ -298,12 +291,22 @@ public class ElementPresenter
         } else {
             setCode("");
         }
+        refreshDirty();
     }
 
-    private void write() {
+    private void onCodeChange() {
+        refreshDirty();
+        ChangeEvent.fire(ElementPresenter.this);
+    }
+
+    private Document write() {
+        // Build the document to save from the current editor content without clobbering the loaded
+        // baseline. The baseline is only advanced on a successful save so that a failed save leaves
+        // the element dirty.
         if (document instanceof final HasData hasData) {
-            document = (Document) hasData.copyWithData(getCode());
+            return (Document) hasData.copyWithData(getCode());
         }
+        return document;
     }
 
     public String getCode() {
@@ -455,8 +458,8 @@ public class ElementPresenter
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     public PipelineElement getElement() {
@@ -498,11 +501,26 @@ public class ElementPresenter
     }
 
     public boolean isDirty() {
-        return loaded && document != null && dirtyCode;
+        // Returns the verdict cached by refreshDirty(). The enclosing pipeline asks every open
+        // element whether it is dirty on each keypress, and reading the editor content to answer is
+        // expensive for a large document, so the comparison is only made when the editor changes.
+        return dirty;
+    }
+
+    /**
+     * Recomputes dirtiness by comparing the current editor content against the loaded/last saved
+     * baseline, mirroring DocPresenter.onChange(). Comparing rather than latching a flag means
+     * reverting an edit (e.g. typing a letter then deleting it) returns to a clean state.
+     */
+    private void refreshDirty() {
+        dirty = loaded
+                && document instanceof final HasData hasData
+                && !Objects.equals(hasData.getData(), getCode());
     }
 
     public void setLoaded(final boolean loaded) {
         this.loaded = loaded;
+        refreshDirty();
     }
 
     public DocRef getDocRef() {
@@ -526,14 +544,13 @@ public class ElementPresenter
             codePresenter.setMode(getMode(element));
             codePresenter.getFormatAction().setAvailable(true);
 
-            registerHandler(codePresenter.addValueChangeHandler(event -> {
-                dirtyCode = true;
-                DirtyEvent.fire(ElementPresenter.this, true);
-            }));
-            registerHandler(codePresenter.addFormatHandler(event -> {
-                dirtyCode = true;
-                DirtyEvent.fire(ElementPresenter.this, true);
-            }));
+            // Fire a change event on any edit so the enclosing presenter re-evaluates dirty state via
+            // onChange(). This is a "something changed" signal, not a dirty assertion - the actual
+            // dirtiness is recomputed by comparison in refreshDirty(), so a reverted edit returns to
+            // clean. Note that element code is not part of the pipeline structure, so this must not
+            // touch the pipeline model: rebuilding it on each keypress makes the editor lag.
+            registerHandler(codePresenter.addValueChangeHandler(event -> onCodeChange()));
+            registerHandler(codePresenter.addFormatHandler(event -> onCodeChange()));
         }
         return codePresenter;
     }

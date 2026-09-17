@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,21 +26,25 @@ public class ExpressionContext {
 
     private final int maxStringLength;
     private final DateTimeSettings dateTimeSettings;
-    private final StateFetcher stateFetcher;
+    private final StateProvider stateProvider;
+    private final AiProvider aiProvider;
 
     public ExpressionContext() {
         this.maxStringLength = 100;
         this.dateTimeSettings = DateTimeSettings.builder().build();
-        this.stateFetcher = (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
+        this.stateProvider = (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
+        this.aiProvider = (modelNameOrUuid, systemPrompt, message) -> ValNull.INSTANCE;
     }
 
     @JsonCreator
     public ExpressionContext(final int maxStringLength,
                              final DateTimeSettings dateTimeSettings,
-                             final StateFetcher stateFetcher) {
+                             final StateProvider stateProvider,
+                             final AiProvider aiProvider) {
         this.maxStringLength = maxStringLength;
         this.dateTimeSettings = dateTimeSettings;
-        this.stateFetcher = stateFetcher;
+        this.stateProvider = stateProvider;
+        this.aiProvider = aiProvider;
     }
 
     public int getMaxStringLength() {
@@ -51,8 +55,12 @@ public class ExpressionContext {
         return dateTimeSettings;
     }
 
-    public StateFetcher getStateFetcher() {
-        return stateFetcher;
+    public StateProvider getStateProvider() {
+        return stateProvider;
+    }
+
+    public AiProvider getAiProvider() {
+        return aiProvider;
     }
 
     @Override
@@ -97,7 +105,8 @@ public class ExpressionContext {
 
         private int maxStringLength;
         private DateTimeSettings dateTimeSettings;
-        private StateFetcher stateFetcher;
+        private StateProvider stateProvider;
+        private AiProvider aiProvider;
 
         private Builder() {
         }
@@ -105,7 +114,8 @@ public class ExpressionContext {
         private Builder(final ExpressionContext expressionContext) {
             this.maxStringLength = expressionContext.maxStringLength;
             this.dateTimeSettings = expressionContext.dateTimeSettings;
-            this.stateFetcher = expressionContext.stateFetcher;
+            this.stateProvider = expressionContext.stateProvider;
+            this.aiProvider = expressionContext.aiProvider;
         }
 
         public Builder maxStringLength(final int maxStringLength) {
@@ -118,13 +128,18 @@ public class ExpressionContext {
             return this;
         }
 
-        public Builder stateFetcher(final StateFetcher stateFetcher) {
-            this.stateFetcher = stateFetcher;
+        public Builder stateProvider(final StateProvider stateProvider) {
+            this.stateProvider = stateProvider;
+            return this;
+        }
+
+        public Builder aiProvider(final AiProvider aiProvider) {
+            this.aiProvider = aiProvider;
             return this;
         }
 
         public ExpressionContext build() {
-            return new ExpressionContext(maxStringLength, dateTimeSettings, stateFetcher);
+            return new ExpressionContext(maxStringLength, dateTimeSettings, stateProvider, aiProvider);
         }
     }
 }

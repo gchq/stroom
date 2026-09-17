@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 
 package stroom.guice;
 
-
-import stroom.ai.impl.MockAiModule;
+import stroom.ai.impl.mock.MockAiModule;
 import stroom.analytics.AnalyticsDataSetup;
 import stroom.analytics.impl.AnalyticRuleStore;
 import stroom.analytics.impl.TableBuilderAnalyticExecutor;
@@ -26,7 +25,7 @@ import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.fs.FsVolumeConfig;
-import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.data.store.impl.fs.FsVolumeServiceImpl;
 import stroom.index.VolumeCreator;
 import stroom.index.VolumeTestConfigModule;
 import stroom.index.impl.IndexShardManager;
@@ -35,7 +34,6 @@ import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.meta.api.MetaService;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
-import stroom.processor.impl.ProcessorTaskQueueManager;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
@@ -108,10 +106,9 @@ class TestInjectionPerformance {
                 IndexShardManager.class,
                 IndexShardWriterCache.class,
                 VolumeCreator.class,
-                ProcessorTaskQueueManager.class,
                 VolumeConfig.class,
                 FsVolumeConfig.class,
-                FsVolumeService.class,
+                FsVolumeServiceImpl.class,
                 PathCreator.class,
                 IndexVolumeService.class,
 

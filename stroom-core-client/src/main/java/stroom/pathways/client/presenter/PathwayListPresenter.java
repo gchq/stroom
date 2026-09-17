@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,12 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.pathways.shared.AddPathway;
 import stroom.pathways.shared.DeletePathway;
@@ -95,6 +93,7 @@ public class PathwayListPresenter
         view.setUiHandlers(this);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Pathways");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
@@ -182,7 +181,6 @@ public class PathwayListPresenter
         addCreateTimeColumn();
         addUpdateTimeColumn();
         addLastUsedColumn();
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {
@@ -237,7 +235,6 @@ public class PathwayListPresenter
                             selectionModel.setSelected(pathway);
                             refresh();
                             e.hide();
-                            DirtyEvent.fire(PathwayListPresenter.this, true);
                         })
                         .onFailure(new DefaultErrorHandler(this, e::reset))
                         .taskMonitorFactory(pagerView)
@@ -266,7 +263,6 @@ public class PathwayListPresenter
                                     selectionModel.setSelected(pathway);
                                     refresh();
                                     e.hide();
-                                    DirtyEvent.fire(PathwayListPresenter.this, true);
                                 })
                                 .onFailure(new DefaultErrorHandler(this, e::reset))
                                 .taskMonitorFactory(pagerView)
@@ -298,7 +294,6 @@ public class PathwayListPresenter
                                 .onSuccess(response -> {
                                     selectionModel.clear();
                                     refresh();
-                                    DirtyEvent.fire(PathwayListPresenter.this, true);
                                 })
                                 .taskMonitorFactory(pagerView)
                                 .exec();

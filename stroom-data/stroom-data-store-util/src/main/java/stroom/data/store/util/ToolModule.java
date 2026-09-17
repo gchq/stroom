@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ package stroom.data.store.util;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionRulesProvider;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.dictionary.mock.MockWordListProviderModule;
-import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.docstore.impl.dao.MockDocDependencyModule;
+import stroom.docstore.mock.MockDocFinderModule;
 import stroom.node.mock.MockNodeServiceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
@@ -34,10 +36,13 @@ import stroom.util.io.StroomPathConfig;
 import stroom.util.metrics.Metrics;
 import stroom.util.metrics.MetricsImpl;
 import stroom.util.servlet.MockServletModule;
+import stroom.util.string.TemplateUtil.ContextVariableResolver;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+
+import java.util.Optional;
 
 public class ToolModule extends AbstractModule {
 
@@ -45,33 +50,54 @@ public class ToolModule extends AbstractModule {
     protected void configure() {
         install(new MockClusterLockModule());
         install(new MockCollectionModule());
-        install(new MockDocRefInfoModule());
         install(new MockInternalStatisticsModule());
         install(new MockNodeServiceModule());
         install(new MockSecurityContextModule());
         install(new MockServletModule());
         install(new MockTaskModule());
         install(new MockWordListProviderModule());
+        install(new MockDocFinderModule());
+        install(new MockDocDependencyModule());
         install(new stroom.activity.mock.MockActivityModule());
+        install(new stroom.aws.s3.client.S3ClientModule());
+//        install(new stroom.aws.s3.impl.S3ConfigModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
-        install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
-        install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
+        install(new stroom.data.store.impl.fs.s3v2.ZstdModule());
+        install(new stroom.data.store.impl.fs.dao.FsDataStoreDaoModule());
+        install(new stroom.data.store.impl.fs.dao.FsDataStoreDaoModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
+//        install(new stroom.docstore.impl.DocStoreModule());
+        install(new stroom.docstore.impl.db.DocStoreDBPersistenceDbModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.meta.impl.MetaModule());
-        install(new stroom.meta.impl.db.MetaDaoModule());
+        install(new stroom.meta.impl.dao.MetaDaoModule());
         install(new stroom.meta.impl.db.MetaDbModule());
 
         bind(PathCreator.class).to(SimplePathCreator.class);
         bind(PathConfig.class).to(StroomPathConfig.class);
         bind(Metrics.class).toInstance(new MetricsImpl(new MetricRegistry()));
-        bind(DataRetentionRulesProvider.class).toInstance(() -> null);
+        bind(DataRetentionRulesProvider.class).toInstance(createDataRetentionRulesProvider());
+        bind(ContextVariableResolver.class).toInstance(ContextVariableResolver.NO_OP);
         install(new DirProvidersModule());
     }
 
     @Provides
     EntityEventBus entityEventBus() {
         return EntityEventBus.NO_OP_EVENT_BUS;
+    }
+
+    private DataRetentionRulesProvider createDataRetentionRulesProvider() {
+        return new DataRetentionRulesProvider() {
+            @Override
+            public DataRetentionRules getOrCreate() {
+                return null;
+            }
+
+            @Override
+            public Optional<DataRetentionRules> get() {
+                return Optional.empty();
+            }
+        };
     }
 }

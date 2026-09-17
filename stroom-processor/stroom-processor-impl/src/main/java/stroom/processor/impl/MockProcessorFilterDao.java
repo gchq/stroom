@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 @Singleton
 public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
@@ -78,8 +79,19 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
-    public ProcessorFilter restoreProcessorFilter(final ProcessorFilter processorFilter, final boolean resetTracker) {
-        return update(processorFilter.copy().deleted(false).build());
+    public ProcessorFilter restoreProcessorFilter(final ProcessorFilter processorFilter) {
+        if (!processorFilter.isDeleted()) {
+            return processorFilter;
+        }
+        // Replace rather than revive, as the real dao does: the deleted filter gives up its uuid
+        // to a replica that records it as its parent.
+        update(processorFilter.copy().uuid(UUID.randomUUID().toString()).build());
+        return create(processorFilter
+                .copy()
+                .id(null)
+                .parentFilterId(processorFilter.getId())
+                .deleted(false)
+                .build());
     }
 
     @Override

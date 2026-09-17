@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package stroom.planb.impl.serde;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.SimpleByteBufferFactory;
 import stroom.pathways.shared.otel.trace.NanoTime;
-import stroom.planb.impl.db.trace.NanoTimeUtil;
+import stroom.planb.impl.dao.trace.NanoTimeUtil;
 import stroom.planb.impl.serde.trace.MockLookupSerde;
 import stroom.planb.impl.serde.trace.SpanValue;
 import stroom.planb.impl.serde.trace.SpanValueSerde;

@@ -15,6 +15,7 @@
     border-bottom: 1px solid var(--splitter__background-color);
     padding: 0 5px;
     gap: 5px;
+    min-height: 34px;
 }
 
 .askStroomAiViewImpl-title {
@@ -22,6 +23,13 @@
     flex-grow: 1;
     align-items: center;
     flex-direction: row;
+    overflow: hidden;
+}
+
+.askStroomAiViewImpl-title div {
+    text-overflow: ellipsis;
+    width: 100%;
+    overflow: hidden;
 }
 
 .askStroomAiViewImpl-buttons {
@@ -202,7 +210,10 @@
 .ai-message-header,
 .ai-message-footer {
     display: flex;
-    gap: 8px;
+    gap: 5px;
+}
+
+.ai-message-footer {
     align-items: center;
 }
 
@@ -212,7 +223,7 @@
     font-style: italic;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
 }
 
 .ai-attachment-status .svgIcon {
@@ -230,6 +241,7 @@
     font-size: 0.7em;
     color: var(--control__text-color--disabled);
     margin-left: auto;
+    cursor: default;
 }
 
 .ai-message-copy {
@@ -264,4 +276,30 @@
 
 .aiChatHistoryCell-age {
     opacity: 0.6;
+}
+
+/* ---- Delete button (visible on hover) ---- */
+
+.ai-message-delete {
+    opacity: 0;
+}
+
+.ai-message:hover > .ai-message-footer .ai-message-delete {
+    opacity: 1;
+}
+
+.ai-message-delete .face {
+    color: var(--control__text-color--disabled);
+}
+
+.ai-message-delete:hover .face {
+    color: var(--icon-colour__red);
+}
+
+.ai-attachment-status-icon {
+    cursor: default !important;
+}
+
+.ai-attachment-status-icon .face {
+    color: var(--icon-colour__green);
 }

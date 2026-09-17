@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,18 +36,41 @@ public class SharedElementData {
     private final boolean formatInput;
     @JsonProperty
     private final boolean formatOutput;
+    // Whether the element actually produced output for the record. Captured explicitly rather than
+    // inferred from the output string as an empty XML element (e.g. <Event/>) has a non-empty output
+    // string but no real content, which the skip-to-empty-output filter needs to distinguish.
+    @JsonProperty
+    private final boolean hasOutput;
+    // True when a running count observable in this element's output (an EventId) reflects only the records
+    // the producing run processed rather than the whole stream - a record materialised on demand with no
+    // counter state to restore. Exact wherever materialisation has been contiguous from the stream start.
+    @JsonProperty
+    private final boolean indicativeCounts;
+
+    public SharedElementData(final String input,
+                             final String output,
+                             final Indicators indicators,
+                             final boolean formatInput,
+                             final boolean formatOutput,
+                             final boolean hasOutput) {
+        this(input, output, indicators, formatInput, formatOutput, hasOutput, false);
+    }
 
     @JsonCreator
     public SharedElementData(@JsonProperty("input") final String input,
                              @JsonProperty("output") final String output,
                              @JsonProperty("indicators") final Indicators indicators,
                              @JsonProperty("formatInput") final boolean formatInput,
-                             @JsonProperty("formatOutput") final boolean formatOutput) {
+                             @JsonProperty("formatOutput") final boolean formatOutput,
+                             @JsonProperty("hasOutput") final boolean hasOutput,
+                             @JsonProperty("indicativeCounts") final boolean indicativeCounts) {
         this.input = input;
         this.output = output;
         this.indicators = indicators;
         this.formatInput = formatInput;
         this.formatOutput = formatOutput;
+        this.hasOutput = hasOutput;
+        this.indicativeCounts = indicativeCounts;
     }
 
     public String getInput() {
@@ -76,6 +99,14 @@ public class SharedElementData {
         return formatOutput;
     }
 
+    public boolean isIndicativeCounts() {
+        return indicativeCounts;
+    }
+
+    public boolean isHasOutput() {
+        return hasOutput;
+    }
+
     @Override
     public String toString() {
         return "SharedElementData{" +
@@ -84,6 +115,7 @@ public class SharedElementData {
                 ", indicators=" + indicators +
                 ", formatInput=" + formatInput +
                 ", formatOutput=" + formatOutput +
+                ", hasOutput=" + hasOutput +
                 '}';
     }
 }

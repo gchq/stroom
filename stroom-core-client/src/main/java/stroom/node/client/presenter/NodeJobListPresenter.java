@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
         super(eventBus, view);
         this.nodeClient = nodeClient;
         this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid.setTableName("Node Jobs");
         this.selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
         this.dataProvider = buildDataProvider(eventBus, view, restFactory);
@@ -302,8 +303,6 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
         jobNodeListHelper.addNextExecutedColumn(dataGrid);
         // Action column
         jobNodeListHelper.addActionColumn(dataGrid);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private CommandLink openJobNodeAsCommandLink(final JobNodeAndInfo jobNodeAndInfo) {

@@ -15,7 +15,7 @@
  */
 
 buildscript {
-    ext.jooqVer = '3.20.1'
+    ext.jooqVer = '3.20.10'
     repositories {
         mavenLocal()
         mavenCentral()
@@ -278,6 +278,16 @@ subprojects {
     test {
         useJUnitPlatform()
 
+        // Gradle forks the test JVMs, so a -D on the gradle command line reaches the daemon and
+        // stops there. Forward the ones measurement tests use to scale or enable themselves, e.g.
+        // -DtestFilterCount for TestProcessorTaskQueryPlans and -DrunProcessorBenchmark for
+        // TestProcessorTaskDispatchBenchmark. Deliberately a narrow prefix rather than the whole
+        // system property set, which would make test runs depend on whatever the daemon happens
+        // to have been started with.
+        systemProperties System.properties.findAll { key, value ->
+            key.startsWith("test") || key.startsWith("bench") || key.startsWith("run")
+        }
+
         // set heap size for the test JVM(s)
 //        minHeapSize = "128m"
 //        maxHeapSize = "8G"
@@ -288,40 +298,51 @@ subprojects {
         maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
         // maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
 
-        beforeSuite { descriptor ->
-            if (descriptor?.className?.trim())
-                println "Executing test class ${descriptor.className}"
-        }
+        // Capture the report output location here (where 'reports' is in scope on the
+        // Test task) so the TestListener below can reference it. Inside the anonymous
+        // TestListener class 'reports' is not resolvable.
+        def junitXmlOutputLocation = reports.junitXml.outputLocation
 
-        beforeTest { descriptor ->
-            if (descriptor.className == "stroom.search.impl.TestSearchResultCreation") {
-                println "  Executing test ${descriptor.className}.${descriptor.name}"
+        addTestListener(new TestListener() {
+            @Override
+            void beforeSuite(TestDescriptor descriptor) {
+                if (descriptor?.className?.trim())
+                    println "Executing test class ${descriptor.className}"
             }
-        }
 
-        // Report duration of tests that take over 1s
-        afterTest { descriptor, result ->
-            def durationSecs = (result.endTime - result.startTime) / 1000
-            if (durationSecs > 1) {
-                println "  Test ${descriptor.className}.${descriptor.name}, took longer than 1s, result: ${result.resultType}, duration: ${durationSecs}s"
+            @Override
+            void beforeTest(TestDescriptor descriptor) {
+                if (descriptor.className == "stroom.search.impl.TestSearchResultCreation") {
+                    println "  Executing test ${descriptor.className}.${descriptor.name}"
+                }
             }
-        }
+
+            // Report duration of tests that take over 1s
+            @Override
+            void afterTest(TestDescriptor descriptor, TestResult result) {
+                def durationSecs = (result.endTime - result.startTime) / 1000
+                if (durationSecs > 1) {
+                    println "  Test ${descriptor.className}.${descriptor.name}, took longer than 1s, result: ${result.resultType}, duration: ${durationSecs}s"
+                }
+            }
+
+            @Override
+            void afterSuite(TestDescriptor descriptor, TestResult result) {
+                if (descriptor != null
+                        && descriptor.className != null
+                        && result.resultType.toString() == "FAILURE") {
+
+                    // test class failed so add its project info and test report file to a global list for
+                    // processing at the end of the build
+                    def reportFileName = "${junitXmlOutputLocation.get().asFile}/TEST-${descriptor.className}.xml"
+                    def reportFile = file(reportFileName)
+                    def pair = new Tuple2("${project.name} ${descriptor.name}", reportFile)
+                    failedTestReportFiles.add(pair)
+                }
+            }
+        })
 
         reports.html.outputLocation = file("${reporting.baseDirectory.getAsFile().get()}/${name}")
-
-        afterSuite { descriptor, result ->
-            if (descriptor != null
-                    && descriptor.className != null
-                    && result.resultType.toString() == "FAILURE") {
-
-                // test class failed so add its project info and test report file to a global list for
-                // processing at the end of the build
-                def reportFileName = "${reports.junitXml.outputLocation}/TEST-${descriptor.className}.xml"
-                def reportFile = file(reportFileName)
-                def pair = new Tuple2("${project.name} ${descriptor.name}", reportFile)
-                failedTestReportFiles.add(pair)
-            }
-        }
 
         // Use full logging for test exceptions so we can see where the failure occurred
         testLogging {
@@ -507,12 +528,7 @@ subprojects {
     checkstyle {
         ignoreFailures = false
         showViolations = true
-
-        // TODO Uplifting this to 13.0.0 caused a lot of checkstyle violations.
-        //   A lot were switch statement lambda indent violations which do not agree with our auto formatter
-        //   Also, 10.4 can't cope with statements
-        toolVersion = "10.4"
-        //toolVersion = "13.0.0"
+        toolVersion = "14.1.0"
     }
 
     // These work in tandem with the suppression.xml

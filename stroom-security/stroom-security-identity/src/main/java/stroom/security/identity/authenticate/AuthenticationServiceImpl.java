@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,11 @@
 package stroom.security.identity.authenticate;
 
 import stroom.config.common.UriFactory;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.security.api.UserSessionEvictor;
 import stroom.security.identity.account.AccountDao;
 import stroom.security.identity.account.AccountService;
+import stroom.security.identity.account.ResetToken;
 import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.config.PasswordPolicyConfig;
@@ -31,25 +34,38 @@ import stroom.security.identity.shared.ConfirmPasswordRequest;
 import stroom.security.identity.shared.ConfirmPasswordResponse;
 import stroom.security.identity.shared.LoginRequest;
 import stroom.security.identity.shared.LoginResponse;
-import stroom.security.identity.token.TokenBuilderFactory;
+import stroom.security.identity.shared.ResetPasswordRequest;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
-import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.net.UrlUtils;
 import stroom.util.servlet.SessionUtil;
 
+import event.logging.AuthenticateAction;
+import event.logging.AuthenticateEventAction;
+import event.logging.AuthenticateOutcome;
 import event.logging.AuthenticateOutcomeReason;
+import event.logging.MultiObject;
+import event.logging.UpdateEventAction;
+import event.logging.User;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.core.UriBuilder;
 
 import java.net.URI;
-import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -60,17 +76,30 @@ class AuthenticationServiceImpl implements AuthenticationService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
     private static final long MIN_CREDENTIAL_CONFIRMATION_INTERVAL = 600000;
+    private static final long ONE_MINUTE_MS = 60_000L;
+    private static final String INVALID_RESET_TOKEN_MESSAGE =
+            "This password reset link is invalid or has expired. Please request a new one.";
+    /**
+     * Deliberately says nothing about which state the account is in. Anyone can ask for a reset link, so
+     * telling the caller whether an account is disabled, locked or a processing account would hand out
+     * information about accounts they may not own. The reason is logged for administrators instead.
+     */
+    private static final String CANNOT_RESET_MESSAGE =
+            "The password for this account cannot be reset. Please contact your administrator.";
     private static final String AUTH_STATE_ATTRIBUTE_NAME = "AUTH_STATE";
+    private static final ThreadPool EMAIL_THREAD_POOL = new ThreadPoolImpl("Password Reset Email");
 
     private final UriFactory uriFactory;
     private final IdentityConfig config;
     private final EmailSender emailSender;
     private final AccountDao accountDao;
     private final AccountService accountService;
-    private final OpenIdClientFactory openIdClientDetailsFactory;
-    private final TokenBuilderFactory tokenBuilderFactory;
+    private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final TokenConfig tokenConfig;
     private final CertificateExtractor certificateExtractor;
+    private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
+    private final Executor emailExecutor;
+    private final UserSessionEvictor userSessionEvictor;
 
     @Inject
     public AuthenticationServiceImpl(
@@ -79,19 +108,31 @@ class AuthenticationServiceImpl implements AuthenticationService {
             final EmailSender emailSender,
             final AccountDao accountDao,
             final AccountService accountService,
-            final OpenIdClientFactory openIdClientDetailsFactory,
-            final TokenBuilderFactory tokenBuilderFactory,
+            final Provider<OpenIdConfiguration> openIdConfigurationProvider,
             final TokenConfig tokenConfig,
-            final CertificateExtractor certificateExtractor) {
+            final CertificateExtractor certificateExtractor,
+            final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
+            final ExecutorProvider executorProvider,
+            final UserSessionEvictor userSessionEvictor) {
         this.uriFactory = uriFactory;
         this.config = config;
         this.emailSender = emailSender;
         this.accountDao = accountDao;
         this.accountService = accountService;
-        this.openIdClientDetailsFactory = openIdClientDetailsFactory;
-        this.tokenBuilderFactory = tokenBuilderFactory;
+        this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.tokenConfig = tokenConfig;
         this.certificateExtractor = certificateExtractor;
+        this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
+        this.emailExecutor = executorProvider.get(EMAIL_THREAD_POOL);
+        this.userSessionEvictor = userSessionEvictor;
+    }
+
+    /**
+     * Local accounts, and therefore password resets, exist only when stroom is its own identity provider.
+     * With an external IDP, password management belongs to that IDP.
+     */
+    private boolean isInternalIdp() {
+        return IdpType.INTERNAL_IDP.equals(openIdConfigurationProvider.get().getIdentityProviderType());
     }
 
     private void setAuthState(final HttpServletRequest request,
@@ -168,9 +209,33 @@ class AuthenticationServiceImpl implements AuthenticationService {
                     final Account account = optionalAccount.get();
                     try {
                         final String authType = "internal IDP certificate";
-                        verifyAccountStateOrThrow(account, "locked", authType, () -> !account.isLocked());
-                        verifyAccountStateOrThrow(account, "inactive", authType, () -> !account.isInactive());
-                        verifyAccountStateOrThrow(account, "disabled", authType, account::isEnabled);
+                        // Everything except inactivity is checked first, so that reactivation can be
+                        // considered while knowing that being inactive is the only thing in the way.
+                        // Disabled before locked, matching the password path: both can be true at once,
+                        // and an account the administrator barred must be reported as barred, not as
+                        // suffering a lock that will lapse.
+                        // No outcome reason describes a disabled or inactive account, so the description
+                        // that travels with the exception carries which it was.
+                        verifyAccountStateOrThrow(account, "disabled", authType,
+                                AuthenticateOutcomeReason.OTHER, account::isEnabled);
+                        verifyAccountStateOrThrow(account, "locked", authType,
+                                AuthenticateOutcomeReason.ACCOUNT_LOCKED, () -> !account.isLocked());
+
+                        // Locked and disabled are necessarily false here - the guards above threw
+                        // otherwise. They are passed as live reads, not constants, because the shared
+                        // overload owns the "never reactivate a locked or disabled account" rule for both
+                        // sign-in paths, and this way it holds even if the guards above are reordered.
+                        if (shouldReactivateAccount(
+                                account.isInactive(), account.isLocked(), !account.isEnabled())) {
+                            LOGGER.info("Reactivating inactive account {} following a successful "
+                                        + "certificate authentication", userId);
+                            accountDao.reactivateAccount(userId);
+                            logAccountReactivation(userId);
+                            account.setInactive(false);
+                        }
+
+                        verifyAccountStateOrThrow(account, "inactive", authType,
+                                AuthenticateOutcomeReason.OTHER, () -> !account.isInactive());
                     } catch (final BadRequestException badRequestException) {
                         return new AuthStatusImpl(badRequestException, true);
                     }
@@ -180,6 +245,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
                             account,
                             false,
                             System.currentTimeMillis());
+                    // Rotate the session id now the request has gained privilege.
+                    SessionUtil.changeSessionId(request);
                     setAuthState(request, newState, true);
 
                     // Reset last access, login failures, etc...
@@ -193,61 +260,312 @@ class AuthenticationServiceImpl implements AuthenticationService {
         return new AuthStatusImpl();
     }
 
-    public LoginResponse handleLogin(final LoginRequest loginRequest,
-                                     final HttpServletRequest request) {
+    /**
+     * What the caller is told, which for a locked account is built from configuration rather than being a
+     * constant. The test the message must pass: it gives the cheapest true remedy. Where the lock lapses on
+     * its own, that is waiting - the previous text sent every default-configuration lockout to an
+     * administrator who could only have said "wait half an hour". Where self service reset is enabled, that
+     * is the reset. Only where neither is true is the administrator genuinely the door.
+     */
+    private String refusalMessage(final String userId, final CredentialValidationResult result) {
+        // Disabled outranks locked, exactly as the result's own message ordering has it: both flags can be
+        // true at once, and a disabled account must not be promised that waiting out its lock will help.
+        if (result.isLocked() && !result.isDisabled()) {
+            return lockedAccountMessage(userId);
+        }
+        return result.toString();
+    }
+
+    private String lockedAccountMessage(final String userId) {
+        // The account carries the lock's end as a derived field; re-reading it here spares the validation
+        // result from carrying timing it does not otherwise need. A null end means the lock never lapses.
+        final Long lockedUntilMs = accountDao.get(userId)
+                .map(Account::getFailureLockedUntilMs)
+                .orElse(null);
+        final boolean resetHint = config.isAllowLockedAccountPasswordReset()
+                                  && config.getPasswordPolicyConfig().isAllowPasswordResets();
+
+        if (lockedUntilMs == null) {
+            // Never lapses, so waiting is not a remedy and must not be suggested.
+            return resetHint
+                    ? "This account is locked. Use 'Forgot password?' to set a new password by email, "
+                      + "or contact your administrator."
+                    : "This account is locked. Please contact your administrator.";
+        }
+
+        // Rounded up, so the message never claims less time than remains. Telling the owner the time costs
+        // nothing: whoever caused the lock knows when their attempts were made, and an owner who did not
+        // cause it has just learned that someone else is guessing at their account - which they should.
+        final long minutes = Math.max(1,
+                (lockedUntilMs - System.currentTimeMillis() + ONE_MINUTE_MS - 1) / ONE_MINUTE_MS);
+        final String tryAgain = "This account is temporarily locked after repeated failed sign-in "
+                                + "attempts. Try again in about "
+                                + minutes + (minutes == 1
+                ? " minute"
+                : " minutes");
+        return resetHint
+                ? tryAgain + ", or use 'Forgot password?' to set a new password by email."
+                : tryAgain + ".";
+    }
+
+    /**
+     * Check a password and count a wrong one against the account's lockout.
+     *
+     * <p>Every path that takes a password has to come through here. {@code AccountDao.validateCredentials}
+     * only reports; it deliberately neither counts the failure nor locks the account. A path that checks a
+     * password without counting is a way to guess one at leisure: the counter never moves, so the account
+     * never locks, and the interactive sign in that does count is never reached. That applies as much to
+     * re-checking the password of someone already signed in as to signing them in, because the point of
+     * asking again is to test the person rather than the session.</p>
+     *
+     * <p>A failure is counted only where a password was actually checked and was wrong. An account that is
+     * locked or disabled does not have its password checked at all, so there is no failure to record - and
+     * recording one anyway would be worse than pointless. A disabled account would accumulate failures for
+     * passwords nobody ever looked at, and could then be locked as well, so re-enabling it would leave the
+     * user still unable to sign in. Counting also stops while an account is locked so that continued
+     * guessing cannot extend a lock that would otherwise clear itself when its window passes.</p>
+     */
+    private CredentialValidationResult checkPassword(final String userId, final String password) {
+        final CredentialValidationResult result = accountDao.validateCredentials(userId, password);
+        if (result.isValidCredentials()
+            || result.isAccountDoesNotExist()
+            || result.isLocked()
+            || result.isDisabled()) {
+            return result;
+        }
+
+        LOGGER.debug("Password for {} is incorrect", userId);
+        final boolean locked = accountDao.incrementLoginFailures(userId);
+        return new CredentialValidationResult(
+                result.isValidCredentials(),
+                result.isAccountDoesNotExist(),
+                locked,
+                result.isDisabled(),
+                result.isInactive());
+    }
+
+    public LoginOutcome handleLogin(final LoginRequest loginRequest,
+                                    final HttpServletRequest request) {
         clearSession(request);
 
         // Check the credentials
-        CredentialValidationResult result = accountDao.validateCredentials(loginRequest.getUserId(),
-                loginRequest.getPassword());
-        if (!result.isValidCredentials() && !result.isAccountDoesNotExist()) {
-            LOGGER.debug("Password for {} is incorrect", loginRequest.getUserId());
-            final boolean locked = accountDao.incrementLoginFailures(loginRequest.getUserId());
+        CredentialValidationResult result = checkPassword(loginRequest.getUserId(), loginRequest.getPassword());
+
+        if (shouldReactivateAccount(result)) {
+            LOGGER.info("Reactivating inactive account {} following a successful authentication",
+                    loginRequest.getUserId());
+            accountDao.reactivateAccount(loginRequest.getUserId());
+            logAccountReactivation(loginRequest.getUserId());
             result = new CredentialValidationResult(
                     result.isValidCredentials(),
                     result.isAccountDoesNotExist(),
-                    locked,
+                    result.isLocked(),
                     result.isDisabled(),
-                    result.isInactive(),
-                    result.isProcessingAccount());
+                    false);
         }
 
-        final String message = result.toString();
+        final String message = refusalMessage(loginRequest.getUserId(), result);
 
         if (result.isAllOk()) {
             final Optional<Account> optionalAccount = accountService.read(loginRequest.getUserId());
             if (optionalAccount.isPresent()) {
-                return processSuccessfulLogin(request, optionalAccount.get(), message);
+                return new LoginOutcome(
+                        processSuccessfulLogin(request, optionalAccount.get(), message), null);
             }
         }
 
-        return new LoginResponse(false, message, false);
+        return new LoginOutcome(new LoginResponse(false, message, false), result.getOutcomeReason());
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * What to send back, and why it was refused.
+     * <p>
+     * The reason is kept apart from the response rather than added to it, because the two have different
+     * audiences: the response goes to whoever asked, and tells them as little as possible, while the reason
+     * is for the audit trail and says exactly which control fired.
+     * </p>
+     *
+     * @param reason null where the sign in succeeded.
+     */
+    public record LoginOutcome(LoginResponse response, AuthenticateOutcomeReason reason) {
+
+    }
+
+    /**
+     * Reactivation changes the state of an account so it must appear in the event log in the same way
+     * as an administrator making the same change via {@code AccountResourceImpl.update}. The sign in
+     * event that is logged separately does not record that account state was altered.
+     */
+    private void logAccountReactivation(final String userId) {
+        // We only ever get here for an account that is enabled, unlocked and inactive, so the before
+        // and after states are known without having to read the account back.
+        stroomEventLoggingServiceProvider.get().log(
+                "AuthenticationServiceImpl.reactivateAccount",
+                "Account reactivated following a successful authentication",
+                UpdateEventAction.builder()
+                        .withBefore(accountState(userId, stateOf(true, true, false)))
+                        .withAfter(accountState(userId, stateOf(true, false, false)))
+                        .build());
+    }
+
+    private MultiObject accountState(final String userId, final String state) {
+        return MultiObject.builder()
+                .addUser(User.builder()
+                        .withName(userId)
+                        .withState(state)
+                        .build())
+                .build();
+    }
+
+    /**
+     * Matches the state format used by {@code AccountResourceImpl.userForAccount} so that a change made
+     * here and the same change made by an administrator are comparable in the event log.
+     */
+    private static String stateOf(final boolean enabled, final boolean inactive, final boolean locked) {
+        return (enabled
+                ? "Enabled"
+                : "Disabled")
+               + "/"
+               + (inactive
+                ? "Inactive"
+                : "Active")
+               + "/"
+               + (locked
+                ? "Locked"
+                : "Unlocked");
+    }
+
+    /**
+     * An inactive account is only reactivated when the user has proved who they are and being inactive is
+     * the only thing preventing them from signing in. This is why reactivation happens at sign in rather
+     * than as part of a password reset: controlling a mailbox is not proof that an account is in use.
+     */
+    private boolean shouldReactivateAccount(final CredentialValidationResult result) {
+        return result.isValidCredentials()
+               && !result.isAccountDoesNotExist()
+               && shouldReactivateAccount(result.isInactive(), result.isLocked(), result.isDisabled());
+    }
+
+    /**
+     * Whether a proven identity earns reactivation, given what else is true of the account.
+     * <p>
+     * Shared by both sign in paths on purpose. What makes reactivation safe is not which credential was
+     * used but that the holder proved who they are before any state changed, and a valid client certificate
+     * is that same proof. Restating the condition per path is how the two came to disagree in the first
+     * place, certificate users being unable to recover however the option was set.
+     * </p>
+     */
+    private boolean shouldReactivateAccount(final boolean inactive,
+                                            final boolean locked,
+                                            final boolean disabled) {
+        return config.isReactivateInactiveAccountsOnLogin()
+               && inactive
+               && !locked
+               && !disabled;
     }
 
     public String logout(final HttpServletRequest request) {
         final HttpSession httpSession = request.getSession(false);
-        if (httpSession != null) {
-            final AuthStateImpl authState = getAuthState(request);
-            if (authState == null) {
-                throw new IllegalStateException("No logged in user found");
+        if (httpSession == null) {
+            throw new IllegalStateException("No open session found");
+        }
+        final AuthStateImpl authState = getAuthState(request);
+        final String userId = authState != null ? authState.getSubject() : null;
+        // Invalidate the whole session so the app-user identity the security filter authenticates from is
+        // cleared too, not only the IdP auth state.
+        httpSession.invalidate();
+        return userId;
+    }
+
+    /**
+     * Whether a logout request may proceed, i.e. it is not a forced cross-context request driven by another
+     * site. Logout is a GET with no body, so the only CSRF signal an attacker's page cannot forge is the
+     * request's own metadata.
+     * <p>
+     * Modern browsers send fetch metadata ({@code Sec-Fetch-*}) that the embedding page cannot influence, used
+     * here to admit only:
+     * <ul>
+     *     <li>a same-origin request from our own UI ({@code Sec-Fetch-Site: same-origin});</li>
+     *     <li>a user-initiated request such as a typed URL or bookmark ({@code Sec-Fetch-Site: none});</li>
+     *     <li>a genuine top-level document navigation from a sibling subdomain ({@code Sec-Fetch-Site:
+     *     same-site} and {@code Sec-Fetch-Dest: document}) - which a split UI/API deployment legitimately
+     *     produces.</li>
+     * </ul>
+     * Everything else is rejected. A nested/embedded load such as {@code <iframe src=".../logout">} or
+     * {@code <img src=".../logout">} carries {@code Sec-Fetch-Dest: iframe}/{@code image} rather than
+     * {@code document}, so it is refused even from a sibling subdomain (gating on {@code Sec-Fetch-Mode:
+     * navigate} would not catch the iframe, because a nested-context navigation is also a "navigate"). A
+     * {@code cross-site} request is refused outright, even as a top-level {@code document} navigation, because
+     * a {@code SameSite=Lax} session cookie is still sent on a cross-site top-level navigation; the internal
+     * identity provider has a single client (itself) and no external relying parties, so no legitimate
+     * cross-site logout navigation exists.
+     * <p>
+     * When fetch metadata is absent (an older browser, or a non-browser client) the check falls back to
+     * comparing the Origin, then the Referer, against this application's origin, allowing the request when
+     * neither header is present.
+     */
+    public boolean isSameOrigin(final HttpServletRequest request) {
+        final String fetchSite = request.getHeader("Sec-Fetch-Site");
+        if (fetchSite != null && !fetchSite.isBlank()) {
+            // "same-origin" is our own UI; "none" is user-initiated (typed URL / bookmark). Both are trusted.
+            if ("same-origin".equals(fetchSite) || "none".equals(fetchSite)) {
+                return true;
             }
-            final String userId = authState.getSubject();
-            clearSession(request);
-            return userId;
+            // "same-site" (a sibling subdomain, e.g. a split UI/API deployment): allow a genuine top-level
+            // document navigation, but never a nested/embedded load such as an <iframe>, <img> or a fetch.
+            if ("same-site".equals(fetchSite)) {
+                return "document".equals(request.getHeader("Sec-Fetch-Dest"));
+            }
+            // "cross-site" (or any other value): reject outright - a cross-site request must not drive logout
+            // even as a top-level navigation, because a SameSite=Lax session cookie is still sent on one.
+            return false;
         }
 
-        throw new IllegalStateException("No open session found");
+        // No fetch metadata, so fall back to the Origin/Referer check.
+        final String allowedOrigin = UrlUtils.toOrigin(uriFactory.publicUri("/").toString());
+        String source = request.getHeader("Origin");
+        if (source == null || source.isBlank()) {
+            source = request.getHeader("Referer");
+        }
+        if (source == null || source.isBlank()) {
+            return true;
+        }
+        return allowedOrigin != null && Objects.equals(UrlUtils.toOrigin(source), allowedOrigin);
+    }
+
+    /**
+     * Validate a post-logout redirect target against this application's origin, falling back to the public
+     * root when it is absent or off-origin, so the logout endpoint cannot be used as an open redirect.
+     */
+    public URI getValidatedPostLogoutRedirectUri(final String postLogoutRedirectUri) {
+        final URI fallback = uriFactory.publicUri("/");
+        if (postLogoutRedirectUri != null && !postLogoutRedirectUri.isBlank()) {
+            final String candidateOrigin = UrlUtils.toOrigin(postLogoutRedirectUri);
+            if (candidateOrigin != null && Objects.equals(candidateOrigin, UrlUtils.toOrigin(fallback.toString()))) {
+                return URI.create(postLogoutRedirectUri);
+            }
+            LOGGER.warn(() -> "Rejecting off-origin post_logout_redirect_uri '"
+                              + postLogoutRedirectUri + "'; redirecting to '" + fallback + "' instead");
+        }
+        return fallback;
     }
 
     public ConfirmPasswordResponse confirmPassword(final HttpServletRequest request,
                                                    final ConfirmPasswordRequest confirmPasswordRequest) {
+        if (confirmPasswordRequest == null) {
+            return new ConfirmPasswordResponse(false, "No request was supplied");
+        }
         final AuthStateImpl authState = getAuthState(request);
         if (authState == null) {
             return new ConfirmPasswordResponse(false, "No user is currently signed in");
         }
-        final CredentialValidationResult result = accountDao.validateCredentials(authState.getSubject(),
+        final CredentialValidationResult result = checkPassword(authState.getSubject(),
                 confirmPasswordRequest.getPassword());
-        final String message = result.toString();
+        final String message = refusalMessage(authState.getSubject(), result);
         if (result.isAllOk()) {
             // Update tha last credential confirmation time.
 
@@ -282,49 +600,314 @@ class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         final String userId = authState.getSubject();
-        final CredentialValidationResult result = accountDao.validateCredentials(userId,
+        final CredentialValidationResult result = checkPassword(userId,
                 changePasswordRequest.getCurrentPassword());
-
-        PasswordValidator.validateCredentials(result);
-        PasswordValidator.validateReuse(changePasswordRequest.getCurrentPassword(),
-                changePasswordRequest.getNewPassword());
-        PasswordValidator.validateLength(changePasswordRequest.getNewPassword(),
-                config.getPasswordPolicyConfig().getMinimumPasswordLength());
-        PasswordValidator.validateComplexity(changePasswordRequest.getNewPassword(),
-                config.getPasswordPolicyConfig().getPasswordComplexityRegex());
-        PasswordValidator.validateConfirmation(changePasswordRequest.getNewPassword(),
-                changePasswordRequest.getConfirmNewPassword());
-
-        accountDao.changePassword(userId, changePasswordRequest.getNewPassword());
-
-        if (authState.getSubject().equals(userId)) {
-            final AuthStateImpl newAuthState = new AuthStateImpl(
-                    authState.getAccount(),
-                    false,
-                    System.currentTimeMillis());
-            setAuthState(request, newAuthState, true);
+        if (!result.isAllOk()) {
+            // Refused, not broken. Getting your own current password wrong is an ordinary thing to do, and
+            // throwing here made it a 500 with the raw message in the body. The reset flow was given this
+            // treatment when it was written; the change flow never was.
+            return new ChangePasswordResponse(false, refusalMessage(userId, result), false);
         }
+
+        final Optional<String> violation = findNewPasswordViolation(
+                userId,
+                changePasswordRequest.getCurrentPassword(),
+                changePasswordRequest.getNewPassword(),
+                changePasswordRequest.getConfirmNewPassword());
+        if (violation.isPresent()) {
+            // Likewise: a password that breaks the policy is the user being told what the policy is.
+            return new ChangePasswordResponse(false, violation.get(), false);
+        }
+
+        // The user has just changed their own password, so any requirement to do so is satisfied.
+        accountDao.changePassword(userId, changePasswordRequest.getNewPassword(), false);
+
+        // This endpoint only ever changes the signed-in user's own password, so refresh the session's auth
+        // state to clear the "password change required" flag.
+        final AuthStateImpl newAuthState = new AuthStateImpl(
+                authState.getAccount(),
+                false,
+                System.currentTimeMillis());
+        setAuthState(request, newAuthState, true);
 
         return new ChangePasswordResponse(true, null, false);
     }
 
+    /**
+     * Set a new password for the user identified by an emailed password reset token. Possession of the
+     * token proves control of the account's email address, so no current password is needed.
+     */
+    public ChangePasswordResponse resetPasswordUsingToken(final ResetPasswordRequest request) {
+        if (request == null) {
+            return new ChangePasswordResponse(false, "No request was supplied", true);
+        }
+        if (!isInternalIdp() || !config.getPasswordPolicyConfig().isAllowPasswordResets()) {
+            return new ChangePasswordResponse(false, "Password resets are not allowed", true);
+        }
+
+        final PasswordResetLink.Parsed parsed = PasswordResetLink.parse(request.getToken()).orElse(null);
+        if (parsed == null) {
+            // Deliberately vague. The caller does not need to know whether the token was expired,
+            // already used or simply malformed.
+            return new ChangePasswordResponse(false, INVALID_RESET_TOKEN_MESSAGE, true);
+        }
+
+        final String userId = parsed.userId();
+        final Account account = accountDao.get(userId).orElse(null);
+        if (account == null) {
+            return new ChangePasswordResponse(false, INVALID_RESET_TOKEN_MESSAGE, true);
+        }
+
+        // Only the most recently issued link is accepted, and it is single use: the token is cleared when
+        // a password is set by any route, so a used link, or one made stale by a password change, fails
+        // here too.
+        final ResetToken resetToken = accountDao.getPasswordResetToken(userId).orElse(null);
+        if (resetToken == null || !resetToken.hash().equals(parsed.tokenHash())) {
+            LOGGER.debug(() -> "Password reset link for " + userId
+                               + " has been used, or a newer one has since been issued");
+            return new ChangePasswordResponse(false, INVALID_RESET_TOKEN_MESSAGE, true);
+        }
+
+        // Links expire, so an intercepted old one stops working.
+        if (resetToken.isExpired(System.currentTimeMillis())) {
+            LOGGER.debug(() -> "Password reset link for " + userId + " has expired");
+            return new ChangePasswordResponse(false, INVALID_RESET_TOKEN_MESSAGE, true);
+        }
+
+        final String stateRefusal = getResetRefusalForAccountState(account);
+        if (stateRefusal != null) {
+            LOGGER.warn(() -> "Refusing to reset the password for account " + userId + ". " + stateRefusal);
+            return new ChangePasswordResponse(false, CANNOT_RESET_MESSAGE, true);
+        }
+
+        final Optional<String> violation = findNewPasswordViolation(
+                userId,
+                null,
+                request.getNewPassword(),
+                request.getConfirmNewPassword());
+        if (violation.isPresent()) {
+            // This endpoint is unauthenticated and anyone can get a password wrong, so report it like
+            // every other refusal here rather than letting it become a 500 with a stack trace in the log
+            // and nothing useful for the user.
+            LOGGER.debug(() -> "Password policy violation resetting the password for " + userId
+                               + ": " + violation.get());
+            return new ChangePasswordResponse(false, violation.get(), true);
+        }
+
+        // Clears the locked state but deliberately not the inactive state, which only a successful
+        // authentication may clear. Conditional on the nonce still being outstanding, so this is the
+        // point at which the link is consumed and two requests using the same one cannot both succeed.
+        // The nonce read above only produces a better message; this is what actually decides.
+        if (!accountDao.unlockAndSetPassword(userId, request.getNewPassword(), parsed.tokenHash())) {
+            LOGGER.debug(() -> "Password reset link for " + userId + " was consumed before we could use it");
+            return new ChangePasswordResponse(false, INVALID_RESET_TOKEN_MESSAGE, true);
+        }
+        logPasswordReset(account);
+
+        // A reset is account recovery: end every existing session for this user across the cluster.
+        userSessionEvictor.evictUserSessions(userId, null);
+
+        // The user is not signed in here. They must now sign in with the new password, which is also
+        // what reactivates the account if it happens to be inactive.
+        return new ChangePasswordResponse(true, null, true);
+    }
+
+    /**
+     * The password policy applied by every route that sets a password, so that changing a password and
+     * resetting a forgotten one cannot drift apart.
+     * <p>
+     * Returns the reason rather than throwing it so that each caller can report it in its own way, and so
+     * that a failure of the account lookup below is not mistaken for a rejected password.
+     * </p>
+     *
+     * @param currentPassword The user's current password if they supplied it, otherwise null. A reset
+     *                        cannot supply it, which is the whole point of a reset.
+     * @return Why the password is not acceptable, in words for the user, or empty if it is fine.
+     */
+    private Optional<String> findNewPasswordViolation(final String userId,
+                                                      final String currentPassword,
+                                                      final String newPassword,
+                                                      final String confirmNewPassword) {
+        try {
+            PasswordValidator.validateLength(newPassword,
+                    config.getPasswordPolicyConfig().getMinimumPasswordLength());
+            PasswordValidator.validateStrength(newPassword,
+                    config.getPasswordPolicyConfig().getMinimumPasswordStrength());
+            PasswordValidator.validateConfirmation(newPassword, confirmNewPassword);
+
+            // Where the caller knows the current password we can also refuse one that differs from it
+            // only by case, which comparing against the stored hash cannot detect.
+            if (currentPassword != null) {
+                PasswordValidator.validateReuse(currentPassword, newPassword);
+            }
+        } catch (final RuntimeException e) {
+            // PasswordValidator signals a violation by throwing, and only ever throws for that.
+            return Optional.of(e.getMessage());
+        }
+
+        // Compared against the stored hash so that reuse is refused even for a reset, where the user does
+        // not know their current password. Last because it hashes, and there is no point paying for that
+        // on a password already rejected above.
+        //
+        // Deliberately not counted as a failed sign in, unlike every other password check here. This is a
+        // policy question about the password being chosen, not an attempt to authenticate with it, and a
+        // new password that is not the current one is the answer we want - counting it would lock an
+        // account for the ordinary act of picking a fresh password.
+        if (accountDao.validateCredentials(userId, newPassword).isValidCredentials()) {
+            return Optional.of("You cannot reuse the previous password");
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * A locked account may only complete a reset when configured to allow it, otherwise every deployment
+     * would get self service unlocking. A disabled account may never be reset this way. An inactive account
+     * may only when a sign in would reactivate it: the reset leaves the inactive state alone, so without
+     * auto reactivation the user would set a new password and then be refused at sign in anyway - the
+     * refusal here spares them the journey and routes them to an administrator at the first step.
+     * <p>
+     * Checked in two places with different consequences: at request time, where a refusal sends the
+     * courtesy email instead of a link, and at completion time, because the state can change while a link
+     * is outstanding.
+     * </p>
+     *
+     * @return The reason the reset must be refused, for the log rather than the caller, or null if it is
+     * allowed.
+     */
+    private String getResetRefusalForAccountState(final Account account) {
+        if (!account.isEnabled()) {
+            return "The account is disabled";
+        }
+        if (account.isLocked() && !config.isAllowLockedAccountPasswordReset()) {
+            return "The account is locked and allowLockedAccountPasswordReset is false";
+        }
+        if (account.isInactive() && !config.isReactivateInactiveAccountsOnLogin()) {
+            return "The account is inactive and reactivateInactiveAccountsOnLogin is false, "
+                   + "so a reset could not lead to a sign in";
+        }
+        return null;
+    }
+
+    /**
+     * The audit record of a refusal that produced the courtesy email. The exact state goes here and to the
+     * log only: the email tells the account's owner that the reset cannot currently complete, and the
+     * requester is told nothing at all.
+     */
+    private void logResetRefusalNotification(final Account account, final String stateRefusal) {
+        stroomEventLoggingServiceProvider.get().log(
+                "AuthenticationServiceImpl.resetEmailRefused",
+                "A password reset request was refused (" + stateRefusal
+                + ") and the account's owner was emailed to contact an administrator",
+                AuthenticateEventAction.builder()
+                        .withAction(AuthenticateAction.RESET_PASSWORD)
+                        .withAuthenticationEntity(User.builder()
+                                .withName(account.getUserId())
+                                .build())
+                        .withOutcome(AuthenticateOutcome.builder()
+                                .withSuccess(false)
+                                .withDescription(stateRefusal)
+                                .build())
+                        .build());
+    }
+
+    private void logPasswordReset(final Account account) {
+        stroomEventLoggingServiceProvider.get().log(
+                "AuthenticationServiceImpl.resetPassword",
+                "User set a new password using an emailed password reset token",
+                AuthenticateEventAction.builder()
+                        .withAction(AuthenticateAction.RESET_PASSWORD)
+                        .withAuthenticationEntity(User.builder()
+                                .withName(account.getUserId())
+                                .build())
+                        .build());
+
+        if (account.isLocked()) {
+            // The lock is a security control in its own right, so record that it was cleared and not
+            // just that the password changed.
+            stroomEventLoggingServiceProvider.get().log(
+                    "AuthenticationServiceImpl.unlockAccount",
+                    "Account unlocked by setting a new password using an emailed password reset token",
+                    UpdateEventAction.builder()
+                            .withBefore(accountState(account.getUserId(),
+                                    stateOf(account.isEnabled(), account.isInactive(), true)))
+                            .withAfter(accountState(account.getUserId(),
+                                    stateOf(account.isEnabled(), account.isInactive(), false)))
+                            .build());
+        }
+    }
+
     public boolean resetEmail(final String emailAddress) {
-        final Account account = accountService.read(emailAddress).orElseThrow(() -> new RuntimeException(
-                "Account not found for email: " + emailAddress));
-        final String token = createResetEmailToken(account,
-                openIdClientDetailsFactory.getClient().getClientId());
-        emailSender.send(emailAddress, account.getFirstName(), account.getLastName(), token);
+        // With an external IDP there are no local passwords to reset. Report success anyway so the
+        // response is no more revealing than for an unknown address.
+        if (!isInternalIdp() || !config.getPasswordPolicyConfig().isAllowPasswordResets()) {
+            LOGGER.debug(() -> "Ignoring a password reset request; local password resets are not enabled");
+            return true;
+        }
+
+        // Always report success, whether or not the account exists and whether or not we are about to
+        // send anything. This endpoint is unauthenticated so telling the caller which email addresses
+        // have accounts would let anyone enumerate our users.
+        //
+        // Everything after the lookup happens on another thread. Signing a token and sending mail take
+        // far longer than the lookup, so doing them here would let a caller tell a known address from an
+        // unknown one by how long we took to answer.
+        final Account account = accountDao.getByEmail(emailAddress).orElse(null);
+        if (account == null) {
+            LOGGER.debug(() -> "Ignoring a password reset request for unknown email address " + emailAddress);
+            return true;
+        }
+
+        emailExecutor.execute(() -> sendResetEmail(account));
         return true;
     }
 
-    private String createResetEmailToken(final Account account, final String clientId) {
-        return tokenBuilderFactory
-                .builder()
-                .expirationTime(Instant.now()
-                        .plus(tokenConfig.getEmailResetTokenExpiration()))
-                .clientId(clientId)
-                .subject(account.getUserId())
-                .build();
+    private void sendResetEmail(final Account account) {
+        try {
+            final long now = System.currentTimeMillis();
+            final long earliestPreviousRequest = now
+                                                 - config.getPasswordResetRequestCooldown().toMillis();
+            if (!accountDao.tryRecordResetEmailRequest(account.getUserId(), now, earliestPreviousRequest)) {
+                LOGGER.debug(() -> "Throttling a password reset request for " + account.getUserId());
+                return;
+            }
+
+            // Refused states get a courtesy email instead of a link. Without it the user either hears
+            // nothing, or - worse - completes the whole reset and is only refused when they try to sign
+            // in. The refusal itself is checked again when the link is used, because state can change
+            // while a link is outstanding; this check is what stops an unusable link being issued at all.
+            // Deliberately behind the cooldown above, so reset requests cannot be used to bomb the
+            // mailbox of exactly the accounts that cannot act.
+            final String stateRefusal = getResetRefusalForAccountState(account);
+            if (stateRefusal != null) {
+                LOGGER.info(() -> "A password reset was requested for " + account.getUserId()
+                                  + " but refused (" + stateRefusal
+                                  + "); telling the account's owner to contact an administrator");
+                logResetRefusalNotification(account, stateRefusal);
+                emailSender.sendCannotResetEmail(
+                        account.getEmail(), account.getFirstName(), account.getLastName());
+                return;
+            }
+
+            // A fresh opaque token. Storing only the hash of its secret invalidates any link issued
+            // earlier and means the raw token cannot be recovered from the database.
+            final PasswordResetLink.Issued issued = PasswordResetLink.issue(account.getUserId());
+            final long expiryTimeMs = System.currentTimeMillis()
+                                      + tokenConfig.getEmailResetTokenExpiration().toMillis();
+            accountDao.setPasswordResetToken(
+                    account.getUserId(), new ResetToken(issued.tokenHash(), expiryTimeMs));
+
+            // Send to the address held against the account rather than whatever the caller typed. They
+            // are the same string today because that is what we matched on, but the account is the
+            // authority.
+            emailSender.send(account.getEmail(), account.getFirstName(), account.getLastName(),
+                    issued.token());
+
+        } catch (final RuntimeException e) {
+            // Nothing is waiting on this, so log rather than let it escape into the executor.
+            LOGGER.error(() -> "Unable to send a password reset email for " + account.getUserId()
+                               + ": " + e.getMessage(), e);
+        }
     }
 
     private LoginResponse processSuccessfulLogin(final HttpServletRequest request,
@@ -347,6 +930,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 account,
                 userNeedsToChangePassword,
                 System.currentTimeMillis());
+        // Rotate the session id now the request has gained privilege.
+        SessionUtil.changeSessionId(request);
         setAuthState(request, newAuthState, true);
 
         return new LoginResponse(true, message, userNeedsToChangePassword);
@@ -415,19 +1000,24 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     /**
      * @param account              The user account to check
+     * @param reason               What to record in the audit trail when this state is the one that refused
+     *                             the sign in. Passed in rather than assumed, because all three states used
+     *                             to be recorded as a lockout - so a disabled account presenting a valid
+     *                             certificate was audited as locked.
      * @param isValidStateSupplier Should return true for a valid state.
      * @throws BadRequestException if user is in an invalid state
      */
     private void verifyAccountStateOrThrow(final Account account,
                                            final String stateType,
                                            final String authType,
+                                           final AuthenticateOutcomeReason reason,
                                            final BooleanSupplier isValidStateSupplier) {
         if (!isValidStateSupplier.getAsBoolean()) {
             LOGGER.warn("User account '{}' attempted {} authentication with the account in a {} state. {}",
                     account.getUserId(), authType, stateType, account);
             throw new BadRequestException(
                     account.getUserId(),
-                    AuthenticateOutcomeReason.ACCOUNT_LOCKED,
+                    reason,
                     LogUtil.message("User account '{}' is {}.", account.getUserId(), stateType));
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
-import stroom.credentials.api.KeyStore;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.StroomCache;
+import stroom.credentials.api.HttpConfigResolver;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.AccessTokenSecret;
@@ -33,24 +35,26 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.api.SecurityContext;
-import stroom.util.http.HttpAuthConfiguration;
 import stroom.util.http.HttpClientConfiguration;
-import stroom.util.http.HttpProxyConfiguration;
-import stroom.util.http.HttpTlsConfiguration;
+import stroom.util.http.HttpClientUtil;
 import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.net.SsrfGuard;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.http.HttpAuthConfig;
 import stroom.util.shared.http.HttpClientConfig;
-import stroom.util.shared.http.HttpProxyConfig;
-import stroom.util.shared.http.HttpTlsConfig;
-import stroom.util.time.SimpleDurationUtil;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.cohere.CohereScoringModel;
 import dev.langchain4j.model.cohere.CohereScoringModel.CohereScoringModelBuilder;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -65,11 +69,22 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -78,107 +93,217 @@ public class AiServiceImpl implements AiService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AiServiceImpl.class);
 
+    /**
+     * How much of a failed response body to include in the error we report back to the user. Enough to
+     * see what the endpoint objected to, not so much that an HTML error page fills the screen.
+     */
+    private static final int MAX_ERROR_BODY_LENGTH = 2_000;
+
+    /**
+     * Sentinel model ID that activates the stub {@link ChatModel} for offline testing.
+     * Create an OpenAIModel document with this as the modelId — no API key or base URL needed.
+     */
+    public static final String STUB_MODEL_ID = "__stub__";
+
+    private static final String CHAT_RESPONSE_CACHE_NAME = "AI Chat Response Cache";
+
+    private static final SimpleDuration DEFAULT_TIMEOUT = SimpleDuration
+            .builder()
+            .time(10)
+            .timeUnit(TimeUnit.MINUTES)
+            .build();
+
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<StoredSecrets> storedSecretsProvider;
+    private final HttpConfigResolver httpConfigResolver;
     private final Provider<HttpClientProviderCache> httpClientCacheProvider;
     private final SecurityContext securityContext;
     private final AiDao aiDao;
+    private final StroomCache<ChatKey, String> chatResponseCache;
+
+    private HttpClientConfig defaultHttpClientConfig;
 
     @Inject
     AiServiceImpl(final Provider<OpenAIModelStore> openAIModelStoreProvider,
                   final Provider<DocumentResourceHelper> documentResourceHelperProvider,
                   final Provider<StoredSecrets> storedSecretsProvider,
+                  final HttpConfigResolver httpConfigResolver,
                   final Provider<HttpClientProviderCache> httpClientCacheProvider,
                   final SecurityContext securityContext,
-                  final AiDao aiDao) {
+                  final AiDao aiDao,
+                  final CacheManager cacheManager,
+                  final Provider<AiConfig> aiConfigProvider) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.storedSecretsProvider = storedSecretsProvider;
+        this.httpConfigResolver = httpConfigResolver;
         this.httpClientCacheProvider = httpClientCacheProvider;
         this.securityContext = securityContext;
         this.aiDao = aiDao;
+        this.chatResponseCache = cacheManager.create(
+                CHAT_RESPONSE_CACHE_NAME,
+                () -> aiConfigProvider.get().getChatResponseCache());
     }
 
     @Override
     public String getModel(final OpenAIModelDoc modelDoc) {
-        try {
-            // curl https://api.openai.com/v1/models \
-            //   -H "Authorization: Bearer $OPENAI_API_KEY"
+        // curl https://api.openai.com/v1/models \
+        //   -H "Authorization: Bearer $OPENAI_API_KEY"
 
+        final HttpClientConfig httpClientConfig = NullSafe.getOrElse(
+                modelDoc,
+                OpenAIModelDoc::getHttpClientConfiguration,
+                getDefaultHttpClientConfig());
+        final HttpClientConfiguration httpClientConfiguration = httpConfigResolver.resolve(httpClientConfig);
+        final HttpClientProviderCache httpClientProviderCache = httpClientCacheProvider.get();
+        final String url = getUrl(modelDoc, "models");
 
-            final HttpClientConfiguration httpClientConfiguration = convert(NullSafe.getOrElse(
-                    modelDoc,
-                    OpenAIModelDoc::getHttpClientConfiguration,
-                    HttpClientConfig.builder().build()));
-            final HttpClientProviderCache httpClientProviderCache = httpClientCacheProvider.get();
-            try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
-                final String url = getUrl(modelDoc, "models");
-                final String apiKey = getApiKey(modelDoc);
+        try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
+            // Reject cloud-metadata/wildcard targets to prevent SSRF. Any redirect the client follows is
+            // checked the same way, see ConfiguredRedirectStrategy.
+            SsrfGuard.rejectMetadataAndWildcard(url);
 
-                final HttpGet httpGet = new HttpGet(url);
-                httpGet.addHeader("Content-Type", "application/audit");
-                if (NullSafe.isNonBlankString(apiKey)) {
-                    httpGet.addHeader("Authorization", "Bearer " + apiKey);
-                }
+            final HttpGet httpGet = new HttpGet(url);
+            // A GET has no body, so it is `Accept` rather than `Content-Type` that tells the endpoint what
+            // we want back.
+            httpGet.addHeader(HttpHeaders.ACCEPT, ContentType.APPLICATION_JSON.getMimeType());
 
-                return httpClientProvider.get().execute(httpGet, response -> {
-//                        final StringBuilder sb = new StringBuilder()
-//                    .append("Model ID: ")
-//                    .append(model.id())
-//                    .append("\nCreated: ")
-//                    .append(DateUtil.createNormalDateTimeString(model.created()))
-//                    .append("\nOwner: ")
-//                    .append(model.ownedBy())
-//                    .append("\nValid: ")
-//                    .append(model.isValid());
+            // Provide an API key
+            getApiKey(modelDoc).ifPresent(apiKey ->
+                    httpGet.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey));
 
-                    if (response.getCode() != 200) {
-                        return response.toString();
-                    }
+            final HttpResult result = httpClientProvider.get().execute(httpGet, this::readResponse);
+            LOGGER.debug(() -> "getModel: GET '" + url + "' returned " + result.code() + " " + result.reasonPhrase()
+                               + ", headers: " + result.headers() + ", body:\n" + result.body());
 
-                    final byte[] bytes = response.getEntity().getContent().readAllBytes();
-                    return new String(bytes, StandardCharsets.UTF_8);
-                });
+            if (!result.isSuccess()) {
+                throw new RuntimeException(describeFailure(url, result, httpClientConfig));
             }
 
-//        final OpenAIOkHttpClient.Builder clientBuilder = OpenAIOkHttpClient.builder()
-//                .fromEnv();
-//
-//        if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-//            // Override the base URL
-//            clientBuilder.baseUrl(modelDoc.getBaseUrl());
-//        }
-//
-//        final String apiKey = getApiKey(modelDoc);
-//        // Provide a bearer token
-//        clientBuilder.credential(BearerTokenCredential.create(apiKey));
-//
-//        final OpenAIClient client = clientBuilder.build();
-//        return client.models().list().items().stream()
-//                .filter(model -> modelDoc.getModelId().equals(model.id()))
-//                .findFirst().orElseThrow();
+            return result.body();
+
         } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+            LOGGER.debug(() -> "getModel: GET '" + url + "' failed: " + e.getMessage(), e);
+            throw new UncheckedIOException("Error requesting '" + url + "': " + e.getMessage(), e);
         }
     }
 
-    private String getApiKey(final OpenAIModelDoc doc) {
-        return getApiKey(doc.getApiKeyName());
+    private HttpResult readResponse(final ClassicHttpResponse response) throws IOException {
+        final Map<String, String> headers = new LinkedHashMap<>();
+        for (final Header header : response.getHeaders()) {
+            // First value wins, as that is what getFirstHeader() would have given us.
+            headers.putIfAbsent(header.getName().toLowerCase(Locale.ROOT), header.getValue());
+        }
+
+        String body = null;
+        final HttpEntity entity = response.getEntity();
+        if (entity != null) {
+            try (final InputStream inputStream = entity.getContent()) {
+                body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        }
+
+        return new HttpResult(response.getCode(), response.getReasonPhrase(), headers, body);
     }
 
-    private String getApiKey(final String apiKeyName) {
+    /**
+     * Says what went wrong in terms the person editing the model document can act on, i.e. the status the
+     * endpoint gave us and whatever it said about it, rather than just the fact that it was not a 200.
+     */
+    private String describeFailure(final String url,
+                                   final HttpResult result,
+                                   final HttpClientConfig httpClientConfig) {
+        final StringBuilder sb = new StringBuilder()
+                .append("GET ")
+                .append(url)
+                .append(" returned ")
+                .append(result.code());
+        if (NullSafe.isNonBlankString(result.reasonPhrase())) {
+            sb.append(" ").append(result.reasonPhrase());
+        }
+        sb.append(".");
+
+        explain(result, httpClientConfig).ifPresent(explanation -> sb.append(" ").append(explanation));
+
+        if (NullSafe.isNonBlankString(result.body())) {
+            final String body = result.body().strip();
+            sb.append("\nResponse:\n");
+            if (body.length() > MAX_ERROR_BODY_LENGTH) {
+                sb.append(body, 0, MAX_ERROR_BODY_LENGTH).append("...");
+            } else {
+                sb.append(body);
+            }
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Anything we can usefully add to the bare status, for the few cases where the endpoint or our own
+     * configuration has told us something more specific than the status code does. Every other failure is
+     * left to speak for itself through the status and the response body.
+     */
+    private Optional<String> explain(final HttpResult result, final HttpClientConfig httpClientConfig) {
+        if (result.isRedirect()) {
+            final String location = result.header(HttpHeaders.LOCATION)
+                    .map(value -> "'" + value + "'")
+                    .orElse("an unspecified location");
+            return Optional.of(httpClientConfig.isFollowRedirects()
+                    ? "The endpoint redirected to " + location + " but the redirect was not followed."
+                    : "The endpoint redirected to " + location + ", which was not followed because "
+                      + "'Follow Redirects' is turned off in this model's HTTP client configuration.");
+        }
+
+        if (result.code() == HttpStatus.SC_UNAUTHORIZED || result.code() == HttpStatus.SC_FORBIDDEN) {
+            return Optional.of(result.header(HttpHeaders.WWW_AUTHENTICATE)
+                    .map(challenge -> "The endpoint asked for authentication: " + challenge)
+                    .orElse("Check the API key set on this model."));
+        }
+
+        if (result.code() == HttpStatus.SC_NOT_FOUND) {
+            return Optional.of("Check the base URL set on this model.");
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * What a response told us, whatever it was, kept for as long as it takes to decide whether it was what
+     * we wanted and to say what it was if it was not. The entity is read here because it is only readable
+     * while the response is open.
+     */
+    private record HttpResult(int code,
+                              String reasonPhrase,
+                              Map<String, String> headers,
+                              String body) {
+
+        private boolean isSuccess() {
+            return code >= HttpStatus.SC_SUCCESS && code < HttpStatus.SC_REDIRECTION;
+        }
+
+        private boolean isRedirect() {
+            return code >= HttpStatus.SC_REDIRECTION && code < HttpStatus.SC_CLIENT_ERROR;
+        }
+
+        private Optional<String> header(final String name) {
+            return Optional.ofNullable(headers.get(name.toLowerCase(Locale.ROOT)));
+        }
+    }
+
+    private Optional<String> getApiKey(final OpenAIModelDoc doc) {
+        final String apiKeyName = doc.getApiKeyName();
         if (NullSafe.isNonBlankString(apiKeyName)) {
             final StoredSecret storedSecret = storedSecretsProvider.get().get(apiKeyName);
             if (storedSecret != null) {
                 if (storedSecret.secret() instanceof final AccessTokenSecret accessTokenSecret) {
                     if (accessTokenSecret.getAccessToken() != null) {
-                        return accessTokenSecret.getAccessToken();
+                        return Optional.of(accessTokenSecret.getAccessToken());
                     }
                 }
             }
         }
-        return "";
+        return Optional.empty();
     }
 
     private String getUrl(final OpenAIModelDoc modelDoc, final String path) {
@@ -198,25 +323,117 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    public Optional<DocRef> findModelByNameOrUuid(final String nameOrUuid) {
+        if (!NullSafe.isNonBlankString(nameOrUuid)) {
+            return Optional.empty();
+        }
+
+        // The store resolves names and UUIDs by testing VIEW, but USE is the permission you would grant to
+        // let a pipeline or query use a model without letting the user see the document itself. Elevate so
+        // that USE counts as VIEW here, matching the read that chat() goes on to do.
+        return securityContext.useAsReadResult(() -> {
+            final OpenAIModelStore store = openAIModelStoreProvider.get();
+
+            // Try by UUID first so that a model named after another model's UUID cannot shadow it.
+            final Optional<DocRef> byUuid = store.findByUuid(nameOrUuid);
+            if (byUuid.isPresent()) {
+                return byUuid;
+            }
+
+            LOGGER.debug(() -> "Unable to find OpenAI model by UUID '" + nameOrUuid + "', trying by name");
+            final List<DocRef> byName = store.findByName(nameOrUuid);
+            if (NullSafe.isEmptyCollection(byName)) {
+                return Optional.empty();
+            }
+            if (byName.size() > 1) {
+                // The store orders by UUID, which is random, so this says which one we used rather than
+                // implying a rule about which one it will be.
+                LOGGER.info(() -> "Multiple OpenAI models found with name '" + nameOrUuid
+                                  + "' - using " + byName.getFirst());
+            }
+            return Optional.of(byName.getFirst());
+        });
+    }
+
+    @Override
+    public String chat(final DocRef modelRef, final String systemPrompt, final String message) {
+        Objects.requireNonNull(modelRef, "No model supplied");
+
+        // Read the model ahead of consulting the cache so that the caller's permission to use it is checked
+        // on every call, not just on a cache miss. The read is cheap as the doc store caches documents.
+        final OpenAIModelDoc modelDoc = getOpenAIModelDoc(modelRef);
+        if (modelDoc == null) {
+            throw new RuntimeException("Unable to read OpenAI model " + modelRef);
+        }
+
+        // Key on the UUID rather than the whole doc so that a rename does not miss the cache. A change to
+        // the model's settings will not invalidate cached answers, which is why the cache is time bounded,
+        // see AiConfig.getChatResponseCache().
+        final ChatKey chatKey = new ChatKey(modelDoc.getUuid(), systemPrompt, message);
+
+        // Deliberately a lookup, then the call, then a put, rather than a loading get. A loading get runs
+        // the load inside the cache's mapping function, which holds a lock on the map bin the key falls in
+        // for as long as the load takes. A model call can take minutes - the default request timeout is ten
+        // - so an unrelated question whose key happened to fall in the same bin would wait on it. The cost
+        // is that two identical questions asked at the same moment both reach the model; asked one after
+        // the other, which is what a pipeline or a query actually does, the second is still served from
+        // the cache.
+        final Optional<String> cached = chatResponseCache.getIfPresent(chatKey);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
+
+        // A failure is not cached, so the next caller asks the model again rather than being told for the
+        // next ten minutes what went wrong once.
+        final String answer = doChat(modelDoc, systemPrompt, message);
+        if (answer != null) {
+            chatResponseCache.put(chatKey, answer);
+        }
+        return answer;
+    }
+
+    private String doChat(final OpenAIModelDoc modelDoc, final String systemPrompt, final String message) {
+        final List<ChatMessage> messages = new ArrayList<>(2);
+        if (NullSafe.isNonBlankString(systemPrompt)) {
+            messages.add(new SystemMessage(systemPrompt));
+        }
+        messages.add(new UserMessage(Objects.requireNonNullElse(message, "")));
+
+        final ChatModel chatModel = getChatModel(modelDoc);
+        final ChatResponse chatResponse = LOGGER.logDurationIfDebugEnabled(
+                () -> chatModel.chat(messages),
+                r -> "chat: asked model '" + modelDoc.getModelId() + "'");
+
+        return NullSafe.get(chatResponse, ChatResponse::aiMessage, AiMessage::text);
+    }
+
+    @Override
     public ChatModel getChatModel(final OpenAIModelDoc modelDoc) {
-        final String apiKey = getApiKey(modelDoc.getApiKeyName());
+        // Stub mode: return a test ChatModel that requires no API key or network.
+        if (STUB_MODEL_ID.equals(modelDoc.getModelId())) {
+            LOGGER.info(() -> "Using stub ChatModel for testing (modelId='" + STUB_MODEL_ID + "')");
+            return new StubChatModel();
+        }
 
         LOGGER.debug(() -> "getChatModel: modelId='" + modelDoc.getModelId()
                            + "' baseUrl='" + NullSafe.toString(modelDoc.getBaseUrl()) + "'");
 
+        final OpenAiChatModelBuilder modelBuilder = OpenAiChatModel.builder()
+                .modelName(modelDoc.getModelId());
+
         // Need to specify HTTP 1.1 for vLLM interoperability
         // Ref: https://github.com/langchain4j/langchain4j/issues/3682
-
-        final HttpClientBuilder httpClientBuilder = getClientBuilder(modelDoc);
-        final OpenAiChatModelBuilder modelBuilder = OpenAiChatModel.builder()
-                .modelName(modelDoc.getModelId())
-                .apiKey(apiKey)
-                .httpClientBuilder(httpClientBuilder);
+        modelBuilder.httpClientBuilder(getClientBuilder(modelDoc));
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
+            // Override the base URL. Reject cloud-metadata/wildcard targets to prevent SSRF (private and
+            // loopback are allowed, since a self-hosted OpenAI-compatible model legitimately lives there).
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
+
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         if (NullSafe.isNonEmptyString(modelDoc.getReasoningEffort())) {
             modelBuilder.reasoningEffort(modelDoc.getReasoningEffort());
@@ -229,38 +446,36 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public EmbeddingModel getEmbeddingModel(final OpenAIModelDoc modelDoc) {
-        final String apiKey = getApiKey(modelDoc.getApiKeyName());
+        final OpenAiEmbeddingModelBuilder modelBuilder = OpenAiEmbeddingModel.builder()
+                .modelName(modelDoc.getModelId());
 
         // Need to specify HTTP 1.1 for vLLM interoperability
         // Ref: https://github.com/langchain4j/langchain4j/issues/3682
-//        final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
-//                .version(HttpClient.Version.HTTP_1_1);
-//        final JdkHttpClientBuilder jdkHttpClientBuilder = JdkHttpClient.builder()
-//                .httpClientBuilder(httpClientBuilder);
+        modelBuilder.httpClientBuilder(getClientBuilder(modelDoc));
 
-        final HttpClientBuilder httpClientBuilder = getClientBuilder(modelDoc);
-        final OpenAiEmbeddingModelBuilder modelBuilder = OpenAiEmbeddingModel.builder()
-                .modelName(modelDoc.getModelId())
-                .apiKey(apiKey)
-                .httpClientBuilder(httpClientBuilder)
-                .dimensions(1024); // Lucene can only support 1024 dimensions.
+        // Set embedding dimensions
+        if (modelDoc.getEmbeddingModelDimensions() > 0) {
+            modelBuilder.dimensions(modelDoc.getEmbeddingModelDimensions());
+        }
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
+            // Override the base URL. Reject cloud-metadata/wildcard targets to prevent SSRF (private and
+            // loopback are allowed, since a self-hosted OpenAI-compatible model legitimately lives there).
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        // Provide a bearer token
-        modelBuilder.apiKey(getApiKey(modelDoc));
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         return modelBuilder.build();
     }
 
     private HttpClientBuilder getClientBuilder(final OpenAIModelDoc modelDoc) {
-        final HttpClientConfiguration httpClientConfiguration = convert(NullSafe.getOrElse(
+        final HttpClientConfiguration httpClientConfiguration = httpConfigResolver.resolve(NullSafe.getOrElse(
                 modelDoc,
                 OpenAIModelDoc::getHttpClientConfiguration,
-                HttpClientConfig.builder().build()));
+                getDefaultHttpClientConfig()));
         return new ApacheHttpClientBuilder(httpClientCacheProvider.get(), httpClientConfiguration);
     }
 
@@ -270,14 +485,14 @@ public class AiServiceImpl implements AiService {
                 .modelName(modelDoc.getModelId());
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
+            // Override the base URL. Reject cloud-metadata/wildcard targets to prevent SSRF (private and
+            // loopback are allowed, since a self-hosted OpenAI-compatible model legitimately lives there).
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        modelBuilder.apiKey(getApiKey(modelDoc));
-//        } else {
-//            modelBuilder.apiKey("dummy_api_key");
-//        }
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         return modelBuilder.build();
     }
@@ -288,109 +503,16 @@ public class AiServiceImpl implements AiService {
                 .modelName(modelDoc.getModelId());
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
+            // Override the base URL. Reject cloud-metadata/wildcard targets to prevent SSRF (private and
+            // loopback are allowed, since a self-hosted OpenAI-compatible model legitimately lives there).
+            SsrfGuard.rejectMetadataAndWildcard(modelDoc.getBaseUrl());
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        // Provide a bearer token
-        modelBuilder.apiKey(getApiKey(modelDoc));
-//        } else {
-//            modelBuilder.apiKey("dummy_api_key");
-//        }
+        // Provide an API key
+        getApiKey(modelDoc).ifPresent(modelBuilder::apiKey);
 
         return modelBuilder.build();
-    }
-
-    private HttpClientConfiguration convert(final HttpClientConfig config) {
-        if (config == null) {
-            return new HttpClientConfiguration();
-        }
-
-        return HttpClientConfiguration
-                .builder()
-                .timeout(SimpleDurationUtil.convertToStroomDuration(config.getTimeout()))
-                .connectionTimeout(SimpleDurationUtil.convertToStroomDuration(config.getConnectionTimeout()))
-                .connectionRequestTimeout(
-                        SimpleDurationUtil.convertToStroomDuration(config.getConnectionRequestTimeout()))
-                .timeToLive(SimpleDurationUtil.convertToStroomDuration(config.getTimeToLive()))
-                .cookiesEnabled(config.isCookiesEnabled())
-                .maxConnections(config.getMaxConnections())
-                .maxConnectionsPerRoute(config.getMaxConnectionsPerRoute())
-                .keepAlive(SimpleDurationUtil.convertToStroomDuration(config.getKeepAlive()))
-                .retries(config.getRetries())
-                .userAgent(config.getUserAgent())
-                .proxyConfiguration(convert(config.getProxy()))
-                .validateAfterInactivityPeriod(
-                        SimpleDurationUtil.convertToStroomDuration(config.getValidateAfterInactivityPeriod()))
-                .tlsConfiguration(convert(config.getTls()))
-                .build();
-    }
-
-    private HttpProxyConfiguration convert(final HttpProxyConfig config) {
-        if (config == null) {
-            return null;
-        }
-
-        return HttpProxyConfiguration
-                .builder()
-                .host(config.getHost())
-                .port(config.getPort())
-                .scheme(config.getScheme())
-                .auth(convert(config.getAuth()))
-                .nonProxyHosts(config.getNonProxyHosts())
-                .build();
-    }
-
-    private HttpAuthConfiguration convert(final HttpAuthConfig config) {
-        if (config == null) {
-            return null;
-        }
-
-        return HttpAuthConfiguration
-                .builder()
-                .username(config.getUsername())
-                .password(config.getPassword())
-                .authScheme(config.getAuthScheme())
-                .realm(config.getRealm())
-                .hostname(config.getHostname())
-                .domain(config.getDomain())
-                .credentialType(config.getCredentialType())
-                .build();
-    }
-
-    private HttpTlsConfiguration convert(final HttpTlsConfig config) {
-        if (config == null) {
-            return null;
-        }
-
-        final HttpTlsConfiguration.Builder builder = HttpTlsConfiguration.builder();
-        if (NullSafe.isNonBlankString(config.getKeyStoreName())) {
-            final KeyStore keyStore = storedSecretsProvider.get().getKeyStore(config.getKeyStoreName());
-            builder
-                    .keyStorePath(keyStore.keyStorePath())
-                    .keyStorePassword(keyStore.keyStorePassword())
-                    .keyStoreType(keyStore.keyStoreType())
-                    .keyStoreProvider(keyStore.keyStoreProvider());
-        }
-
-        if (NullSafe.isNonBlankString(config.getTrustStoreName())) {
-            final KeyStore trustStore = storedSecretsProvider.get().getKeyStore(config.getTrustStoreName());
-            builder
-                    .trustStorePath(trustStore.keyStorePath())
-                    .trustStorePassword(trustStore.keyStorePassword())
-                    .trustStoreType(trustStore.keyStoreType())
-                    .trustStoreProvider(trustStore.keyStoreProvider());
-        }
-
-        return builder
-                .protocol(config.getProtocol())
-                .provider(config.getProvider())
-                .trustSelfSignedCertificates(config.isTrustSelfSignedCertificates())
-                .verifyHostname(config.isVerifyHostname())
-                .supportedProtocols(config.getSupportedProtocols())
-                .supportedCiphers(config.getSupportedCiphers())
-                .certAlias(config.getCertAlias())
-                .build();
     }
 
     // ---------------------------------------------------------------------
@@ -464,6 +586,18 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
+    public Optional<AiChatMessage> getWorkingMessage(final int chatId) {
+        verifyOwnership(chatId);
+        return aiDao.getWorkingMessage(chatId);
+    }
+
+    // No ownership check — internal-only, called either side of processing a question.
+    @Override
+    public void deleteWorkingMessages(final int chatId) {
+        aiDao.deleteWorkingMessages(chatId);
+    }
+
+    @Override
     public AiChatMessage storeMessage(final int chatId,
                                       final AiMessageType messageType,
                                       final Integer attachmentId,
@@ -482,6 +616,17 @@ public class AiServiceImpl implements AiService {
     @Override
     public void deleteMessage(final int messageId) {
         aiDao.deleteMessage(messageId);
+    }
+
+    @Override
+    public void deleteAttachment(final int attachmentId) {
+        aiDao.deleteAttachment(attachmentId);
+    }
+
+    @Override
+    public void deleteAllChatMessagesAndAttachments(final int chatId) {
+        verifyOwnership(chatId);
+        aiDao.deleteAllChatMessagesAndAttachments(chatId);
     }
 
     // ---------------------------------------------------------------------
@@ -530,4 +675,28 @@ public class AiServiceImpl implements AiService {
         verifyOwnership(chatId);
         return aiDao.getAttachmentsByChatId(chatId);
     }
+
+    @Override
+    public HttpClientConfig getDefaultHttpClientConfig() {
+        if (defaultHttpClientConfig == null) {
+            defaultHttpClientConfig = createDefaultHttpClientConfig();
+        }
+        return defaultHttpClientConfig;
+    }
+
+    private HttpClientConfig createDefaultHttpClientConfig() {
+        return HttpClientUtil.createDefaultHttpClientConfig(DEFAULT_TIMEOUT);
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The identity of a question, for caching purposes. Two questions are the same question if they ask the
+     * same model the same thing with the same system prompt.
+     */
+    private record ChatKey(String modelUuid, String systemPrompt, String message) {
+
+    }
+
 }

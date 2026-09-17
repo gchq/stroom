@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Criteria object used to fetch a job that matches the parameters specified.
@@ -69,8 +70,8 @@ public class FindJobNodeCriteria extends BaseCriteria {
                                @JsonProperty("nodeName") final StringCriteria nodeName,
                                @JsonProperty("jobNodeEnabled") final Boolean jobNodeEnabled) {
         super(pageRequest, sortList);
-        this.jobName = jobName;
-        this.nodeName = nodeName;
+        this.jobName = Objects.requireNonNullElseGet(jobName, StringCriteria::new);
+        this.nodeName = Objects.requireNonNullElseGet(nodeName, StringCriteria::new);
         this.jobNodeEnabled = jobNodeEnabled;
     }
 
@@ -93,9 +94,9 @@ public class FindJobNodeCriteria extends BaseCriteria {
     @Override
     public String toString() {
         return "FindJobNodeCriteria{" +
-                "jobName=" + jobName +
-                ", nodeName=" + nodeName +
-                ", jobNodeEnabled=" + jobNodeEnabled +
-                '}';
+               "jobName=" + jobName +
+               ", nodeName=" + nodeName +
+               ", jobNodeEnabled=" + jobNodeEnabled +
+               '}';
     }
 }

@@ -2,10 +2,16 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="analyticStreamDestinationFeed" label="Destination Feed">
-            <g:SimplePanel ui:field="destinationFeed"/>
+            <g:FlowPanel styleName="button-group">
+                <g:SimplePanel ui:field="destinationFeed"/>
+                <b:Button ui:field="setDefaultDestinationFeed"
+                          text="Set Default"
+                          addStyleNames="allow-focus"/>
+            </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="analyticStreamDestinationUseSourceFeedIfPossible" label="Use Source Feed If Possible (Streaming Only)">
             <tickbox:CustomCheckBox ui:field="useSourceFeedIfPossible"/>

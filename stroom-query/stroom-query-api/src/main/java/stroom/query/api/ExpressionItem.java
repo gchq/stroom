@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
@@ -37,7 +38,14 @@ import java.util.function.Predicate;
         @JsonSubTypes.Type(value = ExpressionTerm.class, name = "term")
 })
 @JsonInclude(Include.NON_NULL)
-@Schema(
+@Schema(discriminatorProperty = "type", discriminatorMapping = {
+        @DiscriminatorMapping(
+                value = "operator",
+                schema = ExpressionOperator.class),
+        @DiscriminatorMapping(
+                value = "term",
+                schema = ExpressionTerm.class)
+},
         description = "Base type for an item in an expression tree",
         subTypes = {ExpressionOperator.class, ExpressionTerm.class})
 public abstract sealed class ExpressionItem implements Serializable permits ExpressionOperator, ExpressionTerm {

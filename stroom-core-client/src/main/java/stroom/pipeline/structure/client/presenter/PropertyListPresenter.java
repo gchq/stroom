@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.Builder;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -29,14 +28,9 @@ import stroom.docref.DocRef.DisplayType;
 import stroom.docref.HasDisplayValue;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.shared.ExplorerResource;
-import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
@@ -64,7 +58,6 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
@@ -78,8 +71,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PropertyListPresenter
-        extends MyPresenterWidget<PagerView>
-        implements HasChangeHandlers {
+        extends MyPresenterWidget<PagerView> {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -110,6 +102,7 @@ public class PropertyListPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Pipeline Properties");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
@@ -143,8 +136,6 @@ public class PropertyListPresenter
         addNameColumn();
         addValueColumn();
         addDescriptionColumn();
-
-        addEndColumn();
     }
 
     private void addNameColumn() {
@@ -304,13 +295,13 @@ public class PropertyListPresenter
         return className;
     }
 
-    private void addEndColumn() {
-        dataGrid.addEndColumn(new EndColumn<>());
-    }
-
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         enableButtons();
+    }
+
+    public void setTableName(final String tableName) {
+        dataGrid.setTableName(tableName);
     }
 
     public void setPipelineModel(final PipelineModel pipelineModel) {
@@ -427,11 +418,8 @@ public class PropertyListPresenter
                                                     .build();
                                             builder.getProperties().getAddList().add(embeddedProperty);
 
-                                            final PipelineData pipelineData = builder.build();
-                                            pipelineModel.setPipelineLayer(new PipelineLayer(pipelineModel
-                                                    .getPipelineLayer().getSourcePipeline(), pipelineData));
+                                            pipelineModel.update(builder.build());
 
-                                            onChange();
                                             refresh();
                                             e.hide();
                                         });
@@ -441,11 +429,8 @@ public class PropertyListPresenter
                                 // Do nothing as we have already removed it.
                         }
 
-                        final PipelineData pipelineData = builder.build();
-                        pipelineModel.setPipelineLayer(
-                                new PipelineLayer(pipelineModel.getPipelineLayer().getSourcePipeline(), pipelineData));
+                        pipelineModel.update(builder.build());
 
-                        onChange();
                         refresh();
                     }
                 }
@@ -570,10 +555,6 @@ public class PropertyListPresenter
         }
     }
 
-    private void onChange() {
-        ChangeEvent.fire(this);
-    }
-
     private PipelinePropertyValue getDefaultValue(final PipelinePropertyType propertyType) {
         if ("boolean".equals(propertyType.getType())) {
             boolean defaultValue = true;
@@ -620,11 +601,6 @@ public class PropertyListPresenter
         }
 
         return pipelineModel.getBaseData().getPropertySource(property);
-    }
-
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
 

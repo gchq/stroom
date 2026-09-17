@@ -18,8 +18,6 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.ReportDoc;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.ui.config.client.UiConfigCache;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -33,16 +31,9 @@ public class ReportNotificationPresenter
     @Inject
     public ReportNotificationPresenter(final EventBus eventBus,
                                        final AnalyticNotificationView view,
-                                       final DocSelectionBoxPresenter errorFeedPresenter,
-                                       final ReportNotificationListPresenter notificationListPresenter,
-                                       final UiConfigCache uiConfigCache) {
-        super(eventBus,
-                view,
-                errorFeedPresenter,
-                notificationListPresenter,
-                uiConfigCache);
+                                       final ReportNotificationListPresenter notificationListPresenter) {
+        super(eventBus, view, notificationListPresenter);
         this.notificationListPresenter = notificationListPresenter;
-        getView().setIncludeRuleDocumentationVisible(false);
     }
 
     @Override
@@ -51,7 +42,6 @@ public class ReportNotificationPresenter
         return reportDoc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .errorFeed(errorFeedPresenter.getSelectedEntityReference())
                 .build();
     }
 }

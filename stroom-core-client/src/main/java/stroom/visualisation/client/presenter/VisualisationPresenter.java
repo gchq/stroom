@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,17 @@ public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, Vi
     @Override
     protected TabData getDocumentationTab() {
         return DOCUMENTATION;
+    }
+
+    /**
+     * Asset content is held in a server-side draft/live store rather than in the VisualisationDoc, so
+     * it is not captured by the normal onWrite() comparison. Surface the assets tab's dirty state here
+     * so the Save button reflects pending draft asset changes (mirrors PipelinePresenter's handling of
+     * its stepping editors).
+     */
+    @Override
+    protected boolean hasAssociatedDirty() {
+        return visualisationAssetsPresenter.isDirty();
     }
 
     /**

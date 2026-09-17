@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.shared.AiAttachmentDataPage;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
-import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
@@ -29,6 +30,7 @@ import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
+import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.QueryTableContext;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
@@ -145,7 +147,7 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                 .withValue(NullSafe.get(
                         request,
                         AskStroomAiRequest::getConfig,
-                        AskStroomAIConfig::getModelRef,
+                        AskStroomAiConfig::getModelRef,
                         DocRef::getName))
                 .build());
 
@@ -246,13 +248,13 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
-    public AskStroomAIConfig getDefaultConfig() {
+    public AskStroomAiConfig getDefaultConfig() {
         return askStroomAIServiceProvider.get().getDefaultConfig();
     }
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public Boolean setDefaultAskStroomAIConfig(final AskStroomAIConfig config) {
+    public Boolean setDefaultAskStroomAIConfig(final AskStroomAiConfig config) {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "setDefaultAskStroomAIConfig"))
                 .withDescription("Update default AI configuration")
@@ -261,12 +263,12 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                                 .addObject(OtherObject.builder()
                                         .withType("AskStroomAIConfig")
                                         .withName(NullSafe.get(config,
-                                                AskStroomAIConfig::getModelRef,
+                                                AskStroomAiConfig::getModelRef,
                                                 DocRef::getName))
                                         .addData(Data.builder()
                                                 .withName("Model")
                                                 .withValue(NullSafe.get(config,
-                                                        AskStroomAIConfig::getModelRef,
+                                                        AskStroomAiConfig::getModelRef,
                                                         DocRef::getName))
                                                 .build())
                                         .build())
@@ -360,6 +362,52 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
 
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
+    public Boolean deleteMessage(final int chatId, final int messageId) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "deleteMessage"))
+                .withDescription("Delete message " + messageId + " from AI chat " + chatId)
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addObject(OtherObject.builder()
+                                .withType("AiChatMessage")
+                                .withId(String.valueOf(messageId))
+                                .addData(Data.builder()
+                                        .withName("ChatId")
+                                        .withValue(String.valueOf(chatId))
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> {
+                    askStroomAIServiceProvider.get().deleteMessage(chatId, messageId);
+                    return true;
+                })
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Boolean deleteAllMessages(final int chatId) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "deleteAllMessages"))
+                .withDescription("Delete all messages from AI chat " + chatId)
+                .withDefaultEventAction(DeleteEventAction.builder()
+                        .addObject(OtherObject.builder()
+                                .withType("AiChat")
+                                .withId(String.valueOf(chatId))
+                                .addData(Data.builder()
+                                        .withName("Action")
+                                        .withValue("DeleteAllMessages")
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> {
+                    askStroomAIServiceProvider.get().deleteAllMessages(chatId);
+                    return true;
+                })
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
     public List<AiChatMessage> getMessages(final int chatId) {
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "getMessages"))
@@ -441,6 +489,29 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                         .build())
                 .withSimpleLoggedResult(() ->
                         askStroomAIServiceProvider.get().downloadChatHistory(request))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public AiAttachmentDataPage getAttachmentData(final GetAttachmentDataRequest request) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "getAttachmentData"))
+                .withDescription("View attachment data for attachment "
+                                 + request.getAttachmentId()
+                                 + " in AI chat " + request.getChatId())
+                .withDefaultEventAction(ViewEventAction.builder()
+                        .addObject(OtherObject.builder()
+                                .withType("AiChatAttachment")
+                                .withId(String.valueOf(request.getAttachmentId()))
+                                .addData(Data.builder()
+                                        .withName("ChatId")
+                                        .withValue(String.valueOf(request.getChatId()))
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() ->
+                        askStroomAIServiceProvider.get().getAttachmentData(request))
                 .getResultAndLog();
     }
 }

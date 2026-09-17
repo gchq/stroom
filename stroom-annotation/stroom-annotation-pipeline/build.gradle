@@ -17,16 +17,12 @@
 ext.moduleName = 'stroom.annotation.pipeline'
 
 dependencies {
-    implementation project(':stroom-annotation:stroom-annotation-impl')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-pipeline')
-    implementation project(':stroom-search:stroom-searchable-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jakarta.inject
     implementation libs.slf4j.api
 }

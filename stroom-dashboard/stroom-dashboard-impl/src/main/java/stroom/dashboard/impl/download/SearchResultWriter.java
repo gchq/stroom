@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,8 @@ public class SearchResultWriter implements TableResultBuilder {
             for (final Column column : columns) {
                 if (column.isVisible()) {
                     target.writeHeading(fieldIndex, column, column.getName());
+                    fieldIndex++;
                 }
-
-                fieldIndex++;
             }
             target.endLine();
         } catch (final IOException e) {

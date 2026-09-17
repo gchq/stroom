@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  JOOQ codegen configuration for the activity module.
+
+  Placeholder tokens are substituted at runtime by the Gradle tasks:
+    __JDBC_URL__      - JDBC connection URL
+    __INPUT_SCHEMA__  - MySQL schema name to read from
+    __OUTPUT_DIR__    - Absolute path to the output source directory
+-->
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-3.19.0.xsd">
+    <logging>WARN</logging>
+    <jdbc>
+        <driver>com.mysql.cj.jdbc.Driver</driver>
+        <url>__JDBC_URL__</url>
+        <user>stroomuser</user>
+        <password>stroompassword1</password>
+    </jdbc>
+    <generator>
+        <name>org.jooq.codegen.JavaGenerator</name>
+        <database>
+            <name>org.jooq.meta.mysql.MySQLDatabase</name>
+            <inputSchema>__INPUT_SCHEMA__</inputSchema>
+            <!-- The schema name to use in the generated classes, instead of inputSchema -->
+            <outputSchema>stroom</outputSchema>
+            <!-- Each entry is a Java regex. Whitespace is ignored and comments are allowed. -->
+            <includes>activity</includes>
+            <!-- We don't want to include the Flyway schema history table -->
+            <excludes>activity_schema_history</excludes>
+            <!-- Specify 'version' for use in optimistic concurrency control -->
+            <recordVersionFields>version</recordVersionFields>
+        </database>
+        <generate>
+            <!-- Implicit joins are syntactic sugar that we don't need -->
+            <implicitJoinPathsToOne>false</implicitJoinPathsToOne>
+            <implicitJoinPathsToMany>false</implicitJoinPathsToMany>
+        </generate>
+        <target>
+            <packageName>stroom.activity.impl.db.jooq</packageName>
+            <directory>__OUTPUT_DIR__</directory>
+        </target>
+    </generator>
+</configuration>

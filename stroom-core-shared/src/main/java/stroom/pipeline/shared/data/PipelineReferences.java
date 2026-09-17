@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,11 @@ public class PipelineReferences extends AbstractAddRemove<PipelineReference> {
                               @JsonProperty("remove") final List<PipelineReference> remove) {
         super(add, remove);
     }
+
+    // NOTE: Unlike elements, links and properties, reference order IS significant - reference data
+    // lookups try each loader in the order the references appear - so the inherited order sensitive
+    // comparison in AbstractAddRemove is deliberately kept, and re-ordering references counts as a
+    // change.
 
 
     // --------------------------------------------------------------------------------

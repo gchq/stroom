@@ -24,7 +24,6 @@ dependencies {
     // For logging in junits
     testImplementation project(':stroom-util')
 
-    implementation libs.jackson.annotations
     implementation libs.jakarta.validation.api
     implementation libs.restygwt
     implementation libs.swagger.annotations
@@ -34,7 +33,6 @@ dependencies {
 
     testImplementation libs.classgraph
     testImplementation libs.guice // For TypeLiteral in DynamicTestBuilder
-    testImplementation libs.jackson.core
     testImplementation libs.jackson.databind
     testImplementation libs.slf4j.api
     testImplementation libs.vavr

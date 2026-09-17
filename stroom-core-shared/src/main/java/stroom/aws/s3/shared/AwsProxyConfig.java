@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,9 +95,12 @@ public class AwsProxyConfig {
             return false;
         }
         final AwsProxyConfig that = (AwsProxyConfig) o;
-        return port == that.port && Objects.equals(host, that.host) && Objects.equals(scheme,
-                that.scheme) && Objects.equals(username, that.username) && Objects.equals(password,
-                that.password) && Objects.equals(useSystemPropertyValues, that.useSystemPropertyValues);
+        return port == that.port
+               && Objects.equals(host, that.host)
+               && Objects.equals(scheme, that.scheme)
+               && Objects.equals(username, that.username)
+               && Objects.equals(password, that.password)
+               && Objects.equals(useSystemPropertyValues, that.useSystemPropertyValues);
     }
 
     @Override
@@ -108,14 +111,18 @@ public class AwsProxyConfig {
     @Override
     public String toString() {
         return "AwsProxyConfig{" +
-                "host='" + host + '\'' +
-                ", port=" + port +
-                ", scheme='" + scheme + '\'' +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", useSystemPropertyValues=" + useSystemPropertyValues +
-                '}';
+               "host='" + host + '\'' +
+               ", port=" + port +
+               ", scheme='" + scheme + '\'' +
+               ", username='" + username + '\'' +
+               ", password='" + password + '\'' +
+               ", useSystemPropertyValues=" + useSystemPropertyValues +
+               '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

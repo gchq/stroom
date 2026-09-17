@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import stroom.pipeline.factory.Processor;
 import stroom.pipeline.factory.TakesInput;
 import stroom.pipeline.factory.TakesReader;
 import stroom.pipeline.factory.Target;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.StreamUtil;
 
 import org.slf4j.Logger;
@@ -291,6 +292,9 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
                         final byte[] buffer = new byte[8192];
                         int len;
                         while ((len = inputStream.read(buffer)) != -1) {
+                            if (Thread.currentThread().isInterrupted()) {
+                                throw new TaskTerminatedException();
+                            }
                             for (final OutputStream outputStream : outputStreams) {
                                 outputStream.write(buffer, 0, len);
                             }
@@ -350,6 +354,9 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
                     final char[] buffer = new char[8192];
                     int len;
                     while ((len = reader.read(buffer)) != -1) {
+                        if (Thread.currentThread().isInterrupted()) {
+                            throw new TaskTerminatedException();
+                        }
                         for (final Writer writer : writers) {
                             writer.write(buffer, 0, len);
                         }

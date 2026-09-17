@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ package stroom.util.shared;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Comparator;
 import java.util.Objects;
@@ -32,6 +34,11 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = StreamLocation.class, name = "stream"),
         @JsonSubTypes.Type(value = DefaultLocation.class, name = "default")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "stream", schema = StreamLocation.class),
+                @DiscriminatorMapping(value = "default", schema = DefaultLocation.class)})
 public sealed interface Location extends Comparable<Location> permits StreamLocation, DefaultLocation {
 
     int UNKNOWN_VALUE = -1;

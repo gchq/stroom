@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package stroom.dictionary.mock;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.WordList;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefDecorator;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -54,8 +53,7 @@ public class MockWordListProviderModule extends AbstractModule {
             }
 
             @Override
-            public WordList getCombinedWordList(final DocRef dictionaryRef,
-                                                final DocRefDecorator docRefDecorator) {
+            public WordList getCombinedWordList(final DocRef dictionaryRef) {
                 return null;
             }
         };

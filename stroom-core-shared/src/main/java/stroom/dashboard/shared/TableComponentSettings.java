@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,10 +100,10 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
     @JsonProperty
     private final Boolean showDetail;
 
-    @Schema(description = "IGNORE: UI use only", hidden = true)
+    // Set and used by the UI; serialised on the wire, so they must stay in the OpenAPI spec
+    // (previously @Schema(hidden = true), which wrongly dropped them from generated clients).
     @JsonProperty("conditionalFormattingRules")
     private final List<ConditionalFormattingRule> conditionalFormattingRules;
-    @Schema(description = "IGNORE: UI use only", hidden = true)
     @JsonProperty("modelVersion")
     private final String modelVersion;
     @JsonProperty

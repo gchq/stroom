@@ -21,5 +21,4 @@ dependencies {
     implementation project(':stroom-core-shared')
 
     implementation libs.guice
-    implementation libs.jackson.annotations
 }

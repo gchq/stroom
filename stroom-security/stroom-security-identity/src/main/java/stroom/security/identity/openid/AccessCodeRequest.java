@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ class AccessCodeRequest {
     private final String nonce;
     private final String state;
     private final String prompt;
+    private final String codeChallenge;
 
     AccessCodeRequest(final String scope,
                       final String responseType,
@@ -34,7 +35,8 @@ class AccessCodeRequest {
                       final String subject,
                       final String nonce,
                       final String state,
-                      final String prompt) {
+                      final String prompt,
+                      final String codeChallenge) {
         this.scope = scope;
         this.responseType = responseType;
         this.clientId = clientId;
@@ -43,6 +45,7 @@ class AccessCodeRequest {
         this.nonce = nonce;
         this.state = state;
         this.prompt = prompt;
+        this.codeChallenge = codeChallenge;
     }
 
     public String getScope() {
@@ -75,5 +78,9 @@ class AccessCodeRequest {
 
     public String getPrompt() {
         return prompt;
+    }
+
+    public String getCodeChallenge() {
+        return codeChallenge;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.authentication.HasRefreshable;
 import stroom.util.authentication.Refreshable;
 import stroom.util.authentication.Refreshable.RefreshMode;
@@ -42,7 +41,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.TemplateUtil;
-import stroom.util.string.TemplateUtil.Templator;
+import stroom.util.string.TemplateUtil.Template;
 
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -65,12 +64,11 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 
     private final JwtContextFactory jwtContextFactory;
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final CertificateExtractor certificateExtractor;
     private final ServiceUserFactory serviceUserFactory;
     private final JerseyClientFactory jerseyClientFactory;
     private final SimplePathCreator simplePathCreator;
-    private final CachedValue<Templator, String> cachedFullNameTemplate;
+    private final CachedValue<Template, String> cachedFullNameTemplate;
 
     // A service account/user for communicating with other apps in the same OIDC realm,
     // e.g. proxy => stroom. Created lazily.
@@ -84,7 +82,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
 
     public AbstractUserIdentityFactory(final JwtContextFactory jwtContextFactory,
                                        final Provider<OpenIdConfiguration> openIdConfigProvider,
-                                       final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                        final CertificateExtractor certificateExtractor,
                                        final ServiceUserFactory serviceUserFactory,
                                        final JerseyClientFactory jerseyClientFactory,
@@ -92,7 +89,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                                        final RefreshManager refreshManager) {
         this.jwtContextFactory = jwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.certificateExtractor = certificateExtractor;
         this.serviceUserFactory = serviceUserFactory;
         this.jerseyClientFactory = jerseyClientFactory;
@@ -212,13 +208,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
             if (IdpType.NO_IDP.equals(idpType)) {
                 return Collections.emptyMap();
 
-            } else if (IdpType.TEST_CREDENTIALS.equals(idpType)
-                       && !serviceUserFactory.isServiceUser(userIdentity, getServiceUserIdentity())) {
-                // The processing user is a bit special so even when using hard-coded default open id
-                // creds the proc user uses tokens created by the internal IDP.
-                LOGGER.debug("Using default token");
-                return jwtContextFactory.createAuthorisationEntries(defaultOpenIdCredentials.getApiKey());
-
             } else if (userIdentity instanceof final HasJwt hasJwt) {
                 LOGGER.debug(() -> LogUtil.message("Getting auth headers as {}, {}",
                         HasJwt.class.getSimpleName(),
@@ -270,6 +259,8 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 .withCode(code)
                 .withGrantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
                 .withRedirectUri(state.getRedirectUri())
+                // PKCE: prove we are the party that began the flow by presenting the verifier.
+                .withCodeVerifier(state.getCodeVerifier())
                 .sendRequest(true);
 
         final Optional<UserIdentity> optUserIdentity = jwtContextFactory.getJwtContext(tokenResponse.getIdToken())
@@ -447,14 +438,17 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         Objects.requireNonNull(openIdConfiguration);
         Objects.requireNonNull(jwtClaims);
         // e.g. "${firstName} ${lastName}" => "john Doe"
-        final Templator fullNameTemplator = cachedFullNameTemplate.getValue();
-        if (!fullNameTemplator.isBlank()) {
+        final Template fullNameTemplate = cachedFullNameTemplate.getValue();
+        if (!fullNameTemplate.isBlank()) {
             // If the claim in the template is not in the claims then just replace with empty string
-            final String fullName = NullSafe.trim(fullNameTemplator.buildGenerator()
-                    .addCommonReplacementFunction(aClaim -> JwtUtil.getClaimValue(jwtClaims, aClaim)
-                            .map(NullSafe::trim)
-                            .orElse(""))
-                    .generate());
+            final String fullName = NullSafe.trim(fullNameTemplate.buildExecutor()
+                    .addCommonReplacementFunction(aClaim -> {
+                        // JWT claims are case-sensitive
+                        return JwtUtil.getClaimValue(jwtClaims, aClaim.get())
+                                .map(NullSafe::trim)
+                                .orElse("");
+                    })
+                    .execute());
             return fullName.isEmpty()
                     ? Optional.empty()
                     : Optional.of(fullName);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,9 @@ package stroom.ai.client;
 
 import stroom.ai.client.AiConfigGeneralPresenter.AiConfigGeneralView;
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
-import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.openai.shared.OpenAIModelDoc;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
@@ -44,7 +43,6 @@ public class AiConfigGeneralPresenter
     @Inject
     public AiConfigGeneralPresenter(final EventBus eventBus,
                                     final AiConfigGeneralView view,
-                                    final ClientSecurityContext clientSecurityContext,
                                     final DocSelectionBoxPresenter docSelectionBoxPresenter) {
         super(eventBus, view);
         this.docSelectionBoxPresenter = docSelectionBoxPresenter;
@@ -62,33 +60,35 @@ public class AiConfigGeneralPresenter
         this.dockBehaviourChangeHandler = handler;
     }
 
-    public void read(final AskStroomAIConfig config,
+    public void read(final AskStroomAiConfig config,
                      final DockBehaviour dockBehaviour) {
-        if (config != null && config.getModelRef() != null) {
-            docSelectionBoxPresenter.setSelectedEntityReference(config.getModelRef(), true);
-        }
+        docSelectionBoxPresenter.setSelectedEntityReference(NullSafe.get(
+                config,
+                AskStroomAiConfig::getModelRef), true);
         getView().setChatSystemPrompt(NullSafe.getOrElse(
                 config,
-                AskStroomAIConfig::getChatSystemPrompt,
-                AskStroomAIConfig.DEFAULT_CHAT_SYSTEM_PROMPT));
+                AskStroomAiConfig::getChatSystemPrompt,
+                AskStroomAiConfig.DEFAULT_CHAT_SYSTEM_PROMPT));
         getView().setHistorySummaryPrompt(NullSafe.getOrElse(
                 config,
-                AskStroomAIConfig::getHistorySummaryPrompt,
-                AskStroomAIConfig.DEFAULT_HISTORY_SUMMARY_PROMPT));
+                AskStroomAiConfig::getHistorySummaryPrompt,
+                AskStroomAiConfig.DEFAULT_HISTORY_SUMMARY_PROMPT));
         getView().setMaxHistorySafetyCapMessages(NullSafe.getOrElse(
                 config,
-                AskStroomAIConfig::getMaxHistorySafetyCapMessages,
-                AskStroomAIConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES));
+                AskStroomAiConfig::getMaxHistorySafetyCapMessages,
+                AskStroomAiConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES));
         getView().setEnableDebugDetail(NullSafe.getOrElse(
                 config,
-                AskStroomAIConfig::isEnableDebugDetail,
-                AskStroomAIConfig.DEFAULT_ENABLE_DEBUG_DETAIL));
+                AskStroomAiConfig::isEnableDebugDetail,
+                AskStroomAiConfig.DEFAULT_ENABLE_DEBUG_DETAIL));
         getView().setDockBehaviour(dockBehaviour);
     }
 
-    public void write(final AskStroomAIConfig.Builder builder) {
+    public void write(final AskStroomAiConfig.Builder builder) {
         builder
                 .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
+                .dockType(getView().getDockBehaviour().getDockType())
+                .dockLocation(getView().getDockBehaviour().getDockLocation())
                 .chatSystemPrompt(getView().getChatSystemPrompt())
                 .historySummaryPrompt(getView().getHistorySummaryPrompt())
                 .maxHistorySafetyCapMessages(getView().getMaxHistorySafetyCapMessages())

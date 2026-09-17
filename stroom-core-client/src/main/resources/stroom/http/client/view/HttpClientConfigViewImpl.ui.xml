@@ -4,7 +4,6 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
-             xmlns:l="urn:import:stroom.item.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:d="urn:import:stroom.widget.customdatebox.client">
     <g:FlowPanel styleName="max form-padding form">
@@ -32,6 +31,11 @@
             <tickbox:CustomCheckBox ui:field="cookiesEnabled"
                                     identity="httpClientCookiesEnabled"
                                     label="Cookies Enabled"/>
+        </form:FormGroup>
+        <form:FormGroup helpText="Whether a redirect response (3xx) is followed. Some endpoints redirect in order to authenticate, so a request that does not follow redirects will see the redirect response itself rather than the resource it was after. Default: on">
+            <tickbox:CustomCheckBox ui:field="followRedirects"
+                                    identity="httpClientFollowRedirects"
+                                    label="Follow Redirects"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientMaxConnections"
                         label="Max Connections"

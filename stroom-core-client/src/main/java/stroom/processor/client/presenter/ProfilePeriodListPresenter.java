@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package stroom.processor.client.presenter;
 
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.processor.shared.ProfilePeriod;
@@ -61,6 +60,7 @@ public class ProfilePeriodListPresenter
 
         view.asWidget().addStyleName("form-control-background form-control-border");
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Profile Periods");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
@@ -122,7 +122,6 @@ public class ProfilePeriodListPresenter
         addEndTime();
         addMaxNodeThreads();
         addMaxClusterThreads();
-        addEndColumn();
     }
 
     void addDays() {
@@ -178,10 +177,6 @@ public class ProfilePeriodListPresenter
                         .build(),
                 "Max Cluster Threads",
                 150);
-    }
-
-    private void addEndColumn() {
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setReadOnly(final boolean readOnly) {
@@ -243,13 +238,13 @@ public class ProfilePeriodListPresenter
         removeButton.setEnabled(!readOnly && selected != null);
 
         if (readOnly) {
-            addButton.setTitle("New feed dependency disabled as filter is read only");
-            editButton.setTitle("Edit feed dependency disabled as filter is read only");
-            removeButton.setTitle("Remove feed dependency disabled as filter is read only");
+            addButton.setTitle("New period disabled as profile is read only");
+            editButton.setTitle("Edit period disabled as profile is read only");
+            removeButton.setTitle("Remove period disabled as profile is read only");
         } else {
-            addButton.setTitle("New Reference");
-            editButton.setTitle("Edit Reference");
-            removeButton.setTitle("Remove Reference");
+            addButton.setTitle("New Period");
+            editButton.setTitle("Edit Period");
+            removeButton.setTitle("Remove Period");
         }
     }
 }

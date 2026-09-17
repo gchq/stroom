@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,34 +16,35 @@
 
 package stroom.config.app;
 
-import stroom.activity.impl.db.ActivityConfig;
+import stroom.activity.impl.dao.ActivityConfig;
 import stroom.ai.impl.AiConfig;
-import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.aws.s3.impl.S3Config;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
-import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.cluster.lock.impl.dao.ClusterLockConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
+import stroom.contentindex.ContentIndexConfig;
 import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
+import stroom.dashboard.impl.db.VisualisationAssetDbConfig;
 import stroom.dashboard.impl.visualisation.VisualisationAssetConfig;
-import stroom.dashboard.impl.visualisation.VisualisationAssetConfig.VisualisationAssetDbConfig;
-import stroom.docstore.impl.db.DocStoreConfig;
+import stroom.docstore.impl.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
-import stroom.gitrepo.api.GitRepoConfig;
+import stroom.gitrepo.impl.GitRepoConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;
-import stroom.index.impl.IndexFieldDbConfig;
+import stroom.index.impl.db.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
@@ -91,6 +92,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_ANNOTATION = "annotation";
     public static final String PROP_NAME_ANALYTICS = "analytics";
     public static final String PROP_NAME_ASK_STROOM_AI = "askStroomAi";
+    public static final String PROP_NAME_CONTENT_INDEX = "contentIndex";
     public static final String PROP_NAME_CONTENT_STORE = "contentStore";
     public static final String PROP_NAME_AUTHENTICATION = "authentication";
     public static final String PROP_NAME_AUTO_CONTENT_CREATION = "autoContentCreation";
@@ -150,8 +152,9 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ActivityConfig activityConfig;
     private final AnalyticsConfig analyticsConfig;
     private final AnnotationConfig annotationConfig;
-    private final AskStroomAIConfig askStroomAIConfig;
+    private final AskStroomAiConfig askStroomAIConfig;
     private final ContentStoreConfig contentStoreConfig;
+    private final ContentIndexConfig contentIndexConfig;
     private final AutoContentCreationConfig autoContentCreationConfig;
     private final ByteBufferPoolConfig byteBufferPoolConfig;
     private final ClusterConfig clusterConfig;
@@ -208,7 +211,8 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.aiConfig = new AiConfig();
         this.analyticsConfig = new AnalyticsConfig();
         this.annotationConfig = new AnnotationConfig();
-        this.askStroomAIConfig = new AskStroomAIConfig();
+        this.askStroomAIConfig = new AskStroomAiConfig();
+        this.contentIndexConfig = new ContentIndexConfig();
         this.contentStoreConfig = new ContentStoreConfig();
         this.autoContentCreationConfig = new AutoContentCreationConfig();
         this.byteBufferPoolConfig = new ByteBufferPoolConfig();
@@ -265,13 +269,14 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_AI) final AiConfig aiConfig,
                      @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                      @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
-                     @JsonProperty(PROP_NAME_ASK_STROOM_AI) final AskStroomAIConfig askStroomAIConfig,
+                     @JsonProperty(PROP_NAME_ASK_STROOM_AI) final AskStroomAiConfig askStroomAIConfig,
                      @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION) final AutoContentCreationConfig autoContentCreationConfig,
                      @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
                      @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                      @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                      @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                      @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
+                     @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
                      @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig contentStoreConfig,
                      @JsonProperty(PROP_NAME_CREDENTIALS) final CredentialsConfig credentialsConfig,
                      @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
@@ -320,6 +325,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.analyticsConfig = analyticsConfig;
         this.annotationConfig = annotationConfig;
         this.askStroomAIConfig = askStroomAIConfig;
+        this.contentIndexConfig = contentIndexConfig;
         this.contentStoreConfig = contentStoreConfig;
         this.autoContentCreationConfig = autoContentCreationConfig;
         this.byteBufferPoolConfig = byteBufferPoolConfig;
@@ -406,8 +412,13 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonProperty(PROP_NAME_ASK_STROOM_AI)
-    public AskStroomAIConfig getAskStroomAIConfig() {
+    public AskStroomAiConfig getAskStroomAIConfig() {
         return askStroomAIConfig;
+    }
+
+    @JsonProperty(PROP_NAME_CONTENT_INDEX)
+    public ContentIndexConfig getContentIndexConfig() {
+        return contentIndexConfig;
     }
 
     @JsonProperty(PROP_NAME_CONTENT_STORE)

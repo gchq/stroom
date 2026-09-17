@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,10 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.ai.api.TableSummariser;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.openai.shared.OpenAIModelDoc;
-import stroom.util.guice.GuiceUtil;
+import stroom.query.language.functions.AiProvider;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -35,19 +33,14 @@ public class AiModule extends AbstractModule {
         // Services
         bind(AiService.class).to(AiServiceImpl.class);
         bind(AiAttachmentFileStore.class).asEagerSingleton();
+        bind(TableSummariser.class).to(TableSummariserImpl.class);
+
+        // Backs the ai() StroomQL function, see ExpressionContextFactory.
+        bind(AiProvider.class).to(AiProviderImpl.class);
 
         // OpenAI Model
-        bind(OpenAIModelStore.class).to(OpenAIModelStoreImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(OpenAIModelStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(OpenAIModelStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(OpenAIModelStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(OpenAIModelDoc.TYPE, OpenAIModelStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(OpenAIModelDoc.TYPE, OpenAIModelStore.class, OpenAIModelStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(OpenAIModelResourceImpl.class)

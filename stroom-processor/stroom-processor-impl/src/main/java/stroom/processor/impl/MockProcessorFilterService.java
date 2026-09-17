@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.impl.db.migration.legacyqd.QueryData;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
@@ -186,10 +187,10 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     }
 
     @Override
-    public ProcessorFilter restore(final DocRef processorFilterDocRef, final boolean resetTracker) {
+    public ProcessorFilter restore(final DocRef processorFilterDocRef) {
         final ProcessorFilter processorFilter = dao.fetchByUuid(processorFilterDocRef.getUuid())
                 .orElseThrow();
-        return processorFilter.copy().deleted(false).build();
+        return dao.restoreProcessorFilter(processorFilter);
     }
 
     @Override

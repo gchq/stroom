@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,8 @@ class TestForwarder {
     @Mock
     private ForwardFileDestinationFactory mockForwardFileDestFactory;
     @Mock
+    private ForwardS3DestinationFactory mockForwardS3DestFactory;
+    @Mock
     private CleanupDirQueue mockCleanupDirQueue;
 
     private Path dataDir = null;
@@ -84,6 +86,7 @@ class TestForwarder {
                 () -> proxyConfig,
                 mockForwardFileDestFactory,
                 mockForwardHttpDestFactory,
+                mockForwardS3DestFactory,
                 mockCleanupDirQueue);
 
         final Path sourceDir1 = createSourceDir(1);
@@ -128,6 +131,7 @@ class TestForwarder {
                 () -> proxyConfig,
                 mockForwardFileDestFactory,
                 mockForwardHttpDestFactory,
+                mockForwardS3DestFactory,
                 mockCleanupDirQueue);
 
         final Path sourceDir1 = createSourceDir(1);

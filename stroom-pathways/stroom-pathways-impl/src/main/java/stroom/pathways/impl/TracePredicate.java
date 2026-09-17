@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ public class TracePredicate implements Predicate<Trace> {
             return true;
         }
 
-        // Set or expand duration range.
+        // Check the span's own duration against the node's duration constraint.
         final NanoTime startTime = NanoTime.fromString(span.getStartTimeUnixNano());
         final NanoTime endTime = NanoTime.fromString(span.getEndTimeUnixNano());
         final NanoTime duration = endTime.subtract(startTime);
@@ -141,12 +141,12 @@ public class TracePredicate implements Predicate<Trace> {
             return false;
         }
 
-        // Set or expand flags.
+        // Check flags.
         if (!checkConstraint(constraints, "flags", span.getFlags())) {
             return false;
         }
 
-        // Set or expand kind.
+        // Check kind.
         if (!checkConstraint(constraints, "kind", span.getKind().name())) {
             return false;
         }
@@ -166,7 +166,7 @@ public class TracePredicate implements Predicate<Trace> {
             return false;
         }
 
-        // Set or expand attributes.
+        // Check every attribute the span carries against the node's constraint for it.
         return attributes.entrySet().stream().allMatch(entry -> {
             final String key = entry.getKey();
             final KeyValue value = entry.getValue();
@@ -227,93 +227,57 @@ public class TracePredicate implements Predicate<Trace> {
         return switch (current) {
             case null -> false;
             case final NanoTimeValue nanoTimeValue -> Objects.equals(nanoTimeValue.getValue(), value);
-            case final NanoTimeRange timeRange ->
-                    timeRange.getMin().isLessThanEquals(value) && timeRange.getMax().isGreaterThanEquals(value);
+            case final NanoTimeRange timeRange -> timeRange.getMin().isLessThanEquals(value)
+                                                  && timeRange.getMax().isGreaterThanEquals(value);
             default -> current instanceof AnyTypeValue;
         };
     }
 
     private boolean checkIntConstraint(final ConstraintValue current,
                                        final int value) {
-        switch (current) {
-            case null -> {
-                return false;
-            }
-            case final IntegerValue intValue -> {
-                return Objects.equals(intValue.getValue(), value);
-            }
-            case final IntegerSet intSet -> {
-                return intSet.getSet().contains(value);
-            }
-            case final IntegerRange intRange -> {
-                return intRange.getMin() <= value && intRange.getMax() >= value;
-            }
-            default -> {
-                return current instanceof AnyTypeValue;
-            }
-        }
+        return switch (current) {
+            case null -> false;
+            case final IntegerValue intValue -> Objects.equals(intValue.getValue(), value);
+            case final IntegerSet intSet -> intSet.getSet().contains(value);
+            case final IntegerRange intRange -> intRange.getMin() <= value && intRange.getMax() >= value;
+            default -> current instanceof AnyTypeValue;
+        };
     }
 
     private boolean checkLongConstraint(final ConstraintValue current,
-                                       final long value) {
-        switch (current) {
-            case null -> {
-                return false;
-            }
-            case final LongValue longValue -> {
-                return Objects.equals(longValue.getValue(), value);
-            }
-            case final LongSet longSet -> {
-                return longSet.getSet().contains(value);
-            }
-            case final LongRange longRange -> {
-                return longRange.getMin() <= value && longRange.getMax() >= value;
-            }
-            default -> {
-                return current instanceof AnyTypeValue;
-            }
-        }
+                                        final long value) {
+        return switch (current) {
+            case null -> false;
+            case final LongValue longValue -> Objects.equals(longValue.getValue(), value);
+            case final LongSet longSet -> longSet.getSet().contains(value);
+            case final LongRange longRange -> longRange.getMin() <= value && longRange.getMax() >= value;
+            default -> current instanceof AnyTypeValue;
+        };
     }
 
     private boolean checkBooleanConstraint(final ConstraintValue current,
                                            final boolean value) {
-        switch (current) {
-            case null -> {
-                return false;
-            }
-            case final BooleanValue booleanValue -> {
-                return Objects.equals(booleanValue.getValue(), value);
-            }
-            case final AnyBoolean booleanValue -> {
-                // Do nothing.
-            }
-            default -> {
-                return current instanceof AnyTypeValue;
-            }
-        }
-        return true;
+        return switch (current) {
+            case null -> false;
+            case final BooleanValue booleanValue -> Objects.equals(booleanValue.getValue(), value);
+            // Do nothing.
+            case final AnyBoolean ignored -> true;
+            default -> current instanceof AnyTypeValue;
+        };
     }
 
     private boolean checkStringConstraint(final ConstraintValue current,
                                           final String value) {
-        switch (current) {
-            case null -> {
-                return false;
-            }
-            case final StringValue stringValue -> {
-                return Objects.equals(stringValue.getValue(), value);
-            }
+        return switch (current) {
+            case null -> false;
+            case final StringValue stringValue -> Objects.equals(stringValue.getValue(), value);
             case final StringSet stringSet -> {
                 final Set<String> set = new HashSet<>(stringSet.getSet());
-                return set.contains(value);
+                yield set.contains(value);
             }
-            case final Regex stringPattern -> {
-                // TODO : Create some sort of pattern expansion if possible.
-            }
-            default -> {
-                return current instanceof AnyTypeValue;
-            }
-        }
-        return true;
+            // TODO : Create some sort of pattern expansion if possible.
+            case final Regex ignored -> true;
+            default -> current instanceof AnyTypeValue;
+        };
     }
 }

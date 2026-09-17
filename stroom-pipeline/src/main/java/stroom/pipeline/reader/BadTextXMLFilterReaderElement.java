@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.io.Reader;
         type = "BadTextXMLFilterReader",
         category = Category.READER,
         description = """
-                Escapes the content of a configured list of named XML elements that are know to potentially \
+                Escapes the content of a configured list of named XML elements that are known to potentially \
                 contain un-escaped XML reserved characters.
                 For example the element `<Expression>$time < now()</Expression>` would be transformed to \
                 `<Expression>$time &lt; now()</Expression>` if property `leafList` is set to `Expression`.""",

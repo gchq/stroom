@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.app.db.migration;
 
-import stroom.config.app.CrossModuleConfig.CrossModuleDbConfig;
+import stroom.config.app.CrossModuleDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.FlywayUtil;
@@ -78,7 +78,8 @@ public class CrossModuleDbMigrationsModule
         // module that they want to deal with, accepting that
         // Order doesn't matter here, but you are going to sort them aren't you.
         GuiceUtil.buildMultiBinder(binder(), AbstractCrossModuleJavaDbMigration.class)
-                .addBinding(V07_05_00_005__Orphaned_Doc_Perms.class);
+                .addBinding(V07_05_00_005__Orphaned_Doc_Perms.class)
+                .addBinding(V07_13_00_005__populate_doc_dependency_processor_filters.class);
     }
 
     @Override

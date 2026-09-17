@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.statistics.impl.sql.filter;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.mock.MockDocRefInfoService;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
@@ -573,7 +572,9 @@ class TestStatisticsFilter implements Statistics {
                         persistence,
                         null,
                         securityContext,
-                        MockDocRefInfoService::new),
+                        null,
+                        null),
+                securityContext,
                 new StatisticStoreSerialiser(new Serialiser2FactoryImpl()));
     }
 }

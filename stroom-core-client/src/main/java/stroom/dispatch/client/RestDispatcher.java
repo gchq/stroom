@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ class RestDispatcher implements Dispatcher {
 
     @Override
     public Request send(final Method method, final RequestBuilder builder) throws RequestException {
+        // Add CSRF header to all API requests — required by SecurityFilter
+        builder.setHeader("X-CSRF", "1");
+
         if (GWT.isClient() && LogConfiguration.loggingIsEnabled()) {
             final Logger logger = Logger.getLogger(
                     org.fusesource.restygwt.client.dispatcher.DefaultDispatcher.class.getName());

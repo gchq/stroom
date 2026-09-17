@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,15 @@ public class PrimitiveValueConverterMapImpl<E extends HasPrimitiveValue>
     @Override
     public E fromPrimitiveValue(final byte i) {
         return mapByPrimitiveValue.get(i);
+    }
+
+    @Override
+    public E fromPrimitiveValueOrThrow(final byte i) {
+        final E value = mapByPrimitiveValue.get(i);
+        if (value == null) {
+            throw new RuntimeException("Unknown primitive value " + i + " in " + itemType.getSimpleName());
+        }
+        return value;
     }
 
     public E fromPrimitiveValue(final Byte i) {

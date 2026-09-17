@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import java.util.List;
 public abstract class DraggableTabBar extends AbstractTabBar {
 
     private DraggedTab draggedTab;
-    private int currentStartIndex;
 
     public DraggableTabBar() {
         addDomHandler(this::onDragOver, DragOverEvent.getType());
@@ -50,8 +49,6 @@ public abstract class DraggableTabBar extends AbstractTabBar {
     }
 
     private void onDragStart(final AbstractTab tab) {
-        currentStartIndex = getTabs().indexOf(getVisibleTabs().get(0));
-
         final TabData tabData = getTabData(tab).get();
         final int dragIndex = getVisibleTabs().indexOf(tabData);
         final int dragTabWidth = tab.getOffsetWidth();
@@ -71,7 +68,9 @@ public abstract class DraggableTabBar extends AbstractTabBar {
 
             if (newDragIndex != -1 && newDragIndex != draggedTab.getIndex()) {
                 draggedTab.setIndex(newDragIndex);
-                moveTab(draggedTab.getTabData(), currentStartIndex + newDragIndex);
+                // Calculate absolute tab position from visible tabs
+                final int firstVisibleIndex = getTabs().indexOf(getVisibleTabs().get(0));
+                moveTab(draggedTab.getTabData(), firstVisibleIndex + newDragIndex);
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,13 +180,14 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         authErrorMessage = null;
         defaultMaxResults = "1000000,100,10,1";
         process = new ProcessConfig();
-        helpUrl = "https://gchq.github.io/stroom-docs/7.5/docs";
+        helpUrl = "https://gchq.github.io/stroom-docs/7.13/docs";
         helpSubPathJobs = "/reference-section/jobs/";
-        helpSubPathQuickFilter = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/finding-things/";
+        helpSubPathQuickFilter = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/content/finding-things/";
         helpSubPathProperties = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/properties/";
-        helpSubPathExpressions = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/dashboards/expressions/";
+        helpSubPathExpressions = "/reference-section/expressions/";
         helpSubPathDocumentation = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/content/documentation/";
-        helpSubPathStroomQueryLanguage = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/dashboards/stroom-query-language/";
+        helpSubPathStroomQueryLanguage = DEFAULT_USER_GUIDE_BASE_SUB_PATH
+                                         + "/search/queries/stroom-query-language/";
         theme = new ThemeConfig();
         query = new QueryConfig();
         namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";

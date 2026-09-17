@@ -110,8 +110,6 @@ public class SteppingMetaListPresenter extends AbstractMetaListPresenter {
                 "Retention",
                 DataRetentionFields.RETENTION_AGE_FIELD,
                 ColumnSizeConstants.SMALL_COL);
-
-        addEndColumn();
     }
 
     public ResultPage<MetaRow> getResultPage() {

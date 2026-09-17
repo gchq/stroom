@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import stroom.core.client.event.CloseContentEvent.Handler;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocPresenter;
@@ -252,12 +253,14 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
         final RestErrorHandler errorHandler = caught ->
                 AlertEvent.fireError(
                         DocumentPlugin.this,
-                        "Unable to load document " + docRef, caught.getMessage(),
+                        "Unable to load document " + DocRefUtil.createTypedDocRefString(docRef), caught.getMessage(),
                         null);
 
         final Consumer<D> loadConsumer = doc -> {
             if (doc == null) {
-                AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
+                AlertEvent.fireError(DocumentPlugin.this,
+                        "Unable to load document " + DocRefUtil.createTypedDocRefString(docRef),
+                        null);
             } else {
                 if (selectedCommonTab != null) {
                     if (myPresenterWidget instanceof DocTabPresenter<?, ?>) {
@@ -332,6 +335,11 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 D document = presenter.getEntity();
                 document = presenter.write(document);
                 if (document != null) {
+                    final String validationError = getPreSaveError(document);
+                    if (validationError != null) {
+                        AlertEvent.fireWarn(this, validationError, onComplete::run);
+                        return;
+                    }
                     final D finalDocument = document;
                     save(getDocRef(document), document,
                             presenter.getPostSaveCallback(),
@@ -342,7 +350,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                             throwable -> {
                                 AlertEvent.fireError(
                                         this,
-                                        "Unable to save document " + finalDocument,
+                                        "Unable to save document "
+                                        + DocRefUtil.createTypedDocRefString(getDocRef(finalDocument)),
                                         throwable.getMessage(), null);
                                 onComplete.run();
                             },
@@ -355,14 +364,15 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     }
 
     /**
-     * Called when saving a document, just prior to it being saved.
-     * Subclasses should override this to implement custom save validation/confirmation.
+     * Called after {@link DocPresenter#write} but before the document is sent to the server.
+     * Subclasses may override to block the save when the document is in an invalid state.
      *
-     * @param doc The doc after onWrite() has been called.
-     * @return True to continue with the save, else the save will be aborted.
+     * @param doc The document as produced by the presenter's write step.
+     * @return A user-facing validation error message to display, or {@code null} if the
+     *         document is valid and the save should proceed.
      */
-    public boolean validateBeforeSave(final D doc) {
-        return true;
+    protected String getPreSaveError(final D doc) {
+        return null;
     }
 
     @SuppressWarnings("unchecked")

@@ -1,9 +1,28 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.ai.impl;
 
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.jersey.HttpClientProvider;
 import stroom.util.jersey.HttpClientProviderCache;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
+import dev.langchain4j.exception.HttpException;
 import dev.langchain4j.http.client.HttpClient;
 import dev.langchain4j.http.client.HttpRequest;
 import dev.langchain4j.http.client.SuccessfulHttpResponse;
@@ -35,6 +54,8 @@ import java.util.Map;
 
 public class ApacheHttpClient implements HttpClient {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApacheHttpClient.class);
+
     private final HttpClientProviderCache httpClientProviderCache;
     private final HttpClientConfiguration httpClientConfiguration;
 
@@ -63,6 +84,7 @@ public class ApacheHttpClient implements HttpClient {
         final ClassicHttpRequest apacheRequest = createApacheRequest(request);
         try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
             final org.apache.hc.client5.http.classic.HttpClient httpClient = httpClientProvider.get();
+
             if (httpClient instanceof final CloseableHttpClient closeableHttpClient) {
                 httpClient.execute(apacheRequest, response -> {
                     handleServerSentEvents(response, parser, listener);
@@ -76,6 +98,7 @@ public class ApacheHttpClient implements HttpClient {
                 });
             }
         } catch (final IOException e) {
+            LOGGER.debug("execute() SSE - IOException: {}", e.getMessage(), e);
             listener.onError(e);
         }
     }
@@ -83,6 +106,23 @@ public class ApacheHttpClient implements HttpClient {
     private void handleServerSentEvents(final ClassicHttpResponse response,
                                         final ServerSentEventParser parser,
                                         final ServerSentEventListener listener) throws IOException {
+        final int statusCode = response.getCode();
+        if (statusCode < 200 || statusCode >= 300) {
+            String body = null;
+            if (response.getEntity() != null) {
+                try {
+                    body = EntityUtils.toString(response.getEntity());
+                } catch (final ParseException e) {
+                    LOGGER.debug("handleServerSentEvents() - ParseException reading error body: {}",
+                            e.getMessage(), e);
+                    body = "Failed to parse error response body: " + e.getMessage();
+                }
+            }
+            LOGGER.debug("handleServerSentEvents() - non-2xx response, statusCode: {}, body:\n{}",
+                    statusCode, body);
+            listener.onError(new HttpException(statusCode, body));
+            return;
+        }
         parser.parse(response.getEntity().getContent(), listener);
     }
 
@@ -126,6 +166,7 @@ public class ApacheHttpClient implements HttpClient {
                             apacheRequest.addHeader(key, value)));
         }
 
+        LOGGER.debug("createApacheRequest() - method: {}, url: {}, returning: {}", method, url, apacheRequest);
         return apacheRequest;
     }
 
@@ -135,12 +176,21 @@ public class ApacheHttpClient implements HttpClient {
 
             final Map<String, List<String>> headers = new HashMap<>();
             for (final Header header : response.getHeaders()) {
-                headers.computeIfAbsent(header.getName(), k -> new ArrayList<>()).add(header.getValue());
+                headers.computeIfAbsent(header.getName(), ignored -> new ArrayList<>())
+                        .add(header.getValue());
             }
 
             String body = null;
             if (response.getEntity() != null) {
                 body = EntityUtils.toString(response.getEntity());
+            }
+            LOGGER.debug("convertResponse() - statusCode: {}, headers: {}, body:\n{}",
+                    statusCode, headers, body);
+
+            if (statusCode < 200 || statusCode >= 300) {
+                LOGGER.debug("convertResponse() - non-2xx response, throwing HttpException for statusCode: {}",
+                        statusCode);
+                throw new HttpException(statusCode, body);
             }
 
             return SuccessfulHttpResponse.builder()
@@ -148,9 +198,15 @@ public class ApacheHttpClient implements HttpClient {
                     .headers(headers)
                     .body(body)
                     .build();
+        } catch (final HttpException e) {
+            LOGGER.debug("convertResponse() - HttpException: statusCode: {}, message: {}",
+                    e.statusCode(), e.getMessage(), e);
+            throw e;
         } catch (final IOException e) {
+            LOGGER.debug("convertResponse() - IOException: {}", e.getMessage(), e);
             throw new UncheckedIOException(e);
         } catch (final ParseException e) {
+            LOGGER.debug("convertResponse() - ParseException: {}", e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
     }

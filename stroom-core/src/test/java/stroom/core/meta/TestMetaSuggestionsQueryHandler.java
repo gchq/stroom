@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package stroom.core.meta;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
@@ -68,7 +68,7 @@ class TestMetaSuggestionsQueryHandler {
     private SuggestionsService suggestionsService;
 
     @Mock
-    private DocRefInfoService docRefInfoService;
+    private DocFinder docFinder;
 
     private final TaskContextFactory taskContextFactory = new SimpleTaskContextFactory();
     private final SecurityContext securityContext = new MockSecurityContext();
@@ -190,7 +190,7 @@ class TestMetaSuggestionsQueryHandler {
                 securityContext,
                 feedStore,
                 taskContextFactory,
-                docRefInfoService,
+                docFinder,
                 suggestionsService,
                 new ExpressionPredicateFactory(),
                 executorProvider);

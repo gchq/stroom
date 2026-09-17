@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package stroom.importexport.api;
+
+import stroom.docstore.shared.DocDataType;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -145,25 +147,6 @@ public class ImportExportDocument {
         }
 
         return dataMap;
-    }
-
-    /**
-     * Converts a dataMap (legacy format) into the new ImportExportDocument.
-     *
-     * @param data The data to convert. Can be null.
-     * @return An ImportExportDocument.
-     */
-    public static ImportExportDocument fromDataMap(final Map<String, byte[]> data) {
-        final ImportExportDocument importExportDocument = new ImportExportDocument();
-
-        if (data != null) {
-            for (final Map.Entry<String, byte[]> entry : data.entrySet()) {
-                final ImportExportAsset asset = new ByteArrayImportExportAsset(entry.getKey(), entry.getValue());
-                importExportDocument.addExtAsset(asset);
-            }
-        }
-
-        return importExportDocument;
     }
 
     @Override

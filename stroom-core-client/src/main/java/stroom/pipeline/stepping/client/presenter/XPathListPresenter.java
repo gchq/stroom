@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
@@ -50,6 +49,7 @@ public class XPathListPresenter extends MyPresenterWidget<PagerView>
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("XPath Matches");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
@@ -103,7 +103,6 @@ public class XPathListPresenter extends MyPresenterWidget<PagerView>
             }
         };
         dataGrid.addResizableColumn(ignoreCaseColumn, "Ignore Case", 100);
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     @Override

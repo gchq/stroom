@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,18 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.UserRef;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,10 +52,12 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
         return new SessionResourceImpl(
                 TestUtil.mockProvider(OpenIdManager.class),
                 TestUtil.mockProvider(HttpServletRequest.class),
+                TestUtil.mockProvider(HttpServletResponse.class),
                 TestUtil.mockProvider(AuthenticationEventLog.class),
                 () -> sessionListService,
                 TestUtil.mockProvider(StroomUserIdentityFactory.class),
-                MockSecurityContext::new);
+                MockSecurityContext::new,
+                AuthenticationConfig::new);
 
     }
 
@@ -69,12 +77,14 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
                         123L,
                         456L,
                         "agent1",
-                        "node1"),
+                        "node1",
+                        "handle1"),
                 new SessionDetails(userRef,
                         123L,
                         456L,
                         "agent1",
-                        "node1")));
+                        "node1",
+                        "handle1")));
 
         when(sessionListService.listSessions(Mockito.anyString()))
                 .thenReturn(expectedResponse);
@@ -100,12 +110,14 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
                         123L,
                         456L,
                         "agent1",
-                        "node1"),
+                        "node1",
+                        "handle1"),
                 new SessionDetails(userRef,
                         123L,
                         456L,
                         "agent1",
-                        "node1")));
+                        "node1",
+                        "handle1")));
 
         when(sessionListService.listSessions())
                 .thenReturn(expectedResponse);
@@ -116,5 +128,130 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
                 expectedResponse);
 
         verify(sessionListService).listSessions();
+    }
+
+
+    @Test
+    void terminate_acceptsTheEmptyBodyTheInterNodeHopSends() {
+        // The cluster fan-out (SessionListListener.evictUserSessionsOnNode) POSTs an empty body to this
+        // @Consumes(JSON) endpoint. A text/plain body is rejected 415, so the hop must send empty JSON -
+        // this guards that contract so a future change to either side is caught here rather than only in
+        // a multi-node deployment.
+        when(sessionListService.evictUserSessionsOnNode("user1", null, "node1")).thenReturn(1);
+
+        WebTarget webTarget = getWebTarget(ResourcePaths.buildPath(SessionResource.TERMINATE_PATH_PART));
+        webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.SUBJECT_ID_PARAM, "user1");
+        webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.NODE_NAME_PARAM, "node1");
+
+        try (final Response resp = webTarget
+                .request(MediaType.APPLICATION_JSON)
+                .post(Entity.json(""))) {
+            assertThat(resp.getStatus()).isEqualTo(200);
+        }
+        verify(sessionListService).evictUserSessionsOnNode("user1", null, "node1");
+    }
+
+    @Test
+    void terminate_delegatesToNodeEviction() {
+        final String subPath = ResourcePaths.buildPath(SessionResource.TERMINATE_PATH_PART);
+
+        when(sessionListService.evictUserSessionsOnNode("user1", "sess1", "node1"))
+                .thenReturn(3);
+
+        final Integer response = doPostTest(
+                subPath,
+                "",
+                Integer.class,
+                3,
+                webTarget -> UriBuilderUtil.addParam(webTarget, SessionResource.SUBJECT_ID_PARAM, "user1"),
+                webTarget -> UriBuilderUtil.addParam(webTarget, SessionResource.EXCEPT_SESSION_ID_PARAM, "sess1"),
+                webTarget -> UriBuilderUtil.addParam(webTarget, SessionResource.NODE_NAME_PARAM, "node1"));
+
+        verify(sessionListService).evictUserSessionsOnNode("user1", "sess1", "node1");
+    }
+
+    @Test
+    void terminateSession_acceptsTheEmptyBodyTheInterNodeHopSends() {
+        // Same contract as terminate(): SessionListListener.evictSessionOnNode POSTs an empty JSON body to
+        // this @Consumes(JSON) endpoint, because a text/plain body is rejected 415 by the remote node. That
+        // only shows up in a multi-node deployment, so guard it here.
+        when(sessionListService.evictSessionOnNode("sess1", "node1")).thenReturn(true);
+
+        WebTarget webTarget = getWebTarget(
+                ResourcePaths.buildPath(SessionResource.TERMINATE_SESSION_PATH_PART));
+        webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.SESSION_HANDLE_PARAM, "sess1");
+        webTarget = UriBuilderUtil.addParam(webTarget, SessionResource.NODE_NAME_PARAM, "node1");
+
+        try (final Response resp = webTarget
+                .request(MediaType.APPLICATION_JSON)
+                .post(Entity.json(""))) {
+            assertThat(resp.getStatus()).isEqualTo(200);
+        }
+        verify(sessionListService).evictSessionOnNode("sess1", "node1");
+    }
+
+    @Test
+    void terminateSession_withNodeNameGoesStraightToThatNode() {
+        final String subPath = ResourcePaths.buildPath(SessionResource.TERMINATE_SESSION_PATH_PART);
+
+        when(sessionListService.evictSessionOnNode("sess1", "node1")).thenReturn(true);
+
+        doPostTest(
+                subPath,
+                "",
+                Boolean.class,
+                Boolean.TRUE,
+                webTarget -> UriBuilderUtil.addParam(webTarget, SessionResource.SESSION_HANDLE_PARAM, "sess1"),
+                webTarget -> UriBuilderUtil.addParam(webTarget, SessionResource.NODE_NAME_PARAM, "node1"));
+
+        verify(sessionListService).evictSessionOnNode("sess1", "node1");
+        // No point fanning out when the caller already knows which node holds the session.
+        verify(sessionListService, Mockito.never()).evictSession(Mockito.anyString());
+    }
+
+    @Test
+    void terminateSession_withoutNodeNameFansOut() {
+        final String subPath = ResourcePaths.buildPath(SessionResource.TERMINATE_SESSION_PATH_PART);
+
+        when(sessionListService.evictSession("sess1")).thenReturn(true);
+
+        doPostTest(
+                subPath,
+                "",
+                Boolean.class,
+                Boolean.TRUE,
+                webTarget -> UriBuilderUtil.addParam(webTarget, SessionResource.SESSION_HANDLE_PARAM, "sess1"));
+
+        verify(sessionListService).evictSession("sess1");
+    }
+
+    @Test
+    void terminateSession_reportsFalseWhenTheSessionWasNotFound() {
+        final String subPath = ResourcePaths.buildPath(SessionResource.TERMINATE_SESSION_PATH_PART);
+
+        when(sessionListService.evictSession("gone")).thenReturn(false);
+
+        doPostTest(
+                subPath,
+                "",
+                Boolean.class,
+                Boolean.FALSE,
+                webTarget -> UriBuilderUtil.addParam(webTarget, SessionResource.SESSION_HANDLE_PARAM, "gone"));
+
+        verify(sessionListService).evictSession("gone");
+    }
+
+    @Test
+    void terminateOtherSessions_evictsThisUsersOtherSessions() {
+        final String subPath = ResourcePaths.buildPath(SessionResource.TERMINATE_OTHER_PATH_PART);
+
+        final Boolean response = doPostTest(
+                subPath,
+                "",
+                Boolean.class,
+                Boolean.TRUE);
+
+        // The current user's own sessions are evicted (the mock request has no session to spare).
+        verify(sessionListService).evictUserSessions(Mockito.any(), Mockito.any());
     }
 }

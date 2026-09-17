@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package stroom.data.store.impl.fs;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
+import stroom.data.store.impl.fs.standard.FsFileDeleter;
+import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.PhysicalDelete;
 import stroom.meta.shared.SimpleMeta;

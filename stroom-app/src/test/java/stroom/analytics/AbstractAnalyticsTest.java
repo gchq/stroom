@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,6 +100,7 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
             // Do setup if we don't have any streams.
             analyticsDataSetup.setup();
         }
+
         // Make sure we now have 8 streams.
         analyticsDataSetup.checkStreamCount(8);
 
@@ -125,6 +126,10 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                 .analyticProcessType(sample.getAnalyticProcessType())
                 .analyticProcessConfig(sample.getAnalyticProcessConfig())
                 .notifications(new ArrayList<>(sample.getNotifications()))
+                .description(sample.getDescription())
+                .includeRuleDocumentation(sample.isIncludeRuleDocumentation())
+                .level(sample.getLevel())
+                .status(sample.getStatus())
                 .errorFeed(analyticsDataSetup.getDetections())
                 .build();
         analyticRuleStore.writeDocument(analyticRuleDoc);
@@ -140,11 +145,18 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
         analyticsDataSetup.checkStreamCount(expectedStreams);
 
         // As we have created alerts ensure we now have more streams.
+        final String result = readNewestStream();
+        assertThat(result.split("<detection>").length).isEqualTo(expectedRecords);
+        assertThat(result).contains("user5");
+    }
+
+    /**
+     * @return The content of the most recently written stream, e.g. the detections a rule has just produced.
+     */
+    protected String readNewestStream() {
         final Meta newestMeta = analyticsDataSetup.getNewestMeta();
         try (final Source source = streamStore.openSource(newestMeta.getId())) {
-            final String result = SourceUtil.readString(source);
-            assertThat(result.split("<detection>").length).isEqualTo(expectedRecords);
-            assertThat(result).contains("user5");
+            return SourceUtil.readString(source);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

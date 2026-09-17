@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,13 @@ import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.ServletBinder;
 import stroom.util.servlet.HttpServletRequestHolder;
+import stroom.util.servlet.HttpServletResponseHolder;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResourcePaths;
 
 import com.google.inject.AbstractModule;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class ServletModule extends AbstractModule {
 
@@ -35,6 +37,7 @@ public class ServletModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(HttpServletRequest.class).toProvider(HttpServletRequestHolder.class);
+        bind(HttpServletResponse.class).toProvider(HttpServletResponseHolder.class);
         bind(SessionIdProvider.class).to(SessionIdProviderImpl.class);
 
         // The regex for our script entities that can be cached
@@ -58,6 +61,7 @@ public class ServletModule extends AbstractModule {
                 .bind(DashboardServlet.class)
                 .bind(StroomServlet.class)
                 .bind(SignInServlet.class)
+                .bind(ResetPasswordServlet.class)
                 // unauthenticated servlets (i.e. run as proc user)
                 .bind(ReceiveDataServlet.class)
                 .bind(DebugServlet.class)

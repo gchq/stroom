@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ class TestPasswordPolicyConfig {
                 false,
                 null,
                 null,
-                null,
                 "foo");
         TestUtil.testSerialisation(passwordPolicyConfig, PasswordPolicyConfig.class);
     }
@@ -50,7 +49,6 @@ class TestPasswordPolicyConfig {
     void testDefaults() {
         final PasswordPolicyConfig passwordPolicyConfig1 = new PasswordPolicyConfig();
         final PasswordPolicyConfig passwordPolicyConfig2 = new PasswordPolicyConfig(
-                null,
                 null,
                 null,
                 null,

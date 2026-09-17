@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,6 +116,7 @@ public class SolrIndexSettingsPresenter
         }
 
         getView().setCollection(index.getCollection());
+        getView().setTimeField(index.getTimeField());
 
         ExpressionOperator retentionExpression = index.getRetentionExpression();
         if (retentionExpression == null) {
@@ -147,6 +148,7 @@ public class SolrIndexSettingsPresenter
         return index
                 .copy()
                 .collection(collection)
+                .timeField(getView().getTimeField())
                 .solrConnectionConfig(connectionConfig)
                 .retentionExpression(editExpressionPresenter.write())
                 .defaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference())
