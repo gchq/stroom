@@ -121,7 +121,7 @@ public class RerankScoringFilterFactoryImpl implements RerankScoringFilterFactor
                 final String denseVectorFieldName = entry.getKey();
                 final FieldRef fieldRef = entry.getValue();
 
-                if (fieldRef.scoreField.index != -1 && fieldRef.valueField.index != -1) {
+                if (fieldRef.scoreField != null && fieldRef.valueField != null) {
                     final IndexField denseVectorField = indexFieldCache.get(indexDocRef, denseVectorFieldName);
                     if (denseVectorField == null) {
                         throw new UnsupportedOperationException(
