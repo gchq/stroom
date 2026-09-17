@@ -13,6 +13,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v8.0-proxy-beta.3] - 2026-09-17
+
+* Bug : Fix forwarding to a file destination on a different filesystem from the proxy's data dirs. A file group is a directory, and the non-atomic fallback was a plain `Files.move`, which can only rename, so the move failed with `DirectoryNotEmptyException`; setting `atomicMoveEnabled` to `false` reached the same call and did not help. The fallback now copies the file group to a staging directory beside the target and renames that into place, so publishing it stays atomic. Note that `atomicMoveEnabled: false` is therefore now a copy rather than a rename, and needs transient free space at the destination equal to the size of the file group.
+
+* Bug : **Breaking config change.** The `pipeline.stages` block is now required, must list all five stages, and each stage must state `enabled` explicitly. Previously the compile-time defaults were deep-merged into the YAML before parsing, so a partial `stages` block silently enabled all five stages and a stage listed without `enabled` was silently enabled - the validator's own check for this could never fire. A configuration that does not state its stages now fails to start with an error naming each one, and the pipeline validator's warnings (including which stages are disabled on this process) are now logged at startup instead of being discarded.
+
 * Feature **#5775** : Add `dropwizard-json-logging` runtime dependency so that JSON format app/request logging can be used. See https://www.dropwizard.io/en/stable/manual/configuration.html#json-layout for details of the YAML configuration required to enable it. Add new proxy config property `proxyConfig.logStream.useMappedDiagnosticContext` to support structured JSON logging. Add `type` to the `proxyConfig.logStream.metaKeys` default list so the stream type gets logged.
 
 
@@ -2595,7 +2601,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v8.0-proxy-beta.3...HEAD
+[v8.0-proxy-beta.3]: https://github.com/gchq/stroom/compare/v7.14-beta.3...v8.0-proxy-beta.3
 [v7.14-beta.3]: https://github.com/gchq/stroom/compare/v7.14-beta.2...v7.14-beta.3
 [v7.14-beta.2]: https://github.com/gchq/stroom/compare/v7.14-beta.1...v7.14-beta.2
 [v7.14-beta.1]: https://github.com/gchq/stroom/compare/v7.13-beta.15...v7.14-beta.1
