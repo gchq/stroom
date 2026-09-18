@@ -20,10 +20,12 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.importexport.client.presenter.DependenciesTabPresenter.DependenciesTabView;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.query.api.datasource.ConditionSet;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -46,7 +48,8 @@ public class DependenciesTabPresenter
     public DependenciesTabPresenter(final EventBus eventBus,
                                     final DependenciesTabView view,
                                     final DependenciesPresenter dependenciesPresenter,
-                                    final UiConfigCache uiConfigCache) {
+                                    final UiConfigCache uiConfigCache,
+                                    final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.dependenciesPresenter = dependenciesPresenter;
         view.setUiHandlers(this);
@@ -54,6 +57,8 @@ public class DependenciesTabPresenter
         // A rejected filter comes back as an empty grid like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         dependenciesPresenter.setFilterErrorConsumer(view::setFilterError);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                DependencyCriteria.QUICK_FILTER_CONTEXT, this, this));
 
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
@@ -129,6 +134,8 @@ public class DependenciesTabPresenter
         void setQuickFilterText(final String text);
 
         void setFilterError(final String filterError);
+
+        void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
 
         void focusFilter();
     }

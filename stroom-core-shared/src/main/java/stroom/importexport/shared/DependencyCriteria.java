@@ -19,6 +19,7 @@ package stroom.importexport.shared;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.QuickFilterCriteria;
@@ -109,6 +110,12 @@ public class DependencyCriteria extends QuickFilterCriteria {
             QF_TO_NAME,
             QF_TO_UUID,
             QF_STATUS);
+
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "dependencies",
+            FIELD_DEFINITIONS,
+            DEFAULT_QUERY_FIELDS,
+            QUERY_FIELDS);
 
     /**
      * Not {@link QueryField#createText(String)} - that defaults to

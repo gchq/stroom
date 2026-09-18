@@ -1440,6 +1440,7 @@ appConfig:
         validationRegex: "^[\\s\\S]{3,}$"
       viewPipelineSelectorIncludedTags:
       - "extraction"
+    quickFilterHistorySize: 20
     referencePipelineSelectorIncludedTags:
     - "reference-loader"
     reportUiDefaultConfig:

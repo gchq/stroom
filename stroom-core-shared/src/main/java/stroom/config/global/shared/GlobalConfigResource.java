@@ -18,6 +18,7 @@ package stroom.config.global.shared;
 
 import stroom.query.api.datasource.QueryField;
 import stroom.query.api.datasource.QuickFilterFields;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -76,6 +77,12 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     // qualifiers cannot drift from FIELD_DEFINITIONS.
     List<QueryField> QUERY_FIELDS = QuickFilterFields.uiText(FIELD_DEFINITIONS);
     List<QueryField> DEFAULT_QUERY_FIELDS = QuickFilterFields.uiTextDefaults(FIELD_DEFINITIONS);
+
+    QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "globalProperties",
+            FIELD_DEFINITIONS,
+            DEFAULT_QUERY_FIELDS,
+            QUERY_FIELDS);
 
     @POST
     @Path(PROPERTIES_SUB_PATH)

@@ -19,6 +19,7 @@ package stroom.config.global.client.view;
 import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -83,6 +84,11 @@ public class GlobalPropertyTabViewImpl
     @Override
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
         nameFilter.registerPopupTextProvider(popupTextSupplier);
+    }
+
+    @Override
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        nameFilter.setContextHandler(contextHandler);
     }
 
     // --------------------------------------------------------------------------------

@@ -22,6 +22,7 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docstore.mock.MockDocFinderModule;
 import stroom.explorer.api.ExplorerService;
+import stroom.quickfilter.shared.QuickFilterHistoryService;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.UserService;
 import stroom.security.impl.dao.SecurityDaoModule;
@@ -76,6 +77,10 @@ public class TestModule extends AbstractModule {
         final UserPreferencesService userPreferencesService = GuiceTestUtil.bindMock(
                 binder(), UserPreferencesService.class);
         Mockito.when(userPreferencesService.delete(Mockito.any())).thenReturn(true);
+
+        final QuickFilterHistoryService quickFilterHistoryService = GuiceTestUtil.bindMock(
+                binder(), QuickFilterHistoryService.class);
+        Mockito.when(quickFilterHistoryService.delete(Mockito.any())).thenReturn(0);
 
         final ActivityService activityService = GuiceTestUtil.bindMock(binder(), ActivityService.class);
         Mockito.when(activityService.deleteAllByOwner(Mockito.any())).thenReturn(0);

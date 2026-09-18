@@ -39,8 +39,6 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
     private final UserRef userRef;
     @JsonProperty
     private final PermissionShowLevel showLevel;
-    @JsonProperty
-    private final String quickFilter;
 
     public AdvancedDocumentFindWithPermissionsRequest(final PageRequest pageRequest,
                                                       final List<CriteriaFieldSort> sortList,
@@ -61,10 +59,11 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
                                                       @JsonProperty("userRef") final UserRef userRef,
                                                       @JsonProperty("showLevel") final PermissionShowLevel showLevel,
                                                       @JsonProperty("quickFilter") final String quickFilter) {
-        super(pageRequest, sortList, expression, requiredPermissions);
+        // quickFilter belongs to the superclass. Redeclaring it here made RestyGWT's generated
+        // decoder pass it twice and Jackson write it twice.
+        super(pageRequest, sortList, expression, requiredPermissions, quickFilter);
         this.userRef = userRef;
         this.showLevel = showLevel;
-        this.quickFilter = quickFilter;
     }
 
     public UserRef getUserRef() {
@@ -98,16 +97,12 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
     // --------------------------------------------------------------------------------
 
 
-    public String getQuickFilter() {
-        return quickFilter;
-    }
-
     public static class Builder extends ExpressionCriteriaBuilder<AdvancedDocumentFindWithPermissionsRequest, Builder> {
 
         private String quickFilter;
 
         /**
-         * @see AdvancedDocumentFindWithPermissionsRequest#getQuickFilter()
+         * @see AdvancedDocumentFindRequest#getQuickFilter()
          */
         public Builder quickFilter(final String quickFilter) {
             this.quickFilter = quickFilter;
@@ -128,6 +123,7 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
             this.requiredPermissions = expressionCriteria.getRequiredPermissions();
             this.userRef = expressionCriteria.userRef;
             this.showLevel = expressionCriteria.showLevel;
+            this.quickFilter = expressionCriteria.getQuickFilter();
         }
 
         public Builder requiredPermissions(final Set<DocumentPermission> requiredPermissions) {

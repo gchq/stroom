@@ -43,6 +43,19 @@
 	right: 4px;
 }
 
+/* With a recent-filters drop-down: [text][clear][drop-down][help] */
+.quickFilter.hasDropDown .quickFilter-textBox {
+	padding-right: 44px;
+}
+
+.quickFilter.hasDropDown button.drop-down {
+	right: 25px;
+}
+
+.quickFilter.hasDropDown button.clear {
+	right: 46px;
+}
+
 .quickFilter .svgIcon {
 	height: 18px;
 }

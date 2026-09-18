@@ -20,6 +20,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.HtmlBuilder;
 
+import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -55,6 +56,7 @@ public class QuickFilter extends FlowPanel
 
     private final TextBox textBox = new TextBox();
     private final InlineSvgButton clearButton;
+    private final InlineSvgButton dropDownButton;
     private final InlineSvgButton helpButton;
     private final HandlerManager handlerManager = new HandlerManager(this);
     private Supplier<SafeHtml> popupTextSupplier;
@@ -62,6 +64,12 @@ public class QuickFilter extends FlowPanel
     private boolean updateOnValueChange = true;
     private HelpPopup helpPopup = null;
     private String filterError = null;
+    private QuickFilterContextHandler contextHandler = null;
+    private final QuickFilterHistoryTracker historyTracker = new QuickFilterHistoryTracker(text -> {
+        if (contextHandler != null) {
+            contextHandler.recordUse(text);
+        }
+    });
 
     private final Timer filterRefreshTimer = new Timer() {
         @Override
@@ -81,6 +89,14 @@ public class QuickFilter extends FlowPanel
         clearButton.setTitle("Clear Filter");
         clearButton.addStyleName("clear");
 
+        // Between clear and help: clear and the drop-down both act on the text, like a combo
+        // box, and help stays outermost as it is on every screen. Hidden until a handler is set.
+        dropDownButton = new InlineSvgButton();
+        dropDownButton.setSvg(SvgImage.DROP_DOWN);
+        dropDownButton.setTitle("Recent Filters");
+        dropDownButton.addStyleName("drop-down");
+        dropDownButton.setVisible(false);
+
         helpButton = new InlineSvgButton();
         helpButton.setSvg(SvgImage.HELP_OUTLINE);
         helpButton.setTitle("Quick Filter Syntax Help");
@@ -88,12 +104,15 @@ public class QuickFilter extends FlowPanel
 
         add(textBox);
         add(clearButton);
+        add(dropDownButton);
         add(helpButton);
 
         textBox.addValueChangeHandler(event -> onValueChange());
         textBox.addKeyDownHandler(this::onKeyDown);
+        textBox.addBlurHandler(this::onBlur);
         helpButton.addClickHandler(event -> showHelpPopup());
         clearButton.addClickHandler(event -> clear());
+        dropDownButton.addClickHandler(event -> showRecentFilters());
 
         enableButtons();
     }
@@ -134,6 +153,14 @@ public class QuickFilter extends FlowPanel
      * docs/query-filter-surface-syntax-spec.md §10.5 for the options if that becomes worth doing.
      */
     public void setFilterError(final String filterError) {
+        // Every result, accepted or not, comes through here, so this is where the widget learns
+        // whether the text it sent was good. lastInput is the text the answered query was sent
+        // with - near enough: if the user has typed on since, the next verdict overrides this.
+        historyTracker.verdict(lastInput, filterError == null);
+        applyFilterError(filterError);
+    }
+
+    private void applyFilterError(final String filterError) {
         if (Objects.equals(this.filterError, filterError)) {
             return;
         }
@@ -169,6 +196,45 @@ public class QuickFilter extends FlowPanel
                 .br()
                 .append(syntaxHelp)
                 .toSafeHtml();
+    }
+
+    /**
+     * Give this quick filter a context: an arrow appears on the right, and the filters the user
+     * commits here are remembered and offered back. See {@link QuickFilterContextHandler}.
+     */
+    public void setContextHandler(final QuickFilterContextHandler contextHandler) {
+        this.contextHandler = contextHandler;
+        final boolean hasContext = contextHandler != null;
+        dropDownButton.setVisible(hasContext);
+        if (hasContext) {
+            addStyleName("hasDropDown");
+        } else {
+            removeStyleName("hasDropDown");
+        }
+    }
+
+    private void showRecentFilters() {
+        if (contextHandler != null) {
+            contextHandler.showRecentFilters(this, text -> {
+                setText(text, true);
+                historyTracker.chosen(text);
+                focus();
+            });
+        }
+    }
+
+    /**
+     * The user has committed the current text - Enter, or leaving the box. Whether that becomes
+     * a history entry is {@link QuickFilterHistoryTracker}'s decision.
+     */
+    private void commit() {
+        if (contextHandler != null) {
+            historyTracker.commit(textBox.getText());
+        }
+    }
+
+    private void onBlur(final BlurEvent event) {
+        commit();
     }
 
     private void onValueChange() {
@@ -212,6 +278,11 @@ public class QuickFilter extends FlowPanel
             clear();
         } else if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             onChange(true);
+            commit();
+        } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN && event.isAltKeyDown()) {
+            // Combo-box convention for opening the list from the keyboard.
+            event.preventDefault();
+            showRecentFilters();
         }
     }
 
@@ -222,7 +293,9 @@ public class QuickFilter extends FlowPanel
     @Override
     public void clear() {
         textBox.setText("");
-        setFilterError(null);
+        // Not setFilterError(null): clearing is not a server verdict on the old text.
+        historyTracker.cleared();
+        applyFilterError(null);
         onChange(true);
     }
 

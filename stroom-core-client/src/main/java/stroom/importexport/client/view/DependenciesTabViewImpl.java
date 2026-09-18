@@ -20,6 +20,7 @@ import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.client.presenter.DependenciesTabPresenter.DependenciesTabView;
 import stroom.importexport.client.presenter.DependenciesUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -89,6 +90,11 @@ public class DependenciesTabViewImpl
     @Override
     public void setFilterError(final String filterError) {
         quickFilter.setFilterError(filterError);
+    }
+
+    @Override
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        quickFilter.setContextHandler(contextHandler);
     }
 
     @Override

@@ -23,7 +23,7 @@
             <!-- The schema name to use in the generated classes, instead of inputSchema -->
             <outputSchema>stroom</outputSchema>
             <!-- Each entry is a Java regex. Whitespace is ignored and comments are allowed. -->
-            <includes>config|config_update_tracker|preferences</includes>
+            <includes>config|config_update_tracker|preferences|quick_filter_history</includes>
             <!-- We don't want to include the Flyway schema history table -->
             <excludes>config_schema_history</excludes>
             <!-- Specify 'version' for use in optimistic concurrency control -->
