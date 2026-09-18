@@ -23,8 +23,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
-import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.FeedKey.FeedKeyInterner;
+import stroom.proxy.repo.FeedKeyInterner;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
@@ -42,6 +41,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.net.HostNameUtil;
+import stroom.util.shared.FeedKey;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
@@ -101,6 +101,7 @@ public class ZipReceiver implements Receiver {
     private final NumberedDirProvider receivingDirProvider;
     private final ZipSplitter zipSplitter;
     private final LogStream logStream;
+    private final FeedKeyInterner feedKeyInterner;
     private Consumer<Path> destination;
 
     @Inject
@@ -108,7 +109,8 @@ public class ZipReceiver implements Receiver {
                        final DataDirProvider dataDirProvider,
                        final LogStream logStream,
                        final ZipSplitter zipSplitter,
-                       final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+                       final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                       final FeedKeyInterner feedKeyInterner) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.logStream = logStream;
         this.zipSplitter = zipSplitter;
@@ -123,6 +125,7 @@ public class ZipReceiver implements Receiver {
 //        transferOldReceivedData(receivedDir);
 
         this.receiveDataConfig = receiveDataConfigProvider.get();
+        this.feedKeyInterner = feedKeyInterner;
 
         LOGGER.info("Initialised ZipReceiver, receivingDir base: {}", receivingDirProvider.getParentDir());
     }
@@ -170,7 +173,8 @@ public class ZipReceiver implements Receiver {
                         attributeMap,
                         sourceZipFile,
                         destZipFile,
-                        receivedBytes);
+                        receivedBytes,
+                        feedKeyInterner);
             } catch (final Exception e) {
                 LOGGER.debug(() -> LogUtil.exceptionMessage(e), e);
                 // Cleanup.
@@ -220,7 +224,8 @@ public class ZipReceiver implements Receiver {
                 receiveResult = receiveZipStream(
                         boundedInputStream,
                         attributeMap,
-                        destZipFile);
+                        destZipFile,
+                        feedKeyInterner);
             } catch (final Exception e) {
                 LOGGER.debug(() -> LogUtil.exceptionMessage(e), e);
                 // Cleanup.
@@ -365,7 +370,8 @@ public class ZipReceiver implements Receiver {
      */
     static ReceiveResult receiveZipStream(final InputStream inputStream,
                                           final AttributeMap attributeMap,
-                                          final Path destZipFile) throws IOException {
+                                          final Path destZipFile,
+                                          final FeedKeyInterner feedKeyInterner) throws IOException {
 
         LOGGER.debug("receiveZipStream() - destZipFile: {}, attributeMap: {}", destZipFile, attributeMap);
         // Create a .zip.staging file for the inputStream to be written to. We can then
@@ -379,7 +385,7 @@ public class ZipReceiver implements Receiver {
             // as it can't read the central directory at the end of the stream, so it doesn't know which
             // entries are actually valid and doesn't know the uncompressed sizes.
             receivedBytes = writeStreamToFile(inputStream, stagingZipFile);
-            return receiveZipStream(attributeMap, stagingZipFile, destZipFile, receivedBytes);
+            return receiveZipStream(attributeMap, stagingZipFile, destZipFile, receivedBytes, feedKeyInterner);
         } finally {
             Files.deleteIfExists(stagingZipFile);
         }
@@ -391,14 +397,14 @@ public class ZipReceiver implements Receiver {
     static ReceiveResult receiveZipStream(final AttributeMap attributeMap,
                                           final Path sourceZipFile,
                                           final Path destZipFile,
-                                          final long receivedBytes) throws IOException {
+                                          final long receivedBytes,
+                                          final FeedKeyInterner feedKeyInterner) throws IOException {
         LOGGER.debug("receiveZipStream() - sourceZipFile: {}, destZipFile: {}, attributeMap: {}",
                 sourceZipFile, destZipFile, attributeMap);
         final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
         final String defaultFeedName = attributeMap.get(StandardHeaderArguments.FEED);
         final String defaultTypeName = attributeMap.get(StandardHeaderArguments.TYPE);
         // This is to reduce the memory used by all the FeedKey objects in the ZipEntryGroups
-        final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
         final FeedKey defaultFeedKey = feedKeyInterner.intern(defaultFeedName, defaultTypeName);
 
         final Map<String, ZipEntryGroup> baseNameToGroupMap = new HashMap<>();
@@ -585,7 +591,7 @@ public class ZipReceiver implements Receiver {
                             entryName,
                             baseName);
                 } else if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
-                    final ZipEntryGroup zipEntryGroup = baseNameToGroupMap.computeIfAbsent(baseName, k ->
+                    final ZipEntryGroup zipEntryGroup = baseNameToGroupMap.computeIfAbsent(baseName, ignored ->
                             new ZipEntryGroup(defaultFeedKey));
                     if (zipEntryGroup.getContextEntry() != null) {
                         throw new RuntimeException("Duplicate context found: " + entryName);
@@ -594,7 +600,7 @@ public class ZipReceiver implements Receiver {
                     size = writeUnchangedEntry(zipWriter, stagingZip, entry);
                     zipEntryGroup.setContextEntry(new Entry(entryName, size));
                 } else if (StroomZipFileType.MANIFEST.equals(stroomZipFileType)) {
-                    final ZipEntryGroup zipEntryGroup = baseNameToGroupMap.computeIfAbsent(baseName, k ->
+                    final ZipEntryGroup zipEntryGroup = baseNameToGroupMap.computeIfAbsent(baseName, ignored ->
                             new ZipEntryGroup(defaultFeedKey));
                     if (zipEntryGroup.getManifestEntry() != null) {
                         throw new RuntimeException("Duplicate manifest found: " + entryName);
@@ -646,7 +652,7 @@ public class ZipReceiver implements Receiver {
         zipWriter.writeStream(entryName, new ByteArrayInputStream(bytes));
 
         final ZipEntryGroup zipEntryGroup = baseNameToGroupMap
-                .computeIfAbsent(baseName, k -> new ZipEntryGroup(feedKey));
+                .computeIfAbsent(baseName, ignored -> new ZipEntryGroup(feedKey));
         // Ensure we override the feed and type names with the meta.
         zipEntryGroup.setFeedKey(feedKey);
 

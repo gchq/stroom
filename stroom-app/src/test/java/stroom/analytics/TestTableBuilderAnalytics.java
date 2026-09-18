@@ -20,6 +20,8 @@ import stroom.ai.impl.mock.MockAiModule;
 import stroom.analytics.impl.TableBuilderAnalyticExecutor;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleLevel;
+import stroom.analytics.shared.AnalyticRuleStatus;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.app.guice.CoreModule;
@@ -39,6 +41,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(UriFactoryModule.class)
@@ -111,10 +115,46 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
         basicTest(query, 9, 2);
     }
 
+    /**
+     * A table builder rule builds its detections in a different place to a scheduled query, so the level and
+     * status a rule declares have to reach this path too.
+     */
+    @Test
+    void testLevelAndStatusIncludedInDetections() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                eval count = count()
+                eval EventTime = floorYear(EventTime)
+                group by EventTime, UserId
+                having count > 3
+                select EventTime, UserId, count""";
+        writeRule(ruleBuilder(query)
+                .level(AnalyticRuleLevel.CRITICAL)
+                .status(AnalyticRuleStatus.EXPERIMENTAL)
+                .build());
+
+        analyticsExecutor.exec();
+
+        assertThat(readNewestStream())
+                .contains("<level>Critical</level>")
+                .contains("<status>Experimental</status>");
+    }
+
     private void basicTest(final String query,
                            final int expectedStreams,
                            final int expectedRecords) {
-        final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
+        writeRule(ruleBuilder(query).build());
+
+        // Now run the search process.
+        analyticsExecutor.exec();
+
+        // As we have created alerts ensure we now have more streams.
+        testDetectionsStream(expectedStreams, expectedRecords);
+    }
+
+    private AnalyticRuleDoc.Builder ruleBuilder(final String query) {
+        return AnalyticRuleDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
@@ -125,14 +165,6 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
                         .timeToWaitForData(INSTANT)
                         .build())
                 .notifications(createNotificationConfig())
-                .errorFeed(analyticsDataSetup.getDetections())
-                .build();
-        writeRule(analyticRuleDoc);
-
-        // Now run the search process.
-        analyticsExecutor.exec();
-
-        // As we have created alerts ensure we now have more streams.
-        testDetectionsStream(expectedStreams, expectedRecords);
+                .errorFeed(analyticsDataSetup.getDetections());
     }
 }

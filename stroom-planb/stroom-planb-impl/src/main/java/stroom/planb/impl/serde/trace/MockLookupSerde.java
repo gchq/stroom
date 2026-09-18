@@ -72,7 +72,7 @@ public class MockLookupSerde implements LookupSerde {
                 yield bytes;
             }
             case UID_LOOKUP -> {
-                // Read via UI lookup.
+                // Read via UID lookup. Never reached: write() tags both lookup sizes HASH_LOOKUP.
                 yield intToBytesMap.get(byteBuffer.getInt());
             }
             case HASH_LOOKUP -> {
@@ -129,7 +129,7 @@ public class MockLookupSerde implements LookupSerde {
                 yield false;
             }
             case UID_LOOKUP -> {
-                // Read via UI lookup.
+                // Read via UID lookup. Never reached: write() tags both lookup sizes HASH_LOOKUP.
                 ByteBufferUtils.skip(byteBuffer, Integer.BYTES);
                 yield true;
             }

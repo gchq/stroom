@@ -326,6 +326,7 @@ public class ProgressMonitor {
         QUEUE_CREATED_TASKS_QUEUE_TASKS("Queue created tasks -> Queue tasks"),
         CREATE_TASKS_FROM_SEARCH_QUERY("Create tasks from search query"),
         CREATE_STREAM_MAP("Create stream map"),
+        WAIT_FOR_READY_STREAMS("Waiting for streams to become ready to process"),
         FIND_META_FOR_FILTER("Find meta records matching filter"),
         INSERT_NEW_TASKS("Inserting new task records"),
         UPDATE_TRACKERS("Update trackers"),

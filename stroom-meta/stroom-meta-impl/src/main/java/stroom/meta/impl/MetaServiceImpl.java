@@ -31,6 +31,7 @@ import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StreamFeedProvider;
+import stroom.meta.impl.StreamAttributeMapRetentionRuleDecoratorFactory.StreamAttributeMapRetentionRuleDecorator;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -101,7 +102,7 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
     private final MetaRetentionTrackerDao metaRetentionTrackerDao;
     private final Provider<MetaServiceConfig> metaServiceConfigProvider;
     private final DocFinder docFinder;
-    private final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider;
+    private final Provider<StreamAttributeMapRetentionRuleDecoratorFactory> decoratorProvider;
     private final Optional<MetaSecurityFilter> metaSecurityFilter;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
@@ -117,7 +118,7 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
                     final MetaRetentionTrackerDao metaRetentionTrackerDao,
                     final Provider<MetaServiceConfig> metaServiceConfigProvider,
                     final DocFinder docFinder,
-                    final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
+                    final Provider<StreamAttributeMapRetentionRuleDecoratorFactory> decoratorProvider,
                     final Optional<MetaSecurityFilter> metaSecurityFilter,
                     final SecurityContext securityContext,
                     final TaskContextFactory taskContextFactory,
@@ -142,18 +143,25 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
     }
 
     @Override
-    public Long getMaxId() {
+    public Optional<Long> getMaxId() {
         return metaDao.getMaxId();
     }
 
     @Override
-    public Long getMaxId(final long maxCreateTimeMs) {
-        return metaDao.getMaxId(maxCreateTimeMs);
+    public Optional<Long> getMaxId(final long minId, final long maxCreateTimeMs) {
+        return metaDao.getMaxId(minId, maxCreateTimeMs);
     }
 
     @Override
     public Meta create(final MetaProperties metaProperties) {
+        LOGGER.debug("create() - metaProperties: {}", metaProperties);
         return metaDao.create(metaProperties);
+    }
+
+    @Override
+    public Meta create(final MetaProperties metaProperties, final Status status) {
+        LOGGER.debug("create() - metaProperties: {}, status: {}", metaProperties, status);
+        return metaDao.create(metaProperties, status);
     }
 
     @Override
@@ -262,6 +270,17 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
                     System.currentTimeMillis(),
                     usesUniqueIds);
         });
+    }
+
+    @Override
+    public AttributeMap getAttributes(final Meta meta) {
+        Objects.requireNonNull(meta);
+        final Map<Long, Map<String, String>> map = metaValueDao.getAttributes(List.of(meta));
+        return NullSafe.getOrElseGet(
+                map,
+                aMap -> aMap.get(meta.getId()),
+                AttributeMap::new,
+                AttributeMap::new);
     }
 
     @Override
@@ -533,7 +552,8 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
             if (NullSafe.hasItems(list)) {
                 LOGGER.logDurationIfTraceEnabled(
                         () -> {
-                            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
+                            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get()
+                                    .createDecorator();
                             list.getValues().forEach(metaRow ->
                                     decorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
                         },

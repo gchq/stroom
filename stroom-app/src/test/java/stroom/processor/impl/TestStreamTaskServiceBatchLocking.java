@@ -29,8 +29,6 @@ class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private ProcessorTaskQueueManager processorTaskQueueManager;
-    @Inject
     private NodeInfo nodeInfo;
 
     private int failedCount = 0;

@@ -121,33 +121,25 @@ class Dashboard extends AbstractLink {
 
         @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
-            Val link = ValNull.INSTANCE;
-            Val text = ValNull.INSTANCE;
-            Val uuid = ValNull.INSTANCE;
-            Val params = ValNull.INSTANCE;
-            Val target = ValNull.INSTANCE;
-            Val title = ValNull.INSTANCE;
 
-            if (childGenerators.length > 0) {
-                text = childGenerators[0].eval(storedValues, childDataSupplier);
-            }
-            if (childGenerators.length > 1) {
-                uuid = childGenerators[1].eval(storedValues, childDataSupplier);
-            }
-            if (childGenerators.length > 2) {
-                params = childGenerators[2].eval(storedValues, childDataSupplier);
-            }
-            if (childGenerators.length > 3) {
-                target = childGenerators[3].eval(storedValues, childDataSupplier);
-            }
-            if (childGenerators.length > 4) {
-                title = childGenerators[4].eval(storedValues, childDataSupplier);
-            }
-            if (childGenerators.length > 1) {
-                link = makeDashboardLink(text, uuid, params, target, title);
-            }
-
-            return link;
+            final Val text = childGenerators.length > 0
+                    ? childGenerators[0].eval(storedValues, childDataSupplier)
+                    : ValNull.INSTANCE;
+            final Val uuid = childGenerators.length > 1
+                    ? childGenerators[1].eval(storedValues, childDataSupplier)
+                    : ValNull.INSTANCE;
+            final Val params = childGenerators.length > 2
+                    ? childGenerators[2].eval(storedValues, childDataSupplier)
+                    : ValNull.INSTANCE;
+            final Val target = childGenerators.length > 3
+                    ? childGenerators[3].eval(storedValues, childDataSupplier)
+                    : ValNull.INSTANCE;
+            final Val title = childGenerators.length > 4
+                    ? childGenerators[4].eval(storedValues, childDataSupplier)
+                    : ValNull.INSTANCE;
+            return childGenerators.length > 1
+                    ? makeDashboardLink(text, uuid, params, target, title)
+                    : ValNull.INSTANCE;
         }
 
         private Val makeDashboardLink(final Val text,

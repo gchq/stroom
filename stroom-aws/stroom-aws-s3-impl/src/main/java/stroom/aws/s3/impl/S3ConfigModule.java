@@ -18,11 +18,12 @@ package stroom.aws.s3.impl;
 
 import stroom.aws.s3.shared.S3ConfigDoc;
 import stroom.docstore.api.DocumentStoreBinder;
-import stroom.pipeline.factory.PipelineElementModule;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
-public class S3ConfigModule extends PipelineElementModule {
+import com.google.inject.AbstractModule;
+
+public class S3ConfigModule extends AbstractModule {
 
     @Override
     protected void configure() {
@@ -33,10 +34,5 @@ public class S3ConfigModule extends PipelineElementModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(S3ClientConfigCache.class);
-    }
-
-    @Override
-    protected void configureElements() {
-        bindElement(S3Appender.class);
     }
 }

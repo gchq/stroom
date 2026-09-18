@@ -16,43 +16,117 @@
 
 package stroom.util.string;
 
+import stroom.util.concurrent.LazyValue;
+import stroom.util.io.FileUtil;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.SimplePathCreator;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
+import com.google.common.base.Strings;
+
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
+import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 
 public class TemplateUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TemplateUtil.class);
 
-    public static Templator parseTemplate(final String template) {
+    public static final CIKey UUID_VAR = CIKey.internStaticKey("uuid");
+    public static final CIKey STROOM_TEMP_VAR = CIKey.internStaticKey(SimplePathCreator.STROOM_HOME);
+    public static final CIKey STROOM_HOME_VAR = CIKey.internStaticKey(SimplePathCreator.STROOM_TEMP);
+    /**
+     * Represents epoch millis
+     */
+    public static final CIKey MS_VAR = CIKey.internStaticKey("ms");
+    /**
+     * Represents the millis part of the current second.
+     */
+    public static final CIKey MILLIS_VAR = CIKey.internStaticKey("millis");
+    public static final CIKey SECOND_VAR = CIKey.internStaticKey("second");
+    public static final CIKey MINUTE_VAR = CIKey.internStaticKey("minute");
+    public static final CIKey HOUR_VAR = CIKey.internStaticKey("hour");
+    public static final CIKey DAY_VAR = CIKey.internStaticKey("day");
+    public static final CIKey MONTH_VAR = CIKey.internStaticKey("month");
+    public static final CIKey YEAR_VAR = CIKey.internStaticKey("year");
+    public static final CIKey FILE_NAME_VAR = CIKey.internStaticKey("fileName");
+    public static final CIKey FILE_STEM_VAR = CIKey.internStaticKey("fileStem");
+    public static final CIKey FILE_EXTENSION_VAR = CIKey.internStaticKey("fileExtension");
+
+    public static final Set<CIKey> NON_ENV_VARS;
+
+    static {
+        NON_ENV_VARS = Arrays.stream(SimplePathCreator.NON_ENV_VARS)
+                .map(CIKey::internStaticKey)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Parses a template like '${accountId}_${component}_static_text' and returns
+     * a {@link Template} that can be used many times to build strings from
+     * the parsed template. The {@link Template} is intended to be cached,
+     * held as a static or on a singleton depending on the lifetime of the template string.
+     * <p>
+     * The variables in the template are case-insensitive.
+     * </p>
+     *
+     * @param template The template string to parse.
+     */
+    public static Template parseTemplate(final String template) {
         return parseTemplate(template, null, null);
     }
 
-    public static Templator parseTemplate(final String template,
-                                          final Function<String, String> formatter) {
+    /**
+     * Parses a template like '${accountId}_${component}_static_text' and returns
+     * a {@link Template} that can be used many times to build strings from
+     * the parsed template. The {@link Template} is intended to be cached,
+     * held as a static or on a singleton depending on the lifetime of the template string.
+     * <p>
+     * The variables in the template are case-insensitive.
+     * </p>
+     *
+     * @param template  The template string to parse.
+     * @param formatter An optional formatter that will be called on all
+     *                  static parts and all
+     *                  replacements for parameterised parts of the template.
+     *                  e.g. {@link String#toUpperCase()} and/or to replace unwanted chars.
+     */
+    public static Template parseTemplate(final String template,
+                                         final Function<String, String> formatter) {
         return parseTemplate(template, formatter, formatter);
     }
 
     /**
      * Parses a template like '${accountId}_${component}_static_text' and returns
-     * a {@link Templator} that can be used many times to build strings from
-     * the parsed template.
+     * a {@link Template} that can be used many times to build strings from
+     * the parsed template. The {@link Template} is intended to be cached,
+     * held as a static or on a singleton depending on the lifetime of the template string.
      * <p>
-     * The case sensitivity will depend on the implementation of the map
-     * passed to {@link Templator#parseTemplate(String)}.
+     * The variables in the template are case-insensitive.
      * </p>
      *
      * @param template             The template string to parse.
@@ -63,15 +137,15 @@ public class TemplateUtil {
      *                             static parts of the template
      *                             e.g. {@link String#toUpperCase()} and/or to replace unwanted chars.
      */
-    public static Templator parseTemplate(final String template,
-                                          final Function<String, String> replacementFormatter,
-                                          final Function<String, String> staticTextFormatter) {
+    public static Template parseTemplate(final String template,
+                                         final Function<String, String> replacementFormatter,
+                                         final Function<String, String> staticTextFormatter) {
         if (NullSafe.isEmptyString(template)) {
-            return Templator.EMPTY_TEMPLATE;
+            return Template.EMPTY_TEMPLATE;
         } else {
-            final List<PartExtractor> funcList = new ArrayList<>();
-            final Set<String> varsInTemplate = new HashSet<>();
-            final Map<String, PartExtractor> varToPartExtractorMap = new HashMap<>();
+            final List<TemplatePart> funcList = new ArrayList<>();
+            final Set<CIKey> varsInTemplate = new HashSet<>();
+            final Map<CIKey, TemplatePart> varToPartExtractorMap = new HashMap<>();
             final StringBuilder sb = new StringBuilder();
             char lastChar = 0;
             boolean inVariable = false;
@@ -79,45 +153,69 @@ public class TemplateUtil {
                     ? str -> replacementFormatter.apply(NullSafe.string(str))
                     : NullSafe::string;
 
-            for (final char chr : template.toCharArray()) {
-                if (chr == '{' && lastChar == '$') {
-                    inVariable = true;
-                    if (!sb.isEmpty()) {
-                        // Stuff before must be static text
-                        final String staticText = format(sb.toString(), staticTextFormatter);
-                        funcList.add(StaticPart.of(staticText));
-                        LOGGER.debug("Adding static text func for '{}'", staticText);
+            final Template templateObj;
+            if (isStaticTemplate(template)) {
+                final String formattedText = format(template, staticTextFormatter);
+                templateObj = new AllStaticTemplateImpl(formattedText);
+            } else {
+                // 'Compile' the template into a list of PartExtractor instances, with each one
+                // representing either a chunk of static text or a named variable for replacement.
+                for (final char chr : template.toCharArray()) {
+                    if (chr == '{' && lastChar == '$') {
+                        if (inVariable) {
+                            throw new IllegalArgumentException(LogUtil.message(
+                                    "Nested variable found in template '{}'", template));
+                        } else {
+                            inVariable = true;
+                            if (!sb.isEmpty()) {
+                                // Stuff before must be static text
+                                final String staticText = format(sb.toString(), staticTextFormatter);
+                                funcList.add(StaticTextPart.of(staticText));
+                                LOGGER.debug("Adding static text func for '{}'", staticText);
+                                sb.setLength(0);
+                            }
+                        }
+                    } else if (inVariable && chr == '}') {
+                        inVariable = false;
+                        // Because we may use the var to lookup system props or env vars, we MUST
+                        // retain the original case inside the CIKey, so can't user CIKey.ofIgnoringCase()
+                        final CIKey var = CIKey.of(sb.toString());
+                        varsInTemplate.add(var);
+                        final TemplatePart templatePart = varToPartExtractorMap.computeIfAbsent(var, aVar ->
+                                new VariablePart(aVar, effectiveParamFormatter));
+                        funcList.add(templatePart);
+                        LOGGER.debug("Adding replacement func for var '{}'", var);
                         sb.setLength(0);
+                    } else if (chr != '$') {
+                        // might be static text or the name of the key
+                        sb.append(chr);
                     }
-                } else if (inVariable && chr == '}') {
-                    inVariable = false;
-                    final String var = sb.toString();
-                    varsInTemplate.add(var);
-                    final PartExtractor partExtractor = varToPartExtractorMap.computeIfAbsent(var, aVar ->
-                            new DynamicPart(aVar, effectiveParamFormatter));
-                    funcList.add(partExtractor);
-                    LOGGER.debug("Adding replacement func for var '{}'", var);
-                    sb.setLength(0);
-                } else if (chr != '$') {
-                    // might be static text or the name of the key
-                    sb.append(chr);
+                    lastChar = chr;
                 }
-                lastChar = chr;
-            }
-            if (inVariable) {
-                throw new IllegalArgumentException(LogUtil.message(
-                        "Unclosed variable in template '{}'", template));
-            }
+                if (inVariable) {
+                    throw new IllegalArgumentException(LogUtil.message(
+                            "Unclosed variable in template '{}'", template));
+                }
 
-            // Pick up any trailing static text
-            if (!sb.isEmpty()) {
-                // Stuff before must be static text
-                final String staticText = format(sb.toString(), staticTextFormatter);
-                funcList.add(StaticPart.of(staticText));
-                sb.setLength(0);
+                // Pick up any trailing static text
+                if (!sb.isEmpty()) {
+                    // Stuff before must be static text
+                    final String staticText = format(sb.toString(), staticTextFormatter);
+                    funcList.add(StaticTextPart.of(staticText));
+                    sb.setLength(0);
+                }
+                templateObj = new TemplateImpl(template, varsInTemplate, funcList);
             }
-            return new Templator(template, varsInTemplate, funcList);
+            return templateObj;
         }
+    }
+
+    /**
+     * @return True if the supplied template is null, blank or all static text with no variable placeholders.
+     */
+    public static boolean isStaticTemplate(final String template) {
+        return NullSafe.isBlankString(template)
+               || !template.contains("${");
     }
 
     private static String format(final String str,
@@ -133,26 +231,132 @@ public class TemplateUtil {
     // --------------------------------------------------------------------------------
 
 
-    public static class Templator {
+    public interface Template {
 
-        private static final Templator EMPTY_TEMPLATE = new Templator(
-                "",
-                Collections.emptySet(),
-                Collections.emptyList());
+        Template EMPTY_TEMPLATE = new AllStaticTemplateImpl("");
+
+
+        /**
+         * Use the values in map to derive a string from the parsed template.
+         *
+         * @param varToReplacementMap A map of case-sensitive template variables (without their braces)
+         *                            to the replacement value.
+         * @see Template#buildExecutor() buildGenerator() for more control of variable replacement.
+         */
+        String executeWith(final Map<CIKey, String> varToReplacementMap);
+
+        ExecutorBuilder buildExecutor();
+
+        Set<CIKey> getVarsInTemplate();
+
+        boolean isVarInTemplate(CIKey var);
+
+        boolean isEmpty();
+
+        boolean isBlank();
+
+        boolean isStatic();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class AllStaticTemplateImpl implements Template {
+
+        private final String template;
+        private volatile AllStaticExecutorBuilderImpl allStaticExecutorBuilder = null;
+
+        private AllStaticTemplateImpl(final String template) {
+            this.template = template;
+        }
+
+        @Override
+        public String executeWith(final Map<CIKey, String> varToReplacementMap) {
+            return template;
+        }
+
+        @Override
+        public ExecutorBuilder buildExecutor() {
+            if (allStaticExecutorBuilder == null) {
+                allStaticExecutorBuilder = new AllStaticExecutorBuilderImpl(this);
+            }
+            return allStaticExecutorBuilder;
+        }
+
+        @Override
+        public Set<CIKey> getVarsInTemplate() {
+            return Set.of();
+        }
+
+        @Override
+        public boolean isVarInTemplate(final CIKey var) {
+            // Always false, no vars
+            return false;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return NullSafe.isEmptyString(template);
+        }
+
+        @Override
+        public boolean isBlank() {
+            return NullSafe.isBlankString(template);
+        }
+
+        @Override
+        public boolean isStatic() {
+            // Always true for this impl
+            return true;
+        }
+    }
+
+
+    /**
+     * Thread safe 'compiled' form of a {@link String} template containing named variables of
+     * the form:
+     * <p>
+     * {@code ${feed}_${type}}
+     * </p>
+     */
+    public static class TemplateImpl implements Template {
+
 
         /**
          * Here for debugging and toString
          */
         private final String template;
-        private final Set<String> varsInTemplate;
-        private final List<PartExtractor> partExtractors;
+        private final Set<CIKey> varsInTemplate;
+        private final List<TemplatePart> templateParts;
+        private final int partExtractorCount;
 
-        private Templator(final String template,
-                          final Set<String> varsInTemplate,
-                          final List<PartExtractor> partExtractors) {
-            this.template = template;
+        private TemplateImpl(final String template,
+                             final Set<CIKey> varsInTemplate,
+                             final List<TemplatePart> templateParts) {
+            this.template = Objects.requireNonNull(template);
             this.varsInTemplate = NullSafe.unmodifialbeSet(varsInTemplate);
-            this.partExtractors = NullSafe.unmodifiableList(partExtractors);
+            this.templateParts = NullSafe.unmodifiableList(templateParts);
+            if (varsInTemplate.isEmpty()) {
+                throw new IllegalStateException("Template should have at least one variable");
+            }
+            // Cache these
+            this.partExtractorCount = this.templateParts.size();
+        }
+
+        private static TemplateImpl staticTemplate(final String template, final String formattedText) {
+            return new TemplateImpl(template, Collections.emptySet(), List.of(StaticTextPart.of(formattedText)));
+        }
+
+        private boolean isAllStatic(final List<TemplatePart> templateParts) {
+            if (templateParts.isEmpty()) {
+                // Empty template, but we should never get here as EMPTY should be used.
+                return true;
+            } else {
+                return templateParts.stream()
+                        .allMatch(templatePart ->
+                                templatePart instanceof StaticTextPart);
+            }
         }
 
         /**
@@ -160,71 +364,95 @@ public class TemplateUtil {
          *
          * @param varToReplacementMap A map of case-sensitive template variables (without their braces)
          *                            to the replacement value.
+         * @see TemplateImpl#buildExecutor() buildGenerator() for more control of variable replacement.
          */
-        public String generateWith(final Map<String, String> varToReplacementMap) {
-            // partExtractors cope with null map
+        public String executeWith(final Map<CIKey, String> varToReplacementMap) {
             final String output;
-            if (partExtractors.isEmpty()) {
-                output = "";
+            if (NullSafe.isEmptyMap(varToReplacementMap)) {
+                output = buildExecutor().execute();
             } else {
-                final Map<String, String> map = NullSafe.map(varToReplacementMap);
-                output = buildGenerator()
-                        .addCommonReplacementFunction(map::get)
-                        .generate();
+                output = buildExecutor()
+                        .addCommonReplacementFunction(varToReplacementMap::get)
+                        .execute();
             }
 
             LOGGER.debug("generateWith() - Generated output '{}' from varToReplacementProviderMap: {}",
                     output, varToReplacementMap);
-            return output;
+            return NullSafe.string(output);
         }
 
-        private String doGenerate(final Map<String, ReplacementProvider> varToReplacementMap) {
+        private String doExecute(final Map<CIKey, ReplacementProvider> varToReplacementProviderMap,
+                                 final List<OptionalReplacementProvider> dynamicReplacementProviders) {
             // partExtractors cope with null map
             final String output;
-            if (partExtractors.isEmpty()) {
-                output = "";
+            if (partExtractorCount == 1) {
+                output = NullSafe.string(templateParts.getFirst().apply(
+                        varToReplacementProviderMap,
+                        dynamicReplacementProviders));
             } else {
-                output = partExtractors.stream()
-                        .map(partExtractor ->
-                                partExtractor.apply(varToReplacementMap))
-                        .map(NullSafe::string)
-                        .collect(Collectors.joining());
+                final String[] parts = new String[partExtractorCount];
+                for (int i = 0; i < partExtractorCount; i++) {
+                    final TemplatePart templatePart = templateParts.get(i);
+                    final String part = NullSafe.string(templatePart.apply(
+                            varToReplacementProviderMap,
+                            dynamicReplacementProviders));
+                    parts[i] = part;
+                }
+                output = String.join("", parts);
             }
 
-            LOGGER.debug("doGenerate() - Generated output '{}' from varToReplacementProviderMap: {}",
-                    output, varToReplacementMap);
+            LOGGER.debug("doExecute() - Generated output '{}' from template: '{}', varToReplacementProviderMap: {}, " +
+                         "dynamicReplacementProviders: {}",
+                    output, template, varToReplacementProviderMap, dynamicReplacementProviders);
             return output;
         }
 
         /**
          * Create a builder to add the replacements and generate the output.
+         * {@link ExecutorBuilderImpl} is not thread safe.
          */
-        public GeneratorBuilder buildGenerator() {
-            return new GeneratorBuilder(this);
+        @Override
+        public ExecutorBuilder buildExecutor() {
+            return new ExecutorBuilderImpl(this);
         }
 
         /**
          * @return The set of vars in the template.
          */
-        public Set<String> getVarsInTemplate() {
-            return varsInTemplate;
-        }
-
-        public boolean isVarInTemplate(final String var) {
-            return varsInTemplate.contains(var);
+        @Override
+        public Set<CIKey> getVarsInTemplate() {
+            return Collections.unmodifiableSet(varsInTemplate);
         }
 
         @Override
-        public String toString() {
-            return template;
+        public boolean isVarInTemplate(final CIKey var) {
+            return var != null
+                   && varsInTemplate.contains(var);
         }
 
+        /**
+         * @return True if the template is empty.
+         */
+        @Override
         public boolean isEmpty() {
             return template.isEmpty();
         }
 
+        /**
+         * @return True if the template is empty or contains only whitespace.
+         */
+        @Override
         public boolean isBlank() {
             return template.isBlank();
+        }
+
+        /**
+         * @return True if all the template is static text, i.e. it has no vars in it.
+         */
+        @Override
+        public boolean isStatic() {
+            // Always false for this impl
+            return false;
         }
 
         @Override
@@ -235,14 +463,25 @@ public class TemplateUtil {
             if (object == null || getClass() != object.getClass()) {
                 return false;
             }
-            final Templator templator = (Templator) object;
-            return Objects.equals(template, templator.template) && Objects.equals(varsInTemplate,
-                    templator.varsInTemplate) && Objects.equals(partExtractors, templator.partExtractors);
+            final TemplateImpl template = (TemplateImpl) object;
+            return Objects.equals(this.template, template.template)
+                   && Objects.equals(varsInTemplate, template.varsInTemplate)
+                   && Objects.equals(templateParts, template.templateParts);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(template, varsInTemplate, partExtractors);
+            return Objects.hash(template, varsInTemplate, templateParts);
+        }
+
+        @Override
+        public String toString() {
+            return "Template{" +
+                   "template='" + template + '\'' +
+                   ", varsInTemplate=" + varsInTemplate +
+                   ", templateParts=" + templateParts +
+                   ", partExtractorCount=" + partExtractorCount +
+                   '}';
         }
     }
 
@@ -250,35 +489,14 @@ public class TemplateUtil {
     // --------------------------------------------------------------------------------
 
 
-    public static class GeneratorBuilder {
-
-        private final Map<String, ReplacementProvider> varToReplacementProviderMap = new HashMap<>();
-        private final Templator templator;
-
-        private GeneratorBuilder(final Templator templator) {
-            this.templator = templator;
-        }
+    public interface ExecutorBuilder {
 
         /**
          * Add a simple static replacement for var.
          * This will override any existing replacement for var.
          * If var is not in the template it is a no-op.
          */
-        public GeneratorBuilder addReplacement(final String var, final String replacement) {
-            if (NullSafe.isNonBlankString(var)) {
-                if (templator.isVarInTemplate(var)) {
-                    if (NullSafe.isNonEmptyString(replacement)) {
-                        // No point adding a func for an empty replacement
-                        varToReplacementProviderMap.put(var, ignored -> replacement);
-                    }
-                } else {
-                    LOGGER.debug("addReplacement() - var '{}' is not in template '{}'", var, templator.template);
-                }
-            } else {
-                throw new IllegalArgumentException("Blank var");
-            }
-            return this;
-        }
+        ExecutorBuilder addReplacement(CIKey var, String replacement);
 
         /**
          * Add multiple static replacements. The map key is the var in the template and the
@@ -286,10 +504,287 @@ public class TemplateUtil {
          * This will override any existing replacements for vars matching the keys in replacementsMap.
          * Any entries where the var is not in the template will be ignored.
          */
-        public GeneratorBuilder addReplacements(final Map<String, String> replacementsMap) {
+        ExecutorBuilder addReplacements(Map<CIKey, String> replacementsMap);
+
+        /**
+         * Add a lazy static {@link ReplacementProvider} for var.
+         * replacementSupplier will only be called once to get a replacement
+         * even if var appears more than once in the template.
+         * If var is not in the template it is a no-op.
+         */
+        ExecutorBuilder addLazyReplacement(CIKey var,
+                                           Supplier<String> replacementSupplier);
+
+        /**
+         * Add a lazy static {@link ReplacementProvider} for var.
+         * If var exists in the template, {@link AtomicLong#getAndIncrement()} will be called
+         * to provide the replacement value. If reuseSequenceNumber is true, that value
+         * will be used for each instance of var in the template. If reuseSequenceNumber is false
+         * {@link AtomicLong#getAndIncrement()}
+         * replacementSupplier will only be called once to get a replacement
+         * even if var appears more than once in the template.
+         * If var is not in the template it is a no-op.
+         */
+        ExecutorBuilder addSequenceNumberReplacement(CIKey var,
+                                                     AtomicLong sequenceNumber,
+                                                     boolean reuseSequenceNumber);
+
+        /**
+         * Add a single {@link ReplacementProvider} function that will be used for <strong>ALL</strong>
+         * vars in the template. It will override any other replacements that have been set.
+         * <p>
+         * Use this if you don't know what the vars will be in the template, e.g. the replacementProvider
+         * will resolve them from some other source.
+         * </p>
+         */
+        ExecutorBuilder addCommonReplacementFunction(ReplacementProvider replacementProvider);
+
+        /**
+         * Add the following var replacements:
+         * <ol>
+         *     <li>{@code ${year}} => 4 digit year</li>
+         *     <li>{@code ${month}} => 2 digit month</li>
+         *     <li>{@code ${day}} => 2 digit day of month</li>
+         *     <li>{@code ${hour}} => 2 digit hour of day</li>
+         *     <li>{@code ${minute}} => 2 digit minute of hour</li>
+         *     <li>{@code ${second}} => 2 digit second of hour</li>
+         *     <li>{@code ${millis}} => 3 digit milliseconds of second</li>
+         *     <li>{@code ${ms}} =>  milliseconds seconds since the unix epoch, not padded</li>
+         * </ol>
+         * <p>
+         * Uses the current time in {@link ZoneOffset#UTC} for all the replacements.
+         * </p>
+         */
+        ExecutorBuilder addStandardTimeReplacements();
+
+        /**
+         * Add the following var replacements:
+         * <ol>
+         *     <li>{@code ${year}} => 4 digit year</li>
+         *     <li>{@code ${month}} => 2 digit month</li>
+         *     <li>{@code ${day}} => 2 digit day of month</li>
+         *     <li>{@code ${hour}} => 2 digit hour of day</li>
+         *     <li>{@code ${minute}} => 2 digit minute of hour</li>
+         *     <li>{@code ${second}} => 2 digit second of hour</li>
+         *     <li>{@code ${millis}} => 3 digit milliseconds of second</li>
+         *     <li>{@code ${ms}} =>  milliseconds seconds since the unix epoch, not padded</li>
+         * </ol>
+         *
+         * @param zonedDateTimeSupplier If any time variables are present in the template, this supplier
+         *                              will be called at most once to provide a consistent replacement time
+         *                              for all replacements.
+         */
+        ExecutorBuilder addStandardTimeReplacements(Supplier<ZonedDateTime> zonedDateTimeSupplier);
+
+        /**
+         * Add a replacement for {@code ${uuid}} with a randomly generated UUID.
+         *
+         * @param reuseUUidValue If true, a single randomly generated UUID will be used for all occurrences
+         *                       of {@code ${uuid}}, else a random UUID will be generated for each.
+         */
+        ExecutorBuilder addUuidReplacement(boolean reuseUUidValue);
+
+        /**
+         * Add the standard replacements for {@code ${stroom.home}} and {@code ${stroom.temp}}.
+         * <p>
+         * It will also try to resolve each var as a system property followed by an environment variable (except
+         * for any in this set {@link TemplateUtil#NON_ENV_VARS}).
+         * </p>
+         * <p>
+         * These replacements will be done if no other explicit replacements have been configured
+         * for the variable, e.g. if the template is {@code "${FEED}"} and an explicit replacement for
+         * {@code "FEED"} has been added, it will use that, else it will try to find a system property that
+         * matches, else it will try to find an env var that matches.
+         * </p>
+         *
+         * @param homeDirProvider Provider of the stroom home dir.
+         * @param tempDirProvider Provider of the stroom temp dir.
+         */
+        ExecutorBuilder addSystemPropertyReplacements(HomeDirProvider homeDirProvider,
+                                                      TempDirProvider tempDirProvider);
+
+        /**
+         * Adds these replacements using the supplied fileName value.
+         * <ul>
+         *     <li>{@code fileName} => fileName</li>
+         *     <li>{@code fileStem} => Everything up to the last '.' in filename, e.g. 'foo' in 'foo.txt'</li>
+         *     <li>{@code fileExtension} => The extension of fileName if present, e.g. 'txt' in 'foo.txt'</li>
+         * </ul>
+         *
+         * @param fileName The file name to use in any replacements.
+         */
+        ExecutorBuilder addFileNameReplacement(String fileName);
+
+        /**
+         * Adds a dynamic replacement provider to the list of dynamic replacement providers that will be called
+         * in turn if there is no static replacement provider for the var.
+         */
+        ExecutorBuilder addDynamicReplacementProvider(OptionalReplacementProvider replacementProvider);
+
+        /**
+         * Sets the list of dynamic replacement providers that will be called
+         * in turn if there is no static replacement provider for the var.
+         */
+        ExecutorBuilder setDynamicReplacementProviders(
+                List<OptionalReplacementProvider> replacementProviders);
+
+        /**
+         * Execute the template using the provided replacements to output a string.
+         *
+         * @return The String generated from replacing the variables in the template.
+         */
+        String execute();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Builder for a {@link TemplateImpl} that is all static text, so replacement methods are all a no-op.
+     */
+    public static class AllStaticExecutorBuilderImpl implements ExecutorBuilder {
+
+        private final AllStaticTemplateImpl template;
+
+        private AllStaticExecutorBuilderImpl(final AllStaticTemplateImpl template) {
+            this.template = template;
+        }
+
+        @Override
+        public ExecutorBuilder addReplacement(final CIKey var, final String replacement) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addReplacements(final Map<CIKey, String> replacementsMap) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addLazyReplacement(final CIKey var, final Supplier<String> replacementSupplier) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addSequenceNumberReplacement(final CIKey var,
+                                                            final AtomicLong sequenceNumber,
+                                                            final boolean reuseSequenceNumber) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addCommonReplacementFunction(final ReplacementProvider replacementProvider) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addStandardTimeReplacements() {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addStandardTimeReplacements(final Supplier<ZonedDateTime> zonedDateTimeSupplier) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addUuidReplacement(final boolean reuseUUidValue) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addSystemPropertyReplacements(final HomeDirProvider homeDirProvider,
+                                                             final TempDirProvider tempDirProvider) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addFileNameReplacement(final String fileName) {
+            // Template is all static text so this is a no-op
+            return null;
+        }
+
+        @Override
+        public ExecutorBuilder addDynamicReplacementProvider(final OptionalReplacementProvider replacementProvider) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder setDynamicReplacementProviders(
+                final List<OptionalReplacementProvider> replacementProviders) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public String execute() {
+            // Just return the original template string as there is nothing to replace
+            return template.template;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Standard builder for executing a template with at least one variable in it.
+     */
+    public static class ExecutorBuilderImpl implements ExecutorBuilder {
+
+        private static final SingleStatefulReplacementProvider STATEFUL_UUID_REPLACEMENT_PROVIDER =
+                new SingleStatefulReplacementProvider(
+                        UUID_VAR,
+                        () -> UUID.randomUUID().toString());
+
+        private static final ReplacementProvider STATELESS_UUID_REPLACEMENT_PROVIDER = ignored ->
+                UUID.randomUUID().toString();
+
+        private final Map<CIKey, ReplacementProvider> varToReplacementProviderMap = new HashMap<>();
+        /**
+         * Replacement providers where the var is not known up front, e.g. replacing system properties.
+         */
+        private List<OptionalReplacementProvider> dynamicReplacementProviders = null;
+        private final TemplateImpl template;
+
+        private ExecutorBuilderImpl(final TemplateImpl template) {
+            this.template = template;
+        }
+
+        @Override
+        public ExecutorBuilder addReplacement(final CIKey var, final String replacement) {
+            Objects.requireNonNull(var);
+            if (!var.isEmpty()) {
+                if (template.isVarInTemplate(var)) {
+                    if (NullSafe.isNonEmptyString(replacement)) {
+                        // No point adding a func for an empty replacement
+                        varToReplacementProviderMap.put(var, ignored -> replacement);
+                    }
+                } else {
+                    LOGGER.debug("addReplacement() - var '{}' is not in template '{}'", var, template.template);
+                }
+            } else {
+                throw new IllegalArgumentException("Blank var");
+            }
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addReplacements(final Map<CIKey, String> replacementsMap) {
             NullSafe.map(replacementsMap)
                     .forEach((var, replacement) -> {
-                        if (templator.isVarInTemplate(var)
+                        if (template.isVarInTemplate(var)
                             && NullSafe.isNonEmptyString(replacement)) {
                             // No point adding a func for an empty replacement
                             varToReplacementProviderMap.put(var, ignored -> replacement);
@@ -298,22 +793,18 @@ public class TemplateUtil {
             return this;
         }
 
-        /**
-         * Add a lazy {@link ReplacementProvider} for var.
-         * replacementSupplier will only be called once to get a replacement
-         * even if var appears more than once in the template.
-         * If var is not in the template it is a no-op.
-         */
-        public GeneratorBuilder addLazyReplacement(final String var,
-                                                   final Supplier<String> replacementSupplier) {
-            Objects.requireNonNull(replacementSupplier);
-            if (NullSafe.isNonBlankString(var)) {
-                if (templator.isVarInTemplate(var)) {
+        @Override
+        public ExecutorBuilder addLazyReplacement(final CIKey var,
+                                                  final Supplier<String> replacementSupplier) {
+            Objects.requireNonNull(var);
+            if (!var.isEmpty()) {
+                if (template.isVarInTemplate(var)) {
+                    Objects.requireNonNull(replacementSupplier);
                     final SingleStatefulReplacementProvider singleStatefulReplacementProvider =
                             new SingleStatefulReplacementProvider(var, replacementSupplier);
                     varToReplacementProviderMap.put(var, singleStatefulReplacementProvider);
                 } else {
-                    LOGGER.debug("var '{}' is not in template '{}'", var, templator.template);
+                    LOGGER.debug("var '{}' is not in template '{}'", var, template.template);
                 }
             } else {
                 throw new IllegalArgumentException("Blank var");
@@ -321,27 +812,221 @@ public class TemplateUtil {
             return this;
         }
 
-        /**
-         * Add a {@link ReplacementProvider} function that will be used for ALL vars in the template.
-         */
-        public GeneratorBuilder addCommonReplacementFunction(final ReplacementProvider replacementProvider) {
+        @Override
+        public ExecutorBuilder addSequenceNumberReplacement(final CIKey var,
+                                                            final AtomicLong sequenceNumber,
+                                                            final boolean reuseSequenceNumber) {
+            Objects.requireNonNull(sequenceNumber);
+            if (reuseSequenceNumber) {
+                varToReplacementProviderMap.put(var, new SingleStatefulReplacementProvider(var, () ->
+                        String.valueOf(sequenceNumber.getAndIncrement())));
+            } else {
+                varToReplacementProviderMap.put(var, ignored ->
+                        String.valueOf(sequenceNumber.getAndIncrement()));
+            }
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addCommonReplacementFunction(final ReplacementProvider replacementProvider) {
             Objects.requireNonNull(replacementProvider);
 
             final ReplacementProvider statefulReplacementProvider = new CommonStatefulReplacementProvider(
                     replacementProvider);
-            for (final String var : templator.getVarsInTemplate()) {
+            for (final CIKey var : template.getVarsInTemplate()) {
                 varToReplacementProviderMap.put(var, statefulReplacementProvider);
             }
             return this;
         }
 
-        /**
-         * Generate the output string from the template.
-         *
-         * @return The String generated from replacing the variables in the template.
-         */
-        public String generate() {
-            return templator.doGenerate(varToReplacementProviderMap);
+        @Override
+        public ExecutorBuilder addStandardTimeReplacements() {
+            addStandardTimeReplacements(() -> ZonedDateTime.now(ZoneOffset.UTC));
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addStandardTimeReplacements(final Supplier<ZonedDateTime> zonedDateTimeSupplier) {
+            final Set<CIKey> varsInTemplate = template.getVarsInTemplate();
+            final LazyValue<ZonedDateTime> lazyTime = LazyValue.initialisedBy(zonedDateTimeSupplier);
+
+            addTimeReplacement(YEAR_VAR, varsInTemplate, lazyTime, ZonedDateTime::getYear, 4);
+            addTimeReplacement(MONTH_VAR, varsInTemplate, lazyTime, ZonedDateTime::getMonthValue, 2);
+            addTimeReplacement(DAY_VAR, varsInTemplate, lazyTime, ZonedDateTime::getDayOfMonth, 2);
+            addTimeReplacement(HOUR_VAR, varsInTemplate, lazyTime, ZonedDateTime::getHour, 2);
+            addTimeReplacement(MINUTE_VAR, varsInTemplate, lazyTime, ZonedDateTime::getMinute, 2);
+            addTimeReplacement(SECOND_VAR, varsInTemplate, lazyTime, ZonedDateTime::getSecond, 2);
+            addTimeReplacement(MILLIS_VAR,
+                    varsInTemplate,
+                    lazyTime,
+                    time ->
+                            time.getLong(ChronoField.MILLI_OF_SECOND),
+                    3);
+            addTimeReplacement(
+                    MS_VAR,
+                    varsInTemplate,
+                    lazyTime,
+                    time -> time.toInstant().toEpochMilli(),
+                    3);
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addUuidReplacement(final boolean reuseUUidValue) {
+            if (reuseUUidValue) {
+                varToReplacementProviderMap.put(CIKeys.UUID, STATEFUL_UUID_REPLACEMENT_PROVIDER);
+            } else {
+                varToReplacementProviderMap.put(CIKeys.UUID, STATELESS_UUID_REPLACEMENT_PROVIDER);
+            }
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addSystemPropertyReplacements(final HomeDirProvider homeDirProvider,
+                                                             final TempDirProvider tempDirProvider) {
+            if (template.isVarInTemplate(STROOM_HOME_VAR)) {
+                varToReplacementProviderMap.put(STROOM_HOME_VAR, new SingleStatefulReplacementProvider(
+                        STROOM_HOME_VAR,
+                        () -> {
+                            if (homeDirProvider != null) {
+                                return FileUtil.getCanonicalPath(homeDirProvider.get());
+                            } else {
+                                return "";
+                            }
+                        }));
+            }
+
+            if (template.isVarInTemplate(STROOM_TEMP_VAR)) {
+                varToReplacementProviderMap.put(STROOM_TEMP_VAR, new SingleStatefulReplacementProvider(
+                        STROOM_TEMP_VAR,
+                        () -> {
+                            if (tempDirProvider != null) {
+                                return FileUtil.getCanonicalPath(tempDirProvider.get());
+                            } else {
+                                return "";
+                            }
+                        }));
+            }
+
+            if (dynamicReplacementProviders == null) {
+                dynamicReplacementProviders = new ArrayList<>();
+            }
+
+            dynamicReplacementProviders.add(var -> {
+                if (!NON_ENV_VARS.contains(var)) {
+                    final String varStr = var.get();
+                    return getSystemProperty(varStr)
+                            .or(() -> getEnvVar(varStr));
+                } else {
+                    return Optional.empty();
+                }
+            });
+
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addFileNameReplacement(final String fileName) {
+            if (template.isVarInTemplate(FILE_NAME_VAR)) {
+                varToReplacementProviderMap.put(FILE_NAME_VAR, new SingleStatefulReplacementProvider(
+                        FILE_NAME_VAR, () -> NullSafe.string(fileName)));
+            }
+
+            if (template.isVarInTemplate(FILE_STEM_VAR)) {
+                varToReplacementProviderMap.put(FILE_STEM_VAR, new SingleStatefulReplacementProvider(
+                        FILE_STEM_VAR, () -> {
+                    final String safeFileName = NullSafe.string(fileName);
+                    String fileStem = safeFileName;
+                    final int index = safeFileName.lastIndexOf(".");
+                    if (index != -1) {
+                        fileStem = safeFileName.substring(0, index);
+                    }
+                    return fileStem;
+                }));
+            }
+
+            if (template.isVarInTemplate(FILE_EXTENSION_VAR)) {
+                varToReplacementProviderMap.put(FILE_EXTENSION_VAR, new SingleStatefulReplacementProvider(
+                        FILE_EXTENSION_VAR, () -> {
+                    final String safeFileName = NullSafe.string(fileName);
+                    String fileExtension = "";
+                    final int index = safeFileName.lastIndexOf(".");
+                    if (index != -1) {
+                        fileExtension = safeFileName.substring(index + 1);
+                    }
+                    return fileExtension;
+                }));
+            }
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addDynamicReplacementProvider(final OptionalReplacementProvider replacementProvider) {
+            if (replacementProvider != null) {
+                if (dynamicReplacementProviders == null) {
+                    dynamicReplacementProviders = new ArrayList<>();
+                }
+                dynamicReplacementProviders.add(replacementProvider);
+            }
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder setDynamicReplacementProviders(
+                final List<OptionalReplacementProvider> replacementProviders) {
+            if (replacementProviders != null) {
+                dynamicReplacementProviders = new ArrayList<>(NullSafe.list(replacementProviders));
+            }
+            return this;
+        }
+
+        @Override
+        public String execute() {
+            return template.doExecute(
+                    varToReplacementProviderMap,
+                    NullSafe.list(dynamicReplacementProviders));
+        }
+
+        private Optional<String> getSystemProperty(final String key) {
+            return Optional.ofNullable(System.getProperty(key));
+        }
+
+        private Optional<String> getEnvVar(final String key) {
+            return Optional.ofNullable(System.getenv(key));
+        }
+
+        private void addTimeReplacement(final CIKey var,
+                                        final Set<CIKey> varsInTemplate,
+                                        final LongSupplier valueSupplier,
+                                        final int pad) {
+            if (varsInTemplate.contains(var)) {
+                final ReplacementProvider stringReplacementSupplier = ignored -> {
+                    String value = String.valueOf(valueSupplier.getAsLong());
+                    if (pad > 0) {
+                        value = Strings.padStart(value, pad, '0');
+                    }
+                    return value;
+                };
+                varToReplacementProviderMap.put(var, stringReplacementSupplier);
+            }
+        }
+
+        private void addTimeReplacement(final CIKey var,
+                                        final Set<CIKey> varsInTemplate,
+                                        final LazyValue<ZonedDateTime> timeSupplier,
+                                        final ToLongFunction<ZonedDateTime> getter,
+                                        final int pad) {
+            if (varsInTemplate.contains(var)) {
+                final ReplacementProvider stringReplacementSupplier = ignored -> {
+                    final ZonedDateTime time = timeSupplier.getValueWithoutLocks();
+                    String value = String.valueOf(getter.applyAsLong(time));
+                    if (pad > 0) {
+                        value = Strings.padStart(value, pad, '0');
+                    }
+                    return value;
+                };
+                varToReplacementProviderMap.put(var, stringReplacementSupplier);
+            }
         }
     }
 
@@ -350,14 +1035,29 @@ public class TemplateUtil {
 
 
     @FunctionalInterface
-    public interface ReplacementProvider extends Function<String, String> {
+    public interface ReplacementProvider extends Function<CIKey, String> {
 
         /**
          * @param var The variable being replaced
          * @return The replacement value
          */
         @Override
-        String apply(final String var);
+        String apply(final CIKey var);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @FunctionalInterface
+    public interface OptionalReplacementProvider extends Function<CIKey, Optional<String>> {
+
+        /**
+         * @param var The variable being replaced
+         * @return The replacement value
+         */
+        @Override
+        Optional<String> apply(final CIKey var);
     }
 
 
@@ -366,18 +1066,23 @@ public class TemplateUtil {
 
     private static class SingleStatefulReplacementProvider implements ReplacementProvider {
 
-        private final String var;
+        private final CIKey var;
         private final Supplier<String> replacementSupplier;
         private String replacement = null;
 
-        private SingleStatefulReplacementProvider(final String var,
+        /**
+         * @param var                 The var to replace in the template
+         * @param replacementSupplier Will be called only once if var is in the template. The replacement
+         *                            value will be used for all instances of var.
+         */
+        private SingleStatefulReplacementProvider(final CIKey var,
                                                   final Supplier<String> replacementSupplier) {
             this.var = var;
             this.replacementSupplier = replacementSupplier;
         }
 
         @Override
-        public String apply(final String var) {
+        public String apply(final CIKey var) {
             if (!Objects.equals(var, this.var)) {
                 throw new IllegalArgumentException(LogUtil.message("Vars are different! '{}' vs '{}'",
                         var, this.var));
@@ -396,14 +1101,14 @@ public class TemplateUtil {
     private static class CommonStatefulReplacementProvider implements ReplacementProvider {
 
         private final ReplacementProvider replacementProvider;
-        private final Map<String, String> replacements = new HashMap<>();
+        private final Map<CIKey, String> replacements = new HashMap<>();
 
         private CommonStatefulReplacementProvider(final ReplacementProvider replacementProvider) {
             this.replacementProvider = replacementProvider;
         }
 
         @Override
-        public String apply(final String var) {
+        public String apply(final CIKey var) {
             Objects.requireNonNull(var);
             String replacement = replacements.get(var);
             if (replacement == null) {
@@ -418,38 +1123,54 @@ public class TemplateUtil {
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * A logical part of the template, either a chunk of static text or a variable (i.e. {@code ${foo}})
+     */
     @FunctionalInterface
-    private interface PartExtractor extends Function<Map<String, ReplacementProvider>, String> {
+    private interface TemplatePart extends BiFunction<
+            Map<CIKey, ReplacementProvider>,
+            List<OptionalReplacementProvider>,
+            String> {
 
         @Override
-        String apply(Map<String, ReplacementProvider> stringReplacementProviderMap);
+        String apply(Map<CIKey, ReplacementProvider> stringReplacementProviderMap,
+                     List<OptionalReplacementProvider> dynamicReplacementProviders);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    private static class DynamicPart implements PartExtractor {
+    private static class VariablePart implements TemplatePart {
 
-        private final String var;
+        private final CIKey var;
         private final Function<String, String> formatter;
 
-        private DynamicPart(final String var,
-                            final Function<String, String> formatter) {
+        private VariablePart(final CIKey var,
+                             final Function<String, String> formatter) {
             this.var = var;
             this.formatter = formatter;
         }
 
         @Override
-        public String apply(final Map<String, ReplacementProvider> varToReplacementProviderMap) {
+        public String apply(final Map<CIKey, ReplacementProvider> varToReplacementProviderMap,
+                            final List<OptionalReplacementProvider> dynamicReplacementProviders) {
             // Reuse the replacement across calls
             final ReplacementProvider replacementProvider = varToReplacementProviderMap.get(var);
-            // Get the replacement from the replacementProvider, then format it
-            return NullSafe.getOrElse(
-                    replacementProvider,
-                    aReplacementProvider -> aReplacementProvider.apply(var),
-                    formatter,
-                    "");
+            String output = null;
+            if (replacementProvider != null) {
+                output = replacementProvider.apply(var);
+            } else {
+                for (final OptionalReplacementProvider dynamicReplacementProvider : dynamicReplacementProviders) {
+                    final Optional<String> optStr = dynamicReplacementProvider.apply(var);
+                    if (optStr.isPresent()) {
+                        output = optStr.get();
+                        break;
+                    }
+                }
+            }
+            // Get the replacement then format it
+            return NullSafe.getOrElse(output, formatter, "");
         }
 
         @Override
@@ -464,19 +1185,40 @@ public class TemplateUtil {
     // --------------------------------------------------------------------------------
 
 
-    private record StaticPart(String staticText) implements PartExtractor {
+    private record StaticTextPart(String staticText) implements TemplatePart {
 
-        private StaticPart(final String staticText) {
+        private StaticTextPart(final String staticText) {
             this.staticText = NullSafe.string(staticText);
         }
 
-        private static StaticPart of(final String staticText) {
-            return new StaticPart(staticText);
+        private static StaticTextPart of(final String staticText) {
+            Objects.requireNonNull(staticText);
+            return new StaticTextPart(staticText);
         }
 
         @Override
-        public String apply(final Map<String, ReplacementProvider> ignored) {
+        public String apply(final Map<CIKey, ReplacementProvider> stringReplacementProviderMap,
+                            final List<OptionalReplacementProvider> dynamicReplacementProviders) {
             return staticText;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface ContextVariableResolver {
+
+        public static final ContextVariableResolver NO_OP = new ContextVariableResolver() {
+
+        };
+
+        default Optional<String> getVariableValue(final CIKey var) {
+            return Optional.empty();
+        }
+
+        default ExecutorBuilder addContextReplacements(final ExecutorBuilder executorBuilder) {
+            return executorBuilder;
         }
     }
 }

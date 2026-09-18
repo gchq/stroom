@@ -166,7 +166,7 @@ public class FeedStoreImpl
                     LOGGER.debug("Volume group '{}' in imported feed {} is not a valid volume group",
                             volumeGroup, docRef);
                     final FeedDoc.Builder builder = feedDoc.copy();
-                    fsVolumeGroupService.getDefaultVolumeGroup()
+                    fsVolumeGroupService.getDefaultVolumeGroupName()
                             .ifPresentOrElse(
                                     builder::volumeGroup,
                                     () -> builder.volumeGroup(null));

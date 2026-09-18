@@ -3,8 +3,8 @@
 eventLogging = "5.0-beta.31_schema-v4.0-beta.3"
 
 # ------------3rd-party------------
-aws = "2.46.7"
-commons-io = "2.19.0"
+aws = "2.54.0"
+commons-io = "2.21.0"
 dropwizard = "5.0.2" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "9.4.2"
 flyway = "12.0.0"
@@ -34,6 +34,8 @@ aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.47.0" }
 aws-s3-transfer-manager = { module = "software.amazon.awssdk:s3-transfer-manager" } # version controlled by AWS BOM
 aws-sqs = { module = "software.amazon.awssdk:sqs" } # version controlled by AWS BOM
 aws-sts = { module = "software.amazon.awssdk:sts" } # version controlled by AWS BOM
+#aws-apache-client = { module = "software.amazon.awssdk:apache-client" } # version controlled by AWS BOM
+aws-apache5-client = { module = "software.amazon.awssdk:apache5-client" } # version controlled by AWS BOM
 bcrypt = { module = "de.svenkubiak:jBCrypt", version = "0.4.3" }
 bouncy-castle = { module = "org.bouncycastle:bcprov-jdk18on", version = "1.78.1" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine" } # version controlled by dropwizard-dependencies
@@ -56,6 +58,7 @@ dropwizard-core = { module = "io.dropwizard:dropwizard-core" }#files("libs/dropw
 dropwizard-jackson = { module = "io.dropwizard:dropwizard-jackson" } # version controlled by dropwizard-dependencies
 dropwizard-jersey = { module = "io.dropwizard:dropwizard-jersey" } # version controlled by dropwizard-dependencies
 dropwizard-jetty = { module = "io.dropwizard:dropwizard-jetty" } #was 1.0.6 now 1.1.0
+dropwizard-json-logging = { module = "io.dropwizard:dropwizard-json-logging" } # version controlled by dropwizard-dependencies
 dropwizard-lifecycle = { module = "io.dropwizard:dropwizard-lifecycle" } # version controlled by dropwizard-dependencies
 dropwizard-metrics-annotation = { module = "io.dropwizard.metrics:metrics-annotation" } # version controlled by dropwizard-dependencies
 dropwizard-metrics-caffeine3 = { module = "io.dropwizard.metrics:metrics-caffeine3" } # version controlled by dropwizard-dependencies
@@ -184,6 +187,7 @@ ws-rs-api = { module = "jakarta.ws.rs:jakarta.ws.rs-api" } # version controlled 
 ws-rs-api-gwt = { module = "javax.ws.rs:javax.ws.rs-api", version = "2.1.1" } # For GWT compilation
 xerces = { module = "xerces:xercesImpl", version = "2.12.2" }
 zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", version = "2026.0" }
+zstd-jni = { module =  "com.github.luben:zstd-jni", version = "1.5.7-8" }
 zxcvbn = { module = "com.nulab-inc:zxcvbn", version = "1.9.0" }
 
 [plugins]
@@ -200,7 +204,7 @@ task-tree = { id = "com.dorongold.task-tree", version = "4.0.1" }
 shadow = { id = "com.gradleup.shadow", version = "9.3.0" }
 
 # Plugin for producing the the Jooq generated code for 'writing' SQL in java.
-jooq = { id = "nu.studer.jooq", version = "8.2.3" }
+jooq = { id = "nu.studer.jooq", version = "10.2.1" }
 
 # Plugin for performing DB migrations
 flyway = { id = "org.flywaydb.flyway", version = "11.9.1" }

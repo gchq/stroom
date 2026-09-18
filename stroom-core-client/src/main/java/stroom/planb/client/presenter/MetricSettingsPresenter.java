@@ -20,10 +20,10 @@ import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.MetricSettingsPresenter.MetricSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
+import stroom.planb.client.view.HttpStoreSettingsView;
 import stroom.planb.client.view.MetricKeySchemaSettingsView;
 import stroom.planb.client.view.MetricValueSchemaSettingsView;
 import stroom.planb.client.view.RetentionSettingsView;
-import stroom.planb.client.view.SnapshotSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.MetricSettings;
 
@@ -78,7 +78,7 @@ public class MetricSettingsPresenter
             View,
             GeneralSettingsView,
             RetentionSettingsView,
-            SnapshotSettingsView,
+            HttpStoreSettingsView,
             MetricKeySchemaSettingsView,
             MetricValueSchemaSettingsView,
             ReadOnlyChangeHandler,

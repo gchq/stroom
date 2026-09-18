@@ -26,7 +26,12 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class SnapshotSettingsWidget extends AbstractSettingsWidget implements SnapshotSettingsView {
+/**
+ * Whether reads come from snapshots pushed to other nodes. Only a store served over HTTP has
+ * snapshots, so this has no place in a trace store — see
+ * {@link stroom.planb.shared.AbstractHttpStoreSettings}.
+ */
+public class SnapshotSettingsWidget extends AbstractSettingsWidget {
 
     private final Widget widget;
 
@@ -37,17 +42,18 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget implements Sn
     @UiField
     CustomCheckBox useSnapshotsForQuery;
 
+    private boolean readOnly;
+
     @Inject
     public SnapshotSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
     @Override
-    public Widget asWidget() {
+    Widget asWidget() {
         return widget;
     }
 
-    @Override
     public SnapshotSettings getSnapshotSettings() {
         return new SnapshotSettings(
                 useSnapshotsForLookup.getValue(),
@@ -55,21 +61,25 @@ public class SnapshotSettingsWidget extends AbstractSettingsWidget implements Sn
                 useSnapshotsForQuery.getValue());
     }
 
-    @Override
     public void setSnapshotSettings(final SnapshotSettings snapshotSettings) {
         if (snapshotSettings != null) {
-            this.useSnapshotsForLookup.setValue(snapshotSettings.isUseSnapshotsForLookup());
-            this.useSnapshotsForGet.setValue(snapshotSettings.isUseSnapshotsForGet());
-            this.useSnapshotsForQuery.setValue(snapshotSettings.isUseSnapshotsForQuery());
+            useSnapshotsForLookup.setValue(snapshotSettings.isUseSnapshotsForLookup());
+            useSnapshotsForGet.setValue(snapshotSettings.isUseSnapshotsForGet());
+            useSnapshotsForQuery.setValue(snapshotSettings.isUseSnapshotsForQuery());
         }
     }
 
-    public void onReadOnly(final boolean readOnly) {
-        useSnapshotsForLookup.setEnabled(!readOnly);
-        useSnapshotsForGet.setEnabled(!readOnly);
-        useSnapshotsForQuery.setEnabled(!readOnly);
+    private void updateStates() {
+        final boolean enabled = !readOnly;
+        useSnapshotsForLookup.setEnabled(enabled);
+        useSnapshotsForGet.setEnabled(enabled);
+        useSnapshotsForQuery.setEnabled(enabled);
     }
 
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        updateStates();
+    }
 
     @UiHandler("useSnapshotsForLookup")
     public void onUseSnapshotsForLookup(final ValueChangeEvent<Boolean> event) {

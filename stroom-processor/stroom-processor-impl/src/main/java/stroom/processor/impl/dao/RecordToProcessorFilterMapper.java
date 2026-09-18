@@ -64,6 +64,7 @@ class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter>
                 .minMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS))
                 .maxMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS))
                 .maxTaskCreationDelay(parseMaxTaskCreationDelay(record.get(PROCESSOR_FILTER.MAX_TASK_CREATION_DELAY)))
+                .parentFilterId(record.get(PROCESSOR_FILTER.PARENT_FILTER_ID))
                 .runAsUser(userRefLookupProvider
                         .get()
                         .getByUuid(record.get(PROCESSOR_FILTER.RUN_AS_USER_UUID), FindUserContext.RUN_AS)

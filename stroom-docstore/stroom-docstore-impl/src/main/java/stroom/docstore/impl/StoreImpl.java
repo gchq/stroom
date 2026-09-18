@@ -702,11 +702,11 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         return updatedDoc;
     }
 
-    @Override
     /**
      * Every document of this type. Filtering to what the user may see is applied by
      * {@code AbstractDocumentStore}, the service layer for this document type.
      */
+    @Override
     public List<DocRef> list() {
         return persistence.list(type);
     }

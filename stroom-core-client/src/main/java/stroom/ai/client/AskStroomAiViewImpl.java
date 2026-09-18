@@ -171,7 +171,7 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 
     @UiHandler("message")
     public void onMessageKeyUp(final KeyUpEvent event) {
-        run.setEnabled(!message.getText().isEmpty());
+        run.setEnabled(sending || !message.getText().isEmpty());
     }
 
     @UiHandler("run")

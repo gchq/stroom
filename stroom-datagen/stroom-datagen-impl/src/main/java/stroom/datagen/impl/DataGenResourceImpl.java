@@ -26,6 +26,10 @@ import stroom.util.shared.EntityServiceException;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+/**
+ * Server side of {@link DataGenResource}. Delegates to the store via {@link DocumentResourceHelper},
+ * which applies the permission checks. {@code @AutoLogged} audits every call.
+ */
 @AutoLogged
 class DataGenResourceImpl implements DataGenResource {
 
@@ -57,6 +61,11 @@ class DataGenResourceImpl implements DataGenResource {
                 .build();
     }
 
+    /**
+     * Guards against a doc being written over a different document, e.g. a PUT to one UUID carrying a
+     * body with another. Note the null-uuid half is belt and braces: {@code AbstractDoc} rejects a
+     * null uuid in its constructor, so no {@link DataGenDoc} can reach here with one.
+     */
     private void checkUuidsMatch(final String uuid, final DataGenDoc doc) {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");

@@ -35,7 +35,7 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public final class RangeStateSettings
-        extends AbstractPlanBSettings {
+        extends AbstractHttpStoreSettings {
 
     @JsonProperty
     private final RangeKeySchema keySchema;
@@ -93,7 +93,7 @@ public final class RangeStateSettings
                '}';
     }
 
-    public static class Builder extends AbstractBuilder<RangeStateSettings, Builder> {
+    public static class Builder extends AbstractHttpBuilder<RangeStateSettings, Builder> {
 
         private RangeKeySchema keySchema;
         private StateValueSchema valueSchema;

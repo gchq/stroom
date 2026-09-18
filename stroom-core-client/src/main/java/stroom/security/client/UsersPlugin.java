@@ -23,7 +23,6 @@ import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUsersScreenEvent;
-import stroom.security.client.presenter.UserAndGroupsPresenter;
 import stroom.security.client.presenter.UsersPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.Preset;

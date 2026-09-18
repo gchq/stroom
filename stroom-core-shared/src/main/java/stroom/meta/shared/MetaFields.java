@@ -63,6 +63,7 @@ public class MetaFields {
 
     public static final QueryField STATUS = QueryField.createText("Status");
     public static final QueryField TYPE = QueryField.createText("Type");
+    public static final QueryField READ_ONLY = QueryField.createBoolean("Read Only");
 
     // Id's
     public static final QueryField ID = QueryField.createId("Id");
@@ -87,6 +88,10 @@ public class MetaFields {
     public static final QueryField FILE_SIZE = QueryField.createLong("File Size");
     public static final QueryField RAW_SIZE = QueryField.createLong("Raw Size");
 
+    public static final QueryField SEGMENTATION_TYPE = QueryField.createText("Segmentation Type");
+    public static final QueryField CHILD_TYPES = QueryField.createText("Child Types");
+    public static final QueryField ZSTD_DICTIONARY_UUID = QueryField.createText("Zstd Dictionary UUID");
+
     // Parent fields.
     public static final QueryField PARENT_ID = QueryField.createId("Parent Id");
     public static final QueryField PARENT_STATUS = QueryField.createText("Parent Status");
@@ -101,6 +106,7 @@ public class MetaFields {
         FIELDS.add(PIPELINE_NAME);
         FIELDS.add(STATUS);
         FIELDS.add(TYPE);
+        FIELDS.add(READ_ONLY);
 
         // Id's
         FIELDS.add(ID);
@@ -129,8 +135,11 @@ public class MetaFields {
         EXTENDED_FIELDS.add(REC_FATAL);
 
         // Sizes
+        EXTENDED_FIELDS.add(CHILD_TYPES);
         EXTENDED_FIELDS.add(FILE_SIZE);
         EXTENDED_FIELDS.add(RAW_SIZE);
+        EXTENDED_FIELDS.add(SEGMENTATION_TYPE);
+        EXTENDED_FIELDS.add(ZSTD_DICTIONARY_UUID);
 
         ALL_FIELDS.addAll(FIELDS);
         ALL_FIELDS.addAll(EXTENDED_FIELDS);

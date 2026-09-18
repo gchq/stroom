@@ -17,6 +17,7 @@
 package stroom.util.io;
 
 import com.google.inject.ImplementedBy;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -36,7 +37,7 @@ public interface PathCreator {
      * Turns an application relative path into an absolute path making use of the home directory location set for the
      * application and performing any other system property replacement that may be needed.
      */
-    Path toAppPath(String pathString);
+    Path toAppPath(@Nullable String pathString);
 
     String replaceUUIDVars(String path);
 

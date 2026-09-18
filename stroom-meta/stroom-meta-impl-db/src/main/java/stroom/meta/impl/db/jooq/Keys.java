@@ -49,6 +49,7 @@ public class Keys {
     public static final UniqueKey<MetaRetentionTrackerRecord> KEY_META_RETENTION_TRACKER_PRIMARY = Internal.createUniqueKey(MetaRetentionTracker.META_RETENTION_TRACKER, DSL.name("KEY_meta_retention_tracker_PRIMARY"), new TableField[] { MetaRetentionTracker.META_RETENTION_TRACKER.RETENTION_RULES_VERSION, MetaRetentionTracker.META_RETENTION_TRACKER.RULE_AGE }, true);
     public static final UniqueKey<MetaTypeRecord> KEY_META_TYPE_NAME = Internal.createUniqueKey(MetaType.META_TYPE, DSL.name("KEY_meta_type_name"), new TableField[] { MetaType.META_TYPE.NAME }, true);
     public static final UniqueKey<MetaTypeRecord> KEY_META_TYPE_PRIMARY = Internal.createUniqueKey(MetaType.META_TYPE, DSL.name("KEY_meta_type_PRIMARY"), new TableField[] { MetaType.META_TYPE.ID }, true);
+    public static final UniqueKey<MetaValRecord> KEY_META_VAL_META_VAL_META_ID_META_KEY_ID = Internal.createUniqueKey(MetaVal.META_VAL, DSL.name("KEY_meta_val_meta_val_meta_id_meta_key_id"), new TableField[] { MetaVal.META_VAL.META_ID, MetaVal.META_VAL.META_KEY_ID }, true);
     public static final UniqueKey<MetaValRecord> KEY_META_VAL_PRIMARY = Internal.createUniqueKey(MetaVal.META_VAL, DSL.name("KEY_meta_val_PRIMARY"), new TableField[] { MetaVal.META_VAL.ID }, true);
 
     // -------------------------------------------------------------------------

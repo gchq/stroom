@@ -16,6 +16,9 @@
 
 package stroom.planb.impl.dao;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 
@@ -24,6 +27,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 public class LmdbWriter implements AutoCloseable {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbWriter.class);
 
     private final Env<ByteBuffer> env;
     private final ReentrantLock dbCommitLock;
@@ -46,6 +51,14 @@ public class LmdbWriter implements AutoCloseable {
         writeTxnLock.lock();
     }
 
+    /**
+     * The current write txn, opened on first request.
+     *
+     * <p>Do not hold the returned txn across a {@link #tryCommit()}, {@link #commit()} or
+     * {@link #abort()} — those close it, and a later use of the stale reference fails with
+     * {@code Txn$NotReadyException}. A loop that commits per item must therefore call this again on
+     * each iteration rather than hoisting it.</p>
+     */
     public Txn<ByteBuffer> getWriteTxn() {
         if (writeTxn == null) {
             writeTxn = env.txnWrite();
@@ -64,8 +77,39 @@ public class LmdbWriter implements AutoCloseable {
         changeCount++;
     }
 
+
     public boolean shouldCommit() {
         return changeCount > 10000;
+    }
+
+    /**
+     * Discards the current txn without running the commit listener. Once a native LMDB operation
+     * has failed, e.g. with MDB_MAP_FULL, the txn is flagged MDB_TXN_ERROR and every subsequent
+     * use of it fails with MDB_BAD_TXN. Committing such a txn therefore throws from the listener's
+     * own put and masks the original cause, so callers must abort instead.
+     *
+     * <p>Every record buffered since the last commit is lost, so the count is logged rather than
+     * discarded silently. The writer stays usable: the next {@link #getWriteTxn()} opens a fresh
+     * txn, so one rejected record does not stop the rest of the stream being written.
+     */
+    public void abort() {
+        dbCommitLock.lock();
+        try {
+            if (changeCount > 0) {
+                LOGGER.error("Discarding {} buffered records after a failed write", changeCount);
+            }
+            if (writeTxn != null) {
+                try {
+                    writeTxn.close();
+                } finally {
+                    writeTxn = null;
+                }
+            }
+
+            changeCount = 0;
+        } finally {
+            dbCommitLock.unlock();
+        }
     }
 
     public void commit() {
@@ -88,23 +132,6 @@ public class LmdbWriter implements AutoCloseable {
         } finally {
             dbCommitLock.unlock();
         }
-    }
-
-    /**
-     * Discard the current write transaction without committing it. {@link #close()} commits whatever is in
-     * the transaction, even when the work that wrote it failed part way through, so writers that must not
-     * publish partial work, e.g. additive merges, call this when that work throws. After an abort the
-     * writer can still be closed normally and a subsequent {@link #getWriteTxn()} starts a new transaction.
-     */
-    public void abort() {
-        if (writeTxn != null) {
-            try {
-                writeTxn.close();
-            } finally {
-                writeTxn = null;
-            }
-        }
-        changeCount = 0;
     }
 
     @Override

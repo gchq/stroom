@@ -16,10 +16,18 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.aws.s3.shared.S3ClientConfigService;
 import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.FsVolumeGroupService;
+import stroom.data.store.api.S3VolumeService;
 import stroom.data.store.api.Store;
+import stroom.data.store.impl.DataVolumeService;
+import stroom.data.store.impl.fs.s3v1.S3ReadOnlyStreamStore;
+import stroom.data.store.impl.fs.s3v1.S3StreamStore;
+import stroom.data.store.impl.fs.s3v2.S3ZstdStreamStore;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.standard.EchoServlet;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;
@@ -33,12 +41,22 @@ public class FsDataStoreModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(Store.class).to(FsStore.class);
-        bind(AttributeMapFactory.class).to(FsStore.class);
+        bind(Store.class).to(StoreImpl.class);
+        bind(AttributeMapFactory.class).to(StoreImpl.class);
         bind(FsVolumeGroupService.class).to(FsVolumeGroupServiceImpl.class);
+        bind(FsVolumeService.class).to(FsVolumeServiceImpl.class);
+        bind(S3VolumeService.class).to(FsVolumeServiceImpl.class);
+        bind(S3ClientConfigService.class).to(FsVolumeServiceImpl.class);
+        bind(DataVolumeService.class).to(DataVolumeServiceImpl.class);
+
+        GuiceUtil.buildMapBinder(binder(), FsVolumeType.class, StreamStore.class)
+                .addBinding(FsVolumeType.STANDARD, FsStreamStore.class)
+                .addBinding(FsVolumeType.S3_V1, S3StreamStore.class)
+                .addBinding(FsVolumeType.S3_V1_READ_ONLY, S3ReadOnlyStreamStore.class)
+                .addBinding(FsVolumeType.S3_V2, S3ZstdStreamStore.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(FsVolumeService.class)
+                .addBinding(FsVolumeServiceImpl.class)
                 .addBinding(FsVolumeGroupServiceImpl.class);
 
         RestResourcesBinder.create(binder())
@@ -52,7 +70,7 @@ public class FsDataStoreModule extends AbstractModule {
                 .bind(EchoServlet.class);
 
         HasSystemInfoBinder.create(binder())
-                .bind(FsVolumeService.class);
+                .bind(FsVolumeServiceImpl.class);
     }
 
     @Override

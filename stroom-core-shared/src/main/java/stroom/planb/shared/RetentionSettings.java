@@ -30,6 +30,7 @@ import java.util.Objects;
 @JsonPropertyOrder({
         "enabled",
         "duration",
+        "checkInterval",
         "useStateTime"
 })
 @JsonInclude(Include.NON_NULL)
@@ -48,10 +49,41 @@ public class RetentionSettings extends DurationSetting {
     @JsonCreator
     public RetentionSettings(@JsonProperty("enabled") final Boolean enabled,
                              @JsonProperty("duration") final SimpleDuration duration,
+                             @JsonProperty("checkInterval") final SimpleDuration checkInterval,
                              @JsonProperty("useStateTime") final Boolean useStateTime) {
         super(Objects.requireNonNullElse(enabled, DEFAULT_ENABLED),
-                Objects.requireNonNullElse(duration, DEFAULT_DURATION));
+                Objects.requireNonNullElse(duration, DEFAULT_DURATION),
+                checkInterval);
         this.useStateTime = Objects.requireNonNullElse(useStateTime, false);
+    }
+
+    /**
+     * Validates the check frequency against the retention period, for both the client (which blocks
+     * the save) and the server (which backstops the import and REST paths).
+     *
+     * <p>A record is deleted on the first retention run after it passes the retention period, and
+     * runs are at least {@code checkInterval} apart, so data can survive
+     * {@code retention + checkInterval}. Requiring {@code checkInterval < retention} keeps that
+     * under twice the configured period.
+     *
+     * @return a user-facing message, or null if the settings are valid or retention is off
+     */
+    public static String checkIntervalError(final RetentionSettings retention) {
+        if (retention == null || !retention.isEnabled()) {
+            return null;
+        }
+        final SimpleDuration duration = retention.getDuration();
+        final SimpleDuration checkInterval = retention.getCheckInterval();
+        if (duration == null || checkInterval == null) {
+            return null;
+        }
+        final long durationMs = duration.getApproxMillis();
+        if (durationMs > 0 && checkInterval.getApproxMillis() >= durationMs) {
+            return "The retention check frequency (" + checkInterval.toLongString() + ") must be "
+                   + "shorter than the retention period (" + duration.toLongString() + "), "
+                   + "otherwise data could be kept for far longer than the retention period.";
+        }
+        return null;
     }
 
     public boolean useStateTime() {
@@ -87,6 +119,7 @@ public class RetentionSettings extends DurationSetting {
         return "RetentionSettings{" +
                "enabled=" + enabled +
                ", duration=" + duration +
+               ", checkInterval=" + checkInterval +
                ", useStateTime=" + useStateTime +
                '}';
     }
@@ -95,6 +128,7 @@ public class RetentionSettings extends DurationSetting {
 
         private boolean enabled;
         private SimpleDuration duration;
+        private SimpleDuration checkInterval;
         private Boolean useStateTime;
 
         public Builder() {
@@ -104,6 +138,7 @@ public class RetentionSettings extends DurationSetting {
             if (retentionSettings != null) {
                 this.enabled = retentionSettings.enabled;
                 this.duration = retentionSettings.duration;
+                this.checkInterval = retentionSettings.checkInterval;
                 this.useStateTime = retentionSettings.useStateTime;
             }
         }
@@ -118,13 +153,18 @@ public class RetentionSettings extends DurationSetting {
             return this;
         }
 
+        public Builder checkInterval(final SimpleDuration checkInterval) {
+            this.checkInterval = checkInterval;
+            return this;
+        }
+
         public Builder useStateTime(final Boolean useStateTime) {
             this.useStateTime = useStateTime;
             return this;
         }
 
         public RetentionSettings build() {
-            return new RetentionSettings(enabled, duration, useStateTime);
+            return new RetentionSettings(enabled, duration, checkInterval, useStateTime);
         }
     }
 }

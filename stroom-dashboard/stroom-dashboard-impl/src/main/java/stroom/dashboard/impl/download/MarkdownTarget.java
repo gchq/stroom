@@ -48,6 +48,20 @@ public class MarkdownTarget implements SearchResultWriter.Target {
         writer.close();
     }
 
+    /**
+     * Writes a section of prose after the table. Nothing is written if the text is null or blank.
+     */
+    public void writeSection(final String heading, final String text) throws IOException {
+        if (text == null || text.isBlank()) {
+            return;
+        }
+        writer.write("\n## ");
+        writer.write(heading);
+        writer.write("\n\n");
+        writer.write(text);
+        writer.write("\n");
+    }
+
     @Override
     public void startTable(final String tableName) {
         // Do nothing

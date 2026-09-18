@@ -36,9 +36,10 @@ import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
- * A bit of a special store that only ever holds one doc with a hard coded name.
+ * A bit of a special store that only ever holds one doc with a hard-coded name.
  */
 @Singleton
 public class ContentTemplateStoreImpl
@@ -70,13 +71,17 @@ public class ContentTemplateStoreImpl
 
     @Override
     public ContentTemplates getOrCreate() {
-        // The user will never have any doc perms on the ContentTemplates as it is not an explorer doc, thus
-        // access it via the proc user.
-        return securityContext.asProcessingUserResult(() -> {
-            final DocRef docRef = lazyDocRef.getValueWithLocks();
-            Objects.requireNonNull(docRef);
-            return readDocument(docRef);
-        });
+        final DocRef docRef = lazyDocRef.getValueWithLocks();
+        Objects.requireNonNull(docRef);
+        return readDocument(docRef);
+    }
+
+    @Override
+    public Optional<ContentTemplates> get() {
+        // If we are just trying to apply content templates, we don't need to create them
+        // if they don't exist
+        return Optional.ofNullable(getSingletonDoc())
+                .map(this::readDocument);
     }
 
     private DocRef doGetOrCreate() {

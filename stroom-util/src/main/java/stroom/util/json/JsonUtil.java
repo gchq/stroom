@@ -34,6 +34,7 @@ import tools.jackson.databind.BeanProperty;
 import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JavaType;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.ValueDeserializer;
 import tools.jackson.databind.cfg.EnumFeature;
@@ -45,6 +46,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -133,8 +135,7 @@ public final class JsonUtil {
         try {
             return getMapper().readValue(content, valueType);
         } catch (final JacksonException e) {
-            throw new RuntimeException(String.format("Error deserialising object %s %s",
-                    content, e.getMessage()), e);
+            throw new JsonDeserialisationException(content, valueType, e);
         }
     }
 
@@ -144,8 +145,7 @@ public final class JsonUtil {
         try {
             return getMapper().readValue(content, valueType);
         } catch (final JacksonException e) {
-            throw new RuntimeException(String.format("Error deserialising object %s %s",
-                    EncodingUtil.asString(content), e.getMessage()), e);
+            throw new JsonDeserialisationException(EncodingUtil.asString(content), valueType, e);
         }
     }
 
@@ -338,6 +338,28 @@ public final class JsonUtil {
     }
 
     /**
+     * @param jsonNode     The node that is the parent of the required property.
+     * @param propertyName The name of the property to get
+     * @return The value of the required property or null if the property does not exist.
+     */
+    public static String getNodeAsString(final JsonNode jsonNode, final String propertyName) {
+        Objects.requireNonNull(jsonNode, "jsonNode must not be null");
+        Objects.requireNonNull(propertyName, "propertyName must not be null");
+        return NullSafe.get(jsonNode.get(propertyName), JsonNode::asString);
+    }
+
+    /**
+     * @param jsonNode     The node that is the parent of the required property.
+     * @param propertyName The name of the property to get
+     * @return The value of the required property or null if the property does not exist.
+     */
+    public static Long getNodeAsLong(final JsonNode jsonNode, final String propertyName) {
+        Objects.requireNonNull(jsonNode, "jsonNode must not be null");
+        Objects.requireNonNull(propertyName, "propertyName must not be null");
+        return NullSafe.get(jsonNode.get(propertyName), JsonNode::asLong);
+    }
+
+    /**
      * This module puts errors in the app log if we try to deser primitive values that are null.
      * Previously in Jackson v2, this was disabled. Enabling it makes sense, but for backward compatibility
      * we allow it to use default values.
@@ -480,6 +502,39 @@ public final class JsonUtil {
                          "error in the description.",
                     typeName, defaultValue, jsonNodeName, targetClassName, enclosingClassName, propertyName);
             return defaultValue;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class JsonDeserialisationException extends RuntimeException {
+
+        private final String json;
+        private final Class<?> clazz;
+
+        public JsonDeserialisationException(final String message,
+                                            final String json,
+                                            final Class<?> clazz,
+                                            final Exception e) {
+            super(message, e);
+            this.json = json;
+            this.clazz = clazz;
+        }
+
+        public JsonDeserialisationException(final String json, final Class<?> clazz, final Exception e) {
+            super(e.getMessage());
+            this.json = json;
+            this.clazz = clazz;
+        }
+
+        public String getJson() {
+            return json;
+        }
+
+        public Class<?> getClazz() {
+            return clazz;
         }
     }
 }

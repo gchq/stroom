@@ -36,7 +36,7 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public final class TemporalStateSettings
-        extends AbstractPlanBSettings
+        extends AbstractHttpStoreSettings
         implements HasCondenseSettings {
 
     @JsonProperty
@@ -110,7 +110,7 @@ public final class TemporalStateSettings
                '}';
     }
 
-    public static class Builder extends AbstractBuilder<TemporalStateSettings, Builder> {
+    public static class Builder extends AbstractHttpBuilder<TemporalStateSettings, Builder> {
 
         private DurationSetting condense;
         private TemporalStateKeySchema keySchema;

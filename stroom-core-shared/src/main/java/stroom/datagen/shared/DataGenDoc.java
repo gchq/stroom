@@ -30,6 +30,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+/**
+ * A data generator: a fixed block of text ({@link #getTemplate()}) that is written into a feed
+ * ({@link #getFeed()}) as a Raw Events stream every time its schedule fires. Useful for
+ * generating test or demonstration data without an external sender.
+ * <p>
+ * The schedule itself is not held here - it lives in an {@code ExecutionSchedule} keyed on this
+ * doc, managed from the Execution tab of the editor.
+ * </p>
+ * <p>
+ * Both the template and the feed are nullable, because a doc is created before it is configured
+ * and must be saveable in that state. Anything acting on a {@link DataGenDoc} therefore has to
+ * cope with a half-configured one; see {@code ScheduledDataGenExecutable}.
+ * </p>
+ */
 @Description(
         """
         Defines a data generator which can be used to send data into a Stroom Feed.
@@ -78,10 +92,21 @@ public class DataGenDoc extends AbstractDoc {
         return description;
     }
 
+    /**
+     * @return The literal data written into the destination feed, or null if not yet configured.
+     */
     public String getTemplate() {
         return template;
     }
 
+    /**
+     * @return The feed the generated data is written to, or null if not yet configured.
+     * <p>
+     * Only the type and UUID of the returned {@link DocRef} are dependable. Its name is a
+     * decoration captured when the feed was picked in the UI, so it goes stale if the feed is
+     * later renamed - resolve the name from the feed itself rather than trusting this copy.
+     * </p>
+     */
     public DocRef getFeed() {
         return feed;
     }

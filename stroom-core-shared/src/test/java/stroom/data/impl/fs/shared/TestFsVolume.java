@@ -17,6 +17,7 @@
 package stroom.data.impl.fs.shared;
 
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.util.json.JsonUtil;
 
@@ -36,6 +37,9 @@ public class TestFsVolume {
                 "path":"sdfg",
                 "status":"ACTIVE",
                 "byteLimit":233887098470,
+                "volumeGroup":{
+                    "name":"grp4"
+                },
                 "volumeState":{
                     "id":12,
                     "version":6,
@@ -52,7 +56,7 @@ public class TestFsVolume {
      */
     @Test
     public void testJsonBindings() {
-        final var fsVolume = JsonUtil.readValue(TEST_JSON, FsVolume.class);
+        final FsVolume fsVolume = JsonUtil.readValue(TEST_JSON, FsVolume.class);
         Assertions.assertThat(fsVolume)
                 .isNotNull();
         Assertions.assertThat(fsVolume.getVolumeState())
@@ -111,7 +115,14 @@ public class TestFsVolume {
                 free,
                 total,
                 System.currentTimeMillis());
-        final FsVolume fsVolume = FsVolume.builder().byteLimit(limit).volumeState(fsVolumeState).build();
+
+        final FsVolume fsVolume = FsVolume.builder()
+                .byteLimit(limit)
+                .volumeState(fsVolumeState)
+                .volumeGroup(FsVolumeGroup.builder()
+                        .name("grp4")
+                        .build())
+                .build();
 
         Assertions.assertThat(fsVolume.getCapacityInfo().isFull())
                 .isEqualTo(expectedIsFull);

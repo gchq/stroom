@@ -50,7 +50,7 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
         pollFrequency = DEFAULT_POLL_FREQUENCY;
     }
 
-    @SuppressWarnings({"unused", "checkstyle:LineLength"})
+    @SuppressWarnings("unused")
     @JsonCreator
     public SqsConnectorConfig(@JsonProperty("awsRegionName") final String awsRegionName,
                               @JsonProperty("awsProfileName") final String awsProfileName,
@@ -113,7 +113,7 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
         }
 
         public Builder awsProfileName(final String awsProfileName) {
-            this.queueName = awsProfileName;
+            this.awsProfileName = awsProfileName;
             return this;
         }
 

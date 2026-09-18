@@ -35,6 +35,8 @@ import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -42,9 +44,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -114,7 +118,6 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
                          final InputStream inputStream,
                          final Consumer<Long> progressHandler) throws IOException {
         final long bytesWritten;
-        LOGGER.debug(() -> "addEntry() - " + entryName);
 
         final StroomZipEntry entry = stroomZipEntries.addFile(entryName);
         final String baseName = entry.getBaseName();
@@ -123,9 +126,13 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
         // We don't want to aggregate reference feeds.
         final boolean singleEntry = feedProperties.isReference(currentFeedName);
 
-        // If the base name changes then reset and we will treat this as a new layer.
-        final boolean requiresNewLayer = layer.hasType(stroomZipFileType) || (lastBaseName != null &&
-                                                                              !lastBaseName.equals(baseName));
+        // If the base name changes then reset, and we will treat this as a new layer.
+        final boolean requiresNewLayer = layer.hasType(stroomZipFileType) ||
+                                         (lastBaseName != null && !lastBaseName.equals(baseName));
+        LOGGER.debug(() -> LogUtil.message(
+                "addEntry() - entryName: {}, stroomZipFileType: {}, singleEntry: {}, requiresNewLayer: {}",
+                entryName, stroomZipFileType, singleEntry, requiresNewLayer));
+
         if (requiresNewLayer) {
             reset();
             if (singleEntry) {
@@ -242,12 +249,12 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     }
 
     void error() {
-        targetMap.values().forEach(store::deleteTarget);
+        targetMap.values().forEach(Target::logicallyDelete);
         targetMap.clear();
     }
 
     public void closeDelete() {
-        targetMap.values().forEach(store::deleteTarget);
+        targetMap.values().forEach(Target::logicallyDelete);
         targetMap.clear();
     }
 
@@ -281,17 +288,13 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
 
     private OutputStreamProvider getOutputStreamProvider(final String feedName, final String typeName) {
         // Check to see if we need to move to the next output and do so if necessary.
-        if (currentOutputStreamProvider == null) {
-            // Get a new output stream provider for the new layer.
-            currentOutputStreamProvider = getTarget(feedName, typeName).next();
-        }
+        currentOutputStreamProvider = Objects.requireNonNullElseGet(currentOutputStreamProvider, () ->
+                getTarget(feedName, typeName).next());
         return currentOutputStreamProvider;
     }
 
     private Target getTarget(final String feedName, final String typeName) {
         return targetMap.computeIfAbsent(feedName, k -> {
-            LOGGER.debug(() -> "getTarget() - open stream for " + feedName);
-
             // Get the effective time if one has been provided.
             final Long effectiveMs = StreamFactory.getReferenceEffectiveTime(getCurrentAttributeMap(), true);
 
@@ -304,6 +307,15 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
             final String volumeGroupName = volumeGroupNameProvider
                     .getVolumeGroupName(feedName, typeName, null);
             final Target streamTarget = store.openTarget(metaProperties, volumeGroupName);
+
+            LOGGER.debug(() -> LogUtil.message(
+                    "getTarget() - open stream {} for feedName: {}, typeName: {}, effectiveMs: {}, volumeGroupName: {}",
+                    NullSafe.get(streamTarget.getMeta(), Meta::getId),
+                    feedName,
+                    typeName,
+                    effectiveMs,
+                    volumeGroupName));
+
             streamSet.add(streamTarget.getMeta());
             return streamTarget;
         });
@@ -315,7 +327,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
 
     private static class Layer {
 
-        private final Set<StroomZipFileType> types = new HashSet<>();
+        private final Set<StroomZipFileType> types = EnumSet.noneOf(StroomZipFileType.class);
 
         boolean hasType(final StroomZipFileType type) {
             return types.contains(type);

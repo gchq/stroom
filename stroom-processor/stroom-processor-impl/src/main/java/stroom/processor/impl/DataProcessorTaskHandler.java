@@ -60,6 +60,7 @@ public class DataProcessorTaskHandler {
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
+    private final ProcessorTaskHeartbeat processorTaskHeartbeat;
 
     @Inject
     DataProcessorTaskHandler(final Map<ProcessorType, Provider<ProcessorTaskExecutor>> executorProviders,
@@ -69,7 +70,8 @@ public class DataProcessorTaskHandler {
                              final MetaService metaService,
                              final NodeInfo nodeInfo,
                              final SecurityContext securityContext,
-                             final TaskContextFactory taskContextFactory) {
+                             final TaskContextFactory taskContextFactory,
+                             final ProcessorTaskHeartbeat processorTaskHeartbeat) {
         this.executorProviders = executorProviders;
         this.processorFilterCache = processorFilterCache;
         this.processorTaskDao = processorTaskDao;
@@ -78,9 +80,20 @@ public class DataProcessorTaskHandler {
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
+        this.processorTaskHeartbeat = processorTaskHeartbeat;
     }
 
     public ProcessorResult exec(final ProcessorTask task) {
+        return exec(task, false);
+    }
+
+    /**
+     * @param alreadyClaimed True if this node took the task straight to PROCESSING when it claimed
+     *                       it (gh-5699 worker node claiming), so there is no queued task to
+     *                       transition here and no version check to lose. False when the task came
+     *                       from the master's queue and still has to be moved to PROCESSING.
+     */
+    public ProcessorResult exec(final ProcessorTask task, final boolean alreadyClaimed) {
         // Perform processing as the filter owner.
         final UserRef runAsUser = getFilterRunAs(task.getProcessorFilter());
         return securityContext.asUserResult(runAsUser, () -> securityContext.useAsReadResult(() -> {
@@ -88,7 +101,7 @@ public class DataProcessorTaskHandler {
             return taskContextFactory.contextResult(
                     "Data Processor",
                     TerminateHandlerFactory.NOOP_FACTORY,
-                    taskContext -> exec(taskContext, task)).get();
+                    taskContext -> exec(taskContext, task, alreadyClaimed)).get();
         }));
     }
 
@@ -100,7 +113,9 @@ public class DataProcessorTaskHandler {
         return filter.getRunAsUser();
     }
 
-    private ProcessorResult exec(final TaskContext taskContext, final ProcessorTask task) {
+    private ProcessorResult exec(final TaskContext taskContext,
+                                 final ProcessorTask task,
+                                 final boolean alreadyClaimed) {
         ProcessorTask processorTask = task;
 
         boolean complete = false;
@@ -145,10 +160,18 @@ public class DataProcessorTaskHandler {
                 }
 
             } else {
-                // Change the task status.... and save
-                processorTask = processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(),
-                        TaskStatus.PROCESSING, startTime, null);
+                if (!alreadyClaimed) {
+                    // Change the task status.... and save
+                    processorTask = processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(),
+                            TaskStatus.PROCESSING, startTime, null);
+                }
                 if (processorTask != null) {
+                    // gh-5699 Heartbeat while we hold this task in PROCESSING; the stroom task
+                    // id lets self-fencing terminate this work if the heartbeat cannot renew. A
+                    // claimed task is already registered, without an id because it had not
+                    // started; registering again is what supplies the id.
+                    processorTaskHeartbeat.register(
+                            processorTask.getId(), processorFilter.getId(), taskContext.getTaskId());
                     // Avoid having to do another fetch
                     processorTask = processorTask.copy().processorFilter(processorFilter).build();
 
@@ -187,19 +210,27 @@ public class DataProcessorTaskHandler {
                 LOGGER.error(e::getMessage, e);
             }
         } finally {
-            // Null processorTask implies the task was (logically)? deleted before we completed so no point in
-            // changing status
-            if (processorTask != null) {
-                if (complete) {
-                    processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
-                            startTime, System.currentTimeMillis());
-                } else {
-                    processorTaskDao.changeTaskStatus(processorTask,
-                            nodeInfo.getThisNodeName(),
-                            TaskStatus.FAILED,
-                            startTime,
-                            System.currentTimeMillis());
+            try {
+                // Null processorTask implies the task was (logically)? deleted before we completed so no point in
+                // changing status
+                if (processorTask != null) {
+                    if (complete) {
+                        processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(),
+                                TaskStatus.COMPLETE,
+                                startTime, System.currentTimeMillis());
+                    } else {
+                        processorTaskDao.changeTaskStatus(processorTask,
+                                nodeInfo.getThisNodeName(),
+                                TaskStatus.FAILED,
+                                startTime,
+                                System.currentTimeMillis());
+                    }
                 }
+            } finally {
+                // Unconditional so the registry cannot leak a task and heartbeat it forever,
+                // even if the terminal status write above throws. A no-op if we never
+                // registered (the task was never moved to PROCESSING by us).
+                processorTaskHeartbeat.deregister(task.getId());
             }
         }
 

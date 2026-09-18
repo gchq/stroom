@@ -288,35 +288,39 @@ public final class LogUtil {
         if (value == null || total == null) {
             return null;
         } else {
-            if (value instanceof Duration) {
-                return withPercentage(value,
-                        ((Duration) value).toMillis(),
-                        ((Duration) total).toMillis());
-            } else if (value instanceof final DurationAdder durationAdder) {
-                return withPercentage(value,
-                        durationAdder.toMillis(),
-                        ((DurationAdder) total).toMillis());
-            } else if (value instanceof final DurationTimer durationTimer) {
-                return withPercentage(value,
-                        durationTimer.get().toMillis(),
-                        ((DurationTimer) total).get().toMillis());
-            } else if (value instanceof Number) {
-                final double valNum = ((Number) value).doubleValue();
-                final double totalNum = ((Number) total).doubleValue();
-                if (totalNum == 0) {
-                    return originalValue + " (undefined%)";
-                } else {
+            switch (value) {
+                case final Duration duration -> {
+                    return withPercentage(value,
+                            duration.toMillis(),
+                            ((Duration) total).toMillis());
+                }
+                case final DurationAdder durationAdder -> {
+                    return withPercentage(value,
+                            durationAdder.toMillis(),
+                            ((DurationAdder) total).toMillis());
+                }
+                case final DurationTimer durationTimer -> {
+                    return withPercentage(value,
+                            durationTimer.get().toMillis(),
+                            ((DurationTimer) total).get().toMillis());
+                }
+                case final Number number -> {
+                    final double valNum = number.doubleValue();
+                    final double totalNum = ((Number) total).doubleValue();
+                    if (totalNum == 0) {
+                        return originalValue + " (undefined%)";
+                    } else {
 //                    final int pct = (int) (valNum / totalNum * 100);
 
-                    final BigDecimal pct = BigDecimal.valueOf(valNum / totalNum * 100)
-                            .stripTrailingZeros()
-                            .round(new MathContext(3, RoundingMode.HALF_UP));
-                    return originalValue + " (" + pct.toPlainString() + "%)";
+                        final BigDecimal pct = BigDecimal.valueOf(valNum / totalNum * 100)
+                                .stripTrailingZeros()
+                                .round(new MathContext(3, RoundingMode.HALF_UP));
+                        return originalValue + " (" + pct.toPlainString() + "%)";
+                    }
                 }
-            } else {
-                throw new IllegalArgumentException("Type "
-                                                   + value.getClass().getSimpleName()
-                                                   + " not supported");
+                default -> throw new IllegalArgumentException("Type "
+                                                              + value.getClass().getSimpleName()
+                                                              + " not supported");
             }
         }
     }
@@ -532,10 +536,20 @@ public final class LogUtil {
                 : null;
     }
 
+    /**
+     * Null-safe way to get the class simple name of an object.
+     *
+     * @return Class simple name or null if obj is null.
+     */
     public static String getSimpleClassName(final Object obj) {
         return NullSafe.get(obj, Object::getClass, Class::getSimpleName);
     }
 
+    /**
+     * Null-safe way to get the class name of an object.
+     *
+     * @return Class name or null if obj is null.
+     */
     public static String getClassName(final Object obj) {
         return NullSafe.get(obj, Object::getClass, Class::getName);
     }
@@ -546,7 +560,7 @@ public final class LogUtil {
      *
      * @param sampleSize The number of items in the collection to output,
      *                   taken in iteration order.
-     * @return null if collection is null, else something like '[X, Y, Z]'
+     * @return null if collection is null, else something like '[X, Y, Z, ...]'
      */
     public static <T> String getSample(final Collection<T> collection,
                                        final int sampleSize) {
@@ -560,7 +574,7 @@ public final class LogUtil {
      * @param sampleSize       The number of items in the collection to output,
      *                         taken in iteration order.
      * @param toStringFunction The function to use to convert each item to a string.
-     * @return null if collection is null, else something like '[X, Y, Z]'
+     * @return null if collection is null, else something like '[X, Y, Z, ...]'
      */
     public static <T> String getSample(final Collection<T> collection,
                                        final int sampleSize,
@@ -575,7 +589,7 @@ public final class LogUtil {
                         toStringFunction,
                         Objects::toString);
                 final int size = collection.size();
-                final String str = NullSafe.stream(collection)
+                final String str = collection.stream()
                         .limit(sampleSize)
                         .map(func)
                         .collect(Collectors.joining(", "));

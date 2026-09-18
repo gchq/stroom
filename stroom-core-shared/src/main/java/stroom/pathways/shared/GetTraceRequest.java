@@ -37,14 +37,24 @@ public class GetTraceRequest {
     private final String traceId;
     @JsonProperty
     private final SimpleDuration temporalOrderingTolerance;
+    /**
+     * The trace's root-span start time in epoch milliseconds, if known. Used to
+     * locate the archive shard bucket (labelled by start time) for a trace that
+     * has been purged from the live shard. May be {@code null}, in which case the
+     * server falls back to scanning all archive buckets for the trace's shard.
+     */
+    @JsonProperty
+    private final Long startTimeMs;
 
     @JsonCreator
     public GetTraceRequest(@JsonProperty("dataSourceRef") final DocRef dataSourceRef,
                            @JsonProperty("traceId") final String traceId,
-                           @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance) {
+                           @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance,
+                           @JsonProperty("startTimeMs") final Long startTimeMs) {
         this.dataSourceRef = dataSourceRef;
         this.traceId = traceId;
         this.temporalOrderingTolerance = temporalOrderingTolerance;
+        this.startTimeMs = startTimeMs;
     }
 
     public DocRef getDataSourceRef() {
@@ -59,6 +69,10 @@ public class GetTraceRequest {
         return temporalOrderingTolerance;
     }
 
+    public Long getStartTimeMs() {
+        return startTimeMs;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -67,26 +81,25 @@ public class GetTraceRequest {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o)) {
-            return false;
-        }
         final GetTraceRequest that = (GetTraceRequest) o;
         return Objects.equals(dataSourceRef, that.dataSourceRef) &&
                Objects.equals(traceId, that.traceId) &&
-               Objects.equals(temporalOrderingTolerance, that.temporalOrderingTolerance);
+               Objects.equals(temporalOrderingTolerance, that.temporalOrderingTolerance) &&
+               Objects.equals(startTimeMs, that.startTimeMs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), dataSourceRef, traceId, temporalOrderingTolerance);
+        return Objects.hash(dataSourceRef, traceId, temporalOrderingTolerance, startTimeMs);
     }
 
     @Override
     public String toString() {
-        return "FindTraceCriteria{" +
+        return "GetTraceRequest{" +
                "dataSourceRef=" + dataSourceRef +
                ", traceId='" + traceId + '\'' +
                ", temporalOrderingTolerance='" + temporalOrderingTolerance + '\'' +
+               ", startTimeMs=" + startTimeMs +
                '}';
     }
 }

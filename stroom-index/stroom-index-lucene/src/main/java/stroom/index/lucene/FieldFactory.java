@@ -110,8 +110,10 @@ public class FieldFactory {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
-            case BOOLEAN -> // TODO : We are indexing boolean as String, not sure this is right.
-                    fields = create(luceneIndexField, value.toString());
+            // TODO : We are indexing boolean as String, not sure this is right.
+            case BOOLEAN -> { // Brace to keep CheckStyle happy
+                fields = create(luceneIndexField, value.toString());
+            }
             case INTEGER -> {
                 try {
                     fields = createInt(luceneIndexField, value.toInteger());

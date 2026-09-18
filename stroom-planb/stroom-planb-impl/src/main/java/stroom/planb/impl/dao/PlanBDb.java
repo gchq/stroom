@@ -27,16 +27,37 @@ import stroom.planb.impl.dao.temporalrangestate.TemporalRangeStateDb;
 import stroom.planb.impl.dao.temporalstate.TemporalStateDb;
 import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 
 import java.nio.file.Path;
 
 public class PlanBDb {
 
-    public static Db<?, ?> open(final PlanBDoc doc,
+    /** Opens a store with its secondary indexes. See the six-arg overload to open without them. */
+    public static Db<?, ?> open(final PlanBDocument doc,
                                 final Path targetPath,
                                 final ByteBuffers byteBuffers,
                                 final ByteBufferFactory byteBufferFactory,
                                 final boolean readOnly) {
+        return open(doc, targetPath, byteBuffers, byteBufferFactory, readOnly, true);
+    }
+
+    /**
+     * @param withSecondaryIndexes whether to open the store's secondary indexes — those only sorted or
+     *                             filtered queries read. Pass {@code false} for an env that is only written
+     *                             and merged, to avoid maintaining them. A store type with no secondary
+     *                             indexes ignores it.
+     *                             <p><b>Must be consistent for every open of a given env.</b> Asking a
+     *                             read-only env for a DBI it does not contain throws, so an env written
+     *                             without its indexes cannot later be opened read-only with them. Opening
+     *                             with {@code false} is always safe.
+     */
+    public static Db<?, ?> open(final PlanBDocument doc,
+                                final Path targetPath,
+                                final ByteBuffers byteBuffers,
+                                final ByteBufferFactory byteBufferFactory,
+                                final boolean readOnly,
+                                final boolean withSecondaryIndexes) {
         switch (doc.getStateType()) {
             case STATE -> {
                 return StateDb.create(
@@ -93,7 +114,8 @@ public class PlanBDb {
                         byteBuffers,
                         byteBufferFactory,
                         doc,
-                        readOnly);
+                        readOnly,
+                        withSecondaryIndexes);
             }
 
             default -> throw new RuntimeException("Unexpected Plan B store type: " + doc.getStateType());

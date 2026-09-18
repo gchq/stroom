@@ -53,7 +53,6 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.UnauthenticatedUserIdentity;
 import stroom.receive.content.shared.ContentTemplate;
-import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
@@ -71,9 +70,10 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserType;
+import stroom.util.shared.string.CIKey;
 import stroom.util.shared.string.CaseType;
 import stroom.util.string.TemplateUtil;
-import stroom.util.string.TemplateUtil.Templator;
+import stroom.util.string.TemplateUtil.Template;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -119,10 +119,10 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private final ProcessorFilterService processorFilterService;
     private final PipelineService pipelineService;
     private final CachedValue<ExpressionMatcher, Set<String>> cachedExpressionMatcher;
-    private final CachedValue<Templator, String> cachedDestinationPathTemplator;
-    private final CachedValue<Templator, String> cachedDestinationSubPathTemplator;
-    private final CachedValue<Templator, String> cachedGroupTemplator;
-    private final CachedValue<Templator, String> cachedAdditionalGroupTemplator;
+    private final CachedValue<Template, String> cachedDestinationPathTemplator;
+    private final CachedValue<Template, String> cachedDestinationSubPathTemplator;
+    private final CachedValue<Template, String> cachedGroupTemplator;
+    private final CachedValue<Template, String> cachedAdditionalGroupTemplator;
     private final DocFinder docFinder;
 
     @Inject
@@ -337,8 +337,9 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                         final ContentTemplate contentTemplate) {
 
         final AutoContentCreationConfig autoContentCreationConfig = autoContentCreationConfigProvider.get();
-        final Templator pathTemplator = cachedDestinationPathTemplator.getValue();
-        final String destinationPath = pathTemplator.generateWith(attributeMap);
+        final Template pathTemplator = cachedDestinationPathTemplator.getValue();
+        final Map<CIKey, String> caseInsenseAttrMap = CIKey.mapOf(attributeMap);
+        final String destinationPath = pathTemplator.executeWith(caseInsenseAttrMap);
         final DocPath baseDocPath = DocPath.fromPathString(destinationPath);
 
         final ExplorerNode destFolder = ensureExplorerNode(baseDocPath);
@@ -348,10 +349,10 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         final Optional<ExplorerNode> optDestSubFolder;
         if (contentTemplate.isCopyElementDependencies()) {
             // If a sub dir has been configured then ensure it exists
-            final Templator subPathTemplator = cachedDestinationSubPathTemplator.getValue();
+            final Template subPathTemplator = cachedDestinationSubPathTemplator.getValue();
             if (!subPathTemplator.isBlank()) {
                 final DocPath subDirDocPath = baseDocPath.append(DocPath.fromPathString(
-                        subPathTemplator.generateWith(attributeMap)));
+                        subPathTemplator.executeWith(caseInsenseAttrMap)));
                 optDestSubFolder = Optional.ofNullable(
                         ensureExplorerNode(subDirDocPath));
             } else {
@@ -378,8 +379,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         }
 
         // Set up the group
-        final Templator groupTemplator = cachedGroupTemplator.getValue();
-        final User group = ensureGroup(groupTemplator, attributeMap, userRef);
+        final Template groupTemplator = cachedGroupTemplator.getValue();
+        final User group = ensureGroup(groupTemplator, caseInsenseAttrMap, userRef);
         final String groupParentGroupName = autoContentCreationConfig.getGroupParentGroupName();
         if (NullSafe.isNonBlankString(groupParentGroupName)) {
             // Ensure the common parent group for the main group
@@ -390,9 +391,9 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         // the same as the main group
         final Optional<User> optAdditionalGroup;
         if (contentTemplate.isCopyElementDependencies()) {
-            final Templator additionalGroupTemplator = cachedAdditionalGroupTemplator.getValue();
+            final Template additionalGroupTemplator = cachedAdditionalGroupTemplator.getValue();
             optAdditionalGroup = Optional.ofNullable(
-                    ensureGroup(additionalGroupTemplator, attributeMap, userRef));
+                    ensureGroup(additionalGroupTemplator, caseInsenseAttrMap, userRef));
             optAdditionalGroup.ifPresent(additionalGroup -> {
                 final String additionalGroupParentGroupName =
                         autoContentCreationConfig.getAdditionalGroupParentGroupName();
@@ -563,47 +564,50 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
     private Optional<ContentTemplate> getMatchingTemplate(final AttributeMap attributeMap) {
 
-        final ContentTemplates contentTemplates = contentTemplateStore.getOrCreate();
-        final List<ContentTemplate> activeTemplates = contentTemplates.getActiveTemplates();
-        ContentTemplate matchingTemplate = null;
-        Map<String, Object> normalisedAttributes = null;
-        if (NullSafe.hasItems(activeTemplates)) {
-            for (final ContentTemplate contentTemplate : activeTemplates) {
-                final ExpressionOperator expression = contentTemplate.getExpression();
-                if (expression == null) {
-                    matchingTemplate = contentTemplate;
-                    break;
-                } else {
-                    if (normalisedAttributes == null) {
-                        // Normalise the keys to lower case
-                        normalisedAttributes = attributeMap.asMap(true)
-                                .entrySet()
-                                .stream()
-                                .collect(Collectors.toMap(
-                                        entry1 -> normaliseField(entry1.getKey()),
-                                        entry -> NullSafe.get(
-                                                entry.getValue(),
-                                                val -> (Object) val)));
-                    }
+        return contentTemplateStore.get()
+                .map(contentTemplates -> {
+                    final List<ContentTemplate> activeTemplates = contentTemplates.getActiveTemplates();
+                    ContentTemplate matchingTemplate = null;
+                    Map<String, Object> normalisedAttributes = null;
+                    if (NullSafe.hasItems(activeTemplates)) {
+                        for (final ContentTemplate contentTemplate : activeTemplates) {
+                            final ExpressionOperator expression = contentTemplate.getExpression();
+                            if (expression == null) {
+                                matchingTemplate = contentTemplate;
+                                break;
+                            } else {
+                                if (normalisedAttributes == null) {
+                                    // Normalise the keys to lower case
+                                    normalisedAttributes = attributeMap.asMap(true)
+                                            .entrySet()
+                                            .stream()
+                                            .collect(Collectors.toMap(
+                                                    entry1 -> normaliseField(entry1.getKey()),
+                                                    entry -> NullSafe.get(
+                                                            entry.getValue(),
+                                                            val -> (Object) val)));
+                                }
 
-                    final boolean isMatch = cachedExpressionMatcher.getValue()
-                            .match(normalisedAttributes, expression);
-                    if (isMatch) {
-                        matchingTemplate = contentTemplate;
-                        break;
+                                final boolean isMatch = cachedExpressionMatcher.getValue()
+                                        .match(normalisedAttributes, expression);
+                                if (isMatch) {
+                                    matchingTemplate = contentTemplate;
+                                    break;
+                                }
+                            }
+                        }
                     }
-                }
-            }
-        }
-        if (LOGGER.isInfoEnabled()) {
-            if (matchingTemplate != null) {
-                LOGGER.info("Data matched content template {} '{}', attributeMap: {}",
-                        matchingTemplate.getTemplateNumber(), matchingTemplate.getName(), attributeMap);
-            } else {
-                LOGGER.info("Data didn't match any active content templates, attributeMap: {}", attributeMap);
-            }
-        }
-        return Optional.ofNullable(matchingTemplate);
+                    if (LOGGER.isInfoEnabled()) {
+                        if (matchingTemplate != null) {
+                            LOGGER.info("Data matched content template {} '{}', attributeMap: {}",
+                                    matchingTemplate.getTemplateNumber(), matchingTemplate.getName(), attributeMap);
+                        } else {
+                            LOGGER.info("Data didn't match any active content templates, attributeMap: {}",
+                                    attributeMap);
+                        }
+                    }
+                    return matchingTemplate;
+                });
     }
 
     private static String normaliseField(final String field) {
@@ -838,12 +842,12 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                && COPYABLE_DOC_TYPES.contains(type);
     }
 
-    private User ensureGroup(final Templator groupNameTemplator,
-                             final AttributeMap attributeMap,
+    private User ensureGroup(final Template groupNameTemplator,
+                             final Map<CIKey, String> caseInsenseAttrMap,
                              final UserRef... groupMembers) {
-        final String groupName = groupNameTemplator.generateWith(attributeMap);
-        LOGGER.debug("ensureGroup() - groupNameTemplator: {}, groupName: {}, groupMembers: {}, attributeMap: {}",
-                groupNameTemplator, groupName, groupMembers, attributeMap);
+        final String groupName = groupNameTemplator.executeWith(caseInsenseAttrMap);
+        LOGGER.debug("ensureGroup() - groupNameTemplator: {}, groupName: {}, groupMembers: {}, caseInsenseAttrMap: {}",
+                groupNameTemplator, groupName, groupMembers, caseInsenseAttrMap);
         return ensureGroup(groupName, groupMembers);
     }
 

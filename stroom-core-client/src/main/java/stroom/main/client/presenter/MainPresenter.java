@@ -16,7 +16,7 @@
 
 package stroom.main.client.presenter;
 
-import stroom.ai.client.AskStroomAiPresenter.DockLocation;
+import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.CorePresenter;
@@ -202,7 +202,7 @@ public class MainPresenter
         // Tell all plugins to add new menu items.
         BeforeRevealMenubarEvent.fire(this, menuItems);
         final List<Item> items = menuItems.getMenuItems(MenuKeys.MAIN_MENU);
-        if (items != null && items.size() > 0) {
+        if (items != null && !items.isEmpty()) {
             ShowMenuEvent
                     .builder()
                     .items(items)

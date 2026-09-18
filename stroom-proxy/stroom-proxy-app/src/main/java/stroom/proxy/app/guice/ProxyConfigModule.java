@@ -16,6 +16,7 @@
 
 package stroom.proxy.app.guice;
 
+import stroom.aws.s3.shared.S3ClientConfigService;
 import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyConfigMonitor;
 import stroom.util.config.ConfigLocation;
@@ -58,5 +59,7 @@ public class ProxyConfigModule extends AbstractModule {
         // get hold of it via guice
         bind(ConfigLocation.class)
                 .toInstance(new ConfigLocation(proxyConfigHolder.getConfigFile()));
+
+        bind(S3ClientConfigService.class).to(ProxyS3ClientConfigService.class);
     }
 }

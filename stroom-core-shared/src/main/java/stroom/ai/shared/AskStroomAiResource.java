@@ -57,7 +57,7 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Get the default config to use for asking questions",
             operationId = "getDefaultConfig")
-    AskStroomAIConfig getDefaultConfig();
+    AskStroomAiConfig getDefaultConfig();
 
     @POST
     @Path("/setDefaultAskStroomAIConfig")
@@ -65,7 +65,7 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             summary = "Set the default Stroom AI config to use for asking questions",
             operationId = "setDefaultAskStroomAIConfig")
     Boolean setDefaultAskStroomAIConfig(
-            @Parameter(description = "config", required = true) AskStroomAIConfig config);
+            @Parameter(description = "config", required = true) AskStroomAiConfig config);
 
     @POST
     @Path("/createChat")

@@ -182,7 +182,7 @@ public class ByteStreamDecoder {
 
                 if (LOGGER.isTraceEnabled()) {
                     LOGGER.trace("coderResult: {}, byteCnt: {}, inPos: {}, inLimit: {}, " +
-                                    "inBytes: [{}], outPos:{}, outLimit: {}, outputBuffer: [{}]",
+                                 "inBytes: [{}], outPos:{}, outLimit: {}, outputBuffer: [{}]",
                             coderResult,
                             byteCnt,
                             inputBuffer.position(),
@@ -253,7 +253,6 @@ public class ByteStreamDecoder {
     }
 
     private DecodedChar getAllMalformedBytes(final int bytesInBufferCount) {
-        int goodCharByteOffset = -1;
 
         // As we need to go looking for some good chars, we need more bytes to work with
         largeInputBuffer.clear();
@@ -276,6 +275,7 @@ public class ByteStreamDecoder {
         // to cut off the first n bytes, then decode the remainder (replacing malformed bytes
         // with a replacement char) to find a valid char. We need to do this so we can establish how
         // big the block of bad bytes is.
+        int goodCharByteOffset = -1;
         for (int i = 1; i < byteCount; i++) {
             final ByteBuffer slicedInputBuffer = largeInputBuffer.slice(i, byteCount - i);
 //            LOGGER.trace("slicedInputBuffer: {}", ByteBufferUtils.byteBufferInfo(slicedInputBuffer));
@@ -373,11 +373,11 @@ public class ByteStreamDecoder {
                     DecodedChar.UNKNOWN_CHAR_REPLACEMENT);
 
             return "Unable to decode a "
-                    + charset.displayName()
-                    + " character starting at byte offset " + ModelStringUtil.formatCsv(offset)
-                    + ". Showing " + LogUtil.namedCount("byte", malformedBytes.length) + " at this offset: " +
-                    "[" + ByteArrayUtils.byteArrayToHex(malformedBytes) + "] as hex, " +
-                    "[" + printableStr + "] as characters.";
+                   + charset.displayName()
+                   + " character starting at byte offset " + ModelStringUtil.formatCsv(offset)
+                   + ". Showing " + LogUtil.namedCount("byte", malformedBytes.length) + " at this offset: " +
+                   "[" + ByteArrayUtils.byteArrayToHex(malformedBytes) + "] as hex, " +
+                   "[" + printableStr + "] as characters.";
         }
 
         public byte[] getMalformedBytes() {
@@ -507,14 +507,14 @@ public class ByteStreamDecoder {
         @Override
         public String toString() {
             return "DecodedChar{" +
-                    "str='" + str + '\'' +
-                    ", byteCount=" + byteCount +
-                    ", charCount=" + getCharCount() +
-                    ", isLineBreak=" + isLineBreak() +
-                    ", isNonVisibleCharacter=" + isNonVisibleCharacter() +
-                    ", isByteOrderMark=" + isByteOrderMark() +
-                    ", isUnknown=" + isUnknown() +
-                    '}';
+                   "str='" + str + '\'' +
+                   ", byteCount=" + byteCount +
+                   ", charCount=" + getCharCount() +
+                   ", isLineBreak=" + isLineBreak() +
+                   ", isNonVisibleCharacter=" + isNonVisibleCharacter() +
+                   ", isByteOrderMark=" + isByteOrderMark() +
+                   ", isUnknown=" + isUnknown() +
+                   '}';
         }
     }
 

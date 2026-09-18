@@ -57,31 +57,31 @@ public class BadTextXMLFilterReader extends TransformReader {
 
     private static boolean isNameStartChar(final int cp) {
         return (cp >= 'A' && cp <= 'Z')
-                || (cp >= 'a' && cp <= 'z')
-                || cp == ':'
-                || cp == '_'
-                || (cp >= 0xc0 && cp <= 0xd6)
-                || (cp >= 0xd8 && cp <= 0xf6)
-                || (cp >= 0xf8 && cp <= 0x2ff)
-                || (cp >= 0x370 && cp <= 0x37d)
-                || (cp >= 0x37f && cp <= 0x1fff)
-                || (cp >= 0x200c && cp <= 0x200d)
-                || (cp >= 0x2070 && cp <= 0x218f)
-                || (cp >= 0x2c00 && cp <= 0x2fef)
-                || (cp >= 0x3001 && cp <= 0xD7ff)
-                || (cp >= 0xf900 && cp <= 0xfdcf)
-                || (cp >= 0xfdf0 && cp <= 0xfffd)
-                || (cp >= 0x10000 && cp <= 0xeffff);
+               || (cp >= 'a' && cp <= 'z')
+               || cp == ':'
+               || cp == '_'
+               || (cp >= 0xc0 && cp <= 0xd6)
+               || (cp >= 0xd8 && cp <= 0xf6)
+               || (cp >= 0xf8 && cp <= 0x2ff)
+               || (cp >= 0x370 && cp <= 0x37d)
+               || (cp >= 0x37f && cp <= 0x1fff)
+               || (cp >= 0x200c && cp <= 0x200d)
+               || (cp >= 0x2070 && cp <= 0x218f)
+               || (cp >= 0x2c00 && cp <= 0x2fef)
+               || (cp >= 0x3001 && cp <= 0xD7ff)
+               || (cp >= 0xf900 && cp <= 0xfdcf)
+               || (cp >= 0xfdf0 && cp <= 0xfffd)
+               || (cp >= 0x10000 && cp <= 0xeffff);
     }
 
     private static boolean isNameChar(final int cp) {
         return isNameStartChar(cp)
-                || cp == '-'
-                || cp == '.'
-                || Character.isDigit(cp)
-                || cp == 0x87
-                || (cp >= 0x300 && cp <= 0x36f)
-                || (cp >= 0x203f && cp <= 0x2040);
+               || cp == '-'
+               || cp == '.'
+               || Character.isDigit(cp)
+               || cp == 0x87
+               || (cp >= 0x300 && cp <= 0x36f)
+               || (cp >= 0x203f && cp <= 0x2040);
     }
 
     @Override
@@ -184,7 +184,6 @@ public class BadTextXMLFilterReader extends TransformReader {
 
     @SuppressWarnings({"checkstyle:missingswitchdefault", "checkstyle:fallthrough", "localvariablename"})
     private boolean readFromBadXML() throws IOException {
-        int entityNameidx = -1;
         m_leafBeginText = m_leafEndText = -1;
         String m_entityName = null;
         m_cbuf.rewind();
@@ -192,6 +191,7 @@ public class BadTextXMLFilterReader extends TransformReader {
         if (m_cachedCP == -1) {
             m_cachedCP = readCP();
         }
+        int entityNameidx = -1;
         while (m_cachedCP != -1) {
             switch (m_xmlState) {
                 case Initial:
@@ -230,7 +230,10 @@ public class BadTextXMLFilterReader extends TransformReader {
                     if (isNameChar(m_cachedCP)) {
                         break;
                     }
-                    m_entityName = String.copyValueOf(m_cbuf.array(), entityNameidx, m_cbuf.position() - entityNameidx);
+                    m_entityName = String.copyValueOf(
+                            m_cbuf.array(),
+                            entityNameidx,
+                            m_cbuf.position() - entityNameidx);
                     m_xmlState = XMLstate.InTagTail;
                     // Intended to fall through...
                 case InTagTail:

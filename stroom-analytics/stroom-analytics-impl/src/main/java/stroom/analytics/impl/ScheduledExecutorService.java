@@ -457,7 +457,6 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
         workQueue.join();
     }
 
-
     /**
      * Determines whether a schedule should execute and performs execution if required.
      *

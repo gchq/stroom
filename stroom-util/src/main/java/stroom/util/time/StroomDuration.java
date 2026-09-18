@@ -169,6 +169,10 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
         return duration.toMillis();
     }
 
+    public long toSeconds() {
+        return duration.toSeconds();
+    }
+
     public long toNanos() {
         return duration.toNanos();
     }

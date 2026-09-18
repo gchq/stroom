@@ -25,6 +25,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.planb.client.presenter.PlanBPresenter;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.PlanBDocResource;
 import stroom.security.client.api.ClientSecurityContext;
@@ -102,5 +103,14 @@ public class PlanBPlugin extends DocumentPlugin<PlanBDoc> {
     @Override
     protected DocRef getDocRef(final PlanBDoc document) {
         return DocRefUtil.create(document);
+    }
+
+    /**
+     * Block the save and display a warning if the settings contradict each other, so the user is
+     * told in the browser rather than by a server error.
+     */
+    @Override
+    protected String getPreSaveError(final PlanBDoc doc) {
+        return AbstractPlanBSettings.validationError(doc.getSettings());
     }
 }

@@ -147,6 +147,8 @@ public class RuleEmailTemplatingService {
         NullSafe.consume(detection.getDetectionUniqueId(), val -> context.put("detectionUniqueId", val));
         NullSafe.consume(detection.getDetectionRevision(), val -> context.put("detectionRevision", val));
         NullSafe.consume(detection.getDefunct(), val -> context.put("defunct", val));
+        NullSafe.consume(detection.getLevel(), val -> context.put("level", val));
+        NullSafe.consume(detection.getStatus(), val -> context.put("status", val));
 
         NullSafe.consume(detection.getValues(), values -> {
             if (!values.isEmpty()) {

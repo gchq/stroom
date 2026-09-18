@@ -37,9 +37,9 @@ import java.util.function.Supplier;
 
 public class SimplePathCreator implements PathCreator {
 
-    private static final String STROOM_TEMP = "stroom.temp";
-    private static final String STROOM_HOME = "stroom.home";
-    private static final String[] NON_ENV_VARS = {
+    public static final String STROOM_TEMP = "stroom.temp";
+    public static final String STROOM_HOME = "stroom.home";
+    public static final String[] NON_ENV_VARS = {
             "feed",
             "pipeline",
             "sourceId",
@@ -117,12 +117,7 @@ public class SimplePathCreator implements PathCreator {
 
     @Override
     public Path toAppPath(String pathString) {
-        if (pathString == null) {
-            pathString = "";
-        } else {
-            pathString = pathString.trim();
-        }
-
+        pathString = NullSafe.trim(pathString);
         pathString = replaceSystemProperties(pathString);
         return toAbsolutePath(pathString);
     }

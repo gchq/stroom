@@ -18,11 +18,11 @@ package stroom.proxy.app.handler;
 
 import stroom.data.zip.StroomZipFileType;
 import stroom.proxy.app.DataDirProvider;
-import stroom.proxy.repo.FeedKey;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FeedKey;
 import stroom.util.zip.ZipUtil;
 
 import org.junit.jupiter.api.Disabled;

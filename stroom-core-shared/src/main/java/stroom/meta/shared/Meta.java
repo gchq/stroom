@@ -50,6 +50,8 @@ public class Meta implements SimpleMeta {
     private long createMs;
     @JsonProperty
     private Long effectiveMs;
+    @JsonProperty
+    private boolean readOnly;
 
     public Meta() {
     }
@@ -66,7 +68,8 @@ public class Meta implements SimpleMeta {
                 @JsonProperty("status") final Status status,
                 @JsonProperty("statusMs") final Long statusMs,
                 @JsonProperty("createMs") final long createMs,
-                @JsonProperty("effectiveMs") final Long effectiveMs) {
+                @JsonProperty("effectiveMs") final Long effectiveMs,
+                @JsonProperty("readOnly") final boolean readOnly) {
         this.id = id;
         this.feedName = feedName;
         this.typeName = typeName;
@@ -79,6 +82,7 @@ public class Meta implements SimpleMeta {
         this.statusMs = statusMs;
         this.createMs = createMs;
         this.effectiveMs = effectiveMs;
+        this.readOnly = readOnly;
     }
 
     public long getId() {
@@ -177,6 +181,14 @@ public class Meta implements SimpleMeta {
         this.effectiveMs = effectiveMs;
     }
 
+    /// @return True if the data for this meta is hosted outside stroom and is
+    /// not under stroom's control, i.e. is read-only from stroom's perspective.
+    /// Being read-only does **NOT** mean the meta database record (i.e. the stream)
+    /// cannot be deleted in stroom.
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -225,6 +237,7 @@ public class Meta implements SimpleMeta {
         private Long statusMs;
         private long createMs;
         private Long effectiveMs;
+        private boolean readOnly = false;
 
         private Builder() {
         }
@@ -242,6 +255,7 @@ public class Meta implements SimpleMeta {
             this.statusMs = meta.statusMs;
             this.createMs = meta.createMs;
             this.effectiveMs = meta.effectiveMs;
+            this.readOnly = meta.readOnly;
         }
 
         public Builder id(final long id) {
@@ -304,6 +318,13 @@ public class Meta implements SimpleMeta {
             return this;
         }
 
+        /// True if the data for this meta is hosted outside stroom and is
+        /// not under stroom's control, i.e. is read-only from stroom's perspective.
+        public Builder readOnly(final boolean readOnly) {
+            this.readOnly = readOnly;
+            return this;
+        }
+
         public Meta build() {
             return new Meta(
                     id,
@@ -317,8 +338,8 @@ public class Meta implements SimpleMeta {
                     status,
                     statusMs,
                     createMs,
-                    effectiveMs
-            );
+                    effectiveMs,
+                    readOnly);
         }
     }
 }

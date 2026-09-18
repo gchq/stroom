@@ -63,8 +63,8 @@ public class MergeStatusDb {
     /**
      * Start merging the source identified by sourceUuid, resuming from its recorded status if there is one.
      *
-     * @param sourceUuid The instance UUID of the source being merged, or null for a legacy source created
-     *                   before instance UUIDs, for which no status can be tracked.
+     * @param sourceUuid The instance UUID of the source being merged, or null for a source that carries
+     *                   none, for which no status can be tracked.
      */
     public MergeTracker startMerge(final LmdbWriter writer, final String sourceUuid) {
         if (sourceUuid == null) {
@@ -193,7 +193,7 @@ public class MergeStatusDb {
          */
         public EntryConsumer wrap(final EntryConsumer delegate) {
             if (sourceUuid == null) {
-                // Legacy source with no instance UUID: no progress tracking is possible. The merge remains
+                // Source carries no instance UUID, so no progress tracking is possible. The merge remains
                 // a single transaction, aborted on failure, so it is still exact, just unbounded in size.
                 return delegate;
             }

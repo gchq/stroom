@@ -829,30 +829,30 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             final AbstractAnnotationChange change = request.getChange();
 
             switch (change) {
-                case final ChangeTitle changeTitle ->
-                        changeAnnotationTitle(changeTitle, currentUser, annotationId, now);
-                case final ChangeSubject changeSubject ->
-                        changeAnnotationSubject(changeSubject, currentUser, annotationId, now);
+                case final ChangeTitle changeTitle -> changeAnnotationTitle(
+                        changeTitle, currentUser, annotationId, now);
+                case final ChangeSubject changeSubject -> changeAnnotationSubject(
+                        changeSubject, currentUser, annotationId, now);
                 case final AddTag addTag -> addTag(addTag, currentUser, annotationId, now);
                 case final RemoveTag removeTag -> removeTag(removeTag, currentUser, annotationId, now);
                 case final SetTag setTag -> setTag(setTag, currentUser, annotationId, now);
-                case final ChangeAssignedTo changeAssignedTo ->
-                        changeAssignedTo(changeAssignedTo, currentUser, annotationId, now);
+                case final ChangeAssignedTo changeAssignedTo -> changeAssignedTo(
+                        changeAssignedTo, currentUser, annotationId, now);
                 case final ChangeComment changeComment -> changeComment(changeComment, currentUser, annotationId, now);
-                case final ChangeDescription changeDescription ->
-                        changeDescription(changeDescription, currentUser, annotationId, now);
-                case final ChangeRetentionPeriod changeRetentionPeriod ->
-                        changeRetentionPeriod(changeRetentionPeriod, currentUser, annotationId, now);
-                case final LinkEvents linkEvents ->
-                        linkEvents(userUuid, now, annotationIdentity, linkEvents.getEvents());
-                case final UnlinkEvents unlinkEvents ->
-                        unlinkEvents(userUuid, now, annotationIdentity, unlinkEvents.getEvents());
-                case final LinkAnnotations linkAnnotations ->
-                        linkAnnotations(userUuid, now, annotationId, linkAnnotations.getAnnotations());
-                case final UnlinkAnnotations unlinkAnnotations ->
-                        unlinkAnnotations(userUuid, now, annotationId, unlinkAnnotations.getAnnotations());
-                case final AddAnnotationTable addAnnotationTable ->
-                        addAnnotationTable(userUuid, now, annotationId, addAnnotationTable);
+                case final ChangeDescription changeDescription -> changeDescription(
+                        changeDescription, currentUser, annotationId, now);
+                case final ChangeRetentionPeriod changeRetentionPeriod -> changeRetentionPeriod(
+                        changeRetentionPeriod, currentUser, annotationId, now);
+                case final LinkEvents linkEvents -> linkEvents(
+                        userUuid, now, annotationIdentity, linkEvents.getEvents());
+                case final UnlinkEvents unlinkEvents -> unlinkEvents(
+                        userUuid, now, annotationIdentity, unlinkEvents.getEvents());
+                case final LinkAnnotations linkAnnotations -> linkAnnotations(
+                        userUuid, now, annotationId, linkAnnotations.getAnnotations());
+                case final UnlinkAnnotations unlinkAnnotations -> unlinkAnnotations(
+                        userUuid, now, annotationId, unlinkAnnotations.getAnnotations());
+                case final AddAnnotationTable addAnnotationTable -> addAnnotationTable(
+                        userUuid, now, annotationId, addAnnotationTable);
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);

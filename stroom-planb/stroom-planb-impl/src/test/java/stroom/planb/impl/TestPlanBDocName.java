@@ -16,6 +16,10 @@
 
 package stroom.planb.impl;
 
+import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.SharedFileStoreSettings;
+import stroom.planb.shared.TraceSettings;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Set;

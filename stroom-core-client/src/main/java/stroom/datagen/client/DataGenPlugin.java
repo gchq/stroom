@@ -38,10 +38,14 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 import javax.inject.Singleton;
 
+/**
+ * Registers the data generator document type with the client, so it can be opened from the explorer,
+ * and loads and saves it over {@link DataGenResource}.
+ */
 @Singleton
 public class DataGenPlugin extends DocumentPlugin<DataGenDoc> {
 
-    private static final DataGenResource ANALYTIC_RULE_RESOURCE = GWT.create(DataGenResource.class);
+    private static final DataGenResource DATA_GEN_RESOURCE = GWT.create(DataGenResource.class);
 
     private final Provider<DataGenPresenter> editorProvider;
     private final RestFactory restFactory;
@@ -69,7 +73,7 @@ public class DataGenPlugin extends DocumentPlugin<DataGenDoc> {
                      final RestErrorHandler errorHandler,
                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
-                .create(ANALYTIC_RULE_RESOURCE)
+                .create(DATA_GEN_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
@@ -85,7 +89,7 @@ public class DataGenPlugin extends DocumentPlugin<DataGenDoc> {
                      final TaskMonitorFactory taskMonitorFactory) {
 
         restFactory
-                .create(ANALYTIC_RULE_RESOURCE)
+                .create(DATA_GEN_RESOURCE)
                 .method(resource ->
                         resource.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)

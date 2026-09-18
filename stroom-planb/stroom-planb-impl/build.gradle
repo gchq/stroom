@@ -19,6 +19,8 @@ ext.moduleName = 'stroom.planb.impl'
 dependencies {
     implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
+    implementation project(':stroom-cache:stroom-cache-impl')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
@@ -27,6 +29,7 @@ dependencies {
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')

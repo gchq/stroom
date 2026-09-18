@@ -23,7 +23,7 @@ import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportSettings;
-import stroom.util.shared.StringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.widget.form.client.CustomFileUpload;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -97,7 +97,7 @@ public class ImportConfigPresenter
                     currentHidePopupRequestEvent = e;
                     if (e.isOk()) {
                         final String filename = getView().getFileUpload().getFilename();
-                        if (!StringUtil.isBlank(filename)) {
+                        if (NullSafe.isNonBlankString(filename)) {
                             getView().getFileUpload().submit();
                         } else {
                             error("You must select a file to import.");

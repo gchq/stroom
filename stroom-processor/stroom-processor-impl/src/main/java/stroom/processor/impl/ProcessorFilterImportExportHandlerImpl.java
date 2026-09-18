@@ -177,7 +177,7 @@ public class ProcessorFilterImportExportHandlerImpl
                 if (!ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode())) {
                     if (NullSafe.test(existingProcessorFilter, ProcessorFilter::isDeleted)) {
                         LOGGER.debug("importDocument() - processorFilter needs restoring");
-                        existingProcessorFilter = processorFilterService.restore(docRef, true);
+                        existingProcessorFilter = processorFilterService.restore(docRef);
                     }
 
                     final boolean enableFilters = importSettings.isEnableFilters();

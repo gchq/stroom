@@ -609,9 +609,12 @@ public class Functions {
             }
 
             final UiConfig uiConfig = uiConfigProvider.get();
-            if (uiConfig.getHelpUrl() != null && uiConfig.getHelpSubPathStroomQueryLanguage() != null) {
+            // The expressions sub path, not the Stroom Query Language one - a function's help lives on a
+            // page per function category under the expressions section. The Stroom Query Language page is
+            // where the language's keywords are documented, which is what Structures links to.
+            if (uiConfig.getHelpUrl() != null && uiConfig.getHelpSubPathExpressions() != null) {
                 addHelpLinkToInfo(signature, uiConfig.getHelpUrl() +
-                                             uiConfig.getHelpSubPathStroomQueryLanguage(), detail);
+                                             uiConfig.getHelpSubPathExpressions(), detail);
             }
         }
         return detail.build();

@@ -64,5 +64,10 @@ public interface ProcessorFilterService
 
     Optional<String> getPipelineName(ProcessorType processorType, String uuid);
 
-    ProcessorFilter restore(DocRef processorFilterDocRef, final boolean resetTracker);
+    /**
+     * Bring a logically deleted filter back into use. The doc ref keeps resolving, but to a new
+     * filter that replaces the deleted one rather than to the deleted one revived - see
+     * {@code ProcessorFilterDao.restoreProcessorFilter}.
+     */
+    ProcessorFilter restore(DocRef processorFilterDocRef);
 }

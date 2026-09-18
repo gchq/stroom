@@ -22,7 +22,6 @@ import stroom.db.util.TermHandlerFactory;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.query.api.ExpressionItem;
-import stroom.query.api.ExpressionTerm;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.shared.NullSafe;
 
@@ -76,11 +75,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
                         }
                     });
 
-            final MetaTermHandler handler = new MetaTermHandler(
-                    createKeyField(id),
-                    id,
-                    termHandler);
-            expressionMapper.addHandler(dataSourceField, handler);
+            expressionMapper.addHandler(dataSourceField, termHandler);
         }
     }
 
@@ -97,11 +92,13 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
             final Field<Long> metaIdField,
             final Set<Integer> usedValKeys) {
 
-        for (final Integer id : usedValKeys) {
-            final MetaVal metaVal = getAliasedMetaValTable(id);
+        for (final Integer keyId : usedValKeys) {
+            final MetaVal metaVal = getAliasedMetaValTable(keyId);
 
+            // Constrain the join to the one key the alias is for, so it contributes at most one row.
             query = query.leftOuterJoin(metaVal)
-                    .on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
+                    .on(metaIdField.eq(metaVal.META_ID)
+                            .and(metaVal.META_KEY_ID.eq(keyId))); //Join on meta_val
         }
         return query;
     }
@@ -119,11 +116,13 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
             final Field<Long> metaIdField,
             final Set<Integer> usedValKeys) {
 
-        for (final Integer id : usedValKeys) {
-            final MetaVal metaVal = getAliasedMetaValTable(id);
+        for (final Integer keyId : usedValKeys) {
+            final MetaVal metaVal = getAliasedMetaValTable(keyId);
 
+            // Constrain the join to the one key the alias is for, so it contributes at most one row.
             fromPart = fromPart.leftOuterJoin(metaVal)
-                    .on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
+                    .on(metaIdField.eq(metaVal.META_ID)
+                            .and(metaVal.META_KEY_ID.eq(keyId))); //Join on meta_val
         }
         return fromPart;
     }
@@ -138,36 +137,8 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
                 .field(MetaVal.META_VAL.VAL);
     }
 
-    private Field<Integer> createKeyField(final int valKeyId) {
-        return getAliasedMetaValTable(valKeyId)
-                .field(MetaVal.META_VAL.META_KEY_ID);
-    }
-
-    private Field<Long> createMetaIdField(final int valKeyId) {
-        return getAliasedMetaValTable(valKeyId)
-                .field(MetaVal.META_VAL.META_ID);
-    }
-
     @Override
     public Condition apply(final ExpressionItem expressionItem) {
         return expressionMapper.apply(expressionItem);
-    }
-
-    static class MetaTermHandler implements Function<ExpressionTerm, Condition> {
-
-        private final Field<Integer> keyField;
-        private final Integer id;
-        private final TermHandler<Long> valueHandler;
-
-        MetaTermHandler(final Field<Integer> keyField, final Integer id, final TermHandler<Long> valueHandler) {
-            this.keyField = keyField;
-            this.valueHandler = valueHandler;
-            this.id = id;
-        }
-
-        @Override
-        public Condition apply(final ExpressionTerm term) {
-            return keyField.equal(id).and(valueHandler.apply(term));
-        }
     }
 }

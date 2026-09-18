@@ -70,9 +70,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                      @JsonProperty("duplicateNotificationConfig")
                          final DuplicateNotificationConfig duplicateNotificationConfig,
                      @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences,
-                     @JsonProperty("reportSettings") final ReportSettings reportSettings,
-                     @JsonProperty("level") final String level,
-                     @JsonProperty("status") final String status) {
+                     @JsonProperty("reportSettings") final ReportSettings reportSettings) {
         super(TYPE, uuid,
                 name,
                 version,
@@ -93,9 +91,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 rememberNotifications,
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig,
-                queryTablePreferences,
-                level,
-                status);
+                queryTablePreferences);
 
         this.reportSettings = Objects.requireNonNullElseGet(reportSettings,
                 () -> ReportSettings.builder().build());
@@ -165,16 +161,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
             return self();
         }
 
-        public Builder level(final String level) {
-            this.level = level;
-            return self();
-        }
-
-        public Builder status(final String status) {
-            this.status = status;
-            return self();
-        }
-
         @Override
         protected Builder self() {
             return this;
@@ -204,9 +190,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                     false,
                     duplicateNotificationConfig,
                     queryTablePreferences,
-                    reportSettings,
-                    level,
-                    status);
+                    reportSettings);
         }
     }
 }

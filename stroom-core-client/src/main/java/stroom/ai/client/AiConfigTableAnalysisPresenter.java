@@ -17,7 +17,7 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AiConfigTableAnalysisPresenter.AiConfigTableAnalysisView;
-import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.util.shared.NullSafe;
 
@@ -39,7 +39,7 @@ public class AiConfigTableAnalysisPresenter
     // ---------------------------------------------------------------------
 
     public void read(final TableAnalysisConfig config,
-                     final AskStroomAIConfig askConfig) {
+                     final AskStroomAiConfig askConfig) {
         getView().setMaxTotalRows(NullSafe.getOrElse(
                 config,
                 TableAnalysisConfig::getMaxTotalRows,
@@ -66,8 +66,8 @@ public class AiConfigTableAnalysisPresenter
                 TableAnalysisConfig.DEFAULT_MULTI_SUMMARY_MERGE_PROMPT));
         getView().setAttachmentDownloadTimeoutMs(NullSafe.getOrElse(
                 askConfig,
-                AskStroomAIConfig::getAttachmentDownloadTimeoutMs,
-                AskStroomAIConfig.DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS));
+                AskStroomAiConfig::getAttachmentDownloadTimeoutMs,
+                AskStroomAiConfig.DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS));
     }
 
     public TableAnalysisConfig write() {

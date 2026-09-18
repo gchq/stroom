@@ -118,7 +118,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef())
                 .copy()
                 .description("Original Description")
-                .volumeGroup(fsVolumeGroupService.getDefaultVolumeGroup().orElseThrow())
+                .volumeGroup(fsVolumeGroupService.getDefaultVolumeGroupName().orElseThrow())
                 .build();
         feedStore.writeDocument(eventFeed);
 
@@ -212,7 +212,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef())
                 .copy()
                 .description("Original Description")
-                .volumeGroup(fsVolumeGroupService.getDefaultVolumeGroup().orElseThrow())
+                .volumeGroup(fsVolumeGroupService.getDefaultVolumeGroupName().orElseThrow())
                 .build();
         feedStore.writeDocument(eventFeed);
 

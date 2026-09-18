@@ -27,6 +27,7 @@ import stroom.test.common.MockMetrics;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.concurrent.UniqueId.NodeType;
 import stroom.util.metrics.Metrics;
+import stroom.util.shared.FeedKey;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -45,7 +46,7 @@ public class TestEventStore {
     void test() throws IOException {
         final Path dir = Files.createTempDirectory("stroom");
         final Path eventDir = dir.resolve("event");
-        final FeedKey feedKey = new FeedKey("Test", "Raw Events");
+        final FeedKey feedKey = FeedKey.of("Test", "Raw Events");
         final EventStoreConfig eventStoreConfig = new EventStoreConfig();
         final ReceiverFactory receiveStreamHandlers = Mockito.mock(ReceiverFactory.class);
         final DataDirProvider dataDirProvider = () -> dir;
@@ -90,7 +91,7 @@ public class TestEventStore {
         final Path dir = Files.createTempDirectory("stroom");
         final Path eventDir = dir.resolve("event");
         Files.createDirectories(eventDir);
-        final FeedKey feedKey = new FeedKey("Test", "Raw Events");
+        final FeedKey feedKey = FeedKey.of("Test", "Raw Events");
 
         // A file left over from a previous run, which the constructor forwards.
         Files.writeString(EventStoreFile.createNew(eventDir, feedKey, Instant.now()), "some events");
@@ -104,16 +105,17 @@ public class TestEventStore {
                         receiveSawProcessingUser.set(inProcessingUser.get()));
 
         final CommonSecurityContext securityContext = Mockito.mock(CommonSecurityContext.class);
-        Mockito.doAnswer(invocation -> {
-            final Runnable runnable = invocation.getArgument(0);
-            inProcessingUser.set(true);
-            try {
-                runnable.run();
-            } finally {
-                inProcessingUser.set(false);
-            }
-            return null;
-        })
+        Mockito.doAnswer(
+                        invocation -> {
+                            final Runnable runnable = invocation.getArgument(0);
+                            inProcessingUser.set(true);
+                            try {
+                                runnable.run();
+                            } finally {
+                                inProcessingUser.set(false);
+                            }
+                            return null;
+                        })
                 .when(securityContext)
                 .asProcessingUser(Mockito.any());
 

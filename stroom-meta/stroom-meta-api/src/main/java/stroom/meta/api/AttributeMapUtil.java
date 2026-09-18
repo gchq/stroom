@@ -16,6 +16,7 @@
 
 package stroom.meta.api;
 
+import stroom.aws.s3.shared.S3Location;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
@@ -164,6 +165,16 @@ public class AttributeMapUtil {
         // Include this host in the ReceivedPath
         attributeMap.appendItemIfDifferent(
                 StandardHeaderArguments.RECEIVED_PATH, HostNameUtil.determineHostName());
+    }
+
+    public static void addS3Location(final AttributeMap attributeMap,
+                                     final S3Location s3Location) {
+        if (NullSafe.allNonNull(attributeMap, s3Location)) {
+            attributeMap.put(S3Location.LOCATION_META_KEY, s3Location.getDisplayValue());
+            attributeMap.put(S3Location.REGION_NAME_META_KEY, s3Location.getRegionName());
+            attributeMap.put(S3Location.BUCKET_NAME_META_KEY, s3Location.getBucketName());
+            attributeMap.put(S3Location.KEY_META_KEY, s3Location.getKey());
+        }
     }
 
     public static AttributeMap create(final InputStream inputStream) throws IOException {

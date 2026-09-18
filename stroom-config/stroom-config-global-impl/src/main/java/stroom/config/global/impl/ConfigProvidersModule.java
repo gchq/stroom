@@ -36,10 +36,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.ai.shared.AskStroomAIConfig getAskStroomAIConfig(
+    stroom.ai.shared.AskStroomAiConfig getAskStroomAiConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.ai.shared.AskStroomAIConfig.class);
+                stroom.ai.shared.AskStroomAiConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -558,6 +558,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.pipeline.stepping.store.SteppingConfig getSteppingConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.pipeline.stepping.store.SteppingConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.planb.impl.PlanBConfig getPlanBConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -607,6 +616,15 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.receive.common.ReceiveDataConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.receive.common.S3EventConfig getS3EventConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.receive.common.S3EventConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

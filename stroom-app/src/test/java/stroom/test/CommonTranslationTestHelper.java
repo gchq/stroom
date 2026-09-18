@@ -23,11 +23,9 @@ import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.impl.DataProcessorTaskHandler;
-import stroom.processor.impl.ProcessorTaskQueueManager;
 import stroom.processor.impl.ProcessorTaskTestHelper;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskList;
 import stroom.task.shared.TaskId;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
@@ -92,7 +90,6 @@ public class CommonTranslationTestHelper {
 //            REFFEED_ID_TO_USER);
 
     private final NodeInfo nodeInfo;
-    private final ProcessorTaskQueueManager processorTaskQueueManager;
     private final StoreCreationTool storeCreationTool;
     private final MetaService metaService;
     private final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider;
@@ -100,13 +97,11 @@ public class CommonTranslationTestHelper {
 
     @Inject
     CommonTranslationTestHelper(final NodeInfo nodeInfo,
-                                final ProcessorTaskQueueManager processorTaskQueueManager,
                                 final ProcessorTaskTestHelper processorTaskTestHelper,
                                 final StoreCreationTool storeCreationTool,
                                 final MetaService metaService,
                                 final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider) {
         this.nodeInfo = nodeInfo;
-        this.processorTaskQueueManager = processorTaskQueueManager;
         this.processorTaskTestHelper = processorTaskTestHelper;
         this.storeCreationTool = storeCreationTool;
         this.metaService = metaService;
@@ -117,18 +112,14 @@ public class CommonTranslationTestHelper {
         // Force creation of stream tasks.
         processorTaskTestHelper.createAndQueueTasks();
 
-        LOGGER.info("Tasks to process {}", processorTaskQueueManager.getTaskQueueSize());
-
         // We have to process 1 task at a time to ensure the ref data gets processed first.
         final List<ProcessorResult> results = new ArrayList<>();
-        ProcessorTaskList processorTasks = processorTaskQueueManager
-                .assignTasks(TaskId.createTestTaskId(), nodeInfo.getThisNodeName(), 1);
-        while (processorTasks.getList().size() > 0) {
-            for (final ProcessorTask processorTask : processorTasks.getList()) {
+        List<ProcessorTask> processorTasks = processorTaskTestHelper.assignTasks(1);
+        while (!processorTasks.isEmpty()) {
+            for (final ProcessorTask processorTask : processorTasks) {
                 results.add(process(processorTask));
             }
-            processorTasks = processorTaskQueueManager
-                    .assignTasks(TaskId.createTestTaskId(), nodeInfo.getThisNodeName(), 1);
+            processorTasks = processorTaskTestHelper.assignTasks(1);
         }
 
         return results;
@@ -136,7 +127,8 @@ public class CommonTranslationTestHelper {
 
     public ProcessorResult process(final ProcessorTask processorTask) {
         final DataProcessorTaskHandler dataProcessorTaskHandler = dataProcessorTaskHandlerProvider.get();
-        final ProcessorResult result = dataProcessorTaskHandler.exec(processorTask);
+        final ProcessorResult result = dataProcessorTaskHandler.exec(
+                processorTask, processorTaskTestHelper.isClaimTasksOnWorker());
 
         final String markerCounts = Arrays.stream(Severity.SEVERITIES)
                 .sorted()

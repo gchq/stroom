@@ -165,9 +165,6 @@ public class CopyOnWriteMap<K, V> implements ConcurrentMap<K, V> {
     }
 
     private synchronized Map<K, V> copyDelegateMap(final int additionalInitialSize) {
-        if (additionalInitialSize < 0) {
-            throw new IllegalArgumentException("additionalInitialSize must be >= 0");
-        }
         final Map<K, V> copy = mapSupplier.apply(map.size() + additionalInitialSize);
         copy.putAll(map);
         return copy;
@@ -184,10 +181,12 @@ public class CopyOnWriteMap<K, V> implements ConcurrentMap<K, V> {
 
     @Override
     public synchronized void putAll(final Map<? extends K, ? extends V> map) {
-        // Assume that the copy will be size of delegate + size of map
-        final Map<K, V> copy = copyDelegateMap(map.size());
-        copy.putAll(map);
-        this.map = Collections.unmodifiableMap(copy);
+        if (NullSafe.hasEntries(map)) {
+            // Assume that the copy will be size of delegate + size of map
+            final Map<K, V> copy = copyDelegateMap(map.size());
+            copy.putAll(map);
+            this.map = Collections.unmodifiableMap(copy);
+        }
     }
 
     @Override
@@ -229,16 +228,16 @@ public class CopyOnWriteMap<K, V> implements ConcurrentMap<K, V> {
     }
 
     @Override
-    public V merge(final K key,
-                   final V value,
-                   final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+    public synchronized V merge(final K key,
+                                final V value,
+                                final BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         return getWithCopy(copy ->
                 copy.merge(key, value, remappingFunction));
     }
 
     @Override
     public synchronized boolean remove(final Object k, final Object v) {
-        if (containsKey(k) && get(k).equals(v)) {
+        if (containsKey(k) && Objects.equals(get(k), v)) {
             remove(k);
             return true;
         } else {
@@ -248,7 +247,7 @@ public class CopyOnWriteMap<K, V> implements ConcurrentMap<K, V> {
 
     @Override
     public synchronized boolean replace(final K k, final V original, final V replacement) {
-        if (containsKey(k) && get(k).equals(original)) {
+        if (containsKey(k) && Objects.equals(get(k), original)) {
             put(k, replacement);
             return true;
         } else {
@@ -277,10 +276,7 @@ public class CopyOnWriteMap<K, V> implements ConcurrentMap<K, V> {
         Objects.requireNonNull(copyConsumer);
         final Map<K, V> copy = copyDelegateMap(0);
         final T result = copyConsumer.apply(copy);
-        // Re-copy in case the caller is holding the reference to the original copy
-        // such that they can mutate it.
-        //noinspection Java9CollectionFactory
-        this.map = Collections.unmodifiableMap(new HashMap<>(copy));
+        this.map = Collections.unmodifiableMap(copy);
         return result;
     }
 
@@ -298,9 +294,21 @@ public class CopyOnWriteMap<K, V> implements ConcurrentMap<K, V> {
             // No way of knowing how big the map will get
             final Map<K, V> copy = copyDelegateMap(0);
             writer.accept(copy);
-            // Re-copy in case the caller is holding the reference to the original copy
-            // such that they can mutate it.
-            this.map = unmodifiableCopyOf(copy);
+            this.map = Collections.unmodifiableMap(copy);
         }
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final CopyOnWriteMap<?, ?> that = (CopyOnWriteMap<?, ?>) o;
+        return Objects.equals(map, that.map);
+    }
+
+    @Override
+    public int hashCode() {
+        return map.hashCode();
     }
 }

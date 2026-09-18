@@ -77,6 +77,11 @@ public class AnalyticStreamDestinationViewImpl
         this.useSourceFeedIfPossible.setValue(useSourceFeedIfPossible);
     }
 
+    @Override
+    public void setUseSourceFeedIfPossibleEnabled(final boolean enabled) {
+        this.useSourceFeedIfPossible.setEnabled(enabled);
+    }
+
     @UiHandler("setDefaultDestinationFeed")
     public void onSetDefaultDestinationFeed(final ClickEvent event) {
         getUiHandlers().onSetDefaultDestinationFeed();

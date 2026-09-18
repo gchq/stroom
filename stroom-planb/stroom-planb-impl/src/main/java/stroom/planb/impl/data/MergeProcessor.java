@@ -18,7 +18,16 @@ package stroom.planb.impl.data;
 
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.planb.impl.PlanBConfig;
-import stroom.planb.impl.dao.StatePaths;
+import stroom.planb.impl.PlanBPaths;
+import stroom.planb.impl.data.queue.Dir;
+import stroom.planb.impl.data.queue.DirQueue;
+import stroom.planb.impl.data.queue.DirUtil;
+import stroom.planb.impl.data.queue.SequentialFile;
+import stroom.planb.impl.data.queue.SequentialFileStore;
+import stroom.planb.impl.data.shard.Shard;
+import stroom.planb.impl.data.shard.ShardManager;
+import stroom.planb.impl.rest.FileDescriptor;
+import stroom.planb.impl.rest.FileInfo;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
@@ -80,13 +89,13 @@ public class MergeProcessor {
     private volatile boolean merging;
 
     @Inject
-    public MergeProcessor(final StatePaths statePaths,
+    public MergeProcessor(final PlanBPaths planBPaths,
                           final SecurityContext securityContext,
                           final TaskContextFactory taskContextFactory,
                           final ShardManager shardManager,
                           final ExecutorProvider executorProvider,
                           final Provider<PlanBConfig> configProvider) {
-        this.receiveStore = new SequentialFileStore(statePaths.getStagingDir());
+        this.receiveStore = new SequentialFileStore(planBPaths.getStagingDir());
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.shardManager = shardManager;
@@ -98,13 +107,13 @@ public class MergeProcessor {
         // copy of any data that has not yet been merged. merge() recreates the queues from this dir so that
         // data left behind by the last run, e.g. due to shutdown part way through merging, is merged when
         // the merge job next runs. See gh-5696.
-        mergingDir = statePaths.getMergingDir();
+        mergingDir = planBPaths.getMergingDir();
         FileUtil.ensureDirExists(mergingDir);
 
         // The unzip dir is transient. Anything in it still exists as a zip in the staging store, as staged
         // zips are only deleted after their contents have been moved to the merging dir, so it is safe to
         // delete anything left behind by the last run.
-        unzipDir = statePaths.getUnzipDir();
+        unzipDir = planBPaths.getUnzipDir();
         FileUtil.ensureDirExists(unzipDir);
         if (!FileUtil.deleteContents(unzipDir)) {
             throw new RuntimeException("Unable to delete contents of: " + FileUtil.getCanonicalPath(unzipDir));
@@ -132,9 +141,11 @@ public class MergeProcessor {
     }
 
     public void merge() {
-        // One shot recreation of dir queues for all doc dirs currently in the merging dir, resuming merges
+        // One shot recreation of dir queues from every subdirectory of the merging dir, resuming merges
         // for data that was queued but not merged when the process last stopped. After boot, new queue dirs
         // are only ever created via getOrCreateDirQueue so there is no point re-listing. See gh-5696.
+        // Each name is read as a doc uuid, so anything else left here — e.g. a holding shard's
+        // <uuid>_<shardIndex> working copy — becomes a queue that no merge will ever drain.
         if (resumedQueues.compareAndSet(false, true)) {
             try (final Stream<Path> stream = Files.list(mergingDir)) {
                 stream.forEach(path -> {
@@ -445,7 +456,7 @@ public class MergeProcessor {
                           final String uuid) {
         try {
             final Shard shard = shardManager.getShardForDocUuid(uuid);
-            final String name = NullSafe.get(shard, Shard::getDoc, PlanBDoc::getName);
+            final String name = NullSafe.get(shard, Shard::getDoc, doc -> doc.getName());
             taskContextFactory.context("Merging Plan B Data '" + name + "'", taskContext -> {
                 taskContext.info(() -> "Merging data into '" + name + "'");
                 shard.merge(path);

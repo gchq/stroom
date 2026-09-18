@@ -26,6 +26,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.guice
+    implementation libs.slf4j.api
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

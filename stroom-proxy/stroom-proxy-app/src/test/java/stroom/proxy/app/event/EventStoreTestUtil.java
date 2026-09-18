@@ -16,6 +16,8 @@
 
 package stroom.proxy.app.event;
 
+import stroom.util.shared.FeedKey;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +36,7 @@ public class EventStoreTestUtil {
             final Path path = list.get(0);
             final String fileName = path.getFileName().toString();
             assertThat(fileName).endsWith(EventStoreFile.LOG_EXTENSION);
-            final String prefix = feedKey.encodeKey();
+            final String prefix = FeedKeyEncoder.encodeKey(feedKey);
             assertThat(fileName).startsWith(prefix);
             return Files.readString(path);
         }

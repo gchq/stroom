@@ -94,27 +94,21 @@ public class MetricCountSerde implements CountSerde<Metric> {
     }
 
     private Metric readMetric(final ByteBuffer byteBuffer) {
-        long value = 0;
-        long min = Long.MAX_VALUE;
-        long max = 0;
-        long count = 0;
-        long sum = 0;
-
-        if (storeLatestValue) {
-            value = unsignedBytes.get(byteBuffer);
-        }
-        if (storeMin) {
-            min = unsignedBytes.get(byteBuffer);
-        }
-        if (storeMax) {
-            max = unsignedBytes.get(byteBuffer);
-        }
-        if (storeCount) {
-            count = unsignedBytes.get(byteBuffer);
-        }
-        if (storeSum) {
-            sum = unsignedBytes.get(byteBuffer);
-        }
+        final long value = storeLatestValue
+                ? unsignedBytes.get(byteBuffer)
+                : 0;
+        final long min = storeMin
+                ? unsignedBytes.get(byteBuffer)
+                : Long.MAX_VALUE;
+        final long max = storeMax
+                ? unsignedBytes.get(byteBuffer)
+                : 0;
+        final long count = storeCount
+                ? unsignedBytes.get(byteBuffer)
+                : 0;
+        final long sum = storeSum
+                ? unsignedBytes.get(byteBuffer)
+                : 0;
         return new Metric(value, min, max, count, sum);
     }
 

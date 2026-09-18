@@ -33,27 +33,34 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class LogStreamConfig extends AbstractConfig implements IsProxyConfig {
 
+    private static final boolean USE_MDC_DEFAULT = false;
+
     // Is a list, so they get logged in the desired order
     private final List<String> metaKeys;
+    private final boolean useMappedDiagnosticContext;
 
     public LogStreamConfig() {
         this(List.of(
-                StandardHeaderArguments.GUID,
-                StandardHeaderArguments.RECEIPT_ID,
-                StandardHeaderArguments.FEED,
-                StandardHeaderArguments.SYSTEM,
-                StandardHeaderArguments.ENVIRONMENT,
-                StandardHeaderArguments.REMOTE_HOST,
-                StandardHeaderArguments.REMOTE_ADDRESS,
-                StandardHeaderArguments.REMOTE_DN,
-                StandardHeaderArguments.REMOTE_CERT_EXPIRY,
-                StandardHeaderArguments.DATA_RECEIPT_RULE));
+                        StandardHeaderArguments.GUID,
+                        StandardHeaderArguments.RECEIPT_ID,
+                        StandardHeaderArguments.FEED,
+                        StandardHeaderArguments.TYPE,
+                        StandardHeaderArguments.SYSTEM,
+                        StandardHeaderArguments.ENVIRONMENT,
+                        StandardHeaderArguments.REMOTE_HOST,
+                        StandardHeaderArguments.REMOTE_ADDRESS,
+                        StandardHeaderArguments.REMOTE_DN,
+                        StandardHeaderArguments.REMOTE_CERT_EXPIRY,
+                        StandardHeaderArguments.DATA_RECEIPT_RULE),
+                USE_MDC_DEFAULT);
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public LogStreamConfig(@JsonProperty("metaKeys") final List<String> metaKeys) {
+    public LogStreamConfig(@JsonProperty("metaKeys") final List<String> metaKeys,
+                           @JsonProperty("useMappedDiagnosticContext") final Boolean useMappedDiagnosticContext) {
         this.metaKeys = CollectionUtil.cleanItems(metaKeys, String::trim, true);
+        this.useMappedDiagnosticContext = Objects.requireNonNullElse(useMappedDiagnosticContext, USE_MDC_DEFAULT);
     }
 
     @JsonProperty
@@ -65,27 +72,34 @@ public class LogStreamConfig extends AbstractConfig implements IsProxyConfig {
         return metaKeys;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("Set this to true when you want to use JSON format logging. MDC enables structured " +
+                             "logging of the send/receive meta data. If not using JSON logging, this can be set " +
+                             "to false (the default).")
+    public boolean isUseMappedDiagnosticContext() {
+        return useMappedDiagnosticContext;
+    }
+
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final LogStreamConfig that = (LogStreamConfig) o;
-        return Objects.equals(metaKeys, that.metaKeys);
+        return useMappedDiagnosticContext == that.useMappedDiagnosticContext
+               && Objects.equals(metaKeys, that.metaKeys);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(metaKeys);
+        return Objects.hash(metaKeys, useMappedDiagnosticContext);
     }
 
     @Override
     public String toString() {
         return "LogStreamConfig{" +
-               "metaKeys='" + metaKeys + '\'' +
+               "metaKeys=" + metaKeys +
+               ", useMappedDiagnosticContext=" + useMappedDiagnosticContext +
                '}';
     }
 }

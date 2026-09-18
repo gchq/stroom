@@ -123,7 +123,14 @@ public class SelectionSummaryPresenter
                 "statuses",
                 result.getStatusCount(),
                 result.getDistinctStatuses(),
-                2);
+                1);
+
+        if (result.getReadOnlyCount() > 0) {
+            appendRow(sb, "read-only item", "read-only items", result.getReadOnlyCount());
+            sb.appendHtmlConstant("</br>");
+        }
+        sb.appendHtmlConstant("</br>");
+
         sb.appendEscaped("That are associated with:");
         sb.appendHtmlConstant("</br>");
         appendRow(sb, "pipeline", "pipelines", result.getPipelineCount());

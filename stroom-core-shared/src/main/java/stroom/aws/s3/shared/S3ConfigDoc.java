@@ -130,6 +130,10 @@ public class S3ConfigDoc extends AbstractDoc implements HasData {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder extends AbstractBuilder<S3ConfigDoc, Builder> {
 
         private String description = "";

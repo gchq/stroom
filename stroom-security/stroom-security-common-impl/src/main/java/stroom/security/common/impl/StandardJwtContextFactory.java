@@ -28,8 +28,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 import stroom.util.string.TemplateUtil;
-import stroom.util.string.TemplateUtil.Templator;
+import stroom.util.string.TemplateUtil.Template;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -118,8 +119,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     // constrain the key id to a safe charset/length so it cannot inject path segments (e.g. '../') or other
     // characters into that URL. AWS ELB key ids are UUIDs; this is deliberately a little more permissive.
     static final Pattern AMZN_KEY_ID_PATTERN = Pattern.compile("^[a-zA-Z0-9._-]{1,128}$");
-    static final String AWS_REGION_TEMPLATE_VARIABLE = "awsRegion";
-    static final String KEY_ID_TEMPLATE_VARIABLE = "keyId";
+    static final CIKey AWS_REGION_TEMPLATE_VARIABLE = CIKey.internStaticKey("awsRegion");
+    static final CIKey KEY_ID_TEMPLATE_VARIABLE = CIKey.internStaticKey("keyId");
 
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
 
@@ -130,7 +131,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     // Stateful things
     // Not clear whether AWS re-uses public keys or not so this may not be needed
     private volatile LoadingCache<String, PublicKey> awsPublicKeyCache = null; // uri => publicKey
-    private final CachedValue<Templator, String> awsPublicKeyUriTemplator;
+    private final CachedValue<Template, String> awsPublicKeyUriTemplator;
 
     @Inject
     public StandardJwtContextFactory(final Provider<OpenIdConfiguration> openIdConfigurationProvider,
@@ -590,7 +591,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     // pkg private for testing
     static String getAwsPublicKeyUri(final JwsParts jwsParts,
                                      final Set<String> expectedSignerPrefixes,
-                                     final Templator publicKeyUriTemplator) {
+                                     final Template publicKeyUriTemplate) {
 
         final Map<String, String> headerValues = jwsParts.getHeaderValues(
                 SIGNER_HEADER_KEY,
@@ -638,13 +639,13 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         }
         final String awsRegion = NullSafe.string(extractAwsRegionFromSigner(signer));
 
-        final String publicKeyUri = publicKeyUriTemplator.buildGenerator()
+        final String publicKeyUri = publicKeyUriTemplate.buildExecutor()
                 .addReplacement(AWS_REGION_TEMPLATE_VARIABLE, awsRegion)
                 .addReplacement(KEY_ID_TEMPLATE_VARIABLE, keyId)
-                .generate();
+                .execute();
 
         LOGGER.debug("publicKeyUriTemplator: '{}', awsRegion: '{}', keyId: '{}', publicKeyUri: '{}'",
-                publicKeyUriTemplator, awsRegion, keyId, publicKeyUri);
+                publicKeyUriTemplate, awsRegion, keyId, publicKeyUri);
 
         return publicKeyUri;
     }

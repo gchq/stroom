@@ -49,6 +49,11 @@ public class TraceRootValueSerde {
             output.writeInt(traceRoot.getServices());
             output.writeInt(traceRoot.getDepth());
             output.writeInt(traceRoot.getTotalSpans());
+            output.writeLong(traceRoot.getLastActivityMs());
+            writeNanoTime(output, traceRoot.getRootEndTime());
+            output.writeBoolean(traceRoot.isOrphan());
+            output.writeBoolean(traceRoot.isError());
+            output.writeBoolean(traceRoot.isTruncated());
             final ByteBuffer byteBuffer = output.getByteBuffer();
             byteBuffer.flip();
             consumer.accept(byteBuffer);
@@ -66,6 +71,11 @@ public class TraceRootValueSerde {
             final int services = input.readInt();
             final int depth = input.readInt();
             final int totalSpans = input.readInt();
+            final long lastActivityMs = input.readLong();
+            final NanoTime rootEndTime = readNanoTime(input);
+            final boolean orphan = input.readBoolean();
+            final boolean error = input.readBoolean();
+            final boolean truncated = input.readBoolean();
             return new TraceRoot(
                     HexStringUtil.encode(traceId),
                     name,
@@ -73,7 +83,12 @@ public class TraceRootValueSerde {
                     endTimeUnixNano,
                     services,
                     depth,
-                    totalSpans);
+                    totalSpans,
+                    lastActivityMs,
+                    rootEndTime,
+                    orphan,
+                    error,
+                    truncated);
         }
     }
 
@@ -82,7 +97,10 @@ public class TraceRootValueSerde {
     }
 
     private void writeNanoTime(final Output output, final NanoTime nanoTime) {
-        output.writeLong(nanoTime.getSeconds());
-        output.writeInt(nanoTime.getNanos());
+        final NanoTime value = nanoTime == null
+                ? NanoTime.ZERO
+                : nanoTime;
+        output.writeLong(value.getSeconds());
+        output.writeInt(value.getNanos());
     }
 }

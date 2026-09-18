@@ -18,8 +18,10 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.api.OpenAIModelStore;
+import stroom.ai.api.TableSummariser;
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.query.language.functions.AiProvider;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -31,6 +33,10 @@ public class AiModule extends AbstractModule {
         // Services
         bind(AiService.class).to(AiServiceImpl.class);
         bind(AiAttachmentFileStore.class).asEagerSingleton();
+        bind(TableSummariser.class).to(TableSummariserImpl.class);
+
+        // Backs the ai() StroomQL function, see ExpressionContextFactory.
+        bind(AiProvider.class).to(AiProviderImpl.class);
 
         // OpenAI Model
         DocumentStoreBinder.create(binder())

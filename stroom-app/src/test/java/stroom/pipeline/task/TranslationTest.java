@@ -48,7 +48,6 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.impl.ProcessorTaskTestHelper;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -548,13 +547,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
      * @return The next task or null if there are currently no more tasks.
      */
     private List<ProcessorTask> getTasks() {
-        ProcessorTaskList processorTasks = processorTaskTestHelper.assignTasks(100);
-        List<ProcessorTask> list = processorTasks.getList();
+        List<ProcessorTask> list = processorTaskTestHelper.assignTasks(100);
         final List<ProcessorTask> dataProcessorTasks = new ArrayList<>(list.size());
         while (!list.isEmpty()) {
             dataProcessorTasks.addAll(list);
-            processorTasks = processorTaskTestHelper.assignTasks(100);
-            list = processorTasks.getList();
+            list = processorTaskTestHelper.assignTasks(100);
         }
 
         return dataProcessorTasks;
@@ -673,6 +670,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             requestBuilder.stepType(direction);
             final SteppingResult stepResponse = steppingService.step(requestBuilder.build());
 
+            // Carry the session id across steps exactly as the UI does. Without this every step would open
+            // a fresh session and re-sweep the stream, so the scripted sequences below would still pass but
+            // would never exercise serving a step from data an earlier step captured - which is the whole
+            // point of the engine they are the acceptance gate for.
+            requestBuilder.sessionUuid(stepResponse.getSessionUuid());
+
             if (stepResponse.getGeneralErrors() != null && !stepResponse.getGeneralErrors().isEmpty()) {
                 throw new RuntimeException(stepResponse.getGeneralErrors().iterator().next());
             }
@@ -729,7 +732,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 //                        }
 
                         final SharedElementData newElementData = new SharedElementData(
-                                input, output, indicators, elementData.isFormatInput(), elementData.isFormatOutput());
+                                input, output, indicators, elementData.isFormatInput(), elementData.isFormatOutput(),
+                                elementData.isHasOutput());
                         final SharedStepData newStepData = NullSafe.getOrElseGet(
                                 newResponse,
                                 SteppingResult::getStepData,

@@ -17,7 +17,11 @@
 package stroom.planb.impl.data;
 
 import stroom.planb.impl.PlanBConfig;
-import stroom.planb.impl.dao.StatePaths;
+import stroom.planb.impl.PlanBPaths;
+import stroom.planb.impl.data.queue.DirQueue;
+import stroom.planb.impl.data.queue.DirUtil;
+import stroom.planb.impl.data.shard.Shard;
+import stroom.planb.impl.data.shard.ShardManager;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContextFactory;
@@ -92,7 +96,7 @@ class TestMergeProcessor {
      */
     @Test
     void constructorKeepsQueuedMergeData(@TempDir final Path tempDir) throws IOException {
-        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBPaths statePaths = new PlanBPaths(tempDir);
         final Path queuedFile = createQueuedDir(statePaths, 1).resolve("data.mdb");
         Files.writeString(queuedFile, "queued");
 
@@ -115,7 +119,7 @@ class TestMergeProcessor {
     @Test
     void concurrentCreationSharesOneQueuePerDoc(@TempDir final Path tempDir) throws Exception {
         final MergeProcessor mergeProcessor = createMergeProcessor(
-                new StatePaths(tempDir), Mockito.mock(ShardManager.class));
+                new PlanBPaths(tempDir), Mockito.mock(ShardManager.class));
 
         final int threads = 16;
         final CyclicBarrier barrier = new CyclicBarrier(threads);
@@ -141,7 +145,7 @@ class TestMergeProcessor {
      */
     @Test
     void mergeResumesQueuedDataAfterRestart(@TempDir final Path tempDir) throws IOException {
-        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBPaths statePaths = new PlanBPaths(tempDir);
         final Path queuedDir1 = createQueuedDir(statePaths, 1);
         final Path queuedDir2 = createQueuedDir(statePaths, 2);
 
@@ -171,7 +175,7 @@ class TestMergeProcessor {
     @Test
     void interruptedMergeKeepsDataAndStopsConsumer(@TempDir final Path tempDir)
             throws IOException, InterruptedException {
-        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBPaths statePaths = new PlanBPaths(tempDir);
         final Path queuedDir1 = createQueuedDir(statePaths, 1);
         final Path queuedDir2 = createQueuedDir(statePaths, 2);
 
@@ -239,7 +243,7 @@ class TestMergeProcessor {
      */
     @Test
     void mergeStatusPruningIsGatedOnQuiescence(@TempDir final Path tempDir) throws IOException {
-        final StatePaths statePaths = new StatePaths(tempDir);
+        final PlanBPaths statePaths = new PlanBPaths(tempDir);
         final ShardManager shardManager = Mockito.mock(ShardManager.class);
         final MergeProcessor mergeProcessor = createMergeProcessor(statePaths, shardManager);
 
@@ -267,7 +271,7 @@ class TestMergeProcessor {
         assertThat(quiescent.test(DOC_UUID)).isFalse();
     }
 
-    private MergeProcessor createMergeProcessor(final StatePaths statePaths, final ShardManager shardManager) {
+    private MergeProcessor createMergeProcessor(final PlanBPaths statePaths, final ShardManager shardManager) {
         return new MergeProcessor(
                 statePaths,
                 MockSecurityContext.getInstance(),
@@ -281,7 +285,7 @@ class TestMergeProcessor {
      * Create a dir on the merge queue for {@link #DOC_UUID} as {@link DirQueue} would have laid it out, with a
      * single file in it.
      */
-    private Path createQueuedDir(final StatePaths statePaths, final long id) throws IOException {
+    private Path createQueuedDir(final PlanBPaths statePaths, final long id) throws IOException {
         final Path queuedDir = DirUtil.createPath(statePaths.getMergingDir().resolve(DOC_UUID), id);
         Files.createDirectories(queuedDir);
         Files.writeString(queuedDir.resolve("data.mdb"), "data " + id);

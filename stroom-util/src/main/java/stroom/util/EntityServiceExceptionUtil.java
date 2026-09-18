@@ -17,10 +17,11 @@
 package stroom.util;
 
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -28,19 +29,17 @@ import java.net.UnknownHostException;
 
 public class EntityServiceExceptionUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EntityServiceExceptionUtil.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EntityServiceExceptionUtil.class);
 
     /**
      * Handle an exception and throw a nice EntityServiceException
      */
     public static EntityServiceException create(final Throwable ex) throws EntityServiceException {
         if (ex instanceof EntityServiceException) {
-            LOGGER.trace("create() - {}", ex.getMessage());
-
+            LOGGER.trace(() -> "create() - " + ex.getMessage());
             return (EntityServiceException) ex;
         } else {
             LOGGER.debug("create() - wrapping exception", ex);
-
             return unwrap(ex);
         }
     }
@@ -62,18 +61,11 @@ public class EntityServiceExceptionUtil {
     }
 
     public static String getDefaultMessage(final Throwable e, final Throwable rootEx) {
-        String msg = null;
-        if (e != null && e.getMessage() != null) {
-            msg = e.getMessage();
-        } else {
-            if (rootEx != null && rootEx.getMessage() != null) {
-                msg = rootEx.getMessage();
-            }
-        }
+        String msg = NullSafe.getOrElseGet(e, Throwable::getMessage, () ->
+                NullSafe.get(rootEx, Throwable::getMessage));
 
         if (msg == null) {
             msg = "Unknown";
-
             // Log the exception otherwise we may never know what type of
             // exception this was.
             LOGGER.error(e.getMessage(), e);
@@ -111,8 +103,9 @@ public class EntityServiceExceptionUtil {
             }
         }
 
-        LOGGER.warn("unwrap() - wrapping exception {} {} (increase log level to debug to see stack trace)",
-                rootEx.getMessage(), thEx.getMessage());
+        LOGGER.warn(() -> LogUtil.message(
+                "unwrap() - wrapping exception {} {} (increase log level to debug to see stack trace)",
+                rootEx.getMessage(), thEx.getMessage()));
         LOGGER.debug("unwrap() - wrapping exception ", rootEx);
 
         final EntityServiceException entityServiceException = new EntityServiceException(unwrapMessage(rootEx, rootEx),

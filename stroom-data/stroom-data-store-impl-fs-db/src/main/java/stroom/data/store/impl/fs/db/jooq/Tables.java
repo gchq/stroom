@@ -5,12 +5,15 @@ package stroom.data.store.impl.fs.db.jooq;
 
 
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
+import stroom.data.store.impl.fs.db.jooq.tables.FsMetaS3Location;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
 import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeGroup;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
+import stroom.data.store.impl.fs.db.jooq.tables.ZstdDictionary;
+import stroom.data.store.impl.fs.db.jooq.tables.ZstdDictionaryTask;
 
 
 /**
@@ -23,6 +26,11 @@ public class Tables {
      * The table <code>stroom.fs_feed_path</code>.
      */
     public static final FsFeedPath FS_FEED_PATH = FsFeedPath.FS_FEED_PATH;
+
+    /**
+     * The table <code>stroom.fs_meta_s3_location</code>.
+     */
+    public static final FsMetaS3Location FS_META_S3_LOCATION = FsMetaS3Location.FS_META_S3_LOCATION;
 
     /**
      * The table <code>stroom.fs_meta_volume</code>.
@@ -53,4 +61,14 @@ public class Tables {
      * The table <code>stroom.fs_volume_state</code>.
      */
     public static final FsVolumeState FS_VOLUME_STATE = FsVolumeState.FS_VOLUME_STATE;
+
+    /**
+     * The table <code>stroom.zstd_dictionary</code>.
+     */
+    public static final ZstdDictionary ZSTD_DICTIONARY = ZstdDictionary.ZSTD_DICTIONARY;
+
+    /**
+     * The table <code>stroom.zstd_dictionary_task</code>.
+     */
+    public static final ZstdDictionaryTask ZSTD_DICTIONARY_TASK = ZstdDictionaryTask.ZSTD_DICTIONARY_TASK;
 }

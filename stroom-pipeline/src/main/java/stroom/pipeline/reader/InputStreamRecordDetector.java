@@ -17,7 +17,7 @@
 package stroom.pipeline.reader;
 
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.pipeline.stepping.SteppingController;
+import stroom.pipeline.stepping.capture.SteppingController;
 import stroom.task.api.TaskTerminatedException;
 
 import org.slf4j.Logger;

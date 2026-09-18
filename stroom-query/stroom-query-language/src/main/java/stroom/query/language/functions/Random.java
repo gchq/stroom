@@ -20,6 +20,7 @@ import stroom.query.language.functions.ref.RandomValReference;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -30,8 +31,8 @@ import java.util.function.Supplier;
         commonReturnDescription = "A random number between 0.0 (inc.) and 1.0 (excl.)",
         signatures = @FunctionSignature(
                 description = "Returns a double value with a positive sign, greater than or equal to 0.0 and " +
-                        "less than 1.0. Returned values are chosen pseudorandomly with (approximately) uniform " +
-                        "distribution from that range.",
+                              "less than 1.0. Returned values are chosen pseudorandomly with (approximately) uniform " +
+                              "distribution from that range.",
                 args = {
                 }))
 class Random extends AbstractFunction {
@@ -60,6 +61,10 @@ class Random extends AbstractFunction {
         return false;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static final class Gen extends AbstractNoChildGenerator {
 
         private final RandomValReference randomValReference;
@@ -70,7 +75,7 @@ class Random extends AbstractFunction {
 
         @Override
         public void set(final Val[] values, final StoredValues storedValues) {
-            randomValReference.set(storedValues, ValDouble.create(Math.random()));
+            randomValReference.set(storedValues, ValDouble.create(ThreadLocalRandom.current().nextDouble()));
         }
 
         @Override

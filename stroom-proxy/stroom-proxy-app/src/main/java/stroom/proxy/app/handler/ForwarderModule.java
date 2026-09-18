@@ -24,5 +24,6 @@ public class ForwarderModule extends AbstractModule {
     protected void configure() {
         bind(ForwardFileDestinationFactory.class).to(ForwardFileDestinationFactoryImpl.class);
         bind(ForwardHttpPostDestinationFactory.class).to(ForwardHttpPostDestinationFactoryImpl.class);
+        bind(ForwardS3DestinationFactory.class).to(ForwardS3DestinationFactoryImpl.class);
     }
 }

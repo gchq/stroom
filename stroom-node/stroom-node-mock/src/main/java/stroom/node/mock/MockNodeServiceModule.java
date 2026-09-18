@@ -16,6 +16,7 @@
 
 package stroom.node.mock;
 
+import stroom.node.api.NodeGroupCache;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 
@@ -27,5 +28,6 @@ public class MockNodeServiceModule extends AbstractModule {
     protected void configure() {
         bind(NodeService.class).to(MockNodeService.class);
         bind(NodeInfo.class).to(MockNodeInfo.class);
+        bind(NodeGroupCache.class).to(MockNodeGroupCache.class);
     }
 }

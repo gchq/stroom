@@ -22,7 +22,10 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.DataVolumeService;
+import stroom.data.store.impl.fs.shared.DataVolume;
+import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
+import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.ExplorerNodeService;
@@ -49,7 +52,6 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.Period;
 import stroom.util.date.DateUtil;
-import stroom.util.io.FileUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -60,9 +62,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -74,7 +74,6 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
 
 class TestS3StreamStore extends AbstractCoreIntegrationTest {
 
@@ -460,7 +459,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void doTestDeleteTarget(final DeleteTestStyle style) throws IOException {
+    private void doTestLogicallyDeleteTarget(final DeleteTestStyle style) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final MetaProperties metaProperties = MetaProperties.builder()
@@ -479,19 +478,19 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         } else if (DeleteTestStyle.OPEN.equals(style)) {
             try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
                 meta = streamTarget.getMeta();
-                streamStore.deleteTarget(streamTarget);
+                streamStore.logicallyDeleteTarget(streamTarget);
             }
         } else if (DeleteTestStyle.OPEN_TOUCHED.equals(style)) {
             try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
                 meta = streamTarget.getMeta();
                 TargetUtil.write(streamTarget, testString);
-                streamStore.deleteTarget(streamTarget);
+                streamStore.logicallyDeleteTarget(streamTarget);
             }
         } else if (DeleteTestStyle.OPEN_TOUCHED_CLOSED.equals(style)) {
             try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
                 meta = streamTarget.getMeta();
                 TargetUtil.write(streamTarget, testString);
-                streamStore.deleteTarget(streamTarget);
+                streamStore.logicallyDeleteTarget(streamTarget);
             }
         }
 
@@ -512,17 +511,17 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testDelete4() throws IOException {
-        doTestDeleteTarget(DeleteTestStyle.META);
+        doTestLogicallyDeleteTarget(DeleteTestStyle.META);
     }
 
     @Test
     void testDelete5() throws IOException {
-        doTestDeleteTarget(DeleteTestStyle.OPEN);
+        doTestLogicallyDeleteTarget(DeleteTestStyle.OPEN);
     }
 
     @Test
     void testDelete6() throws IOException {
-        doTestDeleteTarget(DeleteTestStyle.OPEN_TOUCHED);
+        doTestLogicallyDeleteTarget(DeleteTestStyle.OPEN_TOUCHED);
     }
 
     @Test
@@ -532,7 +531,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testDelete8() throws IOException {
-        doTestDeleteTarget(DeleteTestStyle.OPEN_TOUCHED_CLOSED);
+        doTestLogicallyDeleteTarget(DeleteTestStyle.OPEN_TOUCHED_CLOSED);
     }
 
     @Test
@@ -708,7 +707,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
             meta = streamTarget.getMeta();
             t = streamTarget;
             TargetUtil.write(streamTarget, testString);
-            streamStore.deleteTarget(t);
+            streamStore.logicallyDeleteTarget(t);
         }
 
         // We shouldn't be able to close a stream target again.
@@ -717,7 +716,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         Meta reloadedMeta = metaService.find(FindMetaCriteria.createFromMeta(meta)).getFirst();
         assertThat(reloadedMeta).isNull();
 
-        streamStore.deleteTarget(t);
+        streamStore.logicallyDeleteTarget(t);
 
         reloadedMeta = metaService.find(FindMetaCriteria.createFromMeta(meta)).getFirst();
         assertThat(reloadedMeta).isNull();
@@ -790,40 +789,45 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
 //        }
     }
 
-    /**
-     * Test.
-     */
-    @Test
-    void testIOErrors() throws IOException {
-        final String testString = FileSystemTestUtil.getUniqueTestString();
+    // TODO Not testing S3, so commented out
+//    /**
+//     * Test.
+//     */
+//    @Test
+//    void testIOErrors() throws IOException {
+//        final String testString = FileSystemTestUtil.getUniqueTestString();
+//
+//        final MetaProperties metaProperties = MetaProperties.builder()
+//                .feedName(FEED1)
+//                .typeName(StreamTypeNames.RAW_EVENTS)
+//                .build();
+//
+//        Path dir = null;
+//        try {
+//            try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
+//                TargetUtil.write(streamTarget, testString);
+//
+//                dir = ((FsTarget) streamTarget).getFile().getParent();
+//                FileUtil.removeFilePermission(dir,
+//                        PosixFilePermission.OWNER_WRITE,
+//                        PosixFilePermission.GROUP_WRITE,
+//                        PosixFilePermission.OTHERS_WRITE);
+//            }
+//
+//            fail("Expecting an error");
+//        } catch (final RuntimeException e) {
+//            // Expected.
+//        } finally {
+//            FileUtil.addFilePermission(dir,
+//                    PosixFilePermission.OWNER_WRITE,
+//                    PosixFilePermission.GROUP_WRITE,
+//                    PosixFilePermission.OTHERS_WRITE);
+//        }
+//    }
 
-        final MetaProperties metaProperties = MetaProperties.builder()
-                .feedName(FEED1)
-                .typeName(StreamTypeNames.RAW_EVENTS)
-                .build();
 
-        Path dir = null;
-        try {
-            try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
-                TargetUtil.write(streamTarget, testString);
+    // --------------------------------------------------------------------------------
 
-                dir = ((FsTarget) streamTarget).getFile().getParent();
-                FileUtil.removeFilePermission(dir,
-                        PosixFilePermission.OWNER_WRITE,
-                        PosixFilePermission.GROUP_WRITE,
-                        PosixFilePermission.OTHERS_WRITE);
-            }
-
-            fail("Expecting an error");
-        } catch (final RuntimeException e) {
-            // Expected.
-        } finally {
-            FileUtil.addFilePermission(dir,
-                    PosixFilePermission.OWNER_WRITE,
-                    PosixFilePermission.GROUP_WRITE,
-                    PosixFilePermission.OTHERS_WRITE);
-        }
-    }
 
     private enum DeleteTestStyle {
         META,

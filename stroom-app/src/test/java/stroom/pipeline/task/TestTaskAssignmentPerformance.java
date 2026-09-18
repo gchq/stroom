@@ -193,7 +193,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
         jobBootstrap.startup();
 
         final AtomicLong executionCount = new AtomicLong();
-        dataProcessorTaskFactory.setRunnableFactory(processorTask -> () -> {
+        dataProcessorTaskFactory.setRunnableFactory((processorTask, alreadyClaimed) -> () -> {
             final long count = executionCount.incrementAndGet();
             if (count % (metaCount / 10) == 0) {
                 LOGGER.info("Execute " + count);

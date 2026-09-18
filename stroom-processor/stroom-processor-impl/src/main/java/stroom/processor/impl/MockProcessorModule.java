@@ -36,12 +36,14 @@ public class MockProcessorModule extends AbstractModule {
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
         bind(ProcessorFilterDao.class).to(MockProcessorFilterDao.class);
         bind(ProcessorTaskDao.class).to(MockProcessorTaskDao.class);
+        bind(ProcessorProfileDao.class).to(MockProcessorProfileDao.class);
         bind(ClusterLockService.class).to(MockClusterLockService.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(MockProcessorDao.class)
                 .addBinding(MockProcessorFilterDao.class)
                 .addBinding(MockProcessorTaskDao.class)
+                .addBinding(MockProcessorProfileDao.class)
                 .addBinding(ProcessorFilterCache.class);
     }
 }

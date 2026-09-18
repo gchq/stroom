@@ -28,6 +28,11 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+/**
+ * Lays out the Settings tab: the destination feed picker above the template editor. Both are
+ * supplied as sub-presenter views, so read-only state is applied by
+ * {@link stroom.datagen.client.presenter.DataGenSettingsPresenter} rather than here.
+ */
 public class DataGenSettingsViewImpl
         extends ViewWithUiHandlers<DirtyUiHandlers>
         implements DataGenSettingsView, ReadOnlyChangeHandler {

@@ -24,15 +24,16 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBDocStore;
+import stroom.planb.impl.PlanBPaths;
 import stroom.planb.impl.dao.StateValueTestUtil.ValueFunction;
 import stroom.planb.impl.dao.temporalstate.TemporalStateDb;
 import stroom.planb.impl.dao.temporalstate.TemporalStateFields;
 import stroom.planb.impl.dao.temporalstate.TemporalStateRequest;
-import stroom.planb.impl.data.FileDescriptor;
-import stroom.planb.impl.data.FileHashUtil;
 import stroom.planb.impl.data.MergeProcessor;
-import stroom.planb.impl.data.ShardManager;
-import stroom.planb.impl.data.TemporalState;
+import stroom.planb.impl.data.shard.ShardManager;
+import stroom.planb.impl.data.value.TemporalState;
+import stroom.planb.impl.rest.FileDescriptor;
+import stroom.planb.impl.rest.FileHashUtil;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.shared.KeyType;
@@ -82,6 +83,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -209,7 +211,7 @@ class TestTemporalStateDb {
 
     @Test
     void testFullProcess(@TempDir final Path rootDir) {
-        final StatePaths statePaths = new StatePaths(rootDir);
+        final PlanBPaths planBPaths = new PlanBPaths(rootDir);
         final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
         final DocFinder docFinder = Mockito.mock(DocFinder.class);
         final PlanBDoc doc = DOC;
@@ -224,6 +226,7 @@ class TestTemporalStateDb {
         final String path = rootDir.toAbsolutePath().toString();
         final PlanBConfig planBConfig = new PlanBConfig(path);
         final ByteBufferFactoryImpl byteBufferFactory = new ByteBufferFactoryImpl();
+
         final ShardManager shardManager = new ShardManager(
                 new ByteBuffers(byteBufferFactory),
                 byteBufferFactory,
@@ -231,12 +234,13 @@ class TestTemporalStateDb {
                 planBDocStore,
                 null,
                 () -> planBConfig,
-                statePaths,
+                planBPaths,
                 null,
                 new SimpleTaskContextFactory(),
-                executorProvider);
+                executorProvider,
+                null);
         final MergeProcessor mergeProcessor = new MergeProcessor(
-                statePaths,
+                planBPaths,
                 new MockSecurityContext(),
                 new SimpleTaskContextFactory(),
                 shardManager,
@@ -448,10 +452,10 @@ class TestTemporalStateDb {
         try (final TemporalStateDb db = TemporalStateDb.create(dbPath, BYTE_BUFFERS, DOC, false)) {
             assertThat(db.count()).isEqualTo(100);
             db.condense(Instant.now());
-            db.deleteOldData(Instant.MIN, true);
+            db.runRetention(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(1);
             db.condense(Instant.now());
-            db.deleteOldData(Instant.now(), true);
+            db.runRetention(Instant.now(), true);
             assertThat(db.count()).isEqualTo(0);
         }
     }
@@ -471,11 +475,11 @@ class TestTemporalStateDb {
             assertThat(db.count()).isEqualTo(218);
 
             db.condense(refTime.plusMillis(1));
-            db.deleteOldData(Instant.MIN, true);
+            db.runRetention(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(200);
 
             db.condense(Instant.parse("2000-01-10T00:00:00.000Z").plusMillis(1));
-            db.deleteOldData(Instant.MIN, true);
+            db.runRetention(Instant.MIN, true);
             assertThat(db.count()).isEqualTo(182);
         }
     }
@@ -495,7 +499,7 @@ class TestTemporalStateDb {
             }
 
             db.condense(Instant.now());
-            db.deleteOldData(Instant.now(), true);
+            db.runRetention(Instant.now(), true);
             db.condense(Instant.now());
         }
     }
@@ -516,7 +520,7 @@ class TestTemporalStateDb {
 
             for (int i = 0; i < 100; i++) {
                 final Instant effectiveTime = refTime.plusSeconds(i * 60 * 60 * 24);
-                db.deleteOldData(effectiveTime, true);
+                db.runRetention(effectiveTime, true);
                 db.condense(Instant.now());
             }
         }
@@ -551,7 +555,7 @@ class TestTemporalStateDb {
 //                for (int i = 0; i < 100; i++) {
 //                    long total = 0;
 //                    total += db.condense(refTime2);
-//                    total += db.deleteOldData(refTime2, true);
+//                    total += db.runRetention(refTime2, true);
 //                    if (total > 0) {
 //                        // If we removed data then compact the shard.
 

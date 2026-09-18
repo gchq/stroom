@@ -57,7 +57,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -128,8 +127,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
      */
     private volatile boolean allowTaskQueueFill = false;
 
-    private final Map<String, Instant> lastNodeContactTime = new ConcurrentHashMap<>();
-    private Instant lastDisownedTasks = Instant.now();
 
     @Inject
     ProcessorTaskQueueManagerImpl(final ProcessorTaskDao processorTaskDao,
@@ -604,49 +601,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         return size;
     }
 
-    public void disownDeadTasks() {
-        LOGGER.trace(() -> "disownDeadTasks()");
-        try {
-            final String node = nodeInfo.getThisNodeName();
-            final String masterNode = targetNodeSetFactory.getMasterNode();
-            if (node != null && node.equals(masterNode)) {
-                // If this is the master node then see if there are any nodes that we haven't had contact with
-                // for some time.
-
-                // If we haven't had contact with a node for 10 minutes then forcibly release the tasks owned
-                // by that node.
-                final Instant now = Instant.now();
-                final Set<String> activeNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                activeNodes.forEach(activeNode -> lastNodeContactTime.put(activeNode, now));
-                final Instant disownTaskAge = now.minus(processorConfigProvider.get().getDisownDeadTasksAfter());
-                if (lastDisownedTasks.isBefore(disownTaskAge)) {
-                    lastDisownedTasks = now;
-
-                    // Remove nodes we haven't had contact with for 10 minutes.
-                    lastNodeContactTime.forEach((k, v) -> {
-                        if (v.isBefore(disownTaskAge)) {
-                            lastNodeContactTime.remove(k);
-                        }
-                    });
-
-                    // Retain all tasks that have had their status updated in the last 10 minutes or belong to
-                    // nodes we know have been active in the last 10 minutes.
-                    final DurationTimer durationTimer = DurationTimer.start();
-                    final long count = processorTaskDao.retainOwnedTasks(lastNodeContactTime.keySet(), disownTaskAge);
-                    if (count > 0) {
-                        LOGGER.warn(() ->
-                                "Removed task ownership for dead nodes (count = " +
-                                count +
-                                ") in " +
-                                durationTimer.get());
-                    }
-                }
-            }
-        } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
-    }
-
     public synchronized void releaseOldQueuedTasks() {
         LOGGER.trace(() -> "releaseOldQueuedTasks()");
         if (!queueMap.isEmpty()) {
@@ -703,7 +657,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private int doQueueNewTasks(final TaskContext taskContext,
                                 final boolean isEmptyReportRequired) {
         LOGGER.trace("queueNewTasks() - Starting");
-        int totalAdded = 0;
 
         // We need to make sure that only 1 thread at a time is allowed to
         // create tasks. This should always be the case in production but some
@@ -732,6 +685,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         // Now fill the stream task store with tasks for each filter.
         // The aim is to create N tasks in total where N is processorConfig.getQueueSize
         // Also need to ensure each filter queue has no more than N in it.
+        int totalAdded = 0;
         try {
             if (processorConfig.isFillTaskQueue()) {
                 final StroomDuration skipEmptyFilterFetchDuration =

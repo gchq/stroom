@@ -35,7 +35,7 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public final class StateSettings
-        extends AbstractPlanBSettings {
+        extends AbstractHttpStoreSettings {
 
     @JsonProperty
     private final StateKeySchema keySchema;
@@ -93,7 +93,7 @@ public final class StateSettings
                '}';
     }
 
-    public static class Builder extends AbstractBuilder<StateSettings, Builder> {
+    public static class Builder extends AbstractHttpBuilder<StateSettings, Builder> {
 
         private StateKeySchema keySchema;
         private StateValueSchema valueSchema;

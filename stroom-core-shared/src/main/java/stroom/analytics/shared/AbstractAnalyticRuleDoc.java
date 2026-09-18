@@ -74,26 +74,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     @JsonProperty
     private final QueryTablePreferences queryTablePreferences;
 
-    /**
-     * A rule's level denotes its severity.
-     * A high level rule detection should be prioritised over a low level rule detection.
-     **/
-    @JsonProperty
-    private final String level;
-
-    /**
-     * A rule's status denotes how reliable it is. There are several stages:
-     *  - Experimental: An early-stage rule that may be incomplete. Expect more false positives.
-     *  - Testing: More mature than experimental rules. Actively being validated in rela environments.
-     *    Expect some false positives.
-     *  - Stable: Considered production-ready. Has been thoroughly tested across multiple environments.
-     *    Expect a reasonable false positive rate.
-     *  - Deprecated: An outdated or superseded rule that may rely on old techniques or assumptions.
-     *    Generally avoid using these in production.
-     **/
-    @JsonProperty
-    private final String status;
-
     @JsonCreator
     @SuppressWarnings("checkstyle:linelength")
     public AbstractAnalyticRuleDoc(@JsonProperty("type") final String type,
@@ -117,9 +97,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("rememberNotifications") final Boolean rememberNotifications,
                                    @JsonProperty("suppressDuplicateNotifications") final Boolean suppressDuplicateNotifications,
                                    @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
-                                   @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences,
-                                   @JsonProperty("level") final String level,
-                                   @JsonProperty("status") final String status) {
+                                   @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = NullSafe.string(description);
         this.languageVersion = Objects.requireNonNullElse(languageVersion, QueryLanguageVersion.STROOM_QL_VERSION_0_1);
@@ -148,9 +126,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                         false,
                         Collections.emptyList()));
         this.queryTablePreferences = queryTablePreferences;
-
-        this.level = level;
-        this.status = status;
     }
 
     public String getDescription() {
@@ -187,14 +162,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     public DocRef getErrorFeed() {
         return errorFeed;
-    }
-
-    public String getLevel() {
-        return level;
-    }
-
-    public String getStatus() {
-        return status;
     }
 
     @Deprecated
@@ -260,9 +227,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                 rememberNotifications,
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig,
-                queryTablePreferences,
-                level,
-                status);
+                queryTablePreferences);
     }
 
     @Override
@@ -282,8 +247,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
                ", duplicateNotificationConfig=" + duplicateNotificationConfig +
                ", queryTablePreferences=" + queryTablePreferences +
-               ", level=" + level +
-               ", status=" + status +
                '}';
     }
 
@@ -303,9 +266,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         DuplicateNotificationConfig duplicateNotificationConfig;
         QueryTablePreferences queryTablePreferences;
 
-        String level;
-        String status;
-
         public AbstractAnalyticRuleDocBuilder() {
             languageVersion = QueryLanguageVersion.STROOM_QL_VERSION_0_1;
             notifications = new ArrayList<>();
@@ -324,8 +284,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             this.errorFeed = doc.errorFeed;
             this.duplicateNotificationConfig = doc.duplicateNotificationConfig;
             this.queryTablePreferences = doc.queryTablePreferences;
-            this.level = doc.level;
-            this.status = doc.status;
         }
 
         public B description(final String description) {
@@ -380,16 +338,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
         public B queryTablePreferences(final QueryTablePreferences queryTablePreferences) {
             this.queryTablePreferences = queryTablePreferences;
-            return self();
-        }
-
-        public B level(final String level) {
-            this.level = level;
-            return self();
-        }
-
-        public B status(final String status) {
-            this.status = status;
             return self();
         }
     }

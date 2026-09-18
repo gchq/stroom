@@ -31,7 +31,7 @@ import stroom.planb.impl.dao.PlanBSearchHelper.LazyKV;
 import stroom.planb.impl.dao.PlanBSearchHelper.ValuesExtractor;
 import stroom.planb.impl.dao.SchemaInfo;
 import stroom.planb.impl.dao.UsedLookupsRecorder;
-import stroom.planb.impl.data.State;
+import stroom.planb.impl.data.value.State;
 import stroom.planb.impl.serde.KeySerde;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.keyprefix.KeyPrefixSerde;
@@ -39,7 +39,7 @@ import stroom.planb.impl.serde.keyprefix.KeyPrefixSerdeFactory;
 import stroom.planb.impl.serde.valtime.ValTime;
 import stroom.planb.impl.serde.valtime.ValTimeSerde;
 import stroom.planb.impl.serde.valtime.ValTimeSerdeFactory;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.StateSettings;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -72,7 +72,7 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
 
     private StateDb(final PlanBEnv env,
                     final ByteBuffers byteBuffers,
-                    final PlanBDoc doc,
+                    final PlanBDocument doc,
                     final StateSettings settings,
                     final KeySerde<KeyPrefix> keySerde,
                     final ValTimeSerde valueSerde,
@@ -94,7 +94,7 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
 
     public static StateDb create(final Path path,
                                  final ByteBuffers byteBuffers,
-                                 final PlanBDoc doc,
+                                 final PlanBDocument doc,
                                  final boolean readOnly) {
         // Ensure all settings are non null.
         final StateSettings settings;
@@ -259,9 +259,9 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
     }
 
     @Override
-    public long deleteOldData(final Instant deleteBefore, final boolean useStateTime) {
+    public long runRetention(final Instant deleteBefore, final boolean useStateTime) {
         return env.write(writer -> {
-            final long count = deleteOldData(writer, deleteBefore);
+            final long count = runRetention(writer, deleteBefore);
 
             // Delete unused lookup keys.
             if (!Thread.currentThread().isInterrupted()) {
@@ -276,7 +276,7 @@ public class StateDb extends AbstractDb<KeyPrefix, Val> {
         });
     }
 
-    private long deleteOldData(final LmdbWriter writer,
+    private long runRetention(final LmdbWriter writer,
                                final Instant deleteBefore) {
         return env.read(readTxn -> {
             final Count changeCount = new Count();

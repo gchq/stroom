@@ -22,7 +22,13 @@ import stroom.docstore.api.DocumentStore;
 
 import java.util.List;
 
+/**
+ * Document store for {@link DataGenDoc}.
+ */
 public interface DataGenStore extends DocumentStore<DataGenDoc> {
 
+    /**
+     * @return Every data generator the current user is permitted to read.
+     */
     List<DocRef> list();
 }

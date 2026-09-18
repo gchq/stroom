@@ -22,6 +22,7 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.capacity.HasCapacitySelectorFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 @JsonPropertyOrder(alphabetic = true)
 public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
@@ -72,9 +74,10 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
     // stream type name => legacy extension
     // e.g. 'Transient Raw' => '.trevt'
     private final Map<String, String> metaTypeExtensions;
-    //    private final Map<String, String> metaTypeExtensionsReverseMap;
+    private final Map<String, String> metaTypeExtensionsReverseMap;
     private final StroomDuration maxVolumeStateAge;
     private final CacheConfig volumeCache;
+    private final CacheConfig s3VolumeCache;
 
     public FsVolumeConfig() {
         volumeSelector = "RoundRobin";
@@ -94,10 +97,15 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
         metaTypeExtensions = DEFAULT_META_TYPE_EXTENSIONS;
+        metaTypeExtensionsReverseMap = buildReverseMap(metaTypeExtensions);
         // 30s should be enough time for all nodes to check the state after one node has updated it.
         maxVolumeStateAge = StroomDuration.ofSeconds(30);
 
         volumeCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterWrite(StroomDuration.ofMinutes(10))
+                .build();
+        s3VolumeCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
@@ -116,19 +124,26 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
             @JsonProperty("metaTypeExtensions") final Map<String, String> metaTypeExtensions,
             @JsonProperty("findOrphanedMetaBatchSize") final Integer findOrphanedMetaBatchSize,
             @JsonProperty("maxVolumeStateAge") final StroomDuration maxVolumeStateAge,
-            @JsonProperty("volumeCache") final CacheConfig volumeCache) {
+            @JsonProperty("volumeCache") final CacheConfig volumeCache,
+            @JsonProperty("s3VolumeCache") final CacheConfig s3VolumeCache) {
 
         this.volumeSelector = volumeSelector;
         this.defaultStreamVolumePaths = defaultStreamVolumePaths;
-        this.defaultStreamVolumeFilesystemUtilisation = Objects.requireNonNullElse(defaultStreamVolumeFilesystemUtilisation, DEFAULT_DEFAULT_STREAM_VOLUME_FILESYSTEM_UTILISATION);
-        this.createDefaultStreamVolumesOnStart = Objects.requireNonNullElse(createDefaultStreamVolumesOnStart, DEFAULT_CREATE_DEFAULT_STREAM_VOLUMES_ON_START);
+        this.defaultStreamVolumeFilesystemUtilisation = Objects.requireNonNullElse(
+                defaultStreamVolumeFilesystemUtilisation,
+                DEFAULT_DEFAULT_STREAM_VOLUME_FILESYSTEM_UTILISATION);
+        this.createDefaultStreamVolumesOnStart = Objects.requireNonNullElse(createDefaultStreamVolumesOnStart,
+                DEFAULT_CREATE_DEFAULT_STREAM_VOLUMES_ON_START);
         this.defaultStreamVolumeGroupName = defaultStreamVolumeGroupName;
         this.feedPathCache = feedPathCache;
         this.typePathCache = typePathCache;
         this.metaTypeExtensions = metaTypeExtensions;
-        this.findOrphanedMetaBatchSize = Objects.requireNonNullElse(findOrphanedMetaBatchSize, DEFAULT_FIND_ORPHANED_META_BATCH_SIZE);
+        this.metaTypeExtensionsReverseMap = buildReverseMap(metaTypeExtensions);
+        this.findOrphanedMetaBatchSize = Objects.requireNonNullElse(findOrphanedMetaBatchSize,
+                DEFAULT_FIND_ORPHANED_META_BATCH_SIZE);
         this.maxVolumeStateAge = maxVolumeStateAge;
         this.volumeCache = volumeCache;
+        this.s3VolumeCache = s3VolumeCache;
     }
 
     @JsonPropertyDescription(
@@ -202,7 +217,8 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                 metaTypeExtensions,
                 findOrphanedMetaBatchSize,
                 maxVolumeStateAge,
-                volumeCache);
+                volumeCache,
+                s3VolumeCache);
     }
 
     public FsVolumeConfig withVolumeSelector(final String volumeSelector) {
@@ -217,7 +233,8 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                 metaTypeExtensions,
                 findOrphanedMetaBatchSize,
                 maxVolumeStateAge,
-                volumeCache);
+                volumeCache,
+                s3VolumeCache);
     }
 
     @JsonPropertyDescription(
@@ -242,6 +259,21 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
         }
     }
 
+    /**
+     * E.g. {@code 'revt' => 'Raw Reference'}
+     *
+     * @param extension The extension with no leading '.'.
+     * @return The stream type corresponding to the extension.
+     */
+    @JsonIgnore
+    public Optional<String> getStreamType(final String extension) {
+        if (NullSafe.isBlankString(extension)) {
+            return Optional.empty();
+        } else {
+            return Optional.ofNullable(metaTypeExtensionsReverseMap.get(extension));
+        }
+    }
+
     @JsonPropertyDescription(
             "When refreshing the local cache of volumes, the state will only be updated in the " +
             "database if it is older then this threshold age. Value must be less than the period of the job " +
@@ -252,6 +284,10 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
 
     public CacheConfig getVolumeCache() {
         return volumeCache;
+    }
+
+    public CacheConfig getS3VolumeCache() {
+        return s3VolumeCache;
     }
 
     @Override
@@ -268,6 +304,14 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                ", metaTypeExtensions=" + metaTypeExtensions +
                ", maxVolumeStateAge=" + maxVolumeStateAge +
                ", volumeCache=" + volumeCache +
+               ", s3VolumeCache=" + s3VolumeCache +
                '}';
+    }
+
+    private Map<String, String> buildReverseMap(final Map<String, String> metaTypeExtensions) {
+        return NullSafe.map(metaTypeExtensions)
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
     }
 }

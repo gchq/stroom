@@ -27,11 +27,4 @@ public interface GeneralSettingsView extends ReadOnlyChangeHandler, HasUiHandler
 
     void setMaxStoreSize(Long maxStoreSize);
 
-    Boolean getSynchroniseMerge();
-
-    void setSynchroniseMerge(Boolean synchroniseMerge);
-
-    Boolean getOverwrite();
-
-    void setOverwrite(Boolean overwrite);
 }

@@ -19,13 +19,13 @@ package stroom.docstore.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
-import stroom.docstore.impl.db.jooq.tables.Doc;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -99,13 +99,18 @@ class DocRefFromNameCache implements EntityEvent.Handler, Clearable {
             // We don't know the old name on rename/delete, so clear the entire cache.
             // This is acceptable because entity events are relatively infrequent compared to reads.
             LOGGER.debug("Clearing all entries due to {}", event);
-            if (event.getDocRef() != null && event.getDocRef().getType() != null && event.getDocRef().getName() != null) {
-                cache.invalidate(new TypeAndName(event.getDocRef().getType(), event.getDocRef().getName()));
+            final DocRef docRef = event.getDocRef();
+            if (NullSafe.allNonNull(docRef, docRef.getType(), docRef.getName())) {
+                cache.invalidate(new TypeAndName(docRef.getType(), docRef.getName()));
             } else {
                 cache.clear();
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private record TypeAndName(String type, String name) {
 

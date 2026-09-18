@@ -100,6 +100,13 @@ class TestJsonToXml extends AbstractXsltFunctionTest<JsonToXml> {
                 .isEqualTo(Severity.ERROR);
         assertThat(logArgs.getMessage())
                 .containsIgnoringCase("error parsing json");
+        // The message should explain what is wrong with the JSON and where, not leak an NPE
+        // from the parser having no error handler, see gh-5738.
+        assertThat(logArgs.getMessage())
+                .containsIgnoringCase("unexpected end-of-input")
+                .containsIgnoringCase("line 3")
+                .doesNotContainIgnoringCase("cannot invoke")
+                .doesNotContainIgnoringCase("Source:");
     }
 
     @Override

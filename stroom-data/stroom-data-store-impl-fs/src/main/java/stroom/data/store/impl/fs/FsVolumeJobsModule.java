@@ -23,6 +23,7 @@ import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
 public class FsVolumeJobsModule extends AbstractModule {
+
     @Override
     protected void configure() {
         super.configure();
@@ -35,8 +36,9 @@ public class FsVolumeJobsModule extends AbstractModule {
     }
 
     private static class FileVolumeStatus extends RunnableWrapper {
+
         @Inject
-        FileVolumeStatus(final FsVolumeService volumeService) {
+        FileVolumeStatus(final FsVolumeServiceImpl volumeService) {
             super(volumeService::updateStatus);
         }
     }

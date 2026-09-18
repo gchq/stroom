@@ -19,7 +19,15 @@ package stroom.core.receive;
 import stroom.docstore.api.DocumentStore;
 import stroom.receive.content.shared.ContentTemplates;
 
+import java.util.Optional;
+
 public interface ContentTemplateStore extends DocumentStore<ContentTemplates> {
 
+    /// Gets the singleton [ContentTemplates] or creates a new one if it doesn't exist.
+    ///
+    /// @return A non-null [ContentTemplates] instance.
     ContentTemplates getOrCreate();
+
+    /// @return A [ContentTemplates] instance, or an empty Optional if it doesn't exist.
+    Optional<ContentTemplates> get();
 }

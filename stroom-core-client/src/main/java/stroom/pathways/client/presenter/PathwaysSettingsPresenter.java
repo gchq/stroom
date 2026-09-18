@@ -23,7 +23,7 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.pathways.client.presenter.PathwaysSettingsPresenter.PathwaysSettingsView;
 import stroom.pathways.shared.PathwaysDoc;
-import stroom.planb.shared.PlanBDoc;
+import stroom.pathways.shared.TracesDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.time.SimpleDuration;
 
@@ -48,7 +48,7 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
         this.feedPresenter = feedPresenter;
         view.setUiHandlers(this);
 
-        traceStorePresenter.setIncludedTypes(PlanBDoc.TYPE);
+        traceStorePresenter.setIncludedTypes(TracesDoc.TYPE);
         traceStorePresenter.setRequiredPermissions(DocumentPermission.VIEW);
         view.setTraceStoreView(traceStorePresenter.getView());
 

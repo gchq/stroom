@@ -18,14 +18,19 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
+import stroom.data.store.impl.fs.standard.SegmentOutputStreamProvider;
+import stroom.data.store.impl.fs.standard.SegmentOutputStreamProviderFactory;
 import stroom.meta.shared.Meta;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+/**
+ * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD}
+ */
 public class OutputStreamProviderImpl implements OutputStreamProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OutputStreamProviderImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OutputStreamProviderImpl.class);
 
     private final Meta meta;
     private final SegmentOutputStreamProviderFactory factory;
@@ -41,16 +46,9 @@ public class OutputStreamProviderImpl implements OutputStreamProvider {
         root = factory.getSegmentOutputStreamProvider(null);
     }
 
-    private void logDebug(final String msg) {
-        LOGGER.debug(msg + meta.getId());
-    }
-
     @Override
     public SegmentOutputStream get() {
-        if (LOGGER.isDebugEnabled()) {
-            logDebug("get()");
-        }
-
+        LOGGER.debug(() -> LogUtil.message("get() - metaId: {}, index: {}", meta.getId(), index));
         return root.get(index);
     }
 
@@ -60,9 +58,8 @@ public class OutputStreamProviderImpl implements OutputStreamProvider {
             return get();
         }
 
-        if (LOGGER.isDebugEnabled()) {
-            logDebug("get() - " + streamTypeName);
-        }
+        LOGGER.debug(() -> LogUtil.message("get() - streamTypeName: {}, metaId: {}, index: {}",
+                streamTypeName, meta.getId(), index));
 
         final SegmentOutputStreamProvider segmentOutputStreamProvider = factory.getSegmentOutputStreamProvider(
                 streamTypeName);

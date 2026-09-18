@@ -111,6 +111,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.pipeline.factory.PipelineFactoryModule());
         install(new PipelineScopeModule());
         install(new PipelineStreamTaskModule());
+        install(new stroom.pipeline.xsltfunctions.AiXsltFunctionModule());
         install(new stroom.pipeline.xsltfunctions.CommonXsltFunctionModule());
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.pipeline.refdata.ReferenceDataModule());

@@ -29,6 +29,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -90,7 +91,7 @@ class FsOrphanFileFinderExecutor {
         final FsOrphanFileFinderSummary summary = new FsOrphanFileFinderSummary();
         final Consumer<Path> orphanConsumer = path -> {
             LOGGER.debug(() -> "Unexpected file in store: " +
-                    FileUtil.getCanonicalPath(path));
+                               FileUtil.getCanonicalPath(path));
 
             ORPHAN_FILE_LOGGER.info(FileUtil.getCanonicalPath(path));
 
@@ -137,7 +138,7 @@ class FsOrphanFileFinderExecutor {
         final LogExecutionTime logExecutionTime = LogExecutionTime.start();
 
         final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
-        if (volumeList != null && volumeList.size() > 0) {
+        if (NullSafe.hasItems(volumeList)) {
             for (final FsVolume volume : volumeList) {
                 if (Thread.currentThread().isInterrupted() || parentContext.isTerminated()) {
                     LOGGER.info("{} - Task terminated", TASK_NAME);
@@ -158,8 +159,8 @@ class FsOrphanFileFinderExecutor {
         final Path absDir = pathCreator.toAppPath(volume.getPath());
         if (!Files.isDirectory(absDir)) {
             LOGGER.error(() -> "Directory for file delete list does not exist '" +
-                    FileUtil.getCanonicalPath(absDir) +
-                    "'");
+                               FileUtil.getCanonicalPath(absDir) +
+                               "'");
         } else {
             orphanFileFinderProvider.get().scanVolumePath(volume, orphanConsumer, oldestDirTime, taskContext);
         }

@@ -112,7 +112,9 @@ public class FsVolumeGroupEditPresenter
     }
 
     private void create() {
-        final FsVolume fsVolume = FsVolume.builder().volumeGroupId(volumeGroup.getId()).build();
+        final FsVolume fsVolume = FsVolume.builder()
+                .volumeGroup(volumeGroup)
+                .build();
         editVolume(fsVolume, "Add Volume");
     }
 

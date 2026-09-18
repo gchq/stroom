@@ -31,6 +31,9 @@ import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataRequest.DisplayMode;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.util.EntityServiceExceptionUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Count;
 import stroom.util.shared.FetchWithLongId;
 import stroom.util.shared.OffsetRange;
@@ -52,6 +55,8 @@ import java.util.Set;
 
 @AutoLogged
 class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSection>> {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataResourceImpl.class);
 
     private final Provider<DataService> dataServiceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
@@ -183,10 +188,23 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
     @Override
     public Set<String> getChildStreamTypes(final long id, final long partNo) {
 
-        final Set<String> childStreamTypes = dataServiceProvider.get()
-                .getChildStreamTypes(id, partNo);
+        try {
+            final Set<String> childStreamTypes = dataServiceProvider.get()
+                    .getChildStreamTypes(id, partNo);
 
-        return childStreamTypes;
+            LOGGER.debug("getChildStreamTypes() - id: {}, partNo: {}, types: {}",
+                    id, partNo, childStreamTypes);
+            return childStreamTypes;
+        } catch (final RuntimeException e) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Error getting child streams, id: {}, partNo: {} - {} (TRACE for stacktrace)",
+                        id, partNo, LogUtil.exceptionMessage(e));
+                LOGGER.trace(() -> LogUtil.message(
+                        "Error getting child streams, id: {}, partNo: {} - {}",
+                        id, partNo, LogUtil.exceptionMessage(e)), e);
+            }
+            throw e;
+        }
     }
 
     private FetchDataResult createErrorResult(final ViewDataException viewDataException) {

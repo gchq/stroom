@@ -19,32 +19,53 @@ package stroom.pathways.impl;
 import stroom.docstore.api.DocumentStoreBinder;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.pathways.shared.PathwaysDoc;
+import stroom.pathways.shared.TracesDoc;
 import stroom.pathways.shared.TracesStore;
-import stroom.planb.impl.data.TracesStoreImpl;
+import stroom.planb.impl.PlanBDocumentTypes;
+import stroom.planb.impl.fs.HoldingAreaMergeStrategy;
+import stroom.planb.impl.fs.MergeStrategy;
+import stroom.planb.impl.fs.SharedFileStoreDocStore;
+import stroom.planb.shared.StateType;
 import stroom.util.RunnableWrapper;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 import jakarta.inject.Inject;
 
 public class PathwaysModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(TracesStore.class).to(TracesStoreImpl.class);
+        bind(TracesStore.class).to(SharedFileTracesStore.class);
+        bind(TracesDocStore.class).to(TracesDocStoreImpl.class);
+
+        Multibinder.newSetBinder(binder(), String.class, PlanBDocumentTypes.class)
+                .addBinding().toInstance(TracesDoc.TYPE);
 
         DocumentStoreBinder.create(binder())
-                .bind(PathwaysDoc.TYPE, PathwaysStore.class, PathwaysStoreImpl.class);
+                .bind(PathwaysDoc.TYPE, PathwaysStore.class, PathwaysStoreImpl.class)
+                .bind(TracesDoc.TYPE, TracesDocStore.class, TracesDocStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(PathwaysResourceImpl.class)
-                .bind(TracesResourceImpl.class);
+                .bind(TracesResourceImpl.class)
+                .bind(TracesDocResourceImpl.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ProcessPathways.class, builder -> builder
                         .name("Process Pathways")
                         .description("Job to process trace data to form pathways and/or validate traces")
-                        .frequencySchedule("10m"));
+                        .frequencySchedule("1m"));
+
+        GuiceUtil.buildMultiBinder(binder(), SharedFileStoreDocStore.class)
+                .addBinding(TracesDocStoreImpl.class);
+
+        // A trace store accumulates spans in a holding shard and moves them on to the archive
+        // buckets that queries read.
+        GuiceUtil.buildMapBinder(binder(), StateType.class, MergeStrategy.class)
+                .addBinding(StateType.TRACE, HoldingAreaMergeStrategy.class);
     }
 
     private static class ProcessPathways extends RunnableWrapper {

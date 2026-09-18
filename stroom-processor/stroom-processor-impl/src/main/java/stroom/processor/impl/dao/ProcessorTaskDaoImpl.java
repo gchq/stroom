@@ -117,17 +117,13 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private static final int BATCH_SIZE = 1_000;
 
     /**
-     * Another node or job can change a task while we are updating it, e.g. the master disowning tasks from a
-     * node it thinks has died. A reload and retry recovers from that, but if a few attempts haven't succeeded
-     * then more won't either.
+     * How many times to attempt a status update in the face of transient errors (deadlock,
+     * connection loss). A failed optimistic version check is NOT retried - that is a lost
+     * lease and the write is abandoned (gh-5699, see changeTaskStatus).
      */
     private static final int MAX_TASK_STATUS_UPDATE_TRIES = 5;
     /**
-     * How long to wait after losing a race to update a task, so that we don't spin on the database.
-     */
-    private static final long TASK_STATUS_UPDATE_CONTENTION_DELAY_MS = 50;
-    /**
-     * How long to wait after an error updating a task, which is likely to take longer to clear than a lost race.
+     * How long to wait after an error updating a task before trying again.
      */
     private static final long TASK_STATUS_UPDATE_ERROR_DELAY_MS = 1_000;
 
@@ -263,17 +259,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return ValString.create(val);
     }
 
-    private Set<Integer> getNodeIdSet(final Set<String> nodeNames) {
-        final Set<Integer> set = new HashSet<>();
-        for (final String nodeName : nodeNames) {
-            final Integer nodeId = processorNodeCache.getOrCreate(nodeName);
-            if (nodeId != null) {
-                set.add(nodeId);
-            }
-        }
-        return set;
-    }
-
     /**
      * Release tasks and make them unowned.
      *
@@ -302,36 +287,186 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return count;
     }
 
-    /**
-     * Retain task ownership
-     *
-     * @param retainForNodes  A set of nodes to retain task ownership for.
-     * @param statusOlderThan Change task ownership for tasks that have a status older than this.
-     * @return The number of tasks released.
-     */
     @Override
-    public long retainOwnedTasks(final Set<String> retainForNodes, final Instant statusOlderThan) {
-        LOGGER.info(() -> "Retaining owned tasks");
-        final List<Condition> conditions = new ArrayList<>();
+    public long reapDeadTasks(final Instant statusOlderThan) {
+        final long nowMs = System.currentTimeMillis();
+        final Supplier<String> msgSupplier = () -> LogUtil.message(
+                "reapDeadTasks - statusOlderThan: {}", statusOlderThan);
 
-        // Keep tasks ownership for active nodes.
-        final Set<Integer> nodeIdSet = getNodeIdSet(retainForNodes);
-        conditions.add(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.notIn(nodeIdSet));
-
-        // Only change tasks that have not been changed for a certain amount of time.
-        conditions.add(PROCESSOR_TASK.STATUS_TIME_MS.lt(statusOlderThan.toEpochMilli()));
-
-        // Only alter tasks that are marked as queued, assigned or processing,
-        // i.e. ignore complete and failed tasks.
-        conditions.add(ACTIVE_TASKS_STATUS_CONDITION);
-
-        // Release tasks.
-        final long count = releaseTasks(conditions);
-
-        LOGGER.info(() -> "Set " + count + " tasks back to CREATED that were " +
-                          "QUEUED, ASSIGNED, PROCESSING");
-
+        // One atomic statement, so a task whose heartbeat renews between any read and this
+        // write cannot be falsely reaped - the staleness condition is evaluated with the row
+        // lock held. The version bump is the fence against the original owner (see the
+        // interface javadoc). Bounded by the cluster-wide PROCESSING count, which is bounded
+        // by cluster thread count, so no batching is needed; EXPLAIN verified to use
+        // processor_task_status_create_time_ms_idx (TestProcessorTaskQueryPlans).
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context ->
+                JooqUtil.withDeadlockRetries(() -> context
+                                .update(PROCESSOR_TASK)
+                                .setNull(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID)
+                                .set(PROCESSOR_TASK.STATUS, TaskStatus.CREATED.getPrimitiveValue())
+                                .set(PROCESSOR_TASK.STATUS_TIME_MS, nowMs)
+                                .setNull(PROCESSOR_TASK.START_TIME_MS)
+                                .setNull(PROCESSOR_TASK.END_TIME_MS)
+                                .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
+                                .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.PROCESSING.getPrimitiveValue()))
+                                .and(PROCESSOR_TASK.STATUS_TIME_MS.lt(statusOlderThan.toEpochMilli()))
+                                .execute(),
+                        msgSupplier));
+        if (count > 0) {
+            LOGGER.warn(() -> "Reaped " + count + " dead tasks (PROCESSING with no heartbeat since " +
+                              statusOlderThan + ") back to CREATED");
+        }
         return count;
+    }
+
+    @Override
+    public int countDeadTasks(final Instant statusOlderThan) {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .selectCount()
+                .from(PROCESSOR_TASK)
+                .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.PROCESSING.getPrimitiveValue()))
+                .and(PROCESSOR_TASK.STATUS_TIME_MS.lt(statusOlderThan.toEpochMilli()))
+                .fetchOne(0, int.class));
+    }
+
+    @Override
+    public int renewTaskHeartbeats(final String nodeName,
+                                   final Collection<Long> taskIds,
+                                   final long nowMs) {
+        final Integer nodeId = processorNodeCache.getOrCreate(nodeName);
+
+        // Chunked so a node processing a very large number of tasks cannot produce an
+        // unbounded IN list. Rows that are no longer PROCESSING, or no longer owned by this
+        // node, are deliberately left alone, and the version column is not touched so
+        // optimistic locking on status changes is unaffected.
+        int count = 0;
+        final List<Long> remaining = new ArrayList<>(taskIds);
+        for (int from = 0; from < remaining.size(); from += BATCH_SIZE) {
+            final List<Long> chunk = remaining.subList(from, Math.min(from + BATCH_SIZE, remaining.size()));
+            count += JooqUtil.contextResult(processorDbConnProvider, context -> context
+                    .update(PROCESSOR_TASK)
+                    .set(PROCESSOR_TASK.STATUS_TIME_MS, nowMs)
+                    .where(PROCESSOR_TASK.ID.in(chunk))
+                    .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.PROCESSING.getPrimitiveValue()))
+                    .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId))
+                    .execute());
+        }
+        return count;
+    }
+
+    @Override
+    public List<ProcessorTask> claimTasks(final int filterId, final String nodeName, final int limit) {
+        if (limit <= 0) {
+            return List.of();
+        }
+        final long now = System.currentTimeMillis();
+        final Integer nodeId = processorNodeCache.getOrCreate(nodeName);
+        final Supplier<String> msgSupplier = () -> LogUtil.message(
+                "claimTasks - filterId: {}, nodeName: {}, limit: {}", filterId, nodeName, limit);
+
+        final List<ProcessorTask> claimed = JooqUtil.withDeadlockRetries(() ->
+                        JooqUtil.transactionResult(processorDbConnProvider, context -> {
+                            // Lock the oldest waiting tasks, stepping over any row another node is
+                            // already claiming rather than queueing behind it. Read in index order so
+                            // FIFO costs nothing - EXPLAIN verified in TestProcessorTaskQueryPlans.
+                            final List<Long> ids = context
+                                    .select(PROCESSOR_TASK.ID)
+                                    .from(PROCESSOR_TASK)
+                                    .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
+                                    .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.CREATED.getPrimitiveValue()))
+                                    .orderBy(PROCESSOR_TASK.ID)
+                                    .limit(limit)
+                                    .forUpdate()
+                                    .skipLocked()
+                                    .fetch(PROCESSOR_TASK.ID);
+
+                            if (ids.isEmpty()) {
+                                return List.<ProcessorTask>of();
+                            }
+
+                            // Straight to PROCESSING - there is no queue to sit in - so the tasks
+                            // handed back are already ours and the handler does not transition them
+                            // again. The version bump is what a lost lease is later detected by.
+                            final int count = context
+                                    .update(PROCESSOR_TASK)
+                                    .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, nodeId)
+                                    .set(PROCESSOR_TASK.STATUS, TaskStatus.PROCESSING.getPrimitiveValue())
+                                    .set(PROCESSOR_TASK.STATUS_TIME_MS, now)
+                                    .set(PROCESSOR_TASK.START_TIME_MS, now)
+                                    .setNull(PROCESSOR_TASK.END_TIME_MS)
+                                    .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
+                                    .where(PROCESSOR_TASK.ID.in(ids))
+                                    .execute();
+                            if (count != ids.size()) {
+                                // We hold the row locks, so nothing else can have changed them.
+                                throw new RuntimeException("Claimed " + ids.size() + " tasks but updated " + count);
+                            }
+
+                            return convert(select(context, PROCESSOR_TASK.ID.in(ids)));
+                        }),
+                msgSupplier);
+
+        LOGGER.debug(() -> LogUtil.message("claimTasks() - filter {} asked for {}, claimed {}",
+                filterId, limit, claimed.size()));
+        return claimed;
+    }
+
+    @Override
+    public long sweepQueuedTasks(final Instant statusOlderThan) {
+        final long nowMs = System.currentTimeMillis();
+        final Supplier<String> msgSupplier = () -> LogUtil.message(
+                "sweepQueuedTasks - statusOlderThan: {}", statusOlderThan);
+
+        // Same shape and same index as the dead task reap, and bounded by the same argument: the
+        // population is whatever the master queue was holding, not the size of the table.
+        final int count = JooqUtil.contextResult(processorDbConnProvider, context ->
+                JooqUtil.withDeadlockRetries(() -> context
+                                .update(PROCESSOR_TASK)
+                                .setNull(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID)
+                                .set(PROCESSOR_TASK.STATUS, TaskStatus.CREATED.getPrimitiveValue())
+                                .set(PROCESSOR_TASK.STATUS_TIME_MS, nowMs)
+                                .setNull(PROCESSOR_TASK.START_TIME_MS)
+                                .setNull(PROCESSOR_TASK.END_TIME_MS)
+                                .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
+                                .where(PROCESSOR_TASK.STATUS.in(
+                                        TaskStatus.QUEUED.getPrimitiveValue(),
+                                        TaskStatus.ASSIGNED.getPrimitiveValue()))
+                                .and(PROCESSOR_TASK.STATUS_TIME_MS.lt(statusOlderThan.toEpochMilli()))
+                                .execute(),
+                        msgSupplier));
+        if (count > 0) {
+            LOGGER.warn(() -> "Swept " + count + " tasks left QUEUED or ASSIGNED by the master task queue "
+                              + "(no status change since " + statusOlderThan + ") back to CREATED");
+        }
+        return count;
+    }
+
+    @Override
+    public Map<Integer, Long> getTaskAvailability(final Collection<Integer> filterIds) {
+        if (NullSafe.isEmptyCollection(filterIds)) {
+            return Map.of();
+        }
+
+        // Chunked so that a deployment with a very large number of filters cannot produce an
+        // unbounded IN list. Chunking does not change the shape of the work: each chunk is still
+        // one index descent per filter it names, so the total cost tracks the number of filters
+        // asked about rather than the size of the CREATED backlog behind them.
+        final Map<Integer, Long> availability = new HashMap<>();
+        final List<Integer> remaining = new ArrayList<>(filterIds);
+        for (int from = 0; from < remaining.size(); from += BATCH_SIZE) {
+            final List<Integer> chunk = remaining.subList(from, Math.min(from + BATCH_SIZE, remaining.size()));
+            JooqUtil.contextResult(processorDbConnProvider, context -> context
+                            .select(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID, DSL.min(PROCESSOR_TASK.ID))
+                            .from(PROCESSOR_TASK)
+                            .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.in(chunk))
+                            .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.CREATED.getPrimitiveValue()))
+                            .groupBy(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID)
+                            .fetch())
+                    .forEach(record -> availability.put(record.value1(), record.value2()));
+        }
+        LOGGER.debug(() -> LogUtil.message("getTaskAvailability() - {}/{} filters have created tasks",
+                availability.size(), filterIds.size()));
+        return availability;
     }
 
     private long releaseTasks(final List<Condition> conditions) {
@@ -581,6 +716,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
      * @param nodeName This node name.
      * @return A list of tasks to queue.
      */
+
     @Override
     public List<ProcessorTask> queueTasks(final Set<Long> idSet,
                                           final String nodeName) {
@@ -1072,91 +1208,51 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             nodeId = null;
         }
 
-        // Do everything within a single transaction.
-        ProcessorTask updated = processorTask;
+        final ProcessorTask updated = processorTask.copy()
+                .nodeName(nodeName)
+                .status(status)
+                .statusTimeMs(now)
+                .startTimeMs(startTime)
+                .endTimeMs(endTime)
+                .build();
+
         ProcessorTask result = null;
 
         try {
-            try {
-                updated = updated.copy()
-                        .nodeName(nodeName)
-                        .status(status)
-                        .statusTimeMs(now)
-                        .startTimeMs(startTime)
-                        .endTimeMs(endTime)
-                        .build();
+            RuntimeException lastError = null;
+            for (int tries = 0; tries < MAX_TASK_STATUS_UPDATE_TRIES && result == null; tries++) {
+                try {
+                    result = updateProcessorTask(nodeId, updated);
 
-                result = updateProcessorTask(nodeId, updated);
-
-            } catch (final RuntimeException e) {
-                // Reported below if we can't recover by reloading and trying again.
-                LOGGER.debug(() -> LogUtil.message(
-                        "changeTaskStatus({}) - {} - Task has changed, attempting reload {}",
-                        status, e.getMessage(), processorTask), e);
+                    if (result == null) {
+                        // gh-5699. The version check failed: the task has been changed by
+                        // something else since we last saw it, which for a task we believed we
+                        // held means we have lost the lease - most likely the reaper decided
+                        // our heartbeat was dead and returned the task to CREATED, possibly
+                        // for another node to claim. An earlier version of this method
+                        // reloaded the row and re-applied the status change over the top;
+                        // that force-write is exactly how a half-dead node stamps COMPLETE on
+                        // a task another node now owns, so we now log loudly and abandon the
+                        // write instead (PROCESSOR_WORKER_TASK_QUEUEING_DESIGN.md §3.4).
+                        reportLostLease(processorTask, status);
+                        return null;
+                    }
+                } catch (final RuntimeException e) {
+                    // A thrown exception is a transient problem (deadlock, connection loss),
+                    // not a version verdict, so retrying with the SAME expected version is
+                    // safe - it can only ever succeed against an unchanged row.
+                    LOGGER.debug(() -> LogUtil.message(
+                            "changeTaskStatus({}) - {} - retrying {}",
+                            status, e.getMessage(), processorTask), e);
+                    lastError = e;
+                    // Wait before trying this operation again.
+                    Thread.sleep(TASK_STATUS_UPDATE_ERROR_DELAY_MS);
+                }
             }
 
             if (result == null) {
-                // Try this operation a few times.
-                RuntimeException lastError = null;
-
-                for (int tries = 0; tries < MAX_TASK_STATUS_UPDATE_TRIES && result == null; tries++) {
-                    final int attempt = tries + 1;
-                    try {
-                        logTaskStatusRetry(attempt, () -> LogUtil.message(
-                                "changeTaskStatus({}) - Task has changed, attempting reload {}",
-                                status, processorTask));
-
-                        final ProcessorTask reloaded = fetch(updated).orElse(null);
-
-                        LOGGER.debug("Actual DB record {}", reloaded);
-
-                        if (reloaded == null) {
-                            LOGGER.warn(() -> LogUtil.message(
-                                    "changeTaskStatus({}) - Task does not exist, " +
-                                    "task may have been physically deleted {}",
-                                    status, processorTask));
-                            break;
-                        } else if (TaskStatus.DELETED.equals(reloaded.getStatus())) {
-                            LOGGER.warn(() -> LogUtil.message(
-                                    "changeTaskStatus({}) - Task has been logically deleted {}",
-                                    status,
-                                    processorTask));
-                            break;
-                        } else {
-                            logTaskStatusRetry(attempt, () -> LogUtil.message(
-                                    "changeTaskStatus({}) - Re-loaded stream task {}",
-                                    status,
-                                    reloaded));
-                            updated = reloaded.copy()
-                                    .nodeName(nodeName)
-                                    .status(status)
-                                    .statusTimeMs(now)
-                                    .startTimeMs(startTime)
-                                    .endTimeMs(endTime)
-                                    .build();
-
-                            result = updateProcessorTask(nodeId, updated);
-
-                            if (result == null) {
-                                // Something changed the task again, so pause before trying once more rather
-                                // than spinning on the database.
-                                Thread.sleep(TASK_STATUS_UPDATE_CONTENTION_DELAY_MS);
-                            }
-                        }
-                    } catch (final RuntimeException e2) {
-                        LOGGER.debug(() -> LogUtil.message(
-                                "changeTaskStatus({}) - {} - Task has changed, attempting reload {}",
-                                status, e2.getMessage(), processorTask), e2);
-                        lastError = e2;
-                        // Wait before trying this operation again.
-                        Thread.sleep(TASK_STATUS_UPDATE_ERROR_DELAY_MS);
-                    }
-                }
-
-                if (result == null) {
-                    LOGGER.error("Error changing task status to {} for task '{}': {}",
-                            status, processorTask, NullSafe.get(lastError, Exception::getMessage), lastError);
-                }
+                LOGGER.error("Error changing task status to {} for task '{}': {}",
+                        status, processorTask, NullSafe.get(lastError, Exception::getMessage), lastError);
             }
         } catch (final InterruptedException e) {
             LOGGER.error(e::getMessage, e);
@@ -1168,14 +1264,34 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     /**
-     * Recovering from a task that has been changed elsewhere is expected and normally succeeds first time, so
-     * only make a noise about it if the first attempt didn't work.
+     * Diagnose and report a failed version check on a status change. Deletion is routine and
+     * reported quietly; anything else means the task was taken from us while we thought we
+     * held it, which is the loud case - it implies this node processed (or is processing)
+     * work whose output may be duplicated elsewhere.
      */
-    private void logTaskStatusRetry(final int attempt, final Supplier<String> message) {
-        if (attempt == 1) {
-            LOGGER.debug(message);
+    private void reportLostLease(final ProcessorTask processorTask, final TaskStatus newStatus) {
+        final ProcessorTask reloaded = fetch(processorTask).orElse(null);
+        if (reloaded == null) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "changeTaskStatus({}) - Abandoning status change, task does not exist, " +
+                    "task may have been physically deleted {}",
+                    newStatus, processorTask));
+        } else if (TaskStatus.DELETED.equals(reloaded.getStatus())) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "changeTaskStatus({}) - Abandoning status change, task has been logically deleted {}",
+                    newStatus, processorTask));
         } else {
-            LOGGER.warn(message);
+            LOGGER.error(() -> LogUtil.message(
+                    "changeTaskStatus({}) - LEASE LOST - task was changed by another node while this " +
+                    "node held it, so the status change is abandoned rather than overwriting. " +
+                    "This node's work on the task may be duplicated by the task's new owner. " +
+                    "Task as this node knew it: {}. Task as it now is: status {}, version {}, " +
+                    "status time {}.",
+                    newStatus,
+                    processorTask,
+                    reloaded.getStatus(),
+                    reloaded.getVersion(),
+                    reloaded.getStatusTimeMs()));
         }
     }
 
@@ -1445,6 +1561,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .fetch());
         return records.map(r -> new ExistingCreatedTask(r.value1(), r.value2()));
     }
+
 
 
 // --------------------------------------------------------------------------------

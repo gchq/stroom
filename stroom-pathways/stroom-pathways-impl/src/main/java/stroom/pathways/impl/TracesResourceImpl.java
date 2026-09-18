@@ -18,11 +18,17 @@ package stroom.pathways.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.pathways.shared.FindTraceCriteria;
+import stroom.pathways.shared.FindTracesWithHistogramCriteria;
+import stroom.pathways.shared.GetSpansRequest;
+import stroom.pathways.shared.GetTraceOverviewRequest;
 import stroom.pathways.shared.GetTraceRequest;
+import stroom.pathways.shared.TraceOverview;
+import stroom.pathways.shared.TraceSpanPage;
 import stroom.pathways.shared.TracesResource;
+import stroom.pathways.shared.TracesResultPage;
+import stroom.pathways.shared.TracesStore;
 import stroom.pathways.shared.otel.trace.Trace;
 import stroom.pathways.shared.otel.trace.TraceRoot;
-import stroom.planb.impl.data.TracesStoreImpl;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -31,10 +37,10 @@ import jakarta.inject.Provider;
 @AutoLogged
 public class TracesResourceImpl implements TracesResource {
 
-    private final Provider<TracesStoreImpl> tracesStoreProvider;
+    private final Provider<TracesStore> tracesStoreProvider;
 
     @Inject
-    TracesResourceImpl(final Provider<TracesStoreImpl> tracesStoreProvider) {
+    TracesResourceImpl(final Provider<TracesStore> tracesStoreProvider) {
         this.tracesStoreProvider = tracesStoreProvider;
     }
 
@@ -46,5 +52,20 @@ public class TracesResourceImpl implements TracesResource {
     @Override
     public Trace findTrace(final GetTraceRequest request) {
         return tracesStoreProvider.get().getTrace(request);
+    }
+
+    @Override
+    public TraceSpanPage getSpans(final GetSpansRequest request) {
+        return tracesStoreProvider.get().getSpans(request);
+    }
+
+    @Override
+    public TraceOverview getTraceOverview(final GetTraceOverviewRequest request) {
+        return tracesStoreProvider.get().getTraceOverview(request);
+    }
+
+    @Override
+    public TracesResultPage findTracesWithHistogram(final FindTracesWithHistogramCriteria criteria) {
+        return tracesStoreProvider.get().findTracesWithHistogram(criteria);
     }
 }
