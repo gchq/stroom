@@ -27,12 +27,15 @@ import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.client.presenter.TypeFilterPresenter;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.shared.ContentResource;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.DocRefs;
 import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -79,7 +82,8 @@ public class ExportConfigPresenter
                                  final EntityCheckTreePresenter treePresenter,
                                  final TypeFilterPresenter typeFilterPresenter,
                                  final RestFactory restFactory,
-                                 final DocumentTypeCache documentTypeCache) {
+                                 final DocumentTypeCache documentTypeCache,
+                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view, proxy);
         this.locationManager = locationManager;
         this.treePresenter = treePresenter;
@@ -99,6 +103,8 @@ public class ExportConfigPresenter
 
         view.setTreeView(treePresenter.getView());
         treePresenter.setFilterErrorConsumer(view::setFilterError);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
         view.setUiHandlers(this);
 
         // Only show the System node at the root for export
@@ -222,6 +228,8 @@ public class ExportConfigPresenter
          * See {@code FetchExplorerNodeResult.filterError}.
          */
         void setFilterError(String filterError);
+
+        void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
 
         FlowPanel getButtonContainer();
     }

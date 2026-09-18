@@ -18,12 +18,14 @@ package stroom.task.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.TableCell;
@@ -48,7 +50,8 @@ public class TaskManagerPresenter
     public TaskManagerPresenter(final EventBus eventBus,
                                 final TaskManagerView view,
                                 final TaskManagerListPresenter listPresenter,
-                                final UiConfigCache uiConfigCache) {
+                                final UiConfigCache uiConfigCache,
+                                final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         view.setUiHandlers(this);
@@ -56,6 +59,8 @@ public class TaskManagerPresenter
         // A rejected filter comes back as an empty list like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         listPresenter.setFilterErrorConsumer(view::setFilterError);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                FindTaskProgressCriteria.QUICK_FILTER_CONTEXT, this, this));
 
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
@@ -158,6 +163,8 @@ public class TaskManagerPresenter
          * See {@code ResultPage.filterError}.
          */
         void setFilterError(String filterError);
+
+        void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
 
         void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 

@@ -16,6 +16,7 @@
 
 package stroom.activity.shared;
 
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -44,6 +45,9 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ActivityResource extends RestResource, DirectRestService, FetchWithIntegerId<Activity> {
+
+    // The field definitions are served at runtime by listFieldDefinitions(), so history only.
+    QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.historyOnly("activities");
 
     @GET
     @Operation(

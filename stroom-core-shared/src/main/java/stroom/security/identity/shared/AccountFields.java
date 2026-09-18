@@ -17,6 +17,7 @@
 package stroom.security.identity.shared;
 
 import stroom.query.api.datasource.QueryField;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import java.util.Arrays;
@@ -110,5 +111,11 @@ public class AccountFields {
             FIELD_ENABLED,
             FIELD_INACTIVE,
             FIELD_LOCKED);
+
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "accounts",
+            FILTER_FIELD_DEFINITIONS,
+            QUICK_FILTER_DEFAULT_FIELDS,
+            QUICK_FILTER_FIELDS);
 
 }

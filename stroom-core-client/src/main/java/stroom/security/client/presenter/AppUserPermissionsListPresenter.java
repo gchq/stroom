@@ -26,6 +26,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
@@ -89,7 +90,8 @@ public class AppUserPermissionsListPresenter
                                            final PagerView pagerView,
                                            final RestFactory restFactory,
                                            final UiConfigCache uiConfigCache,
-                                           final ClientSecurityContext securityContext) {
+                                           final ClientSecurityContext securityContext,
+                                           final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.pagerView = pagerView;
@@ -120,6 +122,8 @@ public class AppUserPermissionsListPresenter
 
         view.setDataView(pagerView);
         view.setUiHandlers(this);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                UserFields.QUICK_FILTER_CONTEXT, this, this));
 
         setupColumns();
     }

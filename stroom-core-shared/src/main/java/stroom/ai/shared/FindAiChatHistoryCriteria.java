@@ -16,6 +16,7 @@
 
 package stroom.ai.shared;
 
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.QuickFilterCriteria;
@@ -33,6 +34,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class FindAiChatHistoryCriteria extends QuickFilterCriteria {
+
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.historyOnly("aiChatHistory");
 
     public static final CriteriaFieldSort DEFAULT_SORT =
             new CriteriaFieldSort(AiChatHistoryFields.NAME, false, true);

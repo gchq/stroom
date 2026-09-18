@@ -26,6 +26,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
@@ -69,7 +70,8 @@ public class ExplorerPopupPresenter
     ExplorerPopupPresenter(final EventBus eventBus,
                            final ExplorerPopupView view,
                            final RestFactory restFactory,
-                           final UiConfigCache uiConfigCache) {
+                           final UiConfigCache uiConfigCache,
+                           final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
 
@@ -77,6 +79,8 @@ public class ExplorerPopupPresenter
 
         explorerTree = new ExtendedExplorerTree(this, restFactory, this);
         explorerTree.setFilterErrorConsumer(getView()::setFilterError);
+        getView().setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
         setIncludeNullSelection(true);
 
         // Add views.

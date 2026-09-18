@@ -18,9 +18,11 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.FindAnnotationPresenter.FindAnnotationProxy;
 import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.client.presenter.FindUiHandlers;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -47,7 +49,8 @@ public class FindAnnotationPresenter
     public FindAnnotationPresenter(final EventBus eventBus,
                                    final FindView view,
                                    final FindAnnotationProxy proxy,
-                                   final FindAnnotationListPresenter findResultListPresenter) {
+                                   final FindAnnotationListPresenter findResultListPresenter,
+                                   final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view, proxy);
         getView().setDialogMode(false);
         this.findResultListPresenter = findResultListPresenter;
@@ -56,6 +59,8 @@ public class FindAnnotationPresenter
         view.setUiHandlers(this);
         findResultListPresenter.setFindResultListHandler(this);
         findResultListPresenter.setFilterErrorConsumer(view::setFilterError);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                FindAnnotationRequest.QUICK_FILTER_CONTEXT, this, this));
     }
 
     @Override

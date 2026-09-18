@@ -35,6 +35,7 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.UpdateField;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.IndexFieldFields;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
@@ -73,6 +74,7 @@ public class IndexFieldListPresenter
 
     private String filter;
     private DocRef docRef;
+    private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
     private boolean readOnly = true;
 
     @Inject
@@ -80,12 +82,14 @@ public class IndexFieldListPresenter
                                    final QuickFilterPageView view,
                                    final PagerView pagerView,
                                    final RestFactory restFactory,
-                                   final IndexFieldEditPresenter indexFieldEditPresenter) {
+                                   final IndexFieldEditPresenter indexFieldEditPresenter,
+                                   final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.pagerView = pagerView;
         this.restFactory = restFactory;
         view.setDataView(pagerView);
         view.setUiHandlers(this);
+        this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
 
         dataGrid = new MyDataGrid<>(this);
         dataGrid.setTableName("Index Fields");
@@ -332,6 +336,9 @@ public class IndexFieldListPresenter
     protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
         dataGrid.setTableName("Index '" + docRef.getName() + "' Fields");
         this.docRef = docRef;
+        // Field names are particular to one index, so its recent filters are too.
+        getView().setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                IndexResource.QUICK_FILTER_CONTEXT.withDataSource(docRef), this, this));
         this.readOnly = readOnly;
         enableButtons();
         refresh();

@@ -18,6 +18,7 @@ package stroom.task.shared;
 
 import stroom.query.api.datasource.QueryField;
 import stroom.query.api.datasource.QuickFilterFields;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.QuickFilterCriteria;
@@ -64,6 +65,12 @@ public class FindTaskProgressCriteria extends QuickFilterCriteria {
     public static final List<QueryField> QUERY_FIELDS = QuickFilterFields.uiText(FIELD_DEFINITIONS);
     public static final List<QueryField> DEFAULT_QUERY_FIELDS =
             QuickFilterFields.uiTextDefaults(FIELD_DEFINITIONS);
+
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "tasks",
+            FIELD_DEFINITIONS,
+            DEFAULT_QUERY_FIELDS,
+            QUERY_FIELDS);
 
     @JsonProperty
     private Set<TaskProgress> expandedTasks;

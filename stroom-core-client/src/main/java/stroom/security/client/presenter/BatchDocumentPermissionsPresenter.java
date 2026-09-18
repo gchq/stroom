@@ -28,6 +28,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.svg.client.Preset;
@@ -73,12 +74,15 @@ public class BatchDocumentPermissionsPresenter
                                              final Provider<ExpressionPresenter> docFilterPresenterProvider,
                                              final DocumentListPresenter documentListPresenter,
                                              final Provider<BatchDocumentPermissionsEditPresenter>
-                                                     batchDocumentPermissionsEditPresenterProvider) {
+                                                     batchDocumentPermissionsEditPresenterProvider,
+                                             final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.documentListPresenter = documentListPresenter;
         // A rejected filter comes back as an empty page like any other, so surface the reason on
         // the filter box. See ResultPage.filterError.
         documentListPresenter.setFilterErrorConsumer(view::setFilterError);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                DocumentPermissionFields.QUICK_FILTER_CONTEXT, this, this));
         this.batchDocumentPermissionsEditPresenterProvider = batchDocumentPermissionsEditPresenterProvider;
         this.docFilterPresenterProvider = docFilterPresenterProvider;
 

@@ -19,6 +19,7 @@ package stroom.security.shared;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import java.util.Arrays;
@@ -104,6 +105,14 @@ public class UserFields {
             DISPLAY_NAME,
             FULL_NAME,
             ENABLED);
+
+    // Shared by every screen that lists users - the user list, the user picker, app and
+    // document permissions - because they all parse against these fields.
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "users",
+            FILTER_FIELD_DEFINITIONS,
+            QUICK_FILTER_DEFAULT_FIELDS,
+            QUICK_FILTER_FIELDS);
 
     public static final Map<String, QueryField> ALL_FIELDS_MAP = QueryField.buildFieldMap(
             IS_GROUP,

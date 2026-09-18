@@ -54,7 +54,11 @@ public class SimpleStringExpressionParser {
 
     // Add all supported conditions and sort them by longest operator string first, so we can match longest prefixes
     // first.
-    private static final List<Condition> SUPPORTED_CONDITIONS = Stream.of(
+    /**
+     * The conditions with a sigil, longest sigil first so that '==' is tried before '='.
+     * Package-private so {@link QuickFilterPrinter} prints exactly this set and no other.
+     */
+    static final List<Condition> SUPPORTED_CONDITIONS = Stream.of(
                     Condition.CONTAINS,
                     Condition.EQUALS,
                     Condition.STARTS_WITH,

@@ -29,6 +29,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -59,6 +60,7 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
     private ExplorerTreeFilter lastFilter;
     private boolean initialised;
     private boolean focusText;
+    private Consumer<String> filterErrorConsumer;
     private FindDocResultListHandler<FindResult> findResultListHandler = new FindDocResultListHandler<FindResult>() {
         @Override
         public void openDocument(final FindResult match) {
@@ -130,6 +132,13 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
                             .create(EXPLORER_RESOURCE)
                             .method(res -> res.find(currentQuery))
                             .onSuccess(resultPage -> {
+                                // A rejected filter comes back as an empty page like any other,
+                                // so surface the reason on the filter box. See
+                                // ResultPage.filterError.
+                                if (filterErrorConsumer != null) {
+                                    filterErrorConsumer.accept(
+                                            NullSafe.get(resultPage.getFilterError(), TokenError::getText));
+                                }
                                 if (resultPage.getPageStart() != cellTable.getPageStart()) {
                                     cellTable.setPageStart(resultPage.getPageStart());
                                 }
@@ -176,6 +185,10 @@ public class FindDocResultListPresenter extends MyPresenterWidget<PagerView> {
         } else {
             dataProvider.refresh();
         }
+    }
+
+    public void setFilterErrorConsumer(final Consumer<String> filterErrorConsumer) {
+        this.filterErrorConsumer = filterErrorConsumer;
     }
 
     public void setFindResultListHandler(final FindDocResultListHandler<FindResult> findResultListHandler) {

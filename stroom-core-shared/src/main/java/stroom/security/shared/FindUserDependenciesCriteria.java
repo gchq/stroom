@@ -17,6 +17,8 @@
 package stroom.security.shared;
 
 import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QuickFilterFields;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.QuickFilterCriteria;
@@ -65,6 +67,12 @@ public class FindUserDependenciesCriteria extends QuickFilterCriteria {
             FIELD_DEF_DOC_NAME,
 //            FIELD_DEF_DOC_UUID,
             FIELD_DEF_DETAILS);
+
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "userDependencies",
+            FILTER_FIELD_DEFINITIONS,
+            QuickFilterFields.uiTextDefaults(FILTER_FIELD_DEFINITIONS),
+            QuickFilterFields.uiText(FILTER_FIELD_DEFINITIONS));
 
     @JsonProperty
     private UserRef userRef;

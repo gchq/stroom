@@ -26,6 +26,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.AppPermission;
@@ -104,7 +105,8 @@ public class ApiKeysListPresenter
                                 final DateTimeFormatter dateTimeFormatter,
                                 final ClientSecurityContext securityContext,
                                 final EditApiKeyPresenter editApiKeyPresenter,
-                                final UiConfigCache uiConfigCache) {
+                                final UiConfigCache uiConfigCache,
+                                final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, listView);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -136,6 +138,8 @@ public class ApiKeysListPresenter
 
         listView.setDataView(pagerView);
         listView.setUiHandlers(this);
+        listView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                FindApiKeyCriteria.QUICK_FILTER_CONTEXT, this, this));
 
 //        addButton = new InlineSvgButton();
 //        editButton = new InlineSvgButton();

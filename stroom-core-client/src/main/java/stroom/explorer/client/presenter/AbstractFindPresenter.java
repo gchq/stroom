@@ -18,7 +18,10 @@ package stroom.explorer.client.presenter;
 
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
+import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FindResult;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -39,15 +42,23 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
     public AbstractFindPresenter(final EventBus eventBus,
                                  final FindView view,
                                  final T_PROXY proxy,
-                                 final FindDocResultListPresenter findResultListPresenter) {
+                                 final FindDocResultListPresenter findResultListPresenter,
+                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view, proxy);
         this.findResultListPresenter = findResultListPresenter;
+        // The find dialog's text is parsed by NodeInclusionChecker against the explorer tree's
+        // fields, so it shares the tree's history.
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
 
         // Ensure list has a border in the popup view.
         findResultListPresenter.getView().asWidget().addStyleName("form-control-border form-control-background");
         view.setResultView(findResultListPresenter.getView());
         view.setUiHandlers(this);
         findResultListPresenter.setFindResultListHandler(this);
+        // A rejected filter comes back as an empty page like any other, so surface the reason on
+        // the filter box - and, through it, tell the history what was accepted.
+        findResultListPresenter.setFilterErrorConsumer(view::setFilterError);
     }
 
     @Override
@@ -103,6 +114,8 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
          * See {@code ResultPage.filterError}.
          */
         void setFilterError(String filterError);
+
+        void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
 
         void setResultView(View view);
 

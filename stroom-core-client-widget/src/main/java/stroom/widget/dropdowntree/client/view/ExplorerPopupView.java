@@ -32,6 +32,8 @@ public interface ExplorerPopupView extends View, Focus, HasUiHandlers<ExplorerPo
      */
     void setFilterError(String filterError);
 
+    void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
+
     void setCellTree(Widget widget);
 
     void setQuickFilterTooltipSupplier(final Supplier<SafeHtml> tooltipSupplier);

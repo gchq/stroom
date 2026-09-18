@@ -18,6 +18,7 @@ package stroom.activity.client;
 
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -81,6 +82,11 @@ public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiH
     @Override
     public void setFilterError(final String filterError) {
         nameFilter.setFilterError(filterError);
+    }
+
+    @Override
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        nameFilter.setContextHandler(contextHandler);
     }
 
     private SafeHtml getTooltipContent() {

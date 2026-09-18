@@ -17,6 +17,7 @@
 package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 
@@ -29,8 +30,9 @@ public class DocSelectionPopup extends ExplorerPopupPresenter {
     DocSelectionPopup(final EventBus eventBus,
                       final ExplorerPopupView view,
                       final RestFactory restFactory,
-                      final UiConfigCache uiConfigCache) {
-        super(eventBus, view, restFactory, uiConfigCache);
+                      final UiConfigCache uiConfigCache,
+                      final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
+        super(eventBus, view, restFactory, uiConfigCache, quickFilterContextHandlerFactory);
         setIncludeNullSelection(false);
     }
 }

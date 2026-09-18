@@ -18,6 +18,7 @@ package stroom.ai.client;
 
 import stroom.ai.client.AiChatHistoryPresenter.AiChatHistoryView;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -63,6 +64,11 @@ public class AiChatHistoryViewImpl
     @Override
     public void setFilterError(final String filterError) {
         nameFilter.setFilterError(filterError);
+    }
+
+    @Override
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        nameFilter.setContextHandler(contextHandler);
     }
 
     @Override

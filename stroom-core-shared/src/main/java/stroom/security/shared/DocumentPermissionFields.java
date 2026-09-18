@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.datasource.ConditionSet;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
+import stroom.quickfilter.shared.QuickFilterContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -141,5 +142,14 @@ public class DocumentPermissionFields {
             DOCUMENT_UUID,
             DOCUMENT_TYPE,
             DOCUMENT_TAG);
+
+    // Shared by the batch permissions and permission report screens: both parse against these
+    // fields via ExplorerServiceImpl.applyExpressionFilter. No FilterFieldDefinitions - the
+    // tooltip for these screens is hand-built - so only history and Advanced Query use this.
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "documentPermissions",
+            null,
+            QUICK_FILTER_DEFAULT_FIELDS,
+            QUICK_FILTER_FIELDS);
 
 }

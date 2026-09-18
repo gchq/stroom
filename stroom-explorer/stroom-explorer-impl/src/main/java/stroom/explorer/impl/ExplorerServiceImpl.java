@@ -1780,6 +1780,12 @@ class ExplorerServiceImpl
                     OpenItemsImpl.all(),
                     metrics,
                     false);
+            if (result.getFilterError() != null) {
+                // A rejected filter must not look like a filter that matched nothing. The tree
+                // walk already worked out why; send it back with the empty page. See
+                // ResultPage.filterError.
+                return ResultPage.emptyWithFilterError(result.getFilterError());
+            }
             final List<FindResult> results = new ArrayList<>();
 
             walkNodeTree(result.getRootNodes(), (path, node) -> {

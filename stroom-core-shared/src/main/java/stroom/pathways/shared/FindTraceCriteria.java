@@ -20,6 +20,8 @@ import stroom.docref.DocRef;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.query.api.TimeRange;
 import stroom.query.api.datasource.FieldFields;
+import stroom.query.api.datasource.QuickFilterFields;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
@@ -53,6 +55,17 @@ public class FindTraceCriteria extends BaseCriteria {
             FilterFieldDefinition.qualifiedField("Is Error", "iserror");
     public static final List<FilterFieldDefinition> FIELD_DEFINITIONS =
             List.of(FIELD_DEF_OPERATION, FIELD_DEF_TRACE_ID, FIELD_DEF_IS_ERROR);
+
+    /**
+     * The field set only: a traces list is over one Plan B document, so the screen calls
+     * {@link QuickFilterContext#withDataSource} with it. Operations and trace ids in one document
+     * mean nothing in another, so their histories are kept apart.
+     */
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "traces",
+            FIELD_DEFINITIONS,
+            QuickFilterFields.uiTextDefaults(FIELD_DEFINITIONS),
+            QuickFilterFields.uiText(FIELD_DEFINITIONS));
 
     @JsonProperty
     private final DocRef dataSourceRef;

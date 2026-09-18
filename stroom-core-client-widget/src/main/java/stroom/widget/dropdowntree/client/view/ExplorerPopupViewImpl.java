@@ -86,6 +86,11 @@ public class ExplorerPopupViewImpl extends ViewWithUiHandlers<ExplorerPopupUiHan
         nameFilter.setFilterError(filterError);
     }
 
+    @Override
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        nameFilter.setContextHandler(contextHandler);
+    }
+
 
     // --------------------------------------------------------------------------------
 

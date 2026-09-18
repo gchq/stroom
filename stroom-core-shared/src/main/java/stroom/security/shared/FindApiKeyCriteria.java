@@ -17,6 +17,7 @@
 package stroom.security.shared;
 
 import stroom.query.api.datasource.QueryField;
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.QuickFilterCriteria;
@@ -98,6 +99,12 @@ public class FindApiKeyCriteria extends QuickFilterCriteria {
             FIELD_DEF_COMMENTS,
             FIELD_DEF_ENABLED,
             FIELD_DEF_HASH_ALGORITHM);
+
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.of(
+            "apiKeys",
+            FILTER_FIELD_DEFINITIONS,
+            QUICK_FILTER_DEFAULT_FIELDS,
+            QUICK_FILTER_FIELDS);
 
     @JsonProperty
     private UserRef owner;

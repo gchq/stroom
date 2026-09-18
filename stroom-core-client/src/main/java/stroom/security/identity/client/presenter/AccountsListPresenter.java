@@ -28,6 +28,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountFields;
@@ -83,7 +84,8 @@ public class AccountsListPresenter
                                  final RestFactory restFactory,
                                  final DateTimeFormatter dateTimeFormatter,
                                  final Provider<EditAccountPresenter> editAccountPresenterProvider,
-                                 final UiConfigCache uiConfigCache) {
+                                 final UiConfigCache uiConfigCache,
+                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.pagerView = pagerView;
         this.restFactory = restFactory;
@@ -123,6 +125,8 @@ public class AccountsListPresenter
 
         view.setDataView(pagerView);
         view.setUiHandlers(this);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                AccountFields.QUICK_FILTER_CONTEXT, this, this));
     }
 
     @Override

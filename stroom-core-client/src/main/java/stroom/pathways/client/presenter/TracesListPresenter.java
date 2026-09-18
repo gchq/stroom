@@ -31,6 +31,7 @@ import stroom.pathways.shared.otel.trace.TraceRoot;
 import stroom.pathways.shared.pathway.Pathway;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.TimeRange;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
@@ -38,6 +39,7 @@ import stroom.util.client.DurationUtil;
 import stroom.util.client.NumberUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TokenError;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
@@ -88,6 +90,7 @@ public class TracesListPresenter
     private RestDataProvider<TraceRoot, ResultPage<TraceRoot>> dataProvider;
 
     private DocRef dataSourceRef;
+    private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
     private String filter;
     private Pathway pathway;
     private TimeRange timeRange;
@@ -98,7 +101,8 @@ public class TracesListPresenter
                                final PagerView pagerView,
                                final RestFactory restFactory,
                                final DateTimeFormatter dateTimeFormatter,
-                               final UiConfigCache uiConfigCache) {
+                               final UiConfigCache uiConfigCache,
+                               final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -133,6 +137,7 @@ public class TracesListPresenter
         dataPanel.add(pagerWidget);
         view.setDataView(new SimpleView(dataPanel));
         view.setUiHandlers(this);
+        this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
     }
 
     private static final class SimpleView extends ViewImpl {
@@ -407,6 +412,11 @@ public class TracesListPresenter
                                 .create(TRACES_RESOURCE)
                                 .method(res -> res.findTracesWithHistogram(criteria))
                                 .onSuccess(page -> {
+                                    // A rejected filter comes back as an empty page like any
+                                    // other, so surface the reason on the filter box. See
+                                    // ResultPage.filterError.
+                                    getView().setFilterError(
+                                            NullSafe.get(page.getFilterError(), TokenError::getText));
                                     histogramWidget.setData(page.getHistogram());
                                     dataConsumer.accept(page);
                                 })
@@ -428,6 +438,12 @@ public class TracesListPresenter
 
     public void setDataSourceRef(final DocRef dataSourceRef) {
         this.dataSourceRef = dataSourceRef;
+        // Operations and trace ids are particular to one Plan B document, so its recent filters
+        // are too.
+        getView().setQuickFilterContextHandler(dataSourceRef == null
+                ? null
+                : quickFilterContextHandlerFactory.create(
+                        FindTraceCriteria.QUICK_FILTER_CONTEXT.withDataSource(dataSourceRef), this, this));
     }
 
     public void setFilter(final String filter) {

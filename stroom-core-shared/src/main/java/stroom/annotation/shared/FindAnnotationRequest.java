@@ -16,6 +16,7 @@
 
 package stroom.annotation.shared;
 
+import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
@@ -30,6 +31,8 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class FindAnnotationRequest extends QuickFilterCriteria {
+
+    public static final QuickFilterContext QUICK_FILTER_CONTEXT = QuickFilterContext.historyOnly("annotations");
 
     @JsonProperty
     private final DocumentPermission requiredPermission;

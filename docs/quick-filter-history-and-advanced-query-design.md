@@ -4,7 +4,10 @@
 `gh-5740_quick_filter` (uncommitted): shared `QuickFilterContext` / `QuickFilterHistoryKey`,
 `quick_filter_history` table + DAO + service + `QuickFilterHistoryResource`, widget `▼` + menu via
 `QuickFilterContextHandler` / `QuickFilterContextHandlerFactory`, wired on Dependencies and
-Properties. A4 (rollout), B and C not started.
+Properties. **A4 rolled out 2026-09-18** to every surface in the table in §4 (the ones marked
+*history only* use `QuickFilterContext.historyOnly`). **B built 2026-09-18**: `QuickFilterPrinter`
+(+ `QuickFilterPrintException`) beside the parser with 85 round-trip tests, and
+`parseQuickFilter` / `formatQuickFilter` on `ExpressionResource`. C not started.
 
 **Builds on:** `docs/query-filter-surface-syntax-spec.md` (recoverable from commit `739c927737`;
 untracked in this checkout) and the gh-5720 work on `gh-5740_quick_filter`. The decisions
@@ -189,33 +192,35 @@ time: **traces** (`FindTraceCriteria.dataSourceRef`) and **pathways**
 permissions screen is *about* (`DocumentPermissionFields.DOCUMENT` term) is a filter term, not a
 data source, so those screens share one context.
 
-Keys must be **stable across releases** (they are persisted). Proposed keys:
+Keys must be **stable across releases** (they are persisted). Keys as built (A4):
 
-| Key | Surface (shared constants) |
-|---|---|
-| `explorer` | `ExplorerTreeFilter` — nav tree, `EntityTreePresenter`, `ExplorerPopupPresenter` |
-| `find` | `FindPresenter` / `AdvancedDocumentFindRequest` |
-| `dependencies` | `DependencyCriteria` |
-| `userDependencies` | `FindUserDependenciesCriteria` |
-| `globalProperties` | `GlobalConfigResource` |
-| `tasks` | `FindTaskProgressCriteria` |
-| `users` | `UserFields` (user list, user-ref popup, app permissions) |
-| `documentPermissions` | `DocumentPermissionFields` |
-| `apiKeys` | `FindApiKeyCriteria` |
-| `accounts` | `AccountFields` |
-| `activities` | `ManageActivityPresenter` |
-| `annotationTags` | `AnnotationTagFields` |
-| `annotations` | `AnnotationFields` (find annotation) |
-| `credentials` | `CredentialFields` |
-| `aiChatHistory` | AI chat history list |
-| `traces` | `FindTraceCriteria` — **per data source** |
-| `pathways` | `FindPathwayCriteria` — **per data source** |
-| `indexFields` | index field list |
+| Key | Declared on | Screens |
+|---|---|---|
+| `explorer` | `ExplorerTreeFilter` | nav tree, `EntityTreePresenter`, `ExplorerPopupPresenter`/`DocSelectionPopup`, export tree, **and the Find and Recent Items dialogs** — their text is parsed by `NodeInclusionChecker` against the same fields |
+| `dependencies` | `DependencyCriteria` | Dependencies tab |
+| `userDependencies` | `FindUserDependenciesCriteria` (fields derived via `QuickFilterFields`) | user dependencies list |
+| `globalProperties` | `GlobalConfigResource` | Properties tab |
+| `tasks` | `FindTaskProgressCriteria` | task manager |
+| `users` | `UserFields` | user list, user-ref popup, app permissions, document user permissions |
+| `documentPermissions` | `DocumentPermissionFields` (no `FilterFieldDefinition`s; tooltip is hand-built) | batch permissions, permission report |
+| `apiKeys` | `FindApiKeyCriteria` | API keys |
+| `accounts` | `AccountFields` | accounts |
+| `activities` | `ActivityResource` — *history only*, fields served by `listFieldDefinitions()` | choose activity |
+| `annotations` | `FindAnnotationRequest` — *history only* | find annotation |
+| `aiChatHistory` | `FindAiChatHistoryCriteria` — *history only* | AI chat history |
+| `traces` | `FindTraceCriteria` (derived fields) — **per Plan B document** | traces list; bound in `setDataSourceRef` |
+| `indexFields` | `IndexResource` — *history only*, **per index document** | index fields; bound in `onRead`. (`FindFieldCriteria` lives in `stroom-query-api`, which cannot see `QuickFilterContext`.) |
 
-Out of scope, by the spec's own exclusion: the dashboard **column value filter**
-(`ColumnValuesFilterViewImpl`) and the field pickers inside `TermEditor` / `QueryHelpPresenter`.
-They keep the plain widget (no arrow). The widget must therefore work with no context set — the
-arrow is simply not shown.
+Not wired, deliberately:
+
+- the dashboard **column value filter** (`ColumnValuesFilterViewImpl`) and the field pickers in
+  `TermEditor` / `QueryHelpPresenter` — excluded by the spec;
+- the generic annotation `ChooserPresenter` and the `SelectionList` picker (credentials, etc.) —
+  reusable widgets fed by arbitrary data suppliers, so there is no single context to key on;
+- `pathways` — no quick filter box on the pathways screen at present;
+- the annotation tag list — the criteria has a filter but the screen exposes no box.
+
+The widget must therefore work with no context set — the arrow is simply not shown.
 
 ---
 
@@ -402,9 +407,20 @@ Rules:
 | `BETWEEN`, `IN`, `IN_DICTIONARY`, `IS_NULL`, doc-ref / user-ref conditions | not spellable — `format` fails naming the term |
 
 `~` (chars-anywhere) is the one lossy corner: the parser rewrites `~abc` into
-`MATCHES_REGEX a.*?b.*?c`, so the printer would emit `/a.*?b.*?c`. Correct, round-trips, ugly.
+`MATCHES_REGEX a.*?b.*?c`, so the printer emits `/a.*?b.*?c`. Correct, round-trips, ugly.
 Spec §5.2 already decided `~` becomes a real `CHARS_ANYWHERE` condition; when that lands the
 printer emits `~abc` again. Not a blocker.
+
+**Parser quirks the printer prints around** (found while building it; each is pinned by a test in
+`TestQuickFilterPrinter` so that a parser fix shows up as a printer test change):
+
+| Parser behaviour | Printer response |
+|---|---|
+| `!=` reads as `NOT(EQUALS)`, not `NOT_EQUALS` (spec §5.1 not yet in the parser) | `NOT_EQUALS` prints as `!=` and comes back as the equivalent negation; a *negated* `NOT_EQUALS` prints as `not !=abc` since `!!=abc` would read as `CONTAINS "!=abc"` |
+| a lone `!` directly before a quoted value is not negation (`fieldValue.length() > 1` check) | `not "a b"` / `not name:"a b"` instead of `!"a b"` |
+| the longest sigil wins, so `=` + value `=abc` reads as `==abc` | the value is quoted: `="=abc"` |
+| keywords are only recognised after whitespace, `^` or `)` — never directly after `(` — and not after a `=` | a bracketed group opening with `not` is written `( not …)`; a value ending in `=` is quoted |
+| `//` and `/*` open comments anywhere, and only survive in a value because the comment token is glued back on | any composed text containing them is quoted: `"http://example.com"`, `/"/tmp/.*"` |
 
 Output is deterministic (children in tree order, single spaces, no trailing space) so the history
 de-dup in §5.1 sees one spelling.
@@ -474,7 +490,7 @@ text form.
 | A1 | `QuickFilterContext` + `QuickFilterHistoryKey` (shared) for two surfaces: Dependencies, Global Properties | — |
 | A2 | Table, DAO, service, resource, `UiConfig.quickFilterHistorySize`, user-delete hook, DAO test | — |
 | A3 | Widget `▼` + menu + `QuickFilterContextHandler` + `QuickFilterHistoryTracker`; factory; wire the two surfaces | A1, A2 |
-| A4 | Roll the factory wiring out to the remaining ~15 surfaces, incl. traces/pathways `withDataSource`. Each surface must also route `ResultPage.filterError` to the widget, or nothing is ever recorded (§5.4) | A3 |
+| A4 | Roll the factory wiring out to the remaining surfaces (table in §4), incl. traces/index-fields `withDataSource`. Each surface must also route `ResultPage.filterError` to the widget, or nothing is ever recorded (§5.4). **Done.** Audit of A4 found and fixed a second such gap: `ExplorerServiceImpl.find()` computed the filter error and dropped it, and `FindDocResultListPresenter` had no consumer, so the Find and Recent Items dialogs would never have recorded anything. Caveat remaining: the traces *server* never sets `TracesResultPage.filterError` (`TraceArchiveReader` builds its predicate without an error consumer), so on that screen a rejected filter is indistinguishable from an empty one and *will* be recorded — a server-side follow-up | A3 |
 | B1 | `QuickFilterPrinter` + round-trip tests against the existing conformance corpus | — |
 | B2 | `parseQuickFilter` / `formatQuickFilter` endpoints + request/result DTOs | B1 |
 | C1 | `AdvancedQuickFilterPresenter`, condition-set intersection, "Advanced Query…" menu item live | A3, B2 |

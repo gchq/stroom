@@ -26,6 +26,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.FindUserContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.GetUserRequest;
@@ -93,7 +94,8 @@ public class UserRefPopupPresenter
                                  final QuickFilterDialogView userListView,
                                  final PagerView pagerView,
                                  final RestFactory restFactory,
-                                 final UiConfigCache uiConfigCache) {
+                                 final UiConfigCache uiConfigCache,
+                                 final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, userListView);
         this.pagerView = pagerView;
         this.restFactory = restFactory;
@@ -116,6 +118,8 @@ public class UserRefPopupPresenter
 
         userListView.setDataView(pagerView);
         userListView.setUiHandlers(this);
+        userListView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                UserFields.QUICK_FILTER_CONTEXT, this, this));
 
         setupColumns();
     }

@@ -19,6 +19,7 @@ package stroom.explorer.client.view;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.client.presenter.EntityTreeUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -74,6 +75,11 @@ public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
     @Override
     public void setFilterError(final String filterError) {
         nameFilter.setFilterError(filterError);
+    }
+
+    @Override
+    public void setQuickFilterContextHandler(final QuickFilterContextHandler contextHandler) {
+        nameFilter.setContextHandler(contextHandler);
     }
 
     public interface Binder extends UiBinder<Widget, EntityTreeViewImpl> {

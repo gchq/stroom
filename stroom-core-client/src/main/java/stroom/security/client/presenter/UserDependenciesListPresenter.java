@@ -24,6 +24,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.UserResource;
 import stroom.ui.config.client.UiConfigCache;
@@ -69,7 +70,8 @@ public class UserDependenciesListPresenter
                                          final PagerView pagerView,
                                          final RestFactory restFactory,
                                          final QuickFilterPageView dependenciesListView,
-                                         final UiConfigCache uiConfigCache) {
+                                         final UiConfigCache uiConfigCache,
+                                         final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, dependenciesListView);
         this.restFactory = restFactory;
         this.pagerView = pagerView;
@@ -94,6 +96,8 @@ public class UserDependenciesListPresenter
 
         dependenciesListView.setDataView(pagerView);
         dependenciesListView.setUiHandlers(this);
+        dependenciesListView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                FindUserDependenciesCriteria.QUICK_FILTER_CONTEXT, this, this));
     }
 
     @Override

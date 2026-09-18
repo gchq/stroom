@@ -79,6 +79,23 @@ public final class QuickFilterContext {
     }
 
     /**
+     * A context whose fields are not declared client-side - they are served at runtime
+     * ({@code ActivityResource.listFieldDefinitions()}) or only the server's DAO knows them. History
+     * works exactly as for any other context; only Advanced Query, which needs the fields to
+     * build a tree editor, is unavailable until the surface declares them.
+     */
+    public static QuickFilterContext historyOnly(final String key) {
+        return new QuickFilterContext(key, null, null, null, null);
+    }
+
+    /**
+     * Whether Advanced Query can be offered: false for {@link #historyOnly(String)} contexts.
+     */
+    public boolean hasFields() {
+        return !qualifiedFields.isEmpty();
+    }
+
+    /**
      * The same field set over one particular data source. See the class comment.
      */
     public QuickFilterContext withDataSource(final DocRef dataSource) {

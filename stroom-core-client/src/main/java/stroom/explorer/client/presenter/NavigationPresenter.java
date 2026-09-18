@@ -58,6 +58,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.query.shared.QueryDoc;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -69,6 +70,7 @@ import stroom.util.shared.NullSafe;
 import stroom.view.shared.ViewDoc;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
 import stroom.widget.menu.client.presenter.Item;
@@ -109,6 +111,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     private final DocumentTypeCache documentTypeCache;
     private final TypeFilterPresenter typeFilterPresenter;
     private final CurrentActivity currentActivity;
+    private final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory;
     private final ExplorerTree explorerTree;
     private final SimplePanel activityOuter = new SimplePanel();
     private final Button activityButton = new Button();
@@ -138,13 +141,15 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                                final DocumentPluginRegistry documentPluginRegistry,
                                final TypeFilterPresenter typeFilterPresenter,
                                final CurrentActivity currentActivity,
-                               final UiConfigCache uiConfigCache) {
+                               final UiConfigCache uiConfigCache,
+                               final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view, proxy);
         this.menuItems = menuItems;
         this.documentTypeCache = documentTypeCache;
         this.documentPluginRegistry = documentPluginRegistry;
         this.typeFilterPresenter = typeFilterPresenter;
         this.currentActivity = currentActivity;
+        this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
 
         add = new InlineSvgButton();
         add.setSvg(SvgImage.ADD);
@@ -473,6 +478,8 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         explorerTree.getTreeModel().refresh();
         getView().setNavigationWidget(explorerTree);
         explorerTree.setFilterErrorConsumer(getView()::setFilterError);
+        getView().setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
         RevealContentEvent.fire(this, MainPresenter.EXPLORER, this);
     }
 
@@ -512,6 +519,8 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
          * See {@code FetchExplorerNodeResult.filterError}.
          */
         void setFilterError(String filterError);
+
+        void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
 
         TaskMonitorFactory getTaskListener();
     }

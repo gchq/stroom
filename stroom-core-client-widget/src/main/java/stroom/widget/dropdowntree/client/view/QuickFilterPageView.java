@@ -40,4 +40,6 @@ public interface QuickFilterPageView extends View, Focus, HasUiHandlers<QuickFil
      * See {@code ResultPage.filterError}.
      */
     void setFilterError(String filterError);
+
+    void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
 }

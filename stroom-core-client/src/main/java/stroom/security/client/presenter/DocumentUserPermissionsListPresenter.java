@@ -28,6 +28,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermission;
@@ -95,7 +96,9 @@ public class DocumentUserPermissionsListPresenter
                                                 final RestFactory restFactory,
                                                 final UiConfigCache uiConfigCache,
                                                 final DocumentTypeCache documentTypeCache,
-                                                final ClientSecurityContext securityContext) {
+                                                final ClientSecurityContext securityContext,
+                                                final QuickFilterContextHandlerFactory
+                                                        quickFilterContextHandlerFactory) {
         super(eventBus, userListView);
         this.restFactory = restFactory;
         this.pagerView = pagerView;
@@ -121,6 +124,8 @@ public class DocumentUserPermissionsListPresenter
 
         userListView.setDataView(pagerView);
         userListView.setUiHandlers(this);
+        userListView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                UserFields.QUICK_FILTER_CONTEXT, this, this));
 
 //        criteriaBuilder.sortList(List.of(
 //                new CriteriaFieldSort(

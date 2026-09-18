@@ -20,8 +20,10 @@ import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -45,7 +47,8 @@ public class EntityTreePresenter
     public EntityTreePresenter(final EventBus eventBus,
                                final EntityTreeView view,
                                final RestFactory restFactory,
-                               final UiConfigCache uiConfigCache) {
+                               final UiConfigCache uiConfigCache,
+                               final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, view);
         view.setUiHandlers(this);
 
@@ -59,6 +62,8 @@ public class EntityTreePresenter
         // Add views.
         view.setCellTree(explorerTree);
         explorerTree.setFilterErrorConsumer(view::setFilterError);
+        view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                ExplorerTreeFilter.QUICK_FILTER_CONTEXT, this, this));
 
         // Same field defs as the Explorer Tree
         uiConfigCache.get(uiConfig -> {
@@ -128,6 +133,8 @@ public class EntityTreePresenter
          * See {@code FetchExplorerNodeResult.filterError}.
          */
         void setFilterError(String filterError);
+
+        void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
 
         void setCellTree(Widget cellTree);
 

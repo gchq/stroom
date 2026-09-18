@@ -28,6 +28,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
@@ -96,7 +97,8 @@ public class UserListPresenter
                              final ClientSecurityContext securityContext,
                              final PagerView pagerView,
                              final RestFactory restFactory,
-                             final UiConfigCache uiConfigCache) {
+                             final UiConfigCache uiConfigCache,
+                             final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
         super(eventBus, userListView);
         this.securityContext = securityContext;
         this.pagerView = pagerView;
@@ -123,6 +125,8 @@ public class UserListPresenter
 
         userListView.setDataView(pagerView);
         userListView.setUiHandlers(this);
+        userListView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
+                UserFields.QUICK_FILTER_CONTEXT, this, this));
     }
 
     @Override

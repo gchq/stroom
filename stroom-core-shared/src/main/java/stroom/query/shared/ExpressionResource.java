@@ -46,5 +46,29 @@ public interface ExpressionResource extends RestResource, DirectRestService {
     ValidateExpressionResult validate(
             @Parameter(description = "request", required = true) ValidateExpressionRequest request);
 
+    /**
+     * Quick filter text to the expression tree it means, for the Advanced Query dialog to edit.
+     * The canonical parser lives here on the server rather than on the client so the two cannot
+     * drift - see docs/query-filter-surface-syntax-spec.md §11.
+     */
+    @POST
+    @Path("/parseQuickFilter")
+    @Operation(
+            summary = "Parse quick filter text into an expression tree",
+            operationId = "parseQuickFilter")
+    ParseQuickFilterResult parseQuickFilter(
+            @Parameter(description = "request", required = true) ParseQuickFilterRequest request);
+
+    /**
+     * The inverse: an expression tree back to quick filter text, or the reason it has none.
+     */
+    @POST
+    @Path("/formatQuickFilter")
+    @Operation(
+            summary = "Write an expression tree as quick filter text",
+            operationId = "formatQuickFilter")
+    FormatQuickFilterResult formatQuickFilter(
+            @Parameter(description = "request", required = true) FormatQuickFilterRequest request);
+
 
 }

@@ -20,6 +20,7 @@ import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.presenter.FindPresenter.FindProxy;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -41,8 +42,9 @@ public class FindPresenter
     public FindPresenter(final EventBus eventBus,
                          final FindView view,
                          final FindProxy proxy,
-                         final FindDocResultListPresenter findResultListPresenter) {
-        super(eventBus, view, proxy, findResultListPresenter);
+                         final FindDocResultListPresenter findResultListPresenter,
+                         final QuickFilterContextHandlerFactory quickFilterContextHandlerFactory) {
+        super(eventBus, view, proxy, findResultListPresenter, quickFilterContextHandlerFactory);
     }
 
     @ProxyEvent

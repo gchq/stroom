@@ -36,4 +36,6 @@ public interface QuickFilterDialogView extends View, Focus, HasUiHandlers<QuickF
      * See {@code ResultPage.filterError}.
      */
     void setFilterError(String filterError);
+
+    void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
 }
