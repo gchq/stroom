@@ -125,7 +125,8 @@ class TestSimpleReceiver extends StroomUnitTest {
                 () -> dataDir,
                 mockLogStream,
                 null,
-                () -> mockReceiveDataConfig);
+                () -> mockReceiveDataConfig,
+                new FsyncConfig());
 
         final List<Path> consumedPaths = new ArrayList<>();
         final AtomicLong counter = new AtomicLong();

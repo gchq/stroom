@@ -57,6 +57,7 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
     private final PathCreator pathCreator;
     private final Path staticBaseDir;
     private final boolean isAtomicMoveEnabled;
+    private final boolean fsyncEnabled;
 
     // Because we have templated dirs, we need one commitId per base path, but the templating
     // may mean MANY path variations, so use one AtomicLong per base dir. We could use one
@@ -75,7 +76,8 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
                 null,
                 null,
                 pathCreator,
-                isAtomicMoveEnabled);
+                isAtomicMoveEnabled,
+                false);
     }
 
     ForwardFileDestinationImpl(final Path storeDir,
@@ -87,7 +89,8 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
                 forwardFileConfig.getLivenessCheckPath(),
                 forwardFileConfig.getLivenessCheckMode(),
                 pathCreator,
-                forwardFileConfig.isAtomicMoveEnabled());
+                forwardFileConfig.isAtomicMoveEnabled(),
+                forwardFileConfig.isFsyncEnabled());
     }
 
     ForwardFileDestinationImpl(final Path storeDir,
@@ -97,6 +100,24 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
                                final LivenessCheckMode livenessCheckMode,
                                final PathCreator pathCreator,
                                final boolean isAtomicMoveEnabled) {
+        this(storeDir,
+                name,
+                pathTemplateConfig,
+                livenessCheckPath,
+                livenessCheckMode,
+                pathCreator,
+                isAtomicMoveEnabled,
+                false);
+    }
+
+    ForwardFileDestinationImpl(final Path storeDir,
+                               final String name,
+                               final PathTemplateConfig pathTemplateConfig,
+                               final String livenessCheckPath,
+                               final LivenessCheckMode livenessCheckMode,
+                               final PathCreator pathCreator,
+                               final boolean isAtomicMoveEnabled,
+                               final boolean fsyncEnabled) {
 
         this.storeDir = Objects.requireNonNull(storeDir);
         this.name = name;
@@ -105,6 +126,7 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
         this.livenessCheckMode = livenessCheckMode;
         this.pathCreator = pathCreator;
         this.isAtomicMoveEnabled = isAtomicMoveEnabled;
+        this.fsyncEnabled = fsyncEnabled;
 
         if (pathTemplateConfig != null && pathTemplateConfig.hasPathTemplate()) {
             final String pathTemplate = pathTemplateConfig.getPathTemplate();
@@ -166,9 +188,39 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
         final Path targetDir = targetDirCreationFunc.apply(sourceDir);
         try {
             move(sourceDir, targetDir);
+            if (fsyncEnabled) {
+                syncForwardedData(targetDir);
+            }
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
+        }
+    }
+
+    /// Forces data that has just been moved to this destination to durable storage, so that it
+    /// is not lost from the page cache once the proxy drops its own copy. The parent dir is synced
+    /// too, so that the move itself is durable.
+    ///
+    /// This deliberately never throws. The move has already committed by the time we get here and
+    /// the destination is typically watched by another process, which is free to consume the data
+    /// the moment it lands. Letting a sync failure escape would make an already delivered item look
+    /// like a failed forward, sending it down the retry path and risking a duplicate delivery.
+    private void syncForwardedData(final Path targetDir) {
+        try {
+            FileSyncUtil.syncDirContents(targetDir);
+            FileSyncUtil.syncDir(targetDir);
+            FileSyncUtil.syncDir(targetDir.getParent());
+        } catch (final NoSuchFileException e) {
+            // The consumer has already taken the data, so there is nothing left to force.
+            LOGGER.debug(() -> LogUtil.message(
+                    "'{}' - Nothing to sync at '{}', it has already been consumed",
+                    getDestinationDescription(), LogUtil.path(targetDir)));
+        } catch (final IOException e) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "'{}' - Unable to sync forwarded data at '{}', it was delivered but may not be " +
+                    "durable: {}",
+                    getDestinationDescription(), LogUtil.path(targetDir), LogUtil.exceptionMessage(e)));
+            LOGGER.debug(e::getMessage, e);
         }
     }
 

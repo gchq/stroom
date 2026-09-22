@@ -39,16 +39,26 @@ public class DirQueueFactory {
         this.fileStores = fileStores;
     }
 
+    /// Creates a queue rooted at `dirName` under the proxy data dir.
+    ///
+    /// @param fsyncEnabled If true, the parent dir is forced to disk each time an item is added,
+    ///                     making the atomic move that commits the item durable.
     public DirQueue create(final String dirName,
                            final int order,
-                           final String name) {
+                           final String name,
+                           final boolean fsyncEnabled) {
         final Path rootDir = dataDir.resolve(dirName);
-        return create(rootDir, order, name);
+        return create(rootDir, order, name, fsyncEnabled);
     }
 
+    /// Creates a queue rooted at `rootDir`.
+    ///
+    /// @param fsyncEnabled If true, the parent dir is forced to disk each time an item is added,
+    ///                     making the atomic move that commits the item durable.
     public DirQueue create(final Path rootDir,
                            final int order,
-                           final String name) {
-        return new DirQueue(rootDir, queueMonitors, fileStores, order, name);
+                           final String name,
+                           final boolean fsyncEnabled) {
+        return new DirQueue(rootDir, queueMonitors, fileStores, order, name, fsyncEnabled);
     }
 }

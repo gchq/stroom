@@ -97,6 +97,7 @@ public class ZipReceiver implements Receiver {
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
 
     private final ReceiveDataConfig receiveDataConfig;
+    private final boolean fsyncOnReceipt;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
     private final ZipSplitter zipSplitter;
@@ -108,10 +109,12 @@ public class ZipReceiver implements Receiver {
                        final DataDirProvider dataDirProvider,
                        final LogStream logStream,
                        final ZipSplitter zipSplitter,
-                       final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+                       final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                       final FsyncConfig fsyncConfig) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.logStream = logStream;
         this.zipSplitter = zipSplitter;
+        this.fsyncOnReceipt = fsyncConfig.isReceiving();
 
         // Make receiving zip dir provider.
         receivingDirProvider = createDirProvider(dataDirProvider, DirNames.RECEIVING_ZIP);
@@ -277,6 +280,12 @@ public class ZipReceiver implements Receiver {
                 AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());
                 AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
 
+                // Force the received data to disk before we acknowledge receipt of it, otherwise we
+                // may tell the sender the data is safe when it is still only in the page cache.
+                if (fsyncOnReceipt) {
+                    fileGroup.sync();
+                }
+
                 // Move receiving dir to destination.
                 LOGGER.debug("Pass {} with feedKey: {} to destination {}", receivingDir, feedKey, destination);
                 destination.accept(receivingDir);
@@ -285,6 +294,12 @@ public class ZipReceiver implements Receiver {
                 // Before we can queue the zip for splitting we need to serialise the attr map, so it is
                 // available for the split process.
                 AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
+
+                // As above, the data must be durable before the sender is told we have it.
+                if (fsyncOnReceipt) {
+                    fileGroup.sync();
+                }
+
                 LOGGER.debug(() -> LogUtil.message("Pass {} to zipSplitter, isValid: {}, feedGroupCount: {}",
                         receivingDir, receiveResult.valid, feedGroupCount));
                 zipSplitter.add(receivingDir);
