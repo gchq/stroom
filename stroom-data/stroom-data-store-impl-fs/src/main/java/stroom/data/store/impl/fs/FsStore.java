@@ -37,6 +37,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;
@@ -62,6 +63,7 @@ class FsStore implements Store, AttributeMapFactory {
     private final DataVolumeService dataVolumeService;
     private final PathCreator pathCreator;
     private final S3Store s3Store;
+    private final Provider<DataStoreServiceConfig> dataStoreServiceConfigProvider;
 
     @Inject
     FsStore(final FsPathHelper fileSystemStreamPathHelper,
@@ -69,13 +71,15 @@ class FsStore implements Store, AttributeMapFactory {
             final FsVolumeService volumeService,
             final DataVolumeService dataVolumeService,
             final PathCreator pathCreator,
-            final S3Store s3Store) {
+            final S3Store s3Store,
+            final Provider<DataStoreServiceConfig> dataStoreServiceConfigProvider) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
         this.volumeService = volumeService;
         this.dataVolumeService = dataVolumeService;
         this.pathCreator = pathCreator;
         this.s3Store = s3Store;
+        this.dataStoreServiceConfigProvider = dataStoreServiceConfigProvider;
     }
 
     @Override
@@ -108,7 +112,8 @@ class FsStore implements Store, AttributeMapFactory {
                         fileSystemStreamPathHelper,
                         meta,
                         volumePath,
-                        streamType);
+                        streamType,
+                        dataStoreServiceConfigProvider.get().isFsyncEnabled());
                 // Force Creation of the files
                 fsTarget.getOutputStream();
                 target = fsTarget;

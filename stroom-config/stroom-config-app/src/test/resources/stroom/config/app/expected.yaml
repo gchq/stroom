@@ -422,6 +422,7 @@ appConfig:
       fileSystemCleanBatchSize: 20
       fileSystemCleanDeleteOut: false
       fileSystemCleanOldAge: "P1D"
+      fsyncEnabled: true
   docstore:
     db:
       connection:

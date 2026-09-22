@@ -290,7 +290,10 @@ public class RetryingForwardDestination implements ForwardDestination {
         final PathTemplateConfig errorSubPathTemplate = forwardQueueConfig.getErrorSubPathTemplate();
         DirUtil.ensureDirExists(failureDir);
         // Use atomic move here as the failure dir is within the proxy data dirs, rather
-        // than on the forward dest
+        // than on the forward dest.
+        // For the same reason this uses the queue level fsync setting rather than the
+        // destination's own one: 03_failure is proxy internal state that sits alongside
+        // 01_forward and 02_retry, not something written to the external destination.
         failureDestination = new ForwardFileDestinationImpl(
                 failureDir,
                 destinationName + " (failures)",

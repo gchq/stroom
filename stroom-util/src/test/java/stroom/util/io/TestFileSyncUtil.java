@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.handler;
+package stroom.util.io;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

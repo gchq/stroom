@@ -16,6 +16,8 @@
 
 package stroom.proxy.app.handler;
 
+import stroom.util.io.FileSyncUtil;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;

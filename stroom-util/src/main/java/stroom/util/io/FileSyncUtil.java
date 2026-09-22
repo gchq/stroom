@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app.handler;
+package stroom.util.io;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

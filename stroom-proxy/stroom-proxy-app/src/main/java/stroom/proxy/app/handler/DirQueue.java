@@ -21,6 +21,7 @@ import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.exception.ThrowingSupplier;
+import stroom.util.io.FileSyncUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

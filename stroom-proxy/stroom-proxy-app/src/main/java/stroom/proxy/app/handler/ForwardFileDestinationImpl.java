@@ -20,6 +20,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.handler.ForwardFileConfig.LivenessCheckMode;
 import stroom.util.concurrent.LazyValue;
+import stroom.util.io.FileSyncUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -209,13 +210,18 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
         try {
             FileSyncUtil.syncDirContents(targetDir);
             FileSyncUtil.syncDir(targetDir);
-            FileSyncUtil.syncDir(targetDir.getParent());
+            // Walk up to the store dir, as a templated sub path creates a new date/feed branch on
+            // each new day or feed and forcing only the leaf would leave that branch losable.
+            FileSyncUtil.syncDirTree(targetDir.getParent(), storeDir);
         } catch (final NoSuchFileException e) {
             // The consumer has already taken the data, so there is nothing left to force.
             LOGGER.debug(() -> LogUtil.message(
                     "'{}' - Nothing to sync at '{}', it has already been consumed",
                     getDestinationDescription(), LogUtil.path(targetDir)));
-        } catch (final IOException e) {
+        } catch (final IOException | RuntimeException e) {
+            // RuntimeException is caught too because Files.list wraps any IO error hit while the
+            // stream is being iterated in an UncheckedIOException, which is not an IOException.
+            // The consumer removing the dir mid-iteration must not look like a failed forward.
             LOGGER.warn(() -> LogUtil.message(
                     "'{}' - Unable to sync forwarded data at '{}', it was delivered but may not be " +
                     "durable: {}",
