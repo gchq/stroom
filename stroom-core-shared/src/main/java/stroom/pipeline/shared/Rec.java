@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class Rec {
 
@@ -30,10 +32,10 @@ public class Rec {
     private final long recordIndex;
 
     @JsonCreator
-    public Rec(@JsonProperty("metaId") final long metaId,
-               @JsonProperty("recordIndex") final long recordIndex) {
-        this.metaId = metaId;
-        this.recordIndex = recordIndex;
+    public Rec(@JsonProperty("metaId") final Long metaId,
+               @JsonProperty("recordIndex") final Long recordIndex) {
+        this.metaId = Objects.requireNonNullElse(metaId, 0L);
+        this.recordIndex = Objects.requireNonNullElse(recordIndex, 0L);
     }
 
     public long getMetaId() {

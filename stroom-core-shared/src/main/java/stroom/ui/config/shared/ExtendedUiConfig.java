@@ -102,21 +102,21 @@ public class ExtendedUiConfig {
     @JsonCreator
     public ExtendedUiConfig(
             @JsonProperty("uiConfig") final UiConfig uiConfig,
-            @JsonProperty("externalIdentityProvider") final boolean externalIdentityProvider,
-            @JsonProperty("dependencyWarningsEnabled") final boolean dependencyWarningsEnabled,
-            @JsonProperty("maxApiKeyExpiryAgeMs") final long maxApiKeyExpiryAgeMs,
+            @JsonProperty("externalIdentityProvider") final Boolean externalIdentityProvider,
+            @JsonProperty("dependencyWarningsEnabled") final Boolean dependencyWarningsEnabled,
+            @JsonProperty("maxApiKeyExpiryAgeMs") final Long maxApiKeyExpiryAgeMs,
             @JsonProperty("obfuscatedFields") final Set<String> obfuscatedFields,
             @JsonProperty("receiptCheckMode") final ReceiptCheckMode receiptCheckMode,
-            @JsonProperty("lastAnnotationChangeTime") final long lastAnnotationChangeTime) {
+            @JsonProperty("lastAnnotationChangeTime") final Long lastAnnotationChangeTime) {
 
         this.uiConfig = uiConfig;
-        this.externalIdentityProvider = externalIdentityProvider;
-        this.dependencyWarningsEnabled = dependencyWarningsEnabled;
-        this.maxApiKeyExpiryAgeMs = maxApiKeyExpiryAgeMs;
+        this.externalIdentityProvider = Objects.requireNonNullElse(externalIdentityProvider, false);
+        this.dependencyWarningsEnabled = Objects.requireNonNullElse(dependencyWarningsEnabled, false);
+        this.maxApiKeyExpiryAgeMs = Objects.requireNonNullElse(maxApiKeyExpiryAgeMs, 0L);
         // Ensures serialisation tests work
         this.obfuscatedFields = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(obfuscatedFields);
         this.receiptCheckMode = Objects.requireNonNullElse(receiptCheckMode, ReceiptCheckMode.getDefault());
-        this.lastAnnotationChangeTime = lastAnnotationChangeTime;
+        this.lastAnnotationChangeTime = Objects.requireNonNullElse(lastAnnotationChangeTime, 0L);
     }
 
     public UiConfig getUiConfig() {

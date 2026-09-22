@@ -40,12 +40,12 @@ public class AnalyticDataShard {
     @JsonCreator
     public AnalyticDataShard(@JsonProperty("node") final String node,
                              @JsonProperty("path") final String path,
-                             @JsonProperty("createTimeMs") final long createTimeMs,
-                             @JsonProperty("size") final long size) {
+                             @JsonProperty("createTimeMs") final Long createTimeMs,
+                             @JsonProperty("size") final Long size) {
         this.node = node;
         this.path = path;
-        this.createTimeMs = createTimeMs;
-        this.size = size;
+        this.createTimeMs = Objects.requireNonNullElse(createTimeMs, 0L);
+        this.size = Objects.requireNonNullElse(size, 0L);
     }
 
     public String getNode() {

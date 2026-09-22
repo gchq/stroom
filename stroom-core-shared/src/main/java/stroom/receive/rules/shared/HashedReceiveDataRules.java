@@ -94,13 +94,13 @@ public class HashedReceiveDataRules {
      */
     @JsonCreator
     public HashedReceiveDataRules(
-            @JsonProperty("snapshotTimeEpochMs") final long snapshotTimeEpochMs,
+            @JsonProperty("snapshotTimeEpochMs") final Long snapshotTimeEpochMs,
             @JsonProperty("receiveDataRules") final ReceiveDataRules receiveDataRules,
             @JsonProperty("uuidToFlattenedDictMap") final Map<String, DictionaryDoc> uuidToFlattenedDictMap,
             @JsonProperty("fieldNameToSaltMap") final Map<String, String> fieldNameToSaltMap,
             @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
 
-        this.snapshotTimeEpochMs = snapshotTimeEpochMs;
+        this.snapshotTimeEpochMs = Objects.requireNonNullElse(snapshotTimeEpochMs, 0L);
         this.receiveDataRules = Objects.requireNonNull(receiveDataRules);
         this.uuidToFlattenedDictMap = NullSafe.map(uuidToFlattenedDictMap);
         this.fieldNameToSaltMap = NullSafe.map(fieldNameToSaltMap);

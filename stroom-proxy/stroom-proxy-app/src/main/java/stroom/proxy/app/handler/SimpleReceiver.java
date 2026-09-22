@@ -154,7 +154,7 @@ public class SimpleReceiver implements Receiver {
                             feedName,
                             typeName,
                             null,
-                            new Entry(META_FILE_NAME, metaBytes.length),
+                            new Entry(META_FILE_NAME, (long) metaBytes.length),
                             null,
                             new Entry(DATA_FILE_NAME, bytesRead));
 

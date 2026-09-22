@@ -61,26 +61,26 @@ public class CreateProcessFilterRequest {
     public CreateProcessFilterRequest(@JsonProperty("processorType") final ProcessorType processorType,
                                       @JsonProperty("pipeline") final DocRef pipeline,
                                       @JsonProperty("queryData") final QueryData queryData,
-                                      @JsonProperty("priority") final int priority,
-                                      @JsonProperty("maxProcessingTasks") final int maxProcessingTasks,
+                                      @JsonProperty("priority") final Integer priority,
+                                      @JsonProperty("maxProcessingTasks") final Integer maxProcessingTasks,
                                       @JsonProperty("profileName") final String profileName,
-                                      @JsonProperty("autoPriority") final boolean autoPriority,
-                                      @JsonProperty("reprocess") final boolean reprocess,
-                                      @JsonProperty("enabled") final boolean enabled,
-                                      @JsonProperty("export") final boolean export,
+                                      @JsonProperty("autoPriority") final Boolean autoPriority,
+                                      @JsonProperty("reprocess") final Boolean reprocess,
+                                      @JsonProperty("enabled") final Boolean enabled,
+                                      @JsonProperty("export") final Boolean export,
                                       @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                                       @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
                                       @JsonProperty("runAsUser") final UserRef runAsUser) {
         this.processorType = processorType;
         this.pipeline = pipeline;
         this.queryData = queryData;
-        this.priority = priority;
-        this.maxProcessingTasks = maxProcessingTasks;
+        this.priority = Objects.requireNonNullElse(priority, 0);
+        this.maxProcessingTasks = Objects.requireNonNullElse(maxProcessingTasks, 0);
         this.profileName = profileName;
-        this.autoPriority = autoPriority;
-        this.reprocess = reprocess;
-        this.enabled = enabled;
-        this.export = export;
+        this.autoPriority = Objects.requireNonNullElse(autoPriority, false);
+        this.reprocess = Objects.requireNonNullElse(reprocess, false);
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.export = Objects.requireNonNullElse(export, false);
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
         this.runAsUser = runAsUser;

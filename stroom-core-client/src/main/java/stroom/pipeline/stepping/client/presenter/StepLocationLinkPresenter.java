@@ -42,7 +42,7 @@ public class StepLocationLinkPresenter
                                      final StepLocationPresenter stepLocationPresenter) {
         super(eventBus, view);
         this.stepLocationPresenter = stepLocationPresenter;
-        setStepLocation(new StepLocation(0, 0, 0));
+        setStepLocation(new StepLocation(0L, 0L, 0L));
     }
 
     @Override

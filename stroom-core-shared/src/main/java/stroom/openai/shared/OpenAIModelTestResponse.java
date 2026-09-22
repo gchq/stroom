@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class OpenAIModelTestResponse {
 
@@ -30,9 +32,9 @@ public class OpenAIModelTestResponse {
     private final String message;
 
     @JsonCreator
-    public OpenAIModelTestResponse(@JsonProperty("ok") final boolean ok,
+    public OpenAIModelTestResponse(@JsonProperty("ok") final Boolean ok,
                                    @JsonProperty("message") final String message) {
-        this.ok = ok;
+        this.ok = Objects.requireNonNullElse(ok, false);
         this.message = message;
     }
 

@@ -42,10 +42,10 @@ public class GitRepoResponse {
      * @param message Any message. Must not be null.
      */
     @JsonCreator
-    public GitRepoResponse(@JsonProperty("ok") final boolean ok,
+    public GitRepoResponse(@JsonProperty("ok") final Boolean ok,
                            @JsonProperty("message") final String message) {
         Objects.requireNonNull(message);
-        this.ok = ok;
+        this.ok = Objects.requireNonNullElse(ok, false);
         this.message = message;
     }
 

@@ -66,10 +66,10 @@ public class ConditionalFormattingRule {
     @JsonCreator
     public ConditionalFormattingRule(@JsonProperty("id") final String id,
                                      @JsonProperty("expression") final ExpressionOperator expression,
-                                     @JsonProperty("hide") final boolean hide,
+                                     @JsonProperty("hide") final Boolean hide,
                                      @Deprecated @JsonProperty("backgroundColor") final String backgroundColor,
                                      @Deprecated @JsonProperty("textColor") final String textColor,
-                                     @JsonProperty("enabled") final boolean enabled,
+                                     @JsonProperty("enabled") final Boolean enabled,
 
                                      @JsonProperty("formattingType") final ConditionalFormattingType formattingType,
                                      @JsonProperty("formattingStyle") final ConditionalFormattingStyle formattingStyle,
@@ -77,10 +77,10 @@ public class ConditionalFormattingRule {
                                      @JsonProperty("textAttributes") final TextAttributes textAttributes) {
         this.id = id;
         this.expression = expression;
-        this.hide = hide;
+        this.hide = Objects.requireNonNullElse(hide, false);
         this.backgroundColor = null;
         this.textColor = null;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.formattingType = formattingType;
         this.formattingStyle = formattingStyle;
         this.textAttributes = textAttributes;

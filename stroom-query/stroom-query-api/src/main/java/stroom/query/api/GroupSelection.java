@@ -43,10 +43,10 @@ public class GroupSelection {
     }
 
     @JsonCreator
-    public GroupSelection(@JsonProperty("expandedDepth") final int expandedDepth,
+    public GroupSelection(@JsonProperty("expandedDepth") final Integer expandedDepth,
                           @JsonProperty("openGroups") final Set<String> openGroups,
                           @JsonProperty("closedGroups") final Set<String> closedGroups) {
-        this.expandedDepth = expandedDepth;
+        this.expandedDepth = Objects.requireNonNullElse(expandedDepth, 0);
         this.openGroups = openGroups == null ? new HashSet<>() : new HashSet<>(openGroups);
         this.closedGroups = closedGroups == null ? new HashSet<>() : new HashSet<>(closedGroups);
     }

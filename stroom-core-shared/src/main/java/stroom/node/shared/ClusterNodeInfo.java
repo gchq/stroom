@@ -59,14 +59,14 @@ public class ClusterNodeInfo {
     }
 
     @JsonCreator
-    public ClusterNodeInfo(@JsonProperty("discoverTime") final long discoverTime,
+    public ClusterNodeInfo(@JsonProperty("discoverTime") final Long discoverTime,
                            @JsonProperty("buildInfo") final BuildInfo buildInfo,
                            @JsonProperty("nodeName") final String nodeName,
                            @JsonProperty("endpointUrl") final String endpointUrl,
                            @JsonProperty("itemList") final List<ClusterNodeInfoItem> itemList,
                            @JsonProperty("ping") final Long ping,
                            @JsonProperty("error") final String error) {
-        this.discoverTime = discoverTime;
+        this.discoverTime = Objects.requireNonNullElse(discoverTime, 0L);
         this.buildInfo = buildInfo;
         this.nodeName = nodeName;
         this.endpointUrl = endpointUrl;
@@ -186,11 +186,11 @@ public class ClusterNodeInfo {
 
         @JsonCreator
         public ClusterNodeInfoItem(@JsonProperty("nodeName") final String nodeName,
-                                   @JsonProperty("active") final boolean active,
-                                   @JsonProperty("master") final boolean master) {
+                                   @JsonProperty("active") final Boolean active,
+                                   @JsonProperty("master") final Boolean master) {
             this.nodeName = nodeName;
-            this.active = active;
-            this.master = master;
+            this.active = Objects.requireNonNullElse(active, false);
+            this.master = Objects.requireNonNullElse(master, false);
         }
 
         public String getNodeName() {

@@ -74,7 +74,7 @@ public class JobNode implements HasAuditInfoGetters, HasIntegerId {
                    @JsonProperty("nodeName") final String nodeName,
                    @JsonProperty("taskLimit") final Integer taskLimit,
                    @JsonProperty("schedule") final String schedule,
-                   @JsonProperty("enabled") final boolean enabled) {
+                   @JsonProperty("enabled") final Boolean enabled) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -86,7 +86,7 @@ public class JobNode implements HasAuditInfoGetters, HasIntegerId {
         this.nodeName = nodeName;
         this.taskLimit = taskLimit;
         this.schedule = schedule;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
     }
 
     @Override

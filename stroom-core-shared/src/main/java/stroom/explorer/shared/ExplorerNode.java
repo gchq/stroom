@@ -83,7 +83,7 @@ public class ExplorerNode implements HasDisplayValue {
                         @JsonProperty("uuid") final String uuid,
                         @JsonProperty("name") final String name,
                         @JsonProperty("tags") final Set<String> tags,
-                        @JsonProperty("depth") final int depth,
+                        @JsonProperty("depth") final Integer depth,
                         @JsonProperty("children") final List<ExplorerNode> children,
                         @JsonProperty("rootNodeUuid") final String rootNodeUuid,
                         @JsonProperty("uniqueKey") final ExplorerNodeKey uniqueKey,
@@ -93,7 +93,7 @@ public class ExplorerNode implements HasDisplayValue {
         this.uuid = uuid;
         this.name = name;
         this.tags = tags;
-        this.depth = depth;
+        this.depth = Objects.requireNonNullElse(depth, 0);
         this.children = NullSafe.get(children, Collections::unmodifiableList);
         this.rootNodeUuid = rootNodeUuid;
         this.uniqueKey = uniqueKey;

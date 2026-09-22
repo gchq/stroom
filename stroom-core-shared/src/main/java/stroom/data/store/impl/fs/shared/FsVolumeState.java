@@ -25,6 +25,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 /**
  * State of a volume.
  */
@@ -56,14 +58,14 @@ public class FsVolumeState {
     }
 
     @JsonCreator
-    public FsVolumeState(@JsonProperty("id") final int id,
-                         @JsonProperty("version") final int version,
+    public FsVolumeState(@JsonProperty("id") final Integer id,
+                         @JsonProperty("version") final Integer version,
                          @JsonProperty("bytesUsed") final Long bytesUsed,
                          @JsonProperty("bytesFree") final Long bytesFree,
                          @JsonProperty("bytesTotal") final Long bytesTotal,
                          @JsonProperty("updateTimeMs") final Long updateTimeMs) {
-        this.id = id;
-        this.version = version;
+        this.id = Objects.requireNonNullElse(id, 0);
+        this.version = Objects.requireNonNullElse(version, 0);
         this.bytesUsed = bytesUsed;
         this.bytesFree = bytesFree;
         this.bytesTotal = bytesTotal;

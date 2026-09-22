@@ -84,9 +84,9 @@ public class QuerySearchRequest {
             @JsonProperty("queryKey") final QueryKey queryKey,
             @JsonProperty("query") final String query,
             @JsonProperty("queryContext") final QueryContext queryContext,
-            @JsonProperty("incremental") final boolean incremental,
-            @JsonProperty("timeout") final long timeout,
-            @JsonProperty("storeHistory") final boolean storeHistory,
+            @JsonProperty("incremental") final Boolean incremental,
+            @JsonProperty("timeout") final Long timeout,
+            @JsonProperty("storeHistory") final Boolean storeHistory,
             @JsonProperty("requestedRange") final OffsetRange requestedRange,
             @JsonProperty("openGroups") final Set<String> openGroups,
             @JsonProperty("groupSelection") final GroupSelection groupSelection,
@@ -95,9 +95,9 @@ public class QuerySearchRequest {
         this.queryKey = queryKey;
         this.query = query;
         this.queryContext = queryContext;
-        this.incremental = incremental;
-        this.timeout = timeout;
-        this.storeHistory = storeHistory;
+        this.incremental = Objects.requireNonNullElse(incremental, false);
+        this.timeout = Objects.requireNonNullElse(timeout, 0L);
+        this.storeHistory = Objects.requireNonNullElse(storeHistory, false);
         this.requestedRange = requestedRange;
         this.openGroups = openGroups;
         this.groupSelection = groupSelection == null ?

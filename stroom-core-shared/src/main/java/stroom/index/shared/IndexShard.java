@@ -128,7 +128,7 @@ public class IndexShard {
                       @JsonProperty("partition") final String partition,
                       @JsonProperty("partitionFromTime") final Long partitionFromTime,
                       @JsonProperty("partitionToTime") final Long partitionToTime,
-                      @JsonProperty("documentCount") final int documentCount,
+                      @JsonProperty("documentCount") final Integer documentCount,
                       @JsonProperty("commitMs") final Long commitMs,
                       @JsonProperty("commitDurationMs") final Long commitDurationMs,
                       @JsonProperty("commitDocumentCount") final Integer commitDocumentCount,
@@ -142,7 +142,7 @@ public class IndexShard {
         this.partition = partition;
         this.partitionFromTime = partitionFromTime;
         this.partitionToTime = partitionToTime;
-        this.documentCount = documentCount;
+        this.documentCount = Objects.requireNonNullElse(documentCount, 0);
         this.commitMs = commitMs;
         this.commitDurationMs = commitDurationMs;
         this.commitDocumentCount = commitDocumentCount;

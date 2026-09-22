@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Packages all the stuff about visualisation assets in one object
@@ -72,11 +73,11 @@ public class VisualisationAssets {
     @SuppressWarnings("unused")
     @JsonCreator
     public VisualisationAssets(@JsonProperty("ownerId") final String ownerId,
-                               @JsonProperty("dirty") final boolean dirty,
+                               @JsonProperty("dirty") final Boolean dirty,
                                @JsonProperty("uploadedFiles") final Map<String, ResourceKey> uploadedFiles,
                                @JsonProperty("assets") final Collection<VisualisationAsset> assets) {
         this.ownerId = ownerId;
-        this.dirty = dirty;
+        this.dirty = Objects.requireNonNullElse(dirty, false);
         if (uploadedFiles != null) {
             this.uploadedFiles.putAll(uploadedFiles);
         }

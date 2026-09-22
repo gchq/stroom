@@ -53,16 +53,16 @@ public class ExecutionHistory {
     private final String message;
 
     @JsonCreator
-    public ExecutionHistory(@JsonProperty("id") final long id,
+    public ExecutionHistory(@JsonProperty("id") final Long id,
                             @JsonProperty("executionSchedule") final ExecutionSchedule executionSchedule,
-                            @JsonProperty("executionTimeMs") final long executionTimeMs,
-                            @JsonProperty("effectiveExecutionTimeMs") final long effectiveExecutionTimeMs,
+                            @JsonProperty("executionTimeMs") final Long executionTimeMs,
+                            @JsonProperty("effectiveExecutionTimeMs") final Long effectiveExecutionTimeMs,
                             @JsonProperty("status") final String status,
                             @JsonProperty("message") final String message) {
-        this.id = id;
+        this.id = Objects.requireNonNullElse(id, 0L);
         this.executionSchedule = executionSchedule;
-        this.executionTimeMs = executionTimeMs;
-        this.effectiveExecutionTimeMs = effectiveExecutionTimeMs;
+        this.executionTimeMs = Objects.requireNonNullElse(executionTimeMs, 0L);
+        this.effectiveExecutionTimeMs = Objects.requireNonNullElse(effectiveExecutionTimeMs, 0L);
         this.status = status;
         this.message = message;
     }
