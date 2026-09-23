@@ -21,17 +21,22 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.config.Configurable;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.io.entity.HttpEntityWrapper;
 import org.eclipse.jgit.transport.http.HttpConnection;
+import org.eclipse.jgit.util.HttpSupport;
 import org.eclipse.jgit.util.TemporaryBuffer;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PushbackInputStream;
 import java.net.ProtocolException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -41,6 +46,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.TrustManager;
@@ -112,10 +118,69 @@ class StroomHttpConnection implements HttpConnection {
             request.setEntity(entity);
         }
 
+        // JGit asks for gzip and undoes it itself, so the Apache client has to keep out of it - two
+        // decoders on one stream is one too many.
+        request.setConfig(RequestConfig.copy(clientRequestConfig())
+                .setContentCompressionEnabled(false)
+                .build());
+
         // executeOpen leaves the response body streaming, which is what JGit needs - it reads pack data from
         // getInputStream() long after this returns, and a clone is far too big to buffer. The response is
         // closed by close(), which the session calls when the transport is done.
         response = httpClient.executeOpen(host, request, HttpClientContext.create());
+        ignoreContentEncodingIfBodyIsNotGzip();
+    }
+
+    /**
+     * The client's own defaults, so that turning off content compression does not take the configured
+     * timeouts and cookie policy with it. A request level config replaces the client level one outright
+     * rather than merging with it.
+     */
+    private RequestConfig clientRequestConfig() {
+        if (httpClient instanceof final Configurable configurable && configurable.getConfig() != null) {
+            return configurable.getConfig();
+        }
+        return RequestConfig.DEFAULT;
+    }
+
+    /**
+     * Believe the body over the header when the two disagree about gzip.
+     * <p>
+     * Something that decompresses a response - to inspect it, or because it terminates TLS - and then
+     * forwards the original {@code Content-Encoding: gzip} leaves JGit gunzipping plain bytes. Git servers
+     * compress the ref advertisement by default, so this shows up on the first request of a sync as an
+     * opaque 'Not in GZIP format' that says nothing about which side is at fault.
+     * </p>
+     */
+    private void ignoreContentEncodingIfBodyIsNotGzip() throws IOException {
+        final String encoding = getHeaderField(HttpSupport.HDR_CONTENT_ENCODING);
+        final boolean claimsGzip = HttpSupport.ENCODING_GZIP.equalsIgnoreCase(encoding)
+                                   || HttpSupport.ENCODING_X_GZIP.equalsIgnoreCase(encoding);
+        final HttpEntity responseEntity = response.getEntity();
+        if (!claimsGzip || responseEntity == null) {
+            return;
+        }
+
+        // The same two bytes, read the same way, that GZIPInputStream would reject the body on.
+        final PushbackInputStream stream = new PushbackInputStream(responseEntity.getContent(), 2);
+        final byte[] magic = new byte[2];
+        final int read = stream.readNBytes(magic, 0, 2);
+        stream.unread(magic, 0, read);
+        response.setEntity(new HttpEntityWrapper(responseEntity) {
+            @Override
+            public InputStream getContent() {
+                return stream;
+            }
+        });
+
+        // A body too short to hold the marker cannot be a decompressed one - gzip of nothing is 20 bytes -
+        // so leave the header alone and let GZIPInputStream report the truncation itself.
+        if (read == 2 && ((magic[0] & 0xff) | (magic[1] & 0xff) << 8) != GZIPInputStream.GZIP_MAGIC) {
+            LOGGER.warn("{} claims Content-Encoding: {} but the body is not gzip, so the header is being " +
+                        "ignored. Something between Stroom and the Git server is decompressing responses " +
+                        "without correcting the header.", url, encoding);
+            response.removeHeaders(HttpSupport.HDR_CONTENT_ENCODING);
+        }
     }
 
     @Override
