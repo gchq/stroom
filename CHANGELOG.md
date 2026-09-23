@@ -13,6 +13,20 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.16] - 2026-09-23
+
+* Bug **#5721** : Fix Git sync failing with `Not in GZIP format` when something between Stroom and the Git server decompresses the response but leaves the `Content-Encoding: gzip` header in place. Stroom now ignores a `Content-Encoding` that the body contradicts, and logs a warning naming the problem.
+
+* Bug **#5801** : Fix Jackson deserialisation of primitives where value is null.
+
+* Bug **#5799** : Add fsync options to Stroom-Proxy so data can be forced to durable storage before receipt is acknowledged and after forwarding. Configured per pipeline phase under `proxyConfig.fsync` and per forward file destination via `fsyncEnabled`.
+
+* Bug **#5804** : Add fsync option to the app to improve data durability.
+
+* Bug **#5773** : Report a clear error when a dense vector rerank score field is queried without its matching rerank value field, rather than failing with a null pointer error.
+
+* Bug **#5800** : Log audit events for node group membership changes and for setting a global config property. Both were silently producing no audit event because the automatic logger could not determine a before or after value.
+
 * Feature **#5775** : Add `dropwizard-json-logging` runtime dependency so that JSON format app/request logging can be used. See https://www.dropwizard.io/en/stable/manual/configuration.html#json-layout for details of the YAML configuration required to enable it. Add new proxy config property `proxyConfig.logStream.useMappedDiagnosticContext` to support structured JSON logging. Add `type` to the `proxyConfig.logStream.metaKeys` default list so the stream type gets logged.
 
 
@@ -2538,7 +2552,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.15...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.16...HEAD
+[v7.13-beta.16]: https://github.com/gchq/stroom/compare/v7.13-beta.15...v7.13-beta.16
 [v7.13-beta.15]: https://github.com/gchq/stroom/compare/v7.13-beta.14...v7.13-beta.15
 [v7.13-beta.14]: https://github.com/gchq/stroom/compare/v7.13-beta.13...v7.13-beta.14
 [v7.13-beta.13]: https://github.com/gchq/stroom/compare/v7.13-beta.12...v7.13-beta.13
