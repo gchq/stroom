@@ -171,6 +171,14 @@ class StroomHttpConnection implements HttpConnection {
             public InputStream getContent() {
                 return stream;
             }
+
+            // HttpEntityWrapper sends this straight to the entity it wraps, which has already had the
+            // two sniffed bytes taken from it, so the body has to come from the same stream that
+            // getContent() hands out or it loses its first two bytes.
+            @Override
+            public void writeTo(final OutputStream outStream) throws IOException {
+                stream.transferTo(outStream);
+            }
         });
 
         // A body too short to hold the marker cannot be a decompressed one - gzip of nothing is 20 bytes -
