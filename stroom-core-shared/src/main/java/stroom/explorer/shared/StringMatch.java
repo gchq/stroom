@@ -60,10 +60,10 @@ public class StringMatch {
 
     @JsonCreator
     public StringMatch(@JsonProperty("matchType") final MatchType matchType,
-                       @JsonProperty("caseSensitive") final boolean caseSensitive,
+                       @JsonProperty("caseSensitive") final Boolean caseSensitive,
                        @JsonProperty("pattern") final String pattern) {
         this.matchType = matchType;
-        this.caseSensitive = caseSensitive;
+        this.caseSensitive = Objects.requireNonNullElse(caseSensitive, false);
         this.pattern = pattern;
     }
 

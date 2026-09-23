@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class SharedElementData {
 
@@ -41,13 +43,13 @@ public class SharedElementData {
     public SharedElementData(@JsonProperty("input") final String input,
                              @JsonProperty("output") final String output,
                              @JsonProperty("indicators") final Indicators indicators,
-                             @JsonProperty("formatInput") final boolean formatInput,
-                             @JsonProperty("formatOutput") final boolean formatOutput) {
+                             @JsonProperty("formatInput") final Boolean formatInput,
+                             @JsonProperty("formatOutput") final Boolean formatOutput) {
         this.input = input;
         this.output = output;
         this.indicators = indicators;
-        this.formatInput = formatInput;
-        this.formatOutput = formatOutput;
+        this.formatInput = Objects.requireNonNullElse(formatInput, false);
+        this.formatOutput = Objects.requireNonNullElse(formatOutput, false);
     }
 
     public String getInput() {

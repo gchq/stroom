@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Used for changes to the events that are linked to an annotation
@@ -37,9 +38,9 @@ public class AnnotationEventLinks implements EntityEventData {
     private final Collection<EventId> eventIds;
 
     @JsonCreator
-    public AnnotationEventLinks(@JsonProperty("annotationId") final long annotationId,
+    public AnnotationEventLinks(@JsonProperty("annotationId") final Long annotationId,
                                 @JsonProperty("eventIds") final Collection<EventId> eventIds) {
-        this.annotationId = annotationId;
+        this.annotationId = Objects.requireNonNullElse(annotationId, 0L);
         this.eventIds = eventIds == null
                 ? Collections.emptyList()
                 : Collections.unmodifiableCollection(eventIds);

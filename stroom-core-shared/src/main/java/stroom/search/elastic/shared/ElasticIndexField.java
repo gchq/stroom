@@ -80,12 +80,12 @@ public class ElasticIndexField implements IndexField {
             @JsonProperty("fldName") final String fldName,
             @JsonProperty("fldType") final FieldType fldType,
             @JsonProperty("nativeType") final String nativeType,
-            @JsonProperty("indexed") final boolean indexed,
+            @JsonProperty("indexed") final Boolean indexed,
             @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig) {
         this.fldName = convertLegacyName(fldName, fieldName);
         this.fldType = convertLegacyType(fldType, fieldUse);
         this.nativeType = convertLegacyNativeType(nativeType, fieldType);
-        this.indexed = indexed;
+        this.indexed = Objects.requireNonNullElse(indexed, false);
         this.denseVectorFieldConfig = denseVectorFieldConfig;
     }
 

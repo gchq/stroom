@@ -36,11 +36,11 @@ public class VisualisationAsset {
     @JsonCreator
     public VisualisationAsset(@JsonProperty("id") final String id,
                               @JsonProperty("path") final String path,
-                              @JsonProperty("folder") final boolean folder) {
+                              @JsonProperty("folder") final Boolean folder) {
         Objects.requireNonNull(id);
         this.id = id;
         this.path = path;
-        this.folder = folder;
+        this.folder = Objects.requireNonNullElse(folder, false);
     }
 
     public String getId() {

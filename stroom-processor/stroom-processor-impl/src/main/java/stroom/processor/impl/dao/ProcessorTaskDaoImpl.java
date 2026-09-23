@@ -893,7 +893,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             if (pipelineName.isPresent()) {
                 pipelineDocRef = pipelineDocRef.copy().name(pipelineName.get()).build();
             }
-            return new ProcessorTaskSummary(pipelineDocRef, feed, priority, status, count);
+            return new ProcessorTaskSummary(pipelineDocRef, feed, priority, status, (long) count);
         });
 
         return ResultPage.createCriterialBasedList(list, criteria);

@@ -99,16 +99,16 @@ public class TraceRoot {
                      @JsonProperty("name") final String name,
                      @JsonProperty("startTime") final NanoTime startTime,
                      @JsonProperty("endTime") final NanoTime endTime,
-                     @JsonProperty("services") final int services,
-                     @JsonProperty("depth") final int depth,
-                     @JsonProperty("totalSpans") final int totalSpans) {
+                     @JsonProperty("services") final Integer services,
+                     @JsonProperty("depth") final Integer depth,
+                     @JsonProperty("totalSpans") final Integer totalSpans) {
         this.traceId = traceId;
         this.name = name;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.services = services;
-        this.depth = depth;
-        this.totalSpans = totalSpans;
+        this.services = Objects.requireNonNullElse(services, 0);
+        this.depth = Objects.requireNonNullElse(depth, 0);
+        this.totalSpans = Objects.requireNonNullElse(totalSpans, 0);
     }
 
     public String getTraceId() {

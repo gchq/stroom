@@ -51,15 +51,15 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     @Test
     void testUpdateState() {
         final RefDataProcessingInfo input = new RefDataProcessingInfo(
-                1,
-                1,
-                1,
+                1L,
+                1L,
+                1L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
-                1,
-                1,
-                1,
+                1L,
+                1L,
+                1L,
                 ProcessingState.COMPLETE);
 
         doByteBufferModificationTest(
@@ -73,15 +73,15 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     @Test
     void testUpdateLastAccessedTime() {
         final RefDataProcessingInfo input = new RefDataProcessingInfo(
-                1,
-                1,
-                1,
+                1L,
+                1L,
+                1L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
-                1,
-                123,
-                1,
+                1L,
+                123L,
+                1L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
         doByteBufferModificationTest(
@@ -94,15 +94,15 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     @Test
     void testUpdateLastAccessedTimeAndState() {
         final RefDataProcessingInfo input = new RefDataProcessingInfo(
-                1,
-                1,
-                1,
+                1L,
+                1L,
+                1L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
-                1,
-                123,
-                1,
+                1L,
+                123L,
+                1L,
                 ProcessingState.COMPLETE);
 
         doByteBufferModificationTest(

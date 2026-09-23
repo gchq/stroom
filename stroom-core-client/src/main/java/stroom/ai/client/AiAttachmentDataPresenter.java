@@ -100,7 +100,7 @@ public class AiAttachmentDataPresenter extends MyPresenterWidget<PagerView> {
 
                     // Wrap the response as a ResultPage for the data provider.
                     final PageResponse pageResponse = new PageResponse(
-                            dataPage.getOffset(),
+                            (long) dataPage.getOffset(),
                             dataPage.getRows().size(),
                             (long) dataPage.getTotalRowCount(),
                             true);

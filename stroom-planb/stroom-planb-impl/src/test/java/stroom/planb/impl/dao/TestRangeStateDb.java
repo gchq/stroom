@@ -164,7 +164,7 @@ class TestRangeStateDb {
                                             .build())
                                     .build();
 
-                            final Function<Integer, Key> keyFunction = i -> new Key(i, i + 1);
+                            final Function<Integer, Key> keyFunction = i -> new Key((long) i, (long) i + 1);
 
                             Path path = null;
                             try {

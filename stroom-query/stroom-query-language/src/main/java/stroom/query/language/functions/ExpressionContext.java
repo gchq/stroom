@@ -35,10 +35,10 @@ public class ExpressionContext {
     }
 
     @JsonCreator
-    public ExpressionContext(final int maxStringLength,
+    public ExpressionContext(final Integer maxStringLength,
                              final DateTimeSettings dateTimeSettings,
                              final StateProvider stateProvider) {
-        this.maxStringLength = maxStringLength;
+        this.maxStringLength = Objects.requireNonNullElse(maxStringLength, 0);
         this.dateTimeSettings = dateTimeSettings;
         this.stateProvider = stateProvider;
     }

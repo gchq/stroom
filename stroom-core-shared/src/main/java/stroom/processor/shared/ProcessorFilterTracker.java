@@ -84,8 +84,8 @@ public class ProcessorFilterTracker implements HasIntegerId {
     @JsonCreator
     public ProcessorFilterTracker(@JsonProperty("id") final Integer id,
                                   @JsonProperty("version") final Integer version,
-                                  @JsonProperty("minMetaId") final long minMetaId,
-                                  @JsonProperty("minEventId") final long minEventId,
+                                  @JsonProperty("minMetaId") final Long minMetaId,
+                                  @JsonProperty("minEventId") final Long minEventId,
                                   @JsonProperty("minMetaCreateMs") final Long minMetaCreateMs,
                                   @JsonProperty("maxMetaCreateMs") final Long maxMetaCreateMs,
                                   @JsonProperty("metaCreateMs") final Long metaCreateMs,
@@ -97,8 +97,8 @@ public class ProcessorFilterTracker implements HasIntegerId {
                                   @JsonProperty("eventCount") final Long eventCount) {
         this.id = id;
         this.version = version;
-        this.minMetaId = minMetaId;
-        this.minEventId = minEventId;
+        this.minMetaId = Objects.requireNonNullElse(minMetaId, 0L);
+        this.minEventId = Objects.requireNonNullElse(minEventId, 0L);
         this.minMetaCreateMs = minMetaCreateMs;
         this.maxMetaCreateMs = maxMetaCreateMs;
         this.metaCreateMs = metaCreateMs;

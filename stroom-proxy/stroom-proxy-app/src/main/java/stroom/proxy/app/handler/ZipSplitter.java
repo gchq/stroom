@@ -330,7 +330,7 @@ public class ZipSplitter {
         final byte[] bytes = AttributeMapUtil.toByteArray(entryAttributeMap);
         final String outEntryName = baseNameOut + stroomZipFileType.getDotExtension();
         zipWriter.writeStream(outEntryName, new ByteArrayInputStream(bytes));
-        return new Entry(outEntryName, bytes.length);
+        return new Entry(outEntryName, (long) bytes.length);
     }
 
     private NumberedDirProvider createDirProvider(final DataDirProvider dataDirProvider,
