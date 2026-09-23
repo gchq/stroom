@@ -66,7 +66,7 @@ class TestSteppingSession {
         final StepDataStore store = new StepDataStore(dir.resolve(String.valueOf(metaId)), new SteppingConfig());
         final StreamSweep sweep = new StreamSweep(metaId, store);
         for (int r = 0; r < records; r++) {
-            final StepLocation loc = new StepLocation(metaId, 0, r);
+            final StepLocation loc = new StepLocation((long) metaId, 0L, (long) r);
             store.putRecord(loc, List.of(new StepDataStore.ElementRecord(E1, FP, ed("m" + metaId + "r" + r))));
             // As the real capture does: signal the sweep after committing each record, so the sweep's captured
             // range (which navigation is bounded by) tracks the store.
@@ -123,7 +123,7 @@ class TestSteppingSession {
     // which producers are RUNNING, handing them to the launcher so a step can attach to a producer already
     // making its records instead of double-launching.
 
-    private static final StepLocation RECORD_0 = new StepLocation(10L, 0, 0);
+    private static final StepLocation RECORD_0 = new StepLocation(10L, 0L, 0L);
 
     /** What the launcher saw on each call, so tests can assert what the session handed it. */
     private final List<List<StreamSweep>> runningSeen = new ArrayList<>();
@@ -457,11 +457,11 @@ class TestSteppingSession {
                 new SteppingConfig().getMaxSweptStreamsPerSession());
 
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.REFRESH, new StepLocation(10L, 0, 1)), FINGERPRINTS, 5_000);
+                session, req(StepType.REFRESH, new StepLocation(10L, 0L, 1L)), FINGERPRINTS, 5_000);
 
         assertThat(calls.get()).as("it went round again rather than concluding").isEqualTo(2);
         assertThat(result.foundRecord()).isTrue();
-        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 1));
+        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0L, 1L));
     }
 
     @Test
@@ -522,7 +522,7 @@ class TestSteppingSession {
                 resolver.resolve(session, req(StepType.FIRST, null), FINGERPRINTS, Long.MAX_VALUE);
         assertThat(result.foundRecord()).isTrue();
         assertThat(result.complete()).isTrue();
-        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 0));
+        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0L, 0L));
         assertThat(result.stepData().getElementMap().get("e1").getOutput()).isEqualTo("m10r0");
         // Only the first stream was swept.
         assertThat(launches.get()).isEqualTo(1);
@@ -538,7 +538,7 @@ class TestSteppingSession {
         // Records 1 and 2 (the first window) do not satisfy an output NOT_EMPTY filter; record 3 (the
         // second window) does.
         for (int r = 1; r <= 3; r++) {
-            store.putRecord(new StepLocation(10L, 0, r), List.of(new StepDataStore.ElementRecord(
+            store.putRecord(new StepLocation(10L, 0L, (long) r), List.of(new StepDataStore.ElementRecord(
                     E1, FP,
                     new CapturedElementData(null, CapturedData.text("r" + r), false, false, r == 3, null))));
         }
@@ -551,10 +551,10 @@ class TestSteppingSession {
                     final StreamSweep window = new StreamSweep(10L, store);
                     window.markOnDemand();
                     if (launches.incrementAndGet() == 1) {
-                        window.recordCaptured(new StepLocation(10L, 0, 1));
-                        window.recordCaptured(new StepLocation(10L, 0, 2));
+                        window.recordCaptured(new StepLocation(10L, 0L, 1L));
+                        window.recordCaptured(new StepLocation(10L, 0L, 2L));
                     } else {
-                        window.recordCaptured(new StepLocation(10L, 0, 3));
+                        window.recordCaptured(new StepLocation(10L, 0L, 3L));
                     }
                     window.markFullyCaptured();
                     return window;
@@ -567,7 +567,7 @@ class TestSteppingSession {
 
         final PipelineStepRequest request = PipelineStepRequest.builder()
                 .stepType(StepType.FORWARD)
-                .stepLocation(new StepLocation(10L, 0, 0))
+                .stepLocation(new StepLocation(10L, 0L, 0L))
                 .stepFilterMap(Map.of("e1",
                         new SteppingFilterSettings(null, OutputState.NOT_EMPTY, List.of())))
                 .build();
@@ -575,7 +575,7 @@ class TestSteppingSession {
 
         assertThat(result.foundLocation())
                 .as("the match in the second window is found in THIS stream")
-                .isEqualTo(new StepLocation(10L, 0, 3));
+                .isEqualTo(new StepLocation(10L, 0L, 3L));
         assertThat(launches.get()).as("one launch per window").isEqualTo(2);
     }
 
@@ -589,8 +589,8 @@ class TestSteppingSession {
 
         // Forward off the end of stream 10 (last record index 2) lands on the first record of stream 20.
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.FORWARD, new StepLocation(10L, 0, 2)), FINGERPRINTS, 5_000);
-        assertThat(result.foundLocation()).isEqualTo(new StepLocation(20L, 0, 0));
+                session, req(StepType.FORWARD, new StepLocation(10L, 0L, 2L)), FINGERPRINTS, 5_000);
+        assertThat(result.foundLocation()).isEqualTo(new StepLocation(20L, 0L, 0L));
         assertThat(launches.get()).isEqualTo(2);
     }
 
@@ -603,8 +603,8 @@ class TestSteppingSession {
 
         // Backward off the start of stream 20 lands on the last record of stream 10.
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.BACKWARD, new StepLocation(20L, 0, 0)), FINGERPRINTS, 5_000);
-        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 2));
+                session, req(StepType.BACKWARD, new StepLocation(20L, 0L, 0L)), FINGERPRINTS, 5_000);
+        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0L, 2L));
     }
 
     @Test
@@ -615,7 +615,7 @@ class TestSteppingSession {
         final SteppingSession session = session(List.of(10L, 20L), sweeps, new AtomicInteger());
 
         final SessionStepResult result = resolver.resolve(session, req(StepType.LAST, null), FINGERPRINTS, 5_000);
-        assertThat(result.foundLocation()).isEqualTo(new StepLocation(20L, 0, 1));
+        assertThat(result.foundLocation()).isEqualTo(new StepLocation(20L, 0L, 1L));
     }
 
     @Test
@@ -625,7 +625,7 @@ class TestSteppingSession {
 
         // Refresh at a record that doesn't exist in stream 10 -> not found (no crossing).
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.REFRESH, new StepLocation(10L, 0, 9)), FINGERPRINTS, 5_000);
+                session, req(StepType.REFRESH, new StepLocation(10L, 0L, 9L)), FINGERPRINTS, 5_000);
         assertThat(result.foundRecord()).isFalse();
         assertThat(result.complete()).isTrue();
     }
@@ -638,7 +638,7 @@ class TestSteppingSession {
         final SteppingSession session = session(List.of(10L), sweeps, new AtomicInteger());
 
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.FORWARD, new StepLocation(10L, 0, 1)), FINGERPRINTS, 150);
+                session, req(StepType.FORWARD, new StepLocation(10L, 0L, 1L)), FINGERPRINTS, 150);
         assertThat(result.foundRecord()).isFalse();
         assertThat(result.complete()).isFalse();
     }
@@ -651,7 +651,7 @@ class TestSteppingSession {
 
         // Forward past the only record -> stream errored/complete -> error result.
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.FORWARD, new StepLocation(10L, 0, 0)), FINGERPRINTS, 5_000);
+                session, req(StepType.FORWARD, new StepLocation(10L, 0L, 0L)), FINGERPRINTS, 5_000);
         assertThat(result.complete()).isTrue();
         assertThat(result.generalError()).contains("capture blew up");
     }
@@ -730,10 +730,10 @@ class TestSteppingSession {
         final SteppingSession session = session(List.of(10L, 20L), sweeps, new AtomicInteger());
 
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.BACKWARD, new StepLocation(99L, 0, 1)), FINGERPRINTS, 5_000);
+                session, req(StepType.BACKWARD, new StepLocation(99L, 0L, 1L)), FINGERPRINTS, 5_000);
         assertThat(result.foundLocation())
                 .as("fell back to the last stream's last record")
-                .isEqualTo(new StepLocation(20L, 0, 1));
+                .isEqualTo(new StepLocation(20L, 0L, 1L));
     }
 
     @Test
@@ -762,7 +762,7 @@ class TestSteppingSession {
                 new SteppingConfig().getMaxSweptStreamsPerSession());
 
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.FORWARD, new StepLocation(10L, 0, 0)), FINGERPRINTS, 600);
+                session, req(StepType.FORWARD, new StepLocation(10L, 0L, 0L)), FINGERPRINTS, 600);
         assertThat(result.foundRecord()).isFalse();
         assertThat(result.complete()).as("ended as incomplete at the deadline, not by concluding").isFalse();
         assertThat(launches.get()).as("it kept re-planning until the deadline").isGreaterThan(1);
@@ -778,10 +778,10 @@ class TestSteppingSession {
         final SteppingSession session = session(List.of(10L), sweeps, launches);
 
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.FORWARD, new StepLocation(999L, 0, 5)), FINGERPRINTS, 5_000);
+                session, req(StepType.FORWARD, new StepLocation(999L, 0L, 5L)), FINGERPRINTS, 5_000);
 
         assertThat(result.foundRecord()).isTrue();
-        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 0));
+        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0L, 0L));
         // The out-of-session stream was never swept.
         assertThat(launches.get()).isEqualTo(1);
         assertThat(session.getOwnedSweeps()).containsExactly(sweeps.get(10L));
@@ -793,7 +793,7 @@ class TestSteppingSession {
                 session(List.of(10L), Map.of(10L, sweptStream(dir, 10L, 2, true)), new AtomicInteger());
 
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.REFRESH, new StepLocation(999L, 0, 0)), FINGERPRINTS, 5_000);
+                session, req(StepType.REFRESH, new StepLocation(999L, 0L, 0L)), FINGERPRINTS, 5_000);
 
         assertThat(result.foundRecord()).isFalse();
     }
@@ -806,13 +806,13 @@ class TestSteppingSession {
         // forever. RacingSweep reproduces that interleaving deterministically.
         final StepDataStore store10 = new StepDataStore(dir.resolve("10"), new SteppingConfig());
         for (int r = 0; r <= 4; r++) {
-            store10.putRecord(new StepLocation(10L, 0, r),
+            store10.putRecord(new StepLocation(10L, 0L, (long) r),
                     List.of(new StepDataStore.ElementRecord(E1, FP, ed("m10r" + r))));
         }
 
         final RacingSweep s10 = new RacingSweep(10L, store10, sweep -> {
             // Commit record 5 and finish the stream, exactly between the scan and the completeness check.
-            final StepLocation loc = new StepLocation(10L, 0, 5);
+            final StepLocation loc = new StepLocation(10L, 0L, 5L);
             store10.putRecord(loc, List.of(new StepDataStore.ElementRecord(E1, FP, ed("m10r5"))));
             sweep.recordCaptured(loc);
             sweep.markFullyCaptured();
@@ -822,12 +822,12 @@ class TestSteppingSession {
         final SteppingSession session = session(List.of(10L, 20L), sweeps, new AtomicInteger());
 
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.FORWARD, new StepLocation(10L, 0, 4)), FINGERPRINTS, 5_000);
+                session, req(StepType.FORWARD, new StepLocation(10L, 0L, 4L)), FINGERPRINTS, 5_000);
 
         assertThat(s10.fired).isTrue();
         assertThat(result.foundRecord()).isTrue();
         // Record 5 of stream 10, NOT record 0 of stream 20.
-        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 5));
+        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0L, 5L));
     }
 
     @Test
@@ -837,7 +837,7 @@ class TestSteppingSession {
         // down over the not-yet-captured records, find each one absent, take that for "no match" and land on
         // the first record of the part. It must wait for the sweep instead.
         final StepDataStore store = new StepDataStore(dir.resolve("10"), new SteppingConfig());
-        final StepLocation record0 = new StepLocation(10L, 0, 0);
+        final StepLocation record0 = new StepLocation(10L, 0L, 0L);
         store.putRecord(record0, List.of(new StepDataStore.ElementRecord(E1, FP, ed("m10r0"))));
         // Record 0 is captured; the sweep is still running and has not reached records 1-9.
         final StreamSweep s10 = new StreamSweep(10L, store);
@@ -845,7 +845,7 @@ class TestSteppingSession {
         final SteppingSession session = session(List.of(10L), Map.of(10L, s10), new AtomicInteger());
 
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.BACKWARD, new StepLocation(10L, 0, 9)), FINGERPRINTS, 200);
+                session, req(StepType.BACKWARD, new StepLocation(10L, 0L, 9L)), FINGERPRINTS, 200);
 
         assertThat(result.foundRecord()).isFalse();
         assertThat(result.complete()).isFalse();
@@ -858,10 +858,10 @@ class TestSteppingSession {
         final SteppingSession session = session(List.of(10L), Map.of(10L, s10), new AtomicInteger());
 
         final SessionStepResult result = resolver.resolve(
-                session, req(StepType.BACKWARD, new StepLocation(10L, 0, 9)), FINGERPRINTS, 5_000);
+                session, req(StepType.BACKWARD, new StepLocation(10L, 0L, 9L)), FINGERPRINTS, 5_000);
 
         assertThat(result.foundRecord()).isTrue();
-        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0, 8));
+        assertThat(result.foundLocation()).isEqualTo(new StepLocation(10L, 0L, 8L));
     }
 
     // --------------------------------------------------------------------------------

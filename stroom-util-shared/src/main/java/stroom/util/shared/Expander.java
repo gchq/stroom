@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class Expander {
 
@@ -36,12 +38,12 @@ public class Expander {
     }
 
     @JsonCreator
-    public Expander(@JsonProperty("depth") final int depth,
-                    @JsonProperty("expanded") final boolean expanded,
-                    @JsonProperty("leaf") final boolean leaf) {
-        this.depth = depth;
-        this.expanded = expanded;
-        this.leaf = leaf;
+    public Expander(@JsonProperty("depth") final Integer depth,
+                    @JsonProperty("expanded") final Boolean expanded,
+                    @JsonProperty("leaf") final Boolean leaf) {
+        this.depth = Objects.requireNonNullElse(depth, 0);
+        this.expanded = Objects.requireNonNullElse(expanded, false);
+        this.leaf = Objects.requireNonNullElse(leaf, false);
     }
 
     public int getDepth() {

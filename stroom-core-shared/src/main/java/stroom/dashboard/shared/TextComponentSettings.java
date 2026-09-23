@@ -80,8 +80,8 @@ public final class TextComponentSettings implements ComponentSettings {
                                  @JsonProperty("lineToField") final ColumnRef lineToField,
                                  @JsonProperty("colToField") final ColumnRef colToField,
                                  @JsonProperty("pipeline") final DocRef pipeline,
-                                 @JsonProperty("showAsHtml") final boolean showAsHtml,
-                                 @JsonProperty("showStepping") final boolean showStepping,
+                                 @JsonProperty("showAsHtml") final Boolean showAsHtml,
+                                 @JsonProperty("showStepping") final Boolean showStepping,
                                  @JsonProperty("modelVersion") final String modelVersion) {
         this.tableId = tableId;
         this.streamIdField = streamIdField;
@@ -92,8 +92,8 @@ public final class TextComponentSettings implements ComponentSettings {
         this.lineToField = lineToField;
         this.colToField = colToField;
         this.pipeline = pipeline;
-        this.showAsHtml = showAsHtml;
-        this.showStepping = showStepping;
+        this.showAsHtml = Objects.requireNonNullElse(showAsHtml, false);
+        this.showStepping = Objects.requireNonNullElse(showStepping, false);
         this.modelVersion = modelVersion;
     }
 

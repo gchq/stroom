@@ -122,10 +122,10 @@ class TestSweepRun {
         sweepRun.execute(taskContext, PipelineStepRequest.builder().build(), sweep, FINGERPRINTS,
                 List.of(store), "Stepping capture", null, receiver -> {
                 }, () -> {
-                    store.putElementData(new StepLocation(1L, 0, 0), e1, "fp1", data());
+                    store.putElementData(new StepLocation(1L, 0L, 0L), e1, "fp1", data());
                     // MID-RUN: a concurrent edit's write would evict fp1 (limit 1) were it not pinned by
                     // the harness - this is the half an after-the-run assert cannot see.
-                    store.putElementData(new StepLocation(1L, 0, 0), e1, "fp-edit", data());
+                    store.putElementData(new StepLocation(1L, 0L, 0L), e1, "fp-edit", data());
                     assertThat(store.hasElement(e1, "fp1"))
                             .as("the run's pin protected its version against a mid-run write")
                             .isTrue();
@@ -133,7 +133,7 @@ class TestSweepRun {
         assertThat(store.hasElement(e1, "fp1")).isTrue();
 
         // With the pin released, fp1 is ordinary history and the next write retires it (limit 1).
-        store.putElementData(new StepLocation(1L, 0, 0), e1, "fp2", data());
+        store.putElementData(new StepLocation(1L, 0L, 0L), e1, "fp2", data());
         assertThat(store.hasElement(e1, "fp1")).as("the run's pin was released").isFalse();
     }
 

@@ -88,7 +88,7 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
                              @JsonProperty("salt") final String salt,
                              @JsonProperty("hashAlgorithm") final DataFeedKeyHashAlgorithm hashAlgorithm,
                              @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
-                             @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
+                             @JsonProperty("expiryDateEpochMs") final Long expiryDateEpochMs) {
         this.hash = NullSafe.requireNonBlankString(hash, () -> "hash must not be blank");
         this.salt = salt;
         this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm, "hashAlgorithm must not be null");
@@ -112,7 +112,7 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
         // It would be nice not have this field but TestJsonSerialisation can't cope with
         // not having a field with @JsonProperty and doesn't like complex map keys.
         this.streamMetaData = Collections.unmodifiableMap(CIKey.convertToStringMap(ciStreamMetaData));
-        this.expiryDateEpochMs = expiryDateEpochMs;
+        this.expiryDateEpochMs = Objects.requireNonNullElse(expiryDateEpochMs, 0L);
         // Cache the hashCode as we know we will use it
         this.hashCode = Objects.hash(
                 hash,

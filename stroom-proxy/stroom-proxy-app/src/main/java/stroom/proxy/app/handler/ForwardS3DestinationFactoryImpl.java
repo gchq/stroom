@@ -45,6 +45,7 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
     private final SimplePathCreator simplePathCreator;
     private final ProxyServices proxyServices;
     private final FileStores fileStores;
+    private final FsyncConfig fsyncConfig;
     private final S3ClientPool s3ClientPool;
     private final TemplateCache templateCache;
     private final S3MetaKeysMapper s3MetaKeysMapper;
@@ -64,8 +65,10 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
                                            final S3MetaKeysMapper s3MetaKeysMapper,
                                            final CleanupDirQueue cleanupDirQueue,
                                            final JerseyClientFactory jerseyClientFactory,
-                                           final RemoteS3EventClient remoteS3EventClient) {
+                                           final RemoteS3EventClient remoteS3EventClient,
+                                           final FsyncConfig fsyncConfig) {
         this.downstreamHostConfigProvider = downstreamHostConfigProvider;
+        this.fsyncConfig = fsyncConfig;
         this.dirQueueFactory = dirQueueFactory;
         this.dataDirProvider = dataDirProvider;
         this.simplePathCreator = simplePathCreator;
@@ -118,6 +121,7 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
                 simplePathCreator,
                 dirQueueFactory,
                 proxyServices,
-                fileStores);
+                fileStores,
+                fsyncConfig.isForwardingInputQueue());
     }
 }

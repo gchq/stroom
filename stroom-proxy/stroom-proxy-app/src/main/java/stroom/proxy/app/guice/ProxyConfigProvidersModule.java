@@ -128,6 +128,15 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.proxy.app.handler.FsyncConfig getFsyncConfig(
+            final ProxyConfigProvider proxyConfigProvider) {
+        return proxyConfigProvider.getConfigObject(
+                stroom.proxy.app.handler.FsyncConfig.class);
+    }
+
+    @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.proxy.app.handler.ThreadConfig getThreadConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(

@@ -169,7 +169,7 @@ class TestElementFingerprinter {
     @Test
     void testRevertReusesPersistedIo(@TempDir final Path tempDir) {
         final ElementId writerId = new ElementId(WRITER);
-        final StepLocation loc = new StepLocation(1L, 0, 0);
+        final StepLocation loc = new StepLocation(1L, 0L, 0L);
         final StepDataStore store = new StepDataStore(tempDir.resolve("1"), new SteppingConfig());
 
         // Capture the writer's IO under config A's fingerprint.

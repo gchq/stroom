@@ -114,8 +114,8 @@ public class TestDataUtil {
 
                         if (allowedFeedKeys == null || allowedFeedKeys.contains(feedKey)) {
                             final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(feedKey);
-                            zipEntryGroup.setMetaEntry(new Entry(metaEntryName, metaBytes.length));
-                            zipEntryGroup.setDataEntry(new Entry(dataEntryName, dataBytes.length));
+                            zipEntryGroup.setMetaEntry(new Entry(metaEntryName, (long) metaBytes.length));
+                            zipEntryGroup.setDataEntry(new Entry(dataEntryName, (long) dataBytes.length));
 
                             zipEntryGroup.write(entryWriter);
                         }

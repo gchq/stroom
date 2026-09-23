@@ -71,15 +71,15 @@ public class GetSpansRequest {
     @JsonCreator
     public GetSpansRequest(@JsonProperty("dataSourceRef") final DocRef dataSourceRef,
                            @JsonProperty("traceId") final String traceId,
-                           @JsonProperty("offset") final int offset,
-                           @JsonProperty("limit") final int limit,
+                           @JsonProperty("offset") final Integer offset,
+                           @JsonProperty("limit") final Integer limit,
                            @JsonProperty("startTimeMs") final Long startTimeMs,
                            @JsonProperty("cursor") final String cursor,
                            @JsonProperty("groupSelection") final GroupSelection groupSelection) {
         this.dataSourceRef = dataSourceRef;
         this.traceId = traceId;
-        this.offset = offset;
-        this.limit = limit;
+        this.offset = Objects.requireNonNullElse(offset, 0);
+        this.limit = Objects.requireNonNullElse(limit, 0);
         this.startTimeMs = startTimeMs;
         this.cursor = cursor;
         this.groupSelection = groupSelection;

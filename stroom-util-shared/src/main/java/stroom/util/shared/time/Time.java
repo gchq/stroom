@@ -49,12 +49,12 @@ public class Time {
     private final int second;
 
     @JsonCreator
-    public Time(@JsonProperty("hour") final int hour,
-                @JsonProperty("minute") final int minute,
-                @JsonProperty("second") final int second) {
-        this.hour = Math.max(Math.min(hour, 23), 0);
-        this.minute = Math.max(Math.min(minute, 59), 0);
-        this.second = Math.max(Math.min(second, 59), 0);
+    public Time(@JsonProperty("hour") final Integer hour,
+                @JsonProperty("minute") final Integer minute,
+                @JsonProperty("second") final Integer second) {
+        this.hour = Math.max(Math.min(Objects.requireNonNullElse(hour, 0), 23), 0);
+        this.minute = Math.max(Math.min(Objects.requireNonNullElse(minute, 0), 59), 0);
+        this.second = Math.max(Math.min(Objects.requireNonNullElse(second, 0), 59), 0);
     }
 
     public int getHour() {

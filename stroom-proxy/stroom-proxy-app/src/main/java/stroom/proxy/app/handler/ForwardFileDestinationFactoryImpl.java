@@ -40,18 +40,21 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
     private final DataDirProvider dataDirProvider;
     private final PathCreator pathCreator;
     private final FileStores fileStores;
+    private final FsyncConfig fsyncConfig;
 
     @Inject
     public ForwardFileDestinationFactoryImpl(final ProxyServices proxyServices,
                                              final DirQueueFactory dirQueueFactory,
                                              final DataDirProvider dataDirProvider,
                                              final PathCreator pathCreator,
-                                             final FileStores fileStores) {
+                                             final FileStores fileStores,
+                                             final FsyncConfig fsyncConfig) {
         this.proxyServices = proxyServices;
         this.dirQueueFactory = dirQueueFactory;
         this.dataDirProvider = dataDirProvider;
         this.pathCreator = pathCreator;
         this.fileStores = fileStores;
+        this.fsyncConfig = fsyncConfig;
     }
 
     @Override
@@ -90,6 +93,7 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
                 pathCreator,
                 dirQueueFactory,
                 proxyServices,
-                fileStores);
+                fileStores,
+                fsyncConfig.isForwardingInputQueue());
     }
 }

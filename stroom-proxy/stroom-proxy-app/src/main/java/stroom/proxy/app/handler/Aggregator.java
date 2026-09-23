@@ -48,14 +48,17 @@ public class Aggregator {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Aggregator.class);
 
     private final CleanupDirQueue deleteDirQueue;
+    private final boolean fsyncRewrittenData;
     private final NumberedDirProvider tempAggregatesDirProvider;
 
     private Consumer<Path> destination;
 
     @Inject
     public Aggregator(final CleanupDirQueue deleteDirQueue,
-                      final DataDirProvider dataDirProvider) {
+                      final DataDirProvider dataDirProvider,
+                      final FsyncConfig fsyncConfig) {
         this.deleteDirQueue = deleteDirQueue;
+        this.fsyncRewrittenData = fsyncConfig.isReceiving();
 
         // Make temp aggregates dir.
         final Path aggregatesDir = dataDirProvider.get().resolve(DirNames.AGGREGATES);
@@ -171,6 +174,13 @@ public class Aggregator {
                         LOGGER.error(e::getMessage, e);
                         throw new UncheckedIOException(e);
                     }
+                }
+
+                if (fsyncRewrittenData) {
+                    // This aggregate is a freshly written file, not one of the sources synced on
+                    // receipt, and those sources are deleted below. It must be forced to disk or
+                    // the data the sender was told we had can still be lost.
+                    outputFileGroup.sync();
                 }
 
                 // We have finished the merge so transfer the new item to be forwarded.

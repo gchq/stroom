@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -33,11 +34,11 @@ public class CustomRollUpMaskFields implements Comparable<CustomRollUpMaskFields
     private final Set<Integer> rolledUpFieldPositions;
 
     @JsonCreator
-    public CustomRollUpMaskFields(@JsonProperty("id") final int id,
-                                  @JsonProperty("maskValue") final short maskValue,
+    public CustomRollUpMaskFields(@JsonProperty("id") final Integer id,
+                                  @JsonProperty("maskValue") final Short maskValue,
                                   @JsonProperty("rolledUpFieldPositions") final Set<Integer> rolledUpFieldPositions) {
-        this.id = id;
-        this.maskValue = maskValue;
+        this.id = Objects.requireNonNullElse(id, 0);
+        this.maskValue = Objects.requireNonNullElse(maskValue, (short) 0);
         this.rolledUpFieldPositions = rolledUpFieldPositions;
     }
 

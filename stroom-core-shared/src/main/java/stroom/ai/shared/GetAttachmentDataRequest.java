@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class GetAttachmentDataRequest {
@@ -36,11 +38,11 @@ public class GetAttachmentDataRequest {
     private final PageRequest pageRequest;
 
     @JsonCreator
-    public GetAttachmentDataRequest(@JsonProperty("chatId") final int chatId,
-                                    @JsonProperty("attachmentId") final int attachmentId,
+    public GetAttachmentDataRequest(@JsonProperty("chatId") final Integer chatId,
+                                    @JsonProperty("attachmentId") final Integer attachmentId,
                                     @JsonProperty("pageRequest") final PageRequest pageRequest) {
-        this.chatId = chatId;
-        this.attachmentId = attachmentId;
+        this.chatId = Objects.requireNonNullElse(chatId, 0);
+        this.attachmentId = Objects.requireNonNullElse(attachmentId, 0);
         this.pageRequest = pageRequest;
     }
 

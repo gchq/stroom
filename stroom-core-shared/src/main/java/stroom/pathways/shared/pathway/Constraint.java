@@ -38,10 +38,10 @@ public class Constraint {
     @JsonCreator
     public Constraint(@JsonProperty("name") final String name,
                       @JsonProperty("value") final ConstraintValue value,
-                      @JsonProperty("optional") final boolean optional) {
+                      @JsonProperty("optional") final Boolean optional) {
         this.name = name;
         this.value = value;
-        this.optional = optional;
+        this.optional = Objects.requireNonNullElse(optional, false);
     }
 
     public String getName() {

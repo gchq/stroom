@@ -48,11 +48,11 @@ public class TraceSpanRow {
 
     @JsonCreator
     public TraceSpanRow(@JsonProperty("span") final Span span,
-                        @JsonProperty("depth") final int depth,
-                        @JsonProperty("hasChildren") final boolean hasChildren) {
+                        @JsonProperty("depth") final Integer depth,
+                        @JsonProperty("hasChildren") final Boolean hasChildren) {
         this.span = span;
-        this.depth = depth;
-        this.hasChildren = hasChildren;
+        this.depth = Objects.requireNonNullElse(depth, 0);
+        this.hasChildren = Objects.requireNonNullElse(hasChildren, false);
     }
 
     public Span getSpan() {

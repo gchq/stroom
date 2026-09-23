@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class AiChatPollRequest {
 
@@ -28,8 +30,8 @@ public class AiChatPollRequest {
     private final int lastSeenMessageId;
 
     @JsonCreator
-    public AiChatPollRequest(@JsonProperty("lastSeenMessageId") final int lastSeenMessageId) {
-        this.lastSeenMessageId = lastSeenMessageId;
+    public AiChatPollRequest(@JsonProperty("lastSeenMessageId") final Integer lastSeenMessageId) {
+        this.lastSeenMessageId = Objects.requireNonNullElse(lastSeenMessageId, 0);
     }
 
     public int getLastSeenMessageId() {

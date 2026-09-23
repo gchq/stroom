@@ -37,8 +37,8 @@ public final class ValDuration implements ValNumber {
     private final long milliseconds;
 
     @JsonCreator
-    private ValDuration(@JsonProperty("milliseconds") final long milliseconds) {
-        this.milliseconds = milliseconds;
+    private ValDuration(@JsonProperty("milliseconds") final Long milliseconds) {
+        this.milliseconds = Objects.requireNonNullElse(milliseconds, 0L);
     }
 
     public static ValDuration create(final long milliseconds) {

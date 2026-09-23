@@ -26,6 +26,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.query.api.datasource.QueryField;
+import stroom.util.io.FileSyncUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.SeekableOutputStream;
 import stroom.util.logging.LambdaLogger;
@@ -69,18 +70,21 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
     private Meta meta;
     private boolean closed;
     private boolean deleted;
+    private final boolean fsyncEnabled;
     private long index;
 
     private FsTarget(final MetaService metaService,
                      final FsPathHelper fileSystemStreamPathHelper,
                      final Meta requestMetaData,
-                     final Path volumePath) {
+                     final Path volumePath,
+                     final boolean fsyncEnabled) {
         this.metaService = metaService;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.meta = requestMetaData;
         this.volumePath = volumePath;
         this.parent = null;
         this.streamType = meta.getTypeName();
+        this.fsyncEnabled = fsyncEnabled;
 
         validate();
     }
@@ -97,6 +101,7 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
         this.parent = parent;
         this.streamType = streamType;
         this.file = file;
+        this.fsyncEnabled = parent.fsyncEnabled;
         validate();
     }
 
@@ -108,10 +113,11 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
     public static FsTarget create(final MetaService metaService,
                                   final FsPathHelper fileSystemStreamPathHelper,
                                   final Meta meta,
-                                  final Path rootPath) {
+                                  final Path rootPath,
+                                  final boolean fsyncEnabled) {
         LOGGER.debug(() -> LogUtil.message("create() - metaId: {}, rootPath: {}, streamType: {}",
                 meta.getId(), rootPath, meta.getTypeName()));
-        return new FsTarget(metaService, fileSystemStreamPathHelper, meta, rootPath);
+        return new FsTarget(metaService, fileSystemStreamPathHelper, meta, rootPath, fsyncEnabled);
     }
 
     private void validate() {
@@ -183,8 +189,15 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
                 RuntimeException streamCloseException = null;
                 try {
                     closeStreams();
+                    if (fsyncEnabled) {
+                        // Force this target's own data file. Children force theirs in their own
+                        // close(), which closeStreams() has just driven.
+                        FileSyncUtil.syncFileIfExists(getFile());
+                    }
                 } catch (final RuntimeException e) {
                     streamCloseException = e;
+                } catch (final IOException e) {
+                    streamCloseException = new UncheckedIOException(e);
                 } finally {
                     // Only write meta for the root target.
                     if (parent == null) {
@@ -194,6 +207,13 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
                         writeManifest();
 
                         if (streamCloseException == null) {
+                            if (fsyncEnabled) {
+                                // Everything this stream wrote must be durable before the database
+                                // is told the stream is valid, otherwise a power failure can leave
+                                // metadata referring to a stream whose contents never reached disk.
+                                syncManifestAndDir();
+                            }
+
                             // Unlock will update the meta data so set it back on the stream
                             // target so the client has the up to date copy
                             unlock(getMeta(), getAttributes());
@@ -207,6 +227,31 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
             outputStream = null;
             closed = true;
         }
+    }
+
+    /// Forces the manifest and the directories holding this stream's files to durable storage.
+    ///
+    /// The data files themselves are forced as each target closes. The directories are forced here
+    /// because each file was written to a `.lock` path and renamed into place by
+    /// {@link BlockGZIPOutputFile} or {@link LockingFileOutputStream}, and a rename is not durable
+    /// until the directory holding it has been forced. The walk goes all the way up to the volume
+    /// because {@link FileSystemUtil#mkdirs} may have created a whole new branch of date and id
+    /// directories, and forcing only the leaf would leave that branch losable.
+    ///
+    /// A failure to force the manifest fails the close, so that the database is never told the
+    /// stream is unlocked. Note that a failure to force a *directory* does not, as not every
+    /// platform allows a directory to be opened as a channel; see {@link FileSyncUtil#syncDir}.
+    private void syncManifestAndDir() {
+        try {
+            FileSyncUtil.syncFileIfExists(fileSystemStreamPathHelper.getChildPath(
+                    getFile(), InternalStreamTypeNames.MANIFEST));
+        } catch (final IOException e) {
+            // If we cannot make the stream durable we must not let the database record it as
+            // unlocked, so fail the close instead.
+            LOGGER.error(() -> "syncManifestAndDir() - Unable to sync " + this, e);
+            throw new UncheckedIOException(e);
+        }
+        FileSyncUtil.syncDirTree(getFile().getParent(), volumePath);
     }
 
     private void unlock(final Meta meta, final AttributeMap attributeMap) {
@@ -270,7 +315,7 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
                 child.close();
             } catch (final RuntimeException e) {
                 LOGGER.error(() -> "closeStreams() - Error on closing child stream " + this, e);
-                if (exception != null) {
+                if (exception == null) {
                     exception = e;
                 }
             }

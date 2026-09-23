@@ -70,19 +70,22 @@ class FsStreamStore implements StreamStore {
     private final Provider<FsVolumeService> fsVolumeServiceProvider;
     private final PathCreator pathCreator;
     private final FsFileDeleter fsFileDeleter;
+    private final Provider<DataStoreServiceConfig> dataStoreServiceConfigProvider;
 
     @Inject
     FsStreamStore(final FsPathHelper fileSystemStreamPathHelper,
                   final MetaService metaService,
                   final Provider<FsVolumeService> fsVolumeServiceProvider,
                   final PathCreator pathCreator,
-                  final FsFileDeleter fsFileDeleter) {
+                  final FsFileDeleter fsFileDeleter,
+                  final Provider<DataStoreServiceConfig> dataStoreServiceConfigProvider) {
 
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
         this.fsVolumeServiceProvider = fsVolumeServiceProvider;
         this.pathCreator = pathCreator;
         this.fsFileDeleter = fsFileDeleter;
+        this.dataStoreServiceConfigProvider = dataStoreServiceConfigProvider;
     }
 
 
@@ -170,7 +173,8 @@ class FsStreamStore implements StreamStore {
                 metaService,
                 fileSystemStreamPathHelper,
                 meta,
-                volumePath);
+                volumePath,
+                dataStoreServiceConfigProvider.get().isFsyncEnabled());
         // Force Creation of the files
         fsTarget.getOutputStream();
         return fsTarget;

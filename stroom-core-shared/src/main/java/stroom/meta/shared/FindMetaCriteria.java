@@ -47,9 +47,9 @@ public class FindMetaCriteria extends ExpressionCriteria implements Copyable<Fin
     public FindMetaCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                             @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                             @JsonProperty("expression") final ExpressionOperator expression,
-                            @JsonProperty("fetchRelationships") final boolean fetchRelationships) {
+                            @JsonProperty("fetchRelationships") final Boolean fetchRelationships) {
         super(pageRequest, sortList, expression);
-        this.fetchRelationships = fetchRelationships;
+        this.fetchRelationships = Objects.requireNonNullElse(fetchRelationships, false);
     }
 
     public static FindMetaCriteria unlocked() {

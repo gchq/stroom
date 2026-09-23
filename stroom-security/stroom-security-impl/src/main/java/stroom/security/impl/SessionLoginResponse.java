@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class SessionLoginResponse {
     @JsonProperty
@@ -29,9 +31,9 @@ public class SessionLoginResponse {
     private final String redirectUri;
 
     @JsonCreator
-    public SessionLoginResponse(@JsonProperty("authenticated") final boolean authenticated,
+    public SessionLoginResponse(@JsonProperty("authenticated") final Boolean authenticated,
                                 @JsonProperty("redirectUri") final String redirectUri) {
-        this.authenticated = authenticated;
+        this.authenticated = Objects.requireNonNullElse(authenticated, false);
         this.redirectUri = redirectUri;
     }
 

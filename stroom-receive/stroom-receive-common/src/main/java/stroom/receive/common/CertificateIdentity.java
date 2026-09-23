@@ -70,7 +70,7 @@ public final class CertificateIdentity implements DataFeedIdentity {
     @JsonCreator
     public CertificateIdentity(@JsonProperty("certificateDn") final String certificateDn,
                                @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
-                               @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
+                               @JsonProperty("expiryDateEpochMs") final Long expiryDateEpochMs) {
         this.certificateDn = Objects.requireNonNull(certificateDn);
         // No point holding blank keys or null values
         this.ciStreamMetaData = NullSafe.map(streamMetaData)
@@ -92,9 +92,9 @@ public final class CertificateIdentity implements DataFeedIdentity {
         // It would be nice not have this field but TestJsonSerialisation can't cope with
         // not having a field with @JsonProperty and doesn't like complex map keys.
         this.streamMetaData = Collections.unmodifiableMap(CIKey.convertToStringMap(ciStreamMetaData));
-        this.expiryDateEpochMs = expiryDateEpochMs;
+        this.expiryDateEpochMs = Objects.requireNonNullElse(expiryDateEpochMs, 0L);
         // Pre-compute the hash as we know we are putting each identity into a map
-        this.hashCode = Objects.hash(certificateDn, streamMetaData, expiryDateEpochMs);
+        this.hashCode = Objects.hash(certificateDn, streamMetaData, this.expiryDateEpochMs);
     }
 
     public String getCertificateDn() {

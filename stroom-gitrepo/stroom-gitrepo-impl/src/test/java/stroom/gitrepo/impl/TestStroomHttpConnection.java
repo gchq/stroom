@@ -17,22 +17,28 @@
 package stroom.gitrepo.impl;
 
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.Configurable;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
 import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.util.Timeout;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.zip.GZIPOutputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -141,6 +147,95 @@ class TestStroomHttpConnection {
         assertThat(connection.getHeaderField("Content-Type"))
                 .isEqualTo("application/x-git-upload-pack-advertisement");
         assertThat(connection.getHeaderFields()).containsKey("Content-Type");
+    }
+
+    @Test
+    void mislabelledGzipResponseIsReadAsPlainBytes() throws Exception {
+        // gh-5721. A middlebox that decompresses the ref advertisement but forwards the original
+        // Content-Encoding leaves JGit gunzipping plain bytes, which fails as 'Not in GZIP format'.
+        final String advertisement = "001e# service=git-upload-pack\n";
+        final ClassicHttpResponse httpResponse = response(200, advertisement);
+        httpResponse.addHeader("Content-Encoding", "gzip");
+
+        final StroomHttpConnection connection = new StroomHttpConnection(
+                new URL(URL_STRING), mockClient(httpResponse));
+        connection.connect();
+
+        // JGit only gunzips when it sees this header, so the header is what has to go.
+        assertThat(connection.getHeaderField("Content-Encoding")).isNull();
+        assertThat(connection.getHeaderFields()).doesNotContainKey("Content-Encoding");
+        assertThat(new String(connection.getInputStream().readAllBytes(), StandardCharsets.UTF_8))
+                .isEqualTo(advertisement);
+    }
+
+    @Test
+    void genuinelyGzippedResponseKeepsItsContentEncoding() throws Exception {
+        // The other half of the same decision: when the body really is gzip, JGit must still be told, and
+        // must still get every byte - the two we looked at included.
+        final byte[] gzipped = gzip("001e# service=git-upload-pack\n");
+        final BasicClassicHttpResponse httpResponse = new BasicClassicHttpResponse(200, "OK");
+        httpResponse.setEntity(new ByteArrayEntity(gzipped, null));
+        httpResponse.addHeader("Content-Encoding", "gzip");
+
+        final StroomHttpConnection connection = new StroomHttpConnection(
+                new URL(URL_STRING), mockClient(httpResponse));
+        connection.connect();
+
+        assertThat(connection.getHeaderField("Content-Encoding")).isEqualTo("gzip");
+        assertThat(connection.getInputStream().readAllBytes()).isEqualTo(gzipped);
+    }
+
+    @Test
+    void bodyTooShortToHoldTheGzipMarkerKeepsItsContentEncoding() throws Exception {
+        // A truncated response is not a decompressed one - the smallest gzip body is 20 bytes - so the
+        // header stands and the caller gets GZIPInputStream's own report of the truncation.
+        final BasicClassicHttpResponse httpResponse = new BasicClassicHttpResponse(200, "OK");
+        httpResponse.setEntity(new ByteArrayEntity(new byte[]{0x1f}, null));
+        httpResponse.addHeader("Content-Encoding", "gzip");
+
+        final StroomHttpConnection connection = new StroomHttpConnection(
+                new URL(URL_STRING), mockClient(httpResponse));
+        connection.connect();
+
+        assertThat(connection.getHeaderField("Content-Encoding")).isEqualTo("gzip");
+        assertThat(connection.getInputStream().readAllBytes()).isEqualTo(new byte[]{0x1f});
+    }
+
+    @Test
+    void turningOffContentCompressionKeepsTheRestOfTheClientsConfiguration() throws Exception {
+        // A request level config replaces the client level one outright, so disabling compression must not
+        // quietly take the administrator's response timeout with it.
+        final RequestConfig clientConfig = RequestConfig.custom()
+                .setResponseTimeout(Timeout.ofSeconds(17))
+                .build();
+        final ConfigurableHttpClient httpClient = Mockito.mock(ConfigurableHttpClient.class);
+        Mockito.when(httpClient.getConfig()).thenReturn(clientConfig);
+        Mockito.when(httpClient.executeOpen(
+                        Mockito.any(HttpHost.class),
+                        Mockito.any(ClassicHttpRequest.class),
+                        Mockito.any(HttpContext.class)))
+                .thenReturn(response(200, "ok"));
+
+        new StroomHttpConnection(new URL(URL_STRING), httpClient).connect();
+
+        final RequestConfig sent = ((Configurable) capturedRequest(httpClient)).getConfig();
+        assertThat(sent.isContentCompressionEnabled()).isFalse();
+        assertThat(sent.getResponseTimeout()).isEqualTo(Timeout.ofSeconds(17));
+    }
+
+    /**
+     * The real Apache client carries its own defaults; the plain {@link HttpClient} interface does not.
+     */
+    private interface ConfigurableHttpClient extends HttpClient, Configurable {
+
+    }
+
+    private static byte[] gzip(final String text) throws IOException {
+        final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (final GZIPOutputStream gzip = new GZIPOutputStream(bytes)) {
+            gzip.write(text.getBytes(StandardCharsets.UTF_8));
+        }
+        return bytes.toByteArray();
     }
 
     private static ClassicHttpResponse response(final int code, final String body) {

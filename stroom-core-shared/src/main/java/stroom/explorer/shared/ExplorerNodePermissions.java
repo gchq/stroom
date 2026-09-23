@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
@@ -43,11 +44,11 @@ public class ExplorerNodePermissions {
                                    @JsonProperty("createPermissions") final Set<String> createPermissions,
                                    @JsonProperty("documentPermissions") final Set<DocumentPermission>
                                            documentPermissions,
-                                   @JsonProperty("admin") final boolean admin) {
+                                   @JsonProperty("admin") final Boolean admin) {
         this.explorerNode = explorerNode;
         this.createPermissions = createPermissions;
         this.documentPermissions = documentPermissions;
-        this.admin = admin;
+        this.admin = Objects.requireNonNullElse(admin, false);
     }
 
     public ExplorerNode getExplorerNode() {

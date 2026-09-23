@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class ExplorerServiceCopyRequest {
@@ -41,12 +42,12 @@ public class ExplorerServiceCopyRequest {
     public ExplorerServiceCopyRequest(
             @JsonProperty("explorerNodes") final List<ExplorerNode> explorerNodes,
             @JsonProperty("destinationFolder") final ExplorerNode destinationFolder,
-            @JsonProperty("allowRename") final boolean allowRename,
+            @JsonProperty("allowRename") final Boolean allowRename,
             @JsonProperty("docName") final String docName,
             @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
         this.explorerNodes = explorerNodes;
         this.destinationFolder = destinationFolder;
-        this.allowRename = allowRename;
+        this.allowRename = Objects.requireNonNullElse(allowRename, false);
         this.docName = docName;
         this.permissionInheritance = permissionInheritance;
     }

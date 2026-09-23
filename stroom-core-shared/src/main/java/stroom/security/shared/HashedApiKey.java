@@ -68,7 +68,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
 
     @JsonCreator
     public HashedApiKey(@JsonProperty("id") final Integer id,
-                        @JsonProperty("version") final int version,
+                        @JsonProperty("version") final Integer version,
                         @JsonProperty("createTimeMs") final Long createTimeMs,
                         @JsonProperty("createUser") final String createUser,
                         @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -79,10 +79,10 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
                         @JsonProperty("expireTimeMs") final Long expireTimeMs,
                         @JsonProperty("name") final String name,
                         @JsonProperty("comments") final String comments,
-                        @JsonProperty("enabled") final boolean enabled,
+                        @JsonProperty("enabled") final Boolean enabled,
                         @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
         this.id = id;
-        this.version = version;
+        this.version = Objects.requireNonNullElse(version, 0);
         this.createTimeMs = createTimeMs;
         this.createUser = createUser;
         this.updateTimeMs = updateTimeMs;
@@ -93,7 +93,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         this.expireTimeMs = expireTimeMs;
         this.name = name;
         this.comments = comments;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm);
     }
 

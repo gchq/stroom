@@ -35,8 +35,8 @@ public final class ValShort implements ValNumber {
     private final short value;
 
     @JsonCreator
-    private ValShort(@JsonProperty("value") final short value) {
-        this.value = value;
+    private ValShort(@JsonProperty("value") final Short value) {
+        this.value = Objects.requireNonNullElse(value, (short) 0);
     }
 
     public static ValShort create(final short value) {

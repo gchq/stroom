@@ -60,6 +60,7 @@ public class SimpleReceiver implements Receiver {
     private static final String DATA_FILE_NAME = "0000000001.dat";
 
     private final ReceiveDataConfig receiveDataConfig;
+    private final boolean fsyncOnReceipt;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
     private final LogStream logStream;
@@ -71,11 +72,13 @@ public class SimpleReceiver implements Receiver {
                           final DataDirProvider dataDirProvider,
                           final LogStream logStream,
                           final DropReceiver dropReceiver,
-                          final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+                          final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                          final FsyncConfig fsyncConfig) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.logStream = logStream;
         this.dropReceiver = dropReceiver;
         this.receiveDataConfig = receiveDataConfigProvider.get();
+        this.fsyncOnReceipt = fsyncConfig.isReceiving();
 
         // Make receiving zip dir.
         final Path receivingDir = dataDirProvider.get().resolve(DirNames.RECEIVING_SIMPLE);
@@ -154,7 +157,7 @@ public class SimpleReceiver implements Receiver {
                             feedName,
                             typeName,
                             null,
-                            new Entry(META_FILE_NAME, metaBytes.length),
+                            new Entry(META_FILE_NAME, (long) metaBytes.length),
                             null,
                             new Entry(DATA_FILE_NAME, bytesRead));
 
@@ -165,6 +168,12 @@ public class SimpleReceiver implements Receiver {
 
                     // Write the .meta file
                     AttributeMapUtil.write(entryAttributeMap, fileGroup.getMeta());
+                }
+
+                // Force the received data to disk before we acknowledge receipt of it, otherwise we
+                // may tell the sender the data is safe when it is still only in the page cache.
+                if (fsyncOnReceipt) {
+                    fileGroup.sync();
                 }
 
                 // Now move the temp files to the file store or forward if there is a single destination.

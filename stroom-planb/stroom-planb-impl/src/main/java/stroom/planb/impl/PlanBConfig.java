@@ -119,7 +119,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                        @JsonProperty("mergedCheckpointCacheTtl")
                        final StroomDuration mergedCheckpointCacheTtl,
                        @JsonProperty("mergeStatusRetention") final StroomDuration mergeStatusRetention,
-                       @JsonProperty("sendPartAttempts") final int sendPartAttempts,
+                       @JsonProperty("sendPartAttempts") final Integer sendPartAttempts,
                        @JsonProperty("sendPartRetryDelay") final StroomDuration sendPartRetryDelay) {
         this.stateDocCache = stateDocCache;
         this.nodeList = nodeList;
@@ -147,7 +147,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                 ? mergedCheckpointCacheTtl
                 : StroomDuration.ofMinutes(10);
         this.mergeStatusRetention = mergeStatusRetention;
-        this.sendPartAttempts = sendPartAttempts;
+        this.sendPartAttempts = Objects.requireNonNullElse(sendPartAttempts, 0);
         this.sendPartRetryDelay = sendPartRetryDelay;
     }
 

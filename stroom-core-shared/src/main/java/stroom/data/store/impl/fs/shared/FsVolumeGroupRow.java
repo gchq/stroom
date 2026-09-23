@@ -40,10 +40,10 @@ public class FsVolumeGroupRow {
 
     @JsonCreator
     public FsVolumeGroupRow(@JsonProperty("group") final FsVolumeGroup group,
-                            @JsonProperty("volumeCount") final int volumeCount,
+                            @JsonProperty("volumeCount") final Integer volumeCount,
                             @JsonProperty("volumeTypes") final List<FsVolumeType> volumeTypes) {
         this.group = Objects.requireNonNull(group);
-        this.volumeCount = volumeCount;
+        this.volumeCount = Objects.requireNonNullElse(volumeCount, 0);
         this.volumeTypes = NullSafe.unmodifiableList(volumeTypes);
     }
 

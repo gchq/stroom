@@ -35,9 +35,9 @@ public class NodeStatusResult {
 
     @JsonCreator
     public NodeStatusResult(@JsonProperty("node") final Node node,
-                            @JsonProperty("master") final boolean master) {
+                            @JsonProperty("master") final Boolean master) {
         this.node = node;
-        this.master = master;
+        this.master = Objects.requireNonNullElse(master, false);
     }
 
     public Node getNode() {

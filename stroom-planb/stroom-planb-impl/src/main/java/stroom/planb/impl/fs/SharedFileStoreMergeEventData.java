@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class SharedFileStoreMergeEventData implements EntityEventData {
 
@@ -34,10 +36,10 @@ public class SharedFileStoreMergeEventData implements EntityEventData {
     private final String version;
 
     @JsonCreator
-    public SharedFileStoreMergeEventData(@JsonProperty("shardIndex") final int shardIndex,
+    public SharedFileStoreMergeEventData(@JsonProperty("shardIndex") final Integer shardIndex,
                                @JsonProperty("batchDirName") final String batchDirName,
                                @JsonProperty("version") final String version) {
-        this.shardIndex = shardIndex;
+        this.shardIndex = Objects.requireNonNullElse(shardIndex, 0);
         this.batchDirName = batchDirName;
         this.version = version;
     }

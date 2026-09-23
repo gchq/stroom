@@ -62,19 +62,19 @@ public class ProfilePeriod {
             @JsonProperty("days") final Days days,
             @JsonProperty("startTime") final Time startTime,
             @JsonProperty("endTime") final Time endTime,
-            @JsonProperty("limitNodeThreads") final boolean limitNodeThreads,
-            @JsonProperty("maxNodeThreads") final int maxNodeThreads,
-            @JsonProperty("limitClusterThreads") final boolean limitClusterThreads,
-            @JsonProperty("maxClusterThreads") final int maxClusterThreads) {
+            @JsonProperty("limitNodeThreads") final Boolean limitNodeThreads,
+            @JsonProperty("maxNodeThreads") final Integer maxNodeThreads,
+            @JsonProperty("limitClusterThreads") final Boolean limitClusterThreads,
+            @JsonProperty("maxClusterThreads") final Integer maxClusterThreads) {
         Objects.requireNonNull(uuid);
         this.uuid = uuid;
         this.days = Objects.requireNonNullElse(days, Days.EMPTY);
         this.startTime = startTime;
         this.endTime = endTime;
-        this.limitNodeThreads = limitNodeThreads;
-        this.maxNodeThreads = maxNodeThreads;
-        this.limitClusterThreads = limitClusterThreads;
-        this.maxClusterThreads = maxClusterThreads;
+        this.limitNodeThreads = Objects.requireNonNullElse(limitNodeThreads, false);
+        this.maxNodeThreads = Objects.requireNonNullElse(maxNodeThreads, 0);
+        this.limitClusterThreads = Objects.requireNonNullElse(limitClusterThreads, false);
+        this.maxClusterThreads = Objects.requireNonNullElse(maxClusterThreads, 0);
     }
 
     public String getUuid() {

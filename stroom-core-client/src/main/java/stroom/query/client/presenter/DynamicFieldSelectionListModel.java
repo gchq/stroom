@@ -86,7 +86,7 @@ public class DynamicFieldSelectionListModel
                             // Create empty item.
                             final List<FieldInfoSelectionItem> items = Collections.singletonList(
                                     new FieldInfoSelectionItem(null));
-                            resultPage = new ResultPage<>(items, new PageResponse(0, 1, 1L, true));
+                            resultPage = new ResultPage<>(items, new PageResponse(0L, 1, 1L, true));
                         }
 
                         consumer.accept(resultPage);

@@ -88,7 +88,8 @@ public class RetryingForwardDestination implements ForwardDestination {
                                       final PathCreator pathCreator,
                                       final DirQueueFactory dirQueueFactory,
                                       final ProxyServices proxyServices,
-                                      final FileStores fileStores) {
+                                      final FileStores fileStores,
+                                      final boolean fsyncEnabled) {
 
         this.forwardQueueConfig = Objects.requireNonNull(forwardQueueConfig);
         this.delegateDestination = Objects.requireNonNull(delegateDestination);
@@ -105,11 +106,13 @@ public class RetryingForwardDestination implements ForwardDestination {
         forwardQueue = dirQueueFactory.create(
                 forwardingDir.resolve("01_forward"),
                 FORWARD_ORDER,
-                "forward - " + destinationName);
+                "forward - " + destinationName,
+                fsyncEnabled);
         retryQueue = dirQueueFactory.create(
                 forwardingDir.resolve("02_retry"),
                 RETRY_ORDER,
-                "retry - " + destinationName);
+                "retry - " + destinationName,
+                fsyncEnabled);
 
         final DirQueueTransfer forwarding = new DirQueueTransfer(
                 forwardQueue::next, this::forwardDir);
@@ -126,7 +129,7 @@ public class RetryingForwardDestination implements ForwardDestination {
 
         // Create failure destination.
         failureDestination = setupFailureDestination(
-                forwardQueueConfig, pathCreator, forwardingDir);
+                forwardQueueConfig, pathCreator, forwardingDir, fsyncEnabled);
         delayForwardingFunc = createForwardDelayFunc(forwardQueueConfig);
 
         if (delegateDestination.hasLivenessCheck()) {
@@ -280,13 +283,17 @@ public class RetryingForwardDestination implements ForwardDestination {
 
     private ForwardFileDestination setupFailureDestination(final ForwardQueueConfig forwardQueueConfig,
                                                            final PathCreator simplePathCreator,
-                                                           final Path forwardingDir) {
+                                                           final Path forwardingDir,
+                                                           final boolean fsyncEnabled) {
         final ForwardFileDestination failureDestination;
         final Path failureDir = forwardingDir.resolve("03_failure");
         final PathTemplateConfig errorSubPathTemplate = forwardQueueConfig.getErrorSubPathTemplate();
         DirUtil.ensureDirExists(failureDir);
         // Use atomic move here as the failure dir is within the proxy data dirs, rather
-        // than on the forward dest
+        // than on the forward dest.
+        // For the same reason this uses the queue level fsync setting rather than the
+        // destination's own one: 03_failure is proxy internal state that sits alongside
+        // 01_forward and 02_retry, not something written to the external destination.
         failureDestination = new ForwardFileDestinationImpl(
                 failureDir,
                 destinationName + " (failures)",
@@ -294,7 +301,8 @@ public class RetryingForwardDestination implements ForwardDestination {
                 null,
                 null,
                 simplePathCreator,
-                true);
+                true,
+                fsyncEnabled);
         fileStores.add(FORWARD_ORDER, "forward - " + destinationName + " - failure", failureDir);
         return failureDestination;
     }

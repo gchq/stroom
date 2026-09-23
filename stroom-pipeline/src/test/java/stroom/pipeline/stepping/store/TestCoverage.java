@@ -53,7 +53,7 @@ class TestCoverage {
     }
 
     private void put(final StepDataStore store, final long record, final StepDataStore.RecordOrder order) {
-        store.putRecord(new StepLocation(META_ID, 0, record),
+        store.putRecord(new StepLocation((long) META_ID, 0L, (long) record),
                 List.of(new StepDataStore.ElementRecord(E1, FP, data("out" + record))),
                 null, Map.of(), null, order);
     }
@@ -155,7 +155,7 @@ class TestCoverage {
         // reprocessed for one part must not claim the others.
         final StepDataStore store = store(dir);
         put(store, 0, StepDataStore.RecordOrder.SEQUENTIAL);
-        store.putRecord(new StepLocation(META_ID, 2, 0),
+        store.putRecord(new StepLocation((long) META_ID, 2L, 0L),
                 List.of(new StepDataStore.ElementRecord(new ElementId("other"), FP, data("x"))),
                 null, Map.of(), null, StepDataStore.RecordOrder.SEQUENTIAL);
 
@@ -191,8 +191,8 @@ class TestCoverage {
             put(store, r, StepDataStore.RecordOrder.SEQUENTIAL);
         }
         final StreamSweep sweep = new StreamSweep(META_ID, store);
-        sweep.recordCaptured(new StepLocation(META_ID, 0, 0));
-        sweep.recordCaptured(new StepLocation(META_ID, 0, 1));
+        sweep.recordCaptured(new StepLocation((long) META_ID, 0L, 0L));
+        sweep.recordCaptured(new StepLocation((long) META_ID, 0L, 1L));
         final Coverage coverage = sweep.coverage();
 
         assertThat(store.getLastRecordIndex(0)).as("the store holds far more").isEqualTo(9);
@@ -210,7 +210,7 @@ class TestCoverage {
         // An errored capture adds no more records either; a non-final answer would leave a waiter waiting
         // for records that will never come (§5 - everything must signal).
         final StreamSweep sweep = new StreamSweep(META_ID, store(dir));
-        sweep.recordCaptured(new StepLocation(META_ID, 0, 0));
+        sweep.recordCaptured(new StepLocation((long) META_ID, 0L, 0L));
         sweep.markError(new RuntimeException("boom"));
 
         assertThat(sweep.coverage().isExtentFinal()).isTrue();

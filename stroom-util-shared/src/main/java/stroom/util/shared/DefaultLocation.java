@@ -38,10 +38,10 @@ public final class DefaultLocation implements Location {
     private final int colNo;
 
     @JsonCreator
-    public DefaultLocation(@JsonProperty("lineNo") final int lineNo,
-                           @JsonProperty("colNo") final int colNo) {
-        this.lineNo = lineNo;
-        this.colNo = colNo;
+    public DefaultLocation(@JsonProperty("lineNo") final Integer lineNo,
+                           @JsonProperty("colNo") final Integer colNo) {
+        this.lineNo = Objects.requireNonNullElse(lineNo, 0);
+        this.colNo = Objects.requireNonNullElse(colNo, 0);
     }
 
     public static Location of(final int lineNo, final int colNo) {

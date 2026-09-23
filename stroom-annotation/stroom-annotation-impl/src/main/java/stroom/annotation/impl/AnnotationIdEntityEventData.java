@@ -28,6 +28,8 @@ import stroom.util.entityevent.EntityEventBus;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 /**
  * Used for changes to the whole annotation, rather than a single field on it.
  */
@@ -37,8 +39,8 @@ public class AnnotationIdEntityEventData implements EntityEventData {
     private final long annotationId;
 
     @JsonCreator
-    public AnnotationIdEntityEventData(@JsonProperty("annotationId") final long annotationId) {
-        this.annotationId = annotationId;
+    public AnnotationIdEntityEventData(@JsonProperty("annotationId") final Long annotationId) {
+        this.annotationId = Objects.requireNonNullElse(annotationId, 0L);
     }
 
     public long getAnnotationId() {

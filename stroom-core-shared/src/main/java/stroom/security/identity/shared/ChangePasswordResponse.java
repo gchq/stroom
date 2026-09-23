@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class ChangePasswordResponse {
 
@@ -32,12 +34,12 @@ public class ChangePasswordResponse {
     private final boolean forceSignIn;
 
     @JsonCreator
-    public ChangePasswordResponse(@JsonProperty("changeSucceeded") final boolean changeSucceeded,
+    public ChangePasswordResponse(@JsonProperty("changeSucceeded") final Boolean changeSucceeded,
                                   @JsonProperty("message") final String message,
-                                  @JsonProperty("forceSignIn") final boolean forceSignIn) {
-        this.changeSucceeded = changeSucceeded;
+                                  @JsonProperty("forceSignIn") final Boolean forceSignIn) {
+        this.changeSucceeded = Objects.requireNonNullElse(changeSucceeded, false);
         this.message = message;
-        this.forceSignIn = forceSignIn;
+        this.forceSignIn = Objects.requireNonNullElse(forceSignIn, false);
     }
 
     public boolean isChangeSucceeded() {

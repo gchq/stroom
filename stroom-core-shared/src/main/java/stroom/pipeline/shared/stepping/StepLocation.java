@@ -49,12 +49,12 @@ public class StepLocation {
      * @param recordIndex Zero based
      */
     @JsonCreator
-    public StepLocation(@JsonProperty("metaId") final long metaId,
-                        @JsonProperty("partIndex") final long partIndex,
-                        @JsonProperty("recordIndex") final long recordIndex) {
-        this.metaId = metaId;
-        this.partIndex = partIndex;
-        this.recordIndex = recordIndex;
+    public StepLocation(@JsonProperty("metaId") final Long metaId,
+                        @JsonProperty("partIndex") final Long partIndex,
+                        @JsonProperty("recordIndex") final Long recordIndex) {
+        this.metaId = Objects.requireNonNullElse(metaId, 0L);
+        this.partIndex = Objects.requireNonNullElse(partIndex, 0L);
+        this.recordIndex = Objects.requireNonNullElse(recordIndex, 0L);
     }
 
     public static StepLocation first(final long metaId) {
@@ -62,7 +62,7 @@ public class StepLocation {
     }
 
     public static StepLocation first(final long metaId, final long partIndex) {
-        return new StepLocation(metaId, partIndex, -1);
+        return new StepLocation(metaId, partIndex, -1L);
     }
 
     public static StepLocation last(final long metaId) {

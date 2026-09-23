@@ -39,10 +39,10 @@ public class CurrentDbState {
     private final Long lastEventTime;
 
     @JsonCreator
-    public CurrentDbState(@JsonProperty("streamId") final long streamId,
+    public CurrentDbState(@JsonProperty("streamId") final Long streamId,
                           @JsonProperty("eventId") final Long eventId,
                           @JsonProperty("lastEventTime") final Long lastEventTime) {
-        this.streamId = streamId;
+        this.streamId = Objects.requireNonNullElse(streamId, 0L);
         this.eventId = eventId;
         this.lastEventTime = lastEventTime;
     }

@@ -71,11 +71,11 @@ class TestFilteredScanWindow {
                 tempDir.resolve(Long.toString(META_ID)), new SteppingConfig());
         final ElementId upstream = new ElementId("combinedParser");
         for (int r = 0; r < records; r++) {
-            store.putRecord(new StepLocation(META_ID, PART, r),
+            store.putRecord(new StepLocation((long) META_ID, (long) PART, (long) r),
                     List.of(new StepDataStore.ElementRecord(upstream, "fp-upstream", data("out" + r))), null);
         }
         for (final long record : materialised) {
-            store.putElementData(new StepLocation(META_ID, PART, record), ELEMENT_ID, FINGERPRINT,
+            store.putElementData(new StepLocation((long) META_ID, (long) PART, (long) record), ELEMENT_ID, FINGERPRINT,
                     data("scanned" + record));
         }
         return store;
@@ -100,7 +100,7 @@ class TestFilteredScanWindow {
                         .stepType(stepType)
                         .stepLocation(fromRecord == null
                                 ? null
-                                : new StepLocation(META_ID, PART, fromRecord))
+                                : new StepLocation((long) META_ID, (long) PART, (long) fromRecord))
                         .build(),
                 DECISION,
                 store,

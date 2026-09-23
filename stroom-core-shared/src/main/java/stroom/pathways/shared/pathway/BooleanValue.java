@@ -27,8 +27,8 @@ import java.util.Objects;
 public final class BooleanValue extends AbstractValue<Boolean> implements ConstraintValue {
 
     @JsonCreator
-    public BooleanValue(@JsonProperty("value") final boolean value) {
-        super(value);
+    public BooleanValue(@JsonProperty("value") final Boolean value) {
+        super(Objects.requireNonNullElse(value, false));
     }
 
     public boolean validate(final Boolean value) {

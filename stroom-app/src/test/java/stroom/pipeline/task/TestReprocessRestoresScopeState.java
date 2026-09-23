@@ -182,7 +182,7 @@ class TestReprocessRestoresScopeState extends TranslationTest {
                     .as("first step was a full sweep").isEqualTo(fullSweepBefore + 1);
 
             final StepLocation record0 = new StepLocation(
-                    last.getFoundLocation().getMetaId(), last.getFoundLocation().getPartIndex(), 0);
+                    (long) last.getFoundLocation().getMetaId(), (long) last.getFoundLocation().getPartIndex(), 0L);
 
             // 2) REFRESH record 0 with no edit -> served from the completed sweep. This is the baseline: with
             // every element running normally, the get must see what the put put.

@@ -64,9 +64,9 @@ class TestReprocessPlanner {
     private StepDataStore storeWith(final Path tempDir, final String parserFp, final String xsltFp,
                                     final String writerFp) {
         final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
-        store.putElementData(new StepLocation(META, 0, 0), new ElementId("parser"), parserFp, ed());
-        store.putElementData(new StepLocation(META, 0, 0), new ElementId("xslt"), xsltFp, ed());
-        store.putElementData(new StepLocation(META, 0, 0), new ElementId("writer"), writerFp, ed());
+        store.putElementData(new StepLocation((long) META, 0L, 0L), new ElementId("parser"), parserFp, ed());
+        store.putElementData(new StepLocation((long) META, 0L, 0L), new ElementId("xslt"), xsltFp, ed());
+        store.putElementData(new StepLocation((long) META, 0L, 0L), new ElementId("writer"), writerFp, ed());
         return store;
     }
 
@@ -81,9 +81,9 @@ class TestReprocessPlanner {
     private StepDataStore truncatedStore(final Path tempDir, final long frontier) {
         final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
         for (long r = 0; r <= frontier; r++) {
-            store.putElementData(new StepLocation(META, 0, r), new ElementId("parser"), "p1", ed());
-            store.putElementData(new StepLocation(META, 0, r), new ElementId("xslt"), "x1", ed());
-            store.putElementData(new StepLocation(META, 0, r), new ElementId("writer"), "w1", ed());
+            store.putElementData(new StepLocation((long) META, 0L, (long) r), new ElementId("parser"), "p1", ed());
+            store.putElementData(new StepLocation((long) META, 0L, (long) r), new ElementId("xslt"), "x1", ed());
+            store.putElementData(new StepLocation((long) META, 0L, (long) r), new ElementId("writer"), "w1", ed());
         }
         return store;
     }
@@ -168,9 +168,9 @@ class TestReprocessPlanner {
                 new PlannerElement("xslt", false));
         final Map<String, List<String>> forkParents = Map.of("xslt", List.of("parserA", "parserB"));
         final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
-        store.putElementData(new StepLocation(META, 0, 0), new ElementId("parserA"), "a1", ed());
-        store.putElementData(new StepLocation(META, 0, 0), new ElementId("parserB"), "b1", ed());
-        store.putElementData(new StepLocation(META, 0, 0), new ElementId("xslt"), "x1", ed());
+        store.putElementData(new StepLocation((long) META, 0L, 0L), new ElementId("parserA"), "a1", ed());
+        store.putElementData(new StepLocation((long) META, 0L, 0L), new ElementId("parserB"), "b1", ed());
+        store.putElementData(new StepLocation((long) META, 0L, 0L), new ElementId("xslt"), "x1", ed());
 
         final Decision d = planner.plan(forked, forkParents, store,
                 new ElementFingerprints(

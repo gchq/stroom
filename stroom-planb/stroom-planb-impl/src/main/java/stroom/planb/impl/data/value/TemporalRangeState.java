@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @JsonPropertyOrder({"key", "value"})
 @JsonInclude(Include.NON_NULL)
@@ -77,11 +78,11 @@ public final class TemporalRangeState extends KV<Key, Val> implements PlanBValue
         private final Instant time;
 
         @JsonCreator
-        public Key(@JsonProperty("keyStart") final long keyStart,
-                   @JsonProperty("keyEnd") final long keyEnd,
+        public Key(@JsonProperty("keyStart") final Long keyStart,
+                   @JsonProperty("keyEnd") final Long keyEnd,
                    @JsonProperty("time") final Instant time) {
-            this.keyStart = keyStart;
-            this.keyEnd = keyEnd;
+            this.keyStart = Objects.requireNonNullElse(keyStart, 0L);
+            this.keyEnd = Objects.requireNonNullElse(keyEnd, 0L);
             this.time = time;
         }
 

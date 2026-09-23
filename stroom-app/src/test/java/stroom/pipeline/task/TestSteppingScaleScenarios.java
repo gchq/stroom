@@ -148,8 +148,8 @@ class TestSteppingScaleScenarios extends TranslationTest {
             // Ask for the very last record while the sweep is still parsing towards it.
             final SteppingResult ahead = steppingService.step(base.copy()
                     .stepType(StepType.REFRESH)
-                    .stepLocation(new StepLocation(metaId, first.getFoundLocation().getPartIndex(),
-                            RECORD_COUNT - 1))
+                    .stepLocation(new StepLocation((long) metaId, (long) first.getFoundLocation().getPartIndex(),
+                            (long) RECORD_COUNT - 1))
                     .sessionUuid(sessionUuid)
                     .build());
             sessionUuid = ahead.getSessionUuid();
@@ -194,7 +194,7 @@ class TestSteppingScaleScenarios extends TranslationTest {
             // Un-edited: waits on the running sweep until the frontier passes the record. No new launch.
             final SteppingResult unedited = steppingService.step(base.copy()
                     .stepType(StepType.REFRESH)
-                    .stepLocation(new StepLocation(metaId, partIndex, record))
+                    .stepLocation(new StepLocation((long) metaId, (long) partIndex, (long) record))
                     .sessionUuid(sessionUuid)
                     .build());
             sessionUuid = unedited.getSessionUuid();
@@ -206,7 +206,7 @@ class TestSteppingScaleScenarios extends TranslationTest {
             // The edit, issued while the sweep is still parsing towards record 3,999.
             final SteppingResult edited = steppingService.step(base.copy()
                     .stepType(StepType.REFRESH)
-                    .stepLocation(new StepLocation(metaId, partIndex, record))
+                    .stepLocation(new StepLocation((long) metaId, (long) partIndex, (long) record))
                     .sessionUuid(sessionUuid)
                     .code(Map.of(EDITED_ELEMENT_ID, xsltText))
                     .build());
@@ -257,8 +257,8 @@ class TestSteppingScaleScenarios extends TranslationTest {
             // a mid-stream record.
             final SteppingResult edited = steppingService.step(base.copy()
                     .stepType(StepType.REFRESH)
-                    .stepLocation(new StepLocation(metaId, first.getFoundLocation().getPartIndex(),
-                            RECORD_COUNT / 2))
+                    .stepLocation(new StepLocation((long) metaId, (long) first.getFoundLocation().getPartIndex(),
+                            (long) RECORD_COUNT / 2))
                     .sessionUuid(sessionUuid)
                     .code(Map.of(EDITED_ELEMENT_ID, xsltText))
                     .build());
@@ -411,7 +411,7 @@ class TestSteppingScaleScenarios extends TranslationTest {
             sessionUuid = last.getSessionUuid();
             assertThat(last.isFoundRecord()).as("LAST completed the sweep").isTrue();
             final StepLocation record0 =
-                    new StepLocation(metaId, last.getFoundLocation().getPartIndex(), 0);
+                    new StepLocation((long) metaId, (long) last.getFoundLocation().getPartIndex(), 0L);
 
             final long onDemandBefore = steppingService.getOnDemandLaunchCount();
 
@@ -472,7 +472,7 @@ class TestSteppingScaleScenarios extends TranslationTest {
             sessionUuid = last.getSessionUuid();
             assertThat(last.isFoundRecord()).as("LAST completed the sweep").isTrue();
             final StepLocation record0 =
-                    new StepLocation(metaId, last.getFoundLocation().getPartIndex(), 0);
+                    new StepLocation((long) metaId, (long) last.getFoundLocation().getPartIndex(), 0L);
 
             final long onDemandBefore = steppingService.getOnDemandLaunchCount();
 

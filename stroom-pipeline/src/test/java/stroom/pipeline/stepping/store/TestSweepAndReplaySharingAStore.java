@@ -71,7 +71,7 @@ class TestSweepAndReplaySharingAStore {
                      final long recordIndex,
                      final String fingerprint,
                      final StepDataStore.RecordOrder order) {
-        store.putRecord(new StepLocation(META_ID, 0, recordIndex),
+        store.putRecord(new StepLocation((long) META_ID, 0L, (long) recordIndex),
                 List.of(rec(fingerprint, "out" + recordIndex)), null, Map.of(), null, order);
     }
 
@@ -116,7 +116,7 @@ class TestSweepAndReplaySharingAStore {
     }
 
     private void assertReadable(final StepDataStore store, final long recordIndex, final String fingerprint) {
-        assertThat(store.getElementData(new StepLocation(META_ID, 0, recordIndex), E1, fingerprint))
+        assertThat(store.getElementData(new StepLocation((long) META_ID, 0L, (long) recordIndex), E1, fingerprint))
                 .as("record " + recordIndex + " under " + fingerprint + " is readable")
                 .isPresent();
     }

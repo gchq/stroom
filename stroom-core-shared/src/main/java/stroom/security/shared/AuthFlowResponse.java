@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 /**
  * Response DTO for the SPA authentication flow.
  * <p>
@@ -47,12 +49,12 @@ public class AuthFlowResponse {
     private final Long expiresInSec;
 
     @JsonCreator
-    public AuthFlowResponse(@JsonProperty("authenticated") final boolean authenticated,
+    public AuthFlowResponse(@JsonProperty("authenticated") final Boolean authenticated,
                             @JsonProperty("subjectId") final String subjectId,
                             @JsonProperty("displayName") final String displayName,
                             @JsonProperty("redirectUrl") final String redirectUrl,
                             @JsonProperty("expiresInSec") final Long expiresInSec) {
-        this.authenticated = authenticated;
+        this.authenticated = Objects.requireNonNullElse(authenticated, false);
         this.subjectId = subjectId;
         this.displayName = displayName;
         this.redirectUrl = redirectUrl;

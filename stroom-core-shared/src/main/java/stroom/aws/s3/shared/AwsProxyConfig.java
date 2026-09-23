@@ -41,13 +41,13 @@ public class AwsProxyConfig {
 
     @JsonCreator
     public AwsProxyConfig(@JsonProperty("host") final String host,
-                          @JsonProperty("port") final int port,
+                          @JsonProperty("port") final Integer port,
                           @JsonProperty("scheme") final String scheme,
                           @JsonProperty("username") final String username,
                           @JsonProperty("password") final String password,
                           @JsonProperty("useSystemPropertyValues") final Boolean useSystemPropertyValues) {
         this.host = host;
-        this.port = port;
+        this.port = Objects.requireNonNullElse(port, 0);
         this.scheme = scheme;
         this.username = username;
         this.password = password;

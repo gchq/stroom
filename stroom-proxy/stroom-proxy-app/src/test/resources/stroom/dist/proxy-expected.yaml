@@ -47,6 +47,7 @@ proxyConfig:
   forwardFileDestinations:
   - atomicMoveEnabled: true
     enabled: true
+    fsyncEnabled: true
     instant: false
     livenessCheckMode: "READ"
     livenessCheckPath: null
@@ -107,6 +108,12 @@ proxyConfig:
       retryDelay: "PT10M"
       retryDelayGrowthFactor: 1.0
   forwardS3Destinations: []
+  fsync:
+    aggregateInputQueue: true
+    forwardingInputQueue: true
+    preAggregateInputQueue: true
+    receiving: true
+    zipSplittingInputQueue: true
   haltBootOnConfigValidationFailure: true
   logStream:
     metaKeys:

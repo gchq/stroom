@@ -40,6 +40,7 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
     private static final int DEFAULT_DELETE_FAILURE_THRESHOLD = 100;
     private static final int DEFAULT_FILE_SYSTEM_CLEAN_BATCH_SIZE = 20;
     private static final boolean DEFAULT_FILE_SYSTEM_CLEAN_DELETE_OUT = false;
+    private static final boolean DEFAULT_IS_FSYNC_ENABLED = true;
 
     private final DataStoreServiceDbConfig dbConfig;
     private StroomDuration deletePurgeAge;
@@ -47,6 +48,7 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
     private final int deleteFailureThreshold;
     private final int fileSystemCleanBatchSize;
     private final boolean fileSystemCleanDeleteOut;
+    private final boolean fsyncEnabled;
     // TODO 29/11/2021 AT: Make final
     private StroomDuration fileSystemCleanOldAge;
 
@@ -57,6 +59,7 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
         deleteFailureThreshold = DEFAULT_DELETE_FAILURE_THRESHOLD;
         fileSystemCleanBatchSize = DEFAULT_FILE_SYSTEM_CLEAN_BATCH_SIZE;
         fileSystemCleanDeleteOut = DEFAULT_FILE_SYSTEM_CLEAN_DELETE_OUT;
+        fsyncEnabled = DEFAULT_IS_FSYNC_ENABLED;
         fileSystemCleanOldAge = StroomDuration.ofDays(1);
     }
 
@@ -69,7 +72,8 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
                                       final Integer deleteFailureThreshold,
                                   @JsonProperty("fileSystemCleanBatchSize") final Integer fileSystemCleanBatchSize,
                                   @JsonProperty("fileSystemCleanDeleteOut") final Boolean fileSystemCleanDeleteOut,
-                                  @JsonProperty("fileSystemCleanOldAge") final StroomDuration fileSystemCleanOldAge) {
+                                  @JsonProperty("fileSystemCleanOldAge") final StroomDuration fileSystemCleanOldAge,
+                                  @JsonProperty("fsyncEnabled") final Boolean fsyncEnabled) {
         this.dbConfig = dbConfig;
         this.deletePurgeAge = deletePurgeAge;
         this.deleteBatchSize =
@@ -81,12 +85,25 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
         this.fileSystemCleanDeleteOut =
                 Objects.requireNonNullElse(fileSystemCleanDeleteOut, DEFAULT_FILE_SYSTEM_CLEAN_DELETE_OUT);
         this.fileSystemCleanOldAge = fileSystemCleanOldAge;
+        this.fsyncEnabled = Objects.requireNonNullElse(fsyncEnabled, DEFAULT_IS_FSYNC_ENABLED);
     }
 
     @Override
     @JsonProperty("db")
     public DataStoreServiceDbConfig getDbConfig() {
         return dbConfig;
+    }
+
+    @JsonPropertyDescription("If true, a stream's files are forced to durable storage before its " +
+            "metadata is marked as unlocked, so that the database can never record a stream whose " +
+            "contents did not reach disk. Turning this off makes writing data faster but risks the " +
+            "data store being left referencing streams that cannot be read after a power failure. " +
+            "Note that this covers the file system only. Whether the matching database commit itself " +
+            "survives a power failure is governed by the database, for MySQL by " +
+            "'innodb_flush_log_at_trx_commit', which Stroom does not set.")
+    @JsonProperty("fsyncEnabled")
+    public boolean isFsyncEnabled() {
+        return fsyncEnabled;
     }
 
     @JsonPropertyDescription("How long data records are left logically deleted before they are deleted " +
@@ -136,7 +153,8 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
                 deleteFailureThreshold,
                 fileSystemCleanBatchSize,
                 fileSystemCleanDeleteOut,
-                fileSystemCleanOldAge);
+                fileSystemCleanOldAge,
+                fsyncEnabled);
     }
 
     public DataStoreServiceConfig withDeleteBatchSize(final int deleteBatchSize) {
@@ -147,7 +165,8 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
                 deleteFailureThreshold,
                 fileSystemCleanBatchSize,
                 fileSystemCleanDeleteOut,
-                fileSystemCleanOldAge);
+                fileSystemCleanOldAge,
+                fsyncEnabled);
     }
 
     public DataStoreServiceConfig withFileSystemCleanOldAge(final StroomDuration fileSystemCleanOldAge) {
@@ -158,6 +177,7 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
                 deleteFailureThreshold,
                 fileSystemCleanBatchSize,
                 fileSystemCleanDeleteOut,
-                fileSystemCleanOldAge);
+                fileSystemCleanOldAge,
+                fsyncEnabled);
     }
 }

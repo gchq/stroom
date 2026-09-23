@@ -94,7 +94,8 @@ class TestRetryingForwardDestination {
                 new SimplePathCreator(() -> homeDir, () -> tempDir),
                 dirQueueFactory,
                 proxyServices,
-                mockFileStores);
+                mockFileStores,
+                false);
 
         proxyServices.start();
 
@@ -135,7 +136,8 @@ class TestRetryingForwardDestination {
                 new SimplePathCreator(() -> homeDir, () -> tempDir),
                 dirQueueFactory,
                 proxyServices,
-                mockFileStores);
+                mockFileStores,
+                false);
 
         proxyServices.start();
 
@@ -183,7 +185,8 @@ class TestRetryingForwardDestination {
                 new SimplePathCreator(() -> homeDir, () -> tempDir),
                 dirQueueFactory,
                 proxyServices,
-                mockFileStores);
+                mockFileStores,
+                false);
 
         proxyServices.start();
 
