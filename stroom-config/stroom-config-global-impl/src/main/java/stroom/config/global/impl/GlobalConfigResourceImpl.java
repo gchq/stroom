@@ -24,6 +24,7 @@ import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
 import stroom.config.global.shared.SetConfigValueRequest;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -75,6 +76,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigResourceImpl.class);
 
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
+    private final Provider<DocumentEventLog> documentEventLogProvider;
     private final Provider<GlobalConfigService> globalConfigServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<UiConfig> uiConfig;
@@ -90,6 +92,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
+                             final Provider<DocumentEventLog> documentEventLogProvider,
                              final Provider<GlobalConfigService> globalConfigServiceProvider,
                              final Provider<NodeService> nodeServiceProvider,
                              final Provider<UiConfig> uiConfig,
@@ -106,6 +109,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
         this.reportUiDefaultConfigProvider = reportUiDefaultConfigProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
+        this.documentEventLogProvider = Objects.requireNonNull(documentEventLogProvider);
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
         this.nodeServiceProvider = Objects.requireNonNull(nodeServiceProvider);
         this.uiConfig = uiConfig;
@@ -339,6 +343,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
      * </p>
      */
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public Boolean setConfigValue(final SetConfigValueRequest request) {
         RestUtil.requireNonNull(request, "request not supplied");
         RestUtil.requireNonNull(request.getTarget(), "target not supplied");
@@ -352,6 +357,14 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
             case REPORT_UI_DEFAULT -> reportUiDefaultConfigProvider.get();
         };
 
+        // Logged by hand because the auto logger cannot work out what this method changes. It
+        // infers an update from the method name, but the response is a Boolean so it cannot be used
+        // as the 'after', and SetConfigValueRequest carries no id for the auto logger to fetch a
+        // before/after with. Left to the auto logger, both would be null and no audit event would
+        // be produced at all.
+        final PropertyPath propertyPath = config.getFullPath(request.getPropertyName());
+        final ConfigProperty before = getPropertyForAudit(propertyPath);
+
         try {
             // Whichever value was supplied determines how it is stored, so the client never builds the string form.
             if (request.getDocRefValue() != null) {
@@ -363,10 +376,55 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                         .setString(config, request.getPropertyName(), request.getStringValue());
             }
         } catch (final ConfigPropertyValidationException e) {
+            logSetConfigValue(before, getPropertyForAudit(propertyPath), request, e);
             throw RestUtil.badRequest(e);
+        } catch (final RuntimeException e) {
+            logSetConfigValue(before, getPropertyForAudit(propertyPath), request, e);
+            throw e;
         }
 
+        logSetConfigValue(before, getPropertyForAudit(propertyPath), request, null);
         return true;
+    }
+
+    /// Reads a config property for the purposes of an audit event.
+    ///
+    /// Returns null rather than propagating, as failing to read the property for logging must not
+    /// stop the change itself from being reported or, worse, fail the request.
+    private ConfigProperty getPropertyForAudit(final PropertyPath propertyPath) {
+        try {
+            return globalConfigServiceProvider.get()
+                    .fetch(propertyPath)
+                    .orElse(null);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "getPropertyForAudit() - Unable to read property {} for logging: {}",
+                    propertyPath, LogUtil.exceptionMessage(e)), e);
+            return null;
+        }
+    }
+
+    /// Logs the change, naming the property so the event says which one was changed.
+    ///
+    /// If neither version of the property could be read, falls back to the request so that an audit
+    /// event is always produced. On the failure path that fallback goes in the 'before' slot, as the
+    /// requested value was never reached and must not be presented as the 'after'.
+    private void logSetConfigValue(final ConfigProperty before,
+                                   final ConfigProperty after,
+                                   final SetConfigValueRequest request,
+                                   final Throwable ex) {
+        final String typeId = StroomEventLoggingUtil.buildTypeId(this, "setConfigValue");
+        final String verb = LogUtil.message("Setting config property \"{}\"", request.getPropertyName());
+
+        if (before == null && after == null) {
+            if (ex == null) {
+                documentEventLogProvider.get().update(null, request, typeId, verb, ex);
+            } else {
+                documentEventLogProvider.get().update(request, null, typeId, verb, ex);
+            }
+        } else {
+            documentEventLogProvider.get().update(before, after, typeId, verb, ex);
+        }
     }
 
     private Query buildRawQuery(final String userInput) {
