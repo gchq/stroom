@@ -163,7 +163,7 @@ class TestReprocessFromStore extends TranslationTest {
             assertThat(midRecord).as("the feed has enough records for a mid-point to be meaningful")
                     .isGreaterThan(0);
             final StepLocation midLocation =
-                    new StepLocation((long) metaId, (long) sourceStore.getPartIndices().getFirst(), (long) midRecord);
+                    new StepLocation(metaId, sourceStore.getPartIndices().getFirst(), midRecord);
 
             onDemand = steppingService.reprocess(
                     request, metaId, START_ELEMENT_ID, FEED_ELEMENT_ID, sourceStore, fingerprints,
@@ -184,11 +184,12 @@ class TestReprocessFromStore extends TranslationTest {
 
             // ...and nothing else was produced. That is the entire point: the cost is one record's work,
             // not the stream's.
-            assertThat(onDemandStore.getElementData(new StepLocation((long) metaId, (long) midLocation.getPartIndex(), 0L),
+            assertThat(onDemandStore.getElementData(
+                    new StepLocation(metaId, midLocation.getPartIndex(), 0L),
                     startId, fingerprint))
                     .as("record 0 was not materialised").isEmpty();
-            assertThat(onDemandStore.getElementData(new StepLocation((long) metaId, (long) midLocation.getPartIndex(),
-                    (long) midRecord + 1), startId, fingerprint))
+            assertThat(onDemandStore.getElementData(new StepLocation(metaId, midLocation.getPartIndex(),
+                    midRecord + 1), startId, fingerprint))
                     .as("the following record was not materialised").isEmpty();
 
             // The head stage: built from Source as usual, but stopped after the parser. This is the one
@@ -241,7 +242,7 @@ class TestReprocessFromStore extends TranslationTest {
             final long firstRec = sourceStore.getFirstRecordIndex(partIndex);
             final long lastRec = sourceStore.getLastRecordIndex(partIndex);
             for (long r = firstRec; r <= lastRec; r++) {
-                final StepLocation loc = new StepLocation((long) metaId, (long) partIndex, (long) r);
+                final StepLocation loc = new StepLocation(metaId, partIndex, r);
                 final CapturedElementData swept =
                         sourceStore.getElementData(loc, startId, fingerprint).orElse(null);
                 final CapturedElementData reran =
