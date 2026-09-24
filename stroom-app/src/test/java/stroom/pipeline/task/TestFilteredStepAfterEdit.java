@@ -76,9 +76,13 @@ class TestFilteredStepAfterEdit extends TranslationTest {
     private static final String FEED = "XML-EVENTS";
     private static final String FILTERED_ELEMENT_ID = "translationFilter";
 
-    /** The sample stream holds 10 records, so record-nos 3, 6 and 9 emit a Hit and the rest do not. */
+    /**
+     * The sample stream holds 10 records, so record-nos 3, 6 and 9 emit a Hit and the rest do not.
+     */
     private static final int HIT_EVERY = 3;
-    /** The first matching record, as an index: record-no 3. */
+    /**
+     * The first matching record, as an index: record-no 3.
+     */
     private static final long FIRST_HIT_INDEX = 2;
 
     /**
@@ -387,7 +391,8 @@ class TestFilteredStepAfterEdit extends TranslationTest {
                                             final long recordIndex) {
         final SteppingResult result = steppingService.step(base.copy()
                 .stepType(StepType.REFRESH)
-                .stepLocation(new StepLocation((long) found.getMetaId(), (long) found.getPartIndex(), (long) recordIndex))
+                .stepLocation(
+                        new StepLocation(found.getMetaId(), found.getPartIndex(), recordIndex))
                 .sessionUuid(session.getSessionUuid())
                 .code(Map.of(FILTERED_ELEMENT_ID, PROBE_XSLT))
                 .build());
