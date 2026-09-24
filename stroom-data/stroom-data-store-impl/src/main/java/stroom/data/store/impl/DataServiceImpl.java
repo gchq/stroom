@@ -264,7 +264,7 @@ class DataServiceImpl implements DataService {
         final List<DataInfoSection> sections = new ArrayList<>();
         if (metaRow == null) {
             final List<DataInfoSection.Entry> entries = new ArrayList<>(1);
-            entries.add(infoEntry("Deleted Stream Id", String.valueOf(id)));
+            entries.add(infoEntry(DataKey.DELETED_STREAM_ID, String.valueOf(id)));
             sections.add(new DataInfoSection("Stream", entries));
 
         } else {
@@ -420,22 +420,22 @@ class DataServiceImpl implements DataService {
     private List<DataInfoSection.Entry> getStreamEntries(final Meta meta) {
         final List<DataInfoSection.Entry> entries = new ArrayList<>();
 
-        entries.add(infoEntry("Stream Id", String.valueOf(meta.getId())));
-        entries.add(infoEntry("Status", meta.getStatus().getDisplayValue()));
-        entries.add(infoEntry("Status Ms", getDateTimeString(meta.getStatusMs())));
-        addEntryIfPresent(entries, "Parent Stream Id", meta.getParentMetaId());
-        entries.add(infoEntry("Created", getDateTimeString(meta.getCreateMs())));
-        entries.add(infoEntry("Effective", getDateTimeString(meta.getEffectiveMs())));
-        entries.add(infoEntry("Stream Type", meta.getTypeName()));
-        entries.add(infoEntry("Feed", meta.getFeedName()));
+        entries.add(infoEntry(DataKey.STREAM_ID, String.valueOf(meta.getId())));
+        entries.add(infoEntry(DataKey.STATUS, meta.getStatus().getDisplayValue()));
+        entries.add(infoEntry(DataKey.STATUS_MS, getDateTimeString(meta.getStatusMs())));
+        addEntryIfPresent(entries, DataKey.PARENT_STREAM_ID, meta.getParentMetaId());
+        entries.add(infoEntry(DataKey.CREATED, getDateTimeString(meta.getCreateMs())));
+        entries.add(infoEntry(DataKey.EFFECTIVE, getDateTimeString(meta.getEffectiveMs())));
+        entries.add(infoEntry(DataKey.STREAM_TYPE, meta.getTypeName()));
+        entries.add(infoEntry(DataKey.FEED, meta.getFeedName()));
         addEncodingInfo(meta, entries);
 
         final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
         NullSafe.consume(dataVolume, DataVolume::getVolumeGroupName, grpName ->
-                entries.add(infoEntry("Volume Group", grpName)));
+                entries.add(infoEntry(DataKey.VOLUME_GROUP, grpName)));
         NullSafe.consume(dataVolume, DataVolume::getVolumeType, FsVolumeType::getDisplayValue, typeName ->
-                entries.add(infoEntry("Volume Type", typeName)));
-        entries.add(infoEntry("Read-Only Data",
+                entries.add(infoEntry(DataKey.VOLUME_TYPE, typeName)));
+        entries.add(infoEntry(DataKey.READ_ONLY_DATA,
                 (meta.isReadOnly()
                         ? "Yes"
                         : "No")));
@@ -447,7 +447,7 @@ class DataServiceImpl implements DataService {
         final List<DataInfoSection.Entry> entries = new ArrayList<>();
 
         NullSafe.consume(meta.getProcessorUuid(), uuid ->
-                entries.add(infoEntry("Processor", uuid)));
+                entries.add(infoEntry(DataKey.PROCESSOR, uuid)));
 
         if (meta.getPipelineUuid() != null) {
             final String pipelineName = getPipelineName(meta);
@@ -456,19 +456,19 @@ class DataServiceImpl implements DataService {
                     .name(pipelineName)
                     .build();
             final String pipeline = DocRefUtil.createSimpleDocRefString(docRef);
-            entries.add(infoEntry("Processor Pipeline", pipeline));
+            entries.add(infoEntry(DataKey.PROCESSOR_PIPELINE, pipeline));
         }
-        addEntryIfPresent(entries, "Processor Filter Id", meta.getProcessorFilterId());
-        addEntryIfPresent(entries, "Processor Task Id", meta.getProcessorTaskId());
+        addEntryIfPresent(entries, DataKey.PROCESSOR_FILTER_ID, meta.getProcessorFilterId());
+        addEntryIfPresent(entries, DataKey.PROCESSOR_TASK_ID, meta.getProcessorTaskId());
 
         return entries;
     }
 
     private void addEntryIfPresent(final List<DataInfoSection.Entry> entries,
-                                   final String entryName,
+                                   final DataKey dataKey,
                                    final Number value) {
         if (value != null) {
-            entries.add(infoEntry(entryName, String.valueOf(value)));
+            entries.add(infoEntry(dataKey, String.valueOf(value)));
         }
     }
 
@@ -482,45 +482,24 @@ class DataServiceImpl implements DataService {
                             // If this is the received stream type then show the encoding
                             if (metaService.isRaw(meta.getTypeName())) {
                                 NullSafe.consume(feedDoc.getEncoding(), encoding ->
-                                        entries.add(infoEntry("Data Encoding", encoding)));
+                                        entries.add(infoEntry(DataKey.DATA_ENCODING, encoding)));
                             } else {
                                 entries.add(infoEntry(
-                                        "Data Encoding", StreamUtil.DEFAULT_CHARSET_NAME));
+                                        DataKey.DATA_ENCODING, StreamUtil.DEFAULT_CHARSET_NAME));
                             }
                         },
                         () -> LOGGER.error("Can't find feed doc with name " + meta.getFeedName()));
     }
 
 
-    private static DataInfoSection.Entry infoEntry(final String key,
+    private static DataInfoSection.Entry infoEntry(final DataKey dataKey,
                                                    final String value) {
-        return new DataInfoSection.Entry(key, value, helpText(key));
+        return new DataInfoSection.Entry(dataKey.getDisplayName(), value, dataKey.getHelpText());
     }
 
-    private static String helpText(final String key) {
-        return switch (key) {
-            case "Deleted Stream Id" -> "Identifier of a stream that has been deleted.";
-            case "Stream Id" -> "Unique identifier for this stream.";
-            case "Status" -> "Current processing status of this stream.";
-            case "Status Ms" -> "Time the stream status last changed.";
-            case "Parent Stream Id" -> "Identifier of the parent stream this stream was derived from.";
-            case "Created" -> "Time this stream was created.";
-            case "Effective" -> "Effective time assigned to this stream.";
-            case "Stream Type" -> "Type of data stored in this stream.";
-            case "Feed" -> "Feed associated with this stream.";
-            case "Data Encoding" -> "Character encoding used for the stream data.";
-            case "Volume Group" -> "Storage volume group containing this stream.";
-            case "Volume Type" -> "Storage volume type containing this stream.";
-            case "Read-Only Data" -> "Whether the stream data is read-only.";
-            case "Processor" -> "Identifier of the processor that created this stream.";
-            case "Processor Pipeline" -> "Pipeline used by the processor that created this stream.";
-            case "Processor Filter Id" -> "Identifier of the processor filter that created this stream.";
-            case "Processor Task Id" -> "Identifier of the processor task that created this stream.";
-            case DataRetentionFields.RETENTION_AGE -> "Retention age applied to this stream.";
-            case DataRetentionFields.RETENTION_UNTIL -> "Time until which this stream will be retained.";
-            case DataRetentionFields.RETENTION_RULE -> "Retention rule applied to this stream.";
-            default -> "Metadata attribute stored for this stream.";
-        };
+    private static DataInfoSection.Entry infoEntry(final String key,
+                                                   final String value) {
+        return new DataInfoSection.Entry(key, value, "Metadata attribute stored for this stream.");
     }
 
     private String getDateTimeString(final Long ms) {
@@ -534,11 +513,11 @@ class DataServiceImpl implements DataService {
         final List<DataInfoSection.Entry> entries = new ArrayList<>();
 
         if (NullSafe.hasEntries(attributeMap)) {
-            Stream.of(DataRetentionFields.RETENTION_AGE,
-                            DataRetentionFields.RETENTION_UNTIL,
-                            DataRetentionFields.RETENTION_RULE)
-                    .forEach(field ->
-                            entries.add(infoEntry(field, attributeMap.get(field))));
+            Stream.of(DataKey.RETENTION_AGE,
+                            DataKey.RETENTION_UNTIL,
+                            DataKey.RETENTION_RULE)
+                    .forEach(dataKey ->
+                            entries.add(infoEntry(dataKey, attributeMap.get(dataKey.getDisplayName()))));
         }
 
         return entries;
