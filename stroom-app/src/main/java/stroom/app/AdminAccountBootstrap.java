@@ -107,13 +107,8 @@ public class AdminAccountBootstrap {
                 final Set<Item> allItems = Item.allItems();
                 if (!checkItemsPresent().containsAll(allItems)) {
                     // We will likely only come in here once per node, so future reboots will not
-                    // be impacted.
-
-                    // TODO We ought to be using tryLock, but on 7.10 that is using ClusterLockClusterHandler
-                    //  rather than DB record locking. I got errors maybe due to trying to lock
-                    //  before the cluster is fully established. tryLock() has changed in 7.11 so switch to
-                    //  that in 7.11+.
-                    clusterLockService.lock(LOCK_NAME, () -> {
+                    // be impacted. Only one node needs to do this
+                    clusterLockService.tryLock(LOCK_NAME, () -> {
                         LOGGER.debug("startup() - acquired lock");
                         // Re-check under lock
                         final Set<Item> itemsPresent = checkItemsPresent();
