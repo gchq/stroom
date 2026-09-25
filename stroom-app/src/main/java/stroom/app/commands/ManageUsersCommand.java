@@ -207,7 +207,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                     .withColumn(Column.of("Description", AppPermission::getDescription))
                     .build();
 
-            LOGGER.info("""
+            info(LOGGER, """
                             Valid application permission names:
                             {}
                             """,
