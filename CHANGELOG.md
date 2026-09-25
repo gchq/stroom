@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.17] - 2026-09-25
+
+* Bug **#5811** : Fix json deserialisation of data feed identities file that was causing `No value type configured for ObjectReader`.
+
+
 ## [v7.13-beta.16] - 2026-09-23
 
 * Bug **#5721** : Fix Git sync failing with `Not in GZIP format` when something between Stroom and the Git server decompresses the response but leaves the `Content-Encoding: gzip` header in place. Stroom now ignores a `Content-Encoding` that the body contradicts, and logs a warning naming the problem.
@@ -2552,7 +2557,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.16...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.17...HEAD
+[v7.13-beta.17]: https://github.com/gchq/stroom/compare/v7.13-beta.16...v7.13-beta.17
 [v7.13-beta.16]: https://github.com/gchq/stroom/compare/v7.13-beta.15...v7.13-beta.16
 [v7.13-beta.15]: https://github.com/gchq/stroom/compare/v7.13-beta.14...v7.13-beta.15
 [v7.13-beta.14]: https://github.com/gchq/stroom/compare/v7.13-beta.13...v7.13-beta.14
