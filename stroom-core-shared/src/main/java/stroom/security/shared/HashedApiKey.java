@@ -23,6 +23,7 @@ import stroom.util.shared.SerialisationTestConstructor;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -166,6 +167,17 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
 
     public Long getExpireTimeMs() {
         return expireTimeMs;
+    }
+
+    @JsonIgnore
+    public boolean isExpired() {
+        return expireTimeMs != null
+               && System.currentTimeMillis() >= expireTimeMs;
+    }
+
+    public boolean willExpireSoon(final long thresholdMs) {
+        return expireTimeMs != null
+               && System.currentTimeMillis() >= (expireTimeMs - thresholdMs);
     }
 
     public String getName() {

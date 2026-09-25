@@ -25,7 +25,6 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.ApiKeyResource;
@@ -38,6 +37,7 @@ import stroom.svg.client.Preset;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.ExpiryFormatter;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -49,6 +49,7 @@ import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -69,13 +70,13 @@ public class ApiKeysListPresenter
 
     private static final ApiKeyResource API_KEY_RESOURCE = GWT.create(ApiKeyResource.class);
 
+    private static final long THIRTY_DAYS_IN_MS = 30 * 24 * 60 * 60 * 1000;
 
     private final FindApiKeyCriteria.Builder criteriaBuilder = new FindApiKeyCriteria.Builder();
     //    private final FindApiKeyCriteria criteria = new FindApiKeyCriteria();
     private final RestFactory restFactory;
-    private final DateTimeFormatter dateTimeFormatter;
+    private final ExpiryFormatter expiryFormatter;
     private final ClientSecurityContext securityContext;
-    private final EditApiKeyPresenter editApiKeyPresenter;
     private final PagerView pagerView;
 
     //    private final Set<Integer> selectedApiKeyIds = new HashSet<>();
@@ -90,8 +91,6 @@ public class ApiKeysListPresenter
 //    private final InlineSvgButton deleteButton;
 
     private RestDataProvider<HashedApiKey, ResultPage<HashedApiKey>> dataProvider = null;
-    private Range range;
-    private Consumer<ResultPage<HashedApiKey>> dataConsumer;
     private Map<Integer, HashedApiKey> apiKeys = new HashMap<>();
     private boolean isExternalIdp = false;
     private String filter;
@@ -102,15 +101,13 @@ public class ApiKeysListPresenter
                                 final PagerView pagerView,
                                 final QuickFilterPageView listView,
                                 final RestFactory restFactory,
-                                final DateTimeFormatter dateTimeFormatter,
+                                final ExpiryFormatter expiryFormatter,
                                 final ClientSecurityContext securityContext,
-                                final EditApiKeyPresenter editApiKeyPresenter,
                                 final UiConfigCache uiConfigCache) {
         super(eventBus, listView);
         this.restFactory = restFactory;
-        this.dateTimeFormatter = dateTimeFormatter;
+        this.expiryFormatter = expiryFormatter;
         this.securityContext = securityContext;
-        this.editApiKeyPresenter = editApiKeyPresenter;
         this.uiConfigCache = uiConfigCache;
         this.pagerView = pagerView;
         this.dataGrid = new MyDataGrid<>(this);
@@ -238,7 +235,8 @@ public class ApiKeysListPresenter
 //                               to authenticate with it "
 //                               + "and it will not be possible to re-create it.";
 //            ConfirmEvent.fire(this, msg, ok -> {
-////                GWT.log("id: " + id);
+
+    /// /                GWT.log("id: " + id);
 //                if (ok) {
 //                    restFactory
 //                            .create(API_KEY_RESOURCE)
@@ -271,7 +269,6 @@ public class ApiKeysListPresenter
 //            });
 //        }
 //    }
-
     private void initTableColumns() {
 //        final Column<HashedApiKey, TickBoxState> checkBoxColumn = DataGridUtil.columnBuilder(
 //                        (HashedApiKey row) ->
@@ -344,8 +341,8 @@ public class ApiKeysListPresenter
         dataGrid.addColumn(enabledColumn, "State", ColumnSizeConstants.SMALL_COL);
 
         // Expires on
-        final Column<HashedApiKey, String> expiresOnColumn = DataGridUtil.textColumnBuilder(
-                        (HashedApiKey key) -> dateTimeFormatter.formatWithDuration(key.getExpireTimeMs()))
+        final Column<HashedApiKey, SafeHtml> expiresOnColumn = DataGridUtil.htmlColumnBuilder(
+                        this::formatKeyExpireTime)
                 .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_EXPIRE_TIME)
                 .build();
@@ -386,6 +383,11 @@ public class ApiKeysListPresenter
                 actionMenuCol,
                 "",
                 ColumnSizeConstants.ICON_COL + 10);
+    }
+
+    private SafeHtml formatKeyExpireTime(final HashedApiKey hashedApiKey) {
+        final Long expireTimeMs = NullSafe.get(hashedApiKey, HashedApiKey::getExpireTimeMs);
+        return expiryFormatter.formatWithDuration(expireTimeMs, THIRTY_DAYS_IN_MS);
     }
 
     private Set<UserScreen> getActionScreensToInclude() {
@@ -497,8 +499,6 @@ public class ApiKeysListPresenter
             protected void exec(final Range range,
                                 final Consumer<ResultPage<HashedApiKey>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
-                ApiKeysListPresenter.this.range = range;
-                ApiKeysListPresenter.this.dataConsumer = dataConsumer;
                 fetchData(range, dataConsumer, errorHandler, pagerView);
             }
 
