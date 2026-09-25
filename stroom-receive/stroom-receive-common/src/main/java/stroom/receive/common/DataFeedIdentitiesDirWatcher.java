@@ -105,9 +105,10 @@ public class DataFeedIdentitiesDirWatcher extends AbstractDirChangeMonitor {
         LOGGER.info("Reading all data feed identity files in {}", dirToWatch);
         try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(dirToWatch)) {
             final AtomicInteger counter = new AtomicInteger();
+            final ObjectReader reader = createObjectReader();
             dirStream.forEach(path -> {
                 if (fileIncludeFilter == null || fileIncludeFilter.test(path)) {
-                    processFile(path);
+                    processFile(path, reader);
                     counter.incrementAndGet();
                 } else {
                     LOGGER.info(() -> LogUtil.message("Ignoring file {}", path.toAbsolutePath().normalize()));
@@ -119,10 +120,21 @@ public class DataFeedIdentitiesDirWatcher extends AbstractDirChangeMonitor {
         }
     }
 
+    private static ObjectReader createObjectReader() {
+        return JsonUtil.getMapper().reader()
+                .forType(DataFeedIdentities.class)
+                .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+    }
+
     private void processFile(final Path path) {
+        processFile(path, createObjectReader());
+    }
+
+    private void processFile(final Path path, final ObjectReader reader) {
         if (path != null && Files.isRegularFile(path)) {
-            LOGGER.info(() -> LogUtil.message("Reading data feed identity file {}", path.toAbsolutePath().normalize()));
-            final DataFeedIdentities dataFeedIdentities = readDataFeedIdentities(path);
+            LOGGER.info(() -> LogUtil.message("Reading data feed identity file {}",
+                    path.toAbsolutePath().normalize()));
+            final DataFeedIdentities dataFeedIdentities = readDataFeedIdentities(path, reader);
             if (dataFeedIdentities != null && !dataFeedIdentities.isEmpty()) {
                 final int addedCount = dataFeedIdentityServiceProvider.get()
                         .addDataFeedKeys(dataFeedIdentities.getDataFeedIdentities(), path);
@@ -138,9 +150,7 @@ public class DataFeedIdentitiesDirWatcher extends AbstractDirChangeMonitor {
         }
     }
 
-    private DataFeedIdentities readDataFeedIdentities(final Path path) {
-        final ObjectReader reader = JsonUtil.getMapper().reader()
-                .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+    private DataFeedIdentities readDataFeedIdentities(final Path path, final ObjectReader reader) {
         DataFeedIdentities dataFeedIdentities = null;
         try (final InputStream fileStream = new FileInputStream(path.toFile())) {
             try {

@@ -13,7 +13,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.13-beta.16] - 2026-09-23
+* Bug **#5811** : Fix json deserialisation of data feed identities file that was causing `No value type configured for ObjectReader`.
 
 * Bug **#5721** : Fix Git sync failing with `Not in GZIP format` when something between Stroom and the Git server decompresses the response but leaves the `Content-Encoding: gzip` header in place. Stroom now ignores a `Content-Encoding` that the body contradicts, and logs a warning naming the problem.
 
