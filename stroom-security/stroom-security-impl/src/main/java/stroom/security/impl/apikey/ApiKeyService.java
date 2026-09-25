@@ -18,6 +18,7 @@ package stroom.security.impl.apikey;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
+import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
@@ -36,9 +37,15 @@ import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
 import stroom.security.shared.VerifyApiKeyRequest;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
+import stroom.util.entityevent.EntityEventData;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
@@ -46,6 +53,8 @@ import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
 import stroom.util.string.Base58;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -71,14 +80,20 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Singleton // Has a cache
-public class ApiKeyService {
+@EntityEventHandler(type = ApiKeyService.ENTITY_TYPE, action = {
+        EntityAction.UPDATE,
+        EntityAction.DELETE})
+public class ApiKeyService implements Clearable, EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApiKeyService.class);
     private static final AppPermissionSet REQUIRED_PERMISSION_SET = AppPermissionSet.oneOf(
             AppPermission.VERIFY_API_KEY,
             AppPermission.STROOM_PROXY);
+    private static final long EXPIRE_SOON_THRESHOLD_MS = Duration.ofDays(30).toMillis();
+    public static final String ENTITY_TYPE = "API_KEY";
+    private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
 
-    private static final String CACHE_NAME = "API Key cache";
+    private static final String CACHE_NAME = "API Key Cache";
     private static final int MAX_CREATION_ATTEMPTS = 100;
     private static final Map<HashAlgorithm, ApiKeyHasher> API_KEY_HASHER_MAP = Stream.of(
                     new ShaThree256ApiKeyHasher(),
@@ -103,9 +118,10 @@ public class ApiKeyService {
     private final ApiKeyGenerator apiKeyGenerator;
     // The full apiKeyStr to an Authenticated UserIdentity
     // Short life cache to reduce hashing time/cost
-    private final StroomCache<String, Optional<UserIdentity>> apiKeyToAuthenticatedUserCache;
+    private final StroomCache<String, Optional<ApiKeyAndIdentity>> apiKeyToAuthenticatedUserCache;
     private final Provider<AuthenticationConfig> authenticationConfigProvider;
     private final UserCache userCache;
+    private final EntityEventBus entityEventBus;
 
     @Inject
     public ApiKeyService(final ApiKeyDao apiKeyDao,
@@ -113,12 +129,14 @@ public class ApiKeyService {
                          final ApiKeyGenerator apiKeyGenerator,
                          final CacheManager cacheManager,
                          final Provider<AuthenticationConfig> authenticationConfigProvider,
-                         final UserCache userCache) {
+                         final UserCache userCache,
+                         final EntityEventBus entityEventBus) {
         this.apiKeyDao = apiKeyDao;
         this.securityContext = securityContext;
         this.apiKeyGenerator = apiKeyGenerator;
         this.authenticationConfigProvider = authenticationConfigProvider;
         this.userCache = userCache;
+        this.entityEventBus = entityEventBus;
 
         apiKeyToAuthenticatedUserCache = cacheManager.createLoadingCache(
                 CACHE_NAME,
@@ -148,18 +166,32 @@ public class ApiKeyService {
                 header -> header.replace(JwtUtil.BEARER_PREFIX, ""),
                 String::trim);
 
+        return fetchVerifiedIdentity(token);
+    }
+
+    Optional<UserIdentity> fetchVerifiedIdentity(final String apiKeyStr) {
         // We need to do a basic check to see if it looks like an API key else we will fill the cache with
         // JWT tokens mapped to empty Optionals.
-        if (!NullSafe.isBlankString(token)
-            && token.startsWith(ApiKeyGenerator.API_KEY_STATIC_PREFIX)) {
+        // We should only be throwing if apiKeyStr looks like an API key but is invalid in some other way
+        // so other auth mechanisms can try to authenticate it
+        final String trimmedApiKey = NullSafe.trim(apiKeyStr);
+        if (NullSafe.isNonBlankString(trimmedApiKey)
+            && trimmedApiKey.startsWith(ApiKeyGenerator.API_KEY_STATIC_PREFIX)) {
 
-            final Optional<UserIdentity> optUserIdentity = apiKeyToAuthenticatedUserCache.get(token);
+            final Optional<ApiKeyAndIdentity> optApiKeyAndIdentity = apiKeyToAuthenticatedUserCache.get(trimmedApiKey);
 
-            if (optUserIdentity.isEmpty() && apiKeyGenerator.isApiKey(token)) {
+            if (optApiKeyAndIdentity.isEmpty() && apiKeyGenerator.isApiKey(trimmedApiKey)) {
                 // Stops the next filter from trying to authenticate it
                 throw new AuthenticationException("API key failed authentication");
+            } else if (optApiKeyAndIdentity.isPresent()) {
+                // API key may have expired since being added to the cache
+                // For the enabled state we have to rely on the entity events evicting from the cache
+                final HashedApiKey apiKey = optApiKeyAndIdentity.get().hashedApiKey;
+                if (apiKey.isExpired()) {
+                    throw new AuthenticationException("API key has expired");
+                }
             }
-            return optUserIdentity;
+            return optApiKeyAndIdentity.map(ApiKeyAndIdentity::userIdentity);
         } else {
             return Optional.empty();
         }
@@ -182,22 +214,23 @@ public class ApiKeyService {
         });
     }
 
-    /**
-     * Fetch the verified {@link UserIdentity} for the passed API key.
-     * If the hash of the API key matches one in the database and that key is enabled
-     * and not expired then the {@link UserIdentity} will be returned, else an empty {@link Optional}
-     * is returned.
-     */
-    Optional<UserIdentity> fetchVerifiedIdentity(final String apiKeyStr) {
-        if (NullSafe.isBlankString(apiKeyStr)) {
-            return Optional.empty();
-        } else {
-            // See the note on trimming in fetchVerifiedIdentity(HttpServletRequest)
-            return apiKeyToAuthenticatedUserCache.get(apiKeyStr.trim());
-        }
-    }
+//    /**
+//     * Fetch the verified {@link UserIdentity} for the passed API key.
+//     * If the hash of the API key matches one in the database and that key is enabled
+//     * and not expired then the {@link UserIdentity} will be returned, else an empty {@link Optional}
+//     * is returned.
+//     */
+//    Optional<UserIdentity> fetchVerifiedIdentity(final String apiKeyStr) {
+//        if (NullSafe.isBlankString(apiKeyStr)) {
+//            return Optional.empty();
+//        } else {
+//            // See the note on trimming in fetchVerifiedIdentity(HttpServletRequest)
+//            return apiKeyToAuthenticatedUserCache.get(apiKeyStr.trim())
+//                    .map(ApiKeyAndIdentity::userIdentity);
+//        }
+//    }
 
-    private Optional<UserIdentity> doFetchVerifiedIdentity(final String apiKeyStr) {
+    private Optional<ApiKeyAndIdentity> doFetchVerifiedIdentity(final String apiKeyStr) {
         // This has to be unsecured as we are trying to authenticate
         if (!apiKeyGenerator.isApiKey(apiKeyStr)) {
             LOGGER.debug("apiKey is not an API key");
@@ -205,13 +238,14 @@ public class ApiKeyService {
         } else {
             final String prefix = ApiKeyGenerator.extractPrefixPart(apiKeyStr);
 
-            final List<HashedApiKey> apiKeys = apiKeyDao.fetchValidApiKeysByPrefix(prefix);
+            // Keys may be disabled or expired, so we need to check the enabled and expiry state
+            final List<HashedApiKey> apiKeys = apiKeyDao.fetchApiKeysByPrefix(prefix);
 
             if (apiKeys.isEmpty()) {
                 LOGGER.debug("No valid API keys found matching prefix '{}'", prefix);
                 return Optional.empty();
             } else {
-                Optional<UserIdentity> optUserIdentity = Optional.empty();
+                Optional<ApiKeyAndIdentity> optApiKeyAndIdentity = Optional.empty();
                 // In most cases, there will be only one apiKey fetched for a given prefix
                 // as the chance of a prefix clash is ~1:1,000,000. If there are multiple,
                 // then we just test each one using its algorithm to see if the stored hash
@@ -221,22 +255,48 @@ public class ApiKeyService {
                             apiKeyStr,
                             apiKey.getApiKeyHash(),
                             apiKey.getHashAlgorithm());
+                    LOGGER.debug("doFetchVerifiedIdentity() - prefix: '{}', apiKey: {}, isHashMatch: {}",
+                            prefix, apiKey, isHashMatch);
                     if (isHashMatch) {
-                        final Optional<User> optionalUser = Optional.ofNullable(apiKey.getOwner())
-                                .flatMap(userCache::getByRef);
-                        optUserIdentity = optionalUser
-                                .map(user -> {
-                                    verifyEnabledOrThrow(user);
-                                    return user.asRef();
-                                })
-                                .map(BasicUserIdentity::new);
-                        LOGGER.debug("optUserIdentity: {}", optUserIdentity);
-                        break;
+                        // As we are caching this result, the warnings will not spam the logs.
+                        if (!apiKey.getEnabled()) {
+                            LOGGER.warn("An attempt was made to use a disabled API key, prefix: '{}'",
+                                    apiKey.getApiKeyPrefix());
+                        } else if (apiKey.isExpired()) {
+                            LOGGER.warn("An attempt was made to use an API key that has expired, " +
+                                        "prefix: '{}', expiry: {}. A new API Key should be created and distributed.",
+                                    apiKey.getApiKeyPrefix(),
+                                    NullSafe.get(apiKey.getExpireTimeMs(), Instant::ofEpochMilli));
+                        } else {
+                            if (apiKey.willExpireSoon(EXPIRE_SOON_THRESHOLD_MS)) {
+                                LOGGER.warn("An attempt was made to use an API key that will expire soon, " +
+                                            "prefix: '{}', expiry: {}, remaining: {}. " +
+                                            "A new API Key should be created and distributed.",
+                                        apiKey.getApiKeyPrefix(),
+                                        NullSafe.get(apiKey.getExpireTimeMs(), Instant::ofEpochMilli),
+                                        Duration.between(
+                                                Instant.now(),
+                                                Instant.ofEpochMilli(apiKey.getExpireTimeMs())));
+                            }
+
+                            final Optional<User> optionalUser = Optional.ofNullable(apiKey.getOwner())
+                                    .flatMap(userCache::getByRef);
+                            optApiKeyAndIdentity = optionalUser
+                                    .map(user -> {
+                                        verifyEnabledOrThrow(user);
+                                        return user.asRef();
+                                    })
+                                    .map(BasicUserIdentity::new)
+                                    .map(identity ->
+                                            new ApiKeyAndIdentity(apiKey, identity));
+                            LOGGER.debug("optUserIdentity: {}", optApiKeyAndIdentity);
+                            break;
+                        }
                     }
                 }
-                LOGGER.debug("Found {} valid API key(s) matching prefix: '{}', matched identity: {}",
-                        apiKeys.size(), prefix, optUserIdentity);
-                return optUserIdentity;
+                LOGGER.debug("Found {} API key(s) matching prefix: '{}', matched identity: {}",
+                        apiKeys.size(), prefix, optApiKeyAndIdentity);
+                return optApiKeyAndIdentity;
             }
         }
     }
@@ -337,13 +397,10 @@ public class ApiKeyService {
     public HashedApiKey update(final HashedApiKey apiKey) {
         return securityContext.secureResult(AppPermission.MANAGE_API_KEYS, () -> {
             checkAdditionalPerms(apiKey.getOwner());
-            final HashedApiKey apiKeyBefore = apiKeyDao.fetch(apiKey.getId())
-                    .orElseThrow(() -> new RuntimeException("API Key not found with ID " + apiKey.getId()));
-            if (apiKeyBefore.getEnabled() != apiKey.getEnabled()) {
-                // Enabled state has changed so invalidate the cache
-                invalidateApiKeyCacheEntry(apiKeyBefore);
-            }
-            return apiKeyDao.update(apiKey);
+            final HashedApiKey updatedApiKey = apiKeyDao.update(apiKey);
+            // Users can only really change the enabled state
+            fireEvent(EntityAction.UPDATE, updatedApiKey);
+            return updatedApiKey;
         });
     }
 
@@ -354,7 +411,7 @@ public class ApiKeyService {
                 final HashedApiKey apiKey = optApiKey.get();
                 checkAdditionalPerms(apiKey.getOwner());
                 final boolean didDelete = apiKeyDao.delete(id);
-                invalidateApiKeyCacheEntry(apiKey);
+                fireEvent(EntityAction.DELETE, apiKey);
                 return didDelete;
             } else {
                 LOGGER.debug("Nothing to delete");
@@ -363,13 +420,25 @@ public class ApiKeyService {
         });
     }
 
+    private void fireEvent(final EntityAction entityAction, final HashedApiKey updatedApiKey) {
+        // Enabled state has changed so invalidate the cache
+        EntityEvent.fire(
+                entityEventBus,
+                EVENT_DOCREF,
+                entityAction,
+                new ApiKeyEntityEventData(updatedApiKey.getApiKeyPrefix()));
+    }
+
     private void invalidateApiKeyCacheEntry(final HashedApiKey apiKey) {
         if (apiKey != null) {
-            final String apiKeyPrefix = apiKey.getApiKeyPrefix();
-            // It's possible there are >1 entries with the same prefix, but that is lottery odds
-            // so just invalidate any that match, and they can be re-loaded if needed.
-            // We can't invalidate by key as we don't store the api key str.
-            apiKeyToAuthenticatedUserCache.invalidateEntries((apiKeyStr, optUser) ->
+            invalidateApiKeyCacheEntry(apiKey.getApiKeyPrefix());
+        }
+    }
+
+    private void invalidateApiKeyCacheEntry(final String apiKeyPrefix) {
+        if (apiKeyPrefix != null) {
+            LOGGER.debug("invalidateApiKeyCacheEntry() - apiKeyPrefix: {}", apiKeyPrefix);
+            apiKeyToAuthenticatedUserCache.invalidateEntries((apiKeyStr, ignored) ->
                     apiKeyStr.startsWith(apiKeyPrefix));
         }
     }
@@ -452,6 +521,36 @@ public class ApiKeyService {
         }
     }
 
+    @Override
+    public void clear() {
+        apiKeyToAuthenticatedUserCache.clear();
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        final EntityAction action = NullSafe.get(event, EntityEvent::getAction);
+        if (action == EntityAction.DELETE || action == EntityAction.UPDATE) {
+            final ApiKeyEntityEventData apiKeyEntityEventData = event.getDataObject(ApiKeyEntityEventData.class);
+            if (apiKeyEntityEventData != null) {
+                invalidateApiKeyCacheEntry(apiKeyEntityEventData.getApiKeyPrefix());
+            } else {
+                // No info, so have to clear the whole cache
+                apiKeyToAuthenticatedUserCache.clear();
+            }
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record ApiKeyAndIdentity(HashedApiKey hashedApiKey, UserIdentity userIdentity) {
+
+        private ApiKeyAndIdentity {
+            Objects.requireNonNull(hashedApiKey);
+            Objects.requireNonNull(userIdentity);
+        }
+    }
 
     // --------------------------------------------------------------------------------
 
@@ -584,8 +683,8 @@ public class ApiKeyService {
 
         public Argon2ApiKeyHasher() {
             // No salt given the length of api keys being hashed
-            this.argon2Parameters = new Builder(Argon2Parameters.ARGON2_id)
-                    .withVersion(Argon2Parameters.ARGON2_VERSION_13)
+            this.argon2Parameters = new Builder(org.bouncycastle.crypto.params.Argon2Parameters.ARGON2_id)
+                    .withVersion(org.bouncycastle.crypto.params.Argon2Parameters.ARGON2_VERSION_13)
                     .withIterations(ITERATIONS)
                     .withMemoryAsKB(MEMORY_KB)
                     .withParallelism(PARALLELISM)
@@ -609,10 +708,35 @@ public class ApiKeyService {
             return Base58.encode(result);
         }
 
-
         @Override
         public HashAlgorithm getType() {
             return HashAlgorithm.ARGON_2;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static final class ApiKeyEntityEventData implements EntityEventData {
+
+        @JsonProperty
+        private final String apiKeyPrefix;
+
+        @JsonCreator
+        private ApiKeyEntityEventData(@JsonProperty("apiKeyPrefix") final String apiKeyPrefix) {
+            this.apiKeyPrefix = Objects.requireNonNull(apiKeyPrefix);
+        }
+
+        public String getApiKeyPrefix() {
+            return apiKeyPrefix;
+        }
+
+        @Override
+        public String toString() {
+            return "ApiKeyEntityEventData{" +
+                   "apiKeyPrefix='" + apiKeyPrefix + '\'' +
+                   '}';
         }
     }
 }

@@ -28,7 +28,7 @@ public interface ApiKeyCheckResource {
 
     String VERIFY_API_KEY_PATH_PART = "/verifyApiKey";
 
-    @SuppressWarnings("unused") // Called by proxy
+    @SuppressWarnings("unused") // Called by ProxyApiKeyCheckClient
     @POST
     @Path(ApiKeyCheckResource.VERIFY_API_KEY_PATH_PART)
     @Operation(
