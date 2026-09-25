@@ -171,14 +171,14 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
         // Deal with Member Of Groups pane.
         registerHandler(parentsList.getSelectionModel().addSelectionHandler(e -> {
-            final User user = userList.getSelectionModel().getSelected();
+            final UserRef user = getSelectedUserRef();
             final User group = parentsList.getSelectionModel().getSelected();
             removeMemberOfButton.setEnabled(group != null && user != null);
         }));
 
         registerHandler(addMemberOfButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
-                final User user = userList.getSelectionModel().getSelected();
+                final UserRef user = getSelectedUserRef();
                 if (user != null) {
                     final UserRefPopupPresenter userRefPopupPresenter = userRefPopupPresenterProvider.get();
                     userRefPopupPresenter.setAdditionalTerm(ExpressionTerm
@@ -190,7 +190,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
                     userRefPopupPresenter.show("Select Group", groupRef -> {
                         if (groupRef != null) {
-                            addUserToGroup(user.asRef(), groupRef, parentsList, groupRef);
+                            addUserToGroup(user, groupRef, parentsList, groupRef);
                         }
                     });
                 }
@@ -199,27 +199,27 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
         registerHandler(removeMemberOfButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
-                final User user = userList.getSelectionModel().getSelected();
+                final UserRef user = getSelectedUserRef();
                 final User group = parentsList.getSelectionModel().getSelected();
-                removeUserFromGroup(user, group, parentsList);
+                removeUserFromGroup(user, NullSafe.get(group, User::asRef), parentsList);
             }
         }));
 
         // Deal with Members in Group pane.
         registerHandler(childrenList.getSelectionModel().addSelectionHandler(e -> {
-            final User group = userList.getSelectionModel().getSelected();
+            final UserRef group = getSelectedUserRef();
             final User user = childrenList.getSelectionModel().getSelected();
             removeMembersInButton.setEnabled(group != null && user != null);
         }));
 
         registerHandler(addMembersInButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
-                final User group = userList.getSelectionModel().getSelected();
+                final UserRef group = getSelectedUserRef();
                 if (group != null) {
                     final UserRefPopupPresenter userRefPopupPresenter = userRefPopupPresenterProvider.get();
                     userRefPopupPresenter.show("Add User Or Group", userRef -> {
                         if (userRef != null) {
-                            addUserToGroup(userRef, group.asRef(), childrenList, userRef);
+                            addUserToGroup(userRef, group, childrenList, userRef);
                         }
                     });
                 }
@@ -228,9 +228,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
         registerHandler(removeMembersInButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
-                final User group = userList.getSelectionModel().getSelected();
+                final UserRef group = getSelectedUserRef();
                 final User user = childrenList.getSelectionModel().getSelected();
-                removeUserFromGroup(user, group, childrenList);
+                removeUserFromGroup(NullSafe.get(user, User::asRef), group, childrenList);
             }
         }));
     }
@@ -304,9 +304,14 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     }
 
     private void onSelection() {
-        final User selected = userList.getSelectionModel().getSelected();
-//        GWT.log("onSelection - selected: " + selected);
-        onSelection(NullSafe.get(selected, User::asRef));
+        onSelection(getSelectedUserRef());
+    }
+
+    private UserRef getSelectedUserRef() {
+        // The user-specific tab hides the top table, so it has no selected row.
+        return userRef != null
+                ? userRef
+                : NullSafe.get(userList.getSelectionModel().getSelected(), User::asRef);
     }
 
     private void onSelection(final UserRef selected) {
@@ -386,8 +391,8 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         }
     }
 
-    private void removeUserFromGroup(final User user,
-                                     final User group,
+    private void removeUserFromGroup(final UserRef user,
+                                     final UserRef group,
                                      final UserListPresenter userListPresenter) {
         if (NullSafe.allNonNull(user, group)) {
             final User nextSelection = getNextSelection(userListPresenter);
