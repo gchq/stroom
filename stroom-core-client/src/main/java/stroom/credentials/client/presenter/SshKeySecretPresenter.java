@@ -13,8 +13,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-public class SshKeySecretPresenter
-        extends MyPresenterWidget<SshKeySecretView> {
+public final class SshKeySecretPresenter
+        extends MyPresenterWidget<SshKeySecretView> implements SecretPresenter<SshKeySecretView> {
 
     @Inject
     public SshKeySecretPresenter(final EventBus eventBus,

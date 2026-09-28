@@ -231,7 +231,8 @@ class TestStroomUserIdentityFactory {
         final OpenIdConfiguration openIdConfiguration = Mockito.mock(OpenIdConfiguration.class);
         Mockito.lenient().when(openIdConfiguration.getIdentityProviderType()).thenReturn(IdpType.INTERNAL_IDP);
         final ApiKeyService apiKeyService = Mockito.mock(ApiKeyService.class);
-        Mockito.lenient().when(apiKeyService.fetchVerifiedIdentity(Mockito.any())).thenReturn(Optional.empty());
+        Mockito.lenient().when(apiKeyService.fetchVerifiedIdentity(Mockito.any()))
+                .thenReturn(Optional.empty());
 
         return new StroomUserIdentityFactory(
                 Mockito.mock(JwtContextFactory.class),
