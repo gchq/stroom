@@ -139,7 +139,9 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
         return super.getHostname();
     }
 
-    @JsonPropertyDescription("The API Key to use authenticate with the downstream stroom/proxy.")
+    @JsonPropertyDescription("The API Key to use to authenticate with the downstream stroom/proxy. This api key " +
+                             "will be used by any HTTP forwarders that have not configured their own API key or " +
+                             "set addOpenIdAccessToken to true.")
     @JsonProperty
     public String getApiKey() {
         return apiKey;
