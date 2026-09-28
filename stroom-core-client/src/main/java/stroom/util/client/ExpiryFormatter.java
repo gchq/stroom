@@ -27,11 +27,17 @@ import com.google.inject.Inject;
 
 public class ExpiryFormatter {
 
+    private static final long DEFAULT_EXPIRY_THRESHOLD = 30L * 24 * 60 * 60 * 1000;
+
     private final DateTimeFormatter dateTimeFormatter;
 
     @Inject
     public ExpiryFormatter(final DateTimeFormatter dateTimeFormatter) {
         this.dateTimeFormatter = dateTimeFormatter;
+    }
+
+    public SafeHtml formatWithDuration(final Long ms) {
+        return formatWithDuration(ms, DEFAULT_EXPIRY_THRESHOLD);
     }
 
     public SafeHtml formatWithDuration(final Long ms, final long alertThresholdMs) {

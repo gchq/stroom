@@ -70,8 +70,6 @@ public class ApiKeysListPresenter
 
     private static final ApiKeyResource API_KEY_RESOURCE = GWT.create(ApiKeyResource.class);
 
-    private static final long THIRTY_DAYS_IN_MS = 30 * 24 * 60 * 60 * 1000;
-
     private final FindApiKeyCriteria.Builder criteriaBuilder = new FindApiKeyCriteria.Builder();
     //    private final FindApiKeyCriteria criteria = new FindApiKeyCriteria();
     private final RestFactory restFactory;
@@ -313,7 +311,13 @@ public class ApiKeysListPresenter
                     .enabledWhen(HashedApiKey::getEnabled)
                     .withSorting(FindApiKeyCriteria.FIELD_OWNER)
                     .build();
-            dataGrid.addResizableColumn(ownerColumn, "Owner", 250);
+            dataGrid.addResizableColumn(
+                    ownerColumn,
+                    DataGridUtil.headingBuilder("Owner")
+                            .withToolTip("The user or group that owns this API key. " +
+                                         "The API key has the same permissions as the owner.")
+                            .build(),
+                    250);
         }
 
         // Key Name
@@ -321,14 +325,24 @@ public class ApiKeysListPresenter
                 .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_NAME)
                 .build();
-        dataGrid.addResizableColumn(nameColumn, "Key Name", 250);
+        dataGrid.addResizableColumn(
+                nameColumn,
+                DataGridUtil.headingBuilder("Key Name")
+                        .withToolTip("The name of the API key")
+                        .build(),
+                250);
 
         // Key Prefix
         final Column<HashedApiKey, String> prefixColumn = DataGridUtil.textColumnBuilder(HashedApiKey::getApiKeyPrefix)
                 .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_PREFIX)
                 .build();
-        dataGrid.addColumn(prefixColumn, "Key Prefix", 130);
+        dataGrid.addColumn(
+                prefixColumn,
+                DataGridUtil.headingBuilder("Key Prefix")
+                        .withToolTip("The first few characters of the API key to help identify an API key")
+                        .build(),
+                130);
 
         // Enabled state
         final Column<HashedApiKey, String> enabledColumn = DataGridUtil.textColumnBuilder((HashedApiKey apiKey) ->
@@ -338,7 +352,12 @@ public class ApiKeysListPresenter
                 .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_STATE)
                 .build();
-        dataGrid.addColumn(enabledColumn, "State", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addColumn(
+                enabledColumn,
+                DataGridUtil.headingBuilder("State")
+                        .withToolTip("Whether this API key is enabled or disabled")
+                        .build(),
+                ColumnSizeConstants.SMALL_COL);
 
         // Expires on
         final Column<HashedApiKey, SafeHtml> expiresOnColumn = DataGridUtil.htmlColumnBuilder(
@@ -346,7 +365,12 @@ public class ApiKeysListPresenter
                 .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_EXPIRE_TIME)
                 .build();
-        dataGrid.addColumn(expiresOnColumn, "Expires On", ColumnSizeConstants.DATE_AND_DURATION_COL);
+        dataGrid.addColumn(
+                expiresOnColumn,
+                DataGridUtil.headingBuilder("Expires On")
+                        .withToolTip("When the API key expires")
+                        .build(),
+                ColumnSizeConstants.DATE_AND_DURATION_COL);
         dataGrid.sort(expiresOnColumn);
 
         // Hash algorithm
@@ -387,7 +411,7 @@ public class ApiKeysListPresenter
 
     private SafeHtml formatKeyExpireTime(final HashedApiKey hashedApiKey) {
         final Long expireTimeMs = NullSafe.get(hashedApiKey, HashedApiKey::getExpireTimeMs);
-        return expiryFormatter.formatWithDuration(expireTimeMs, THIRTY_DAYS_IN_MS);
+        return expiryFormatter.formatWithDuration(expireTimeMs);
     }
 
     private Set<UserScreen> getActionScreensToInclude() {

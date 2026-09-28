@@ -13,8 +13,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-public class AccessTokenSecretPresenter
-        extends MyPresenterWidget<AccessTokenSecretView> {
+public final class AccessTokenSecretPresenter
+        extends MyPresenterWidget<AccessTokenSecretView> implements SecretPresenter<AccessTokenSecretView> {
 
     @Inject
     public AccessTokenSecretPresenter(final EventBus eventBus,
@@ -46,6 +46,10 @@ public class AccessTokenSecretPresenter
         }
         return null;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface AccessTokenSecretView extends View, Focus {
 
