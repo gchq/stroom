@@ -70,12 +70,22 @@ public class CredentialSettingsPresenter
 
     @Override
     public void onTypeChange(final CredentialType type) {
-        switch (type) {
-            case ACCESS_TOKEN -> getView().setSecretView(accessTokenSecretPresenter.getView());
-            case KEY_STORE -> getView().setSecretView(keyStoreSecretPresenter.getView());
-            case SSH_KEY -> getView().setSecretView(sshKeySecretPresenter.getView());
-            case USERNAME_PASSWORD -> getView().setSecretView(usernamePasswordSecretPresenter.getView());
-        }
+        final View secretView = getSecretView(type);
+        getView().setSecretView(secretView);
+    }
+
+    private SecretPresenter<?> getSecretPresenter(final CredentialType credentialType) {
+        return switch (credentialType) {
+            case ACCESS_TOKEN -> accessTokenSecretPresenter;
+            case KEY_STORE -> keyStoreSecretPresenter;
+            case SSH_KEY -> sshKeySecretPresenter;
+            case USERNAME_PASSWORD -> usernamePasswordSecretPresenter;
+        };
+    }
+
+    private View getSecretView(final CredentialType credentialType) {
+        return getSecretPresenter(credentialType)
+                .getView();
     }
 
     /**
@@ -103,21 +113,19 @@ public class CredentialSettingsPresenter
             } else {
                 getView().getExpiryTime().setValue(System.currentTimeMillis());
             }
-            getView().setCredentialType(credential.getCredentialType());
-            keyStoreSecretPresenter.setType(NullSafe
-                    .getOrElse(credential, Credential::getKeyStoreType, KeyStoreType.PKCS12));
+            final CredentialType credentialType = credential.getCredentialType();
+            getView().setCredentialType(credentialType);
+            keyStoreSecretPresenter.setType(NullSafe.getOrElse(
+                    credential,
+                    Credential::getKeyStoreType,
+                    KeyStoreType.PKCS12));
         }
 
         onTypeChange(getView().getCredentialType());
     }
 
     private Secret getSecret() {
-        return switch (getView().getCredentialType()) {
-            case ACCESS_TOKEN -> accessTokenSecretPresenter.getSecret();
-            case KEY_STORE -> keyStoreSecretPresenter.getSecret();
-            case SSH_KEY -> sshKeySecretPresenter.getSecret();
-            case USERNAME_PASSWORD -> usernamePasswordSecretPresenter.getSecret();
-        };
+        return getSecretPresenter(getView().getCredentialType()).getSecret();
     }
 
     public void onOk(final Consumer<Boolean> consumer) {
@@ -125,12 +133,7 @@ public class CredentialSettingsPresenter
         if (message != null) {
             AlertEvent.fireError(this, message, () -> consumer.accept(false));
         } else {
-            switch (getView().getCredentialType()) {
-                case ACCESS_TOKEN -> accessTokenSecretPresenter.onOk(consumer);
-                case KEY_STORE -> keyStoreSecretPresenter.onOk(consumer);
-                case SSH_KEY -> sshKeySecretPresenter.onOk(consumer);
-                case USERNAME_PASSWORD -> usernamePasswordSecretPresenter.onOk(consumer);
-            }
+            getSecretPresenter(getView().getCredentialType()).onOk(consumer);
         }
     }
 
@@ -171,6 +174,10 @@ public class CredentialSettingsPresenter
 
         return new PutCredentialRequest(credential, secret);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * View that this presents. Provides access to the data in the UI.

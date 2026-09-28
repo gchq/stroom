@@ -41,6 +41,8 @@ import java.util.Set;
 @JsonInclude(Include.NON_NULL)
 public class ExtendedUiConfig {
 
+    private static final long DEFAULT_MAX_API_KEY_EXPIRY_AGE_MS = 365L * 24 * 60 * 60 * 1_000;
+
     @JsonProperty
     @JsonPropertyDescription("Whether authentication is provided by an external Open ID Connect identity " +
                              "provider or not")
@@ -79,7 +81,7 @@ public class ExtendedUiConfig {
         this.externalIdentityProvider = false;
         this.uiConfig = new UiConfig();
         this.dependencyWarningsEnabled = false;
-        this.maxApiKeyExpiryAgeMs = 365L * 24 * 60 * 60 * 1_000;
+        this.maxApiKeyExpiryAgeMs = DEFAULT_MAX_API_KEY_EXPIRY_AGE_MS;
         // This set of values comes from
         // stroom.receive.rules.impl.StroomReceiptPolicyConfig.DEFAULT_OBFUSCATED_FIELDS,
         // and it MUST be in alphabetic order.
@@ -112,7 +114,7 @@ public class ExtendedUiConfig {
         this.uiConfig = uiConfig;
         this.externalIdentityProvider = Objects.requireNonNullElse(externalIdentityProvider, false);
         this.dependencyWarningsEnabled = Objects.requireNonNullElse(dependencyWarningsEnabled, false);
-        this.maxApiKeyExpiryAgeMs = Objects.requireNonNullElse(maxApiKeyExpiryAgeMs, 0L);
+        this.maxApiKeyExpiryAgeMs = Objects.requireNonNullElse(maxApiKeyExpiryAgeMs, DEFAULT_MAX_API_KEY_EXPIRY_AGE_MS);
         // Ensures serialisation tests work
         this.obfuscatedFields = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(obfuscatedFields);
         this.receiptCheckMode = Objects.requireNonNullElse(receiptCheckMode, ReceiptCheckMode.getDefault());

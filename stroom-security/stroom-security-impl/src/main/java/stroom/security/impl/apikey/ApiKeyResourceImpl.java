@@ -17,6 +17,7 @@
 package stroom.security.impl.apikey;
 
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.security.api.exception.AuthenticationException;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
@@ -107,8 +108,15 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
         LOGGER.debug("verifyApiKey() - request: {}", request);
         Objects.requireNonNull(request);
         // Null return is mapped to 204 status
-        final UserDesc userDesc = apiKeyServiceProvider.get().verifyApiKey(request)
-                .orElse(null);
+        UserDesc userDesc = null;
+        try {
+            userDesc = apiKeyServiceProvider.get().verifyApiKey(request)
+                    .orElse(null);
+        } catch (final AuthenticationException e) {
+            // Swallow an authentication exception as we just want to return null
+            LOGGER.debug("verifyApiKey() - request: {}, e: {} (TRACE for stacktrace)", request, e.getMessage());
+            LOGGER.trace("verifyApiKey() - request: {}, e: {}", request, e.getMessage(), e);
+        }
         LOGGER.debug("verifyApiKey() - Returning userDesc: {}, request: {}", userDesc, request);
         return userDesc;
     }

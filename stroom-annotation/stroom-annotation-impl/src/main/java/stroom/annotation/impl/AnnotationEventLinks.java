@@ -18,7 +18,7 @@ package stroom.annotation.impl;
 
 
 import stroom.annotation.shared.EventId;
-import stroom.util.entityevent.EntityEvent.EntityEventData;
+import stroom.util.entityevent.EntityEventData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

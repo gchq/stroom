@@ -18,7 +18,6 @@ package stroom.util.entityevent;
 
 import stroom.docref.DocRef;
 import stroom.test.common.TestUtil;
-import stroom.util.entityevent.EntityEvent.EntityEventData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
