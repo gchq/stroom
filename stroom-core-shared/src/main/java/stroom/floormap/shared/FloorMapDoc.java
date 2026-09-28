@@ -23,6 +23,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.TimeRange;
 import stroom.query.shared.QueryTablePreferences;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -569,7 +570,7 @@ public class FloorMapDoc extends AbstractDoc {
      * @return the value schema list; never {@code null} or empty
      */
     public List<FloorMapFieldMapping> getValueSchema() {
-        if (valueSchema == null || valueSchema.isEmpty()) {
+        if (NullSafe.isEmptyCollection(valueSchema)) {
             // initialValueSchema() is already a List.of(...), so immutable.
             return FloorMapFieldMapping.initialValueSchema();
         }

@@ -16,6 +16,8 @@
 
 package stroom.floormap.shared;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -39,7 +41,7 @@ import java.util.Set;
  * hold event-stream entities (people, vehicles), static object facts (a gate, a
  * camera), or even areas and backgrounds, freely mixed. Nothing here knows or
  * cares which — that is what lets the tracking panel, the roster
- * ({@link FloorMapEntityList}) and the canvas highlight all key on the same
+ * ({@code FloorMapEntityList}) and the canvas highlight all key on the same
  * string.</p>
  *
  * <p><strong>Identity is {@link #getId()}, never the name.</strong> The name is
@@ -110,7 +112,7 @@ public class FloorMapGroup {
      * name — the same hand-edited case — still yields {@code null}.</p>
      */
     public String getId() {
-        return id != null && !id.isEmpty()
+        return NullSafe.isNonEmptyString(id)
                 ? id
                 : name;
     }
@@ -134,7 +136,7 @@ public class FloorMapGroup {
      * <p>Name structured to avoid triggering TestJsonSerialisation.testNoExtraProps() </p>
      */
     public String findColourOrDefault() {
-        return colour != null && !colour.isEmpty()
+        return NullSafe.isNonEmptyString(colour)
                 ? colour
                 : DEFAULT_COLOUR;
     }
@@ -172,7 +174,7 @@ public class FloorMapGroup {
      * unchanged if the id is null/blank or already a member.
      */
     public FloorMapGroup withMember(final String memberId) {
-        if (memberId == null || memberId.isEmpty() || memberIds.contains(memberId)) {
+        if (NullSafe.isEmptyString(memberId) || memberIds.contains(memberId)) {
             return this;
         }
         final List<String> next = new ArrayList<>(memberIds);
@@ -268,7 +270,7 @@ public class FloorMapGroup {
     /**
      * Generates an id that no group in {@code groups} is using.
      *
-     * <p>Same idiom as {@link FloorMapEditorModel#generateObjectKey(String)}:
+     * <p>Same idiom as {@code FloorMapEditorModel.generateObjectKey(String)}:
      * {@code group-NNNNN} from a random int, retried on collision, with a
      * timestamp suffix as the never-expected fallback. The {@link Random} is a
      * parameter so the collision path is testable with a seeded generator
@@ -314,7 +316,7 @@ public class FloorMapGroup {
      */
     public static String uniqueName(final List<FloorMapGroup> groups,
                                     final String desired) {
-        final String base = desired != null && !desired.isEmpty()
+        final String base = NullSafe.isNonEmptyString(desired)
                 ? desired
                 : DEFAULT_NAME;
         final Set<String> used = new LinkedHashSet<>();

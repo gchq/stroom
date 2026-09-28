@@ -19,27 +19,26 @@ package stroom.floormap.client.view;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.floormap.client.FloorMapAria;
+import stroom.floormap.client.cluster.FloorMapCluster;
+import stroom.floormap.client.cluster.FloorMapClusterLabel;
+import stroom.floormap.client.cluster.FloorMapClusterOverlay;
+import stroom.floormap.client.geometry.FloorMapLabelPlacement;
+import stroom.floormap.client.geometry.FloorMapMarker;
+import stroom.floormap.client.geometry.FloorMapScreenGeometry;
+import stroom.floormap.client.geometry.FloorMapShapes;
+import stroom.floormap.client.geometry.FloorMapZOrder;
+import stroom.floormap.client.model.Fact;
+import stroom.floormap.client.model.FloorMapEntityList;
+import stroom.floormap.client.model.FloorMapObject;
+import stroom.floormap.client.overlay.FloorMapAreaMembership;
+import stroom.floormap.client.overlay.FloorMapAreaOverlay;
+import stroom.floormap.client.overlay.FloorMapHighlight;
 import stroom.floormap.client.presenter.FloorMapCanvasPresenter;
 import stroom.floormap.client.presenter.FloorMapCanvasPresenter.FloorMapCanvasView;
-import stroom.floormap.shared.Fact;
-import stroom.floormap.shared.FloorMapAreaMembership;
-import stroom.floormap.shared.FloorMapAreaOverlay;
-import stroom.floormap.shared.FloorMapCluster;
-import stroom.floormap.shared.FloorMapClusterLabel;
-import stroom.floormap.shared.FloorMapClusterOverlay;
-import stroom.floormap.shared.FloorMapEntityList;
-import stroom.floormap.shared.FloorMapGeometry;
-import stroom.floormap.shared.FloorMapHighlight;
 import stroom.floormap.shared.FloorMapIcon;
 import stroom.floormap.shared.FloorMapJsonKeys;
-import stroom.floormap.shared.FloorMapLabelPlacement;
-import stroom.floormap.shared.FloorMapMarker;
 import stroom.floormap.shared.FloorMapMeasurementUnits;
-import stroom.floormap.shared.FloorMapObject;
-import stroom.floormap.shared.FloorMapScreenGeometry;
-import stroom.floormap.shared.FloorMapShapes;
 import stroom.floormap.shared.FloorMapTransformationMatrix;
-import stroom.floormap.shared.FloorMapZOrder;
 import stroom.floormap.shared.TypeStyle;
 import stroom.util.client.Console;
 import stroom.widget.util.client.HtmlBuilder;
@@ -1369,7 +1368,7 @@ public class FloorMapCanvasViewImpl
                                      final int occupantCount,
                                      final String colour,
                                      final double scale) {
-        final double[] centroid = FloorMapGeometry.mapTestPoint(fact);
+        final double[] centroid = fact.mapTestPoint();
         appendCountPill(parent, occupantCount, colour,
                 centroid[0], centroid[1], 0, 0, scale);
     }

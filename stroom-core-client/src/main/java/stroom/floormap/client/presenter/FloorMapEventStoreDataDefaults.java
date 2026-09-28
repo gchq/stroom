@@ -16,7 +16,7 @@
 
 package stroom.floormap.client.presenter;
 
-import stroom.floormap.shared.FloorMapEventsQuery;
+import stroom.floormap.client.playback.FloorMapEventsQuery;
 import stroom.query.api.Column;
 
 import java.util.Arrays;

@@ -16,12 +16,12 @@
 
 package stroom.floormap.client.presenter;
 
-import stroom.floormap.shared.Fact;
+import stroom.floormap.client.model.Fact;
+import stroom.floormap.client.model.FloorMapLocationResolver;
+import stroom.floormap.client.model.FloorMapObject;
+import stroom.floormap.client.playback.FloorMapEventsQuery;
 import stroom.floormap.shared.FloorMapEventColumns;
 import stroom.floormap.shared.FloorMapEventRole;
-import stroom.floormap.shared.FloorMapEventsQuery;
-import stroom.floormap.shared.FloorMapLocationResolver;
-import stroom.floormap.shared.FloorMapObject;
 import stroom.floormap.shared.FloorMapTransformationMatrix;
 import stroom.query.api.Column;
 import stroom.query.api.Row;

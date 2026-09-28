@@ -16,6 +16,8 @@
 
 package stroom.floormap.shared;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -88,7 +90,7 @@ public class FloorMapEventColumns {
         for (final Entry entry : entries) {
             if (entry != null && role == entry.getRole()) {
                 final String column = entry.getColumn();
-                return column == null || column.trim().isEmpty() ? null : column;
+                return NullSafe.isBlankString(column) ? null : column;
             }
         }
         return null;

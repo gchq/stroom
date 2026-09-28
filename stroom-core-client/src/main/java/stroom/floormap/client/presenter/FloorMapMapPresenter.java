@@ -20,34 +20,33 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
+import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.event.FloorMapDataEvent;
 import stroom.floormap.client.event.MapClusterSelectedEvent;
 import stroom.floormap.client.event.MapObjectSelectedEvent;
 import stroom.floormap.client.event.TimeChangeEvent;
+import stroom.floormap.client.model.Fact;
+import stroom.floormap.client.model.FloorMapEntityList;
+import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
+import stroom.floormap.client.model.FloorMapFactHistory;
+import stroom.floormap.client.model.FloorMapLocationResolver;
+import stroom.floormap.client.model.FloorMapObject;
+import stroom.floormap.client.overlay.FloorMapAreaMembership;
+import stroom.floormap.client.overlay.FloorMapGroupOverlay;
+import stroom.floormap.client.overlay.FloorMapGroupSnapshot;
+import stroom.floormap.client.playback.FloorMapEventsQuery;
+import stroom.floormap.client.playback.FloorMapEventsQueryOrder;
+import stroom.floormap.client.playback.FloorMapHistogramBuckets;
+import stroom.floormap.client.playback.FloorMapStageReporter;
 import stroom.floormap.client.presenter.FloorMapMapPresenter.FloorMapMapView;
-import stroom.floormap.shared.Fact;
-import stroom.floormap.shared.FloorMapAreaMembership;
+import stroom.floormap.client.value.FloorMapFactTableParser;
 import stroom.floormap.shared.FloorMapDoc;
-import stroom.floormap.shared.FloorMapDocSession;
-import stroom.floormap.shared.FloorMapEntityList;
-import stroom.floormap.shared.FloorMapEntityList.EntityEntry;
-import stroom.floormap.shared.FloorMapEntryParser;
 import stroom.floormap.shared.FloorMapEventColumns;
 import stroom.floormap.shared.FloorMapEventRole;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
-import stroom.floormap.shared.FloorMapEventsQuery;
-import stroom.floormap.shared.FloorMapEventsQueryOrder;
-import stroom.floormap.shared.FloorMapFactHistory;
-import stroom.floormap.shared.FloorMapFactTableParser;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.FloorMapGroup;
-import stroom.floormap.shared.FloorMapGroupOverlay;
-import stroom.floormap.shared.FloorMapGroupSnapshot;
-import stroom.floormap.shared.FloorMapHistogramBuckets;
-import stroom.floormap.shared.FloorMapLocationResolver;
-import stroom.floormap.shared.FloorMapObject;
-import stroom.floormap.shared.FloorMapStageReporter;
 import stroom.floormap.shared.ValueFormat;
 import stroom.query.api.Column;
 import stroom.query.api.Param;
@@ -399,7 +398,7 @@ public class FloorMapMapPresenter
      *         XML.
      */
     private String pathForRole(final Role role) {
-        return FloorMapEntryParser.findPath(valueSchema(), role);
+        return FloorMapFieldMapping.findPath(valueSchema(), role);
     }
 
     @Inject
@@ -1283,7 +1282,7 @@ public class FloorMapMapPresenter
      * objects. Maps column names to schema roles to extract key, type, coordinates,
      * image, and transformation matrices.
      *
-     * <p>Rows become {@link stroom.floormap.shared.Fact}s carrying world coordinates plus their
+     * <p>Rows become {@link stroom.floormap.client.model.Fact}s carrying world coordinates plus their
      * placement matrix; the canvas applies the transform at render time rather than this method
      * pre-transforming them. A background is simply an image fact, not a special case, and
      * {@link FloorMapObject} is the event-entity type - this method does not produce them.</p>

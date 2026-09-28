@@ -24,25 +24,25 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.floormap.client.FloorMapEditorHelp;
-import stroom.floormap.client.ValueAccessorFactory;
+import stroom.floormap.client.editor.FloorMapDocSession;
+import stroom.floormap.client.editor.FloorMapEditorModel;
+import stroom.floormap.client.editor.FloorMapPendingChanges;
 import stroom.floormap.client.event.FloorMapDataEvent;
 import stroom.floormap.client.event.MapContextMenuEvent;
 import stroom.floormap.client.event.TimeChangeEvent;
+import stroom.floormap.client.model.Fact;
+import stroom.floormap.client.model.FloorMapObject;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
-import stroom.floormap.shared.Fact;
+import stroom.floormap.client.value.FloorMapEntryParser;
+import stroom.floormap.client.value.ParsedValue;
+import stroom.floormap.client.value.ValueAccessor;
+import stroom.floormap.client.value.ValueAccessorFactory;
 import stroom.floormap.shared.FloorMapDoc;
-import stroom.floormap.shared.FloorMapDocSession;
-import stroom.floormap.shared.FloorMapEditorModel;
-import stroom.floormap.shared.FloorMapEntryParser;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.FloorMapJsonKeys;
-import stroom.floormap.shared.FloorMapObject;
-import stroom.floormap.shared.FloorMapPendingChanges;
 import stroom.floormap.shared.FloorMapTransformationMatrix;
-import stroom.floormap.shared.ParsedValue;
 import stroom.floormap.shared.TypeStyle;
-import stroom.floormap.shared.ValueAccessor;
 import stroom.floormap.shared.ValueFormat;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
@@ -2126,14 +2126,7 @@ public class FloorMapEditorPresenter
      * @throws IllegalStateException if the schema does not contain the requested role
      */
     private String pathForRole(final Role role) {
-        final String path = FloorMapEntryParser.findPath(valueSchema(), role);
-        if (path == null) {
-            throw new IllegalStateException(
-                    "The Value Schema for this Floor Map does not define a mapping "
-                    + "for the '" + role + "' role. Please add a '" + role
-                    + "' mapping in the Settings tab under Value Schema.");
-        }
-        return path;
+        return FloorMapFieldMapping.requirePath(valueSchema(), role);
     }
 
     // -----------------------------------------------------------------------

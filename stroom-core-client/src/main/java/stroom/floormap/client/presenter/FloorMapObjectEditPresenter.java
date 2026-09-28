@@ -19,19 +19,20 @@ package stroom.floormap.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.document.asset.client.presenter.DocumentAssetDropDownPresenter;
-import stroom.floormap.client.ValueAccessorFactory;
+import stroom.floormap.client.editor.FloorMapEditorModel;
+import stroom.floormap.client.geometry.FloorMapScreenGeometry;
 import stroom.floormap.client.presenter.FloorMapObjectEditPresenter.FloorMapObjectEditView;
+import stroom.floormap.client.value.FloorMapEntryParser;
+import stroom.floormap.client.value.ParsedValue;
+import stroom.floormap.client.value.ValueAccessor;
+import stroom.floormap.client.value.ValueAccessorFactory;
 import stroom.floormap.shared.FloorMapDoc;
-import stroom.floormap.shared.FloorMapEditorModel;
-import stroom.floormap.shared.FloorMapEntryParser;
+import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.FloorMapGeometry;
 import stroom.floormap.shared.FloorMapJsonKeys;
 import stroom.floormap.shared.FloorMapMeasurementUnits;
-import stroom.floormap.shared.FloorMapScreenGeometry;
-import stroom.floormap.shared.ParsedValue;
 import stroom.floormap.shared.TypeStyle;
-import stroom.floormap.shared.ValueAccessor;
 import stroom.util.shared.TemporalEntry;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -103,7 +104,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
      * @throws NullPointerException if no document has been set
      */
     private String pathForRole(final Role role) {
-        return FloorMapEntryParser.findPath(floorMapDoc.getValueSchema(), role);
+        return FloorMapFieldMapping.findPath(floorMapDoc.getValueSchema(), role);
     }
 
     /**

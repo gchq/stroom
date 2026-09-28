@@ -16,28 +16,28 @@
 
 package stroom.floormap.client.presenter;
 
+import stroom.floormap.client.cluster.FloorMapCluster;
+import stroom.floormap.client.cluster.FloorMapClusterLabel;
+import stroom.floormap.client.cluster.FloorMapClusterOverlay;
 import stroom.floormap.client.event.MapClusterSelectedEvent;
 import stroom.floormap.client.event.MapContextMenuEvent;
 import stroom.floormap.client.event.MapObjectSelectedEvent;
+import stroom.floormap.client.geometry.FloorMapScreenGeometry;
+import stroom.floormap.client.geometry.FloorMapViewport;
+import stroom.floormap.client.geometry.FloorMapZOrder;
+import stroom.floormap.client.model.Fact;
+import stroom.floormap.client.model.FloorMapObject;
+import stroom.floormap.client.overlay.FloorMapAreaMembership;
+import stroom.floormap.client.overlay.FloorMapAreaOverlay;
+import stroom.floormap.client.overlay.FloorMapGroupOverlay;
+import stroom.floormap.client.overlay.FloorMapHighlight;
+import stroom.floormap.client.overlay.FloorMapHoverDetail;
+import stroom.floormap.client.playback.FloorMapEntityAnimator;
 import stroom.floormap.client.presenter.FloorMapCanvasPresenter.FloorMapCanvasView;
 import stroom.floormap.client.view.FloorMapGrid;
-import stroom.floormap.shared.Fact;
-import stroom.floormap.shared.FloorMapAreaMembership;
-import stroom.floormap.shared.FloorMapAreaOverlay;
-import stroom.floormap.shared.FloorMapCluster;
-import stroom.floormap.shared.FloorMapClusterLabel;
-import stroom.floormap.shared.FloorMapClusterOverlay;
-import stroom.floormap.shared.FloorMapEntityAnimator;
-import stroom.floormap.shared.FloorMapGroupOverlay;
-import stroom.floormap.shared.FloorMapHighlight;
-import stroom.floormap.shared.FloorMapHoverDetail;
 import stroom.floormap.shared.FloorMapJsonKeys;
 import stroom.floormap.shared.FloorMapMeasurementUnits;
-import stroom.floormap.shared.FloorMapObject;
-import stroom.floormap.shared.FloorMapScreenGeometry;
 import stroom.floormap.shared.FloorMapTransformationMatrix;
-import stroom.floormap.shared.FloorMapViewport;
-import stroom.floormap.shared.FloorMapZOrder;
 import stroom.floormap.shared.TypeStyle;
 
 import com.google.gwt.animation.client.AnimationScheduler;

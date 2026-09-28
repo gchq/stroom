@@ -21,15 +21,20 @@ import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for {@link FloorMapFieldMapping} — construction, equality,
  * and JSON serialisation round-trip.
  */
 class TestFloorMapFieldMapping {
+
+    private static final List<FloorMapFieldMapping> INITIAL_SCHEMA =
+            FloorMapFieldMapping.initialValueSchema();
 
     @Test
     void testConstruction() {
@@ -287,5 +292,106 @@ class TestFloorMapFieldMapping {
         assertThat(FloorMapFieldMapping.withAreaMappings(null, ValueFormat.JSON))
                 .extracting(FloorMapFieldMapping::getRole)
                 .containsExactly(Role.GEOMETRY, Role.FILL, Role.OPACITY);
+    }
+
+    // -----------------------------------------------------------------------
+    // findPath
+    // -----------------------------------------------------------------------
+
+    /**
+     * The path mapped to the {@code TYPE} role in the schema is returned.
+     */
+    @Test
+    void testFindPath_type() {
+        assertThat(FloorMapFieldMapping.findPath(INITIAL_SCHEMA, Role.TYPE))
+                .isEqualTo(".type");
+    }
+
+    /**
+     * The path mapped to the {@code POSITION} role in the schema is returned.
+     */
+    @Test
+    void testFindPath_position() {
+        assertThat(FloorMapFieldMapping.findPath(INITIAL_SCHEMA, Role.POSITION))
+                .isEqualTo(".coords");
+    }
+
+    /**
+     * The path mapped to the {@code IMAGE} role in the schema is returned.
+     */
+    @Test
+    void testFindPath_image() {
+        assertThat(FloorMapFieldMapping.findPath(INITIAL_SCHEMA, Role.IMAGE))
+                .isEqualTo(".img");
+    }
+
+    /**
+     * The path mapped to the {@code WORLD_TO_MAP} role in the schema is
+     * returned.
+     */
+    @Test
+    void testFindPath_worldToMap() {
+        assertThat(FloorMapFieldMapping.findPath(INITIAL_SCHEMA, Role.WORLD_TO_MAP))
+                .isEqualTo(".tm-world-to-map");
+    }
+
+    /**
+     * A {@code null} schema yields {@code null} rather than throwing.
+     */
+    @Test
+    void testFindPath_nullSchema() {
+        assertThat(FloorMapFieldMapping.findPath(null, Role.TYPE)).isNull();
+    }
+
+    /**
+     * When the schema has no mapping for the requested role, {@code null} is
+     * returned instead of matching an unrelated entry.
+     */
+    @Test
+    void testFindPath_missingRole() {
+        final List<FloorMapFieldMapping> partial = List.of(
+                new FloorMapFieldMapping(".type", Role.TYPE, "Type", null));
+        assertThat(FloorMapFieldMapping.findPath(partial, Role.POSITION)).isNull();
+    }
+
+    /**
+     * {@code null} entries in the schema are skipped rather than throwing.
+     */
+    @Test
+    void testFindPath_nullElement() {
+        final List<FloorMapFieldMapping> schema = new ArrayList<>();
+        schema.add(null);
+        schema.add(new FloorMapFieldMapping(".type", Role.TYPE, "Type", null));
+        assertThat(FloorMapFieldMapping.findPath(schema, Role.TYPE)).isEqualTo(".type");
+        assertThat(FloorMapFieldMapping.findPath(schema, Role.LABEL)).isNull();
+    }
+
+    // -----------------------------------------------------------------------
+    // requirePath
+    // -----------------------------------------------------------------------
+
+    @Test
+    void testRequirePath_mapped() {
+        assertThat(FloorMapFieldMapping.requirePath(INITIAL_SCHEMA, Role.TYPE))
+                .isEqualTo(".type");
+    }
+
+    /**
+     * An unmapped role fails loudly, naming the role, because a write to a
+     * {@code null} path would otherwise be silently dropped.
+     */
+    @Test
+    void testRequirePath_missingRole() {
+        final List<FloorMapFieldMapping> partial = List.of(
+                new FloorMapFieldMapping(".type", Role.TYPE, "Type", null));
+        assertThatThrownBy(() -> FloorMapFieldMapping.requirePath(partial, Role.GEOMETRY))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("'GEOMETRY'");
+    }
+
+    @Test
+    void testRequirePath_nullSchema() {
+        assertThatThrownBy(() -> FloorMapFieldMapping.requirePath(null, Role.TYPE))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

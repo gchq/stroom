@@ -16,12 +16,14 @@
 
 package stroom.floormap.shared;
 
+import stroom.util.shared.NullSafe;
+
 /**
  * The built-in icons a layer can be drawn with, as an alternative to a plain
  * {@link TypeStyle.Shape} or an uploaded image.
  *
  * <h2>Why these are geometry rather than images</h2>
- * <p>An icon is a path, not a file, for the same reason {@link FloorMapShapes}
+ * <p>An icon is a path, not a file, for the same reason {@code FloorMapShapes}
  * is: one definition serves every surface that has to draw it — the canvas
  * glyph, the Layers panel swatch, the appearance dialog's preview and its
  * picker — so a legend cannot drift from the map.</p>
@@ -208,7 +210,7 @@ public enum FloorMapIcon {
      *             {@code null}
      */
     public static FloorMapIcon fromName(final String name) {
-        if (name == null || name.isEmpty()) {
+        if (NullSafe.isEmptyString(name)) {
             return null;
         }
         for (final FloorMapIcon icon : values()) {
@@ -222,7 +224,7 @@ public enum FloorMapIcon {
     /**
      * The SVG {@code transform} that maps the icon's grid onto a glyph centred on
      * the origin and spanning {@code ±halfSize} — the frame
-     * {@link FloorMapShapes} works in, so an icon drops into the same place a
+     * {@code FloorMapShapes} works in, so an icon drops into the same place a
      * shape would.
      *
      * @param halfSize half the glyph's extent

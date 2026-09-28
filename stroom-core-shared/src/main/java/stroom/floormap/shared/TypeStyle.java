@@ -16,6 +16,8 @@
 
 package stroom.floormap.shared;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -186,12 +188,12 @@ public class TypeStyle {
      *
      * <p>Needs no {@code @JsonIgnore}: Jackson only auto-detects {@code getXxx}/
      * {@code isXxx} as properties, so a {@code hasXxx} method is invisible to it —
-     * matching {@link Fact#hasImage()} and the other {@code has*} helpers.
+     * matching {@code Fact.hasImage()} and the other {@code has*} helpers.
      * {@code TestJsonSerialisation} fails the build on a redundant
      * {@code @JsonIgnore}.</p>
      */
     public boolean hasGraphic() {
-        return graphic != null && !graphic.isEmpty();
+        return NullSafe.isNonEmptyString(graphic);
     }
 
     /**
@@ -213,7 +215,7 @@ public class TypeStyle {
         if (type != null && styles != null) {
             for (final TypeStyle style : styles) {
                 if (style != null && type.equals(style.getType())
-                        && style.getColour() != null && !style.getColour().isEmpty()) {
+                        && NullSafe.isNonEmptyString(style.getColour())) {
                     return style.getColour();
                 }
             }
@@ -262,7 +264,7 @@ public class TypeStyle {
             // Sort the genuinely-new type names alphabetically before appending.
             final Set<String> fresh = new TreeSet<>();
             for (final String name : discoveredTypes) {
-                if (name != null && !name.isEmpty() && !present.contains(name)) {
+                if (NullSafe.isNonEmptyString(name) && !present.contains(name)) {
                     fresh.add(name);
                 }
             }

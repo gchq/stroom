@@ -214,8 +214,7 @@ public class FloorMapMeasurementUnits {
      */
     public boolean checkUnitIsValid() {
         return unit != null
-               && !Double.isNaN(unitsPerMapUnit)
-               && !Double.isInfinite(unitsPerMapUnit)
+               && Double.isFinite(unitsPerMapUnit)
                && unitsPerMapUnit > 0;
     }
 
@@ -353,7 +352,7 @@ public class FloorMapMeasurementUnits {
         if (!checkUnitIsValid()) {
             return DEFAULT.format(mapDistance);
         }
-        if (Double.isNaN(mapDistance) || Double.isInfinite(mapDistance)) {
+        if (!Double.isFinite(mapDistance)) {
             return formatNumber(mapDistance) + " " + unit.getSymbol();
         }
         final double metres = unit.toMetres(toDisplayUnits(mapDistance));
@@ -408,7 +407,7 @@ public class FloorMapMeasurementUnits {
      * @return the rendered number, without a unit
      */
     public static String formatNumber(final double value) {
-        if (Double.isNaN(value) || Double.isInfinite(value)) {
+        if (!Double.isFinite(value)) {
             return String.valueOf(value);
         }
         final double abs = Math.abs(value);
@@ -440,7 +439,7 @@ public class FloorMapMeasurementUnits {
      * @return the rendered number, without a unit
      */
     public static String formatForInput(final double value) {
-        if (Double.isNaN(value) || Double.isInfinite(value)) {
+        if (!Double.isFinite(value)) {
             return String.valueOf(value);
         }
         if (value == 0) {
@@ -540,7 +539,7 @@ public class FloorMapMeasurementUnits {
      * {@code calibrate} reads as "reject if unusable".
      */
     private static boolean isUnusableLength(final double length) {
-        return Double.isNaN(length) || Double.isInfinite(length) || !(length > 0);
+        return !Double.isFinite(length) || !(length > 0);
     }
 
     // ------------------------------------------------------------------------
@@ -561,7 +560,7 @@ public class FloorMapMeasurementUnits {
      * @return the chosen length, or {@code 0} when none fits
      */
     public static double niceRoundLength(final double maxLength) {
-        if (Double.isNaN(maxLength) || Double.isInfinite(maxLength) || maxLength <= 0) {
+        if (!Double.isFinite(maxLength) || maxLength <= 0) {
             return 0;
         }
         final double decade = Math.pow(10, Math.floor(Math.log10(maxLength)));

@@ -254,8 +254,9 @@ class TestFloorMapGroup {
     void testDefaultColourAvoidsReservedColours() {
         assertThat(FloorMapGroup.DEFAULT_COLOUR)
                 .isNotEqualToIgnoringCase("#1e88e5")   // accent / handles / area fill
-                .isNotEqualToIgnoringCase("#ff9800")   // selected
-                .isNotEqualToIgnoringCase(FloorMapHighlight.RELATED_COLOUR);
+                .isNotEqualToIgnoringCase("#ff9800");  // selected
+        // The related-highlight colour is checked from TestFloorMapHighlight, which
+        // lives with the client-side FloorMapHighlight.
     }
 
     @Test

@@ -16,8 +16,8 @@
 
 package stroom.floormap.client.event;
 
+import stroom.floormap.client.cluster.FloorMapCluster;
 import stroom.floormap.client.event.MapClusterSelectedEvent.Handler;
-import stroom.floormap.shared.FloorMapCluster;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;

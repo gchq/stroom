@@ -33,7 +33,7 @@ package stroom.floormap.shared;
  *
  * <p>Facts have never had the problem: their query is generated from a schema of role-to-path
  * mappings, so text and meaning agree by construction. Events cannot copy that exactly — the
- * events query is deliberately editable, which is why {@link FloorMapEventsQueryOrder} exists at
+ * events query is deliberately editable, which is why {@code FloorMapEventsQueryOrder} exists at
  * all — so the query stays free text and this enum structures the <em>bridge</em> instead. One
  * concept, one place to validate.</p>
  *

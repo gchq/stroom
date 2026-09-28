@@ -88,7 +88,7 @@ public final class FloorMapJsonKeys {
     /**
      * ID prefix applied to a cluster's summary glyph — the single glyph drawn in
      * place of entities too close together on screen to be told apart (see
-     * {@link FloorMapClusterOverlay}). The id format is
+     * {@code FloorMapClusterOverlay}). The id format is
      * {@code CLUSTER_PREFIX + FloorMapCluster#getKey()}.
      *
      * <p>A cluster is <strong>not</strong> an entity: it has no row in the

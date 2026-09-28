@@ -16,7 +16,7 @@
 
 package stroom.floormap.client.event;
 
-import stroom.floormap.shared.FloorMapObject;
+import stroom.floormap.client.model.FloorMapObject;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;

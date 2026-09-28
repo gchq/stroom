@@ -291,12 +291,61 @@ public class FloorMapFieldMapping {
      * present) makes every call site read as its own opposite.</p>
      */
     private static boolean isRoleMissing(final List<FloorMapFieldMapping> schema, final Role role) {
+        // Presence of the role, not of a path: a path-less mapping still counts as
+        // present, so no second mapping is added for it. Hence not findPath.
         for (final FloorMapFieldMapping mapping : schema) {
             if (mapping != null && mapping.getRole() == role) {
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * Finds the path mapped to {@code role} in the schema.
+     *
+     * <p>A mapping that is present but has no path counts as unmapped, since
+     * there is nowhere to read or write the value.</p>
+     *
+     * @param schema the value schema; may be {@code null}, and may contain
+     *               {@code null} entries, which are skipped
+     * @param role   the role to look up
+     * @return the path of the first mapping for the role, or {@code null} if the
+     *         role is not mapped
+     */
+    public static String findPath(final List<FloorMapFieldMapping> schema, final Role role) {
+        if (schema == null) {
+            return null;
+        }
+        for (final FloorMapFieldMapping mapping : schema) {
+            if (mapping != null && mapping.getRole() == role) {
+                return mapping.getPath();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds the path mapped to {@code role}, failing loudly when there is none.
+     *
+     * <p>For writers: the value accessors silently ignore a write to a
+     * {@code null} path, so writing through {@link #findPath} for an unmapped role
+     * would drop the value without a trace.</p>
+     *
+     * @param schema the value schema; may be {@code null}
+     * @param role   the role to look up
+     * @return the path for the role; never {@code null}
+     * @throws IllegalStateException if the schema does not map the role
+     */
+    public static String requirePath(final List<FloorMapFieldMapping> schema, final Role role) {
+        final String path = findPath(schema, role);
+        if (path == null) {
+            throw new IllegalStateException(
+                    "The Value Schema for this Floor Map does not define a mapping "
+                    + "for the '" + role + "' role. Please add a '" + role
+                    + "' mapping in the Settings tab under Value Schema.");
+        }
+        return path;
     }
 
     @Override

@@ -19,9 +19,8 @@ package stroom.floormap.client.presenter;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.FloorMapEditorHelp;
-import stroom.floormap.client.ValuePathAccessor;
 import stroom.floormap.client.presenter.FloorMapFactListPresenter.FloorMapFactListView;
-import stroom.floormap.shared.FloorMapEntryParser;
+import stroom.floormap.client.value.ValuePathAccessor;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.svg.client.SvgPresets;
@@ -401,10 +400,10 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
                     if (json != null) {
                         final String parsedName = JSONUtil.getString(
                                 ValuePathAccessor.get(json,
-                                        FloorMapEntryParser.findPath(schema, Role.LABEL)));
+                                        FloorMapFieldMapping.findPath(schema, Role.LABEL)));
                         final String parsedType = JSONUtil.getString(
                                 ValuePathAccessor.get(json,
-                                        FloorMapEntryParser.findPath(schema, Role.TYPE)));
+                                        FloorMapFieldMapping.findPath(schema, Role.TYPE)));
                         if (parsedName != null && !parsedName.isEmpty()) {
                             name = parsedName;
                         }

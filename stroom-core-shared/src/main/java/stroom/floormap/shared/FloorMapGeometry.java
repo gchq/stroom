@@ -31,7 +31,7 @@ package stroom.floormap.shared;
  * <p><strong>Coordinate space:</strong> every method here is space-agnostic —
  * it simply compares numbers. Callers are responsible for making the polygon
  * and the point share one space; for FloorMap that space is always
- * <strong>map space</strong> (see {@link #toMapVertices(Fact)}).</p>
+ * <strong>map space</strong> (see {@code Fact.toMapVertices()}).</p>
  */
 public final class FloorMapGeometry {
 
@@ -139,72 +139,70 @@ public final class FloorMapGeometry {
     }
 
     /**
-     * Projects an area fact's vertices from its local frame into map space by
-     * pushing each through the fact's {@code WORLD_TO_MAP} matrix.
+     * Returns the vertex centroid of the polygon — the mean of its vertices — as
+     * {@code {x, y}}, or {@code null} if it has no usable vertices.
      *
-     * <p>This is the load-bearing step for correctness: area vertices are
-     * stored centred on their centroid in a local frame, so an untransformed
-     * comparison against a map-space point is meaningless.</p>
+     * <p>This is the vertex mean rather than the area-weighted centroid. It is
+     * what an area's local frame is centred on when it is stored, and where its
+     * occupant badge and camera anchor sit, so every caller has to agree on it —
+     * which is why there is exactly one implementation.</p>
      *
-     * @param area the area fact; may be {@code null}
-     * @return the map-space vertices, or {@code null} if the fact is not an area
+     * @param polygon the polygon vertices {@code [[x,y], ...]}; may be {@code null}.
+     *                Rows that are {@code null} or shorter than two elements are
+     *                skipped, as in {@link #aabb(double[][])}
+     * @return the centroid, or {@code null}
      */
-    public static double[][] toMapVertices(final Fact area) {
-        if (area == null || !area.hasVertices()) {
+    public static double[] centroid(final double[][] polygon) {
+        if (polygon == null) {
             return null;
         }
-        final double[][] local = area.getVertices();
-        final FloorMapTransformationMatrix worldToMap = area.getWorldToMap();
-        final double[][] out = new double[local.length][];
-        for (int i = 0; i < local.length; i++) {
-            out[i] = local[i] != null
-                    ? worldToMap.transformPoint(local[i][0], local[i][1])
-                    : null;
+        double sumX = 0;
+        double sumY = 0;
+        int count = 0;
+        for (final double[] v : polygon) {
+            if (v != null && v.length >= 2) {
+                sumX += v[0];
+                sumY += v[1];
+                count++;
+            }
         }
-        return out;
+        return count > 0
+                ? new double[]{sumX / count, sumY / count}
+                : null;
     }
 
     /**
-     * Returns the map-space point at which a fact is tested for containment.
+     * Returns the straight-line distance between two points.
      *
-     * <p>Deliberately <em>not</em> {@link Fact#mapAnchor(double, Double)}: that
-     * needs the rendered image width and aspect ratio, which only the view
-     * knows. Containment instead uses the fact's own placement, which is
-     * view-independent and stable:</p>
-     * <ul>
-     *   <li>an area → its local vertex centroid through {@code worldToMap};</li>
-     *   <li>anything else → its {@code position} through {@code worldToMap}.</li>
-     * </ul>
-     *
-     * <p>For an image fact this is its placement origin rather than the centre
-     * of the drawn image. That is the documented trade-off for keeping the test
-     * free of view state; it only matters for facts whose image is large
-     * relative to the areas around it.</p>
-     *
-     * @param fact the fact to locate; must not be {@code null}
-     * @return the map-space test point {@code {mapX, mapY}}
+     * @param x1 the first point's x
+     * @param y1 the first point's y
+     * @param x2 the second point's x
+     * @param y2 the second point's y
+     * @return the distance
      */
-    public static double[] mapTestPoint(final Fact fact) {
-        final FloorMapTransformationMatrix worldToMap = fact.getWorldToMap();
-        if (fact.hasVertices()) {
-            final double[][] local = fact.getVertices();
-            double cx = 0;
-            double cy = 0;
-            int count = 0;
-            for (final double[] v : local) {
-                if (v != null) {
-                    cx += v[0];
-                    cy += v[1];
-                    count++;
-                }
-            }
-            if (count > 0) {
-                return worldToMap.transformPoint(cx / count, cy / count);
-            }
-        }
-        final double[] position = fact.getPosition();
-        return worldToMap.transformPoint(
-                position != null ? position[0] : 0,
-                position != null ? position[1] : 0);
+    public static double distance(final double x1,
+                                  final double y1,
+                                  final double x2,
+                                  final double y2) {
+        return Math.sqrt(distanceSquared(x1, y1, x2, y2));
+    }
+
+    /**
+     * Returns the square of the straight-line distance between two points — the
+     * cheaper form for comparisons, since it needs no square root.
+     *
+     * @param x1 the first point's x
+     * @param y1 the first point's y
+     * @param x2 the second point's x
+     * @param y2 the second point's y
+     * @return the squared distance
+     */
+    public static double distanceSquared(final double x1,
+                                         final double y1,
+                                         final double x2,
+                                         final double y2) {
+        final double dx = x2 - x1;
+        final double dy = y2 - y1;
+        return (dx * dx) + (dy * dy);
     }
 }

@@ -16,9 +16,9 @@
 
 package stroom.floormap.client;
 
+import stroom.floormap.client.geometry.FloorMapMarker;
+import stroom.floormap.client.geometry.FloorMapShapes;
 import stroom.floormap.shared.FloorMapIcon;
-import stroom.floormap.shared.FloorMapMarker;
-import stroom.floormap.shared.FloorMapShapes;
 import stroom.floormap.shared.TypeStyle;
 import stroom.floormap.shared.TypeStyle.Shape;
 

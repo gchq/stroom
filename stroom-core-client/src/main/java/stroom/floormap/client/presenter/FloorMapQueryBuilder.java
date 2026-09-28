@@ -16,8 +16,8 @@
 
 package stroom.floormap.client.presenter;
 
-import stroom.floormap.client.ValuePathAccessor;
-import stroom.floormap.shared.FloorMapFactHistory;
+import stroom.floormap.client.model.FloorMapFactHistory;
+import stroom.floormap.client.value.ValuePathAccessor;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.ValueFormat;
 import stroom.query.api.token.QuotedStringUtil;

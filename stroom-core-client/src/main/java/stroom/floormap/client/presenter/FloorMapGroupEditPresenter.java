@@ -17,8 +17,8 @@
 package stroom.floormap.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
 import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.FloorMapGroupEditView;
-import stroom.floormap.shared.FloorMapEntityList.EntityEntry;
 import stroom.floormap.shared.FloorMapGroup;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;

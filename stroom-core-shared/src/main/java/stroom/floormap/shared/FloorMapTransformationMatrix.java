@@ -305,12 +305,12 @@ public class FloorMapTransformationMatrix {
         // translation pair only reaches the inverse via invE/invF, so a non-finite e or f used
         // to sail through this test and produce a non-finite inverse - the plausible-looking
         // wrong answer that inverse() documents at length as being worse than no answer.
-        if (!isFinite(a) || !isFinite(b) || !isFinite(c) || !isFinite(d)
-            || !isFinite(e) || !isFinite(f)) {
+        if (!Double.isFinite(a) || !Double.isFinite(b) || !Double.isFinite(c)
+            || !Double.isFinite(d) || !Double.isFinite(e) || !Double.isFinite(f)) {
             return false;
         }
         final double det = a * d - b * c;
-        if (Double.isNaN(det) || Double.isInfinite(det)) {
+        if (!Double.isFinite(det)) {
             return false;
         }
         final double magnitude = Math.abs(a * d) + Math.abs(b * c);
@@ -318,10 +318,6 @@ public class FloorMapTransformationMatrix {
             return false;
         }
         return Math.abs(det) > SINGULARITY_RELATIVE_TOLERANCE * magnitude;
-    }
-
-    private static boolean isFinite(final double value) {
-        return !Double.isNaN(value) && !Double.isInfinite(value);
     }
 
     /**
