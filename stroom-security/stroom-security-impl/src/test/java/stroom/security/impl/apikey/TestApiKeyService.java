@@ -29,17 +29,21 @@ import stroom.security.impl.UserCache;
 import stroom.security.impl.UserDao;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
 import stroom.security.mock.MockSecurityContext;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
+import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.test.common.TestUtil;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -79,6 +83,8 @@ class TestApiKeyService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestApiKeyService.class);
 
     private final SecurityContext securityContext = new MockSecurityContext();
+    private final ApiKeyGenerator apiKeyGenerator = new ApiKeyGenerator();
+
     @Mock
     private ApiKeyDao mockApiKeyDao;
     @Mock
@@ -86,9 +92,7 @@ class TestApiKeyService {
     @Mock
     private EntityEventBus mockEntityEventBus;
 
-
-    ApiKeyGenerator apiKeyGenerator = new ApiKeyGenerator();
-    ApiKeyService apiKeyService;
+    private ApiKeyService apiKeyService;
 
     @BeforeEach
     void setUp() {
@@ -102,6 +106,76 @@ class TestApiKeyService {
                 AuthenticationConfig::new,
                 userCache,
                 mockEntityEventBus);
+    }
+
+    @Test
+    void verifyApiKey_validKey_returnsUserDescription() {
+        final String apiKey = apiKeyGenerator.generateRandomApiKey();
+        final User owner = createUser("mySubjectId");
+
+        Mockito.when(mockApiKeyDao.fetchApiKeysByPrefix(Mockito.anyString()))
+                .thenReturn(List.of(HashedApiKey.builder()
+                        .owner(owner.asRef())
+                        .apiKeyHash(apiKeyService.computeApiKeyHash(apiKey))
+                        .apiKeyPrefix(ApiKeyGenerator.extractPrefixPart(apiKey))
+                        .enabled(true)
+                        .build()));
+        Mockito.when(mockUserDao.getByUuid(owner.getUuid()))
+                .thenReturn(Optional.of(owner));
+
+        final Optional<UserDesc> result = apiKeyService.verifyApiKey(new VerifyApiKeyRequest(apiKey));
+
+        assertThat(result)
+                .contains(new UserDesc(owner.getSubjectId(), owner.getDisplayName(), owner.getFullName()));
+    }
+
+    @Test
+    void verifyApiKey_invalidKey_returnsEmpty() {
+        final VerifyApiKeyRequest request = new VerifyApiKeyRequest("not-an-api-key");
+
+        final Optional<UserDesc> result = apiKeyService.verifyApiKey(request);
+
+        assertThat(result)
+                .isEmpty();
+        Mockito.verifyNoInteractions(mockApiKeyDao, mockUserDao);
+    }
+
+    @Test
+    void verifyApiKey_requiredPermissionMissing_returnsEmpty() {
+        final SecurityContext mockSecurityContext = Mockito.spy(new MockSecurityContext());
+        Mockito.doReturn(false)
+                .when(mockSecurityContext)
+                .hasAppPermissions(Mockito.any(UserIdentity.class), Mockito.any(AppPermissionSet.class));
+
+        final CacheManager cacheManager = new CacheManagerImpl();
+        final UserCache userCache = new UserCache(cacheManager, AuthorisationConfig::new, () -> mockUserDao);
+        apiKeyService = new ApiKeyService(
+                mockApiKeyDao,
+                mockSecurityContext,
+                apiKeyGenerator,
+                new CacheManagerImpl(),
+                AuthenticationConfig::new,
+                userCache,
+                mockEntityEventBus);
+
+        final String apiKey = apiKeyGenerator.generateRandomApiKey();
+        final User owner = createUser("mySubjectId");
+        Mockito.when(mockApiKeyDao.fetchApiKeysByPrefix(Mockito.anyString()))
+                .thenReturn(List.of(HashedApiKey.builder()
+                        .owner(owner.asRef())
+                        .apiKeyHash(apiKeyService.computeApiKeyHash(apiKey))
+                        .apiKeyPrefix(ApiKeyGenerator.extractPrefixPart(apiKey))
+                        .enabled(true)
+                        .build()));
+        Mockito.when(mockUserDao.getByUuid(owner.getUuid()))
+                .thenReturn(Optional.of(owner));
+
+        final VerifyApiKeyRequest request = new VerifyApiKeyRequest(
+                apiKey,
+                AppPermissionSet.of(AppPermission.MANAGE_API_KEYS));
+
+        assertThat(apiKeyService.verifyApiKey(request))
+                .isEmpty();
     }
 
     @Test

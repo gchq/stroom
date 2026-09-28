@@ -197,6 +197,11 @@ public class ApiKeyService implements Clearable, EntityEvent.Handler {
         }
     }
 
+    /// Verifies that an API key is valid and holds the requested required permissions.
+    /// Callers must hold either the VERIFY_API_KEY or STROOM_PROXY permission.
+    /// If the API key is valid and holds the requested required permissions, the UserDesc
+    /// corresponding to the API key is returned.
+    /// In all other cases, Optional.empty() is returned.
     public Optional<UserDesc> verifyApiKey(final VerifyApiKeyRequest request) {
         return securityContext.secureResult(REQUIRED_PERMISSION_SET, () -> {
             final Optional<UserDesc> optUserDesc = fetchVerifiedIdentity(request.getApiKey())
@@ -213,22 +218,6 @@ public class ApiKeyService implements Clearable, EntityEvent.Handler {
             return optUserDesc;
         });
     }
-
-//    /**
-//     * Fetch the verified {@link UserIdentity} for the passed API key.
-//     * If the hash of the API key matches one in the database and that key is enabled
-//     * and not expired then the {@link UserIdentity} will be returned, else an empty {@link Optional}
-//     * is returned.
-//     */
-//    Optional<UserIdentity> fetchVerifiedIdentity(final String apiKeyStr) {
-//        if (NullSafe.isBlankString(apiKeyStr)) {
-//            return Optional.empty();
-//        } else {
-//            // See the note on trimming in fetchVerifiedIdentity(HttpServletRequest)
-//            return apiKeyToAuthenticatedUserCache.get(apiKeyStr.trim())
-//                    .map(ApiKeyAndIdentity::userIdentity);
-//        }
-//    }
 
     private Optional<ApiKeyAndIdentity> doFetchVerifiedIdentity(final String apiKeyStr) {
         // This has to be unsecured as we are trying to authenticate
@@ -683,8 +672,8 @@ public class ApiKeyService implements Clearable, EntityEvent.Handler {
 
         public Argon2ApiKeyHasher() {
             // No salt given the length of api keys being hashed
-            this.argon2Parameters = new Builder(org.bouncycastle.crypto.params.Argon2Parameters.ARGON2_id)
-                    .withVersion(org.bouncycastle.crypto.params.Argon2Parameters.ARGON2_VERSION_13)
+            this.argon2Parameters = new Builder(Argon2Parameters.ARGON2_id)
+                    .withVersion(Argon2Parameters.ARGON2_VERSION_13)
                     .withIterations(ITERATIONS)
                     .withMemoryAsKB(MEMORY_KB)
                     .withParallelism(PARALLELISM)
