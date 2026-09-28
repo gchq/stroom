@@ -16,7 +16,7 @@
 
 package stroom.planb.impl.fs;
 
-import stroom.util.entityevent.EntityEvent.EntityEventData;
+import stroom.util.entityevent.EntityEventData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,8 +37,8 @@ public class SharedFileStoreMergeEventData implements EntityEventData {
 
     @JsonCreator
     public SharedFileStoreMergeEventData(@JsonProperty("shardIndex") final Integer shardIndex,
-                               @JsonProperty("batchDirName") final String batchDirName,
-                               @JsonProperty("version") final String version) {
+                                         @JsonProperty("batchDirName") final String batchDirName,
+                                         @JsonProperty("version") final String version) {
         this.shardIndex = Objects.requireNonNullElse(shardIndex, 0);
         this.batchDirName = batchDirName;
         this.version = version;
@@ -59,9 +59,9 @@ public class SharedFileStoreMergeEventData implements EntityEventData {
     @Override
     public String toString() {
         return "SharedFileStoreMergeEventData{" +
-                "shardIndex=" + shardIndex +
-                ", batchDirName='" + batchDirName + '\'' +
-                ", version='" + version + '\'' +
-                '}';
+               "shardIndex=" + shardIndex +
+               ", batchDirName='" + batchDirName + '\'' +
+               ", version='" + version + '\'' +
+               '}';
     }
 }
