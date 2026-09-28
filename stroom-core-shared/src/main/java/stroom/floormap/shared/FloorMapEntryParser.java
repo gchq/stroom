@@ -147,8 +147,6 @@ public final class FloorMapEntryParser {
         return facts;
     }
 
-
-
     /**
      * Finds the path for a given role in the schema, or {@code null} if not
      * mapped.

@@ -54,6 +54,8 @@ public final class Fact {
      * @param worldToMap the affine placing this fact into map space; never {@code null}
      * @param position   world-space coordinates {@code [x, y]} for a point fact,
      *                   or {@code null} (e.g. for a background)
+     * @throws IllegalArgumentException if the position does not hold exactly two
+     *                                  elements
      */
     public Fact(final String key,
                 final String type,
@@ -77,6 +79,9 @@ public final class Fact {
      *                   type's default colour
      * @param opacity    area fill opacity in {@code [0, 1]}, or {@code null} for
      *                   the default
+     * @throws IllegalArgumentException if the position, or any vertex, does not
+     *                                  hold exactly two elements, or a vertex is
+     *                                  {@code null}
      */
     public Fact(final String key,
                 final String type,
@@ -106,6 +111,9 @@ public final class Fact {
      * @param label      the user-facing name from the {@code LABEL} role, or
      *                   {@code null} when the schema does not map it (or the
      *                   fact has no name)
+     * @throws IllegalArgumentException if the position, or any vertex, does not
+     *                                  hold exactly two elements, or a vertex is
+     *                                  {@code null}
      */
     public Fact(final String key,
                 final String type,
@@ -122,9 +130,7 @@ public final class Fact {
         this.worldToMap = worldToMap != null
                 ? worldToMap
                 : FloorMapTransformationMatrix.identity();
-        this.position = position != null
-                ? new double[]{position[0], position[1]}
-                : null;
+        this.position = copyPosition(position);
         this.vertices = copyVertices(vertices);
         this.fill = fill;
         this.opacity = opacity;
@@ -156,9 +162,7 @@ public final class Fact {
 
     /** World coordinates {@code [x, y]} for a point fact, or {@code null}. */
     public double[] getPosition() {
-        return position != null
-                ? new double[]{position[0], position[1]}
-                : null;
+        return copyPosition(position);
     }
 
     /**
@@ -234,19 +238,14 @@ public final class Fact {
                     imageDisplayWidth / aspect / 2);
         }
         if (hasVertices()) {
+            // Every vertex is a non-null [x, y] pair - the constructor rejects anything else.
             double cx = 0;
             double cy = 0;
-            int count = 0;
             for (final double[] v : vertices) {
-                if (v != null) {
-                    cx += v[0];
-                    cy += v[1];
-                    count++;
-                }
+                cx += v[0];
+                cy += v[1];
             }
-            if (count > 0) {
-                return worldToMap.transformPoint(cx / count, cy / count);
-            }
+            return worldToMap.transformPoint(cx / vertices.length, cy / vertices.length);
         }
         return worldToMap.transformPoint(
                 position != null ? position[0] : 0,
@@ -288,20 +287,63 @@ public final class Fact {
      * Returns a copy of this fact with different area vertices (local frame) —
      * used for live vertex-edit previews. All other fields are carried over
      * unchanged.
+     *
+     * @throws IllegalArgumentException if any new vertex is {@code null} or does
+     *                                  not hold exactly two elements
      */
     public Fact withVertices(final double[][] newVertices) {
         return new Fact(key, type, image, worldToMap, position, newVertices, fill, opacity, label);
     }
 
+    /// Defensively copies a position, checking that it really is an `[x, y]` pair.
+    /// Like a malformed vertex this is a caller bug rather than bad user data, and
+    /// left unchecked it either reads whichever coordinates happen to be there or
+    /// throws an `ArrayIndexOutOfBoundsException` from the middle of a constructor,
+    /// saying nothing about which argument was wrong.
+    ///
+    /// @param source the position to copy; may be `null`
+    /// @return a copy, or `null` if `source` is `null`
+    /// @throws IllegalArgumentException if `source` does not hold exactly two
+    ///         elements
+    private static double[] copyPosition(final double[] source) {
+        if (source == null) {
+            return null;
+        }
+        if (source.length != 2) {
+            throw new IllegalArgumentException(
+                    "Position has " + source.length + " element(s), "
+                            + "expecting an [x, y] pair");
+        }
+        return new double[]{source[0], source[1]};
+    }
+
+    /// Defensively copies a vertex array, checking that every row really is an
+    /// `[x, y]` pair. A malformed row is a programming error in the caller rather
+    /// than bad user data - the parsers only ever emit two-element rows - so it
+    /// fails loudly here instead of surviving as a vertex that silently drops out
+    /// of hit-testing and rendering further downstream.
+    ///
+    /// @param source the vertices to copy; may be `null`
+    /// @return a deep copy, or `null` if `source` is `null`
+    /// @throws IllegalArgumentException if any row is `null` or does not hold
+    ///         exactly two elements
     private static double[][] copyVertices(final double[][] source) {
         if (source == null) {
             return null;
         }
         final double[][] copy = new double[source.length][];
         for (int i = 0; i < source.length; i++) {
-            copy[i] = source[i] != null
-                    ? new double[]{source[i][0], source[i][1]}
-                    : null;
+            final double[] vertex = source[i];
+            if (vertex == null) {
+                throw new IllegalArgumentException(
+                        "Vertex " + i + " is null, expecting an [x, y] pair");
+            }
+            if (vertex.length != 2) {
+                throw new IllegalArgumentException(
+                        "Vertex " + i + " has " + vertex.length + " element(s), "
+                                + "expecting an [x, y] pair");
+            }
+            copy[i] = new double[]{vertex[0], vertex[1]};
         }
         return copy;
     }

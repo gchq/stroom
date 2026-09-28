@@ -309,7 +309,8 @@ public final class FloorMapFactTableParser {
                 : null;
     }
 
-    private static String coalesce(final String value, final String fallback) {
+    private static String coalesce(final String value,
+                                   @SuppressWarnings("SameParameterValue") final String fallback) {
         return value != null
                 ? value
                 : fallback;

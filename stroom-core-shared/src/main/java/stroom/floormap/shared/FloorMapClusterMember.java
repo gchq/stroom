@@ -34,6 +34,7 @@ import java.util.List;
  * GWT-compiled source. Holds no GWT or DOM types so it can be unit-tested on
  * the JVM.</p>
  */
+@SuppressWarnings("ClassCanBeRecord") // Must compile under GWT
 public final class FloorMapClusterMember {
 
     private final String id;

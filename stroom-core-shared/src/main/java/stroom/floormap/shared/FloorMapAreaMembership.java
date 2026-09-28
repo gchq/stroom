@@ -258,6 +258,7 @@ public final class FloorMapAreaMembership {
      */
     public String getInnermostAreaKey(final String entityId) {
         final List<String> keys = getAreaKeys(entityId);
+        //noinspection SequencedCollectionMethodCanBeUsed Not on GWT
         return keys.isEmpty()
                 ? null
                 : keys.get(0);

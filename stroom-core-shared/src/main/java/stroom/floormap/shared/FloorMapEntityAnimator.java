@@ -46,7 +46,6 @@ public final class FloorMapEntityAnimator {
     /** Maximum recorded trail points per entity (bounds memory during long playback). */
     private static final int TRAIL_MAX_PTS = 5000;
 
-
     /** How long (wall-clock ms) a trail takes to fade out after the entity stops. */
     private static final double TRAIL_FADE_DURATION_MS = 2000.0;
 

@@ -284,6 +284,7 @@ public class FloorMapEntityList {
      * entry for the same entity compares equal to the one a selection model is
      * already holding — a grid data refresh must not read as a selection change.
      */
+    @SuppressWarnings("ClassCanBeRecord") // Record not supported in GWT
     public static class EntityEntry {
 
         private final String id;

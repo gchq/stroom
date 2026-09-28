@@ -19,6 +19,7 @@ package stroom.floormap.shared;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestFact {
 
@@ -210,5 +211,132 @@ class TestFact {
         assertThat(new Fact("moved", "t", null,
                 new FloorMapTransformationMatrix(1, 0, 0, 1, 50, 50),
                 new double[]{1, 2}).hasUsablePlacement()).isTrue();
+    }
+
+    // -----------------------------------------------------------------------
+    // vertex validation
+    // -----------------------------------------------------------------------
+
+    /** Well-formed vertices are copied defensively, not shared with the caller. */
+    @Test
+    void testVerticesAreDefensivelyCopied() {
+        final double[][] source = new double[][]{{-5, -5}, {5, -5}, {5, 5}};
+        final Fact fact = new Fact("zone", "area", null,
+                FloorMapTransformationMatrix.identity(), null,
+                source, null, null);
+
+        source[0][0] = 999;
+        assertThat(fact.getVertices()[0]).containsExactly(-5, -5);
+
+        final double[][] returned = fact.getVertices();
+        returned[1][1] = 999;
+        assertThat(fact.getVertices()[1]).containsExactly(5, -5);
+    }
+
+    /** A null vertex is a caller bug, not geometry, so construction fails loudly. */
+    @Test
+    void testNullVertexIsRejected() {
+        assertThatThrownBy(() -> new Fact("zone", "area", null,
+                FloorMapTransformationMatrix.identity(), null,
+                new double[][]{{-5, -5}, null, {5, 5}}, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Vertex 1")
+                .hasMessageContaining("null");
+    }
+
+    /** A vertex holding anything other than an [x, y] pair is rejected. */
+    @Test
+    void testMalformedVertexIsRejected() {
+        assertThatThrownBy(() -> new Fact("zone", "area", null,
+                FloorMapTransformationMatrix.identity(), null,
+                new double[][]{{-5, -5}, {5}, {5, 5}}, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Vertex 1")
+                .hasMessageContaining("1 element");
+
+        assertThatThrownBy(() -> new Fact("zone", "area", null,
+                FloorMapTransformationMatrix.identity(), null,
+                new double[][]{{-5, -5, 0}, {5, -5}, {5, 5}}, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Vertex 0")
+                .hasMessageContaining("3 element");
+
+        assertThatThrownBy(() -> new Fact("zone", "area", null,
+                FloorMapTransformationMatrix.identity(), null,
+                new double[][]{{}, {5, -5}, {5, 5}}, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Vertex 0");
+    }
+
+    /** The vertex-preview copy validates its replacement geometry too. */
+    @Test
+    void testWithVerticesRejectsMalformedVertices() {
+        final Fact fact = new Fact("zone", "area", null,
+                FloorMapTransformationMatrix.identity(), null,
+                new double[][]{{-5, -5}, {5, -5}, {5, 5}}, null, null);
+
+        assertThatThrownBy(() -> fact.withVertices(new double[][]{{-1, -1}, {1}, {1, 1}}))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Vertex 1");
+    }
+
+    /** No vertices at all remains legitimate — a point fact simply has none. */
+    @Test
+    void testNullVerticesAreAccepted() {
+        final Fact fact = new Fact("gate", "gate", null,
+                FloorMapTransformationMatrix.identity(), new double[]{1, 2},
+                null, null, null);
+
+        assertThat(fact.getVertices()).isNull();
+        assertThat(fact.hasVertices()).isFalse();
+    }
+
+    // -----------------------------------------------------------------------
+    // position validation
+    // -----------------------------------------------------------------------
+
+    /** A position is copied defensively, not shared with the caller. */
+    @Test
+    void testPositionIsDefensivelyCopied() {
+        final double[] source = new double[]{5, 7};
+        final Fact fact = new Fact("gate", "gate", null,
+                FloorMapTransformationMatrix.identity(), source);
+
+        source[0] = 999;
+        assertThat(fact.getPosition()).containsExactly(5, 7);
+
+        fact.getPosition()[1] = 999;
+        assertThat(fact.getPosition()).containsExactly(5, 7);
+    }
+
+    /** A position that is not an [x, y] pair is a caller bug, so it is rejected. */
+    @Test
+    void testMalformedPositionIsRejected() {
+        assertThatThrownBy(() -> new Fact("gate", "gate", null,
+                FloorMapTransformationMatrix.identity(), new double[]{5}))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Position")
+                .hasMessageContaining("1 element");
+
+        assertThatThrownBy(() -> new Fact("gate", "gate", null,
+                FloorMapTransformationMatrix.identity(), new double[]{5, 7, 9}))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Position")
+                .hasMessageContaining("3 element");
+
+        assertThatThrownBy(() -> new Fact("gate", "gate", null,
+                FloorMapTransformationMatrix.identity(), new double[]{},
+                null, null, null, "Gate"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Position");
+    }
+
+    /** No position at all remains legitimate — an area or background has none. */
+    @Test
+    void testNullPositionIsAccepted() {
+        final Fact fact = new Fact("bg", "background", "img.png",
+                FloorMapTransformationMatrix.identity(), null);
+
+        assertThat(fact.getPosition()).isNull();
     }
 }

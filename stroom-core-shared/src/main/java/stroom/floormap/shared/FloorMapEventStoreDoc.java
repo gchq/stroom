@@ -116,6 +116,37 @@ public class FloorMapEventStoreDoc extends AbstractPlanBDoc {
     @JsonProperty
     private final SimpleDuration eventExpiry;
 
+    /**
+     * Creates a store, fixing the parts of a Plan B document that this type does not leave open.
+     *
+     * <p>{@code stateType} is accepted and then discarded: the call to {@code super} always passes
+     * {@link StateType#TEMPORAL_STATE}. The parameter is here because the property cannot simply be
+     * left out.</p>
+     *
+     * <p>It is part of the serialised shape. {@code stateType} is a Jackson property of
+     * {@link AbstractPlanBDoc}, so every document written carries it, and this constructor is the
+     * {@code @JsonCreator}, so reading one back needs somewhere for that property to land. An
+     * unbound property is tolerated by the doc store's mapper, which disables
+     * {@code FAIL_ON_UNKNOWN_PROPERTIES}, but is fatal over REST, where Stroom deliberately enables
+     * it.</p>
+     *
+     * <p>Naming it here is also what keeps the value fixed. Were it not a creator property, Jackson
+     * would bind it to the inherited field instead — final fields are settable by default — and a
+     * hand-edited export or a REST call claiming {@link StateType#SESSION} would take effect.
+     * Taking the argument and dropping it is what makes the state type unforgeable, in the same way
+     * that {@link #withFixedSchemas(AbstractPlanBSettings)} overwrites rather than validates the
+     * schemas. The inherited {@code stateType} builder method is ignored for the same reason.</p>
+     *
+     * <p>The sibling {@code TracesDoc} takes the same argument and honours it where non-null, so
+     * the unconditional discard here is a deliberate difference rather than a copy of that
+     * class.</p>
+     *
+     * @param stateType   ignored; present only so the serialised property has somewhere to land
+     * @param settings    the Plan B settings, whose key and value schemas are replaced with this
+     *                    type's own before use
+     * @param eventExpiry how long an entity stays on the map after its last event, or {@code null}
+     *                    to use {@link #DEFAULT_EVENT_EXPIRY}
+     */
     @JsonCreator
     public FloorMapEventStoreDoc(
             @JsonProperty("uuid") final String uuid,

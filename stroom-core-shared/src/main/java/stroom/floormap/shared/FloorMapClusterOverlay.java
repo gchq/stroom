@@ -63,7 +63,7 @@ import java.util.TreeMap;
  *       clustering instead would leave two glyphs a few pixels apart fighting for
  *       the same space — the crowding this whole class exists to remove. One glyph
  *       suffices because clusters are homogeneous: the glyph comes from the shared
- *       type, so a focused member's glyph and its cluster's are the same shape and
+ *       type, so a focused member's glyph and its clusters are the same shape and
  *       colour anyway.</li>
  *   <li><strong>A cluster of one is not a cluster</strong> — its member renders
  *       normally.</li>
@@ -104,8 +104,8 @@ import java.util.TreeMap;
  * the two glyphs' reach rather than a flat threshold: a big badge covers more
  * ground and must speak for what it covers. And a merge is refused when it would
  * put a member further than {@link #SPREAD_LIMIT} thresholds from the seed, which
- * is what stops a corridor of desks chaining into one badge whose members are off
- * screen. Note what that leash does and does not guarantee: it bounds an absorbed candidate's
+ * is what stops a corridor of desks chaining into one badge whose members are off-screen.
+ * Note what that leash does and does not guarantee: it bounds an absorbed candidate's
  * members relative to the absorbing seed's anchor, but nothing bounds the seed's own spread, and a
  * merged node's spread is recomputed from its moved centroid. In practice this keeps every member
  * within roughly {@code 2 × SPREAD_LIMIT} thresholds of every other, but that is an approximation,
