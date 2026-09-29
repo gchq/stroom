@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.value;
 
-
 import com.google.gwt.xml.client.Document;
 import com.google.gwt.xml.client.Element;
 import com.google.gwt.xml.client.Node;

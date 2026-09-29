@@ -28,6 +28,7 @@ import stroom.util.shared.TemporalEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -424,6 +425,7 @@ class TestFloorMapEditorModel {
      */
     private static final class ScriptedRandom extends Random {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         private final int[] values;
@@ -1314,6 +1316,29 @@ class TestFloorMapEditorModel {
                 FloorMapFieldMapping.withAreaMappings(SCHEMA, ValueFormat.JSON),
                 ACCESSOR))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    /// A null or one-element vertex is rejected rather than failing with an NPE.
+    @Test
+    void testBuildAreaEntry_malformedVertex() {
+        final List<double[]> nullVertex = new ArrayList<>();
+        nullVertex.add(new double[]{0, 0});
+        nullVertex.add(null);
+        nullVertex.add(new double[]{1, 1});
+        assertThatThrownBy(() -> FloorMapEditorModel.buildAreaEntry(
+                MAP, "area-1", nullVertex, 0L,
+                FloorMapFieldMapping.withAreaMappings(SCHEMA, ValueFormat.JSON),
+                ACCESSOR))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("[x, y]");
+
+        assertThatThrownBy(() -> FloorMapEditorModel.buildAreaEntry(
+                MAP, "area-1",
+                List.of(new double[]{0}, new double[]{1}, new double[]{2}), 0L,
+                FloorMapFieldMapping.withAreaMappings(SCHEMA, ValueFormat.JSON),
+                ACCESSOR))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("[x, y]");
     }
 
     /**

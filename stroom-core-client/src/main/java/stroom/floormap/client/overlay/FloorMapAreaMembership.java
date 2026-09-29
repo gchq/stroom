@@ -114,6 +114,7 @@ public final class FloorMapAreaMembership {
         // Smallest first, so the per-entity lists come out innermost-first
         // without a second sort. The key is the tiebreak so equal-sized areas
         // order stably rather than by query row order.
+        //noinspection ComparatorCombinators
         areas.sort((a, b) -> {
             final int cmp = Double.compare(a.size, b.size);
             return cmp != 0
@@ -176,6 +177,7 @@ public final class FloorMapAreaMembership {
                     containing = new ArrayList<>(2);
                 }
                 containing.add(area.key);
+                //noinspection unused k
                 final List<String> occupants = occupantsByArea.computeIfAbsent(area.key, k -> new ArrayList<>());
                 occupants.add(id);
             }
@@ -195,7 +197,7 @@ public final class FloorMapAreaMembership {
             return areas;
         }
         for (final Fact fact : facts) {
-            if (isAreaFact(fact) && NullSafe.isNonEmptyString(fact.getKey())) {
+            if (fact != null && fact.isArea() && NullSafe.isNonEmptyString(fact.getKey())) {
                 final double[][] mapVertices = fact.toMapVertices();
                 if (mapVertices != null && mapVertices.length >= 3) {
                     areas.add(new AreaShape(
@@ -206,15 +208,6 @@ public final class FloorMapAreaMembership {
             }
         }
         return areas;
-    }
-
-    /**
-     * {@code true} if this fact is painted — and so tested — as an area. The
-     * image check mirrors the renderer's image-first dispatch: a fact carrying
-     * its own image renders as that image, never as a polygon.
-     */
-    public static boolean isAreaFact(final Fact fact) {
-        return fact != null && fact.hasVertices() && !fact.hasImage();
     }
 
     /**
@@ -230,7 +223,7 @@ public final class FloorMapAreaMembership {
      * </ul>
      */
     private static boolean canBeOccupant(final Fact fact) {
-        return !isAreaFact(fact)
+        return !fact.isArea()
                 && !FloorMapJsonKeys.BACKGROUND.equalsIgnoreCase(fact.getType());
     }
 

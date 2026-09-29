@@ -295,6 +295,36 @@ class TestFact {
         assertThat(fact.hasVertices()).isFalse();
     }
 
+    /// A fact with vertices and no image is an area.
+    @Test
+    void testIsArea_verticesWithoutImage() {
+        final Fact fact = new Fact("zone", FloorMapJsonKeys.AREA, null,
+                FloorMapTransformationMatrix.identity(), new double[]{0, 0},
+                new double[][]{{-5, -5}, {5, -5}, {5, 5}}, null, null);
+
+        assertThat(fact.isArea()).isTrue();
+    }
+
+    /// A fact carrying its own image renders as that image, so is not an area.
+    @Test
+    void testIsArea_imageWithVertices() {
+        final Fact fact = new Fact("odd", FloorMapJsonKeys.AREA, "/assets/x.png",
+                FloorMapTransformationMatrix.identity(), new double[]{0, 0},
+                new double[][]{{-5, -5}, {5, -5}, {5, 5}}, null, null);
+
+        assertThat(fact.isArea()).isFalse();
+    }
+
+    /// A point fact has no vertices, so is not an area.
+    @Test
+    void testIsArea_noVertices() {
+        final Fact fact = new Fact("gate", "gate", null,
+                FloorMapTransformationMatrix.identity(), new double[]{1, 2},
+                null, null, null);
+
+        assertThat(fact.isArea()).isFalse();
+    }
+
     // -----------------------------------------------------------------------
     // position validation
     // -----------------------------------------------------------------------

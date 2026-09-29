@@ -187,11 +187,6 @@ public class FloorMapEditorModel {
         }
     }
 
-    /** Clears the selection. */
-    public void clearSelection() {
-        selectedFactKeys.clear();
-    }
-
     /** Whether the given key is currently selected. */
     public boolean isSelected(final String key) {
         return selectedFactKeys.contains(key);
@@ -950,7 +945,8 @@ public class FloorMapEditorModel {
      * @param schema          the value schema (must map the area roles)
      * @param accessor        the value accessor
      * @return the new entry; never {@code null}
-     * @throws IllegalArgumentException if fewer than 3 vertices are supplied
+     * @throws IllegalArgumentException if fewer than 3 vertices are supplied,
+     *                                  or any vertex is not an {@code [x, y]} pair
      * @throws IllegalStateException    if the schema lacks a required role
      */
     public static TemporalEntry buildAreaEntry(final String mapName,
@@ -962,6 +958,12 @@ public class FloorMapEditorModel {
         if (mapVertices == null || mapVertices.size() < 3) {
             throw new IllegalArgumentException(
                     "An area needs at least 3 vertices");
+        }
+        for (final double[] vertex : mapVertices) {
+            if (vertex == null || vertex.length < 2) {
+                throw new IllegalArgumentException(
+                        "Every area vertex must be an [x, y] pair");
+            }
         }
 
         final double[] centroid = FloorMapGeometry.centroid(mapVertices.toArray(new double[0][]));

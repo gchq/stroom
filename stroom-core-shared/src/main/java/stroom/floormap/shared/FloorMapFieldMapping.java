@@ -301,18 +301,16 @@ public class FloorMapFieldMapping {
         return true;
     }
 
-    /**
-     * Finds the path mapped to {@code role} in the schema.
-     *
-     * <p>A mapping that is present but has no path counts as unmapped, since
-     * there is nowhere to read or write the value.</p>
-     *
-     * @param schema the value schema; may be {@code null}, and may contain
-     *               {@code null} entries, which are skipped
-     * @param role   the role to look up
-     * @return the path of the first mapping for the role, or {@code null} if the
-     *         role is not mapped
-     */
+    /// Finds the path mapped to `role` in the schema.
+    ///
+    /// A mapping that is present but has no path counts as unmapped, since
+    /// there is nowhere to read or write the value.
+    ///
+    /// @param schema the value schema; may be `null`, and may contain
+    ///         `null` entries, which are skipped
+    /// @param role   the role to look up
+    /// @return the path of the first mapping for the role, or `null` if the
+    ///         role is not mapped
     public static String findPath(final List<FloorMapFieldMapping> schema, final Role role) {
         if (schema == null) {
             return null;
@@ -325,18 +323,16 @@ public class FloorMapFieldMapping {
         return null;
     }
 
-    /**
-     * Finds the path mapped to {@code role}, failing loudly when there is none.
-     *
-     * <p>For writers: the value accessors silently ignore a write to a
-     * {@code null} path, so writing through {@link #findPath} for an unmapped role
-     * would drop the value without a trace.</p>
-     *
-     * @param schema the value schema; may be {@code null}
-     * @param role   the role to look up
-     * @return the path for the role; never {@code null}
-     * @throws IllegalStateException if the schema does not map the role
-     */
+    /// Finds the path mapped to `role`, failing loudly when there is none.
+    ///
+    /// For writers: the value accessors silently ignore a write to a
+    /// `null` path, so writing through [#findPath] for an unmapped role
+    /// would drop the value without a trace.
+    ///
+    /// @param schema the value schema; may be `null`
+    /// @param role   the role to look up
+    /// @return the path for the role; never `null`
+    /// @throws IllegalStateException if the schema does not map the role
     public static String requirePath(final List<FloorMapFieldMapping> schema, final Role role) {
         final String path = findPath(schema, role);
         if (path == null) {

@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.model;
 
-import stroom.floormap.client.value.FloorMapEntryParser;
 import stroom.floormap.shared.FloorMapGeometry;
 import stroom.floormap.shared.FloorMapTransformationMatrix;
 import stroom.util.shared.NullSafe;
@@ -30,7 +29,7 @@ import stroom.util.shared.NullSafe;
  * (person) is a fact from the event stream that may or may not carry an
  * image.</p>
  *
- * <p>Instances are immutable, produced by {@link FloorMapEntryParser} from a
+ * <p>Instances are immutable, produced by {@code FloorMapEntryParser} from a
  * {@link stroom.util.shared.TemporalEntry}. This is a plain, GWT-friendly value
  * object with no serialisation dependencies — it never crosses the wire (the
  * {@code TemporalEntry} does).</p>
@@ -183,6 +182,16 @@ public final class Fact {
         return vertices != null && vertices.length >= 3;
     }
 
+    /// Returns `true` if this fact is painted, and so tested, as an area.
+    ///
+    /// The image check mirrors the renderer's image-first dispatch: a fact
+    /// carrying its own image renders as that image, never as a polygon.
+    ///
+    /// @return `true` if this fact has polygon vertices and no image
+    public boolean isArea() {
+        return hasVertices() && !hasImage();
+    }
+
     /** The area fill colour (hex string), or {@code null} for the type default. */
     public String getFill() {
         return fill;
@@ -247,25 +256,21 @@ public final class Fact {
         return mapTestPoint();
     }
 
-    /**
-     * Returns the map-space point at which this fact is tested for containment.
-     *
-     * <p>Deliberately <em>not</em> {@link #mapAnchor(double, Double)}: that
-     * needs the rendered image width and aspect ratio, which only the view
-     * knows. Containment instead uses the fact's own placement, which is
-     * view-independent and stable:</p>
-     * <ul>
-     *   <li>an area → its local vertex centroid through {@code worldToMap};</li>
-     *   <li>anything else → its {@code position} through {@code worldToMap}.</li>
-     * </ul>
-     *
-     * <p>For an image fact this is its placement origin rather than the centre
-     * of the drawn image. That is the documented trade-off for keeping the test
-     * free of view state; it only matters for facts whose image is large
-     * relative to the areas around it.</p>
-     *
-     * @return the map-space test point {@code {mapX, mapY}}; never {@code null}
-     */
+    /// Returns the map-space point at which this fact is tested for containment.
+    ///
+    /// Deliberately _not_ [#mapAnchor(double, Double)]: that
+    /// needs the rendered image width and aspect ratio, which only the view
+    /// knows. Containment instead uses the fact's own placement, which is
+    /// view-independent and stable:
+    /// - an area → its local vertex centroid through `worldToMap`;
+    /// - anything else → its `position` through `worldToMap`.
+    ///
+    /// For an image fact this is its placement origin rather than the centre
+    /// of the drawn image. That is the documented trade-off for keeping the test
+    /// free of view state; it only matters for facts whose image is large
+    /// relative to the areas around it.
+    ///
+    /// @return the map-space test point `{mapX, mapY}`; never `null`
     public double[] mapTestPoint() {
         if (hasVertices()) {
             // Every vertex is a non-null [x, y] pair - the constructor rejects anything
@@ -278,16 +283,14 @@ public final class Fact {
                 position != null ? position[1] : 0);
     }
 
-    /**
-     * Projects this area's vertices from its local frame into map space by
-     * pushing each through its {@code WORLD_TO_MAP} matrix.
-     *
-     * <p>This is the load-bearing step for correctness: area vertices are
-     * stored centred on their centroid in a local frame, so an untransformed
-     * comparison against a map-space point is meaningless.</p>
-     *
-     * @return the map-space vertices, or {@code null} if this fact is not an area
-     */
+    /// Projects this area's vertices from its local frame into map space by
+    /// pushing each through its `WORLD_TO_MAP` matrix.
+    ///
+    /// This is the load-bearing step for correctness: area vertices are
+    /// stored centred on their centroid in a local frame, so an untransformed
+    /// comparison against a map-space point is meaningless.
+    ///
+    /// @return the map-space vertices, or `null` if this fact is not an area
     public double[][] toMapVertices() {
         if (!hasVertices()) {
             return null;
@@ -342,18 +345,16 @@ public final class Fact {
         return new Fact(key, type, image, worldToMap, position, newVertices, fill, opacity, label);
     }
 
-    /**
-     * Defensively copies a position, checking that it really is an {@code [x, y]}
-     * pair. Like a malformed vertex this is a caller bug rather than bad user data,
-     * and left unchecked it either reads whichever coordinates happen to be there
-     * or throws an {@code ArrayIndexOutOfBoundsException} from the middle of a
-     * constructor, saying nothing about which argument was wrong.
-     *
-     * @param source the position to copy; may be {@code null}
-     * @return a copy, or {@code null} if {@code source} is {@code null}
-     * @throws IllegalArgumentException if {@code source} does not hold exactly two
-     *                                  elements
-     */
+    /// Defensively copies a position, checking that it really is an `[x, y]` pair.
+    /// Like a malformed vertex this is a caller bug rather than bad user data, and
+    /// left unchecked it either reads whichever coordinates happen to be there or
+    /// throws an `ArrayIndexOutOfBoundsException` from the middle of a constructor,
+    /// saying nothing about which argument was wrong.
+    ///
+    /// @param source the position to copy; may be `null`
+    /// @return a copy, or `null` if `source` is `null`
+    /// @throws IllegalArgumentException if `source` does not hold exactly two
+    ///         elements
     private static double[] copyPosition(final double[] source) {
         if (source == null) {
             return null;
@@ -366,18 +367,16 @@ public final class Fact {
         return new double[]{source[0], source[1]};
     }
 
-    /**
-     * Defensively copies a vertex array, checking that every row really is an
-     * {@code [x, y]} pair. A malformed row is a programming error in the caller
-     * rather than bad user data - the parsers only ever emit two-element rows - so
-     * it fails loudly here instead of surviving as a vertex that silently drops out
-     * of hit-testing and rendering further downstream.
-     *
-     * @param source the vertices to copy; may be {@code null}
-     * @return a deep copy, or {@code null} if {@code source} is {@code null}
-     * @throws IllegalArgumentException if any row is {@code null} or does not hold
-     *                                  exactly two elements
-     */
+    /// Defensively copies a vertex array, checking that every row really is an
+    /// `[x, y]` pair. A malformed row is a programming error in the caller rather
+    /// than bad user data - the parsers only ever emit two-element rows - so it
+    /// fails loudly here instead of surviving as a vertex that silently drops out
+    /// of hit-testing and rendering further downstream.
+    ///
+    /// @param source the vertices to copy; may be `null`
+    /// @return a deep copy, or `null` if `source` is `null`
+    /// @throws IllegalArgumentException if any row is `null` or does not hold
+    ///         exactly two elements
     private static double[][] copyVertices(final double[][] source) {
         if (source == null) {
             return null;

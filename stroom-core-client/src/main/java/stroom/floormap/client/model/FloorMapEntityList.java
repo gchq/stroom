@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.model;
 
-import stroom.floormap.client.overlay.FloorMapAreaMembership;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -167,7 +166,7 @@ public class FloorMapEntityList {
      * backgrounds are unaffected.</p>
      */
     private static String displayNameFor(final Fact fact) {
-        if (FloorMapAreaMembership.isAreaFact(fact)) {
+        if (fact.isArea()) {
             final String label = fact.getLabelOrNull();
             if (label != null) {
                 return label.trim();

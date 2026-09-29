@@ -262,7 +262,7 @@ class TestFloorMapAreaMembership {
                 FloorMapTransformationMatrix.translate(100, 100),
                 new double[]{0, 0}, local, null, null);
 
-        assertThat(FloorMapAreaMembership.isAreaFact(imageWithVertices)).isFalse();
+        assertThat(imageWithVertices.isArea()).isFalse();
 
         final FloorMapAreaMembership membership = FloorMapAreaMembership.compute(
                 Collections.singletonList(imageWithVertices),

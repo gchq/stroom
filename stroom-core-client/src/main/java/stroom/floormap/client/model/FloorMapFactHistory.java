@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.model;
 
-import stroom.floormap.client.playback.FloorMapQueryThrottle;
 import stroom.floormap.client.value.FloorMapFactTableParser;
 import stroom.query.api.Column;
 import stroom.query.api.Row;
@@ -70,7 +69,7 @@ import java.util.Map;
  * therefore compares times explicitly and does not care what order the rows are in.</p>
  *
  * <p>GWT-free and pure, so the decision logic and the snapshot arithmetic are unit-testable without
- * a browser or a clock — the same shape as {@link FloorMapQueryThrottle}.</p>
+ * a browser or a clock — the same shape as {@code FloorMapQueryThrottle}.</p>
  */
 public final class FloorMapFactHistory {
 

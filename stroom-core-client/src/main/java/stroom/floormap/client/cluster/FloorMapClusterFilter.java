@@ -204,10 +204,10 @@ public final class FloorMapClusterFilter {
         }
         final List<FloorMapClusterMember> sorted = new ArrayList<>(members);
         sorted.sort((a, b) -> {
-            final int byName = nullSafe(a.getName()).compareToIgnoreCase(nullSafe(b.getName()));
+            final int byName = NullSafe.string(a.getName()).compareToIgnoreCase(NullSafe.string(b.getName()));
             return byName != 0
                     ? byName
-                    : nullSafe(a.getId()).compareToIgnoreCase(nullSafe(b.getId()));
+                    : NullSafe.string(a.getId()).compareToIgnoreCase(NullSafe.string(b.getId()));
         });
         return sorted;
     }
@@ -311,11 +311,5 @@ public final class FloorMapClusterFilter {
      */
     private static boolean isUnconstrained(final String selected, final String anyOption) {
         return NullSafe.isBlankString(selected) || anyOption.equals(selected);
-    }
-
-    private static String nullSafe(final String s) {
-        return s != null
-                ? s
-                : "";
     }
 }

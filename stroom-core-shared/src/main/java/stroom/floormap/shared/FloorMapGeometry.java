@@ -31,7 +31,7 @@ package stroom.floormap.shared;
  * <p><strong>Coordinate space:</strong> every method here is space-agnostic —
  * it simply compares numbers. Callers are responsible for making the polygon
  * and the point share one space; for FloorMap that space is always
- * <strong>map space</strong> (see {@code Fact.toMapVertices()}).</p>
+ * <strong>map space</strong>.</p>
  */
 public final class FloorMapGeometry {
 
@@ -138,20 +138,18 @@ public final class FloorMapGeometry {
         return Math.abs(sum) / 2.0;
     }
 
-    /**
-     * Returns the vertex centroid of the polygon — the mean of its vertices — as
-     * {@code {x, y}}, or {@code null} if it has no usable vertices.
-     *
-     * <p>This is the vertex mean rather than the area-weighted centroid. It is
-     * what an area's local frame is centred on when it is stored, and where its
-     * occupant badge and camera anchor sit, so every caller has to agree on it —
-     * which is why there is exactly one implementation.</p>
-     *
-     * @param polygon the polygon vertices {@code [[x,y], ...]}; may be {@code null}.
-     *                Rows that are {@code null} or shorter than two elements are
-     *                skipped, as in {@link #aabb(double[][])}
-     * @return the centroid, or {@code null}
-     */
+    /// Returns the vertex centroid of the polygon — the mean of its vertices — as
+    /// `{x, y}`, or `null` if it has no usable vertices.
+    ///
+    /// This is the vertex mean rather than the area-weighted centroid. It is
+    /// what an area's local frame is centred on when it is stored, and where its
+    /// occupant badge and camera anchor sit, so every caller has to agree on it —
+    /// which is why there is exactly one implementation.
+    ///
+    /// @param polygon the polygon vertices `[[x,y], ...]`; may be `null`.
+    ///         Rows that are `null` or shorter than two elements are
+    ///         skipped, as in [#aabb(double\[\]\[\])]
+    /// @return the centroid, or `null`
     public static double[] centroid(final double[][] polygon) {
         if (polygon == null) {
             return null;
@@ -171,15 +169,13 @@ public final class FloorMapGeometry {
                 : null;
     }
 
-    /**
-     * Returns the straight-line distance between two points.
-     *
-     * @param x1 the first point's x
-     * @param y1 the first point's y
-     * @param x2 the second point's x
-     * @param y2 the second point's y
-     * @return the distance
-     */
+    /// Returns the straight-line distance between two points.
+    ///
+    /// @param x1 the first point's x
+    /// @param y1 the first point's y
+    /// @param x2 the second point's x
+    /// @param y2 the second point's y
+    /// @return the distance
     public static double distance(final double x1,
                                   final double y1,
                                   final double x2,
@@ -187,16 +183,14 @@ public final class FloorMapGeometry {
         return Math.sqrt(distanceSquared(x1, y1, x2, y2));
     }
 
-    /**
-     * Returns the square of the straight-line distance between two points — the
-     * cheaper form for comparisons, since it needs no square root.
-     *
-     * @param x1 the first point's x
-     * @param y1 the first point's y
-     * @param x2 the second point's x
-     * @param y2 the second point's y
-     * @return the squared distance
-     */
+    /// Returns the square of the straight-line distance between two points — the
+    /// cheaper form for comparisons, since it needs no square root.
+    ///
+    /// @param x1 the first point's x
+    /// @param y1 the first point's y
+    /// @param x2 the second point's x
+    /// @param y2 the second point's y
+    /// @return the squared distance
     public static double distanceSquared(final double x1,
                                          final double y1,
                                          final double x2,
