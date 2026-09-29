@@ -50,6 +50,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 
 @Singleton
+// TODO why are we firing events. What is there to do when we receive them?
 @EntityEventHandler(type = IndexVolumeServiceImpl.ENTITY_TYPE, action = {
         EntityAction.UPDATE,
         EntityAction.CREATE,
@@ -182,6 +183,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     }
 
     private synchronized void createDefaultVolumes() {
+        // Volumes are node-specific, so each node needs to ensure its default volumes are created
+        // (if so configured), thus we don't want a cluster lock.
         if (!createdDefaultVolumes && !creatingDefaultVolumes) {
             try {
                 creatingDefaultVolumes = true;

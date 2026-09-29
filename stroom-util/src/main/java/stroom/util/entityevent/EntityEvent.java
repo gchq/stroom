@@ -157,6 +157,16 @@ public class EntityEvent {
     }
 
     /**
+     * Starts building an event-firing operation.
+     *
+     * @param eventBus The event bus to fire the event on.
+     * @return A builder that requires the document reference and action to be supplied.
+     */
+    public static FiringBuilder buildFiring(final EntityEventBus eventBus) {
+        return new FiringBuilder(eventBus);
+    }
+
+    /**
      * @return The {@link DocRef} of the {@link stroom.util.shared.Document} affected by this event,
      * as it is after the event happened.
      */
@@ -206,8 +216,21 @@ public class EntityEvent {
      * be expected and understood by sender and receiver. The format of the data will likely be
      * specific to the docRef.
      */
-    public String getData() {
+    @JsonProperty("data")
+    public String getDataAsJson() {
         return data;
+    }
+
+    /// When the entity event data is expected to be a simple string value, return the string value.
+    @JsonIgnore
+    public String getStringData() {
+        final String expectedClassName = String.class.getName();
+        if (expectedClassName.equals(dataClassName)) {
+            return data;
+        } else {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "dataClassName '{}' does not match '{}'", dataClassName, expectedClassName));
+        }
     }
 
     /**
@@ -237,10 +260,13 @@ public class EntityEvent {
         }
     }
 
+    /// A helper metod for when you want part of the EntityData
     public <T extends EntityEventData, R> R getDataObjectAs(@NonNull final Class<T> dataClass,
                                                             @NonNull final Function<T, R> mapper) {
+        Objects.requireNonNull(dataClass, "dataClass must not be null");
         final T data = getDataObject(dataClass);
-        return mapper.apply(data);
+        return Objects.requireNonNull(mapper, "mapper must not be null")
+                .apply(data);
     }
 
     public EntityEventKey asEntityEventKey() {
@@ -287,5 +313,185 @@ public class EntityEvent {
          * Any exceptions thrown within this method will be swallowed and logged at ERROR.
          */
         void onChange(EntityEvent event);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The first stage of an event firing builder.
+     */
+    public static final class FiringBuilder {
+
+        private final EntityEventBus eventBus;
+        private DocRef docRef;
+        private DocRef oldDocRef;
+        private EntityAction action;
+        private String dataClassName;
+        private String data;
+        private EntityEventData entityEventData;
+
+        private FiringBuilder(final EntityEventBus eventBus) {
+            this.eventBus = eventBus;
+        }
+
+        /**
+         * Sets the document reference affected by the event.
+         *
+         * @param docRef The document reference.
+         * @return The stage that accepts the optional old document reference or action.
+         */
+        public DocRefStage docRef(final DocRef docRef) {
+            this.docRef = docRef;
+            return new DocRefStage(this);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The builder stage after the current document reference has been supplied.
+     */
+    public static final class DocRefStage {
+
+        private final FiringBuilder builder;
+
+        private DocRefStage(final FiringBuilder builder) {
+            this.builder = builder;
+        }
+
+        /**
+         * Sets the document reference before a rename.
+         *
+         * @param oldDocRef The document reference before the event.
+         * @return The stage that accepts the action.
+         */
+        public OldDocRefStage oldDocRef(final DocRef oldDocRef) {
+            builder.oldDocRef = oldDocRef;
+            return new OldDocRefStage(builder);
+        }
+
+        /**
+         * Sets the action performed on the document.
+         *
+         * @param action The event action.
+         * @return The stage that accepts optional event data and can fire the event.
+         */
+        public ActionStage action(final EntityAction action) {
+            builder.action = action;
+            return new ActionStage(builder);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The builder stage after the old document reference has been supplied.
+     */
+    public static final class OldDocRefStage {
+
+        private final FiringBuilder builder;
+
+        private OldDocRefStage(final FiringBuilder builder) {
+            this.builder = builder;
+        }
+
+        /**
+         * Sets the action performed on the document.
+         *
+         * @param action The event action.
+         * @return The stage that accepts optional event data and can fire the event.
+         */
+        public ActionStage action(final EntityAction action) {
+            builder.action = action;
+            return new ActionStage(builder);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The builder stage after the action has been supplied.
+     */
+    public static final class ActionStage {
+
+        private final FiringBuilder builder;
+
+        private ActionStage(final FiringBuilder builder) {
+            this.builder = builder;
+        }
+
+        /**
+         * Sets additional event data that will be serialised as JSON.
+         *
+         * @param entityEventData The additional event data.
+         * @return This stage.
+         */
+        public ActionStage data(final EntityEventData entityEventData) {
+            if (entityEventData != null) {
+                builder.entityEventData = entityEventData;
+                builder.dataClassName = null;
+                builder.data = null;
+            }
+            return this;
+        }
+
+        /**
+         * Sets additional event data that has already been serialised as JSON.
+         *
+         * @param dataClassName The fully qualified class name of the data.
+         * @param json          The JSON encoded data.
+         * @return This stage.
+         */
+        public ActionStage data(final String dataClassName, final String json) {
+            builder.dataClassName = dataClassName;
+            builder.data = json;
+            builder.entityEventData = null;
+            return this;
+        }
+
+        /**
+         * Sets additional event data that is a simple string, i.e. a single field value, e.g. a name.
+         *
+         * @param strData The string value.
+         * @return This stage.
+         */
+        public ActionStage data(final String strData) {
+            builder.dataClassName = String.class.getName();
+            builder.data = strData;
+            builder.entityEventData = null;
+            return this;
+        }
+
+        /**
+         * Validates the builder and fires the event.
+         */
+        public void fire() {
+            final DocRef docRef = Objects.requireNonNull(builder.docRef, "docRef");
+            final EntityAction action = Objects.requireNonNull(builder.action, "action");
+            if (builder.eventBus != null) {
+                if (builder.entityEventData != null) {
+                    builder.eventBus.fire(new EntityEvent(
+                            docRef,
+                            builder.oldDocRef,
+                            action,
+                            builder.entityEventData));
+                } else {
+                    builder.eventBus.fire(new EntityEvent(
+                            docRef,
+                            builder.oldDocRef,
+                            action,
+                            builder.dataClassName,
+                            builder.data));
+                }
+            }
+        }
     }
 }

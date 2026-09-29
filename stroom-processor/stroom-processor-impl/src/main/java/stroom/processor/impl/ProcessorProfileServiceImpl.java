@@ -21,9 +21,7 @@ import stroom.processor.shared.ProcessorProfile;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -33,12 +31,9 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.List;
+import java.util.Objects;
 
 @Singleton
-@EntityEventHandler(type = ProcessorProfileService.ENTITY_TYPE, action = {
-        EntityAction.UPDATE,
-        EntityAction.CREATE,
-        EntityAction.DELETE})
 public class ProcessorProfileServiceImpl implements ProcessorProfileService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorProfileServiceImpl.class);
@@ -68,10 +63,13 @@ public class ProcessorProfileServiceImpl implements ProcessorProfileService {
 
     @Override
     public ProcessorProfile create(final ProcessorProfile processorProfile) {
-        final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () ->
-                processorProfileDao.create(processorProfile.copy().stampAudit(securityContext).build()));
-        fireChange(EntityAction.CREATE);
-        return result;
+        return securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () -> {
+            final ProcessorProfile persistedProfile = processorProfileDao.create(processorProfile.copy()
+                    .stampAudit(securityContext)
+                    .build());
+            fireChange(EntityAction.CREATE, processorProfile.getName());
+            return persistedProfile;
+        });
     }
 
     @Override
@@ -87,24 +85,34 @@ public class ProcessorProfileServiceImpl implements ProcessorProfileService {
     @Override
     public ProcessorProfile update(final ProcessorProfile processorProfile) {
         final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () ->
-                processorProfileDao.update(processorProfile.copy().stampAudit(securityContext).build()));
-        fireChange(EntityAction.UPDATE);
+                processorProfileDao.update(processorProfile.copy()
+                        .stampAudit(securityContext)
+                        .build()));
+        fireChange(EntityAction.UPDATE, processorProfile.getName());
         return result;
     }
 
     @Override
     public void delete(final int id) {
         securityContext.secure(AppPermission.MANAGE_PROCESSORS_PERMISSION,
-                () -> processorProfileDao.delete(id));
-        fireChange(EntityAction.DELETE);
+                () -> {
+                    final ProcessorProfile processorProfile = processorProfileDao.fetchById(id);
+                    Objects.requireNonNull(processorProfile, "Profile with id " + id + " not found");
+                    processorProfileDao.delete(id);
+                    fireChange(EntityAction.DELETE, processorProfile.getName());
+                });
     }
 
-    private void fireChange(final EntityAction action) {
+    private void fireChange(final EntityAction action, final String profileName) {
         if (entityEventBusProvider != null) {
             try {
                 final EntityEventBus entityEventBus = entityEventBusProvider.get();
                 if (entityEventBus != null) {
-                    entityEventBus.fire(new EntityEvent(EVENT_DOCREF, action));
+                    entityEventBus.buildFiring()
+                            .docRef(EVENT_DOCREF)
+                            .action(action)
+                            .data(profileName)
+                            .fire();
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
