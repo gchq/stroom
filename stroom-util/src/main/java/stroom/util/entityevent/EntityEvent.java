@@ -380,7 +380,7 @@ public class EntityEvent {
          * @return The stage that accepts the optional old document reference or action.
          */
         public DocRefStage withDocRef(final DocRef docRef) {
-            this.docRef = Objects.requireNonNull(docRef);
+            this.docRef = Objects.requireNonNull(docRef, "docRef");
             return new DocRefStage(this);
         }
     }
@@ -407,7 +407,7 @@ public class EntityEvent {
          * @return The stage that accepts the action.
          */
         public OldDocRefStage withOldDocRef(final DocRef oldDocRef) {
-            builder.oldDocRef = Objects.requireNonNull(oldDocRef);
+            builder.oldDocRef = Objects.requireNonNull(oldDocRef, "oldDocRef");
             return new OldDocRefStage(builder);
         }
 
@@ -418,7 +418,7 @@ public class EntityEvent {
          * @return The stage that accepts optional event data and can fire the event.
          */
         public ActionStage withAction(final EntityAction action) {
-            builder.action = Objects.requireNonNull(action);
+            builder.action = Objects.requireNonNull(action, "action");
             return new ActionStage(builder);
         }
     }
@@ -445,7 +445,7 @@ public class EntityEvent {
          * @return The stage that accepts optional event data and can fire the event.
          */
         public ActionStage withAction(final EntityAction action) {
-            builder.action = Objects.requireNonNull(action);
+            builder.action = Objects.requireNonNull(action, "action");
             return new ActionStage(builder);
         }
     }
