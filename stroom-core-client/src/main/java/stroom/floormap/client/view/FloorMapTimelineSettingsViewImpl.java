@@ -18,6 +18,7 @@ package stroom.floormap.client.view;
 
 import stroom.floormap.client.FloorMapAria;
 import stroom.floormap.client.presenter.FloorMapTimelineSettingsPresenter.FloorMapTimelineSettingsView;
+import stroom.util.client.Console;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -32,19 +33,17 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/**
- * View implementation for the timeline settings popup dialog.
- *
- * <p>Contains start/end date-time pickers to constrain the visible time range,
- * a loop-playback checkbox, and a "Show All" button that resets the range to
- * cover all available data. Playback speed is not set here — it has its own
- * menu opened from the speed badge on the timeline.</p>
- */
+/// View implementation for the timeline settings popup dialog.
+///
+/// Contains start/end date-time pickers to constrain the visible time range,
+/// a loop-playback checkbox, and a "Show All" button that resets the range to
+/// cover all available data. Playback speed is not set here — it has its own
+/// menu opened from the speed badge on the timeline.
 public class FloorMapTimelineSettingsViewImpl extends ViewImpl implements FloorMapTimelineSettingsView {
 
     private final Widget widget;
 
-    /** Called when the Show All button is clicked. */
+    /// Called when the Show All button is clicked.
     private Runnable showAllHandler;
 
     @UiField
@@ -74,7 +73,10 @@ public class FloorMapTimelineSettingsViewImpl extends ViewImpl implements FloorM
         // wrapping the real <input>, so a name written to the widget itself lands on
         // the wrapper and ARIA drops it — the checkbox was announced unnamed. Not
         // group() either, which would describe one checkbox as a group of controls.
-        FloorMapAria.labelInnerControl(loopCheckBox, "Loop Playback");
+        if (!FloorMapAria.labelInnerControl(loopCheckBox, "Loop Playback")) {
+            Console.error("Floor map: could not find the input inside the 'Loop Playback'"
+                          + " checkbox to give it an accessible name.");
+        }
 
         // Registered once and dispatched through a field, so a second
         // setShowAllHandler() call replaces the handler instead of stacking

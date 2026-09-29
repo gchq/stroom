@@ -218,11 +218,9 @@ class TestFloorMapGrid {
     // Decade selection in display units
     // ------------------------------------------------------------------------
 
-    /**
-     * The decade is chosen so the label is a round number of *display* units.
-     * At 0.5 m per map unit and 100 % zoom, a 100-map-unit division would be
-     * "50 m" — so the grid instead picks a 200-unit division, which is 100 m.
-     */
+    /// The decade is chosen so the label is a round number of *display* units.
+    /// At 0.5 m per map unit and 100 % zoom, a 100-map-unit division would be
+    /// "50 m" — so the grid instead picks a 200-unit division, which is 100 m.
     @Test
     void decadeIsAPowerOfTenInDisplayUnits() {
         for (final double unitsPerMapUnit : new double[]{0.5, 0.187, 2.5, 1000}) {
@@ -240,7 +238,7 @@ class TestFloorMapGrid {
         }
     }
 
-    /** Whatever the scale factor, the grid stays a comfortable size on screen. */
+    /// Whatever the scale factor, the grid stays a comfortable size on screen.
     @Test
     void displayUnitDecadesStayInComfortableRange() {
         for (final double unitsPerMapUnit : new double[]{0.001, 0.187, 1, 3.7, 5280}) {
@@ -257,7 +255,7 @@ class TestFloorMapGrid {
         }
     }
 
-    /** An uncalibrated map's grid must be bit-for-bit what it always was. */
+    /// An uncalibrated map's grid must be bit-for-bit what it always was.
     @Test
     void factorOfOneChangesNothing() {
         for (final double effectiveScale : new double[]{0.001, 0.3, 1, 2, 5, 30, 1000}) {
@@ -267,10 +265,8 @@ class TestFloorMapGrid {
         }
     }
 
-    /**
-     * A zero or non-finite factor would put NaN in every pattern coordinate, and
-     * an SVG with NaN coordinates renders nothing at all.
-     */
+    /// A zero or non-finite factor would put NaN in every pattern coordinate, and
+    /// an SVG with NaN coordinates renders nothing at all.
     @Test
     void unusableScaleFactorsFallBackToUnscaled() {
         for (final double factor : new double[]{0, -2, Double.NaN, Double.POSITIVE_INFINITY}) {
@@ -280,10 +276,8 @@ class TestFloorMapGrid {
         }
     }
 
-    /**
-     * The grid-relative helpers must agree with the drawn grid, or the initial
-     * pan inset and the duplicate-object nudge drift away from the lines.
-     */
+    /// The grid-relative helpers must agree with the drawn grid, or the initial
+    /// pan inset and the duplicate-object nudge drift away from the lines.
     @Test
     void gridRelativeHelpersFollowTheSameDecade() {
         final FloorMapMeasurementUnits units = metres(0.5);
@@ -300,7 +294,7 @@ class TestFloorMapGrid {
         }
     }
 
-    /** Passing no units is the same as the single-argument form. */
+    /// Passing no units is the same as the single-argument form.
     @Test
     void gridRelativeHelpersDefaultToUnscaled() {
         assertThat(FloorMapGrid.majorDivisionScreenPx(1.0, null))
@@ -313,7 +307,7 @@ class TestFloorMapGrid {
     // Scale bar
     // ------------------------------------------------------------------------
 
-    /** The bar never exceeds the width it is given, and is never zero-length. */
+    /// The bar never exceeds the width it is given, and is never zero-length.
     @Test
     void scaleBarFitsTheSpaceAvailable() {
         for (final double effectiveScale : new double[]{0.01, 0.3, 1, 7, 250, 5000}) {
@@ -332,7 +326,7 @@ class TestFloorMapGrid {
         }
     }
 
-    /** The width drawn must be exactly what the labelled distance is worth. */
+    /// The width drawn must be exactly what the labelled distance is worth.
     @Test
     void scaleBarWidthMatchesItsLabelledDistance() {
         final double[] bar = FloorMapGrid.scaleBar(2.0, 120, metres(0.5));
@@ -344,7 +338,7 @@ class TestFloorMapGrid {
         assertThat(FloorMapMeasurementUnits.format(metres(0.5), bar[0])).isEqualTo("20 m");
     }
 
-    /** An uncalibrated map's bar measures in the default scale, never in map units. */
+    /// An uncalibrated map's bar measures in the default scale, never in map units.
     @Test
     void scaleBarWithoutUnitsUsesTheDefaultScale() {
         final double[] bar = FloorMapGrid.scaleBar(1.0, 120, null);

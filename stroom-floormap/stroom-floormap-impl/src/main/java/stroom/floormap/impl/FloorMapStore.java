@@ -22,16 +22,12 @@ import stroom.floormap.shared.FloorMapDoc;
 
 import java.util.List;
 
-/**
- * Document store for {@link FloorMapDoc} documents, extending {@link DocumentStore}
- * with an additional method to list all available floor map document references.
- */
+/// Document store for [FloorMapDoc] documents, extending [DocumentStore]
+/// with an additional method to list all available floor map document references.
 public interface FloorMapStore extends DocumentStore<FloorMapDoc> {
 
-    /**
-     * Lists all floor map document references available in the store.
-     *
-     * @return a list of {@link DocRef} instances representing the available floor map documents
-     */
+    /// Lists all floor map document references available in the store.
+    ///
+    /// @return a list of [DocRef] instances representing the available floor map documents
     List<DocRef> list();
 }

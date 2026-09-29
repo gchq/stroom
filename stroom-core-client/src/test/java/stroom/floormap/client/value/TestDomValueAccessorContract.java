@@ -20,10 +20,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Runs the {@link AbstractValueAccessorContractTest} against the XML double, which
- * stands in for the production GWT XML accessor in every JVM test.
- */
+/// Runs the [AbstractValueAccessorContractTest] against the XML double, which
+/// stands in for the production GWT XML accessor in every JVM test.
 class TestDomValueAccessorContract extends AbstractValueAccessorContractTest {
 
     @Override
@@ -76,16 +74,14 @@ class TestDomValueAccessorContract extends AbstractValueAccessorContractTest {
     // XML-specific behaviour
     // -----------------------------------------------------------------------
 
-    /**
-     * XML element text is untyped, so a numeric-looking value <em>is</em> a string.
-     *
-     * <p>Asserted explicitly because it is the one place the two formats are
-     * legitimately allowed to differ, and the difference looks like a bug when you
-     * meet it cold: the same field reads as {@code null} through the JSON accessor
-     * and as {@code "5"} through this one. Pinning it here records that the
-     * asymmetry is intended, so nobody "fixes" one side into agreement with the
-     * other.</p>
-     */
+    /// XML element text is untyped, so a numeric-looking value *is* a string.
+    ///
+    /// Asserted explicitly because it is the one place the two formats are
+    /// legitimately allowed to differ, and the difference looks like a bug when you
+    /// meet it cold: the same field reads as `null` through the JSON accessor
+    /// and as `"5"` through this one. Pinning it here records that the
+    /// asymmetry is intended, so nobody "fixes" one side into agreement with the
+    /// other.
     @Test
     void testGetString_numericTextIsStillText() {
         final ValueAccessor a = accessor();
@@ -93,9 +89,7 @@ class TestDomValueAccessorContract extends AbstractValueAccessorContractTest {
                 .isEqualTo("5");
     }
 
-    /**
-     * CDATA is character data, so it reads exactly like plain text.
-     */
+    /// CDATA is character data, so it reads exactly like plain text.
     @Test
     void testGetString_cdataReadsAsText() {
         final ValueAccessor a = accessor();

@@ -20,10 +20,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Runs the {@link AbstractValueAccessorContractTest} against the JSON-shaped double
- * used by the parser and editor-model suites.
- */
+/// Runs the [AbstractValueAccessorContractTest] against the JSON-shaped double
+/// used by the parser and editor-model suites.
 class TestMapValueAccessorContract extends AbstractValueAccessorContractTest {
 
     @Override
@@ -82,15 +80,13 @@ class TestMapValueAccessorContract extends AbstractValueAccessorContractTest {
     // formats. Leaving them unasserted is what let the two drift.
     // -----------------------------------------------------------------------
 
-    /**
-     * JSON is typed, so only a string is a string.
-     *
-     * <p>Production {@code JsonValueAccessor.getString} asks {@code JSONValue.isString()}
-     * and returns {@code null} for anything else. This double used to call
-     * {@code toString()} on whatever it found, so a numeric {@code 5} read back as
-     * {@code "5.0"} — a value the browser never produces, asserted by every test that
-     * used this double.</p>
-     */
+    /// JSON is typed, so only a string is a string.
+    ///
+    /// Production `JsonValueAccessor.getString` asks `JSONValue.isString()`
+    /// and returns `null` for anything else. This double used to call
+    /// `toString()` on whatever it found, so a numeric `5` read back as
+    /// `"5.0"` — a value the browser never produces, asserted by every test that
+    /// used this double.
     @Test
     void testGetString_nonStringScalarYieldsNull() {
         final ValueAccessor a = accessor();
@@ -107,9 +103,7 @@ class TestMapValueAccessorContract extends AbstractValueAccessorContractTest {
                 .isEqualTo("text");
     }
 
-    /**
-     * An explicit JSON {@code null} is absent, not a value.
-     */
+    /// An explicit JSON `null` is absent, not a value.
     @Test
     void testHasValue_explicitJsonNullIsAbsent() {
         final ValueAccessor a = accessor();
@@ -119,14 +113,12 @@ class TestMapValueAccessorContract extends AbstractValueAccessorContractTest {
         assertThat(a.getString(value, ".maybe")).isNull();
     }
 
-    /**
-     * Only an object is a parseable document.
-     *
-     * <p>Production keeps the parse result only if {@code isObject()} succeeds. This
-     * double used to hand back a {@link ParsedValue} wrapping a null map for the
-     * literal {@code null}, which looked like a successful parse and then failed on
-     * first use instead of being rejected up front.</p>
-     */
+    /// Only an object is a parseable document.
+    ///
+    /// Production keeps the parse result only if `isObject()` succeeds. This
+    /// double used to hand back a [ParsedValue] wrapping a null map for the
+    /// literal `null`, which looked like a successful parse and then failed on
+    /// first use instead of being rejected up front.
     @Test
     void testParse_nonObjectYieldsNull() {
         final ValueAccessor a = accessor();

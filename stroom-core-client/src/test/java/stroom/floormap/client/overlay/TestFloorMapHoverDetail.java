@@ -27,13 +27,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestFloorMapHoverDetail {
 
-    /** The panel is headed by the name the rest of the UI uses. */
+    /// The panel is headed by the name the rest of the UI uses.
     @Test
     void testCaptionIsTheDisplayName() {
         assertThat(FloorMapHoverDetail.caption("user-42", "Alice")).isEqualTo("Alice");
     }
 
-    /** An unnamed entity is captioned by the id, which is what its grid rows show. */
+    /// An unnamed entity is captioned by the id, which is what its grid rows show.
     @Test
     void testCaptionFallsBackToId() {
         assertThat(FloorMapHoverDetail.caption("user-42", null)).isEqualTo("user-42");
@@ -41,14 +41,14 @@ class TestFloorMapHoverDetail {
         assertThat(FloorMapHoverDetail.caption("user-42", "   ")).isEqualTo("user-42");
     }
 
-    /** Nothing to identify it by means no caption at all, rather than a blank pill. */
+    /// Nothing to identify it by means no caption at all, rather than a blank pill.
     @Test
     void testCaptionWithNothingToSay() {
         assertThat(FloorMapHoverDetail.caption(null, null)).isNull();
         assertThat(FloorMapHoverDetail.caption("  ", "  ")).isNull();
     }
 
-    /** The reported shape of a fully-populated panel, in reading order. */
+    /// The reported shape of a fully-populated panel, in reading order.
     @Test
     void testFullDetail() {
         assertThat(FloorMapHoverDetail.lines(
@@ -64,7 +64,7 @@ class TestFloorMapHoverDetail {
                         "Id: user-42");
     }
 
-    /** Every containing area is named, innermost first — none is summarised away. */
+    /// Every containing area is named, innermost first — none is summarised away.
     @Test
     void testEveryContainingAreaIsNamed() {
         assertThat(FloorMapHoverDetail.areaLines(
@@ -76,24 +76,22 @@ class TestFloorMapHoverDetail {
                         "• East Wing");
     }
 
-    /** One area is stated plainly — a count and a bulleted list of one would be silly. */
+    /// One area is stated plainly — a count and a bulleted list of one would be silly.
     @Test
     void testSingleAreaIsStatedPlainly() {
         assertThat(FloorMapHoverDetail.areaLines(Collections.singletonList("Office")))
                 .containsExactly("Inside Office");
     }
 
-    /** Where areas exist, being in none of them is worth saying. */
+    /// Where areas exist, being in none of them is worth saying.
     @Test
     void testInNoAreaIsSaidWhenTheMapHasAreas() {
         assertThat(FloorMapHoverDetail.areaLines(Collections.emptyList()))
                 .containsExactly("Not inside an area");
     }
 
-    /**
-     * On a map with no areas at all the subject is dropped: "not inside an area"
-     * on every hover of every entity is noise, not information.
-     */
+    /// On a map with no areas at all the subject is dropped: "not inside an area"
+    /// on every hover of every entity is noise, not information.
     @Test
     void testAreasAreUnmentionedOnAMapWithNone() {
         assertThat(FloorMapHoverDetail.areaLines(null)).isEmpty();
@@ -104,7 +102,7 @@ class TestFloorMapHoverDetail {
                         "Id: id");
     }
 
-    /** Blank area names are skipped rather than rendered as empty bullets. */
+    /// Blank area names are skipped rather than rendered as empty bullets.
     @Test
     void testBlankAreaNamesAreSkipped() {
         assertThat(FloorMapHoverDetail.areaLines(Arrays.asList("Office", "", null, "  ")))
@@ -113,7 +111,7 @@ class TestFloorMapHoverDetail {
                 .containsExactly("Not inside an area");
     }
 
-    /** The id line is dropped when the caption already is the id. */
+    /// The id line is dropped when the caption already is the id.
     @Test
     void testIdIsNotRepeatedUnderItself() {
         assertThat(FloorMapHoverDetail.lines(
@@ -121,7 +119,7 @@ class TestFloorMapHoverDetail {
                 .containsExactly("Type: device", "Not inside an area");
     }
 
-    /** Each line stands or falls on its own input; a bare entity still reads. */
+    /// Each line stands or falls on its own input; a bare entity still reads.
     @Test
     void testMissingDetailOmitsItsLine() {
         assertThat(FloorMapHoverDetail.lines(null, null, null, null, null)).isEmpty();
@@ -130,11 +128,12 @@ class TestFloorMapHoverDetail {
                 .containsExactly("Id: fact-1");
     }
 
-    /** The returned lists are the caller's to render, not to mutate. */
+    /// The returned lists are the caller's to render, not to mutate.
     @Test
     void testResultsAreImmutable() {
         final List<String> lines = FloorMapHoverDetail.lines(
                 "person", Arrays.asList("A", "B"), "X 0 m, Y 0 m", "id", "Alice");
+        //noinspection DataFlowIssue
         assertThatThrownBy(() -> lines.add("nope"))
                 .isInstanceOf(UnsupportedOperationException.class);
     }

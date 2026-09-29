@@ -69,123 +69,101 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.inject.Inject;
 
-/**
- * Presenter for the interactive SVG map canvas.
- *
- * <p>Manages zoom, pan, object selection and drag-move in edit mode, and
- * smooth entity-movement animations with fading trails during timeline
- * playback.  Static floor-plan content comes from the {@code facts} list
- * (rendered by type z-order); event-driven entities come from
- * {@code eventObjects}.  An entity that exists as both (its positions are
- * recorded in the facts store AND it streams events) renders once: the
- * animated event overlay suppresses its static fact twin.</p>
- *
- * <p>The canvas view renders the z-ordered facts plus the event draw list
- * produced by {@link #buildAnimatedDrawList(double)} via its
- * {@link FloorMapCanvasView#draw draw()} method.</p>
- */
+/// Presenter for the interactive SVG map canvas.
+///
+/// Manages zoom, pan, object selection and drag-move in edit mode, and
+/// smooth entity-movement animations with fading trails during timeline
+/// playback.  Static floor-plan content comes from the `facts` list
+/// (rendered by type z-order); event-driven entities come from
+/// `eventObjects`.  An entity that exists as both (its positions are
+/// recorded in the facts store AND it streams events) renders once: the
+/// animated event overlay suppresses its static fact twin.
+///
+/// The canvas view renders the z-ordered facts plus the event draw list
+/// produced by [#buildAnimatedDrawList(double)] via its
+/// [draw()][FloorMapCanvasView#draw] method.
 public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasView> {
 
 
     // -------------------------------------------------------------------------
-    /**
-     * Minimum/maximum zoom scale — the single source of truth lives on
-     * {@link FloorMapViewport} (shared, unit-tested) so the clamp used here and
-     * in the viewport maths cannot drift apart. Beyond these (~1e±12) the grid
-     * decade selection and SVG coordinate values lose precision.
-     */
+    /// Minimum/maximum zoom scale — the single source of truth lives on
+    /// [FloorMapViewport] (shared, unit-tested) so the clamp used here and
+    /// in the viewport maths cannot drift apart. Beyond these (~1e±12) the grid
+    /// decade selection and SVG coordinate values lose precision.
     private static final double MIN_SCALE = FloorMapViewport.MIN_SCALE;
     private static final double MAX_SCALE = FloorMapViewport.MAX_SCALE;
 
-    /** The zoom level a freshly opened map starts at (100 %). */
+    /// The zoom level a freshly opened map starts at (100 %).
     private static final double DEFAULT_SCALE = 1.0;
 
-    /**
-     * The map→screen "background" matrix handed to {@link FloorMapViewport} for
-     * projection: map space is Y-up, the SVG render pipeline is Y-down, so the
-     * only fixed transform on top of pan/zoom is a Y flip. With this as the
-     * viewport's background, {@code viewport.mapToScreen}/{@code screenToMap}
-     * reproduce this presenter's projection exactly, so the (unit-tested)
-     * viewport maths is the single source of the projection formula.
-     */
+    /// The map→screen "background" matrix handed to [FloorMapViewport] for
+    /// projection: map space is Y-up, the SVG render pipeline is Y-down, so the
+    /// only fixed transform on top of pan/zoom is a Y flip. With this as the
+    /// viewport's background, `viewport.mapToScreen`/`screenToMap`
+    /// reproduce this presenter's projection exactly, so the (unit-tested)
+    /// viewport maths is the single source of the projection formula.
     private static final FloorMapTransformationMatrix Y_FLIP =
             FloorMapTransformationMatrix.scale(1, -1);
 
-    /**
-     * How far the origin (0,0) is inset from the bottom-left corner in the
-     * default view, expressed in major grid divisions. Half a division places
-     * the axis indicator comfortably clear of the corner (e.g. the bottom-left
-     * of the screen reads as (-50,-50) when the major division is 100).
-     */
+    /// How far the origin (0,0) is inset from the bottom-left corner in the
+    /// default view, expressed in major grid divisions. Half a division places
+    /// the axis indicator comfortably clear of the corner (e.g. the bottom-left
+    /// of the screen reads as (-50,-50) when the major division is 100).
     private static final double ORIGIN_INSET_MAJOR_DIVISIONS = 0.5;
 
-    /**
-     * Fraction of the viewport kept as empty margin on each side when the
-     * initial view is zoomed to fit all content.
-     */
+    /// Fraction of the viewport kept as empty margin on each side when the
+    /// initial view is zoomed to fit all content.
     private static final double FIT_MARGIN = 0.08;
 
-    /**
-     * How close together (screen px) two entities must be before they are merged
-     * into one summary glyph.
-     *
-     * <p>Computed from the glyph rather than picked: point glyphs occupy a
-     * {@link FloorMapScreenGeometry#POINT_GLYPH_SIZE_PX} box, so their ink starts
-     * overlapping the moment they are closer than that. It was previously
-     * three-quarters of the box on the reasoning that only badly-obscured pairs
-     * needed merging — which guaranteed the survivors overlapped, since the
-     * merged glyph is a full box wide and its neighbour could sit at 45 px. The
-     * clearance above the box gives the count pill and the caption somewhere to
-     * go. Being a <em>screen</em> distance is what makes one constant serve every
-     * zoom level and every document.</p>
-     */
+    /// How close together (screen px) two entities must be before they are merged
+    /// into one summary glyph.
+    ///
+    /// Computed from the glyph rather than picked: point glyphs occupy a
+    /// [FloorMapScreenGeometry#POINT_GLYPH_SIZE_PX] box, so their ink starts
+    /// overlapping the moment they are closer than that. It was previously
+    /// three-quarters of the box on the reasoning that only badly-obscured pairs
+    /// needed merging — which guaranteed the survivors overlapped, since the
+    /// merged glyph is a full box wide and its neighbour could sit at 45 px. The
+    /// clearance above the box gives the count pill and the caption somewhere to
+    /// go. Being a *screen* distance is what makes one constant serve every
+    /// zoom level and every document.
     private static final double CLUSTER_RADIUS_PX =
             FloorMapScreenGeometry.POINT_GLYPH_SIZE_PX * 1.2;
 
-    /**
-     * How close (screen px) the pointer must be to a cluster's centre to count as
-     * hovering it — the glyph's own half-width, so the hit area is the glyph.
-     *
-     * <p>This is the radius for a cluster drawn at the base size;
-     * {@link FloorMapClusterOverlay#clusterNear} scales it by each cluster's own
-     * {@link FloorMapCluster#getSizeFactor()}, so a badge that has grown stays
-     * hoverable right to its edge.</p>
-     */
+    /// How close (screen px) the pointer must be to a cluster's centre to count as
+    /// hovering it — the glyph's own half-width, so the hit area is the glyph.
+    ///
+    /// This is the radius for a cluster drawn at the base size;
+    /// [FloorMapClusterOverlay#clusterNear] scales it by each cluster's own
+    /// [FloorMapCluster#getSizeFactor()], so a badge that has grown stays
+    /// hoverable right to its edge.
     private static final double CLUSTER_HIT_RADIUS_PX =
             FloorMapScreenGeometry.POINT_GLYPH_SIZE_PX / 2.0;
 
-    /**
-     * The most member names listed in a hover tooltip before it summarises the
-     * rest. A cluster can hold hundreds; a tooltip taller than the canvas helps
-     * nobody, and the full list is a click away.
-     */
+    /// The most member names listed in a hover tooltip before it summarises the
+    /// rest. A cluster can hold hundreds; a tooltip taller than the canvas helps
+    /// nobody, and the full list is a click away.
     private static final int CLUSTER_TOOLTIP_MAX_NAMES = 20;
 
     // Zoom and pan state
     private double scale = DEFAULT_SCALE;
     private double offsetX = 0;
     private double offsetY = 0;
-    /**
-     * Whether the initial view (zoom-to-fit, or the bottom-left origin fallback)
-     * has been applied yet. Applied once, when the canvas first has both a real
-     * size and — for the fit — content or an injected view; user pan/zoom
-     * afterwards is left untouched.
-     */
+    /// Whether the initial view (zoom-to-fit, or the bottom-left origin fallback)
+    /// has been applied yet. Applied once, when the canvas first has both a real
+    /// size and — for the fit — content or an injected view; user pan/zoom
+    /// afterwards is left untouched.
     private boolean initialViewApplied = false;
 
-    /**
-     * An initial view {@code {scale, offsetX, offsetY}} handed over from another
-     * tab (Map → Editor) so the first frame matches exactly and nothing jumps.
-     * {@code null} when this canvas must compute its own fit. Consulted once, on
-     * the first {@link #maybeApplyInitialView()}.
-     */
+    /// An initial view `{scale, offsetX, offsetY}` handed over from another
+    /// tab (Map → Editor) so the first frame matches exactly and nothing jumps.
+    /// `null` when this canvas must compute its own fit. Consulted once, on
+    /// the first [#maybeApplyInitialView()].
     private double[] injectedInitialView;
 
-    /**
-     * Notified once with this canvas's computed initial view
-     * {@code {scale, offsetX, offsetY}} so another tab can reuse it. {@code null}
-     * when nothing is listening.
-     */
+    /// Notified once with this canvas's computed initial view
+    /// `{scale, offsetX, offsetY}` so another tab can reuse it. `null`
+    /// when nothing is listening.
     private Consumer<double[]> initialViewListener;
 
     // Dragging state
@@ -193,15 +171,15 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     private GeometryHandler geometryHandler;
     private SelectionHandler selectionHandler;
     private boolean isDragging = false;
-    /** True only if the mouse actually moved while dragging an object (distinguishes click-to-select from drag). */
+    /// True only if the mouse actually moved while dragging an object (distinguishes click-to-select from drag).
     private boolean hasMoved = false;
     private double lastMouseX;
     private double lastMouseY;
-    /** Accumulated drag delta in map space (Y-up) for the current drag gesture. */
+    /// Accumulated drag delta in map space (Y-up) for the current drag gesture.
     private double dragDxMap;
     private double dragDyMap;
 
-    /** The kind of pointer gesture currently in progress. */
+    /// The kind of pointer gesture currently in progress.
     private enum Gesture {
         NONE, PANNING, MOVING, MARQUEE, SCALING, ROTATING, DRAWING_AREA, MOVING_VERTEX,
         MEASURING_SCALE
@@ -210,281 +188,229 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     private Gesture gesture = Gesture.NONE;
 
     // Area vertex-edit state (valid while gesture == MOVING_VERTEX).
-    /** Key of the area whose vertices are being edited. */
+    /// Key of the area whose vertices are being edited.
     private String editingAreaKey;
-    /** The area's world-to-map at edit start (to map screen ↔ local frame). */
+    /// The area's world-to-map at edit start (to map screen ↔ local frame).
     private FloorMapTransformationMatrix editingWorldToMap;
-    /** Working copy of the area's local-frame vertices during the edit. */
+    /// Working copy of the area's local-frame vertices during the edit.
     private double[][] workingVertices;
-    /** Index of the vertex being dragged, or -1. */
+    /// Index of the vertex being dragged, or -1.
     private int editingVertexIndex = -1;
-    /** True when the current vertex edit inserted a new vertex (persist even if not dragged). */
+    /// True when the current vertex edit inserted a new vertex (persist even if not dragged).
     private boolean vertexInserted;
 
-    /** Rubber-band marquee corners in element-pixel space (valid while MARQUEE). */
+    /// Rubber-band marquee corners in element-pixel space (valid while MARQUEE).
     private double marqueeStartX;
     private double marqueeStartY;
     private double marqueeCurX;
     private double marqueeCurY;
 
-    /** Minimum vertices needed to close an area polygon. */
+    /// Minimum vertices needed to close an area polygon.
     private static final int AREA_MIN_VERTICES = 3;
-    /**
-     * Screen-pixel radius around vertex 0 within which a click closes the
-     * polygon, and the radius of the close-target ring the view draws. Public
-     * so {@code FloorMapCanvasViewImpl} shares this single value (the hit test
-     * and the drawn ring must match).
-     */
+    /// Screen-pixel radius around vertex 0 within which a click closes the
+    /// polygon, and the radius of the close-target ring the view draws. Public
+    /// so `FloorMapCanvasViewImpl` shares this single value (the hit test
+    /// and the drawn ring must match).
     public static final double AREA_CLOSE_RADIUS_PX = 10;
 
-    /**
-     * Committed draft vertices for the in-progress DRAWING_AREA gesture, in
-     * map space (so panning/zooming mid-draw doesn't shear the draft).
-     */
+    /// Committed draft vertices for the in-progress DRAWING_AREA gesture, in
+    /// map space (so panning/zooming mid-draw doesn't shear the draft).
     private final List<double[]> areaDraftMap = new ArrayList<>();
-    /** Live cursor position in element pixels (valid while DRAWING_AREA). */
+    /// Live cursor position in element pixels (valid while DRAWING_AREA).
     private double areaCursorX;
     private double areaCursorY;
 
-    /**
-     * The anchor of the in-progress Set Scale measurement, in map space (so a
-     * mid-measure zoom cannot stretch it), or {@code null} before the press.
-     */
+    /// The anchor of the in-progress Set Scale measurement, in map space (so a
+    /// mid-measure zoom cannot stretch it), or `null` before the press.
     private double[] measureStartMap;
-    /** Live cursor position in element pixels (valid while MEASURING_SCALE). */
+    /// Live cursor position in element pixels (valid while MEASURING_SCALE).
     private double measureCursorX;
     private double measureCursorY;
 
-    /**
-     * Shortest measurement worth acting on, in screen pixels. Below this the
-     * derived scale would be dominated by where the pointer happened to land, so
-     * the gesture stays live and the user can simply drag again.
-     */
+    /// Shortest measurement worth acting on, in screen pixels. Below this the
+    /// derived scale would be dominated by where the pointer happened to land, so
+    /// the gesture stays live and the user can simply drag again.
     private static final double MIN_MEASURE_PX = 8;
     private AreaHandler areaHandler;
     private ScaleHandler scaleHandler;
 
-    /**
-     * On a plain press over the background fact or empty canvas, the fact key to
-     * select if the press turns out to be a click rather than a pan
-     * ({@code null} for empty canvas). Lets a click select the background image
-     * while a drag still pans.
-     */
+    /// On a plain press over the background fact or empty canvas, the fact key to
+    /// select if the press turns out to be a click rather than a pan
+    /// (`null` for empty canvas). Lets a click select the background image
+    /// while a drag still pans.
     private String pendingClickSelectId;
 
-    /**
-     * The in-progress map-space transform for the current MOVING/SCALING/ROTATING
-     * gesture (composed onto each selected fact for live preview and committed on
-     * release). {@code null} when no transform gesture is active.
-     */
+    /// The in-progress map-space transform for the current MOVING/SCALING/ROTATING
+    /// gesture (composed onto each selected fact for live preview and committed on
+    /// release). `null` when no transform gesture is active.
     private FloorMapTransformationMatrix pendingTransform;
-    /** Scale pivot in map space (opposite corner / edge midpoint), for SCALING. */
+    /// Scale pivot in map space (opposite corner / edge midpoint), for SCALING.
     private double gesturePivotX;
     private double gesturePivotY;
-    /** The grabbed scale handle's map-space position at gesture start, for SCALING. */
+    /// The grabbed scale handle's map-space position at gesture start, for SCALING.
     private double gestureRefX;
     private double gestureRefY;
-    /** Rotation centre in map space, for ROTATING. */
+    /// Rotation centre in map space, for ROTATING.
     private double gestureCentreX;
     private double gestureCentreY;
-    /** Pointer position in map space at gesture start, for ROTATING. */
+    /// Pointer position in map space at gesture start, for ROTATING.
     private double gestureStartMapX;
     private double gestureStartMapY;
-    /** Smallest scale factor a handle drag may produce (avoids zero/flip/singular). */
+    /// Smallest scale factor a handle drag may produce (avoids zero/flip/singular).
     private static final double MIN_SCALE_FACTOR = 0.05;
 
-    /**
-     * Keys of facts that behave like the canvas background: a plain drag over
-     * them pans (matching the read-only Map viewer) rather than moving them.
-     * Recomputed on each {@link #setFacts(List)}.
-     */
+    /// Keys of facts that behave like the canvas background: a plain drag over
+    /// them pans (matching the read-only Map viewer) rather than moving them.
+    /// Recomputed on each [#setFacts(List)].
     private final Set<String> backgroundKeys = new HashSet<>();
 
-    /**
-     * Keys of area (polygon) facts. Their whole interior is clickable, so a
-     * press on an <em>unselected</em> area gets the background treatment —
-     * drag pans, plain click selects — otherwise a large area would make the
-     * map impossible to pan. Once selected, a drag moves it like any object.
-     * Recomputed on each {@link #setFacts(List)}.
-     */
+    /// Keys of area (polygon) facts. Their whole interior is clickable, so a
+    /// press on an *unselected* area gets the background treatment —
+    /// drag pans, plain click selects — otherwise a large area would make the
+    /// map impossible to pan. Once selected, a drag moves it like any object.
+    /// Recomputed on each [#setFacts(List)].
     private final Set<String> areaKeys = new HashSet<>();
 
     // Edit mode
     private boolean editMode = false;
-    /**
-     * Currently selected object ids, in selection order. Backed as a set so a
-     * future rubber-band / modifier-key UI can select many; the current UI
-     * selects exactly one (see {@link #setSelectedObjectId(String)}). The view
-     * highlights every id in this set; a drag translates the whole selection.
-     */
+    /// Currently selected object ids, in selection order. Backed as a set so a
+    /// future rubber-band / modifier-key UI can select many; the current UI
+    /// selects exactly one (see [#setSelectedObjectId(String)]). The view
+    /// highlights every id in this set; a drag translates the whole selection.
     private final Set<String> selectedObjectIds = new LinkedHashSet<>();
 
-    /**
-     * Whether the grid overlay is drawn. The grid is a non-interactive UI aid
-     * (it visualises map space) and is independent of {@link #editMode} and of
-     * whether a background image is present. The Editor tab enables it; other
-     * tabs (e.g. the Map tab) can opt in via {@link #setShowGrid(boolean)}.
-     */
+    /// Whether the grid overlay is drawn. The grid is a non-interactive UI aid
+    /// (it visualises map space) and is independent of [#editMode] and of
+    /// whether a background image is present. The Editor tab enables it; other
+    /// tabs (e.g. the Map tab) can opt in via [#setShowGrid(boolean)].
     private boolean showGrid = false;
 
-    /**
-     * Whether entities too close together on screen are merged into one summary
-     * glyph. Enabled by the Map tab; never applied in edit mode (see
-     * {@link #clusterOverlay}).
-     *
-     * <p>Transient view state, like {@link #showGrid} — not a document field, so
-     * it neither dirties the document nor needs carrying through
-     * {@code FloorMapDoc.copy()}.</p>
-     */
+    /// Whether entities too close together on screen are merged into one summary
+    /// glyph. Enabled by the Map tab; never applied in edit mode (see
+    /// [#clusterOverlay]).
+    ///
+    /// Transient view state, like [#showGrid] — not a document field, so
+    /// it neither dirties the document nor needs carrying through
+    /// `FloorMapDoc.copy()`.
     private boolean clusterNearbyEntities = false;
 
-    /**
-     * The clusters drawn by the most recent frame, retained so a hover can ask
-     * what the pointer is over.
-     *
-     * <p>Assigned inside {@link #clusterOverlay}, which is the one place both
-     * draw paths go through — the static redraw and the animation loop. Setting
-     * it at the call sites instead would leave it stale for exactly as long as
-     * anything was moving.</p>
-     */
+    /// The clusters drawn by the most recent frame, retained so a hover can ask
+    /// what the pointer is over.
+    ///
+    /// Assigned inside [#clusterOverlay], which is the one place both
+    /// draw paths go through — the static redraw and the animation loop. Setting
+    /// it at the call sites instead would leave it stale for exactly as long as
+    /// anything was moving.
     private FloorMapClusterOverlay lastClusterOverlay = FloorMapClusterOverlay.EMPTY;
 
-    /**
-     * The cluster key pressed on mousedown, resolved on mouseup by the same
-     * click-versus-pan test the background press uses — so a drag that starts on
-     * a cluster still pans the map rather than opening a dialog.
-     */
+    /// The cluster key pressed on mousedown, resolved on mouseup by the same
+    /// click-versus-pan test the background press uses — so a drag that starts on
+    /// a cluster still pans the map rather than opening a dialog.
     private String pendingClickClusterKey;
 
-    /**
-     * The key of the cluster the pointer is currently over, or {@code null}.
-     * Tracked so the tooltip's contents are rebuilt when the hovered cluster
-     * changes rather than on every mouse move.
-     */
+    /// The key of the cluster the pointer is currently over, or `null`.
+    /// Tracked so the tooltip's contents are rebuilt when the hovered cluster
+    /// changes rather than on every mouse move.
     private String hoveredClusterKey;
 
-    /**
-     * The id of the single entity the pointer is currently over, or {@code null}.
-     * Tracked for the same reason as {@link #hoveredClusterKey}, and mutually
-     * exclusive with it: one panel, describing whatever is under the pointer.
-     */
+    /// The id of the single entity the pointer is currently over, or `null`.
+    /// Tracked for the same reason as [#hoveredClusterKey], and mutually
+    /// exclusive with it: one panel, describing whatever is under the pointer.
     private String hoveredObjectId;
 
-    /**
-     * Resolves an entity id to the name shown to users. Supplied by the owning
-     * tab, which owns the roster; without one the tooltip falls back to ids.
-     */
+    /// Resolves an entity id to the name shown to users. Supplied by the owning
+    /// tab, which owns the roster; without one the tooltip falls back to ids.
     private Function<String, String> entityNameResolver;
 
-    /** Per-type presentation settings (z-order + default graphic); may be null. */
+    /// Per-type presentation settings (z-order + default graphic); may be null.
     private List<TypeStyle> typeStyles;
 
-    /**
-     * What one map unit means in the real world; {@code null} on a map with no
-     * scale set, which is the normal state.
-     */
+    /// What one map unit means in the real world; `null` on a map with no
+    /// scale set, which is the normal state.
     private FloorMapMeasurementUnits measurementUnits;
 
-    /** The facts to render (backgrounds + static facts), from the parser. */
+    /// The facts to render (backgrounds + static facts), from the parser.
     private List<Fact> facts = new ArrayList<>();
 
-    /**
-     * Image-bearing facts by key, for decorating animated entities with their configured icon.
-     *
-     * <p>Derived purely from {@link #facts}, so it is rebuilt in {@link #setFacts} rather than on
-     * every animation frame - which is where it used to be built, scanning every fact 60 times a
-     * second to produce a map that only changes when the facts do. Null means "not yet built".</p>
-     */
+    /// Image-bearing facts by key, for decorating animated entities with their configured icon.
+    ///
+    /// Derived purely from [#facts], so it is rebuilt in [#setFacts] rather than on
+    /// every animation frame - which is where it used to be built, scanning every fact 60 times a
+    /// second to produce a map that only changes when the facts do. Null means "not yet built".
     private Map<String, Fact> imageFactsByKey = new HashMap<>();
 
-    /** Types the Layers panel has hidden: not drawn and not hit-tested. */
+    /// Types the Layers panel has hidden: not drawn and not hit-tested.
     private final Set<String> hiddenTypes = new HashSet<>();
-    /** Types the Layers panel has dimmed to 30% opacity. */
+    /// Types the Layers panel has dimmed to 30% opacity.
     private final Set<String> dimmedTypes = new HashSet<>();
-    /** Types the Layers panel has locked (Editor): their items can't be moved. */
+    /// Types the Layers panel has locked (Editor): their items can't be moved.
     private final Set<String> lockedTypes = new HashSet<>();
-    /** Fact keys belonging to a locked type — recomputed whenever facts change. */
+    /// Fact keys belonging to a locked type — recomputed whenever facts change.
     private final Set<String> lockedKeys = new HashSet<>();
 
     // -------------------------------------------------------------------------
     // Entity tracking (Map tab)
     // -------------------------------------------------------------------------
 
-    /**
-     * How far (px) the mouse must move with the button down before the gesture
-     * counts as a deliberate pan rather than click jitter. Without this, the
-     * couple of pixels of movement inside an ordinary click would pause
-     * following the instant it was enabled.
-     */
+    /// How far (px) the mouse must move with the button down before the gesture
+    /// counts as a deliberate pan rather than click jitter. Without this, the
+    /// couple of pixels of movement inside an ordinary click would pause
+    /// following the instant it was enabled.
     private static final double PAN_INTENT_THRESHOLD_PX = 4.0;
 
-    /**
-     * Below this outstanding follow correction (px) the camera snaps the
-     * remainder instead of gliding, so a damped follow terminates rather than
-     * trailing sub-pixel movements forever.
-     */
+    /// Below this outstanding follow correction (px) the camera snaps the
+    /// remainder instead of gliding, so a damped follow terminates rather than
+    /// trailing sub-pixel movements forever.
     private static final double FOLLOW_SNAP_PX = 0.5;
 
-    /** Id of the entity the camera is following, or {@code null} when not tracking. */
+    /// Id of the entity the camera is following, or `null` when not tracking.
     private String trackedObjectId = null;
 
-    /**
-     * Which entities are inside which areas at the current timeline instant,
-     * supplied by the owning tab (see {@link #setAreaMembership}). Drives the
-     * reciprocal containment highlight and the occupant-count badges; empty
-     * until the tab pushes a snapshot, so nothing is decorated by default.
-     */
+    /// Which entities are inside which areas at the current timeline instant,
+    /// supplied by the owning tab (see [#setAreaMembership]). Drives the
+    /// reciprocal containment highlight and the occupant-count badges; empty
+    /// until the tab pushes a snapshot, so nothing is decorated by default.
     private FloorMapAreaMembership areaMembership = FloorMapAreaMembership.EMPTY;
 
-    /**
-     * Which entities belong to a group the user has switched on in the Groups
-     * panel, and in what colour (see {@link #setGroupOverlay}). Empty until the tab
-     * pushes one, and empty again whenever no group is highlighted — which is the
-     * default for every group.
-     *
-     * <p>Purely a decoration: group highlight never affects the camera, so nothing
-     * here touches {@link #trackedObjectId}.</p>
-     */
+    /// Which entities belong to a group the user has switched on in the Groups
+    /// panel, and in what colour (see [#setGroupOverlay]). Empty until the tab
+    /// pushes one, and empty again whenever no group is highlighted — which is the
+    /// default for every group.
+    ///
+    /// Purely a decoration: group highlight never affects the camera, so nothing
+    /// here touches [#trackedObjectId].
     private FloorMapGroupOverlay groupOverlay = FloorMapGroupOverlay.EMPTY;
 
-    /**
-     * {@code true} after a deliberate manual pan while tracking — the highlight
-     * stays but the camera stops following until the user re-selects (or
-     * re-clicks) the tracked entity, which calls
-     * {@link #setTrackedObjectId(String)} again and clears this flag.
-     */
+    /// `true` after a deliberate manual pan while tracking — the highlight
+    /// stays but the camera stops following until the user re-selects (or
+    /// re-clicks) the tracked entity, which calls
+    /// [#setTrackedObjectId(String)] again and clears this flag.
     private boolean followPaused = false;
 
-    /**
-     * When {@code true}, the next follow with a known position hard-centres the
-     * tracked entity instead of dead-zone panning. Set on (re-)selection so
-     * tracking gives immediate visible feedback even when the entity is
-     * already somewhere on screen.
-     */
+    /// When `true`, the next follow with a known position hard-centres the
+    /// tracked entity instead of dead-zone panning. Set on (re-)selection so
+    /// tracking gives immediate visible feedback even when the entity is
+    /// already somewhere on screen.
     private boolean centreOnNextFollow = false;
 
-    /** Manual pan distance accumulated since the last mousedown, in px. */
+    /// Manual pan distance accumulated since the last mousedown, in px.
     private double manualPanPx = 0;
 
     // -------------------------------------------------------------------------
     // Playback / animation state
     // -------------------------------------------------------------------------
 
-    /**
-     * The entity animation data machine (interpolation, trails, teleport). This
-     * presenter owns only the scheduler loop, camera-follow and drawing; all the
-     * per-entity bookkeeping lives in the shared, unit-tested animator.
-     */
+    /// The entity animation data machine (interpolation, trails, teleport). This
+    /// presenter owns only the scheduler loop, camera-follow and drawing; all the
+    /// per-entity bookkeeping lives in the shared, unit-tested animator.
     private final FloorMapEntityAnimator animator = new FloorMapEntityAnimator();
 
-    /** {@code true} while the {@link #animationCallback} loop is scheduled. */
+    /// `true` while the [#animationCallback] loop is scheduled.
     private boolean animationLoopRunning = false;
 
-    /**
-     * The {@code AnimationScheduler} timestamp of the most recently executed animation
-     * frame.  Used to compute the per-frame delta for advancing animation progress.
-     * Reset to {@code 0} when the loop terminates or is cleared.
-     */
+    /// The `AnimationScheduler` timestamp of the most recently executed animation
+    /// frame.  Used to compute the per-frame delta for advancing animation progress.
+    /// Reset to `0` when the loop terminates or is cleared.
     private double lastAnimationTimestamp = 0;
 
     // -------------------------------------------------------------------------
@@ -513,19 +439,16 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /**
-     * Applies the one-time initial view the first time it can, then leaves the
-     * view alone. Ordering of layout vs. fact loading is not guaranteed, so this
-     * is called from both the resize listener and {@link #setFacts}; it runs at
-     * most once. Priority:
-     * <ol>
-     *   <li>An injected view from another tab (Map → Editor) — applied verbatim
-     *       so the first frame matches and nothing jumps.</li>
-     *   <li>Zoom-to-fit all content, when facts are present.</li>
-     *   <li>The bottom-left origin fallback, when there is no content (does
-     *       <em>not</em> lock in, so a later {@link #setFacts} can still fit).</li>
-     * </ol>
-     */
+    /// Applies the one-time initial view the first time it can, then leaves the
+    /// view alone. Ordering of layout vs. fact loading is not guaranteed, so this
+    /// is called from both the resize listener and [#setFacts]; it runs at
+    /// most once. Priority:
+    ///
+    /// 1. An injected view from another tab (Map → Editor) — applied verbatim
+    ///    so the first frame matches and nothing jumps.
+    /// 2. Zoom-to-fit all content, when facts are present.
+    /// 3. The bottom-left origin fallback, when there is no content (does
+    ///    *not* lock in, so a later [#setFacts] can still fit).
     private void maybeApplyInitialView() {
         if (initialViewApplied) {
             return;
@@ -559,17 +482,15 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         applyOriginView(height);
     }
 
-    /**
-     * Sets {@code scale}/{@code offsetX}/{@code offsetY} so the given map-space
-     * content bounds are centred and fill the viewport with a {@link #FIT_MARGIN}
-     * border. A degenerate (zero-extent) axis keeps {@link #DEFAULT_SCALE} rather
-     * than zooming to the clamp. Does not redraw on its own when it returns
-     * {@code false}.
-     *
-     * @param b      the content bounds {@code {minX, minY, maxX, maxY}}
-     * @param height the current viewport height (already known to be {@code > 0})
-     * @return {@code true} if a view was applied
-     */
+    /// Sets `scale`/`offsetX`/`offsetY` so the given map-space
+    /// content bounds are centred and fill the viewport with a [#FIT_MARGIN]
+    /// border. A degenerate (zero-extent) axis keeps [#DEFAULT_SCALE] rather
+    /// than zooming to the clamp. Does not redraw on its own when it returns
+    /// `false`.
+    ///
+    /// @param b      the content bounds `{minX, minY, maxX, maxY}`
+    /// @param height the current viewport height (already known to be `> 0`)
+    /// @return `true` if a view was applied
     private boolean applyFitView(final double[] b, final int height) {
         final int width = getView().getFocusPanel().getElement().getOffsetWidth();
         if (width <= 0) {
@@ -599,13 +520,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return true;
     }
 
-    /**
-     * Positions the view so the map origin (0,0) sits near the bottom-left
-     * corner, inset by {@link #ORIGIN_INSET_MAJOR_DIVISIONS} of a major grid
-     * division at the default zoom. The empty-map fallback.
-     *
-     * @param height the current viewport height (already known to be {@code > 0})
-     */
+    /// Positions the view so the map origin (0,0) sits near the bottom-left
+    /// corner, inset by [#ORIGIN_INSET_MAJOR_DIVISIONS] of a major grid
+    /// division at the default zoom. The empty-map fallback.
+    ///
+    /// @param height the current viewport height (already known to be `> 0`)
     private void applyOriginView(final int height) {
         // Half a major grid division, in screen pixels, at the default zoom.
         // The grid is drawn with an identity world-to-map matrix, so its
@@ -626,13 +545,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     // Public API — called by FloorMapMapPresenter
     // =========================================================================
 
-    /**
-     * Notifies the canvas that the timeline is playing or has been paused.
-     * When transitioning to paused, any in-flight animations are allowed to
-     * finish naturally (they will terminate on the next loop iteration).
-     *
-     * @param playing {@code true} when playback starts, {@code false} when it stops.
-     */
+    /// Notifies the canvas that the timeline is playing or has been paused.
+    /// When transitioning to paused, any in-flight animations are allowed to
+    /// finish naturally (they will terminate on the next loop iteration).
+    ///
+    /// @param playing `true` when playback starts, `false` when it stops.
     public void setPlaying(final boolean playing) {
         this.playing = playing;
         animator.setPlaying(playing);
@@ -643,16 +560,14 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 : "Paused");
     }
 
-    /**
-     * Discards all in-flight movement animations and trail data.  Call this
-     * whenever the timeline time jumps non-continuously (scrub, step, loop-around,
-     * stop-at-end) so stale animation state does not carry over.
-     * <p>
-     * Arms a teleport (via {@link FloorMapEntityAnimator#clear()}) so the
-     * <em>next</em> {@link #setEventObjects} places entities at their new
-     * positions instantly rather than animating from stale positions, even
-     * during playback.
-     */
+    /// Discards all in-flight movement animations and trail data.  Call this
+    /// whenever the timeline time jumps non-continuously (scrub, step, loop-around,
+    /// stop-at-end) so stale animation state does not carry over.
+    ///
+    /// Arms a teleport (via [FloorMapEntityAnimator#clear()]) so the
+    /// *next* [#setEventObjects] places entities at their new
+    /// positions instantly rather than animating from stale positions, even
+    /// during playback.
     public void clearAnimationState() {
         animator.clear();
         // Deliberately do NOT force animationLoopRunning = false here. A frame
@@ -1364,56 +1279,49 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }));
     }
 
-    /** On-screen distance one arrow key pans the map. */
+    /// On-screen distance one arrow key pans the map.
     private static final double KEY_PAN_PX = 40;
 
-    /**
-     * Multiplier applied to {@link #KEY_PAN_PX} when Shift is held, so crossing a
-     * large floor plan does not take fifty keypresses.
-     */
+    /// Multiplier applied to [#KEY_PAN_PX] when Shift is held, so crossing a
+    /// large floor plan does not take fifty keypresses.
     private static final double KEY_PAN_FAST_FACTOR = 5;
 
-    /**
-     * Keyboard operation of the view: pan, zoom, reset, clear selection, and open
-     * the context menu.
-     *
-     * <p>Bindings deliberately mirror every mouse capability the canvas has, since
-     * a map you can focus but not move is no more usable than one you cannot focus
-     * at all:</p>
-     * <ul>
-     *   <li><strong>Arrows</strong> pan; with <strong>Shift</strong>, five times as
-     *       far.</li>
-     *   <li><strong>+</strong> / <strong>-</strong> (main row or numeric keypad)
-     *       zoom about the centre of the viewport. The wheel zooms toward the
-     *       cursor, but a keyboard user has no cursor to zoom toward, and the
-     *       viewport centre is the one point they can be sure of.</li>
-     *   <li><strong>0</strong> resets to the fit-everything view — the escape hatch
-     *       from having panned or zoomed into empty space, which is easy to do
-     *       without a visible scrollbar to say where you are.</li>
-     * </ul>
-     *
-     * <p>Escape is deliberately <em>not</em> handled here. In edit mode the caller
-     * has already dealt with it (cancel gesture, else clear selection). On the Map
-     * tab, where selection is the tracking highlight, clearing it here would leave
-     * {@code trackedObjectId} set and the Tracking panel's row still selected —
-     * tracking with no highlight, and a grid disagreeing with the map. Stopping a
-     * follow has to go through the Tracking panel, whose Stop Tracking button is
-     * already keyboard-reachable and keeps both ends in step.</p>
-     *
-     * <ul>
-     *   <li><strong>Enter</strong> / <strong>Space</strong> opens the context menu
-     *       for the selection — see {@link #openKeyboardContextMenu()}. Edit mode
-     *       only, and only when no gesture is in progress, matching the mouse
-     *       path: {@code MapContextMenuEvent} is handled by the Editor tab alone,
-     *       and a menu must never open mid-draw.</li>
-     * </ul>
-     *
-     * <p>Tab is untouched, so it always leaves the map: entity-by-entity traversal
-     * lives in the Tracking panel's grid, which is a real navigable list and is
-     * named as this map's text alternative. Spending the map's own arrow keys on
-     * walking entities would have cost panning and gained a worse version of a
-     * control that already exists.</p>
-     */
+    /// Keyboard operation of the view: pan, zoom, reset, clear selection, and open
+    /// the context menu.
+    ///
+    /// Bindings deliberately mirror every mouse capability the canvas has, since
+    /// a map you can focus but not move is no more usable than one you cannot focus
+    /// at all:
+    ///
+    /// - **Arrows** pan; with **Shift**, five times as
+    ///   far.
+    /// - **+** / **-** (main row or numeric keypad)
+    ///   zoom about the centre of the viewport. The wheel zooms toward the
+    ///   cursor, but a keyboard user has no cursor to zoom toward, and the
+    ///   viewport centre is the one point they can be sure of.
+    /// - **0** resets to the fit-everything view — the escape hatch
+    ///   from having panned or zoomed into empty space, which is easy to do
+    ///   without a visible scrollbar to say where you are.
+    ///
+    /// Escape is deliberately *not* handled here. In edit mode the caller
+    /// has already dealt with it (cancel gesture, else clear selection). On the Map
+    /// tab, where selection is the tracking highlight, clearing it here would leave
+    /// `trackedObjectId` set and the Tracking panel's row still selected —
+    /// tracking with no highlight, and a grid disagreeing with the map. Stopping a
+    /// follow has to go through the Tracking panel, whose Stop Tracking button is
+    /// already keyboard-reachable and keeps both ends in step.
+    ///
+    /// - **Enter** / **Space** opens the context menu
+    ///   for the selection — see [#openKeyboardContextMenu()]. Edit mode
+    ///   only, and only when no gesture is in progress, matching the mouse
+    ///   path: `MapContextMenuEvent` is handled by the Editor tab alone,
+    ///   and a menu must never open mid-draw.
+    ///
+    /// Tab is untouched, so it always leaves the map: entity-by-entity traversal
+    /// lives in the Tracking panel's grid, which is a real navigable list and is
+    /// named as this map's text alternative. Spending the map's own arrow keys on
+    /// walking entities would have cost panning and gained a worse version of a
+    /// control that already exists.
     private void handleViewKeys(final KeyDownEvent event) {
         final double step = event.isShiftKeyDown()
                 ? KEY_PAN_PX * KEY_PAN_FAST_FACTOR
@@ -1450,24 +1358,22 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /**
-     * {@code keyCode} for the main-row {@code =}/{@code +} key in Chrome, Safari
-     * and Edge.
-     *
-     * <p>These have to be spelled out because {@link KeyCodes} has no constants for
-     * the punctuation keys, and because a {@code keydown} carries a key code rather
-     * than a character: there is no {@code '+'} to compare against, only the code
-     * of the physical key that produces {@code +} when shifted. Firefox
-     * historically reports different values for exactly these two keys, so both
-     * sets are accepted.</p>
-     */
+    /// `keyCode` for the main-row `=`/`+` key in Chrome, Safari
+    /// and Edge.
+    ///
+    /// These have to be spelled out because [KeyCodes] has no constants for
+    /// the punctuation keys, and because a `keydown` carries a key code rather
+    /// than a character: there is no `'+'` to compare against, only the code
+    /// of the physical key that produces `+` when shifted. Firefox
+    /// historically reports different values for exactly these two keys, so both
+    /// sets are accepted.
     private static final int KEY_EQUALS = 187;
     private static final int KEY_EQUALS_FIREFOX = 61;
-    /** {@code keyCode} for the main-row {@code -}/{@code _} key. */
+    /// `keyCode` for the main-row `-`/`_` key.
     private static final int KEY_DASH = 189;
     private static final int KEY_DASH_FIREFOX = 173;
 
-    /** Handles the zoom and reset-view keys. */
+    /// Handles the zoom and reset-view keys.
     private void handleZoomKeys(final KeyDownEvent event) {
         switch (event.getNativeKeyCode()) {
             case KEY_EQUALS:
@@ -1498,15 +1404,13 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /**
-     * Pans the view by a keyboard step.
-     *
-     * <p>A deliberate pan pauses camera-follow, exactly as a mouse drag does: the
-     * user has just said where they want to look, and having the camera drag them
-     * back to the tracked entity would override that. This is why the pan goes
-     * through the same {@code followPaused} flag rather than only moving the
-     * offsets.</p>
-     */
+    /// Pans the view by a keyboard step.
+    ///
+    /// A deliberate pan pauses camera-follow, exactly as a mouse drag does: the
+    /// user has just said where they want to look, and having the camera drag them
+    /// back to the tracked entity would override that. This is why the pan goes
+    /// through the same `followPaused` flag rather than only moving the
+    /// offsets.
     private void panByKeyboard(final KeyDownEvent event,
                                final double dxPx,
                                final double dyPx) {
@@ -1527,7 +1431,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /** Zooms one step about the centre of the viewport. */
+    /// Zooms one step about the centre of the viewport.
     private void zoomByKeyboard(final KeyDownEvent event, final boolean zoomIn) {
         event.preventDefault();
         event.stopPropagation();
@@ -1548,23 +1452,21 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /**
-     * Opens the context menu from the keyboard, anchored to the selection.
-     *
-     * <p>The mouse path takes its target and its position from the pointer. A
-     * keyboard-triggered menu has neither, so the selection supplies both: the
-     * selected object is the target, and its on-screen frame is where the menu
-     * opens. Previously a keyboard {@code contextmenu} (Shift+F10 or the Menu key)
-     * hit-tested the focus panel itself, found no object id, and so could only ever
-     * open the canvas menu — the per-object actions were unreachable without a
-     * mouse.</p>
-     *
-     * <p>With nothing selected this opens the canvas menu at the viewport centre,
-     * which is the keyboard equivalent of right-clicking empty space.</p>
-     *
-     * <p>Callers must have checked {@code editMode} and that no gesture is in
-     * progress — see {@link #handleViewKeys}.</p>
-     */
+    /// Opens the context menu from the keyboard, anchored to the selection.
+    ///
+    /// The mouse path takes its target and its position from the pointer. A
+    /// keyboard-triggered menu has neither, so the selection supplies both: the
+    /// selected object is the target, and its on-screen frame is where the menu
+    /// opens. Previously a keyboard `contextmenu` (Shift+F10 or the Menu key)
+    /// hit-tested the focus panel itself, found no object id, and so could only ever
+    /// open the canvas menu — the per-object actions were unreachable without a
+    /// mouse.
+    ///
+    /// With nothing selected this opens the canvas menu at the viewport centre,
+    /// which is the keyboard equivalent of right-clicking empty space.
+    ///
+    /// Callers must have checked `editMode` and that no gesture is in
+    /// progress — see [#handleViewKeys].
     private void openKeyboardContextMenu() {
         final Element panel = getView().getFocusPanel().getElement();
         final String objectId = selectedObjectIds.isEmpty()
@@ -1593,21 +1495,19 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 clientX, clientY);
     }
 
-    /**
-     * Converts element-relative coordinates to map-space coordinates by
-     * reversing the zoom/pan transform and then applying the inverse of
-     * the background transformation matrix.
-     *
-     * <p>The input coordinates should be relative to the FocusPanel element
-     * (matching the coordinate space of {@code MouseEvent.getX()/getY()}
-     * and the zoom/pan model's {@code offsetX}/{@code offsetY}).
-     * Viewport-relative client coordinates must be converted first by
-     * subtracting the element's absolute position.</p>
-     *
-     * @param screenX the X coordinate relative to the FocusPanel element
-     * @param screenY the Y coordinate relative to the FocusPanel element
-     * @return a two-element array {@code {mapX, mapY}} in map space
-     */
+    /// Converts element-relative coordinates to map-space coordinates by
+    /// reversing the zoom/pan transform and then applying the inverse of
+    /// the background transformation matrix.
+    ///
+    /// The input coordinates should be relative to the FocusPanel element
+    /// (matching the coordinate space of `MouseEvent.getX()/getY()`
+    /// and the zoom/pan model's `offsetX`/`offsetY`).
+    /// Viewport-relative client coordinates must be converted first by
+    /// subtracting the element's absolute position.
+    ///
+    /// @param screenX the X coordinate relative to the FocusPanel element
+    /// @param screenY the Y coordinate relative to the FocusPanel element
+    /// @return a two-element array `{mapX, mapY}` in map space
     private double[] screenToMapCoords(final double screenX, final double screenY) {
         // Delegate to the shared, unit-tested viewport maths (Y_FLIP is the
         // Y-up→Y-down background); this is the inverse of the draw pipeline.
@@ -1615,17 +1515,15 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 .screenToMap(screenX, screenY, Y_FLIP);
     }
 
-    /**
-     * Returns the W3C DOM {@code buttons} property from a native mouse event.
-     *
-     * <p>GWT's {@code NativeEvent} doesn't expose {@code getButtons()}, so we
-     * access it via JSNI. The {@code buttons} property is a bitmask of
-     * currently pressed buttons (1 = primary, 2 = secondary, 4 = auxiliary).
-     * Returns {@code 0} when no button is pressed.</p>
-     *
-     * @param event the native event to query
-     * @return the {@code buttons} bitmask, or 0 if unsupported
-     */
+    /// Returns the W3C DOM `buttons` property from a native mouse event.
+    ///
+    /// GWT's `NativeEvent` doesn't expose `getButtons()`, so we
+    /// access it via JSNI. The `buttons` property is a bitmask of
+    /// currently pressed buttons (1 = primary, 2 = secondary, 4 = auxiliary).
+    /// Returns `0` when no button is pressed.
+    ///
+    /// @param event the native event to query
+    /// @return the `buttons` bitmask, or 0 if unsupported
     private static native int nativeButtons(com.google.gwt.dom.client.NativeEvent event) /*-{
         return event.buttons || 0;
     }-*/;
@@ -1654,23 +1552,21 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 currentMeasureLinePx());
     }
 
-    /**
-     * Which entities this frame merges into summary glyphs, because they are
-     * closer together on screen than a glyph is wide.
-     *
-     * <p>Computed from the <strong>already-filtered</strong> draw lists, so a
-     * hidden layer's entities are not counted, and from the live {@code scale},
-     * so the merge distance tracks the zoom without any per-document
-     * configuration.</p>
-     *
-     * <p>Off in edit mode regardless of the toggle: the Editor tab's whole job is
-     * placing individual objects, and an object merged into a cluster cannot be
-     * dragged.</p>
-     *
-     * @param drawFacts  the facts about to be drawn
-     * @param drawEvents the event entities about to be drawn
-     * @return the overlay; never {@code null}
-     */
+    /// Which entities this frame merges into summary glyphs, because they are
+    /// closer together on screen than a glyph is wide.
+    ///
+    /// Computed from the **already-filtered** draw lists, so a
+    /// hidden layer's entities are not counted, and from the live `scale`,
+    /// so the merge distance tracks the zoom without any per-document
+    /// configuration.
+    ///
+    /// Off in edit mode regardless of the toggle: the Editor tab's whole job is
+    /// placing individual objects, and an object merged into a cluster cannot be
+    /// dragged.
+    ///
+    /// @param drawFacts  the facts about to be drawn
+    /// @param drawEvents the event entities about to be drawn
+    /// @return the overlay; never `null`
     private FloorMapClusterOverlay clusterOverlay(final List<Fact> drawFacts,
                                                   final List<FloorMapObject> drawEvents) {
         final FloorMapClusterOverlay computed;
@@ -1698,18 +1594,16 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return computed;
     }
 
-    /**
-     * Describes whatever the pointer is over: a cluster, a single entity, or
-     * nothing.
-     *
-     * <p>Clusters are asked first because they are drawn on top and stand in for
-     * the entities beneath them — a glyph the user can see must win over one they
-     * cannot.</p>
-     *
-     * @param target    the event target under the pointer, for the object hit test
-     * @param cursorXPx the cursor position in element pixels
-     * @param cursorYPx the cursor position in element pixels
-     */
+    /// Describes whatever the pointer is over: a cluster, a single entity, or
+    /// nothing.
+    ///
+    /// Clusters are asked first because they are drawn on top and stand in for
+    /// the entities beneath them — a glyph the user can see must win over one they
+    /// cannot.
+    ///
+    /// @param target    the event target under the pointer, for the object hit test
+    /// @param cursorXPx the cursor position in element pixels
+    /// @param cursorYPx the cursor position in element pixels
     private void updateHover(final EventTarget target,
                              final double cursorXPx,
                              final double cursorYPx) {
@@ -1718,23 +1612,21 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /**
-     * Shows, moves or hides the cluster tooltip for the pointer's position.
-     *
-     * <p>Only the <em>change</em> of hovered cluster does any work: the panel is
-     * anchored to the glyph, not the cursor, so moving within one glyph needs no
-     * update, and rebuilding a list of names on every mouse move would be real
-     * DOM churn for no visible difference.</p>
-     *
-     * <p>Does <strong>not</strong> hide the panel when the pointer is over no
-     * cluster — a single entity may be under it, and tearing the panel down here
-     * only to rebuild it in {@link #updateObjectHover} would flicker.</p>
-     *
-     * @param cursorXPx the cursor position in element pixels
-     * @param cursorYPx the cursor position in element pixels
-     * @return {@code true} if the pointer is over a cluster, which has now been
-     *         described
-     */
+    /// Shows, moves or hides the cluster tooltip for the pointer's position.
+    ///
+    /// Only the *change* of hovered cluster does any work: the panel is
+    /// anchored to the glyph, not the cursor, so moving within one glyph needs no
+    /// update, and rebuilding a list of names on every mouse move would be real
+    /// DOM churn for no visible difference.
+    ///
+    /// Does **not** hide the panel when the pointer is over no
+    /// cluster — a single entity may be under it, and tearing the panel down here
+    /// only to rebuild it in [#updateObjectHover] would flicker.
+    ///
+    /// @param cursorXPx the cursor position in element pixels
+    /// @param cursorYPx the cursor position in element pixels
+    /// @return `true` if the pointer is over a cluster, which has now been
+    ///         described
     private boolean updateClusterHover(final double cursorXPx, final double cursorYPx) {
         if (lastClusterOverlay.isEmpty()) {
             return false;
@@ -1771,22 +1663,20 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return true;
     }
 
-    /**
-     * Shows, moves or hides the tooltip describing the single entity under the
-     * pointer — the same question the cluster tooltip answers for a crowd, asked
-     * of one glyph: what is this, and where is it standing?
-     *
-     * <p>Hit-tested through the DOM rather than geometrically, so the pointer has
-     * to be over the drawn shape itself — exactly the surface a click acts on.
-     * Backgrounds and areas are excluded for the reason the read-only click
-     * handler excludes them: their clickable surface can cover most of the map,
-     * so a tooltip on them would appear almost wherever the pointer rested.</p>
-     *
-     * <p>Like the cluster tooltip, only a <em>change</em> of hovered entity
-     * rebuilds anything.</p>
-     *
-     * @param target the event target under the pointer
-     */
+    /// Shows, moves or hides the tooltip describing the single entity under the
+    /// pointer — the same question the cluster tooltip answers for a crowd, asked
+    /// of one glyph: what is this, and where is it standing?
+    ///
+    /// Hit-tested through the DOM rather than geometrically, so the pointer has
+    /// to be over the drawn shape itself — exactly the surface a click acts on.
+    /// Backgrounds and areas are excluded for the reason the read-only click
+    /// handler excludes them: their clickable surface can cover most of the map,
+    /// so a tooltip on them would appear almost wherever the pointer rested.
+    ///
+    /// Like the cluster tooltip, only a *change* of hovered entity
+    /// rebuilds anything.
+    ///
+    /// @param target the event target under the pointer
     private void updateObjectHover(final EventTarget target) {
         final String id = hitObjectId(target);
         if (id == null
@@ -1823,7 +1713,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 anchorPx[0], anchorPx[1]);
     }
 
-    /** Hides the hover tooltip — cluster or single entity — if one is showing. */
+    /// Hides the hover tooltip — cluster or single entity — if one is showing.
     private void hideHoverTooltip() {
         if (hoveredClusterKey != null || hoveredObjectId != null) {
             hoveredClusterKey = null;
@@ -1832,12 +1722,10 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /**
-     * The name shown for an entity: the owning tab's resolver first (so a name
-     * here matches the name in every grid), then a fact's own label — which is
-     * all the Editor tab has, since it wires no resolver. {@code null} when the
-     * entity has no name at all.
-     */
+    /// The name shown for an entity: the owning tab's resolver first (so a name
+    /// here matches the name in every grid), then a fact's own label — which is
+    /// all the Editor tab has, since it wires no resolver. `null` when the
+    /// entity has no name at all.
     private String displayName(final String id) {
         final String resolved = entityNameResolver != null
                 ? entityNameResolver.apply(id)
@@ -1851,7 +1739,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 : null;
     }
 
-    /** {@link #displayName} with the id as the last resort, for use in a list. */
+    /// [#displayName] with the id as the last resort, for use in a list.
     private String displayNameOrId(final String id) {
         final String name = displayName(id);
         return name != null
@@ -1859,11 +1747,9 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 : id;
     }
 
-    /**
-     * An entity's type: the live event entity's, else the static fact's. Same
-     * precedence as {@link #entityMapPosition}, so the type and the position
-     * describing one entity cannot come from two different sources.
-     */
+    /// An entity's type: the live event entity's, else the static fact's. Same
+    /// precedence as [#entityMapPosition], so the type and the position
+    /// describing one entity cannot come from two different sources.
     private String entityType(final String id) {
         final String eventType = animator.typeOf(id);
         if (eventType != null) {
@@ -1875,15 +1761,13 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 : null;
     }
 
-    /**
-     * The names of every area containing an entity, innermost (most specific)
-     * first — the same order and the same names the Tracking panel and the
-     * cluster dialog use.
-     *
-     * @param id the entity id
-     * @return the names, empty when the entity is in no area, or {@code null}
-     *         when the map has no areas at all (see {@link FloorMapHoverDetail})
-     */
+    /// The names of every area containing an entity, innermost (most specific)
+    /// first — the same order and the same names the Tracking panel and the
+    /// cluster dialog use.
+    ///
+    /// @param id the entity id
+    /// @return the names, empty when the entity is in no area, or `null`
+    ///         when the map has no areas at all (see [FloorMapHoverDetail])
     private List<String> containingAreaNames(final String id) {
         if (areaMembership.getAreaKeys().isEmpty()) {
             return null;
@@ -1896,7 +1780,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return names;
     }
 
-    /** The static fact with this key, or {@code null} if there is none. */
+    /// The static fact with this key, or `null` if there is none.
     private Fact factFor(final String id) {
         if (id != null) {
             for (final Fact fact : facts) {
@@ -1908,21 +1792,19 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return null;
     }
 
-    /**
-     * Updates the readout pill that follows the cursor during a move or resize.
-     *
-     * <p>Answers the question the gesture raises — "how big is this?" while
-     * scaling, "where is it?" while moving — in real-world units, which is
-     * otherwise unknowable from a canvas whose only other scale cues are the
-     * grid and the corner bar.</p>
-     *
-     * <p><strong>Call after {@link #redraw()}</strong>: the size is read back
-     * from the geometry the view just laid out, which is where the in-progress
-     * transform has been applied.</p>
-     *
-     * @param cursorXPx the cursor position in element pixels
-     * @param cursorYPx the cursor position in element pixels
-     */
+    /// Updates the readout pill that follows the cursor during a move or resize.
+    ///
+    /// Answers the question the gesture raises — "how big is this?" while
+    /// scaling, "where is it?" while moving — in real-world units, which is
+    /// otherwise unknowable from a canvas whose only other scale cues are the
+    /// grid and the corner bar.
+    ///
+    /// **Call after [#redraw()]**: the size is read back
+    /// from the geometry the view just laid out, which is where the in-progress
+    /// transform has been applied.
+    ///
+    /// @param cursorXPx the cursor position in element pixels
+    /// @param cursorYPx the cursor position in element pixels
     private void updateGestureReadout(final double cursorXPx, final double cursorYPx) {
         final String text;
         if (gesture == Gesture.SCALING) {
@@ -1935,19 +1817,17 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         getView().setGestureReadout(text, cursorXPx, cursorYPx);
     }
 
-    /** Clears the gesture readout, if one is showing. */
+    /// Clears the gesture readout, if one is showing.
     private void hideGestureReadout() {
         getView().setGestureReadout(null, 0, 0);
     }
 
-    /**
-     * The selection's size as {@code "2.4 m × 1.1 m"}, or {@code null} if it
-     * cannot be measured.
-     *
-     * <p>Read from the drawn bounds rather than from the pending transform, so
-     * it reports what is actually on screen — including an image's aspect ratio,
-     * which only the view knows.</p>
-     */
+    /// The selection's size as `"2.4 m × 1.1 m"`, or `null` if it
+    /// cannot be measured.
+    ///
+    /// Read from the drawn bounds rather than from the pending transform, so
+    /// it reports what is actually on screen — including an image's aspect ratio,
+    /// which only the view knows.
     private String selectionSizeText() {
         final double[] bounds = getView().getSelectionBoundsPx();
         if (bounds == null || scale <= 0) {
@@ -1959,15 +1839,13 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 (bounds[3] - bounds[1]) / scale);
     }
 
-    /**
-     * The selection's position as {@code "X 4.5 m, Y 2.1 m"}, or {@code null} if
-     * it cannot be measured.
-     *
-     * <p>The centre of the selection, which is the point that visibly tracks the
-     * pointer — and the only meaningful single position for a multi-selection.
-     * Axes are named because a bare pair of numbers on a Y-up map is exactly the
-     * kind of cell that gets queried.</p>
-     */
+    /// The selection's position as `"X 4.5 m, Y 2.1 m"`, or `null` if
+    /// it cannot be measured.
+    ///
+    /// The centre of the selection, which is the point that visibly tracks the
+    /// pointer — and the only meaningful single position for a multi-selection.
+    /// Axes are named because a bare pair of numbers on a Y-up map is exactly the
+    /// kind of cell that gets queried.
     private String selectionPositionText() {
         final double[] bounds = getView().getSelectionBoundsPx();
         if (bounds == null) {
@@ -1980,13 +1858,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 measurementUnits, centreMap[0], centreMap[1]);
     }
 
-    /**
-     * The in-progress Set Scale line as {@code {x0, y0, x1, y1}} in element
-     * pixels, or {@code null} when not measuring or before the press.
-     *
-     * <p>The anchor is held in map space and projected here, so a mid-measure
-     * zoom moves the line with the floor plan rather than stretching it.</p>
-     */
+    /// The in-progress Set Scale line as `{x0, y0, x1, y1}` in element
+    /// pixels, or `null` when not measuring or before the press.
+    ///
+    /// The anchor is held in map space and projected here, so a mid-measure
+    /// zoom moves the line with the floor plan rather than stretching it.
     private double[] currentMeasureLinePx() {
         if (gesture != Gesture.MEASURING_SCALE || measureStartMap == null) {
             return null;
@@ -1995,15 +1871,13 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return new double[]{startPx[0], startPx[1], measureCursorX, measureCursorY};
     }
 
-    /**
-     * The area-containment decorations for this frame: badges for every occupied
-     * area, plus the reciprocal highlight for whatever is currently focused.
-     *
-     * <p>Focus is the tracked entity when the camera is following one, otherwise
-     * a lone selected object — so the highlight works on the Editor tab (which
-     * selects but never tracks) as well as the Map tab. A multi-selection has no
-     * single subject, so it highlights nothing.</p>
-     */
+    /// The area-containment decorations for this frame: badges for every occupied
+    /// area, plus the reciprocal highlight for whatever is currently focused.
+    ///
+    /// Focus is the tracked entity when the camera is following one, otherwise
+    /// a lone selected object — so the highlight works on the Editor tab (which
+    /// selects but never tracks) as well as the Map tab. A multi-selection has no
+    /// single subject, so it highlights nothing.
     private FloorMapAreaOverlay areaOverlay() {
         final String focusId = trackedObjectId != null
                 ? trackedObjectId
@@ -2013,11 +1887,9 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return FloorMapAreaOverlay.of(areaMembership, focusId);
     }
 
-    /**
-     * The current rubber-band rectangle in element-pixel space as
-     * {@code {minX, minY, maxX, maxY}}. Only meaningful while a MARQUEE gesture
-     * is in progress.
-     */
+    /// The current rubber-band rectangle in element-pixel space as
+    /// `{minX, minY, maxX, maxY}`. Only meaningful while a MARQUEE gesture
+    /// is in progress.
     private double[] currentMarqueeRect() {
         return new double[]{
                 Math.min(marqueeStartX, marqueeCurX),
@@ -2026,18 +1898,16 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 Math.max(marqueeStartY, marqueeCurY)};
     }
 
-    /**
-     * Resolves the id of the map object under an event target, or {@code null}
-     * if the target is not a real object shape. Wrapper {@code <g>} groups
-     * (prefixed {@link FloorMapJsonKeys#SVG_GROUP_PREFIX}), transform handles
-     * (prefixed {@link FloorMapJsonKeys#HANDLE_PREFIX}) and cluster glyphs
-     * (prefixed {@link FloorMapJsonKeys#CLUSTER_PREFIX}) are not objects.
-     *
-     * <p>The cluster exclusion is load-bearing: a cluster's key is one of its
-     * members' ids, so without it a press on a cluster would announce that member
-     * as the thing that was clicked — selecting an entity the user cannot see and
-     * did not aim at.</p>
-     */
+    /// Resolves the id of the map object under an event target, or `null`
+    /// if the target is not a real object shape. Wrapper `<g>` groups
+    /// (prefixed [FloorMapJsonKeys#SVG_GROUP_PREFIX]), transform handles
+    /// (prefixed [FloorMapJsonKeys#HANDLE_PREFIX]) and cluster glyphs
+    /// (prefixed [FloorMapJsonKeys#CLUSTER_PREFIX]) are not objects.
+    ///
+    /// The cluster exclusion is load-bearing: a cluster's key is one of its
+    /// members' ids, so without it a press on a cluster would announce that member
+    /// as the thing that was clicked — selecting an entity the user cannot see and
+    /// did not aim at.
     private String hitObjectId(final EventTarget target) {
         if (Element.is(target)) {
             final String id = Element.as(target).getId();
@@ -2051,11 +1921,9 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return null;
     }
 
-    /**
-     * Returns the key of the cluster glyph under an event target, or {@code null}
-     * if the target is not one. Mirrors {@link #handleRole}: the prefix both
-     * excludes the glyph from the object hit-test and identifies it here.
-     */
+    /// Returns the key of the cluster glyph under an event target, or `null`
+    /// if the target is not one. Mirrors [#handleRole]: the prefix both
+    /// excludes the glyph from the object hit-test and identifies it here.
     private String clusterKey(final EventTarget target) {
         if (Element.is(target)) {
             final String id = Element.as(target).getId();
@@ -2073,11 +1941,9 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return null;
     }
 
-    /**
-     * Returns the transform-handle role under an event target (the id suffix
-     * after {@link FloorMapJsonKeys#HANDLE_PREFIX}, e.g. {@code "scale-nw"} or
-     * {@code "rotate"}), or {@code null} if the target is not a handle.
-     */
+    /// Returns the transform-handle role under an event target (the id suffix
+    /// after [FloorMapJsonKeys#HANDLE_PREFIX], e.g. `"scale-nw"` or
+    /// `"rotate"`), or `null` if the target is not a handle.
     private String handleRole(final EventTarget target) {
         if (Element.is(target)) {
             final String id = Element.as(target).getId();
@@ -2088,20 +1954,18 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return null;
     }
 
-    /**
-     * True if the current selection contains at least one fact that can be
-     * meaningfully scaled or rotated — an image fact or an area (which has real
-     * geometry). Bare point glyphs are drawn at a fixed screen size, so
-     * transforming them has no visible effect; their handles are greyed and inert.
-     *
-     * <p>Facts on a <strong>locked</strong> layer never count. The mouseup that
-     * ends a scale/rotate filters them out before persisting, so a locked-only
-     * selection would otherwise draw live handles that follow the pointer through
-     * the whole gesture and then snap back on release — which reads as a glitch
-     * rather than as "locked". Excluding them here means no handles are offered
-     * and {@link #beginHandleGesture} is never entered, so the vertex handles of a
-     * locked area go with them.</p>
-     */
+    /// True if the current selection contains at least one fact that can be
+    /// meaningfully scaled or rotated — an image fact or an area (which has real
+    /// geometry). Bare point glyphs are drawn at a fixed screen size, so
+    /// transforming them has no visible effect; their handles are greyed and inert.
+    ///
+    /// Facts on a **locked** layer never count. The mouseup that
+    /// ends a scale/rotate filters them out before persisting, so a locked-only
+    /// selection would otherwise draw live handles that follow the pointer through
+    /// the whole gesture and then snap back on release — which reads as a glitch
+    /// rather than as "locked". Excluding them here means no handles are offered
+    /// and [#beginHandleGesture] is never entered, so the vertex handles of a
+    /// locked area go with them.
     private boolean selectionTransformable() {
         for (final Fact fact : facts) {
             // At least one *unlocked* fact must be transformable. A locked one does not
@@ -2118,14 +1982,12 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return false;
     }
 
-    /**
-     * Begins a scale or rotate gesture from the given handle, snapshotting the
-     * pivot/centre (in map space) from the current selection frame.
-     *
-     * @param role the handle role ({@code "scale-*"} or {@code "rotate"})
-     * @param px   the pointer X at gesture start (element pixels)
-     * @param py   the pointer Y at gesture start (element pixels)
-     */
+    /// Begins a scale or rotate gesture from the given handle, snapshotting the
+    /// pivot/centre (in map space) from the current selection frame.
+    ///
+    /// @param role the handle role (`"scale-*"` or `"rotate"`)
+    /// @param px   the pointer X at gesture start (element pixels)
+    /// @param py   the pointer Y at gesture start (element pixels)
     private void beginHandleGesture(final String role, final double px, final double py) {
         isDragging = true;
         hasMoved = false;
@@ -2186,7 +2048,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /** Parses the integer index from a handle role like {@code "vertex-3"}. */
+    /// Parses the integer index from a handle role like `"vertex-3"`.
     private static int parseHandleIndex(final String role, final String prefix) {
         try {
             return Integer.parseInt(role.substring(prefix.length()));
@@ -2195,10 +2057,8 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /**
-     * The single selected area fact (imageless, with vertices), or {@code null}
-     * when the selection is empty, multiple, or not an area.
-     */
+    /// The single selected area fact (imageless, with vertices), or `null`
+    /// when the selection is empty, multiple, or not an area.
     private Fact selectedAreaFact() {
         if (selectedObjectIds.size() != 1) {
             return null;
@@ -2212,11 +2072,9 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return null;
     }
 
-    /**
-     * Begins a {@link Gesture#MOVING_VERTEX} edit. For {@code insert}, a new
-     * vertex is spliced at the midpoint of edge {@code index} and immediately
-     * dragged; otherwise the existing vertex {@code index} is dragged.
-     */
+    /// Begins a [Gesture#MOVING_VERTEX] edit. For `insert`, a new
+    /// vertex is spliced at the midpoint of edge `index` and immediately
+    /// dragged; otherwise the existing vertex `index` is dragged.
     private void beginVertexEdit(final int index, final boolean insert) {
         final Fact area = selectedAreaFact();
         if (area == null || index < 0 || lockedKeys.contains(area.getKey())) {
@@ -2276,13 +2134,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /**
-     * Deletes the vertex at {@code index} from the single selected area,
-     * enforcing the 3-vertex minimum and skipping locked layers. Persists via
-     * the geometry handler. No-op when there is no single-area selection.
-     *
-     * @param index the vertex index to delete
-     */
+    /// Deletes the vertex at `index` from the single selected area,
+    /// enforcing the 3-vertex minimum and skipping locked layers. Persists via
+    /// the geometry handler. No-op when there is no single-area selection.
+    ///
+    /// @param index the vertex index to delete
     public void deleteVertex(final int index) {
         final Fact area = selectedAreaFact();
         if (area == null || geometryHandler == null || lockedKeys.contains(area.getKey())) {
@@ -2301,12 +2157,10 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         geometryHandler.onGeometryEdited(area.getKey(), nv);
     }
 
-    /**
-     * Clears all transient vertex-editing state. Called on every path that ends
-     * a {@code MOVING_VERTEX} gesture (normal mouseup and the lost-mouseup
-     * recovery) so the {@link #factsForDraw()} live preview cannot outlive the
-     * gesture.
-     */
+    /// Clears all transient vertex-editing state. Called on every path that ends
+    /// a `MOVING_VERTEX` gesture (normal mouseup and the lost-mouseup
+    /// recovery) so the [#factsForDraw()] live preview cannot outlive the
+    /// gesture.
     private void clearVertexEditState() {
         editingAreaKey = null;
         editingWorldToMap = null;
@@ -2315,16 +2169,14 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         vertexInserted = false;
     }
 
-    /**
-     * The gestures Escape can abandon: the editing gestures, whose only other
-     * ending is the mouseup that commits them.
-     *
-     * <p>Panning is not one of them — it changes nothing that needs undoing, and
-     * Escape during a pan is wanted for its other job of clearing the selection.
-     * The two modal gestures (drawing an area, measuring a scale) have their own
-     * Escape handling earlier in the key handler, since leaving them also means
-     * leaving the mode.</p>
-     */
+    /// The gestures Escape can abandon: the editing gestures, whose only other
+    /// ending is the mouseup that commits them.
+    ///
+    /// Panning is not one of them — it changes nothing that needs undoing, and
+    /// Escape during a pan is wanted for its other job of clearing the selection.
+    /// The two modal gestures (drawing an area, measuring a scale) have their own
+    /// Escape handling earlier in the key handler, since leaving them also means
+    /// leaving the mode.
     private static boolean isAbortableGesture(final Gesture gesture) {
         return gesture == Gesture.MOVING
                || gesture == Gesture.SCALING
@@ -2333,21 +2185,19 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                || gesture == Gesture.MARQUEE;
     }
 
-    /**
-     * Abandons any in-flight gesture <em>without persisting it</em>, returning the
-     * canvas to a neutral state.
-     *
-     * <p>Needed because a gesture is normally ended by the mouseup that completes
-     * it, and some interactions steal that mouseup — most obviously a right-click,
-     * whose mouseup lands on the popup rather than the canvas. Resetting only part
-     * of the state left the {@link #factsForDraw()} live preview substituting
-     * never-persisted working vertices indefinitely, so the canvas showed geometry
-     * that did not match what was stored.</p>
-     *
-     * <p>The current <strong>selection</strong> is deliberately left alone: it is
-     * not gesture state, and the vertex context menu resolves its target from the
-     * selection (see {@link #selectedAreaFact()}).</p>
-     */
+    /// Abandons any in-flight gesture *without persisting it*, returning the
+    /// canvas to a neutral state.
+    ///
+    /// Needed because a gesture is normally ended by the mouseup that completes
+    /// it, and some interactions steal that mouseup — most obviously a right-click,
+    /// whose mouseup lands on the popup rather than the canvas. Resetting only part
+    /// of the state left the [#factsForDraw()] live preview substituting
+    /// never-persisted working vertices indefinitely, so the canvas showed geometry
+    /// that did not match what was stored.
+    ///
+    /// The current **selection** is deliberately left alone: it is
+    /// not gesture state, and the vertex context menu resolves its target from the
+    /// selection (see [#selectedAreaFact()]).
     private void abortGesture() {
         isDragging = false;
         hasMoved = false;
@@ -2362,14 +2212,12 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         clearVertexEditState();
     }
 
-    /**
-     * Computes the map-space scale transform for the current SCALING gesture
-     * given the current pointer position. Scaling is always uniform
-     * (aspect-preserving): the factor is the projection of the pointer-from-pivot
-     * vector onto the grabbed-corner-from-pivot vector. Uniform scale never
-     * shears, so it is correct even for a rotated fact. The factor is clamped to
-     * {@link #MIN_SCALE_FACTOR} to avoid zero/flip/singular.
-     */
+    /// Computes the map-space scale transform for the current SCALING gesture
+    /// given the current pointer position. Scaling is always uniform
+    /// (aspect-preserving): the factor is the projection of the pointer-from-pivot
+    /// vector onto the grabbed-corner-from-pivot vector. Uniform scale never
+    /// shears, so it is correct even for a rotated fact. The factor is clamped to
+    /// [#MIN_SCALE_FACTOR] to avoid zero/flip/singular.
     private FloorMapTransformationMatrix computeScaleTransform(final double px, final double py) {
         final double[] cur = screenToMapCoords(px, py);
         final double dx0 = gestureRefX - gesturePivotX;
@@ -2387,7 +2235,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return Math.max(s, MIN_SCALE_FACTOR);
     }
 
-    /** Screen-space position of a corner frame handle by direction (nw/ne/se/sw). */
+    /// Screen-space position of a corner frame handle by direction (nw/ne/se/sw).
     private static double[] pointForDir(final String dir,
                                         final double minX, final double minY,
                                         final double maxX, final double maxY,
@@ -2423,12 +2271,10 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /**
-     * Filters the facts draw list down to those NOT currently owned by the
-     * event overlay. An entity whose positions are recorded in the facts store
-     * AND streamed as events would otherwise render twice — a static fact glyph
-     * under the animated overlay glyph; the animated one wins.
-     */
+    /// Filters the facts draw list down to those NOT currently owned by the
+    /// event overlay. An entity whose positions are recorded in the facts store
+    /// AND streamed as events would otherwise render twice — a static fact glyph
+    /// under the animated overlay glyph; the animated one wins.
     private List<Fact> factsExcludingOverlay(final List<FloorMapObject> overlay) {
         final List<Fact> base = factsForDraw();
         if (overlay.isEmpty()) {
@@ -2447,13 +2293,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return out;
     }
 
-    /**
-     * Builds the event-overlay draw list, substituting animated entities at
-     * their current interpolated positions and attaching trail data.
-     *
-     * @param nowMs Current wall-clock time in ms (used to compute trail alpha).
-     *              Pass {@code 0.0} when there are no active animations.
-     */
+    /// Builds the event-overlay draw list, substituting animated entities at
+    /// their current interpolated positions and attaching trail data.
+    ///
+    /// @param nowMs Current wall-clock time in ms (used to compute trail alpha).
+    ///         Pass `0.0` when there are no active animations.
     private List<FloorMapObject> buildAnimatedDrawList(final double nowMs) {
         final List<FloorMapObject> combined = animator.buildDrawList(nowMs);
 
@@ -2535,7 +2379,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 }
             };
 
-    /** Starts the animation loop if it is not already running. */
+    /// Starts the animation loop if it is not already running.
     private void ensureAnimationLoop() {
         if (!animationLoopRunning) {
             animationLoopRunning = true;
@@ -2547,20 +2391,18 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     // Setters
     // =========================================================================
 
-    /**
-     * Sets the area-containment snapshot used to decorate the canvas — the
-     * reciprocal highlight (areas holding the focused entity, entities inside
-     * the focused area) and the per-area occupant-count badges.
-     *
-     * <p>Recomputed and pushed by the owning tab whenever the facts or event
-     * entities change (a query refresh), never per animation frame. An unchanged
-     * snapshot does not redraw — the tab pushes one on every refresh, and the
-     * accompanying {@code setFacts}/{@code setEventObjects} has already
-     * triggered a redraw of its own.</p>
-     *
-     * @param areaMembership the snapshot, or {@code null} to clear the
-     *                       decorations
-     */
+    /// Sets the area-containment snapshot used to decorate the canvas — the
+    /// reciprocal highlight (areas holding the focused entity, entities inside
+    /// the focused area) and the per-area occupant-count badges.
+    ///
+    /// Recomputed and pushed by the owning tab whenever the facts or event
+    /// entities change (a query refresh), never per animation frame. An unchanged
+    /// snapshot does not redraw — the tab pushes one on every refresh, and the
+    /// accompanying `setFacts`/`setEventObjects` has already
+    /// triggered a redraw of its own.
+    ///
+    /// @param areaMembership the snapshot, or `null` to clear the
+    ///         decorations
     public void setAreaMembership(final FloorMapAreaMembership areaMembership) {
         final FloorMapAreaMembership next = areaMembership != null
                 ? areaMembership
@@ -2574,19 +2416,17 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /**
-     * Sets which entities carry a group highlight, and in what colour.
-     *
-     * <p>Pushed by the owning tab when the user switches a group's highlight on or
-     * off, or edits a highlighted group's membership — not on query refreshes,
-     * since group membership does not move with the data.</p>
-     *
-     * <p>This is a decoration only: it never moves the camera and never changes the
-     * tracked entity, so highlighting a group leaves an in-progress follow
-     * undisturbed.</p>
-     *
-     * @param groupOverlay the highlight, or {@code null} to clear it
-     */
+    /// Sets which entities carry a group highlight, and in what colour.
+    ///
+    /// Pushed by the owning tab when the user switches a group's highlight on or
+    /// off, or edits a highlighted group's membership — not on query refreshes,
+    /// since group membership does not move with the data.
+    ///
+    /// This is a decoration only: it never moves the camera and never changes the
+    /// tracked entity, so highlighting a group leaves an in-progress follow
+    /// undisturbed.
+    ///
+    /// @param groupOverlay the highlight, or `null` to clear it
     public void setGroupOverlay(final FloorMapGroupOverlay groupOverlay) {
         final FloorMapGroupOverlay next = groupOverlay != null
                 ? groupOverlay
@@ -2597,12 +2437,10 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /**
-     * Single-select façade: highlights exactly one object (or clears the
-     * highlight when {@code null}) and redraws.
-     *
-     * @param selectedObjectId the object ID to highlight, or {@code null} to clear
-     */
+    /// Single-select façade: highlights exactly one object (or clears the
+    /// highlight when `null`) and redraws.
+    ///
+    /// @param selectedObjectId the object ID to highlight, or `null` to clear
     public void setSelectedObjectId(final String selectedObjectId) {
         selectedObjectIds.clear();
         if (selectedObjectId != null) {
@@ -2611,15 +2449,13 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /**
-     * Replaces the highlighted selection with the given object ids (multi-select
-     * facade beside {@link #setSelectedObjectId}) and redraws. Selection order is
-     * preserved so the first id is treated as the primary. Does <em>not</em> fire
-     * the {@link SelectionHandler} — this is the inbound path used by callers
-     * (e.g. the editor) that already hold the selection.
-     *
-     * @param objectIds the ids to select; {@code null} clears the selection
-     */
+    /// Replaces the highlighted selection with the given object ids (multi-select
+    /// facade beside [#setSelectedObjectId]) and redraws. Selection order is
+    /// preserved so the first id is treated as the primary. Does *not* fire
+    /// the [SelectionHandler] — this is the inbound path used by callers
+    /// (e.g. the editor) that already hold the selection.
+    ///
+    /// @param objectIds the ids to select; `null` clears the selection
     public void setSelectedObjectIds(final Collection<String> objectIds) {
         selectedObjectIds.clear();
         if (objectIds != null) {
@@ -2628,15 +2464,13 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /**
-     * Starts tracking the given entity: highlights it via the selection
-     * mechanism, immediately centres the camera on it, and follows it as it
-     * moves. Passing {@code null} stops tracking and clears the highlight.
-     * Calling this again with the same id re-centres and resumes following
-     * after a manual pan paused it.
-     *
-     * @param trackedObjectId the entity's object id, or {@code null} to stop tracking
-     */
+    /// Starts tracking the given entity: highlights it via the selection
+    /// mechanism, immediately centres the camera on it, and follows it as it
+    /// moves. Passing `null` stops tracking and clears the highlight.
+    /// Calling this again with the same id re-centres and resumes following
+    /// after a manual pan paused it.
+    ///
+    /// @param trackedObjectId the entity's object id, or `null` to stop tracking
     public void setTrackedObjectId(final String trackedObjectId) {
         this.trackedObjectId = trackedObjectId;
         this.followPaused = false;
@@ -2651,23 +2485,21 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         announceTracking();
     }
 
-    /**
-     * Applies one damped camera-follow step: computes the pan needed to bring
-     * the tracked entity back inside the view's central dead zone (via
-     * {@link FloorMapViewport#followDelta}) and applies a time-proportional
-     * fraction of it, so the camera glides after the entity instead of
-     * snapping. The full correction is applied at once when hard-centring on
-     * (re-)selection ({@link #centreOnNextFollow}) or when the remainder is
-     * sub-pixel.
-     *
-     * <p>No-op when nothing is tracked, following is paused, or the entity's
-     * position is unknown. Callers are responsible for redrawing afterwards.</p>
-     *
-     * @param deltaMs elapsed time since the previous step (ms); {@code 0}
-     *                applies the full correction immediately
-     * @return {@code true} if the camera moved (a glide is in progress), so
-     *         the animation loop keeps running until the correction is spent
-     */
+    /// Applies one damped camera-follow step: computes the pan needed to bring
+    /// the tracked entity back inside the view's central dead zone (via
+    /// [FloorMapViewport#followDelta]) and applies a time-proportional
+    /// fraction of it, so the camera glides after the entity instead of
+    /// snapping. The full correction is applied at once when hard-centring on
+    /// (re-)selection ([#centreOnNextFollow]) or when the remainder is
+    /// sub-pixel.
+    ///
+    /// No-op when nothing is tracked, following is paused, or the entity's
+    /// position is unknown. Callers are responsible for redrawing afterwards.
+    ///
+    /// @param deltaMs elapsed time since the previous step (ms); `0`
+    ///         applies the full correction immediately
+    /// @return `true` if the camera moved (a glide is in progress), so
+    ///         the animation loop keeps running until the correction is spent
     private boolean followStep(final double deltaMs) {
         if (trackedObjectId == null || followPaused) {
             return false;
@@ -2706,24 +2538,20 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return true;
     }
 
-    /**
-     * Resolves the tracked entity's current map-space position.
-     *
-     * @return {@code {mapX, mapY}}, or {@code null} if the entity is unknown
-     */
+    /// Resolves the tracked entity's current map-space position.
+    ///
+    /// @return `{mapX, mapY}`, or `null` if the entity is unknown
     private double[] trackedPosition() {
         return entityMapPosition(trackedObjectId);
     }
 
-    /**
-     * Resolves an entity's current map-space position, preferring the live
-     * interpolated animation position, then the last known rendered position,
-     * then the event draw list, then — for static facts (objects, backgrounds,
-     * areas), which never move — the fact's placement anchor.
-     *
-     * @param id the entity id
-     * @return {@code {mapX, mapY}}, or {@code null} if the entity is unknown
-     */
+    /// Resolves an entity's current map-space position, preferring the live
+    /// interpolated animation position, then the last known rendered position,
+    /// then the event draw list, then — for static facts (objects, backgrounds,
+    /// areas), which never move — the fact's placement anchor.
+    ///
+    /// @param id the entity id
+    /// @return `{mapX, mapY}`, or `null` if the entity is unknown
     private double[] entityMapPosition(final String id) {
         // The animator knows live/animated/last-known and current-overlay positions.
         final double[] pos = animator.positionOf(id);
@@ -2738,20 +2566,18 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 : null;
     }
 
-    /**
-     * Returns the facts to render, applying any in-progress transform gesture:
-     * each selected, unlocked fact's world-to-map matrix is composed as
-     * {@code pendingTransform · oldMatrix} so a move/scale/rotate is shown live.
-     * On release the same transform is persisted via {@link DragHandler#onTransform}.
-     *
-     * <p>Items on a locked layer are excluded, matching the mouseup commit, which
-     * filters {@link #lockedKeys} out of the transform. Without that the preview and
-     * the commit disagreed: a selection containing both locked and unlocked items -
-     * reachable by locking a layer after selecting, or by Shift-clicking a locked
-     * item, which is deliberately allowed - showed the locked ones tracking the drag
-     * and then snapping back on release, with nothing said. Locked now means locked
-     * from the first pixel.</p>
-     */
+    /// Returns the facts to render, applying any in-progress transform gesture:
+    /// each selected, unlocked fact's world-to-map matrix is composed as
+    /// `pendingTransform · oldMatrix` so a move/scale/rotate is shown live.
+    /// On release the same transform is persisted via [DragHandler#onTransform].
+    ///
+    /// Items on a locked layer are excluded, matching the mouseup commit, which
+    /// filters [#lockedKeys] out of the transform. Without that the preview and
+    /// the commit disagreed: a selection containing both locked and unlocked items -
+    /// reachable by locking a layer after selecting, or by Shift-clicking a locked
+    /// item, which is deliberately allowed - showed the locked ones tracking the drag
+    /// and then snapping back on release, with nothing said. Locked now means locked
+    /// from the first pixel.
     private List<Fact> factsForDraw() {
         final boolean editingVertices = editingAreaKey != null && workingVertices != null;
         if ((pendingTransform == null || selectedObjectIds.isEmpty()) && !editingVertices) {
@@ -2775,17 +2601,15 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     }
 
 
-    /**
-     * Returns the map-space coordinates of the centre of the currently
-     * visible canvas area.
-     *
-     * <p>This is useful for placing new objects at "the middle of what the
-     * user can see" when no specific click position is available (e.g. when
-     * using a toolbar Add button rather than a canvas right-click).</p>
-     *
-     * @return a two-element array {@code {mapX, mapY}} representing the
-     *         visible centre in map space
-     */
+    /// Returns the map-space coordinates of the centre of the currently
+    /// visible canvas area.
+    ///
+    /// This is useful for placing new objects at "the middle of what the
+    /// user can see" when no specific click position is available (e.g. when
+    /// using a toolbar Add button rather than a canvas right-click).
+    ///
+    /// @return a two-element array `{mapX, mapY}` representing the
+    ///         visible centre in map space
     public double[] getVisibleCentreMapCoords() {
         final Element panel = getView().getFocusPanel().getElement();
         final double centreX = panel.getOffsetWidth() / 2.0;
@@ -2793,33 +2617,29 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return screenToMapCoords(centreX, centreY);
     }
 
-    /**
-     * Converts a number of minor grid divisions into a map-space distance at
-     * the current zoom level, using the same adaptive-decade sizing that draws
-     * the grid ({@link FloorMapGrid}). Because the grid's spacing is chosen to
-     * keep grid cells a comfortable on-screen size at any zoom, an offset
-     * expressed this way stays visually consistent regardless of magnification.
-     *
-     * <p>The grid is drawn with an identity world-to-map matrix (see the
-     * {@code appendGrid} call in the view), so its effective scale is simply
-     * the user zoom and its world space coincides with map space.</p>
-     *
-     * @param minorDivisions the number of minor grid divisions
-     * @return the equivalent distance in map-space units
-     */
+    /// Converts a number of minor grid divisions into a map-space distance at
+    /// the current zoom level, using the same adaptive-decade sizing that draws
+    /// the grid ([FloorMapGrid]). Because the grid's spacing is chosen to
+    /// keep grid cells a comfortable on-screen size at any zoom, an offset
+    /// expressed this way stays visually consistent regardless of magnification.
+    ///
+    /// The grid is drawn with an identity world-to-map matrix (see the
+    /// `appendGrid` call in the view), so its effective scale is simply
+    /// the user zoom and its world space coincides with map space.
+    ///
+    /// @param minorDivisions the number of minor grid divisions
+    /// @return the equivalent distance in map-space units
     public double minorGridDivisionsToMapUnits(final double minorDivisions) {
         return minorDivisions * FloorMapGrid.minorWorldSpacing(scale, measurementUnits);
     }
 
-    /**
-     * Sets the event-driven entity overlays (events query result).
-     * <p>
-     * When the timeline is <em>not</em> playing, all objects are placed at their
-     * target positions immediately (teleport behaviour).
-     * <p>
-     * When the timeline <em>is</em> playing, every entity is animated from its
-     * last known position to the new one, regardless of type.
-     */
+    /// Sets the event-driven entity overlays (events query result).
+    ///
+    /// When the timeline is *not* playing, all objects are placed at their
+    /// target positions immediately (teleport behaviour).
+    ///
+    /// When the timeline *is* playing, every entity is animated from its
+    /// last known position to the new one, regardless of type.
     public void setEventObjects(final List<FloorMapObject> objects) {
         // Entities move on a refresh, and the tooltip is anchored to where one
         // was and describes where it was — both stale the moment this lands, and
@@ -2843,11 +2663,9 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /**
-     * Toggles edit mode. When disabled, the object selection is cleared.
-     *
-     * @param editMode {@code true} to enter edit mode, {@code false} to leave
-     */
+    /// Toggles edit mode. When disabled, the object selection is cleared.
+    ///
+    /// @param editMode `true` to enter edit mode, `false` to leave
     public void setEditMode(final boolean editMode) {
         this.editMode = editMode;
         if (!editMode) {
@@ -2863,13 +2681,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /**
-     * Enters the modal area-drawing gesture: subsequent clicks append polygon
-     * vertices, a press-drag pans, right-click undoes the last vertex, Escape
-     * cancels, and the polygon closes on Enter, double-click, or a click near
-     * the first vertex (≥ 3 vertices). The finished polygon is delivered to
-     * the {@link AreaHandler}.
-     */
+    /// Enters the modal area-drawing gesture: subsequent clicks append polygon
+    /// vertices, a press-drag pans, right-click undoes the last vertex, Escape
+    /// cancels, and the polygon closes on Enter, double-click, or a click near
+    /// the first vertex (≥ 3 vertices). The finished polygon is delivered to
+    /// the [AreaHandler].
     public void startAreaDrawing() {
         selectedObjectIds.clear();
         fireSelectionChanged();
@@ -2886,15 +2702,13 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /**
-     * Enters the modal Set Scale gesture: the user presses at one end of a
-     * distance they know, drags to the other, and releases. The measured
-     * map-space length is delivered to the {@link ScaleHandler}, which asks what
-     * that distance really is and calibrates the map from the answer.
-     *
-     * <p>Escape and right-click both leave the mode; a drag shorter than
-     * {@link #MIN_MEASURE_PX} is ignored and the mode stays live.</p>
-     */
+    /// Enters the modal Set Scale gesture: the user presses at one end of a
+    /// distance they know, drags to the other, and releases. The measured
+    /// map-space length is delivered to the [ScaleHandler], which asks what
+    /// that distance really is and calibrates the map from the answer.
+    ///
+    /// Escape and right-click both leave the mode; a drag shorter than
+    /// [#MIN_MEASURE_PX] is ignored and the mode stays live.
     public void startScaleMeasurement() {
         selectedObjectIds.clear();
         fireSelectionChanged();
@@ -2911,7 +2725,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /** Discards any in-progress measurement and leaves the Set Scale gesture. */
+    /// Discards any in-progress measurement and leaves the Set Scale gesture.
     public void cancelScaleMeasurement() {
         measureStartMap = null;
         isDragging = false;
@@ -2922,13 +2736,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /**
-     * Ends a measurement at the given element-pixel position, delivering its
-     * map-space length to the {@link ScaleHandler}.
-     *
-     * <p>A drag too short to be meaningful leaves the gesture live rather than
-     * opening a dialog about a distance the user did not mean to measure.</p>
-     */
+    /// Ends a measurement at the given element-pixel position, delivering its
+    /// map-space length to the [ScaleHandler].
+    ///
+    /// A drag too short to be meaningful leaves the gesture live rather than
+    /// opening a dialog about a distance the user did not mean to measure.
     private void finishScaleMeasurement(final double screenX, final double screenY) {
         final double[] startPx = mapToScreen(measureStartMap);
         final double dx = screenX - startPx[0];
@@ -2955,7 +2767,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /** Discards any in-progress area draft and leaves the drawing gesture. */
+    /// Discards any in-progress area draft and leaves the drawing gesture.
     public void cancelAreaDrawing() {
         areaDraftMap.clear();
         gesture = Gesture.NONE;
@@ -2963,10 +2775,8 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /**
-     * Closes the in-progress polygon and delivers it to the
-     * {@link AreaHandler}. No-ops (keeps drawing) below the vertex minimum.
-     */
+    /// Closes the in-progress polygon and delivers it to the
+    /// [AreaHandler]. No-ops (keeps drawing) below the vertex minimum.
     private void finishAreaDrawing() {
         if (areaDraftMap.size() < AREA_MIN_VERTICES) {
             return;
@@ -2984,10 +2794,8 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /**
-     * {@code true} if the given element-pixel position falls within the
-     * close radius of the draft's first vertex.
-     */
+    /// `true` if the given element-pixel position falls within the
+    /// close radius of the draft's first vertex.
     private boolean isNearFirstDraftVertex(final double screenX, final double screenY) {
         if (areaDraftMap.isEmpty()) {
             return false;
@@ -2999,21 +2807,17 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return dx * dx + dy * dy <= AREA_CLOSE_RADIUS_PX * AREA_CLOSE_RADIUS_PX;
     }
 
-    /**
-     * Projects a map-space point to element-pixel coordinates — the inverse of
-     * {@link #screenToMapCoords} (pan/zoom plus the Y-up flip).
-     */
+    /// Projects a map-space point to element-pixel coordinates — the inverse of
+    /// [#screenToMapCoords] (pan/zoom plus the Y-up flip).
     private double[] mapToScreen(final double[] mapPoint) {
         return new FloorMapViewport(scale, offsetX, offsetY)
                 .mapToScreen(mapPoint[0], mapPoint[1], Y_FLIP);
     }
 
-    /**
-     * The in-progress area draft as a flat element-pixel polyline
-     * {@code [x0, y0, ..., xn, yn]} whose last point is the live cursor. An
-     * empty draft yields just the cursor point — still non-null, so the view
-     * shows the drawing-mode banner from the moment the mode starts.
-     */
+    /// The in-progress area draft as a flat element-pixel polyline
+    /// `{x0, y0, ..., xn, yn}` whose last point is the live cursor. An
+    /// empty draft yields just the cursor point — still non-null, so the view
+    /// shows the drawing-mode banner from the moment the mode starts.
     private double[] currentAreaDraftPx() {
         final double[] draft = new double[(areaDraftMap.size() + 1) * 2];
         for (int i = 0; i < areaDraftMap.size(); i++) {
@@ -3026,43 +2830,37 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return draft;
     }
 
-    /**
-     * Controls whether the grid overlay is drawn. The grid is a non-interactive
-     * UI aid and is independent of edit mode and of whether a background image is
-     * present.
-     *
-     * @param showGrid {@code true} to always draw the grid, {@code false} to hide it
-     */
+    /// Controls whether the grid overlay is drawn. The grid is a non-interactive
+    /// UI aid and is independent of edit mode and of whether a background image is
+    /// present.
+    ///
+    /// @param showGrid `true` to always draw the grid, `false` to hide it
     public void setShowGrid(final boolean showGrid) {
         this.showGrid = showGrid;
         redraw();
     }
 
-    /**
-     * Turns the merging of crowded entities on or off.
-     *
-     * <p>Worth being able to switch off, not just polish: zooming in separates
-     * entities that are merely close, but nothing separates entities at the
-     * <em>same</em> position, so without this there would be no way to confirm
-     * how many are really there — or to reach one of them on the canvas.</p>
-     *
-     * @param clusterNearbyEntities {@code true} to merge crowded entities
-     */
+    /// Turns the merging of crowded entities on or off.
+    ///
+    /// Worth being able to switch off, not just polish: zooming in separates
+    /// entities that are merely close, but nothing separates entities at the
+    /// *same* position, so without this there would be no way to confirm
+    /// how many are really there — or to reach one of them on the canvas.
+    ///
+    /// @param clusterNearbyEntities `true` to merge crowded entities
     public void setClusterNearbyEntities(final boolean clusterNearbyEntities) {
         this.clusterNearbyEntities = clusterNearbyEntities;
         redraw();
     }
 
-    /**
-     * Supplies the resolver that turns an entity id into the name shown to
-     * users, for the cluster hover tooltip.
-     *
-     * <p>Comes from the owning tab because the roster lives there — the same
-     * resolver the tracking panel and the Groups panel name entities through, so
-     * a name in a tooltip matches the name in every grid.</p>
-     *
-     * @param entityNameResolver the resolver, or {@code null} to fall back to ids
-     */
+    /// Supplies the resolver that turns an entity id into the name shown to
+    /// users, for the cluster hover tooltip.
+    ///
+    /// Comes from the owning tab because the roster lives there — the same
+    /// resolver the tracking panel and the Groups panel name entities through, so
+    /// a name in a tooltip matches the name in every grid.
+    ///
+    /// @param entityNameResolver the resolver, or `null` to fall back to ids
     public void setEntityNameResolver(final Function<String, String> entityNameResolver) {
         this.entityNameResolver = entityNameResolver;
         // The canvas caption needs it too, and must not word a cluster differently
@@ -3088,46 +2886,38 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     // instead.
     // -----------------------------------------------------------------------
 
-    /**
-     * The event objects last handed to {@link #setEventObjects}, kept for the
-     * accessible summary's entity counts.
-     *
-     * <p>Read from here rather than from the animator's draw list because the
-     * draw list is a per-frame interpolation: asking it "how many people are
-     * there?" mid-animation can answer differently on consecutive frames.</p>
-     */
+    /// The event objects last handed to [#setEventObjects], kept for the
+    /// accessible summary's entity counts.
+    ///
+    /// Read from here rather than from the animator's draw list because the
+    /// draw list is a per-frame interpolation: asking it "how many people are
+    /// there?" mid-animation can answer differently on consecutive frames.
     private List<FloorMapObject> lastEventObjects = new ArrayList<>();
 
-    /** The time currently shown, as already-formatted text, or {@code null}. */
+    /// The time currently shown, as already-formatted text, or `null`.
     private String currentTimeText;
 
-    /**
-     * The standing "why is this empty" text, or {@code null}.
-     *
-     * <p>Held rather than only pushed to the view because it also belongs in the accessible
-     * summary. A screen-reader user gets the map's state from the summary, not from looking at the
-     * corner of the canvas, so the explanation has to reach both or it reaches only sighted
-     * users.</p>
-     */
+    /// The standing "why is this empty" text, or `null`.
+    ///
+    /// Held rather than only pushed to the view because it also belongs in the accessible
+    /// summary. A screen-reader user gets the map's state from the summary, not from looking at the
+    /// corner of the canvas, so the explanation has to reach both or it reaches only sighted
+    /// users.
     private String emptyStatusText;
 
-    /**
-     * Whether the timeline is playing. Held here so time announcements can be
-     * suppressed during playback — see {@link #setCurrentTimeText(String)}.
-     */
+    /// Whether the timeline is playing. Held here so time announcements can be
+    /// suppressed during playback — see [#setCurrentTimeText(String)].
     private boolean playing;
 
-    /**
-     * Rebuilds the map's accessible name.
-     *
-     * <p>Summarises rather than enumerates. A list of every entity and its
-     * coordinates would be a faithful transcription of the canvas and no use to
-     * anybody: it is unlistenable, and it duplicates the Tracking grid, which is
-     * already a navigable row-per-entity view of the same data (and is wired up as
-     * this element's {@code aria-describedby}). What a sighted user takes from a
-     * glance at the map is the population, roughly where the interest is, and what
-     * is being followed — so that is what this says.</p>
-     */
+    /// Rebuilds the map's accessible name.
+    ///
+    /// Summarises rather than enumerates. A list of every entity and its
+    /// coordinates would be a faithful transcription of the canvas and no use to
+    /// anybody: it is unlistenable, and it duplicates the Tracking grid, which is
+    /// already a navigable row-per-entity view of the same data (and is wired up as
+    /// this element's `aria-describedby`). What a sighted user takes from a
+    /// glance at the map is the population, roughly where the interest is, and what
+    /// is being followed — so that is what this says.
     private void refreshAccessibleSummary() {
         final StringBuilder sb = new StringBuilder("Floor map");
 
@@ -3195,13 +2985,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         getView().setMapSummary(sb.toString());
     }
 
-    /**
-     * Names an entity for speech, adding the area it is in when that is known.
-     *
-     * <p>"Alice, in Meeting Room A" rather than "Alice at 12.4, 8.1": map
-     * coordinates are meaningless read aloud, whereas the containing area is the
-     * same answer a sighted user reads off the map.</p>
-     */
+    /// Names an entity for speech, adding the area it is in when that is known.
+    ///
+    /// "Alice, in Meeting Room A" rather than "Alice at 12.4, 8.1": map
+    /// coordinates are meaningless read aloud, whereas the containing area is the
+    /// same answer a sighted user reads off the map.
     private String describeEntity(final String id) {
         final String name = entityNameResolver != null
                 ? entityNameResolver.apply(id)
@@ -3219,22 +3007,20 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 : displayName;
     }
 
-    /** The current zoom as a rounded percentage, e.g. {@code "150%"}. */
+    /// The current zoom as a rounded percentage, e.g. `"150%"`.
     private String zoomPercentText() {
         return Math.round(scale * 100) + "%";
     }
 
-    /**
-     * Sets or clears the line explaining why the map is empty, and folds it into the accessible
-     * summary.
-     *
-     * <p>Announced only when the text <em>changes</em>, which {@link FloorMapCanvasView#announce}
-     * enforces anyway by dropping repeats — a line that re-announced on every tick while the map
-     * stayed legitimately empty would be worse than not saying it at all.</p>
-     *
-     * @param text  what to say, or {@code null} to clear it
-     * @param fault whether this is a fault rather than merely an absence
-     */
+    /// Sets or clears the line explaining why the map is empty, and folds it into the accessible
+    /// summary.
+    ///
+    /// Announced only when the text *changes*, which [FloorMapCanvasView#announce]
+    /// enforces anyway by dropping repeats — a line that re-announced on every tick while the map
+    /// stayed legitimately empty would be worse than not saying it at all.
+    ///
+    /// @param text  what to say, or `null` to clear it
+    /// @param fault whether this is a fault rather than merely an absence
     public void setEmptyStatus(final String text, final boolean fault) {
         final String normalised = text == null || text.isEmpty() ? null : text;
         final boolean changed = normalised == null
@@ -3248,21 +3034,19 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /**
-     * Sets the time the map is showing, for the summary and the live region.
-     *
-     * <p>Announced only when the map is <em>not</em> playing. During playback the
-     * time changes several times a second, and announcing each one would make the
-     * live region useless — a screen reader would do nothing but read timestamps,
-     * drowning out selection and tracking messages that actually need to be heard.
-     * The summary still carries the current time, so "where am I now?" remains
-     * answerable on demand throughout playback.</p>
-     *
-     * <p>Whether playback is running is read from {@link #playing} rather than
-     * taken as an argument, so no caller can get the distinction wrong.</p>
-     *
-     * @param timeText the formatted time now shown
-     */
+    /// Sets the time the map is showing, for the summary and the live region.
+    ///
+    /// Announced only when the map is *not* playing. During playback the
+    /// time changes several times a second, and announcing each one would make the
+    /// live region useless — a screen reader would do nothing but read timestamps,
+    /// drowning out selection and tracking messages that actually need to be heard.
+    /// The summary still carries the current time, so "where am I now?" remains
+    /// answerable on demand throughout playback.
+    ///
+    /// Whether playback is running is read from [#playing] rather than
+    /// taken as an argument, so no caller can get the distinction wrong.
+    ///
+    /// @param timeText the formatted time now shown
     public void setCurrentTimeText(final String timeText) {
         this.currentTimeText = timeText;
         refreshAccessibleSummary();
@@ -3271,7 +3055,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /** Announces, and re-summarises after, a change of tracked entity. */
+    /// Announces, and re-summarises after, a change of tracked entity.
     private void announceTracking() {
         if (trackedObjectId != null) {
             getView().announce("Following " + describeEntity(trackedObjectId));
@@ -3281,73 +3065,63 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         refreshAccessibleSummary();
     }
 
-    /**
-     * Points the map's accessible description at the Tracking panel's grid, which
-     * lists one row per entity with its type and containing area.
-     *
-     * <p>The grid is the map's real text equivalent — it is navigable, it updates
-     * with the timeline, and selecting a row tracks that entity. Naming it as the
-     * map's description is what tells a screen-reader user that the detail behind
-     * the summary exists and where to find it.</p>
-     *
-     * @param elementId the grid's element id
-     */
+    /// Points the map's accessible description at the Tracking panel's grid, which
+    /// lists one row per entity with its type and containing area.
+    ///
+    /// The grid is the map's real text equivalent — it is navigable, it updates
+    /// with the timeline, and selecting a row tracks that entity. Naming it as the
+    /// map's description is what tells a screen-reader user that the detail behind
+    /// the summary exists and where to find it.
+    ///
+    /// @param elementId the grid's element id
     public void setTextAlternativeId(final String elementId) {
         getView().setMapDescribedBy(elementId);
     }
 
-    /**
-     * Sets the per-type presentation settings (z-order + default graphic shape
-     * and colour). Used by the view to render imageless facts.
-     *
-     * @param typeStyles the ordered type styles, or {@code null}
-     */
+    /// Sets the per-type presentation settings (z-order + default graphic shape
+    /// and colour). Used by the view to render imageless facts.
+    ///
+    /// @param typeStyles the ordered type styles, or `null`
     public void setTypeStyles(final List<TypeStyle> typeStyles) {
         this.typeStyles = typeStyles;
         redraw();
     }
 
-    /**
-     * Sets what one map unit means in the real world, so the grid labels, the
-     * scale bar and any distance the canvas reports carry real units.
-     *
-     * <p>Held here as well as pushed to the view because the presenter sizes
-     * offsets in grid divisions ({@link #minorGridDivisionsToMapUnits}), and the
-     * grid's decade now depends on the scale — given different units the two
-     * would disagree about where the lines are.</p>
-     *
-     * @param measurementUnits the document's units, or {@code null} when the map
-     *                         has no scale set
-     */
+    /// Sets what one map unit means in the real world, so the grid labels, the
+    /// scale bar and any distance the canvas reports carry real units.
+    ///
+    /// Held here as well as pushed to the view because the presenter sizes
+    /// offsets in grid divisions ([#minorGridDivisionsToMapUnits]), and the
+    /// grid's decade now depends on the scale — given different units the two
+    /// would disagree about where the lines are.
+    ///
+    /// @param measurementUnits the document's units, or `null` when the map
+    ///         has no scale set
     public void setMeasurementUnits(final FloorMapMeasurementUnits measurementUnits) {
         this.measurementUnits = measurementUnits;
         getView().setMeasurementUnits(measurementUnits);
         redraw();
     }
 
-    /**
-     * The width/height ratio of an image this canvas has already loaded, or
-     * {@code null} if it has not.
-     *
-     * <p>Exposed so the properties dialog can state an image's real-world size
-     * without probing the image a second time — by the time a fact is being
-     * edited the canvas has almost always drawn it.</p>
-     *
-     * @param imageUrl the image URL
-     * @return the aspect ratio, or {@code null} when unknown
-     */
+    /// The width/height ratio of an image this canvas has already loaded, or
+    /// `null` if it has not.
+    ///
+    /// Exposed so the properties dialog can state an image's real-world size
+    /// without probing the image a second time — by the time a fact is being
+    /// edited the canvas has almost always drawn it.
+    ///
+    /// @param imageUrl the image URL
+    /// @return the aspect ratio, or `null` when unknown
     public Double getImageAspectRatio(final String imageUrl) {
         return getView().getImageAspectRatio(imageUrl);
     }
 
-    /**
-     * Sets per-type layer visibility from the Layers panel. Types in
-     * {@code hidden} are neither drawn nor hit-tested; types in {@code dimmed}
-     * render at reduced opacity.
-     *
-     * @param hidden types to hide; {@code null} treated as empty
-     * @param dimmed types to render dimmed; {@code null} treated as empty
-     */
+    /// Sets per-type layer visibility from the Layers panel. Types in
+    /// `hidden` are neither drawn nor hit-tested; types in `dimmed`
+    /// render at reduced opacity.
+    ///
+    /// @param hidden types to hide; `null` treated as empty
+    /// @param dimmed types to render dimmed; `null` treated as empty
     public void setLayerVisibility(final Set<String> hidden, final Set<String> dimmed) {
         hiddenTypes.clear();
         if (hidden != null) {
@@ -3360,12 +3134,10 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         redraw();
     }
 
-    /**
-     * Sets the types whose items are locked against movement (Editor Layers
-     * panel). Locked items stay visible and selectable but cannot be dragged.
-     *
-     * @param locked the locked types; {@code null} treated as empty
-     */
+    /// Sets the types whose items are locked against movement (Editor Layers
+    /// panel). Locked items stay visible and selectable but cannot be dragged.
+    ///
+    /// @param locked the locked types; `null` treated as empty
     public void setLockedTypes(final Set<String> locked) {
         lockedTypes.clear();
         if (locked != null) {
@@ -3374,7 +3146,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         recomputeLockedKeys();
     }
 
-    /** Recomputes {@link #lockedKeys} from the current facts and locked types. */
+    /// Recomputes [#lockedKeys] from the current facts and locked types.
     private void recomputeLockedKeys() {
         lockedKeys.clear();
         if (lockedTypes.isEmpty()) {
@@ -3387,7 +3159,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         }
     }
 
-    /** Facts minus those whose type is a hidden layer. */
+    /// Facts minus those whose type is a hidden layer.
     private List<Fact> visibleFacts(final List<Fact> in) {
         if (in == null || hiddenTypes.isEmpty()) {
             return in;
@@ -3401,7 +3173,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return out;
     }
 
-    /** Event objects minus those whose type is a hidden layer. */
+    /// Event objects minus those whose type is a hidden layer.
     private List<FloorMapObject> visibleEvents(final List<FloorMapObject> in) {
         if (in == null || hiddenTypes.isEmpty()) {
             return in;
@@ -3415,12 +3187,10 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         return out;
     }
 
-    /**
-     * Sets the facts to render (backgrounds + static facts) as produced by the
-     * parser. Replaces the legacy background-image/matrix/objects inputs.
-     *
-     * @param facts the facts; {@code null} is treated as empty
-     */
+    /// Sets the facts to render (backgrounds + static facts) as produced by the
+    /// parser. Replaces the legacy background-image/matrix/objects inputs.
+    ///
+    /// @param facts the facts; `null` is treated as empty
     public void setFacts(final List<Fact> facts) {
         // A tooltip describing a fact this load may have moved, renamed or
         // dropped altogether cannot survive it.
@@ -3452,82 +3222,66 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         maybeApplyInitialView();
     }
 
-    /**
-     * Injects an initial view {@code {scale, offsetX, offsetY}} from another tab
-     * (Map → Editor) so this canvas's first frame matches exactly and nothing
-     * jumps on the tab switch. Only honoured before the initial view is applied;
-     * user pan/zoom afterwards is independent per canvas.
-     *
-     * @param view the view state, or {@code null} to compute a fit locally
-     */
+    /// Injects an initial view `{scale, offsetX, offsetY}` from another tab
+    /// (Map → Editor) so this canvas's first frame matches exactly and nothing
+    /// jumps on the tab switch. Only honoured before the initial view is applied;
+    /// user pan/zoom afterwards is independent per canvas.
+    ///
+    /// @param view the view state, or `null` to compute a fit locally
     public void setInitialViewState(final double[] view) {
         this.injectedInitialView = view;
     }
 
-    /**
-     * Registers a listener notified once with this canvas's computed initial
-     * view {@code {scale, offsetX, offsetY}}, so another tab can reuse it.
-     *
-     * @param listener the callback, or {@code null} to remove
-     */
+    /// Registers a listener notified once with this canvas's computed initial
+    /// view `{scale, offsetX, offsetY}`, so another tab can reuse it.
+    ///
+    /// @param listener the callback, or `null` to remove
     public void setInitialViewListener(final Consumer<double[]> listener) {
         this.initialViewListener = listener;
     }
 
 
-    /**
-     * Sets the handler that persists a completed move/scale/rotate gesture.
-     *
-     * <p>Called once, when the gesture finishes - not during it. The live preview while dragging
-     * is handled internally via {@code pendingTransform}.</p>
-     *
-     * @param dragHandler the callback, or {@code null} to remove
-     */
+    /// Sets the handler that persists a completed move/scale/rotate gesture.
+    ///
+    /// Called once, when the gesture finishes - not during it. The live preview while dragging
+    /// is handled internally via `pendingTransform`.
+    ///
+    /// @param dragHandler the callback, or `null` to remove
     public void setDragHandler(final DragHandler dragHandler) {
         this.dragHandler = dragHandler;
     }
 
-    /**
-     * Sets the handler that persists an area's edited geometry.
-     *
-     * @param geometryHandler the callback, or {@code null} to remove
-     */
+    /// Sets the handler that persists an area's edited geometry.
+    ///
+    /// @param geometryHandler the callback, or `null` to remove
     public void setGeometryHandler(final GeometryHandler geometryHandler) {
         this.geometryHandler = geometryHandler;
     }
 
-    /**
-     * Sets the handler that receives a finished area-drawing polygon.
-     *
-     * @param areaHandler the callback, or {@code null} to remove
-     */
+    /// Sets the handler that receives a finished area-drawing polygon.
+    ///
+    /// @param areaHandler the callback, or `null` to remove
     public void setAreaHandler(final AreaHandler areaHandler) {
         this.areaHandler = areaHandler;
     }
 
-    /**
-     * Sets the handler that receives a finished Set Scale measurement.
-     *
-     * @param scaleHandler the callback, or {@code null} to remove
-     */
+    /// Sets the handler that receives a finished Set Scale measurement.
+    ///
+    /// @param scaleHandler the callback, or `null` to remove
     public void setScaleHandler(final ScaleHandler scaleHandler) {
         this.scaleHandler = scaleHandler;
     }
 
-    /**
-     * Sets the handler notified when the selection changes as a result of a
-     * canvas interaction (click, Shift-click toggle, or rubber-band marquee).
-     *
-     * @param selectionHandler the callback, or {@code null} to remove
-     */
+    /// Sets the handler notified when the selection changes as a result of a
+    /// canvas interaction (click, Shift-click toggle, or rubber-band marquee).
+    ///
+    /// @param selectionHandler the callback, or `null` to remove
     public void setSelectionHandler(final SelectionHandler selectionHandler) {
         this.selectionHandler = selectionHandler;
     }
 
-    /**
-     * Notifies the {@link SelectionHandler} of the current selection, if one is
-     * set. The primary key is the first-selected id, or {@code null} when empty.
-     */
+    /// Notifies the [SelectionHandler] of the current selection, if one is
+    /// set. The primary key is the first-selected id, or `null` when empty.
     private void fireSelectionChanged() {
         if (selectionHandler != null) {
             final String primary = selectedObjectIds.isEmpty()
@@ -3539,13 +3293,11 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         announceSelection();
     }
 
-    /**
-     * Announces what is now selected.
-     *
-     * <p>Selection is otherwise shown only as an orange stroke around a shape,
-     * which conveys nothing without sight — and, being colour alone, little to
-     * some users who do have it.</p>
-     */
+    /// Announces what is now selected.
+    ///
+    /// Selection is otherwise shown only as an orange stroke around a shape,
+    /// which conveys nothing without sight — and, being colour alone, little to
+    /// some users who do have it.
     private void announceSelection() {
         if (selectedObjectIds.isEmpty()) {
             getView().announce("Selection cleared");
@@ -3558,75 +3310,55 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
         refreshAccessibleSummary();
     }
 
-    /**
-     * Callback invoked when a transform gesture (move/rotate/scale) completes,
-     * to persist the change as a single map-space affine applied to the whole
-     * selection. A plain move is just a translation transform.
-     */
+    /// Callback invoked when a transform gesture (move/rotate/scale) completes,
+    /// to persist the change as a single map-space affine applied to the whole
+    /// selection. A plain move is just a translation transform.
     public interface DragHandler {
 
-        /**
-         * Persists an arbitrary map-space transform applied to the whole
-         * selection.
-         *
-         * @param keys the selected fact keys being transformed
-         * @param mapSpaceTransform the accumulated map-space affine to compose
-         *                          onto each fact ({@code newWorldToMap = T · old})
-         */
+        /// Persists an arbitrary map-space transform applied to the whole
+        /// selection.
+        ///
+        /// @param keys the selected fact keys being transformed
+        /// @param mapSpaceTransform the accumulated map-space affine to compose
+        ///         onto each fact (`newWorldToMap = T · old`)
         void onTransform(Collection<String> keys, FloorMapTransformationMatrix mapSpaceTransform);
     }
 
-    /**
-     * Callback invoked when an area's geometry is edited (a vertex moved,
-     * inserted or deleted), to persist the new local-frame vertices.
-     */
+    /// Callback invoked when an area's geometry is edited (a vertex moved,
+    /// inserted or deleted), to persist the new local-frame vertices.
     public interface GeometryHandler {
 
-        /**
-         * Persists the area's new vertices (local frame).
-         *
-         * @param key      the area fact's key
-         * @param vertices the new local-frame vertices ({@code >= 3})
-         */
+        /// Persists the area's new vertices (local frame).
+        ///
+        /// @param key      the area fact's key
+        /// @param vertices the new local-frame vertices (`>= 3`)
         void onGeometryEdited(String key, double[][] vertices);
     }
 
-    /**
-     * Callback invoked when the user finishes drawing an area polygon (see
-     * {@link #startAreaDrawing()}).
-     */
+    /// Callback invoked when the user finishes drawing an area polygon (see
+    /// [#startAreaDrawing()]).
     public interface AreaHandler {
 
-        /**
-         * @param mapVertices the polygon vertices in map space, in click order;
-         *                    always at least 3
-         */
+        /// @param mapVertices the polygon vertices in map space, in click order;
+        ///         always at least 3
         void onAreaDrawn(List<double[]> mapVertices);
     }
 
-    /**
-     * Callback invoked when the user finishes measuring a distance with the Set
-     * Scale tool (see {@link #startScaleMeasurement()}).
-     */
+    /// Callback invoked when the user finishes measuring a distance with the Set
+    /// Scale tool (see [#startScaleMeasurement()]).
     public interface ScaleHandler {
 
-        /**
-         * @param mapLength the measured length in map units; always {@code > 0}.
-         *                  The handler asks the user what that distance really is
-         *                  and derives the scale from the two.
-         */
+        /// @param mapLength the measured length in map units; always `> 0`.
+        ///         The handler asks the user what that distance really is
+        ///         and derives the scale from the two.
         void onScaleMeasured(double mapLength);
     }
 
-    /**
-     * Callback invoked when a canvas interaction changes the selection.
-     */
+    /// Callback invoked when a canvas interaction changes the selection.
     public interface SelectionHandler {
 
-        /**
-         * @param keys    the full selection in selection order
-         * @param primary the first-selected id (the "primary"), or {@code null}
-         */
+        /// @param keys    the full selection in selection order
+        /// @param primary the first-selected id (the "primary"), or `null`
         void onSelectionChanged(Collection<String> keys, String primary);
     }
 
@@ -3635,120 +3367,107 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     // View interface
     // =========================================================================
 
-    /**
-     * View contract for the floor map canvas.
-     *
-     * <p>The canvas is an SVG-based rendering surface that displays a
-     * background image (the floor plan), overlaid with draggable map objects
-     * (gates, doors, cameras, people, etc.). It supports zoom, pan, object
-     * selection, and right-click context menus.</p>
-     *
-     * <p>The view is responsible for rendering; all interaction logic
-     * (drag handling, selection, coordinate transforms) lives in
-     * {@link FloorMapCanvasPresenter}.</p>
-     */
+    /// View contract for the floor map canvas.
+    ///
+    /// The canvas is an SVG-based rendering surface that displays a
+    /// background image (the floor plan), overlaid with draggable map objects
+    /// (gates, doors, cameras, people, etc.). It supports zoom, pan, object
+    /// selection, and right-click context menus.
+    ///
+    /// The view is responsible for rendering; all interaction logic
+    /// (drag handling, selection, coordinate transforms) lives in
+    /// [FloorMapCanvasPresenter].
     public interface FloorMapCanvasView extends View, RequiresResize {
 
-        /**
-         * Returns the {@link FocusPanel} that wraps the SVG canvas.
-         *
-         * <p>The presenter registers mouse and context-menu handlers on this
-         * panel. {@code FocusPanel} is returned (rather than a narrower
-         * {@code Has*Handlers} type) so that the presenter can also attach
-         * DOM-level handlers via {@code addDomHandler} (e.g. for the native
-         * {@code contextmenu} event).</p>
-         *
-         * @return the focus panel containing the SVG canvas
-         */
+        /// Returns the [FocusPanel] that wraps the SVG canvas.
+        ///
+        /// The presenter registers mouse and context-menu handlers on this
+        /// panel. `FocusPanel` is returned (rather than a narrower
+        /// `Has*Handlers` type) so that the presenter can also attach
+        /// DOM-level handlers via `addDomHandler` (e.g. for the native
+        /// `contextmenu` event).
+        ///
+        /// @return the focus panel containing the SVG canvas
         FocusPanel getFocusPanel();
 
-        /**
-         * Returns the handler source for mouse-move events on the canvas.
-         *
-         * @return the mouse-move handler source
-         */
+        /// Returns the handler source for mouse-move events on the canvas.
+        ///
+        /// @return the mouse-move handler source
         HasMouseMoveHandlers getMouseMoveHandlers();
 
-        /**
-         * Returns the handler source for mouse-up events on the canvas.
-         *
-         * @return the mouse-up handler source
-         */
+        /// Returns the handler source for mouse-up events on the canvas.
+        ///
+        /// @return the mouse-up handler source
         HasMouseUpHandlers getMouseUpHandlers();
 
-        /**
-         * Returns the handler source for mouse-wheel events on the canvas.
-         *
-         * @return the mouse-wheel handler source
-         */
+        /// Returns the handler source for mouse-wheel events on the canvas.
+        ///
+        /// @return the mouse-wheel handler source
         HasMouseWheelHandlers getMouseWheelHandlers();
 
-        /**
-         * Renders the complete SVG canvas contents.
-         *
-         * <p>This is called on every state change (zoom, pan, object move,
-         * selection change, data load) and rebuilds the entire SVG DOM.
-         * The rendering layers are, from back to front:</p>
-         * <ol>
-         *   <li>Grid overlay (drawn when {@code showGrid} is set)</li>
-         *   <li>Facts — image facts (incl. backgrounds) and imageless default graphics,
-         *       in the supplied paint (z) order</li>
-         *   <li>Events (people) drawn on top</li>
-         * </ol>
-         *
-         * @param scale           the current zoom scale factor
-         * @param x               the current pan offset X (pixels)
-         * @param y               the current pan offset Y (pixels)
-         * @param facts           the facts to render, already in paint (z) order
-         * @param events          the event entity overlay objects (map coordinates)
-         * @param selectedObjectIds the IDs of the currently selected objects (all
-         *                         highlighted); empty if nothing is selected
-         * @param typeStyles      per-type presentation settings (default graphic
-         *                        shape/colour for imageless facts); may be {@code null}
-         * @param showGrid        {@code true} to draw the (non-interactive) grid overlay
-         * @param dimmedTypes     the types the user has pushed into the background from the
-         *                        Layers panel, drawn at reduced opacity. Applies to facts,
-         *                        events <em>and</em> cluster glyphs, so a dimmed layer does
-         *                        not reappear at full strength once its members merge. May
-         *                        be {@code null}, meaning nothing is dimmed
-         * @param marqueeRectPx   the rubber-band selection rectangle
-         *                        {@code {minX, minY, maxX, maxY}} in element pixels, already
-         *                        normalised so the mins are the mins whichever way the drag
-         *                        went, or {@code null} when no marquee is in progress
-         * @param drawSelectionHandles
-         *                        {@code true} to draw the selection frame and its handles.
-         *                        Distinct from the selection being non-empty: the caller
-         *                        suppresses it while a marquee is being dragged, so the
-         *                        frame does not fight the rubber band for the user's
-         *                        attention
-         * @param scaleRotateEnabled
-         *                        {@code true} when the selection contains at least one
-         *                        <em>unlocked</em> fact with an image or an outline, so
-         *                        scale and rotate handles are worth offering. False leaves
-         *                        the move-only frame - handles that cannot act on anything
-         *                        are worse than no handles, because they invite a gesture
-         *                        that then does nothing
-         * @param areaDraftPx     the in-progress area-drawing polyline in element
-         *                        pixels ({@code [x0, y0, x1, y1, ...]}, last point =
-         *                        live cursor), or {@code null} when not drawing
-         * @param areaOverlay     area-containment decorations — which facts/entities
-         *                        carry the "related to the focused entity" highlight
-         *                        and what each area's occupant-count badge reads;
-         *                        never {@code null}
-         * @param clusterOverlay  which entities are merged into summary glyphs
-         *                        because they are too close together on screen to
-         *                        tell apart. Members must <strong>not</strong> be
-         *                        drawn individually — the cluster glyph stands in
-         *                        for them. Never {@code null}
-         * @param highlight       resolves the non-selection highlight for each entity -
-         *                        a group's own colour, or area-containment green when the
-         *                        entity is inside an area holding the tracked entity,
-         *                        whichever the resolver says wins. Selection styling still
-         *                        takes precedence over both; never {@code null}
-         * @param measureLinePx   the in-progress Set Scale line
-         *                        {@code {x0, y0, x1, y1}} in element pixels, or
-         *                        {@code null} when not measuring
-         */
+        /// Renders the complete SVG canvas contents.
+        ///
+        /// This is called on every state change (zoom, pan, object move,
+        /// selection change, data load) and rebuilds the entire SVG DOM.
+        /// The rendering layers are, from back to front:
+        ///
+        /// 1. Grid overlay (drawn when `showGrid` is set)
+        /// 2. Facts — image facts (incl. backgrounds) and imageless default graphics,
+        ///    in the supplied paint (z) order
+        /// 3. Events (people) drawn on top
+        ///
+        /// @param scale           the current zoom scale factor
+        /// @param x               the current pan offset X (pixels)
+        /// @param y               the current pan offset Y (pixels)
+        /// @param facts           the facts to render, already in paint (z) order
+        /// @param events          the event entity overlay objects (map coordinates)
+        /// @param selectedObjectIds the IDs of the currently selected objects (all
+        ///         highlighted); empty if nothing is selected
+        /// @param typeStyles      per-type presentation settings (default graphic
+        ///         shape/colour for imageless facts); may be `null`
+        /// @param showGrid        `true` to draw the (non-interactive) grid overlay
+        /// @param dimmedTypes     the types the user has pushed into the background from the
+        ///         Layers panel, drawn at reduced opacity. Applies to facts,
+        ///         events *and* cluster glyphs, so a dimmed layer does
+        ///         not reappear at full strength once its members merge. May
+        ///         be `null`, meaning nothing is dimmed
+        /// @param marqueeRectPx   the rubber-band selection rectangle
+        ///         `{minX, minY, maxX, maxY}` in element pixels, already
+        ///         normalised so the mins are the mins whichever way the drag
+        ///         went, or `null` when no marquee is in progress
+        /// @param drawSelectionHandles
+        ///         `true` to draw the selection frame and its handles.
+        ///         Distinct from the selection being non-empty: the caller
+        ///         suppresses it while a marquee is being dragged, so the
+        ///         frame does not fight the rubber band for the user's
+        ///         attention
+        /// @param scaleRotateEnabled
+        ///         `true` when the selection contains at least one
+        ///         *unlocked* fact with an image or an outline, so
+        ///         scale and rotate handles are worth offering. False leaves
+        ///         the move-only frame - handles that cannot act on anything
+        ///         are worse than no handles, because they invite a gesture
+        ///         that then does nothing
+        /// @param areaDraftPx     the in-progress area-drawing polyline in element
+        ///         pixels (`{x0, y0, x1, y1, ...}`, last point =
+        ///         live cursor), or `null` when not drawing
+        /// @param areaOverlay     area-containment decorations — which facts/entities
+        ///         carry the "related to the focused entity" highlight
+        ///         and what each area's occupant-count badge reads;
+        ///         never `null`
+        /// @param clusterOverlay  which entities are merged into summary glyphs
+        ///         because they are too close together on screen to
+        ///         tell apart. Members must **not** be
+        ///         drawn individually — the cluster glyph stands in
+        ///         for them. Never `null`
+        /// @param highlight       resolves the non-selection highlight for each entity -
+        ///         a group's own colour, or area-containment green when the
+        ///         entity is inside an area holding the tracked entity,
+        ///         whichever the resolver says wins. Selection styling still
+        ///         takes precedence over both; never `null`
+        /// @param measureLinePx   the in-progress Set Scale line
+        ///         `{x0, y0, x1, y1}` in element pixels, or
+        ///         `null` when not measuring
         void draw(double scale, double x, double y, List<Fact> facts,
                 List<FloorMapObject> events, Set<String> selectedObjectIds,
                 List<TypeStyle> typeStyles, boolean showGrid, Set<String> dimmedTypes,
@@ -3757,195 +3476,161 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
                 FloorMapClusterOverlay clusterOverlay,
                 FloorMapHighlight highlight, double[] measureLinePx);
 
-        /**
-         * Sets what one map unit means in the real world, used to label the grid
-         * and size the scale bar. {@code null} on a map that has never been
-         * calibrated, which measures in the default scale.
-         *
-         * <p>A setter rather than a {@link #draw} parameter: it changes only when
-         * the document is read or recalibrated, not per frame.</p>
-         *
-         * @param measurementUnits the document's units, or {@code null}
-         */
+        /// Sets what one map unit means in the real world, used to label the grid
+        /// and size the scale bar. `null` on a map that has never been
+        /// calibrated, which measures in the default scale.
+        ///
+        /// A setter rather than a [#draw] parameter: it changes only when
+        /// the document is read or recalibrated, not per frame.
+        ///
+        /// @param measurementUnits the document's units, or `null`
         void setMeasurementUnits(FloorMapMeasurementUnits measurementUnits);
 
-        /**
-         * Tells the view the Set Scale mode is active, so its instruction pill
-         * can announce the mode before the first press — at which point there is
-         * no measuring line for the view to infer it from.
-         *
-         * @param measuringScale {@code true} while the mode is active
-         */
+        /// Tells the view the Set Scale mode is active, so its instruction pill
+        /// can announce the mode before the first press — at which point there is
+        /// no measuring line for the view to infer it from.
+        ///
+        /// @param measuringScale `true` while the mode is active
         void setMeasuringScale(boolean measuringScale);
 
-        /**
-         * Shows a readout pill at the cursor during a move or resize, or hides
-         * it.
-         *
-         * @param text      what to show, or {@code null} to hide
-         * @param cursorXPx cursor position in element pixels
-         * @param cursorYPx cursor position in element pixels
-         */
+        /// Shows a readout pill at the cursor during a move or resize, or hides
+        /// it.
+        ///
+        /// @param text      what to show, or `null` to hide
+        /// @param cursorXPx cursor position in element pixels
+        /// @param cursorYPx cursor position in element pixels
         void setGestureReadout(String text, double cursorXPx, double cursorYPx);
 
-        /**
-         * Shows the panel describing whatever is under the pointer — a cluster's
-         * members, or one entity's details — or hides it.
-         *
-         * <p>One panel serves both: only one thing can be under the pointer, and
-         * naming ten entities and describing one are the same job.</p>
-         *
-         * <p>Anchored to the glyph rather than to the cursor, so it holds still
-         * while the pointer moves across the glyph — which also means the
-         * presenter only needs to call this when the hovered glyph changes, not
-         * on every mouse move.</p>
-         *
-         * @param caption   the heading — a cluster's {@code "10 users"} or an
-         *                  entity's name — or {@code null} to hide
-         * @param lines     the lines to list under it: member names (already
-         *                  capped) or an entity's details
-         * @param anchorXPx the glyph's centre in element pixels
-         * @param anchorYPx the glyph's centre in element pixels
-         */
+        /// Shows the panel describing whatever is under the pointer — a cluster's
+        /// members, or one entity's details — or hides it.
+        ///
+        /// One panel serves both: only one thing can be under the pointer, and
+        /// naming ten entities and describing one are the same job.
+        ///
+        /// Anchored to the glyph rather than to the cursor, so it holds still
+        /// while the pointer moves across the glyph — which also means the
+        /// presenter only needs to call this when the hovered glyph changes, not
+        /// on every mouse move.
+        ///
+        /// @param caption   the heading — a cluster's `"10 users"` or an
+        ///         entity's name — or `null` to hide
+        /// @param lines     the lines to list under it: member names (already
+        ///         capped) or an entity's details
+        /// @param anchorXPx the glyph's centre in element pixels
+        /// @param anchorYPx the glyph's centre in element pixels
         void setHoverTooltip(String caption, List<String> lines,
                 double anchorXPx, double anchorYPx);
 
-        /**
-         * Supplies the resolver used to caption a cluster drawn around the tracked
-         * entity, which needs that entity's display name.
-         *
-         * <p>A setter rather than a {@link #draw} parameter, for the same reason
-         * as the measurement units: it is wired once by the owning tab and never
-         * changes per frame.</p>
-         *
-         * @param entityNameResolver resolves an entity id to its display name, or
-         *                           {@code null} to fall back to ids
-         */
+        /// Supplies the resolver used to caption a cluster drawn around the tracked
+        /// entity, which needs that entity's display name.
+        ///
+        /// A setter rather than a [#draw] parameter, for the same reason
+        /// as the measurement units: it is wired once by the owning tab and never
+        /// changes per frame.
+        ///
+        /// @param entityNameResolver resolves an entity id to its display name, or
+        ///         `null` to fall back to ids
         void setEntityNameResolver(Function<String, String> entityNameResolver);
 
-        /**
-         * Returns the screen-space bounding box {@code {minX, minY, maxX, maxY}}
-         * of the selected facts, <strong>without</strong> the minimum-size
-         * padding {@link #getSelectionFrame()} applies — that padding exists to
-         * keep drag handles separable and would overstate a small object's size.
-         *
-         * <p>Reflects the last {@link #draw}, so during a gesture it already
-         * includes the live transform.</p>
-         *
-         * @return the bounds, or {@code null} when nothing is selected or laid out
-         */
+        /// Returns the screen-space bounding box `{minX, minY, maxX, maxY}`
+        /// of the selected facts, **without** the minimum-size
+        /// padding [#getSelectionFrame()] applies — that padding exists to
+        /// keep drag handles separable and would overstate a small object's size.
+        ///
+        /// Reflects the last [#draw], so during a gesture it already
+        /// includes the live transform.
+        ///
+        /// @return the bounds, or `null` when nothing is selected or laid out
         double[] getSelectionBoundsPx();
 
-        /**
-         * The width/height ratio of an image the canvas has already loaded, or
-         * {@code null} if it has not. Never starts a load.
-         *
-         * @param imageUrl the image URL
-         * @return the aspect ratio, or {@code null} when unknown
-         */
+        /// The width/height ratio of an image the canvas has already loaded, or
+        /// `null` if it has not. Never starts a load.
+        ///
+        /// @param imageUrl the image URL
+        /// @return the aspect ratio, or `null` when unknown
         Double getImageAspectRatio(String imageUrl);
 
-        /**
-         * Returns the keys of facts whose on-screen bounds intersect the given
-         * rubber-band rectangle (element-pixel space, {@code {minX, minY, maxX,
-         * maxY}}). Uses the geometry of the last {@link #draw} call — including
-         * image aspect ratios, which are known only to the view.
-         *
-         * @param rectPx the marquee rectangle in element pixels
-         * @return the intersecting fact keys; never {@code null}
-         */
+        /// Returns the keys of facts whose on-screen bounds intersect the given
+        /// rubber-band rectangle (element-pixel space, `{minX, minY, maxX,
+        /// maxY}`). Uses the geometry of the last [#draw] call — including
+        /// image aspect ratios, which are known only to the view.
+        ///
+        /// @param rectPx the marquee rectangle in element pixels
+        /// @return the intersecting fact keys; never `null`
         Set<String> hitTestScreenRect(double[] rectPx);
 
-        /**
-         * Returns the fact's map-space anchor point (the point the camera
-         * centres on when the fact is tracked). Delegates to
-         * {@link Fact#mapAnchor} with the view's image display width and the
-         * fact's aspect ratio — which is known only to the view.
-         *
-         * @param fact the fact to anchor; must not be {@code null}
-         * @return the anchor {@code {mapX, mapY}}; never {@code null}
-         */
+        /// Returns the fact's map-space anchor point (the point the camera
+        /// centres on when the fact is tracked). Delegates to
+        /// [Fact#mapAnchor] with the view's image display width and the
+        /// fact's aspect ratio — which is known only to the view.
+        ///
+        /// @param fact the fact to anchor; must not be `null`
+        /// @return the anchor `{mapX, mapY}`; never `null`
         double[] getFactMapAnchor(Fact fact);
 
-        /**
-         * Returns the screen-space bounding box {@code {minX, minY, maxX, maxY}}
-         * of the current selection (from the last {@link #draw}), or {@code null}
-         * if nothing is selected. Used to seed a scale/rotate gesture.
-         *
-         * @return the selection frame in element pixels, or {@code null}
-         */
+        /// Returns the screen-space bounding box `{minX, minY, maxX, maxY}`
+        /// of the current selection (from the last [#draw]), or `null`
+        /// if nothing is selected. Used to seed a scale/rotate gesture.
+        ///
+        /// @return the selection frame in element pixels, or `null`
         double[] getSelectionFrame();
 
-        /**
-         * Returns the map-space bounding box {@code {minX, minY, maxX, maxY}} of
-         * all facts from the last {@link #draw} call, or {@code null} if there is
-         * no content. Used to compute the initial zoom-to-fit view. Independent
-         * of the current scale/pan (unlike {@link #getSelectionFrame()}).
-         *
-         * @return the content bounds in map space, or {@code null}
-         */
+        /// Returns the map-space bounding box `{minX, minY, maxX, maxY}` of
+        /// all facts from the last [#draw] call, or `null` if there is
+        /// no content. Used to compute the initial zoom-to-fit view. Independent
+        /// of the current scale/pan (unlike [#getSelectionFrame()]).
+        ///
+        /// @return the content bounds in map space, or `null`
         double[] getContentMapBounds();
 
-        /**
-         * Registers a listener that is called whenever the view needs to
-         * trigger a redraw from outside the normal presenter flow (e.g.
-         * after an asynchronous image aspect-ratio calculation completes).
-         *
-         * @param redrawListener the callback to invoke, typically
-         *                       {@code FloorMapCanvasPresenter::redraw}
-         */
+        /// Registers a listener that is called whenever the view needs to
+        /// trigger a redraw from outside the normal presenter flow (e.g.
+        /// after an asynchronous image aspect-ratio calculation completes).
+        ///
+        /// @param redrawListener the callback to invoke, typically
+        ///         `FloorMapCanvasPresenter::redraw`
         void setRedrawListener(Runnable redrawListener);
 
-        /**
-         * Registers a listener that is called once the canvas has a real
-         * (non-zero) on-screen size — i.e. after layout completes. The
-         * presenter uses this to apply its size-dependent initial view (which
-         * needs the canvas dimensions to fit or place the content).
-         *
-         * @param resizeListener the callback to invoke, typically
-         *                       {@code FloorMapCanvasPresenter::maybeApplyInitialView}
-         */
+        /// Registers a listener that is called once the canvas has a real
+        /// (non-zero) on-screen size — i.e. after layout completes. The
+        /// presenter uses this to apply its size-dependent initial view (which
+        /// needs the canvas dimensions to fit or place the content).
+        ///
+        /// @param resizeListener the callback to invoke, typically
+        ///         `FloorMapCanvasPresenter::maybeApplyInitialView`
         void setResizeListener(Runnable resizeListener);
 
-        /**
-         * Sets the map's accessible name — a one-line summary of what is currently
-         * drawn, for a user who cannot see it.
-         *
-         * <p>The canvas is exposed to assistive technology as a single image with a
-         * generated description, not as a tree of shapes. Read in DOM order the
-         * SVG's own text captions are a stream of disconnected names and numbers:
-         * they are positioned for the eye, and their paint order is a z-order, not
-         * a reading order.</p>
-         *
-         * @param summary the summary; replaces any previous one
-         */
+        /// Sets the map's accessible name — a one-line summary of what is currently
+        /// drawn, for a user who cannot see it.
+        ///
+        /// The canvas is exposed to assistive technology as a single image with a
+        /// generated description, not as a tree of shapes. Read in DOM order the
+        /// SVG's own text captions are a stream of disconnected names and numbers:
+        /// they are positioned for the eye, and their paint order is a z-order, not
+        /// a reading order.
+        ///
+        /// @param summary the summary; replaces any previous one
         void setMapSummary(String summary);
 
-        /**
-         * Points the map's accessible description at another element — in practice
-         * the Tracking panel's grid, which is the map's row-by-row text equivalent.
-         *
-         * @param elementId the id of the describing element
-         */
+        /// Points the map's accessible description at another element — in practice
+        /// the Tracking panel's grid, which is the map's row-by-row text equivalent.
+        ///
+        /// @param elementId the id of the describing element
         void setMapDescribedBy(String elementId);
 
-        /**
-         * Announces a change through the canvas's live region.
-         *
-         * <p>For things the map says only by redrawing itself: what is selected,
-         * what is being followed, that the followed entity has left the timeline
-         * range. Repeats of the current message are dropped.</p>
-         *
-         * @param message the message to announce
-         */
+        /// Announces a change through the canvas's live region.
+        ///
+        /// For things the map says only by redrawing itself: what is selected,
+        /// what is being followed, that the followed entity has left the timeline
+        /// range. Repeats of the current message are dropped.
+        ///
+        /// @param message the message to announce
         void announce(String message);
 
-        /**
-         * Shows or clears the on-canvas line saying why the map is empty.
-         *
-         * @param text  what to say, or {@code null} to clear it
-         * @param fault whether this is a fault rather than merely an absence
-         */
+        /// Shows or clears the on-canvas line saying why the map is empty.
+        ///
+        /// @param text  what to say, or `null` to clear it
+        /// @param fault whether this is a fault rather than merely an absence
         void setEmptyStatus(String text, boolean fault);
     }
 

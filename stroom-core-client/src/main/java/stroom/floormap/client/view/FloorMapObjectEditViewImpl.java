@@ -42,26 +42,22 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 import java.util.function.Consumer;
 
-/**
- * View implementation for the floor map object (fact) edit dialog.
- *
- * <p>Renders form fields for the object's name, type, effective time, position,
- * an image chooser, and the scale/rotation of its world→map transform. Every
- * fact — backgrounds included — is placed by that matrix.</p>
- *
- * <p><strong>Position is shown resolved and in metres</strong>, not as the raw
- * matrix translation: a fact's place on the map is {@code worldToMap · coords},
- * and the two components mean nothing separately. Editing it solves the
- * translation back out ({@link FloorMapTransformationMatrix#placing}), leaving
- * the stored coordinates untouched — the same thing a canvas drag does.</p>
- */
+/// View implementation for the floor map object (fact) edit dialog.
+///
+/// Renders form fields for the object's name, type, effective time, position,
+/// an image chooser, and the scale/rotation of its world→map transform. Every
+/// fact — backgrounds included — is placed by that matrix.
+///
+/// **Position is shown resolved and in metres**, not as the raw
+/// matrix translation: a fact's place on the map is `worldToMap · coords`,
+/// and the two components mean nothing separately. Editing it solves the
+/// translation back out ([FloorMapTransformationMatrix#placing]), leaving
+/// the stored coordinates untouched — the same thing a canvas drag does.
 public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObjectEditView {
 
-    /**
-     * The unit the position and size boxes are typed in. Fixed rather than
-     * best-fitting: a field that changed between mm and km as you typed would be
-     * unusable.
-     */
+    /// The unit the position and size boxes are typed in. Fixed rather than
+    /// best-fitting: a field that changed between mm and km as you typed would be
+    /// unusable.
     private static final Unit INPUT_UNIT = Unit.METRE;
 
     private final Widget widget;
@@ -128,63 +124,53 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
 
     private boolean enabled = true;
 
-    /**
-     * The fact's stored coordinates, exactly as loaded.
-     *
-     * <p>Not shown: they are a <em>pre-transform</em> offset in the fact's own
-     * frame, so they are a real-world distance only while the placement matrix
-     * has unit scale. The dialog shows the resolved map position instead —
-     * {@code worldToMap · coords}, which is where the fact actually is — and
-     * carries these through an edit untouched, exactly as a canvas drag does.</p>
-     */
+    /// The fact's stored coordinates, exactly as loaded.
+    ///
+    /// Not shown: they are a *pre-transform* offset in the fact's own
+    /// frame, so they are a real-world distance only while the placement matrix
+    /// has unit scale. The dialog shows the resolved map position instead —
+    /// `worldToMap · coords`, which is where the fact actually is — and
+    /// carries these through an edit untouched, exactly as a canvas drag does.
     private final double[] loadedCoords = {0, 0};
 
-    /** The placement matrix as loaded, used to resolve and re-derive the position. */
+    /// The placement matrix as loaded, used to resolve and re-derive the position.
     private double[] loadedMatrix = {1, 0, 0, 1, 0, 0};
 
-    /**
-     * The text last written into the position boxes. If a box still holds it, the
-     * loaded translation is reused verbatim rather than being recomputed from a
-     * rounded display value — so opening a dialog and pressing OK cannot nudge an
-     * object.
-     */
+    /// The text last written into the position boxes. If a box still holds it, the
+    /// loaded translation is reused verbatim rather than being recomputed from a
+    /// rounded display value — so opening a dialog and pressing OK cannot nudge an
+    /// object.
     private String shownPosX = "";
     private String shownPosY = "";
 
-    /** What one map unit means in the real world; never {@code null} in practice. */
+    /// What one map unit means in the real world; never `null` in practice.
     private FloorMapMeasurementUnits measurementUnits;
 
-    /**
-     * The fact's size in map units at scale 1, or {@code null} when it has no
-     * measurable extent — a shape marker is drawn at a fixed screen size, and an
-     * image whose proportions are not yet known has no knowable height. When
-     * null the size fields are hidden and the raw scale factors shown instead,
-     * so the stored value is still visible and editable.
-     */
+    /// The fact's size in map units at scale 1, or `null` when it has no
+    /// measurable extent — a shape marker is drawn at a fixed screen size, and an
+    /// image whose proportions are not yet known has no knowable height. When
+    /// null the size fields are hidden and the raw scale factors shown instead,
+    /// so the stored value is still visible and editable.
     private double[] baseSize;
 
-    /** The text last written into the size boxes; see {@link #shownPosX}. */
+    /// The text last written into the size boxes; see [#shownPosX].
     private String shownSizeW = "";
     private String shownSizeH = "";
 
-    /**
-     * Whether the user has touched the fill controls since the form was last
-     * populated. The presenter writes the fill only when this is set, so a
-     * stored fill value the picker cannot represent (e.g. {@code "red"} — SVG
-     * accepts it, an {@code <input type=color>} cannot) survives an edit of
-     * unrelated fields instead of being coerced to black.
-     */
+    /// Whether the user has touched the fill controls since the form was last
+    /// populated. The presenter writes the fill only when this is set, so a
+    /// stored fill value the picker cannot represent (e.g. `"red"` — SVG
+    /// accepts it, an `<input type=color>` cannot) survives an edit of
+    /// unrelated fields instead of being coerced to black.
     private boolean fillDirty;
 
-    /**
-     * The colour the map actually paints an area of this type when it has no fill
-     * of its own, as resolved by the presenter from the document's type styles.
-     *
-     * <p>The swatch shows this whenever <em>Default</em> is ticked, so the picker
-     * never advertises a colour that pressing OK would not produce. Leaving the
-     * last-picked colour showing (or black on a fresh dialog) would promise a fill
-     * that ticking Default does not deliver.</p>
-     */
+    /// The colour the map actually paints an area of this type when it has no fill
+    /// of its own, as resolved by the presenter from the document's type styles.
+    ///
+    /// The swatch shows this whenever *Default* is ticked, so the picker
+    /// never advertises a colour that pressing OK would not produce. Leaving the
+    /// last-picked colour showing (or black on a fresh dialog) would promise a fill
+    /// that ticking Default does not deliver.
     private String defaultFill = TypeStyle.DEFAULT_COLOUR;
 
     @Inject
@@ -215,22 +201,20 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         }, MouseDownEvent.getType());
     }
 
-    /**
-     * Gives every control in this form an accessible name.
-     *
-     * <p>The three rows holding a single plain input — Name, Type and Area Fill
-     * Opacity — are named by {@code identity} in the ui.xml, which produces a
-     * real {@code <label for>}. The rest cannot be: a {@code for} attribute only
-     * reaches a labelable element, and these rows hold either a composite widget
-     * (whose root is a wrapper {@code div} with the input nested inside), an
-     * injected picker view, or two inputs under one label. Each of those is named
-     * here instead — as a group for the row, plus an individual name per input so
-     * "X" and "Y" are distinguishable.</p>
-     *
-     * <p>The trailing "m" suffixes are hidden: every measurement input already
-     * says "in metres" in its own name, so announcing the unit again after each
-     * pair is noise.</p>
-     */
+    /// Gives every control in this form an accessible name.
+    ///
+    /// The three rows holding a single plain input — Name, Type and Area Fill
+    /// Opacity — are named by `identity` in the ui.xml, which produces a
+    /// real `<label for>`. The rest cannot be: a `for` attribute only
+    /// reaches a labelable element, and these rows hold either a composite widget
+    /// (whose root is a wrapper `div` with the input nested inside), an
+    /// injected picker view, or two inputs under one label. Each of those is named
+    /// here instead — as a group for the row, plus an individual name per input so
+    /// "X" and "Y" are distinguishable.
+    ///
+    /// The trailing "m" suffixes are hidden: every measurement input already
+    /// says "in metres" in its own name, so announcing the unit again after each
+    /// pair is noise.
     private void nameControlsForScreenReaders() {
         FloorMapAria.group(chooseImgContainer, "Image");
 
@@ -496,14 +480,12 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         showSize();
     }
 
-    /**
-     * The position the user has typed, in map units — or, where a box is
-     * untouched, the exact position the fact was loaded at.
-     *
-     * <p>The fallback matters: the boxes show metres rounded for legibility, so
-     * recomputing from the displayed text would quietly shift every object that
-     * passed through the dialog.</p>
-     */
+    /// The position the user has typed, in map units — or, where a box is
+    /// untouched, the exact position the fact was loaded at.
+    ///
+    /// The fallback matters: the boxes show metres rounded for legibility, so
+    /// recomputing from the displayed text would quietly shift every object that
+    /// passed through the dialog.
     private double[] typedPositionMapUnits() {
         final double[] loaded = resolvedPositionMapUnits();
         return new double[]{
@@ -524,15 +506,13 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         return units().toMapUnits(parseDouble(text, 0.0), INPUT_UNIT);
     }
 
-    /**
-     * The scale factors to build the matrix from: derived from the typed size
-     * where the fact has a measurable extent, otherwise read from the scale
-     * boxes directly.
-     *
-     * <p>An untouched size box yields the loaded scale exactly, so passing
-     * through the dialog cannot nudge an object's size — the same guard the
-     * position boxes use.</p>
-     */
+    /// The scale factors to build the matrix from: derived from the typed size
+    /// where the fact has a measurable extent, otherwise read from the scale
+    /// boxes directly.
+    ///
+    /// An untouched size box yields the loaded scale exactly, so passing
+    /// through the dialog cannot nudge an object's size — the same guard the
+    /// position boxes use.
     private double[] typedScale() {
         final double[] loaded = loadedScale();
         if (baseSize == null) {
@@ -567,7 +547,7 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
                 : sizeMapUnits / baseMapUnits;
     }
 
-    /** The scale factors of the matrix as loaded, sign preserved. */
+    /// The scale factors of the matrix as loaded, sign preserved.
     private double[] loadedScale() {
         final double sX = Math.sqrt(loadedMatrix[0] * loadedMatrix[0]
                                     + loadedMatrix[1] * loadedMatrix[1]);
@@ -578,7 +558,7 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         return new double[]{sX, sY};
     }
 
-    /** Writes the fact's size into the boxes, in metres. */
+    /// Writes the fact's size into the boxes, in metres.
     private void showSize() {
         if (baseSize == null) {
             shownSizeW = "";
@@ -594,7 +574,7 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         sizeH.setText(shownSizeH);
     }
 
-    /** Where the fact actually is in map space: {@code worldToMap · coords}. */
+    /// Where the fact actually is in map space: `worldToMap · coords`.
     private double[] resolvedPositionMapUnits() {
         return new FloorMapTransformationMatrix(
                 loadedMatrix[0], loadedMatrix[1], loadedMatrix[2],
@@ -602,7 +582,7 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
                 .transformPoint(loadedCoords[0], loadedCoords[1]);
     }
 
-    /** Writes the resolved position into the boxes, in metres. */
+    /// Writes the resolved position into the boxes, in metres.
     private void showPosition() {
         final double[] map = resolvedPositionMapUnits();
         shownPosX = FloorMapMeasurementUnits.formatForInput(
@@ -653,17 +633,16 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         return null;
     }
 
-    /** Whether the user has changed a box away from the text this dialog last wrote. */
+    /// Whether the user has changed a box away from the text this dialog last wrote.
     private boolean isEdited(final TextBox box, final String shownText) {
         return !boxText(box).equals(shownText);
     }
 
-    /**
-     * Whether the box holds a number the geometry can actually be built from. Blank fails:
-     * an empty position box is not "leave it alone" - the untouched case is handled by
-     * {@link #isEdited}. NaN and infinity fail too; either would poison the matrix and make
-     * the object unselectable and invisible.
-     */
+    /// Whether the box holds a number the geometry can actually be built from. Blank fails:
+    /// an empty position box is not "leave it alone" - the untouched case is handled by
+    /// [#isEdited]. NaN and infinity fail too; either would poison the matrix and make
+    /// the object unselectable and invisible.
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean isFiniteNumber(final TextBox box) {
         try {
             final double value = Double.parseDouble(boxText(box));
@@ -673,19 +652,17 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         }
     }
 
-    /** The trimmed text of a box, never {@code null}. */
+    /// The trimmed text of a box, never `null`.
     private String boxText(final TextBox box) {
         return box.getText() == null
                 ? ""
                 : box.getText().trim();
     }
 
-    /**
-     * Parses a double from the given string, returning {@code defaultVal} on failure.
-     *
-     * <p>Reached only for values {@link #getGeometryFieldError()} has already accepted, so
-     * the default is a backstop rather than the silent correction it once was.</p>
-     */
+    /// Parses a double from the given string, returning `defaultVal` on failure.
+    ///
+    /// Reached only for values [#getGeometryFieldError()] has already accepted, so
+    /// the default is a backstop rather than the silent correction it once was.
     private double parseDouble(final String val, final double defaultVal) {
         try {
             return Double.parseDouble(val.trim());
@@ -694,12 +671,10 @@ public class FloorMapObjectEditViewImpl extends ViewImpl implements FloorMapObje
         }
     }
 
-    /**
-     * Decomposes a 6-element affine matrix {@code [a, b, c, d, tx, ty]} into its
-     * scale and rotation fields. Falls back to identity values if the matrix is
-     * null or too short. The translation is not shown as such — it is carried by
-     * the position boxes, resolved through the fact's coordinates.
-     */
+    /// Decomposes a 6-element affine matrix `{a, b, c, d, tx, ty}` into its
+    /// scale and rotation fields. Falls back to identity values if the matrix is
+    /// null or too short. The translation is not shown as such — it is carried by
+    /// the position boxes, resolved through the fact's coordinates.
     private void populateMatrixFields(final double[] m,
                                       final TextBox sx,
                                       final TextBox sy,

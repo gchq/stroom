@@ -71,172 +71,147 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-/**
- * GWT view implementation for the interactive SVG floor-map canvas.
- *
- * <p>Renders the map from a list of {@link Fact}s — each fact placed by its own
- * {@code world-to-map} matrix — plus an event entity overlay:</p>
- * <ul>
- *   <li>Facts with an image are drawn as scaled images (multiple backgrounds are
- *       simply several image facts).</li>
- *   <li>Imageless facts and event entities are drawn as the same fixed-size
- *       default graphic whose shape and colour come from the per-type settings
- *       ({@link TypeStyle}); event entities additionally carry movement trails
- *       tinted with the type colour.</li>
- * </ul>
- *
- * <p>Facts are painted in the order supplied by the presenter (the configured
- * type z-order); events paint on top. Pan and zoom are applied via a wrapping
- * SVG {@code <g>} group.</p>
- */
+/// GWT view implementation for the interactive SVG floor-map canvas.
+///
+/// Renders the map from a list of [Fact]s — each fact placed by its own
+/// `world-to-map` matrix — plus an event entity overlay:
+///
+/// - Facts with an image are drawn as scaled images (multiple backgrounds are
+///   simply several image facts).
+/// - Imageless facts and event entities are drawn as the same fixed-size
+///   default graphic whose shape and colour come from the per-type settings
+///   ([TypeStyle]); event entities additionally carry movement trails
+///   tinted with the type colour.
+///
+/// Facts are painted in the order supplied by the presenter (the configured
+/// type z-order); events paint on top. Pan and zoom are applied via a wrapping
+/// SVG `<g>` group.
 public class FloorMapCanvasViewImpl
         extends ViewWithUiHandlers<DirtyUiHandlers>
         implements FloorMapCanvasView, ReadOnlyChangeHandler {
 
-    /**
-     * The local display width of an image fact in SVG user-units. The height is
-     * derived from this and the image's aspect ratio; the fact's world-to-map
-     * matrix then places and scales the image in map space.
-     */
+    /// The local display width of an image fact in SVG user-units. The height is
+    /// derived from this and the image's aspect ratio; the fact's world-to-map
+    /// matrix then places and scales the image in map space.
     private static final double IMAGE_DISPLAY_WIDTH =
             FloorMapScreenGeometry.DEFAULT_IMAGE_DISPLAY_WIDTH;
 
-    /**
-     * On-screen size (SVG user-units, i.e. pixels at the fixed-size transform) of
-     * an imageless default graphic and of an event marker. 0.6&times; the original
-     * 100 — the label {@code font-size} is deliberately left unchanged.
-     */
+    /// On-screen size (SVG user-units, i.e. pixels at the fixed-size transform) of
+    /// an imageless default graphic and of an event marker. 0.6× the original
+    /// 100 — the label `font-size` is deliberately left unchanged.
     private static final int OBJECT_SIZE = FloorMapScreenGeometry.POINT_GLYPH_SIZE_PX;
 
 
-    /** On-screen size (px) of a square scale handle. */
+    /// On-screen size (px) of a square scale handle.
     private static final double HANDLE_SIZE_PX = 8;
-    /** On-screen radius (px) of the round rotation handle. */
+    /// On-screen radius (px) of the round rotation handle.
     private static final double ROTATE_HANDLE_RADIUS_PX = 5;
-    /** Gap (px) between the top edge of the selection frame and the rotation handle. */
+    /// Gap (px) between the top edge of the selection frame and the rotation handle.
     private static final double ROTATE_HANDLE_OFFSET_PX = 24;
-    /** Minimum on-screen frame size (px) so the handles stay separable on tiny objects. */
+    /// Minimum on-screen frame size (px) so the handles stay separable on tiny objects.
     private static final double MIN_FRAME_PX = 24;
-    /** On-screen radius (px) of a round edge-midpoint "+" insert handle. */
+    /// On-screen radius (px) of a round edge-midpoint "+" insert handle.
     private static final double INSERT_HANDLE_RADIUS_PX = 6;
-    /** Edges shorter than this on-screen (px) omit their "+" insert handle. */
+    /// Edges shorter than this on-screen (px) omit their "+" insert handle.
     private static final double MIN_INSERT_EDGE_PX = 24;
-    /** Primary accent (blue) used for handles, the marquee and the area draft. */
+    /// Primary accent (blue) used for handles, the marquee and the area draft.
     private static final String ACCENT_BLUE = "#1e88e5";
-    /** Selection highlight (orange) drawn around a selected fact. */
+    /// Selection highlight (orange) drawn around a selected fact.
     private static final String SELECTION_STROKE = "#ff9800";
 
-    /**
-     * The outline round a marker, and the fill of the icon inside it.
-     *
-     * <p>A literal white rather than a theme colour, in both themes: the marker's
-     * job is to separate itself from an arbitrary floor plan underneath, and that
-     * plan is an uploaded image whose colours no theme knows about. A dark
-     * outline would vanish against a dark plan.</p>
-     */
+    /// The outline round a marker, and the fill of the icon inside it.
+    ///
+    /// A literal white rather than a theme colour, in both themes: the marker's
+    /// job is to separate itself from an arbitrary floor plan underneath, and that
+    /// plan is an uploaded image whose colours no theme knows about. A dark
+    /// outline would vanish against a dark plan.
     private static final String MARKER_OUTLINE = "#ffffff";
     // The containment-highlight green lives in FloorMapHighlight, which resolves
     // every non-selection highlight colour (group vs containment) in one place.
-    /** Opacity applied to a dimmed (0.3) layer group. */
+    /// Opacity applied to a dimmed (0.3) layer group.
     private static final String DIMMED_LAYER_OPACITY = "0.3";
     private static final String HANDLE_STROKE = ACCENT_BLUE;
     private static final String HANDLE_FILL = "#ffffff";
-    /** Fill for the round "+" insert handle (light blue tint). */
+    /// Fill for the round "+" insert handle (light blue tint).
     private static final String INSERT_HANDLE_FILL = "#e3f2fd";
-    /** Greyed handle colours, shown when the selection can't be scaled/rotated. */
+    /// Greyed handle colours, shown when the selection can't be scaled/rotated.
     private static final String HANDLE_DISABLED_STROKE = "#9e9e9e";
     private static final String HANDLE_DISABLED_FILL = "#e0e0e0";
-    /** Tooltip explaining why the handles are inert for a non-transformable fact. */
+    /// Tooltip explaining why the handles are inert for a non-transformable fact.
     private static final String HANDLE_DISABLED_TOOLTIP =
             "Only image facts and areas can be scaled or rotated";
 
-    /** Default translucency of an area fact's fill when no opacity is stored. */
+    /// Default translucency of an area fact's fill when no opacity is stored.
     private static final double DEFAULT_AREA_FILL_OPACITY = 0.3;
-    /** On-screen radius (px) of an area's occupant-count badge. */
+    /// On-screen radius (px) of an area's occupant-count badge.
     private static final double OCCUPANT_BADGE_RADIUS_PX = 10;
 
-    /**
-     * Gap (screen px) between the bottom of a glyph and its caption, so the text
-     * does not touch the thing it names.
-     */
+    /// Gap (screen px) between the bottom of a glyph and its caption, so the text
+    /// does not touch the thing it names.
     private static final double GLYPH_CAPTION_GAP_PX = 4;
 
-    /**
-     * Style hook for the caption under a glyph — an entity's name, or a cluster's
-     * "10 users". A CSS class rather than baked-in attributes because this text is
-     * drawn <em>outside</em> the glyph, over whatever floor plan is beneath it: it
-     * needs the theme's text colour and a halo to stay legible in both light and
-     * dark themes, and neither can be hard-coded here.
-     */
+    /// Style hook for the caption under a glyph — an entity's name, or a cluster's
+    /// "10 users". A CSS class rather than baked-in attributes because this text is
+    /// drawn *outside* the glyph, over whatever floor plan is beneath it: it
+    /// needs the theme's text colour and a halo to stay legible in both light and
+    /// dark themes, and neither can be hard-coded here.
     private static final String GLYPH_CAPTION_CLASS = "stroom-floormap-glyph-caption";
 
-    /**
-     * Average glyph advance (px) used to estimate a caption's width for collision
-     * testing, at the caption's 11px font. Deliberately a little generous:
-     * underestimating lets two captions touch, which is the thing being prevented,
-     * whereas overestimating only drops a caption that would just have fitted.
-     *
-     * <p>An estimate rather than a measurement because measuring text means
-     * inserting it in the DOM and reading it back — a synchronous reflow per
-     * caption, per frame.</p>
-     */
+    /// Average glyph advance (px) used to estimate a caption's width for collision
+    /// testing, at the caption's 11px font. Deliberately a little generous:
+    /// underestimating lets two captions touch, which is the thing being prevented,
+    /// whereas overestimating only drops a caption that would just have fitted.
+    ///
+    /// An estimate rather than a measurement because measuring text means
+    /// inserting it in the DOM and reading it back — a synchronous reflow per
+    /// caption, per frame.
     private static final double CAPTION_CHAR_WIDTH_PX = 6.0;
 
-    /** Line box (px) a caption occupies vertically, for collision testing. */
+    /// Line box (px) a caption occupies vertically, for collision testing.
     private static final double CAPTION_HEIGHT_PX = 14;
 
-    /**
-     * How many constant-opacity bands a movement trail is drawn as.
-     *
-     * <p>SVG cannot vary stroke opacity along one path, so the animator's per-point alpha ramp is
-     * approximated by splitting the trail into this many sub-paths, each drawn at the opacity of
-     * its newest point. Fixed rather than proportional, so a long trail costs no more elements
-     * than a short one; consecutive bands share an endpoint so there is no gap between them.</p>
-     *
-     * <p>Bands are drawn with butt caps rather than round ones. A round cap extends half the
-     * stroke width past the endpoint, so where two bands met their caps overlapped and the two
-     * semi-transparent strokes composited into a bright blob - one at every band boundary. Butt
-     * caps stop exactly at the shared vertex, so the bands abut without painting the same pixels
-     * twice. Corners <em>within</em> a band still round off via {@code stroke-linejoin}.</p>
-     */
+    /// How many constant-opacity bands a movement trail is drawn as.
+    ///
+    /// SVG cannot vary stroke opacity along one path, so the animator's per-point alpha ramp is
+    /// approximated by splitting the trail into this many sub-paths, each drawn at the opacity of
+    /// its newest point. Fixed rather than proportional, so a long trail costs no more elements
+    /// than a short one; consecutive bands share an endpoint so there is no gap between them.
+    ///
+    /// Bands are drawn with butt caps rather than round ones. A round cap extends half the
+    /// stroke width past the endpoint, so where two bands met their caps overlapped and the two
+    /// semi-transparent strokes composited into a bright blob - one at every band boundary. Butt
+    /// caps stop exactly at the shared vertex, so the bands abut without painting the same pixels
+    /// twice. Corners *within* a band still round off via `stroke-linejoin`.
     private static final int TRAIL_BANDS = 12;
 
-    /**
-     * Caption priorities — <strong>lower is placed first</strong> and so survives
-     * crowding. Clusters sit between the tracked entity and lone entities, and a
-     * bigger cluster outranks a smaller one because its caption speaks for more
-     * entities (see {@link #clusterCaptionPriority}).
-     */
+    /// Caption priorities — **lower is placed first** and so survives
+    /// crowding. Clusters sit between the tracked entity and lone entities, and a
+    /// bigger cluster outranks a smaller one because its caption speaks for more
+    /// entities (see [#clusterCaptionPriority]).
     private static final int CAPTION_PRIORITY_FOCUSED = 0;
     private static final int CAPTION_PRIORITY_CLUSTER_BASE = 1000;
     private static final int CAPTION_PRIORITY_EVENT = 2000;
     private static final int CAPTION_PRIORITY_FACT = 3000;
 
-    /**
-     * Added to a caption's priority when its layer is dimmed, so every undimmed
-     * caption is placed first. Larger than the whole undimmed range, so a dimmed
-     * cluster can never outrank an undimmed fact.
-     */
+    /// Added to a caption's priority when its layer is dimmed, so every undimmed
+    /// caption is placed first. Larger than the whole undimmed range, so a dimmed
+    /// cluster can never outrank an undimmed fact.
     private static final int CAPTION_PRIORITY_DIMMED_PENALTY = 10000;
-    /**
-     * On-screen radius (px) of the vertex-0 close-target ring in the area
-     * drawing draft — shares the presenter's single constant so the drawn ring
-     * and the click hit-test always match.
-     */
+    /// On-screen radius (px) of the vertex-0 close-target ring in the area
+    /// drawing draft — shares the presenter's single constant so the drawn ring
+    /// and the click hit-test always match.
     private static final double AREA_DRAFT_CLOSE_RADIUS_PX =
             FloorMapCanvasPresenter.AREA_CLOSE_RADIUS_PX;
 
     private final Widget widget;
 
-    /**
-     * Natural {@code {width, height}} in pixels per image URL, as reported by the
-     * browser once loaded.
-     *
-     * <p>The intrinsic <em>size</em> is cached rather than just the aspect ratio
-     * because {@link #appendScaledImage} needs it to scale SVGs that cannot scale
-     * themselves. A present entry of {@code {0, 0}} records "loaded but the browser
-     * would not report a usable size", which stops the image being probed forever.</p>
-     */
+    /// Natural `{width, height}` in pixels per image URL, as reported by the
+    /// browser once loaded.
+    ///
+    /// The intrinsic *size* is cached rather than just the aspect ratio
+    /// because [#appendScaledImage] needs it to scale SVGs that cannot scale
+    /// themselves. A present entry of `{0, 0}` records "loaded but the browser
+    /// would not report a usable size", which stops the image being probed forever.
     private final Map<String, double[]> imageNaturalSizeCache = new HashMap<>();
     private final Set<String> loadingImages = new HashSet<>();
     private Runnable redrawListener;
@@ -249,47 +224,37 @@ public class FloorMapCanvasViewImpl
     private double lastOffsetY;
     private List<Fact> lastFacts;
 
-    /**
-     * The type styles of the last draw. Held so {@link #geometry()} can measure a
-     * layer that draws an image at the box that image actually occupies, rather
-     * than assuming every imageless fact is a square glyph.
-     */
+    /// The type styles of the last draw. Held so [#geometry()] can measure a
+    /// layer that draws an image at the box that image actually occupies, rather
+    /// than assuming every imageless fact is a square glyph.
     private List<TypeStyle> lastTypeStyles;
     private Set<String> lastSelectedIds;
 
-    /**
-     * What one map unit means in the real world, or {@code null} on a map with
-     * no scale set. Set from the presenter rather than passed per draw: it
-     * changes only when the document is read or recalibrated.
-     */
+    /// What one map unit means in the real world, or `null` on a map with
+    /// no scale set. Set from the presenter rather than passed per draw: it
+    /// changes only when the document is read or recalibrated.
     private FloorMapMeasurementUnits measurementUnits;
 
-    /**
-     * Id for this canvas's grid {@code <pattern>}, minted once per view.
-     *
-     * <p>Per instance rather than a shared constant because inline SVG resolves ids
-     * document-wide: with two canvases attached — two open floor maps, or one
-     * document's Map and Editor tabs — the second would fill its background with the
-     * first's pattern and inherit its pan and zoom. Stable across frames rather than
-     * minted per draw, so redrawing does not leak ids.</p>
-     */
+    /// Id for this canvas's grid `<pattern>`, minted once per view.
+    ///
+    /// Per instance rather than a shared constant because inline SVG resolves ids
+    /// document-wide: with two canvases attached — two open floor maps, or one
+    /// document's Map and Editor tabs — the second would fill its background with the
+    /// first's pattern and inherit its pan and zoom. Stable across frames rather than
+    /// minted per draw, so redrawing does not leak ids.
     private final String gridPatternId = FloorMapAria.uniqueId("floormap-grid-major");
 
-    /**
-     * Resolves an entity id to its display name, for captioning a cluster drawn
-     * around the tracked entity. Supplied by the presenter; {@code null} until
-     * then, which falls the caption back to the id.
-     */
+    /// Resolves an entity id to its display name, for captioning a cluster drawn
+    /// around the tracked entity. Supplied by the presenter; `null` until
+    /// then, which falls the caption back to the id.
     private Function<String, String> entityNameResolver;
 
-    /**
-     * Captions collected during the current frame's draw, resolved together at the
-     * end so no two are written on top of each other.
-     *
-     * <p>Collected rather than drawn in place because whether a caption fits can
-     * only be known once every other caption's position is known — and because a
-     * caption drawn with its own glyph can be painted over by a later one.</p>
-     */
+    /// Captions collected during the current frame's draw, resolved together at the
+    /// end so no two are written on top of each other.
+    ///
+    /// Collected rather than drawn in place because whether a caption fits can
+    /// only be known once every other caption's position is known — and because a
+    /// caption drawn with its own glyph can be painted over by a later one.
     private final List<PendingCaption> pendingCaptions = new ArrayList<>();
 
     @UiField
@@ -298,45 +263,37 @@ public class FloorMapCanvasViewImpl
     @UiField
     FocusPanel focusPanel;
 
-    /**
-     * Instruction pill overlaid on the canvas while the area-drawing mode is
-     * active — an HTML element (not SVG text) so it uses the theme variables
-     * and reads clearly over any floor plan, matching the timeline scrub
-     * tooltip's visual language.
-     */
+    /// Instruction pill overlaid on the canvas while the area-drawing mode is
+    /// active — an HTML element (not SVG text) so it uses the theme variables
+    /// and reads clearly over any floor plan, matching the timeline scrub
+    /// tooltip's visual language.
     @UiField
     Label areaDrawHint;
 
     private static final String AREA_DRAW_HINT_VISIBLE =
             "stroom-floormap-area-draw-hint--visible";
 
-    /**
-     * Pill that follows the cursor while an object is moved or resized, showing
-     * its position or size in real-world units.
-     */
+    /// Pill that follows the cursor while an object is moved or resized, showing
+    /// its position or size in real-world units.
     @UiField
     Label gestureReadout;
 
     private static final String GESTURE_READOUT_VISIBLE =
             "stroom-floormap-gesture-readout--visible";
 
-    /** Offset of the readout from the cursor, so the pointer never covers it. */
+    /// Offset of the readout from the cursor, so the pointer never covers it.
     private static final int READOUT_OFFSET_X_PX = 16;
     private static final int READOUT_OFFSET_Y_PX = 18;
 
-    /**
-     * Room left for the readout when deciding whether it fits to the right of,
-     * or below, the cursor. Its real size is not known until it has been laid
-     * out, and reading that back mid-drag would force a synchronous reflow on
-     * every mouse move.
-     */
+    /// Room left for the readout when deciding whether it fits to the right of,
+    /// or below, the cursor. Its real size is not known until it has been laid
+    /// out, and reading that back mid-drag would force a synchronous reflow on
+    /// every mouse move.
     private static final int READOUT_ASSUMED_WIDTH_PX = 150;
     private static final int READOUT_ASSUMED_HEIGHT_PX = 24;
 
-    /**
-     * Panel describing the glyph under the pointer — the members of a cluster,
-     * or the details of a single entity. What the glyph itself cannot say.
-     */
+    /// Panel describing the glyph under the pointer — the members of a cluster,
+    /// or the details of a single entity. What the glyph itself cannot say.
     @UiField
     FlowPanel hoverTooltip;
 
@@ -347,17 +304,15 @@ public class FloorMapCanvasViewImpl
     private static final String HOVER_TOOLTIP_LINE_CLASS =
             "stroom-floormap-hover-tooltip__line";
 
-    /** Gap between the glyph's centre and the tooltip's near corner. */
+    /// Gap between the glyph's centre and the tooltip's near corner.
     private static final int HOVER_TOOLTIP_OFFSET_PX = 34;
 
-    /**
-     * The scale bar: a labelled rule fixed in the canvas corner, showing what a
-     * given on-screen distance is worth in real units.
-     *
-     * <p>It is the canvas's only standing statement of scale: the grid draws no
-     * text, so without this bar the size of a grid square — and therefore of
-     * anything on the map — would be unknowable without starting a drag.</p>
-     */
+    /// The scale bar: a labelled rule fixed in the canvas corner, showing what a
+    /// given on-screen distance is worth in real units.
+    ///
+    /// It is the canvas's only standing statement of scale: the grid draws no
+    /// text, so without this bar the size of a grid square — and therefore of
+    /// anything on the map — would be unknowable without starting a drag.
     @UiField
     FlowPanel scaleBar;
 
@@ -367,12 +322,10 @@ public class FloorMapCanvasViewImpl
     @UiField
     SimplePanel scaleBarLine;
 
-    /**
-     * Line naming why the map is empty, when it is empty for a reason worth naming.
-     *
-     * <p>See {@link #setEmptyStatus(String, boolean)} for why it is styled in two registers
-     * rather than one.</p>
-     */
+    /// Line naming why the map is empty, when it is empty for a reason worth naming.
+    ///
+    /// See [#setEmptyStatus(String, boolean)] for why it is styled in two registers
+    /// rather than one.
     @UiField
     Label emptyStatus;
 
@@ -382,51 +335,41 @@ public class FloorMapCanvasViewImpl
     private static final String EMPTY_STATUS_FAULT =
             "stroom-floormap-empty-status--fault";
 
-    /**
-     * Visually-hidden live region carrying the map's spoken commentary. See
-     * {@link #announce(String)}.
-     */
+    /// Visually-hidden live region carrying the map's spoken commentary. See
+    /// [#announce(String)].
     @UiField
     Label statusRegion;
 
-    /**
-     * The last thing announced, so an unchanged message can be skipped.
-     *
-     * <p>Writing the same text into a live region twice may or may not re-announce
-     * depending on the screen reader, and the repeat is never what the user wants:
-     * the point of an announcement is that something changed.</p>
-     */
+    /// The last thing announced, so an unchanged message can be skipped.
+    ///
+    /// Writing the same text into a live region twice may or may not re-announce
+    /// depending on the screen reader, and the repeat is never what the user wants:
+    /// the point of an announcement is that something changed.
     private String lastAnnouncement = "";
 
-    /** The most recent map summary, re-applied to the focus panel when it loses focus. */
+    /// The most recent map summary, re-applied to the focus panel when it loses focus.
     private String lastSummary;
 
-    /** Whether the focus panel currently holds focus — see {@link #setMapSummary(String)}. */
+    /// Whether the focus panel currently holds focus — see [#setMapSummary(String)].
     private boolean focusPanelHasFocus;
 
-    /**
-     * The widest the scale bar may be drawn. The chosen distance is the largest
-     * 1-2-5 value that fits within this, so the bar is typically 40–120 px.
-     */
+    /// The widest the scale bar may be drawn. The chosen distance is the largest
+    /// 1-2-5 value that fits within this, so the bar is typically 40–120 px.
     private static final double SCALE_BAR_MAX_WIDTH_PX = 120;
 
-    /** Half-length of the tick drawn across each end of the measuring line. */
+    /// Half-length of the tick drawn across each end of the measuring line.
     private static final double MEASURE_TICK_PX = 6;
-    /** Gap between the measuring line and its running length readout. */
+    /// Gap between the measuring line and its running length readout.
     private static final double MEASURE_LABEL_GAP_PX = 8;
 
-    /**
-     * Whether the Set Scale mode is active, so the hint pill can announce it
-     * before the first press — at which point there is no line to infer it from,
-     * and the mode would otherwise look like nothing having happened.
-     */
+    /// Whether the Set Scale mode is active, so the hint pill can announce it
+    /// before the first press — at which point there is no line to infer it from,
+    /// and the mode would otherwise look like nothing having happened.
     private boolean measuringScale;
 
-    /**
-     * Constructs the canvas view, inflating the UiBinder template.
-     *
-     * @param binder the UiBinder that produces the widget tree
-     */
+    /// Constructs the canvas view, inflating the UiBinder template.
+    ///
+    /// @param binder the UiBinder that produces the widget tree
     @Inject
     public FloorMapCanvasViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -479,13 +422,13 @@ public class FloorMapCanvasViewImpl
         FloorMapAria.liveRegion(statusRegion);
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public Widget asWidget() {
         return widget;
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void setMapSummary(final String summary) {
         // The container is named unconditionally: it is never focused, so rewriting its
@@ -509,7 +452,7 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void setMapDescribedBy(final String elementId) {
         // Container only — deliberately NOT the focus panel. The id names the whole
@@ -524,21 +467,19 @@ public class FloorMapCanvasViewImpl
         svgContainer.getElement().setAttribute("aria-describedby", elementId);
     }
 
-    /**
-     * Shows or clears the line explaining why the map is empty.
-     *
-     * <p>Two registers, and the distinction matters more than the wording does. A map with no
-     * events at the selected time is <b>usually correct</b> — the timeline is simply outside the
-     * data — so that case reads as a quiet statement of fact. The three configuration faults are
-     * styled to draw the eye. Given one uniform "warning" look, the common harmless case would
-     * read as breakage, and people would learn to ignore the line that matters.</p>
-     *
-     * <p>Never a modal, toast or anything that takes focus: an empty map is a frequent and often
-     * correct state, and interrupting for it would be worse than the silence this replaces.</p>
-     *
-     * @param text  what to say, or {@code null}/blank to clear the line
-     * @param fault whether this is a fault rather than merely an absence
-     */
+    /// Shows or clears the line explaining why the map is empty.
+    ///
+    /// Two registers, and the distinction matters more than the wording does. A map with no
+    /// events at the selected time is **usually correct** — the timeline is simply outside the
+    /// data — so that case reads as a quiet statement of fact. The three configuration faults are
+    /// styled to draw the eye. Given one uniform "warning" look, the common harmless case would
+    /// read as breakage, and people would learn to ignore the line that matters.
+    ///
+    /// Never a modal, toast or anything that takes focus: an empty map is a frequent and often
+    /// correct state, and interrupting for it would be worse than the silence this replaces.
+    ///
+    /// @param text  what to say, or `null`/blank to clear the line
+    /// @param fault whether this is a fault rather than merely an absence
     @Override
     public void setEmptyStatus(final String text, final boolean fault) {
         if (text == null || text.isEmpty()) {
@@ -556,7 +497,7 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void announce(final String message) {
         if (message == null || message.isEmpty() || message.equals(lastAnnouncement)) {
@@ -566,21 +507,19 @@ public class FloorMapCanvasViewImpl
         statusRegion.setText(message);
     }
 
-    /** {@inheritDoc} — no read-only visual changes required for the canvas. */
+    /// {@inheritDoc} — no read-only visual changes required for the canvas.
     @Override
     public void onReadOnly(final boolean readOnly) {
     }
 
-    /**
-     * Handles resize events. If the parent container has no size yet (e.g. during
-     * initial attachment), the call is deferred until layout completes.
-     *
-     * <p>The retry stops if the widget is detached. Without that check the deferred
-     * call re-queued itself unconditionally, so a canvas that never gets laid out —
-     * a document opened into a hidden or closed tab — rescheduled forever and kept
-     * the view, and through it the presenter, reachable for the rest of the
-     * session.</p>
-     */
+    /// Handles resize events. If the parent container has no size yet (e.g. during
+    /// initial attachment), the call is deferred until layout completes.
+    ///
+    /// The retry stops if the widget is detached. Without that check the deferred
+    /// call re-queued itself unconditionally, so a canvas that never gets laid out —
+    /// a document opened into a hidden or closed tab — rescheduled forever and kept
+    /// the view, and through it the presenter, reachable for the rest of the
+    /// session.
     @Override
     public void onResize() {
         if (!svgContainer.isAttached()) {
@@ -612,45 +551,43 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public FocusPanel getFocusPanel() {
         return focusPanel;
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public HasMouseMoveHandlers getMouseMoveHandlers() {
         return focusPanel;
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public HasMouseUpHandlers getMouseUpHandlers() {
         return focusPanel;
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public HasMouseWheelHandlers getMouseWheelHandlers() {
         return focusPanel;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Rebuilds the entire SVG DOM. The structure is
-     * {@code <svg> → <g pan/zoom> → [facts…, events…]}. Each image fact is wrapped in its
-     * own {@code <g matrix>} and scales with the map; imageless facts and events are
-     * anchored in map space but drawn at a fixed screen size (see
-     * {@link #fixedSizeTransform}).</p>
-     *
-     * <p>The parameters are documented once, on
-     * {@code FloorMapCanvasPresenter.FloorMapCanvasView#draw}. They were duplicated here,
-     * and the two copies had drifted into documenting different subsets of the seventeen -
-     * eleven here, thirteen there, four documented in neither. With seventeen parameters
-     * that is not a mistake anyone was going to notice, so there is now one copy.</p>
-     */
+    /// {@inheritDoc}
+    ///
+    /// Rebuilds the entire SVG DOM. The structure is
+    /// `<svg>` → `<g pan/zoom>` → facts, then events. Each image fact is wrapped in its
+    /// own `<g matrix>` and scales with the map; imageless facts and events are
+    /// anchored in map space but drawn at a fixed screen size (see
+    /// [#fixedSizeTransform]).
+    ///
+    /// The parameters are documented once, on
+    /// `FloorMapCanvasPresenter.FloorMapCanvasView#draw`. They were duplicated here,
+    /// and the two copies had drifted into documenting different subsets of the seventeen -
+    /// eleven here, thirteen there, four documented in neither. With seventeen parameters
+    /// that is not a mistake anyone was going to notice, so there is now one copy.
     @Override
     public void draw(final double scale,
                      final double x,
@@ -851,19 +788,17 @@ public class FloorMapCanvasViewImpl
         updateScaleBar(scale);
     }
 
-    /**
-     * Draws the in-progress Set Scale measuring line at the SVG root in screen
-     * space: the line itself, a tick across each end, and a running readout of
-     * what it currently measures.
-     *
-     * <p>The readout is in whatever units the map already has — the default
-     * scale if it has never been calibrated — so the user can see the very
-     * quantity they are about to correct.</p>
-     *
-     * @param svg     the SVG root builder to append to
-     * @param linePx  {@code {x0, y0, x1, y1}} in element pixels
-     * @param scale   the current zoom factor, i.e. pixels per map unit
-     */
+    /// Draws the in-progress Set Scale measuring line at the SVG root in screen
+    /// space: the line itself, a tick across each end, and a running readout of
+    /// what it currently measures.
+    ///
+    /// The readout is in whatever units the map already has — the default
+    /// scale if it has never been calibrated — so the user can see the very
+    /// quantity they are about to correct.
+    ///
+    /// @param svg     the SVG root builder to append to
+    /// @param linePx  `{x0, y0, x1, y1}` in element pixels
+    /// @param scale   the current zoom factor, i.e. pixels per map unit
     private void appendMeasureLine(final HtmlBuilder svg,
                                    final double[] linePx,
                                    final double scale) {
@@ -914,7 +849,7 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /** One end tick of the measuring line, centred on {@code (x, y)}. */
+    /// One end tick of the measuring line, centred on `(x, y)`.
     private void appendMeasureTick(final HtmlBuilder svg,
                                    final double x,
                                    final double y,
@@ -930,22 +865,20 @@ public class FloorMapCanvasViewImpl
                 new Attribute("pointer-events", "none"));
     }
 
-    /**
-     * Sizes and labels the scale bar for this frame.
-     *
-     * <p>Drawn on every map, calibrated or not: an uncalibrated map measures in
-     * the default scale (one centimetre per map unit), so the bar always states
-     * a real-world distance.</p>
-     *
-     * <p>Lives here rather than in the rebuilt SVG so it can use the theme's CSS
-     * variables, and so it never moves with pan or zoom. Being inside
-     * {@code draw} covers both of the presenter's redraw paths — the static one
-     * and the animation-frame loop — so it cannot go stale while entities
-     * move.</p>
-     *
-     * @param scale the current zoom factor; the grid is drawn with an identity
-     *              matrix, so this is also pixels-per-map-unit
-     */
+    /// Sizes and labels the scale bar for this frame.
+    ///
+    /// Drawn on every map, calibrated or not: an uncalibrated map measures in
+    /// the default scale (one centimetre per map unit), so the bar always states
+    /// a real-world distance.
+    ///
+    /// Lives here rather than in the rebuilt SVG so it can use the theme's CSS
+    /// variables, and so it never moves with pan or zoom. Being inside
+    /// `draw` covers both of the presenter's redraw paths — the static one
+    /// and the animation-frame loop — so it cannot go stale while entities
+    /// move.
+    ///
+    /// @param scale the current zoom factor; the grid is drawn with an identity
+    ///         matrix, so this is also pixels-per-map-unit
     private void updateScaleBar(final double scale) {
         final double[] bar =
                 FloorMapGrid.scaleBar(scale, SCALE_BAR_MAX_WIDTH_PX, measurementUnits);
@@ -958,13 +891,13 @@ public class FloorMapCanvasViewImpl
         scaleBarLine.setWidth(bar[1] + "px");
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void setMeasurementUnits(final FloorMapMeasurementUnits measurementUnits) {
         this.measurementUnits = measurementUnits;
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void setGestureReadout(final String text, final double cursorXPx, final double cursorYPx) {
         if (text == null) {
@@ -993,13 +926,13 @@ public class FloorMapCanvasViewImpl
         gestureReadout.addStyleName(GESTURE_READOUT_VISIBLE);
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void setEntityNameResolver(final Function<String, String> entityNameResolver) {
         this.entityNameResolver = entityNameResolver;
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void setHoverTooltip(final String caption,
                                 final List<String> lines,
@@ -1047,7 +980,7 @@ public class FloorMapCanvasViewImpl
         hoverTooltip.getElement().getStyle().setTop(Math.max(0, y), Unit.PX);
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public Double getImageAspectRatio(final String imageUrl) {
         // Deliberately does not start a load: this answers "do we already know?"
@@ -1055,7 +988,7 @@ public class FloorMapCanvasViewImpl
         return cachedAspectRatio(imageUrl);
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public double[] getSelectionBoundsPx() {
         // Unpadded, unlike the selection frame: that pads small selections out
@@ -1064,22 +997,20 @@ public class FloorMapCanvasViewImpl
         return geometry().selectionFrame(lastFacts, lastSelectedIds, 0);
     }
 
-    /**
-     * Shows, hides and words the instruction pill for whichever modal canvas
-     * mode is active. It is an HTML overlay (see the ui.xml) rather than part of
-     * the rebuilt SVG, styled via {@code stroom-floormap-area-draw-hint} to match
-     * the timeline scrub tooltip.
-     *
-     * <p>A modal mode must be visibly announced from the instant it starts, or
-     * it is indistinguishable from nothing having happened — which is exactly
-     * how area drawing was first reported as broken.</p>
-     *
-     * @param areaDraftPx   the area draft passed to this draw, or {@code null}
-     *                      when the drawing mode is not active
-     * @param measureLinePx the Set Scale line passed to this draw; only
-     *                      non-null once the press has landed, so the mode is
-     *                      announced by {@link #setMeasuringScale} instead
-     */
+    /// Shows, hides and words the instruction pill for whichever modal canvas
+    /// mode is active. It is an HTML overlay (see the ui.xml) rather than part of
+    /// the rebuilt SVG, styled via `stroom-floormap-area-draw-hint` to match
+    /// the timeline scrub tooltip.
+    ///
+    /// A modal mode must be visibly announced from the instant it starts, or
+    /// it is indistinguishable from nothing having happened — which is exactly
+    /// how area drawing was first reported as broken.
+    ///
+    /// @param areaDraftPx   the area draft passed to this draw, or `null`
+    ///         when the drawing mode is not active
+    /// @param measureLinePx the Set Scale line passed to this draw; only
+    ///         non-null once the press has landed, so the mode is
+    ///         announced by [#setMeasuringScale] instead
     private void updateCanvasHint(final double[] areaDraftPx, final double[] measureLinePx) {
         if (areaDraftPx != null) {
             final int committed = areaDraftPx.length / 2 - 1;
@@ -1106,18 +1037,16 @@ public class FloorMapCanvasViewImpl
         areaDrawHint.addStyleName(AREA_DRAW_HINT_VISIBLE);
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void setMeasuringScale(final boolean measuringScale) {
         this.measuringScale = measuringScale;
     }
 
-    /**
-     * Draws the rubber-band selection rectangle at the SVG root in screen space.
-     *
-     * @param svg    the SVG root builder
-     * @param rectPx {@code {minX, minY, maxX, maxY}} in element pixels
-     */
+    /// Draws the rubber-band selection rectangle at the SVG root in screen space.
+    ///
+    /// @param svg    the SVG root builder
+    /// @param rectPx `{minX, minY, maxX, maxY}` in element pixels
     private void appendMarquee(final HtmlBuilder svg, final double[] rectPx) {
         svg.elem(SafeHtmlUtil.from("rect"),
                 new Attribute("x", String.valueOf(rectPx[0])),
@@ -1132,18 +1061,16 @@ public class FloorMapCanvasViewImpl
                 new Attribute("pointer-events", "none"));
     }
 
-    /**
-     * Draws the in-progress area-drawing draft at the SVG root in screen space:
-     * a solid polyline through the committed vertices, a dashed rubber-band
-     * segment from the last committed vertex to the live cursor, a small dot on
-     * each committed vertex, and a close-target ring on vertex 0 that fills in
-     * when the polygon can be closed (≥ 3 committed vertices and the cursor
-     * within the close radius). Everything is non-interactive.
-     *
-     * @param svg     the SVG root builder to append to
-     * @param draftPx flat polyline {@code [x0, y0, ..., xn, yn]} in element
-     *                pixels; the last point is the live cursor position
-     */
+    /// Draws the in-progress area-drawing draft at the SVG root in screen space:
+    /// a solid polyline through the committed vertices, a dashed rubber-band
+    /// segment from the last committed vertex to the live cursor, a small dot on
+    /// each committed vertex, and a close-target ring on vertex 0 that fills in
+    /// when the polygon can be closed (≥ 3 committed vertices and the cursor
+    /// within the close radius). Everything is non-interactive.
+    ///
+    /// @param svg     the SVG root builder to append to
+    /// @param draftPx flat polyline `{x0, y0, ..., xn, yn}` in element
+    ///         pixels; the last point is the live cursor position
     private void appendAreaDraft(final HtmlBuilder svg, final double[] draftPx) {
         final int points = draftPx.length / 2;
         final int committed = points - 1;
@@ -1208,15 +1135,13 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /**
-     * Renders a single fact into the given builder, dispatching by content:
-     * image facts render their image; imageless facts with vertices render as
-     * areas; everything else renders as the type's default glyph — which is
-     * itself either the layer's configured image or its shape.
-     *
-     * <p>Note the precedence: a fact carrying its own {@code img} takes this
-     * first branch, so it always beats its layer's graphic.</p>
-     */
+    /// Renders a single fact into the given builder, dispatching by content:
+    /// image facts render their image; imageless facts with vertices render as
+    /// areas; everything else renders as the type's default glyph — which is
+    /// itself either the layer's configured image or its shape.
+    ///
+    /// Note the precedence: a fact carrying its own `img` takes this
+    /// first branch, so it always beats its layer's graphic.
     private void renderFact(final HtmlBuilder builder,
                             final Fact fact,
                             final boolean isSelected,
@@ -1246,30 +1171,28 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /**
-     * Draws an area fact — a filled polygon whose vertices are in the fact's
-     * local frame, placed into map space by its world-to-map matrix inside the
-     * Y-up flip group (so it pans, zooms and rotates with the map, like an
-     * image fact).
-     *
-     * <p>The translucent fill is deliberately non-interactive so a large area
-     * cannot hijack panning, marquee selection or the empty-canvas context
-     * menu; selection is by clicking the border, via an invisible wide "hit"
-     * stroke that carries the fact key as its id (the same click-detection
-     * convention as every other object shape).</p>
-     *
-     * <p>A coloured border marks a highlighted area — green and dashed when it
-     * holds the entity being tracked, or a group's own colour (solid) when the area
-     * is a member of a highlighted group. Selection styling still wins over both —
-     * being <em>the</em> selection is more specific. The occupant-count badge is
-     * drawn separately, after every fact and event, by
-     * {@link #appendOccupantBadge}.</p>
-     *
-     * @param highlightColour the non-selection highlight colour, or {@code null}
-     *                        when this area carries no highlight
-     * @param highlightDashed {@code true} to dash the highlight border, which
-     *                        distinguishes area containment from group membership
-     */
+    /// Draws an area fact — a filled polygon whose vertices are in the fact's
+    /// local frame, placed into map space by its world-to-map matrix inside the
+    /// Y-up flip group (so it pans, zooms and rotates with the map, like an
+    /// image fact).
+    ///
+    /// The translucent fill is deliberately non-interactive so a large area
+    /// cannot hijack panning, marquee selection or the empty-canvas context
+    /// menu; selection is by clicking the border, via an invisible wide "hit"
+    /// stroke that carries the fact key as its id (the same click-detection
+    /// convention as every other object shape).
+    ///
+    /// A coloured border marks a highlighted area — green and dashed when it
+    /// holds the entity being tracked, or a group's own colour (solid) when the area
+    /// is a member of a highlighted group. Selection styling still wins over both —
+    /// being *the* selection is more specific. The occupant-count badge is
+    /// drawn separately, after every fact and event, by
+    /// [#appendOccupantBadge].
+    ///
+    /// @param highlightColour the non-selection highlight colour, or `null`
+    ///         when this area carries no highlight
+    /// @param highlightDashed `true` to dash the highlight border, which
+    ///         distinguishes area containment from group membership
     private void appendAreaFact(final HtmlBuilder parent,
                                 final Fact fact,
                                 final boolean isSelected,
@@ -1340,29 +1263,25 @@ public class FloorMapCanvasViewImpl
                 new Attribute("id", FloorMapJsonKeys.SVG_GROUP_PREFIX + fact.getKey()));
     }
 
-    /**
-     * An area's colour: its own stored fill if set, else the colour configured
-     * for its type (which is {@code "area"} for areas created by the editor, but
-     * users may retype areas — e.g. {@code "restricted"} — and expect that
-     * type's Settings colour).
-     */
+    /// An area's colour: its own stored fill if set, else the colour configured
+    /// for its type (which is `"area"` for areas created by the editor, but
+    /// users may retype areas — e.g. `"restricted"` — and expect that
+    /// type's Settings colour).
     private static String areaColour(final Fact fact, final List<TypeStyle> typeStyles) {
         return fact.getFill() != null && !fact.getFill().isEmpty()
                 ? fact.getFill()
                 : TypeStyle.colourForType(fact.getType(), typeStyles);
     }
 
-    /**
-     * Draws an area's occupant-count badge at the area's map-space centroid: a
-     * filled disc in the area's own colour with the count in white, at a fixed
-     * screen size so it stays legible at any zoom.
-     *
-     * <p>The count is the number of entities whose position at the current
-     * timeline instant falls inside the polygon. It is deliberately
-     * <em>not</em> an occupancy figure — an entity with no event near this
-     * instant has no position and so is not counted (see
-     * {@link FloorMapAreaMembership}).</p>
-     */
+    /// Draws an area's occupant-count badge at the area's map-space centroid: a
+    /// filled disc in the area's own colour with the count in white, at a fixed
+    /// screen size so it stays legible at any zoom.
+    ///
+    /// The count is the number of entities whose position at the current
+    /// timeline instant falls inside the polygon. It is deliberately
+    /// *not* an occupancy figure — an entity with no event near this
+    /// instant has no position and so is not counted (see
+    /// [FloorMapAreaMembership]).
     private void appendOccupantBadge(final HtmlBuilder parent,
                                      final Fact fact,
                                      final int occupantCount,
@@ -1373,24 +1292,22 @@ public class FloorMapCanvasViewImpl
                 centroid[0], centroid[1], 0, 0, scale);
     }
 
-    /**
-     * Draws a count pill at fixed screen size, anchored at a map-space point and
-     * offset from it in screen pixels.
-     *
-     * <p>Shared by the area occupant badge (centred on the area) and the cluster
-     * count (offset to the glyph's corner), so the two read as the same kind of
-     * statement — a number this canvas is telling you about the thing underneath
-     * it.</p>
-     *
-     * @param parent    the builder to append to, inside the Y-up flip group
-     * @param count     the number to show
-     * @param colour    the pill's fill, normally the type's own colour
-     * @param mapX      the anchor point in map space
-     * @param mapY      the anchor point in map space
-     * @param offsetXPx screen-pixel offset from the anchor, positive right
-     * @param offsetYPx screen-pixel offset from the anchor, positive down
-     * @param scale     the current zoom factor
-     */
+    /// Draws a count pill at fixed screen size, anchored at a map-space point and
+    /// offset from it in screen pixels.
+    ///
+    /// Shared by the area occupant badge (centred on the area) and the cluster
+    /// count (offset to the glyph's corner), so the two read as the same kind of
+    /// statement — a number this canvas is telling you about the thing underneath
+    /// it.
+    ///
+    /// @param parent    the builder to append to, inside the Y-up flip group
+    /// @param count     the number to show
+    /// @param colour    the pill's fill, normally the type's own colour
+    /// @param mapX      the anchor point in map space
+    /// @param mapY      the anchor point in map space
+    /// @param offsetXPx screen-pixel offset from the anchor, positive right
+    /// @param offsetYPx screen-pixel offset from the anchor, positive down
+    /// @param scale     the current zoom factor
     private void appendCountPill(final HtmlBuilder parent,
                                  final int count,
                                  final String colour,
@@ -1434,14 +1351,12 @@ public class FloorMapCanvasViewImpl
                 new Attribute("transform", fixedSizeTransform(mapX, mapY, scale)));
     }
 
-    /**
-     * Orders clusters back-to-front by their type's configured paint order, so a
-     * merged crowd sits in the same layer its members would have.
-     *
-     * <p>The overlay produces clusters in type-<em>name</em> order, which is only
-     * a determinism guarantee and says nothing about which layer belongs on
-     * top.</p>
-     */
+    /// Orders clusters back-to-front by their type's configured paint order, so a
+    /// merged crowd sits in the same layer its members would have.
+    ///
+    /// The overlay produces clusters in type-*name* order, which is only
+    /// a determinism guarantee and says nothing about which layer belongs on
+    /// top.
     private static List<FloorMapCluster> paintOrdered(final List<FloorMapCluster> clusters,
                                                       final List<TypeStyle> typeStyles) {
         final List<FloorMapCluster> ordered = new ArrayList<>(clusters);
@@ -1451,25 +1366,23 @@ public class FloorMapCanvasViewImpl
         return ordered;
     }
 
-    /**
-     * Draws the summary glyph standing in for a cluster's members: the type's own
-     * graphic, so a merged crowd of users still reads as users in the user
-     * colour.
-     *
-     * <p>Carries {@link FloorMapJsonKeys#CLUSTER_PREFIX} on its id rather than a
-     * member's id, because a cluster is not an entity — the object hit-test must
-     * not report it as one.</p>
-     *
-     * <p>The glyph takes the highlight of any highlighted member, so switching a
-     * group's highlight on still shows where its members are when they are too
-     * crowded to draw individually. It is never drawn as selected: the selection
-     * is excluded from clustering upstream, so a selected entity is always its own
-     * glyph.</p>
-     *
-     * <p>It is drawn <strong>bigger the more it stands for</strong> — see
-     * {@link FloorMapCluster#getSizeFactor()} — so the difference between a pair
-     * and a crowd reads before the count pill is examined.</p>
-     */
+    /// Draws the summary glyph standing in for a cluster's members: the type's own
+    /// graphic, so a merged crowd of users still reads as users in the user
+    /// colour.
+    ///
+    /// Carries [FloorMapJsonKeys#CLUSTER_PREFIX] on its id rather than a
+    /// member's id, because a cluster is not an entity — the object hit-test must
+    /// not report it as one.
+    ///
+    /// The glyph takes the highlight of any highlighted member, so switching a
+    /// group's highlight on still shows where its members are when they are too
+    /// crowded to draw individually. It is never drawn as selected: the selection
+    /// is excluded from clustering upstream, so a selected entity is always its own
+    /// glyph.
+    ///
+    /// It is drawn **bigger the more it stands for** — see
+    /// [FloorMapCluster#getSizeFactor()] — so the difference between a pair
+    /// and a crowd reads before the count pill is examined.
     private void appendClusterGlyph(final HtmlBuilder parent,
                                     final FloorMapCluster cluster,
                                     final List<TypeStyle> typeStyles,
@@ -1494,15 +1407,13 @@ public class FloorMapCanvasViewImpl
                 cluster.getSizeFactor());
     }
 
-    /**
-     * Draws a cluster's count pill and its caption — the pill at the glyph's
-     * top-right corner, the caption centred underneath.
-     *
-     * <p>The caption spells the count out ("10 users") rather than leaving a bare
-     * number to be decoded. It is drawn with a halo (a white stroke painted under
-     * the fill) because it sits outside the glyph, over whatever floor plan
-     * happens to be beneath it.</p>
-     */
+    /// Draws a cluster's count pill and its caption — the pill at the glyph's
+    /// top-right corner, the caption centred underneath.
+    ///
+    /// The caption spells the count out ("10 users") rather than leaving a bare
+    /// number to be decoded. It is drawn with a halo (a white stroke painted under
+    /// the fill) because it sits outside the glyph, over whatever floor plan
+    /// happens to be beneath it.
     private void appendClusterCount(final HtmlBuilder parent,
                                     final FloorMapCluster cluster,
                                     final List<TypeStyle> typeStyles,
@@ -1532,11 +1443,9 @@ public class FloorMapCanvasViewImpl
                 clusterCaptionPriority(cluster));
     }
 
-    /**
-     * A cluster's caption priority: above every lone entity, and — among clusters —
-     * bigger first, because a bigger cluster's caption speaks for more entities. A
-     * cluster drawn around the tracked entity outranks all of them.
-     */
+    /// A cluster's caption priority: above every lone entity, and — among clusters —
+    /// bigger first, because a bigger cluster's caption speaks for more entities. A
+    /// cluster drawn around the tracked entity outranks all of them.
     private static int clusterCaptionPriority(final FloorMapCluster cluster) {
         if (cluster.hasFocusedMember()) {
             return CAPTION_PRIORITY_FOCUSED;
@@ -1545,11 +1454,9 @@ public class FloorMapCanvasViewImpl
         return CAPTION_PRIORITY_CLUSTER_BASE - Math.min(cluster.size(), 999);
     }
 
-    /**
-     * A geometry helper bound to the last-drawn scale/pan and this view's image
-     * aspect-ratio cache. The projection maths lives in the shared, unit-tested
-     * {@link FloorMapScreenGeometry}; the view just supplies its current state.
-     */
+    /// A geometry helper bound to the last-drawn scale/pan and this view's image
+    /// aspect-ratio cache. The projection maths lives in the shared, unit-tested
+    /// [FloorMapScreenGeometry]; the view just supplies its current state.
     private FloorMapScreenGeometry geometry() {
         return new FloorMapScreenGeometry(lastScale, lastOffsetX, lastOffsetY,
                 IMAGE_DISPLAY_WIDTH, OBJECT_SIZE, this::cachedAspectRatio, lastTypeStyles);
@@ -1576,23 +1483,19 @@ public class FloorMapCanvasViewImpl
         return computeSelectionFrame();
     }
 
-    /**
-     * Returns the screen-space bounding box {@code {minX, minY, maxX, maxY}} of
-     * the currently selected facts (union of their on-screen bounds), padded to
-     * a minimum size so the handles stay separable. Returns {@code null} when
-     * nothing is selected or laid out.
-     */
+    /// Returns the screen-space bounding box `{minX, minY, maxX, maxY}` of
+    /// the currently selected facts (union of their on-screen bounds), padded to
+    /// a minimum size so the handles stay separable. Returns `null` when
+    /// nothing is selected or laid out.
     private double[] computeSelectionFrame() {
         return geometry().selectionFrame(lastFacts, lastSelectedIds, MIN_FRAME_PX);
     }
 
-    /**
-     * Draws the selection frame outline, the 4 corner scale handles and the
-     * rotation handle above the top edge, all in screen space at the SVG root.
-     * Each handle carries an id of {@code FloorMapJsonKeys.HANDLE_PREFIX + role}
-     * so the presenter can route a mousedown on it to a scale/rotate gesture.
-     * Scaling is always aspect-preserving, so only corner handles are offered.
-     */
+    /// Draws the selection frame outline, the 4 corner scale handles and the
+    /// rotation handle above the top edge, all in screen space at the SVG root.
+    /// Each handle carries an id of `FloorMapJsonKeys.HANDLE_PREFIX + role`
+    /// so the presenter can route a mousedown on it to a scale/rotate gesture.
+    /// Scaling is always aspect-preserving, so only corner handles are offered.
     private void appendSelectionHandles(final HtmlBuilder svg, final boolean enabled,
                                         final boolean areaOffset) {
         final double[] f = computeSelectionFrame();
@@ -1680,12 +1583,10 @@ public class FloorMapCanvasViewImpl
                 new Attribute("cursor", enabled ? "grab" : "not-allowed"));
     }
 
-    /**
-     * Returns the single selected fact when it is an editable area (exactly one
-     * selection, no image, {@code >= 3} vertices), or {@code null} otherwise.
-     * Used to decide whether to draw per-vertex editing handles and to offset
-     * the scale/rotate frame outward.
-     */
+    /// Returns the single selected fact when it is an editable area (exactly one
+    /// selection, no image, `>= 3` vertices), or `null` otherwise.
+    /// Used to decide whether to draw per-vertex editing handles and to offset
+    /// the scale/rotate frame outward.
     private Fact singleSelectedArea() {
         if (lastFacts == null || lastSelectedIds == null || lastSelectedIds.size() != 1) {
             return null;
@@ -1698,10 +1599,8 @@ public class FloorMapCanvasViewImpl
         return null;
     }
 
-    /**
-     * Projects a fact-local vertex to screen space using the last-drawn scale
-     * and pan (local → map via {@code worldToMap}, then the Y-up screen flip).
-     */
+    /// Projects a fact-local vertex to screen space using the last-drawn scale
+    /// and pan (local → map via `worldToMap`, then the Y-up screen flip).
     private double[] vertexToScreen(final Fact area, final double[] vertex) {
         final double[] mapPt = area.getWorldToMap().transformPoint(vertex[0], vertex[1]);
         return new double[]{
@@ -1709,14 +1608,12 @@ public class FloorMapCanvasViewImpl
                 lastOffsetY - lastScale * mapPt[1]};
     }
 
-    /**
-     * Draws the per-vertex editing handles for a single selected area: a square
-     * move handle on each vertex (id {@code HANDLE_PREFIX + "vertex-" + i}) and
-     * a round "+" insert handle at each edge midpoint (id
-     * {@code HANDLE_PREFIX + "insert-" + i}), all in screen space at the SVG
-     * root so they paint over the area and win the mousedown. Insert handles on
-     * very short on-screen edges are skipped to avoid crowding.
-     */
+    /// Draws the per-vertex editing handles for a single selected area: a square
+    /// move handle on each vertex (id `HANDLE_PREFIX + "vertex-" + i`) and
+    /// a round "+" insert handle at each edge midpoint (id
+    /// `HANDLE_PREFIX + "insert-" + i`), all in screen space at the SVG
+    /// root so they paint over the area and win the mousedown. Insert handles on
+    /// very short on-screen edges are skipped to avoid crowding.
     private void appendAreaHandles(final HtmlBuilder svg, final Fact area) {
         final double[][] verts = area.getVertices();
         if (verts == null || verts.length < 3) {
@@ -1790,11 +1687,9 @@ public class FloorMapCanvasViewImpl
                 new Attribute("pointer-events", "none"));
     }
 
-    /**
-     * Draws an image fact — an {@code <image>} at its local size, wrapped in a
-     * {@code <g>} carrying the fact's world-to-map matrix so it is placed and
-     * scaled in map space. A selection border is added when selected.
-     */
+    /// Draws an image fact — an `<image>` at its local size, wrapped in a
+    /// `<g>` carrying the fact's world-to-map matrix so it is placed and
+    /// scaled in map space. A selection border is added when selected.
     private void appendImageFact(final HtmlBuilder parent,
                                  final Fact fact,
                                  final boolean isSelected,
@@ -1806,23 +1701,21 @@ public class FloorMapCanvasViewImpl
                 isSelected ? ACCENT_BLUE : highlightColour);
     }
 
-    /**
-     * Draws an image glyph — an {@code <image>} at its local size, wrapped in a
-     * {@code <g>} carrying the given placement matrix so it is placed and
-     * scaled in map space. Used for image facts (placed by their own
-     * world-to-map) and for event entities with an image-bearing fact twin
-     * (placed by the twin's scale/rotation but the entity's live position).
-     *
-     * @param placement       the full placement matrix to apply
-     * @param centred         when {@code true}, the image's centre (rather than
-     *                        its bottom-left corner) lands on the placement
-     *                        translation point — used for event entities so the
-     *                        icon sits on the entity position like a shape
-     *                        glyph would
-     * @param selectionColour selection border colour when selected (facts use
-     *                        the Editor blue, tracked entities the orange
-     *                        selection colour)
-     */
+    /// Draws an image glyph — an `<image>` at its local size, wrapped in a
+    /// `<g>` carrying the given placement matrix so it is placed and
+    /// scaled in map space. Used for image facts (placed by their own
+    /// world-to-map) and for event entities with an image-bearing fact twin
+    /// (placed by the twin's scale/rotation but the entity's live position).
+    ///
+    /// @param placement       the full placement matrix to apply
+    /// @param centred         when `true`, the image's centre (rather than
+    ///         its bottom-left corner) lands on the placement
+    ///         translation point — used for event entities so the
+    ///         icon sits on the entity position like a shape
+    ///         glyph would
+    /// @param selectionColour selection border colour when selected (facts use
+    ///         the Editor blue, tracked entities the orange
+    ///         selection colour)
     private void appendImageGlyph(final HtmlBuilder parent,
                                   final Fact fact,
                                   final FloorMapTransformationMatrix placement,
@@ -1876,13 +1769,11 @@ public class FloorMapCanvasViewImpl
                         + " translate(0," + imgHeight + ") scale(1,-1)"));
     }
 
-    /**
-     * Draws the default graphic for an imageless fact at its map position
-     * (world-to-map applied to the fact's world coordinates), using the image or
-     * the shape and colour configured for its type. The graphic and its label are
-     * drawn at a fixed screen size (independent of zoom) via
-     * {@link #fixedSizeTransform}.
-     */
+    /// Draws the default graphic for an imageless fact at its map position
+    /// (world-to-map applied to the fact's world coordinates), using the image or
+    /// the shape and colour configured for its type. The graphic and its label are
+    /// drawn at a fixed screen size (independent of zoom) via
+    /// [#fixedSizeTransform].
     private void appendDefaultGraphic(final HtmlBuilder parent,
                                       final Fact fact,
                                       final boolean isSelected,
@@ -1905,14 +1796,12 @@ public class FloorMapCanvasViewImpl
                 mapX, mapY, typeStyles, CAPTION_PRIORITY_FACT);
     }
 
-    /**
-     * Draws an event entity at its map coordinates, preceded by its movement
-     * trail — a fading path tinted with the entity's type colour. The entity
-     * itself renders as its attached icon (when an image-bearing fact twin is
-     * present, scaled/rotated by that fact's world-to-map but placed at the
-     * live position) or otherwise as the type-styled default graphic, the same
-     * rendering as an imageless fact.
-     */
+    /// Draws an event entity at its map coordinates, preceded by its movement
+    /// trail — a fading path tinted with the entity's type colour. The entity
+    /// itself renders as its attached icon (when an image-bearing fact twin is
+    /// present, scaled/rotated by that fact's world-to-map but placed at the
+    /// live position) or otherwise as the type-styled default graphic, the same
+    /// rendering as an imageless fact.
     private void appendEvent(final HtmlBuilder parent,
                              final FloorMapObject obj,
                              final boolean isSelected,
@@ -1948,22 +1837,20 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /**
-     * Draws an event entity's movement trail — a fading path tinted with its type
-     * colour — in map space, so it scales with the map.
-     *
-     * <p>Separate from {@link #appendEvent} because the two are wanted apart in one
-     * case: an entity merged into a cluster has its glyph replaced by the cluster's,
-     * but if it is the <em>tracked</em> one its trail is still worth drawing. Ten
-     * trails converging on a spot is the mess clustering removes; the one belonging
-     * to the entity the user is following is the reason they are watching.</p>
-     *
-     * <p>Drawn as {@link #TRAIL_BANDS} sub-paths rather than one, because SVG has no way to vary
-     * stroke opacity along a single path. Previously the whole trail took one opacity - the
-     * maximum over its points - which discarded the animator's alpha ramp entirely and drew the
-     * trail as a uniform block that faded all at once, rather than tapering off behind the
-     * entity.</p>
-     */
+    /// Draws an event entity's movement trail — a fading path tinted with its type
+    /// colour — in map space, so it scales with the map.
+    ///
+    /// Separate from [#appendEvent] because the two are wanted apart in one
+    /// case: an entity merged into a cluster has its glyph replaced by the cluster's,
+    /// but if it is the *tracked* one its trail is still worth drawing. Ten
+    /// trails converging on a spot is the mess clustering removes; the one belonging
+    /// to the entity the user is following is the reason they are watching.
+    ///
+    /// Drawn as [#TRAIL_BANDS] sub-paths rather than one, because SVG has no way to vary
+    /// stroke opacity along a single path. Previously the whole trail took one opacity - the
+    /// maximum over its points - which discarded the animator's alpha ramp entirely and drew the
+    /// trail as a uniform block that faded all at once, rather than tapering off behind the
+    /// entity.
     private void appendEventTrail(final HtmlBuilder parent,
                                   final FloorMapObject obj,
                                   final List<TypeStyle> typeStyles) {
@@ -2009,23 +1896,21 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /**
-     * Draws the type-styled default graphic — the single glyph rendering shared
-     * by imageless facts and event entities — anchored at a map-space point and
-     * drawn at a fixed screen size.
-     *
-     * <p>The graphic comes from the type's {@link TypeStyle}: its
-     * {@link TypeStyle#getGraphic() image} if it has one, otherwise its
-     * {@link TypeStyle#getShape() shape} filled with its colour. Either way the
-     * glyph occupies the same {@code OBJECT_SIZE} box, so switching a layer
-     * between a shape and an image does not change how much room it takes; an
-     * image is letterboxed into that box rather than stretched.</p>
-     *
-     * <p>The graphic element carries {@code id} so click-detection works. The
-     * glyph's <strong>name is not drawn here</strong>: captions are collected during
-     * the draw and placed together at the end, so that two of them can never be
-     * written on top of each other (see {@link #collectCaption}).</p>
-     */
+    /// Draws the type-styled default graphic — the single glyph rendering shared
+    /// by imageless facts and event entities — anchored at a map-space point and
+    /// drawn at a fixed screen size.
+    ///
+    /// The graphic comes from the type's [TypeStyle]: its
+    /// [image][TypeStyle#getGraphic()] if it has one, otherwise its
+    /// [shape][TypeStyle#getShape()] filled with its colour. Either way the
+    /// glyph occupies the same `OBJECT_SIZE` box, so switching a layer
+    /// between a shape and an image does not change how much room it takes; an
+    /// image is letterboxed into that box rather than stretched.
+    ///
+    /// The graphic element carries `id` so click-detection works. The
+    /// glyph's **name is not drawn here**: captions are collected during
+    /// the draw and placed together at the end, so that two of them can never be
+    /// written on top of each other (see [#collectCaption]).
     private void appendStyledGlyph(final HtmlBuilder parent,
                                    final String id,
                                    final String type,
@@ -2039,22 +1924,19 @@ public class FloorMapCanvasViewImpl
                 typeStyles, scale, 1.0);
     }
 
-    /**
-     * {@link #appendStyledGlyph(HtmlBuilder, String, String, double, double,
-     * boolean, String, List, double) As above}, drawn {@code sizeFactor} times its
-     * normal size.
-     *
-     * <p>The factor is applied to the counter-scale of the fixed-size transform
-     * rather than to each shape's own geometry, so every glyph kind — shape, pin,
-     * layer image — grows by construction, and a future one cannot forget to. A
-     * selection or highlight border is unaffected: it is drawn with
-     * {@code non-scaling-stroke}, so it stays the same weight round a bigger
-     * glyph, which is what keeps a ring reading as a ring rather than as a
-     * band.</p>
-     *
-     * @param sizeFactor the multiplier on the glyph box; {@code 1} for an entity,
-     *                   more for a cluster standing for several
-     */
+    /// [As above][#appendStyledGlyph(HtmlBuilder, String, String, double, double, boolean, String, List, double)],
+    /// drawn `sizeFactor` times its normal size.
+    ///
+    /// The factor is applied to the counter-scale of the fixed-size transform
+    /// rather than to each shape's own geometry, so every glyph kind — shape, pin,
+    /// layer image — grows by construction, and a future one cannot forget to. A
+    /// selection or highlight border is unaffected: it is drawn with
+    /// `non-scaling-stroke`, so it stays the same weight round a bigger
+    /// glyph, which is what keeps a ring reading as a ring rather than as a
+    /// band.
+    ///
+    /// @param sizeFactor the multiplier on the glyph box; `1` for an entity,
+    ///         more for a cluster standing for several
     private void appendStyledGlyph(final HtmlBuilder parent,
                                    final String id,
                                    final String type,
@@ -2191,24 +2073,22 @@ public class FloorMapCanvasViewImpl
                 new Attribute("id", FloorMapJsonKeys.SVG_GROUP_PREFIX + id));
     }
 
-    /**
-     * Queues a glyph's caption for placement at the end of the frame.
-     *
-     * <p>Nothing is drawn here: the caption's position depends on where every other
-     * caption ends up, so the decision is deferred to
-     * {@link #appendPlacedCaptions}.</p>
-     *
-     * @param key        the entity id or cluster key — identifies the caption and
-     *                   breaks ties between equal priorities, so it must be stable
-     *                   between frames
-     * @param text       the caption, or {@code null}/blank to queue nothing
-     * @param type       the entity type, for sizing the glyph the caption clears
-     * @param mapX       the glyph's anchor in map space
-     * @param mapY       the glyph's anchor in map space
-     * @param typeStyles the layer styles, for the same sizing
-     * @param priority   lower is placed first; see the {@code CAPTION_PRIORITY_*}
-     *                   constants
-     */
+    /// Queues a glyph's caption for placement at the end of the frame.
+    ///
+    /// Nothing is drawn here: the caption's position depends on where every other
+    /// caption ends up, so the decision is deferred to
+    /// [#appendPlacedCaptions].
+    ///
+    /// @param key        the entity id or cluster key — identifies the caption and
+    ///         breaks ties between equal priorities, so it must be stable
+    ///         between frames
+    /// @param text       the caption, or `null`/blank to queue nothing
+    /// @param type       the entity type, for sizing the glyph the caption clears
+    /// @param mapX       the glyph's anchor in map space
+    /// @param mapY       the glyph's anchor in map space
+    /// @param typeStyles the layer styles, for the same sizing
+    /// @param priority   lower is placed first; see the `CAPTION_PRIORITY_*`
+    ///         constants
     private void collectCaption(final String key,
                                 final String text,
                                 final String type,
@@ -2220,14 +2100,11 @@ public class FloorMapCanvasViewImpl
                 glyphBoxPx(type, typeStyles)[1] / 2.0, priority);
     }
 
-    /**
-     * {@link #collectCaption(String, String, String, double, double, List, int) As
-     * above}, for a glyph that is not drawn at its type's normal size — a cluster
-     * badge grown by its member count. Passing the type's box for one of those
-     * would tuck the caption under the glyph it is naming.
-     *
-     * @param halfHeightPx half the height of the glyph the caption must clear
-     */
+    /// [As above][#collectCaption(String, String, String, double, double, List, int)], for a glyph
+    /// that is not drawn at its type's normal size — a cluster badge grown by its member count.
+    /// Passing the type's box for one of those would tuck the caption under the glyph it is naming.
+    ///
+    /// @param halfHeightPx half the height of the glyph the caption must clear
     private void collectCaption(final String key,
                                 final String text,
                                 final String type,
@@ -2241,25 +2118,23 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /**
-     * Resolves the frame's queued captions and draws the ones that fit.
-     *
-     * <p>Runs last, for two reasons: a caption must not be painted over by a glyph
-     * drawn after it, and which captions fit can only be decided once they are all
-     * known. Crowding drops the least important names — never the most important —
-     * and zooming in brings them back as the glyphs separate.</p>
-     *
-     * <p>A dimmed layer's captions are dimmed with it and yield space to undimmed
-     * ones — dimming means "push this into the background", which a crisp name
-     * hanging off a ghosted glyph would contradict. The count pills stay crisp:
-     * they are drawn with their glyph, and a number nobody can read is no use.</p>
-     *
-     * @param parent      the flip group, so captions share the glyphs' coordinate space
-     * @param scale       the current zoom
-     * @param offsetX     the current pan, for projecting anchors to screen space
-     * @param offsetY     the current pan
-     * @param dimmedTypes the layers the user has pushed into the background
-     */
+    /// Resolves the frame's queued captions and draws the ones that fit.
+    ///
+    /// Runs last, for two reasons: a caption must not be painted over by a glyph
+    /// drawn after it, and which captions fit can only be decided once they are all
+    /// known. Crowding drops the least important names — never the most important —
+    /// and zooming in brings them back as the glyphs separate.
+    ///
+    /// A dimmed layer's captions are dimmed with it and yield space to undimmed
+    /// ones — dimming means "push this into the background", which a crisp name
+    /// hanging off a ghosted glyph would contradict. The count pills stay crisp:
+    /// they are drawn with their glyph, and a number nobody can read is no use.
+    ///
+    /// @param parent      the flip group, so captions share the glyphs' coordinate space
+    /// @param scale       the current zoom
+    /// @param offsetX     the current pan, for projecting anchors to screen space
+    /// @param offsetY     the current pan
+    /// @param dimmedTypes the layers the user has pushed into the background
     private void appendPlacedCaptions(final HtmlBuilder parent,
                                       final double scale,
                                       final double offsetX,
@@ -2315,7 +2190,7 @@ public class FloorMapCanvasViewImpl
         return dimmedTypes != null && dimmedTypes.contains(caption.type);
     }
 
-    /** One queued caption, before it is known whether it fits. */
+    /// One queued caption, before it is known whether it fits.
     private static final class PendingCaption {
 
         private final String key;
@@ -2343,27 +2218,25 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /**
-     * Draws a caption centred under a fixed-size glyph, in the theme-aware style
-     * shared by entity names and cluster captions.
-     *
-     * <p>Must be called from inside a {@link #fixedSizeTransform} group, whose
-     * local space is screen pixels with Y increasing downward — so the positive
-     * offset here puts the text below the glyph.</p>
-     *
-     * <p>Styled by CSS class rather than attributes because this text sits
-     * <em>outside</em> the glyph, over whatever floor plan is beneath it: it needs
-     * the theme's text colour and a halo, and neither can be hard-coded here.</p>
-     *
-     * @param parent       the glyph's own group builder
-     * @param text         the caption; escaped by the text-content overload, since
-     *                     it carries entity and type names from the data
-     * @param halfHeightPx half the height of the glyph being named — from
-     *                     {@link #glyphBoxPx}, <strong>not</strong> assumed to be
-     *                     {@code OBJECT_SIZE / 2}: a layer drawing an image gets an
-     *                     area-matched box that can be twice as tall, and a caption
-     *                     placed for a square glyph would land on top of it
-     */
+    /// Draws a caption centred under a fixed-size glyph, in the theme-aware style
+    /// shared by entity names and cluster captions.
+    ///
+    /// Must be called from inside a [#fixedSizeTransform] group, whose
+    /// local space is screen pixels with Y increasing downward — so the positive
+    /// offset here puts the text below the glyph.
+    ///
+    /// Styled by CSS class rather than attributes because this text sits
+    /// *outside* the glyph, over whatever floor plan is beneath it: it needs
+    /// the theme's text colour and a halo, and neither can be hard-coded here.
+    ///
+    /// @param parent       the glyph's own group builder
+    /// @param text         the caption; escaped by the text-content overload, since
+    ///         it carries entity and type names from the data
+    /// @param halfHeightPx half the height of the glyph being named — from
+    ///         [#glyphBoxPx], **not** assumed to be
+    ///         `OBJECT_SIZE / 2`: a layer drawing an image gets an
+    ///         area-matched box that can be twice as tall, and a caption
+    ///         placed for a square glyph would land on top of it
     private void appendGlyphCaption(final HtmlBuilder parent,
                                     final String text,
                                     final double halfHeightPx) {
@@ -2377,23 +2250,21 @@ public class FloorMapCanvasViewImpl
                 new Attribute("pointer-events", "none"));
     }
 
-    /**
-     * Builds the SVG transform for a <strong>fixed-screen-size</strong> glyph
-     * anchored at a map-space point.
-     *
-     * <p>The {@code translate} places the glyph's origin in map space, so it
-     * tracks pan/zoom position exactly like everything else. The
-     * {@code scale(1/zoom, -1/zoom)} then cancels two things at once: the
-     * pan/zoom group's {@code scale(zoom)} (so the glyph's own geometry renders
-     * at a constant screen size regardless of zoom) and the Y-up
-     * {@code scale(1,-1)} flip (so the glyph and its label stay upright — the
-     * two negatives cancel).</p>
-     *
-     * @param mapX  map-space X of the anchor point
-     * @param mapY  map-space Y of the anchor point
-     * @param scale the current zoom factor (never zero — clamped by the presenter)
-     * @return the {@code transform} attribute value
-     */
+    /// Builds the SVG transform for a **fixed-screen-size** glyph
+    /// anchored at a map-space point.
+    ///
+    /// The `translate` places the glyph's origin in map space, so it
+    /// tracks pan/zoom position exactly like everything else. The
+    /// `scale(1/zoom, -1/zoom)` then cancels two things at once: the
+    /// pan/zoom group's `scale(zoom)` (so the glyph's own geometry renders
+    /// at a constant screen size regardless of zoom) and the Y-up
+    /// `scale(1,-1)` flip (so the glyph and its label stay upright — the
+    /// two negatives cancel).
+    ///
+    /// @param mapX  map-space X of the anchor point
+    /// @param mapY  map-space Y of the anchor point
+    /// @param scale the current zoom factor (never zero — clamped by the presenter)
+    /// @return the `transform` attribute value
     private static String fixedSizeTransform(final double mapX,
                                              final double mapY,
                                              final double scale) {
@@ -2401,12 +2272,10 @@ public class FloorMapCanvasViewImpl
         return "translate(" + mapX + "," + mapY + ") scale(" + inv + "," + (-inv) + ")";
     }
 
-    /**
-     * Returns the configured default-graphic shape for the given type. Falls
-     * back to a circle for unconfigured {@code person} types (continuity with
-     * the traditional person marker), or {@code null} otherwise (the view then
-     * falls back to the default rounded rectangle).
-     */
+    /// Returns the configured default-graphic shape for the given type. Falls
+    /// back to a circle for unconfigured `person` types (continuity with
+    /// the traditional person marker), or `null` otherwise (the view then
+    /// falls back to the default rounded rectangle).
     private static TypeStyle.Shape shapeForType(final String type, final List<TypeStyle> typeStyles) {
         if (type != null && typeStyles != null) {
             for (final TypeStyle style : typeStyles) {
@@ -2421,15 +2290,13 @@ public class FloorMapCanvasViewImpl
         return null;
     }
 
-    /**
-     * Returns the asset-store URL of the image configured as the given type's
-     * layer graphic, or {@code null} to draw a shape instead.
-     *
-     * <p>This only applies to facts and entities with <em>no image of their own</em>
-     * — {@link #renderFact} sends image-bearing facts down the
-     * {@link #appendImageFact} path first, so a fact's own {@code img} always wins
-     * over its layer's graphic.</p>
-     */
+    /// Returns the asset-store URL of the image configured as the given type's
+    /// layer graphic, or `null` to draw a shape instead.
+    ///
+    /// This only applies to facts and entities with *no image of their own*
+    /// — [#renderFact] sends image-bearing facts down the
+    /// [#appendImageFact] path first, so a fact's own `img` always wins
+    /// over its layer's graphic.
     private static String graphicForType(final String type, final List<TypeStyle> typeStyles) {
         if (type != null && typeStyles != null) {
             for (final TypeStyle style : typeStyles) {
@@ -2441,20 +2308,18 @@ public class FloorMapCanvasViewImpl
         return null;
     }
 
-    /**
-     * Draws an icon as a map marker: a coloured teardrop with a white outline,
-     * the icon knocked out of it in white.
-     *
-     * <p>Three layers, back to front. A selection or highlight ring first, so it
-     * shows outside the white outline rather than replacing it. Then the marker
-     * itself, which carries the {@code id} — it is the solid shape the pointer
-     * will actually be over, and the only part of the glyph that should answer a
-     * hit-test. Then the icon, explicitly {@code pointer-events="none"} so it
-     * cannot become the event target and hide the marker's id from the hit-test
-     * beneath it.</p>
-     *
-     * @param stroke the ring colour, or {@code null} for no ring
-     */
+    /// Draws an icon as a map marker: a coloured teardrop with a white outline,
+    /// the icon knocked out of it in white.
+    ///
+    /// Three layers, back to front. A selection or highlight ring first, so it
+    /// shows outside the white outline rather than replacing it. Then the marker
+    /// itself, which carries the `id` — it is the solid shape the pointer
+    /// will actually be over, and the only part of the glyph that should answer a
+    /// hit-test. Then the icon, explicitly `pointer-events="none"` so it
+    /// cannot become the event target and hide the marker's id from the hit-test
+    /// beneath it.
+    ///
+    /// @param stroke the ring colour, or `null` for no ring
     private void appendIconMarker(final HtmlBuilder parent,
                                   final FloorMapIcon icon,
                                   final String id,
@@ -2487,13 +2352,11 @@ public class FloorMapCanvasViewImpl
                 new Attribute("transform", FloorMapIcon.transform(30.0)));
     }
 
-    /**
-     * Returns the built-in icon configured as the given type's layer graphic, or
-     * {@code null} to draw a shape instead.
-     *
-     * <p>An icon is filled with the layer's colour, exactly as a shape is, so
-     * unlike an uploaded image it does not retire the colour control.</p>
-     */
+    /// Returns the built-in icon configured as the given type's layer graphic, or
+    /// `null` to draw a shape instead.
+    ///
+    /// An icon is filled with the layer's colour, exactly as a shape is, so
+    /// unlike an uploaded image it does not retire the colour control.
     private static FloorMapIcon iconForType(final String type, final List<TypeStyle> typeStyles) {
         if (type != null && typeStyles != null) {
             for (final TypeStyle style : typeStyles) {
@@ -2505,34 +2368,32 @@ public class FloorMapCanvasViewImpl
         return null;
     }
 
-    /**
-     * Appends an {@code <image>} filling the target box, compensating for SVGs that
-     * cannot scale themselves.
-     *
-     * <p>An SVG {@code <image>} maps the referenced file into the given
-     * width/height <em>via that file's {@code viewBox}</em>. An SVG declaring only
-     * {@code width}/{@code height} and no {@code viewBox} has no user coordinate
-     * system to map, so it ignores the box and renders at its own small intrinsic
-     * size — for a fact icon, inside a 1000-unit box, that is a barely visible
-     * speck. Setting the box <em>to</em> the intrinsic size and scaling the wrapping
-     * group instead sidesteps the problem: the file renders 1:1, and the group
-     * transform does the enlarging.</p>
-     *
-     * <p>This is a no-op in effect for raster images and for well-formed SVGs — the
-     * same pixels either way — so it is applied uniformly rather than trying to
-     * sniff which files need it. When the natural size is unknown (still loading, or
-     * the browser will not report one) it falls back to sizing the box directly.</p>
-     *
-     * @param naturalSize the image's intrinsic {@code {width, height}}, or
-     *                    {@code null} if unknown
-     * @param x           left edge of the target box, in the parent's coordinates
-     * @param y           top edge of the target box
-     * @param targetWidth  width to draw at; must share the natural aspect ratio with
-     *                     {@code targetHeight} so one uniform scale suffices
-     * @param targetHeight height to draw at
-     * @param preserveAspectRatio value for the attribute of the same name, used only
-     *                            on the unknown-size fallback path
-     */
+    /// Appends an `<image>` filling the target box, compensating for SVGs that
+    /// cannot scale themselves.
+    ///
+    /// An SVG `<image>` maps the referenced file into the given
+    /// width/height *via that file's `viewBox`*. An SVG declaring only
+    /// `width`/`height` and no `viewBox` has no user coordinate
+    /// system to map, so it ignores the box and renders at its own small intrinsic
+    /// size — for a fact icon, inside a 1000-unit box, that is a barely visible
+    /// speck. Setting the box *to* the intrinsic size and scaling the wrapping
+    /// group instead sidesteps the problem: the file renders 1:1, and the group
+    /// transform does the enlarging.
+    ///
+    /// This is a no-op in effect for raster images and for well-formed SVGs — the
+    /// same pixels either way — so it is applied uniformly rather than trying to
+    /// sniff which files need it. When the natural size is unknown (still loading, or
+    /// the browser will not report one) it falls back to sizing the box directly.
+    ///
+    /// @param naturalSize the image's intrinsic `{width, height}`, or
+    ///         `null` if unknown
+    /// @param x           left edge of the target box, in the parent's coordinates
+    /// @param y           top edge of the target box
+    /// @param targetWidth  width to draw at; must share the natural aspect ratio with
+    ///         `targetHeight` so one uniform scale suffices
+    /// @param targetHeight height to draw at
+    /// @param preserveAspectRatio value for the attribute of the same name, used only
+    ///         on the unknown-size fallback path
     private void appendScaledImage(final HtmlBuilder parent,
                                    final String url,
                                    final String id,
@@ -2571,16 +2432,14 @@ public class FloorMapCanvasViewImpl
                         "translate(" + x + "," + y + ") scale(" + scale + ")"));
     }
 
-    /**
-     * The on-screen {@code {width, height}} a type's point glyph occupies: the
-     * area-matched box of its layer graphic, or the plain square when it draws a
-     * shape.
-     *
-     * <p>Exists so anything positioned <em>relative to</em> a glyph — its caption,
-     * a cluster's count pill — is placed against the box the glyph really has.
-     * Assuming a square silently misplaces both on any layer configured with an
-     * image, which is not visible until such a layer exists.</p>
-     */
+    /// The on-screen `{width, height}` a type's point glyph occupies: the
+    /// area-matched box of its layer graphic, or the plain square when it draws a
+    /// shape.
+    ///
+    /// Exists so anything positioned *relative to* a glyph — its caption,
+    /// a cluster's count pill — is placed against the box the glyph really has.
+    /// Assuming a square silently misplaces both on any layer configured with an
+    /// image, which is not visible until such a layer exists.
     private double[] glyphBoxPx(final String type, final List<TypeStyle> typeStyles) {
         final String graphic = graphicForType(type, typeStyles);
         return graphic != null
@@ -2588,26 +2447,24 @@ public class FloorMapCanvasViewImpl
                 : new double[]{OBJECT_SIZE, OBJECT_SIZE};
     }
 
-    /**
-     * The on-screen {@code {width, height}} to draw a layer graphic at, sized so it
-     * carries the <strong>same visual weight as a shape glyph</strong>.
-     *
-     * <p>Matching the shape's bounding box is not enough: a shape is solid ink out
-     * to its box edge, whereas an image preserving its aspect ratio inside a square
-     * box only reaches the edge on its longer side (a 4:3 icon would fill just
-     * three quarters of the height), and most icons carry transparent margins on
-     * top of that. So the box is sized to match the shape box's <em>area</em>
-     * instead — for aspect ratio {@code r}, that is
-     * {@code (S·√r, S/√r)}, which has area {@code S²} for every {@code r} and
-     * gives a square image exactly the shape's {@code S × S}.</p>
-     *
-     * <p>The ratio comes from {@link #naturalSize}; until it resolves the graphic is
-     * drawn square, and {@link #onImageSizeResolved} triggers a redraw at the true
-     * size.</p>
-     *
-     * @param url the graphic's asset URL
-     * @return a two-element {@code {width, height}} in SVG user-units
-     */
+    /// The on-screen `{width, height}` to draw a layer graphic at, sized so it
+    /// carries the **same visual weight as a shape glyph**.
+    ///
+    /// Matching the shape's bounding box is not enough: a shape is solid ink out
+    /// to its box edge, whereas an image preserving its aspect ratio inside a square
+    /// box only reaches the edge on its longer side (a 4:3 icon would fill just
+    /// three quarters of the height), and most icons carry transparent margins on
+    /// top of that. So the box is sized to match the shape box's *area*
+    /// instead — for aspect ratio `r`, that is
+    /// `(S·√r, S/√r)`, which has area `S²` for every `r` and
+    /// gives a square image exactly the shape's `S × S`.
+    ///
+    /// The ratio comes from [#naturalSize]; until it resolves the graphic is
+    /// drawn square, and [#onImageSizeResolved] triggers a redraw at the true
+    /// size.
+    ///
+    /// @param url the graphic's asset URL
+    /// @return a two-element `{width, height}` in SVG user-units
     private double[] graphicBoxSize(final String url) {
         final double[] natural = naturalSize(url);
         // Delegate the arithmetic so the drawn box and the hit-test/selection box
@@ -2617,32 +2474,28 @@ public class FloorMapCanvasViewImpl
                 : natural[0] / natural[1]);
     }
 
-    /**
-     * Registers a callback that is invoked whenever the canvas needs to be redrawn
-     * (e.g. after an asynchronous image aspect-ratio resolution completes).
-     *
-     * @param redrawListener the callback, or {@code null} to clear
-     */
+    /// Registers a callback that is invoked whenever the canvas needs to be redrawn
+    /// (e.g. after an asynchronous image aspect-ratio resolution completes).
+    ///
+    /// @param redrawListener the callback, or `null` to clear
     @Override
     public void setRedrawListener(final Runnable redrawListener) {
         this.redrawListener = redrawListener;
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void setResizeListener(final Runnable resizeListener) {
         this.resizeListener = resizeListener;
     }
 
-    /**
-     * Callback invoked (via JSNI) when the browser has finished loading an image and
-     * its natural dimensions are known.
-     *
-     * @param url           the image URL that was loaded
-     * @param naturalWidth  the image's natural width in pixels, or {@code 0} if the
-     *                      browser would not report one
-     * @param naturalHeight the image's natural height in pixels, or {@code 0}
-     */
+    /// Callback invoked (via JSNI) when the browser has finished loading an image and
+    /// its natural dimensions are known.
+    ///
+    /// @param url           the image URL that was loaded
+    /// @param naturalWidth  the image's natural width in pixels, or `0` if the
+    ///         browser would not report one
+    /// @param naturalHeight the image's natural height in pixels, or `0`
     @SuppressWarnings("unused")
     void onImageSizeResolved(final String url,
                              final double naturalWidth,
@@ -2654,16 +2507,14 @@ public class FloorMapCanvasViewImpl
         }
     }
 
-    /**
-     * The image's natural {@code {width, height}}, starting a load if it is not yet
-     * known. Returns {@code null} while unknown, or if the browser reported no
-     * usable size — callers then fall back to letting the {@code <image>} box do
-     * the scaling.
-     *
-     * <p>Safe to call every frame: {@link #loadImageAspectRatio} de-duplicates
-     * in-flight loads, and a resolved entry (even an unusable one) is never probed
-     * again.</p>
-     */
+    /// The image's natural `{width, height}`, starting a load if it is not yet
+    /// known. Returns `null` while unknown, or if the browser reported no
+    /// usable size — callers then fall back to letting the `<image>` box do
+    /// the scaling.
+    ///
+    /// Safe to call every frame: [#loadImageAspectRatio] de-duplicates
+    /// in-flight loads, and a resolved entry (even an unusable one) is never probed
+    /// again.
     private double[] naturalSize(final String url) {
         final double[] size = imageNaturalSizeCache.get(url);
         if (size == null) {
@@ -2675,11 +2526,9 @@ public class FloorMapCanvasViewImpl
                 : null;
     }
 
-    /**
-     * The image's natural width/height ratio if already known, otherwise
-     * {@code null}. Unlike {@link #naturalSize} this never starts a load, so it is
-     * safe to call from hit-testing and other non-drawing paths.
-     */
+    /// The image's natural width/height ratio if already known, otherwise
+    /// `null`. Unlike [#naturalSize] this never starts a load, so it is
+    /// safe to call from hit-testing and other non-drawing paths.
     private Double cachedAspectRatio(final String url) {
         final double[] size = imageNaturalSizeCache.get(url);
         return size != null && size[0] > 0 && size[1] > 0
@@ -2687,12 +2536,10 @@ public class FloorMapCanvasViewImpl
                 : null;
     }
 
-    /**
-     * Starts an asynchronous image load to determine the aspect ratio of the given URL.
-     * No-ops if a load for this URL is already in flight.
-     *
-     * @param url the image URL to load
-     */
+    /// Starts an asynchronous image load to determine the aspect ratio of the given URL.
+    /// No-ops if a load for this URL is already in flight.
+    ///
+    /// @param url the image URL to load
     private void loadImageAspectRatio(final String url) {
         if (loadingImages.contains(url)) {
             return;
@@ -2701,12 +2548,10 @@ public class FloorMapCanvasViewImpl
         startImageLoad(url);
     }
 
-    /**
-     * JSNI method that creates a browser {@code Image} element and starts loading the
-     * given URL, reporting the natural size to {@link #onImageSizeResolved}. A failed
-     * load, or one the browser will not size, reports {@code 0 x 0}, which callers
-     * treat as "unknown".
-     */
+    /// JSNI method that creates a browser `Image` element and starts loading the
+    /// given URL, reporting the natural size to [#onImageSizeResolved]. A failed
+    /// load, or one the browser will not size, reports `0 x 0`, which callers
+    /// treat as "unknown".
     private native void startImageLoad(final String url) /*-{
         var self = this;
         var img = new Image();
@@ -2723,7 +2568,7 @@ public class FloorMapCanvasViewImpl
         img.src = url;
     }-*/;
 
-    /** GWT UiBinder interface for {@link FloorMapCanvasViewImpl}. */
+    /// GWT UiBinder interface for [FloorMapCanvasViewImpl].
     public interface Binder extends UiBinder<Widget, FloorMapCanvasViewImpl> {
 
     }

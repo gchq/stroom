@@ -24,56 +24,50 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * Places event entities on the map by resolving the fact their events reference.
- *
- * <p>An event says "this entity was at that location", and the events query carries two separate
- * columns for it:</p>
- *
- * <ul>
- *   <li><b>Location</b> — {@code "<x>, <y>"}, the position already baked into the event at ingest
- *       (typically by an XSLT {@code lookup} against a location store). Used as-is.</li>
- *   <li><b>Location Ref</b> — the <em>key of the fact</em> the event happened at (a desk, a gate,
- *       a camera). The entity is drawn wherever that fact currently is.</li>
- * </ul>
- *
- * <p>The distinction matters because baked coordinates are frozen at ingest time: move the desk on
- * the Editor tab and every event that ever happened at it still reports the desk's old position, so
- * entities keep visiting a place nothing occupies any more. A reference is resolved against the
- * facts loaded for the current timeline instant, so moving the fact moves the entities with it —
- * retroactively, which matches how the editor persists a move (the fact's existing shard is
- * rewritten in place rather than time-versioned).</p>
- *
- * <p><b>This class no longer decides which form a value is.</b> One column used to carry both, told
- * apart by shape — two numbers meant a position, anything else a key. That is now two columns and
- * two {@link FloorMapEventRole}s, so a fact key that happens to look like two numbers, or to
- * contain a comma, is expressible; there is no part-count rule to learn; and a malformed coordinate
- * is reported as a malformed coordinate rather than as a reference to a desk that does not
- * exist.</p>
- *
- * <p>Kept out of the presenters, and free of GWT types, so the parse and the placement rules are
- * unit-testable on the JVM.</p>
- */
+/// Places event entities on the map by resolving the fact their events reference.
+///
+/// An event says "this entity was at that location", and the events query carries two separate
+/// columns for it:
+///
+/// - **Location** — `"<x>, <y>"`, the position already baked into the event at ingest
+///   (typically by an XSLT `lookup` against a location store). Used as-is.
+/// - **Location Ref** — the *key of the fact* the event happened at (a desk, a gate,
+///   a camera). The entity is drawn wherever that fact currently is.
+///
+/// The distinction matters because baked coordinates are frozen at ingest time: move the desk on
+/// the Editor tab and every event that ever happened at it still reports the desk's old position, so
+/// entities keep visiting a place nothing occupies any more. A reference is resolved against the
+/// facts loaded for the current timeline instant, so moving the fact moves the entities with it —
+/// retroactively, which matches how the editor persists a move (the fact's existing shard is
+/// rewritten in place rather than time-versioned).
+///
+/// **This class no longer decides which form a value is.** One column used to carry both, told
+/// apart by shape — two numbers meant a position, anything else a key. That is now two columns and
+/// two [FloorMapEventRole]s, so a fact key that happens to look like two numbers, or to
+/// contain a comma, is expressible; there is no part-count rule to learn; and a malformed coordinate
+/// is reported as a malformed coordinate rather than as a reference to a desk that does not
+/// exist.
+///
+/// Kept out of the presenters, and free of GWT types, so the parse and the placement rules are
+/// unit-testable on the JVM.
 public final class FloorMapLocationResolver {
 
     private FloorMapLocationResolver() {
         // Utility class.
     }
 
-    /**
-     * Parses the Location column as literal coordinates.
-     *
-     * <p>The form is {@code "<x>, <y>"} — two comma-separated numbers. A string rather than two
-     * numeric columns for consistency with the other composite values the feature stores that way,
-     * the placement matrix among them.</p>
-     *
-     * <p>Anything else is <b>malformed</b>, not a reference: the column's role says it holds
-     * coordinates, so there is no second reading to fall back to. Returning {@code null} lets the
-     * caller say so.</p>
-     *
-     * @param location the raw Location column value; may be {@code null}
-     * @return {@code {x, y}}, or {@code null} when the value is not two numbers
-     */
+    /// Parses the Location column as literal coordinates.
+    ///
+    /// The form is `"<x>, <y>"` — two comma-separated numbers. A string rather than two
+    /// numeric columns for consistency with the other composite values the feature stores that way,
+    /// the placement matrix among them.
+    ///
+    /// Anything else is **malformed**, not a reference: the column's role says it holds
+    /// coordinates, so there is no second reading to fall back to. Returning `null` lets the
+    /// caller say so.
+    ///
+    /// @param location the raw Location column value; may be `null`
+    /// @return `{x, y}`, or `null` when the value is not two numbers
     public static double[] parseCoordinates(final String location) {
         if (location == null) {
             return null;
@@ -91,12 +85,10 @@ public final class FloorMapLocationResolver {
         }
     }
 
-    /**
-     * Normalises a Location Ref column value to the fact key it names.
-     *
-     * @param locationRef the raw Location Ref column value; may be {@code null}
-     * @return the trimmed key, or {@code null} when blank
-     */
+    /// Normalises a Location Ref column value to the fact key it names.
+    ///
+    /// @param locationRef the raw Location Ref column value; may be `null`
+    /// @return the trimmed key, or `null` when blank
     public static String parseReference(final String locationRef) {
         if (locationRef == null) {
             return null;
@@ -105,23 +97,21 @@ public final class FloorMapLocationResolver {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    /**
-     * Places every entity that references a fact at that fact's current
-     * position, passing through the ones that carry their own coordinates.
-     *
-     * <p>An entity whose reference matches no current fact is <em>omitted</em>:
-     * it has no position, and the alternative — drawing it at its parsed
-     * {@code (0, 0)} — would pile every unresolved entity onto the map origin
-     * as if they were really there. The caller re-runs this whenever the facts
-     * refresh, so an entity dropped because the facts had not loaded yet
-     * reappears as soon as they do.</p>
-     *
-     * @param entities the entities parsed from the events query; may be
-     *                 {@code null}
-     * @param facts    the facts loaded for the current timeline instant; may be
-     *                 {@code null} (then only coordinate-bearing entities survive)
-     * @return the placed entities; never {@code null}
-     */
+    /// Places every entity that references a fact at that fact's current
+    /// position, passing through the ones that carry their own coordinates.
+    ///
+    /// An entity whose reference matches no current fact is *omitted*:
+    /// it has no position, and the alternative — drawing it at its parsed
+    /// `(0, 0)` — would pile every unresolved entity onto the map origin
+    /// as if they were really there. The caller re-runs this whenever the facts
+    /// refresh, so an entity dropped because the facts had not loaded yet
+    /// reappears as soon as they do.
+    ///
+    /// @param entities the entities parsed from the events query; may be
+    ///         `null`
+    /// @param facts    the facts loaded for the current timeline instant; may be
+    ///         `null` (then only coordinate-bearing entities survive)
+    /// @return the placed entities; never `null`
     public static List<FloorMapObject> resolve(final List<FloorMapObject> entities,
                                                final List<Fact> facts) {
         final List<FloorMapObject> placed = new ArrayList<>();
@@ -150,17 +140,15 @@ public final class FloorMapLocationResolver {
         return placed;
     }
 
-    /**
-     * Compares two placement results by what actually reaches the canvas — the
-     * entities present and where they are. Lets a caller skip re-pushing an
-     * overlay a facts refresh did not move, which is the common case (the facts
-     * query re-runs on every playback tick).
-     *
-     * @param a one list; may be {@code null}
-     * @param b the other; may be {@code null}
-     * @return {@code true} if both hold the same ids, in the same order, at the
-     *         same positions
-     */
+    /// Compares two placement results by what actually reaches the canvas — the
+    /// entities present and where they are. Lets a caller skip re-pushing an
+    /// overlay a facts refresh did not move, which is the common case (the facts
+    /// query re-runs on every playback tick).
+    ///
+    /// @param a one list; may be `null`
+    /// @param b the other; may be `null`
+    /// @return `true` if both hold the same ids, in the same order, at the
+    ///         same positions
     public static boolean samePositions(final List<FloorMapObject> a,
                                         final List<FloorMapObject> b) {
         if (a == null || b == null) {
@@ -187,11 +175,9 @@ public final class FloorMapLocationResolver {
         return true;
     }
 
-    /**
-     * Indexes the facts by key at their map-space test point — the same point
-     * area containment locates a fact at, so an entity anchored to a fact is
-     * inside exactly the areas that fact is.
-     */
+    /// Indexes the facts by key at their map-space test point — the same point
+    /// area containment locates a fact at, so an entity anchored to a fact is
+    /// inside exactly the areas that fact is.
     private static Map<String, double[]> anchorsByKey(final List<Fact> facts) {
         final Map<String, double[]> anchors = new HashMap<>();
         if (facts != null) {

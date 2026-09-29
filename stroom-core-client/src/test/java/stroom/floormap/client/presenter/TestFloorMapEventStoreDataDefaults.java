@@ -25,18 +25,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * The Data tab's default query, and its agreement with the events query it borrows columns from.
- *
- * <p>These live off the presenter because {@code AbstractQueryDataPresenter} calls
- * {@code GWT.create()} in a static initialiser: referring to any static member of a subclass, even
- * a string constant, initialises that superclass and throws {@code ExceptionInInitializerError}
- * outside a browser. Holding them apart is what makes them reachable at all.</p>
- *
- * <p>What is worth pinning is agreement with the events query. A default that drifts from it is the
- * defect {@link FloorMapEventsQuery} exists to prevent, and it surfaces as columns that read as
- * empty rather than as anything that looks like a fault.</p>
- */
+/// The Data tab's default query, and its agreement with the events query it borrows columns from.
+///
+/// These live off the presenter because `AbstractQueryDataPresenter` calls
+/// `GWT.create()` in a static initialiser: referring to any static member of a subclass, even
+/// a string constant, initialises that superclass and throws `ExceptionInInitializerError`
+/// outside a browser. Holding them apart is what makes them reachable at all.
+///
+/// What is worth pinning is agreement with the events query. A default that drifts from it is the
+/// defect [FloorMapEventsQuery] exists to prevent, and it surfaces as columns that read as
+/// empty rather than as anything that looks like a fault.
 class TestFloorMapEventStoreDataDefaults {
 
     private static final String QUERY = FloorMapEventStoreDataDefaults.query("floor_map_events");
@@ -71,26 +69,22 @@ class TestFloorMapEventStoreDataDefaults {
                 .isLessThan(QUERY.indexOf(FloorMapEventsQuery.LOCATION_COLUMN));
     }
 
-    /**
-     * The key column keeps Plan B's name rather than the events query's {@code Entity ID} alias.
-     *
-     * <p>This tab reads the store, and the store's column is {@code Key}. Aliasing it here would
-     * describe the floor map's use of the data rather than the data.</p>
-     */
+    /// The key column keeps Plan B's name rather than the events query's `Entity ID` alias.
+    ///
+    /// This tab reads the store, and the store's column is `Key`. Aliasing it here would
+    /// describe the floor map's use of the data rather than the data.
     @Test
     void keyKeepsItsPlanBName() {
         assertThat(QUERY).contains(", Key,");
         assertThat(QUERY).doesNotContain("Entity ID");
     }
 
-    /**
-     * The whole query sits on one line, because the editor cannot hold more than one.
-     *
-     * <p>{@code QueryDataViewImpl} binds a {@code g:TextBox}, a single-line {@code <input>}, so
-     * {@code setText} silently drops newlines and fuses whatever sat either side of them. A
-     * multi-line default reached the parser as {@code limit 100select} and failed with a syntax
-     * error naming a column the user could not see a problem at.</p>
-     */
+    /// The whole query sits on one line, because the editor cannot hold more than one.
+    ///
+    /// `QueryDataViewImpl` binds a `g:TextBox`, a single-line `<input>`, so
+    /// `setText` silently drops newlines and fuses whatever sat either side of them. A
+    /// multi-line default reached the parser as `limit 100select` and failed with a syntax
+    /// error naming a column the user could not see a problem at.
     @Test
     void fitsOnOneLineBecauseTheEditorHoldsOnlyOne() {
         assertThat(QUERY).doesNotContain("\n").doesNotContain("\r");
@@ -110,13 +104,11 @@ class TestFloorMapEventStoreDataDefaults {
     // Agreement with the events query, which is the thing that can drift.
     // ------------------------------------------------------------------
 
-    /**
-     * Every event property this tab shows is aliased exactly as the events query aliases it.
-     *
-     * <p>Both are built from {@link FloorMapEventsQuery}'s constants, so renaming one moves both.
-     * This asserts the outcome rather than the mechanism, so replacing a constant with literal text
-     * fails here rather than silently later.</p>
-     */
+    /// Every event property this tab shows is aliased exactly as the events query aliases it.
+    ///
+    /// Both are built from [FloorMapEventsQuery]'s constants, so renaming one moves both.
+    /// This asserts the outcome rather than the mechanism, so replacing a constant with literal text
+    /// fails here rather than silently later.
     @Test
     void eventColumnAliasesMatchTheEventsQuery() {
         final String eventsQuery = FloorMapEventsQuery.defaultQuery();
@@ -161,14 +153,12 @@ class TestFloorMapEventStoreDataDefaults {
         }
     }
 
-    /**
-     * The value column carries no {@code substring}.
-     *
-     * <p>It had one in the Plan B tab until 2026-09-18 and it never took effect - preferences are
-     * matched to query columns by id and carry presentation only, never an expression. Truncating
-     * would be wrong here regardless: it shortens the data, so hovering a cell would show the
-     * truncation rather than the value.</p>
-     */
+    /// The value column carries no `substring`.
+    ///
+    /// It had one in the Plan B tab until 2026-09-18 and it never took effect - preferences are
+    /// matched to query columns by id and carry presentation only, never an expression. Truncating
+    /// would be wrong here regardless: it shortens the data, so hovering a cell would show the
+    /// truncation rather than the value.
     @Test
     void valueIsNotTruncated() {
         assertThat(QUERY).doesNotContain("substring");

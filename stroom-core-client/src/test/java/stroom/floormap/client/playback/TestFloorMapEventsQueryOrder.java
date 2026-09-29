@@ -22,14 +22,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * The point of these is the false positives, not the true ones.
- *
- * <p>Detecting {@code sort} where it really is a clause is easy. What earns the tokeniser its place
- * is <em>not</em> detecting it inside a quoted alias, a comment, a {@code jq} program, or after an
- * {@code =} — each of which a substring search would get wrong, and each of which would push the
- * Map tab onto the weaker time-comparison reduction for no reason.</p>
- */
+/// The point of these is the false positives, not the true ones.
+///
+/// Detecting `sort` where it really is a clause is easy. What earns the tokeniser its place
+/// is *not* detecting it inside a quoted alias, a comment, a `jq` program, or after an
+/// `=` — each of which a substring search would get wrong, and each of which would push the
+/// Map tab onto the weaker time-comparison reduction for no reason.
 class TestFloorMapEventsQueryOrder {
 
     // -----------------------------------------------------------------------
@@ -67,24 +65,22 @@ class TestFloorMapEventsQueryOrder {
     // It is not a clause — the cases that matter
     // -----------------------------------------------------------------------
 
-    /** The default query, which must stay on the exact last-row-wins reduction. */
+    /// The default query, which must stay on the exact last-row-wins reduction.
     @Test
     void testTheGeneratedDefaultQueryHasNoSort() {
         assertThat(FloorMapEventsQueryOrder.hasSortClause(FloorMapEventsQuery.defaultQuery()))
                 .isFalse();
     }
 
-    /**
-     * The {@code [^=]} rule from the server-side tokeniser: after an {@code =} it is a field
-     * reference, not a clause.
-     */
+    /// The `[^=]` rule from the server-side tokeniser: after an `=` it is a field
+    /// reference, not a clause.
     @Test
     void testSortAfterAnEqualsIsAFieldReferenceNotAClause() {
         assertThat(FloorMapEventsQueryOrder.hasSortClause("from x eval y = sort select y"))
                 .isFalse();
     }
 
-    /** A quoted column alias is a string, and this is why the tokeniser is used at all. */
+    /// A quoted column alias is a string, and this is why the tokeniser is used at all.
     @Test
     void testSortInsideAQuotedAliasIsNotAClause() {
         assertThat(FloorMapEventsQueryOrder.hasSortClause(
@@ -99,7 +95,7 @@ class TestFloorMapEventsQueryOrder {
                 .isFalse();
     }
 
-    /** The shape a floor map's events query actually takes: a jq program in a quoted string. */
+    /// The shape a floor map's events query actually takes: a jq program in a quoted string.
     @Test
     void testSortInsideAJqProgramIsNotAClause() {
         assertThat(FloorMapEventsQueryOrder.hasSortClause(
@@ -123,7 +119,7 @@ class TestFloorMapEventsQueryOrder {
                 .isFalse();
     }
 
-    /** A longer word merely containing the letters. */
+    /// A longer word merely containing the letters.
     @Test
     void testSortAsPartOfALongerWordIsNotAClause() {
         assertThat(FloorMapEventsQueryOrder.hasSortClause(
@@ -142,23 +138,21 @@ class TestFloorMapEventsQueryOrder {
         assertThat(FloorMapEventsQueryOrder.hasSortClause("   \n  ")).isFalse();
     }
 
-    /**
-     * An unterminated quote leaves its contents exposed to the scan, so a standalone {@code sort}
-     * inside one is detected.
-     *
-     * <p>Verified rather than assumed: {@link BasicTokeniser} does <em>not</em> tag an unterminated
-     * single quote as a string — it leaves the span {@code UNKNOWN} — though it does still tag an
-     * unterminated block comment. Detecting here is the safe direction anyway: such a query fails
-     * server-side, so the only question is which reduction the client uses meanwhile, and the safer
-     * answer is the one that does not depend on an arrival order nobody can reason about.</p>
-     */
+    /// An unterminated quote leaves its contents exposed to the scan, so a standalone `sort`
+    /// inside one is detected.
+    ///
+    /// Verified rather than assumed: [BasicTokeniser] does *not* tag an unterminated
+    /// single quote as a string — it leaves the span `UNKNOWN` — though it does still tag an
+    /// unterminated block comment. Detecting here is the safe direction anyway: such a query fails
+    /// server-side, so the only question is which reduction the client uses meanwhile, and the safer
+    /// answer is the one that does not depend on an arrival order nobody can reason about.
     @Test
     void testAStandaloneSortInsideAnUnterminatedQuoteIsDetected() {
         assertThat(FloorMapEventsQueryOrder.hasSortClause("from x where Key = 'a sort by Key"))
                 .isTrue();
     }
 
-    /** An unterminated block comment is still masked, so its contents are not scanned. */
+    /// An unterminated block comment is still masked, so its contents are not scanned.
     @Test
     void testSortInsideAnUnterminatedBlockCommentIsNotAClause() {
         assertThat(FloorMapEventsQueryOrder.hasSortClause("from x /* sort by Key")).isFalse();
@@ -168,10 +162,8 @@ class TestFloorMapEventsQueryOrder {
     // The entity id is the store Key
     // -----------------------------------------------------------------------
 
-    /**
-     * The generated default binds it, which is the case that has to work: everything else about the
-     * ordering guarantee is moot if the out-of-the-box query does not qualify for it.
-     */
+    /// The generated default binds it, which is the case that has to work: everything else about the
+    /// ordering guarantee is moot if the out-of-the-box query does not qualify for it.
     @Test
     void testTheGeneratedDefaultQueryBindsTheEntityIdToTheKey() {
         assertThat(FloorMapEventsQueryOrder.bindsEntityIdToStoreKey(
@@ -186,7 +178,7 @@ class TestFloorMapEventsQueryOrder {
                 .isTrue();
     }
 
-    /** Single quotes are as good as double for an alias. */
+    /// Single quotes are as good as double for an alias.
     @Test
     void testASingleQuotedAliasIsRecognised() {
         assertThat(FloorMapEventsQueryOrder.bindsEntityIdToStoreKey(
@@ -194,14 +186,12 @@ class TestFloorMapEventsQueryOrder {
                 .isTrue();
     }
 
-    /**
-     * The case the check exists for.
-     *
-     * <p>An entity id taken from the value scatters one entity's history across many key prefixes,
-     * so the last row to arrive is the last <em>prefix's</em> latest rather than the entity's. Note
-     * the {@code '.key'} inside the {@code jq} program: a textual search would match on it, which
-     * is why this scans tokens.</p>
-     */
+    /// The case the check exists for.
+    ///
+    /// An entity id taken from the value scatters one entity's history across many key prefixes,
+    /// so the last row to arrive is the last *prefix's* latest rather than the entity's. Note
+    /// the `'.key'` inside the `jq` program: a textual search would match on it, which
+    /// is why this scans tokens.
     @Test
     void testAnEntityIdDerivedFromTheValueIsNotABinding() {
         assertThat(FloorMapEventsQueryOrder.bindsEntityIdToStoreKey(
@@ -209,7 +199,7 @@ class TestFloorMapEventsQueryOrder {
                 .isFalse();
     }
 
-    /** A longer field name merely ending in the letters. */
+    /// A longer field name merely ending in the letters.
     @Test
     void testAFieldNameEndingInKeyIsNotABinding() {
         assertThat(FloorMapEventsQueryOrder.bindsEntityIdToStoreKey(
@@ -217,7 +207,7 @@ class TestFloorMapEventsQueryOrder {
                 .isFalse();
     }
 
-    /** {@code Key} is bound, but to a different column than the document reads. */
+    /// `Key` is bound, but to a different column than the document reads.
     @Test
     void testABindingToAnotherColumnDoesNotCount() {
         assertThat(FloorMapEventsQueryOrder.bindsEntityIdToStoreKey(
@@ -225,12 +215,10 @@ class TestFloorMapEventsQueryOrder {
                 .isFalse();
     }
 
-    /**
-     * {@code Key} is selected but not aliased to the configured column, which is another query.
-     *
-     * <p>Phrased so the scan actually runs over more than one token — {@code from x select Key,
-     * Value} is a single token, so it would pass without exercising anything.</p>
-     */
+    /// `Key` is selected but not aliased to the configured column, which is another query.
+    ///
+    /// Phrased so the scan actually runs over more than one token — `from x select Key,
+    /// Value` is a single token, so it would pass without exercising anything.
     @Test
     void testAnUnaliasedKeyIsNotABinding() {
         assertThat(FloorMapEventsQueryOrder.bindsEntityIdToStoreKey(

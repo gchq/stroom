@@ -48,7 +48,7 @@ class TestFloorMapZOrder {
         assertThat(FloorMapZOrder.indexOf("desk", ORDER)).isEqualTo(Integer.MAX_VALUE);
     }
 
-    /** Facts paint back-to-front by configured type order. */
+    /// Facts paint back-to-front by configured type order.
     @Test
     void testSort_byConfiguredOrder() {
         final List<Fact> sorted = FloorMapZOrder.sort(List.of(
@@ -58,7 +58,7 @@ class TestFloorMapZOrder {
         assertThat(keys(sorted)).containsExactly("bg", "g1", "p1");
     }
 
-    /** Same-type facts keep their input order (stable). */
+    /// Same-type facts keep their input order (stable).
     @Test
     void testSort_stableWithinType() {
         final List<Fact> sorted = FloorMapZOrder.sort(List.of(
@@ -68,7 +68,7 @@ class TestFloorMapZOrder {
         assertThat(keys(sorted)).containsExactly("bg", "g1", "g2");
     }
 
-    /** Unconfigured types sort last (paint on top), preserving their order. */
+    /// Unconfigured types sort last (paint on top), preserving their order.
     @Test
     void testSort_unconfiguredOnTop() {
         final List<Fact> sorted = FloorMapZOrder.sort(List.of(
@@ -79,7 +79,7 @@ class TestFloorMapZOrder {
         assertThat(keys(sorted)).containsExactly("g1", "new1", "new2");
     }
 
-    /** A null/empty order leaves the facts in their original order. */
+    /// A null/empty order leaves the facts in their original order.
     @Test
     void testSort_nullOrder_preservesInput() {
         final List<Fact> input = List.of(fact("a", "x"), fact("b", "y"), fact("c", "z"));

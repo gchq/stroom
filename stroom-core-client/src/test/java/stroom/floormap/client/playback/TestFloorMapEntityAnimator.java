@@ -44,7 +44,7 @@ class TestFloorMapEntityAnimator {
 
     // -----------------------------------------------------------------------
 
-    /** Not playing: entities teleport, positions are recorded, and it's inactive. */
+    /// Not playing: entities teleport, positions are recorded, and it's inactive.
     @Test
     void testTeleportRecordsPositions() {
         final boolean teleported = animator.onEventObjects(List.of(obj("a", 1, 2), obj("b", 3, 4)));
@@ -54,11 +54,9 @@ class TestFloorMapEntityAnimator {
         assertThat(animator.positionOf("b")).containsExactly(3.0, 4.0);
     }
 
-    /**
-     * The type is answerable for any entity the animator knows — including one
-     * mid-animation, which is when the hover panel most needs it — and null for
-     * one it has never seen.
-     */
+    /// The type is answerable for any entity the animator knows — including one
+    /// mid-animation, which is when the hover panel most needs it — and null for
+    /// one it has never seen.
     @Test
     void testTypeOfMatchesPositionOf() {
         assertThat(animator.typeOf("a")).isNull();
@@ -77,7 +75,7 @@ class TestFloorMapEntityAnimator {
         assertThat(animator.typeOf("a")).isEqualTo("vehicle");
     }
 
-    /** A teleport prunes state for entities that are no longer present. */
+    /// A teleport prunes state for entities that are no longer present.
     @Test
     void testTeleportPrunesVanishedEntities() {
         animator.onEventObjects(List.of(obj("a", 1, 1), obj("b", 2, 2)));
@@ -86,7 +84,7 @@ class TestFloorMapEntityAnimator {
         assertThat(animator.positionOf("b")).isNull();
     }
 
-    /** Playing: a moved entity animates and, on frame completion, lands at the target. */
+    /// Playing: a moved entity animates and, on frame completion, lands at the target.
     @Test
     void testPlayingAnimatesToTarget() {
         animator.setPlaying(true);
@@ -110,10 +108,8 @@ class TestFloorMapEntityAnimator {
         assertThat(animator.isActive()).isFalse();
     }
 
-    /**
-     * While animating A→B, an update back to A must NOT be dropped as unchanged
-     * (regression for the return-to-previous-target bug).
-     */
+    /// While animating A→B, an update back to A must NOT be dropped as unchanged
+    /// (regression for the return-to-previous-target bug).
     @Test
     void testReturnToPreviousTargetWhileAnimating() {
         animator.setPlaying(true);
@@ -127,7 +123,7 @@ class TestFloorMapEntityAnimator {
         assertThat(animator.positionOf("a")).containsExactly(0.0, 0.0);
     }
 
-    /** buildDrawList includes stationary (last-known) entities. */
+    /// buildDrawList includes stationary (last-known) entities.
     @Test
     void testBuildDrawListIncludesStationary() {
         animator.onEventObjects(List.of(obj("a", 2, 3)));
@@ -136,7 +132,7 @@ class TestFloorMapEntityAnimator {
         assertThat(a.getY()).isCloseTo(3.0, within(TOL));
     }
 
-    /** clear() arms a teleport: the next update is instant even while playing. */
+    /// clear() arms a teleport: the next update is instant even while playing.
     @Test
     void testClearArmsTeleport() {
         animator.setPlaying(true);
@@ -155,11 +151,9 @@ class TestFloorMapEntityAnimator {
     // Trail recording and decimation
     // -----------------------------------------------------------------------
 
-    /**
-     * Drives one entity along a straight line for {@code frames} frames, returning the trail the
-     * renderer would be handed. Each frame advances the animation a little, so a trail point is
-     * recorded per frame.
-     */
+    /// Drives one entity along a straight line for `frames` frames, returning the trail the
+    /// renderer would be handed. Each frame advances the animation a little, so a trail point is
+    /// recorded per frame.
     private List<double[]> trailAfterFrames(final int frames) {
         animator.setPlaying(true);
         animator.onEventObjects(List.of(obj("a", 0, 0)));
@@ -171,26 +165,24 @@ class TestFloorMapEntityAnimator {
         return drawn(animator.buildDrawList(0)).getTrail();
     }
 
-    /** A short trail is passed through point-for-point. */
+    /// A short trail is passed through point-for-point.
     @Test
     void testShortTrailIsPassedThroughWhole() {
         final List<double[]> trail = trailAfterFrames(50);
 
         assertThat(trail).hasSize(50);
         // Alpha runs 0 (oldest) to 1 (newest).
-        assertThat(trail.get(0)[2]).isCloseTo(0.0, within(TOL));
-        assertThat(trail.get(trail.size() - 1)[2]).isCloseTo(1.0, within(TOL));
+        assertThat(trail.getFirst()[2]).isCloseTo(0.0, within(TOL));
+        assertThat(trail.getLast()[2]).isCloseTo(1.0, within(TOL));
     }
 
-    /**
-     * Every recorded point reaches the renderer, however long the trail.
-     *
-     * <p>Regression test for a decimation pass that sampled every Nth point once a trail passed a
-     * fixed budget. Uniform striding drops whichever points fall between samples, and turning
-     * points are exactly the ones carrying the shape - so the drawn polyline cut across corners
-     * rather than following the route the entity took. Sampling by position cannot preserve shape;
-     * only a shape-aware reduction could.</p>
-     */
+    /// Every recorded point reaches the renderer, however long the trail.
+    ///
+    /// Regression test for a decimation pass that sampled every Nth point once a trail passed a
+    /// fixed budget. Uniform striding drops whichever points fall between samples, and turning
+    /// points are exactly the ones carrying the shape - so the drawn polyline cut across corners
+    /// rather than following the route the entity took. Sampling by position cannot preserve shape;
+    /// only a shape-aware reduction could.
     @Test
     void testLongTrailKeepsEveryPoint() {
         // A point is recorded per frame while the animation is in flight, so stop short of
@@ -205,14 +197,12 @@ class TestFloorMapEntityAnimator {
         for (int i = 1; i < trail.size(); i++) {
             assertThat(trail.get(i)[0]).isGreaterThan(trail.get(i - 1)[0]);
         }
-        assertThat(trail.get(0)[2]).isCloseTo(0.0, within(TOL));
-        assertThat(trail.get(trail.size() - 1)[2]).isCloseTo(1.0, within(TOL));
+        assertThat(trail.getFirst()[2]).isCloseTo(0.0, within(TOL));
+        assertThat(trail.getLast()[2]).isCloseTo(1.0, within(TOL));
     }
 
-    /**
-     * A direction change must survive into the rendered trail. Drives the entity right, then up,
-     * and asserts the turning point itself is present rather than being cut across.
-     */
+    /// A direction change must survive into the rendered trail. Drives the entity right, then up,
+    /// and asserts the turning point itself is present rather than being cut across.
     @Test
     void testTurningPointSurvivesIntoTheRenderedTrail() {
         animator.setPlaying(true);
@@ -234,10 +224,8 @@ class TestFloorMapEntityAnimator {
                 .anyMatch(p -> Math.abs(p[0] - corner[0]) < 1e-6 && Math.abs(p[1] - corner[1]) < 1e-6);
     }
 
-    /**
-     * The ring buffer must wrap correctly: past its capacity the oldest points are overwritten
-     * and the trail still reads oldest-first, with x strictly increasing along a straight run.
-     */
+    /// The ring buffer must wrap correctly: past its capacity the oldest points are overwritten
+    /// and the trail still reads oldest-first, with x strictly increasing along a straight run.
     @Test
     void testTrailStaysOrderedOldestFirstAfterWrapping() {
         final List<double[]> trail = trailAfterFrames(300);
@@ -252,16 +240,14 @@ class TestFloorMapEntityAnimator {
         }
     }
 
-    /**
-     * A redraw that has no scheduler timestamp of its own must still see the fade.
-     *
-     * <p>Regression test: {@code buildDrawList} is called both from the animation loop, which has
-     * a timestamp, and from an ordinary redraw - pan, zoom, query refresh - which passes zero. The
-     * fade begins when an animation <em>finishes</em>, so a trail is routinely mid-fade with
-     * nothing animating. Treating zero as "no fade" drew that trail at full opacity for the frame,
-     * and the next loop tick restored the faded value, which reads as the trail flickering
-     * bright.</p>
-     */
+    /// A redraw that has no scheduler timestamp of its own must still see the fade.
+    ///
+    /// Regression test: `buildDrawList` is called both from the animation loop, which has
+    /// a timestamp, and from an ordinary redraw - pan, zoom, query refresh - which passes zero. The
+    /// fade begins when an animation *finishes*, so a trail is routinely mid-fade with
+    /// nothing animating. Treating zero as "no fade" drew that trail at full opacity for the frame,
+    /// and the next loop tick restored the faded value, which reads as the trail flickering
+    /// bright.
     @Test
     void testFadeIsAppliedWhenTheCallerHasNoTimestamp() {
         animator.setPlaying(true);
@@ -283,24 +269,22 @@ class TestFloorMapEntityAnimator {
                 .isCloseTo(alphaFromLoop, within(TOL));
     }
 
-    /** Alpha of the newest trail point of the single drawn entity. */
+    /// Alpha of the newest trail point of the single drawn entity.
     private static double newestAlpha(final List<FloorMapObject> drawList) {
         final List<double[]> trail = drawn(drawList).getTrail();
-        return trail.get(trail.size() - 1)[2];
+        return trail.getLast()[2];
     }
 
     // -----------------------------------------------------------------------
     // Trail ageing
     // -----------------------------------------------------------------------
 
-    /**
-     * Trail sections older than the window are dropped, however long the entity keeps moving.
-     *
-     * <p>Regression test: the only things that discarded trail data were a teleport and a fade
-     * that ran to completion, and the fade is cancelled the moment the entity moves again - so an
-     * entity that moved intermittently never lost any. The point cap did not help, bounding
-     * recorded frames rather than elapsed time, so sections minutes old were still drawn.</p>
-     */
+    /// Trail sections older than the window are dropped, however long the entity keeps moving.
+    ///
+    /// Regression test: the only things that discarded trail data were a teleport and a fade
+    /// that ran to completion, and the fade is cancelled the moment the entity moves again - so an
+    /// entity that moved intermittently never lost any. The point cap did not help, bounding
+    /// recorded frames rather than elapsed time, so sections minutes old were still drawn.
     @Test
     void testTrailSectionsOlderThanTheWindowAreDropped() {
         animator.setPlaying(true);
@@ -323,7 +307,7 @@ class TestFloorMapEntityAnimator {
                 .isBetween(180, 220);
     }
 
-    /** A trail that fits inside the window is untouched by ageing. */
+    /// A trail that fits inside the window is untouched by ageing.
     @Test
     void testTrailWithinTheWindowIsNotTrimmed() {
         animator.setPlaying(true);
@@ -340,10 +324,8 @@ class TestFloorMapEntityAnimator {
         assertThat(trail).hasSize(50);
     }
 
-    /**
-     * Ageing must keep the trail contiguous and ordered - it drops from the old end only, never
-     * leaving a gap in the middle.
-     */
+    /// Ageing must keep the trail contiguous and ordered - it drops from the old end only, never
+    /// leaving a gap in the middle.
     @Test
     void testAgeingKeepsTheTrailContiguousAndOrdered() {
         animator.setPlaying(true);
@@ -362,7 +344,7 @@ class TestFloorMapEntityAnimator {
                     .isGreaterThan(trail.get(i - 1)[0]);
         }
         // Alpha still spans the full range across whatever survived.
-        assertThat(trail.get(0)[2]).isCloseTo(0.0, within(TOL));
-        assertThat(trail.get(trail.size() - 1)[2]).isCloseTo(1.0, within(TOL));
+        assertThat(trail.getFirst()[2]).isCloseTo(0.0, within(TOL));
+        assertThat(trail.getLast()[2]).isCloseTo(1.0, within(TOL));
     }
 }

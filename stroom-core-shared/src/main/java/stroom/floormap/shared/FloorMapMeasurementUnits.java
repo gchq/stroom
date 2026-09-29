@@ -24,57 +24,51 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-/**
- * What one <em>map unit</em> means in the real world, held on the
- * {@link FloorMapDoc} so that anything displaying a size can label it.
- *
- * <p>Map space is otherwise a pure abstraction: the canvas draws its grid with
- * the identity matrix, so one map unit is one screen pixel at 100 % zoom, and a
- * background image is scaled by dragging until it looks right. Nothing in the
- * document has ever said that the loading bay is 40 m across. This class is that
- * statement — a {@link Unit} to display in, and {@link #getUnitsPerMapUnit()}
- * of that unit per map unit.</p>
- *
- * <p><strong>Every map has a scale.</strong> A {@code null}
- * {@code FloorMapMeasurementUnits} — the stored state of any document that has
- * not been calibrated — resolves to {@link #DEFAULT}, one centimetre per map
- * unit, wherever a distance is displayed. The concept of a "map unit" is
- * internal: it is never shown to a user, who sees only real-world
- * measurements.</p>
- *
- * <p>Values <strong>auto-promote within their family</strong> when formatted, so
- * the default centimetres read {@code 40 cm} but {@code 12.5 m} and
- * {@code 1.2 km}. The canvas spans several decades of zoom; a fixed unit would
- * show {@code 0.05 m} at one end and {@code 12000 m} at the other.</p>
- *
- * <p>Immutable, holds no GWT or DOM types, and does all its own number
- * formatting — {@code String.format} and {@code NumberFormat} are both
- * unavailable to GWT-compiled shared code, and this class must also run under
- * plain JUnit.</p>
- */
+/// What one *map unit* means in the real world, held on the
+/// [FloorMapDoc] so that anything displaying a size can label it.
+///
+/// Map space is otherwise a pure abstraction: the canvas draws its grid with
+/// the identity matrix, so one map unit is one screen pixel at 100 % zoom, and a
+/// background image is scaled by dragging until it looks right. Nothing in the
+/// document has ever said that the loading bay is 40 m across. This class is that
+/// statement — a [Unit] to display in, and [#getUnitsPerMapUnit()]
+/// of that unit per map unit.
+///
+/// **Every map has a scale.** A `null`
+/// `FloorMapMeasurementUnits` — the stored state of any document that has
+/// not been calibrated — resolves to [#DEFAULT], one centimetre per map
+/// unit, wherever a distance is displayed. The concept of a "map unit" is
+/// internal: it is never shown to a user, who sees only real-world
+/// measurements.
+///
+/// Values **auto-promote within their family** when formatted, so
+/// the default centimetres read `40 cm` but `12.5 m` and
+/// `1.2 km`. The canvas spans several decades of zoom; a fixed unit would
+/// show `0.05 m` at one end and `12000 m` at the other.
+///
+/// Immutable, holds no GWT or DOM types, and does all its own number
+/// formatting — `String.format` and `NumberFormat` are both
+/// unavailable to GWT-compiled shared code, and this class must also run under
+/// plain JUnit.
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class FloorMapMeasurementUnits {
 
-    /**
-     * The unit families. Promotion never crosses a family: a map configured in
-     * feet promotes to miles, never to kilometres.
-     */
+    /// The unit families. Promotion never crosses a family: a map configured in
+    /// feet promotes to miles, never to kilometres.
     public enum Family {
         METRIC,
         IMPERIAL
     }
 
-    /**
-     * The units a map can be measured in.
-     *
-     * <p>Each carries {@code metresPerUnit}, the pivot every conversion and
-     * promotion goes through, so no pairwise conversion table is needed.</p>
-     *
-     * <p>Yards are deliberately absent: in/ft/mi is the ladder maps actually
-     * use, and every extra rung is another promotion boundary to reason
-     * about.</p>
-     */
+    /// The units a map can be measured in.
+    ///
+    /// Each carries `metresPerUnit`, the pivot every conversion and
+    /// promotion goes through, so no pairwise conversion table is needed.
+    ///
+    /// Yards are deliberately absent: in/ft/mi is the ladder maps actually
+    /// use, and every extra rung is another promotion boundary to reason
+    /// about.
     public enum Unit {
         MILLIMETRE("mm", "Millimetres", Family.METRIC, 0.001),
         CENTIMETRE("cm", "Centimetres", Family.METRIC, 0.01),
@@ -99,17 +93,17 @@ public class FloorMapMeasurementUnits {
             this.metresPerUnit = metresPerUnit;
         }
 
-        /** The symbol appended to formatted values — {@code "m"}, {@code "ft"}. */
+        /// The symbol appended to formatted values — `"m"`, `"ft"`.
         public String getSymbol() {
             return symbol;
         }
 
-        /** The name shown in the Settings drop-down — {@code "Metres"}. */
+        /// The name shown in the Settings drop-down — `"Metres"`.
         public String getDisplayName() {
             return displayName;
         }
 
-        /** The drop-down label, e.g. {@code "Metres (m)"}. */
+        /// The drop-down label, e.g. `"Metres (m)"`.
         public String getLabel() {
             return displayName + " (" + symbol + ")";
         }
@@ -118,61 +112,55 @@ public class FloorMapMeasurementUnits {
             return family;
         }
 
-        /** How many metres one of this unit spans; the conversion pivot. */
+        /// How many metres one of this unit spans; the conversion pivot.
         public double getMetresPerUnit() {
             return metresPerUnit;
         }
 
-        /** Converts {@code value}, expressed in this unit, to metres. */
+        /// Converts `value`, expressed in this unit, to metres.
         public double toMetres(final double value) {
             return value * metresPerUnit;
         }
 
-        /** Converts {@code metres} to this unit. */
+        /// Converts `metres` to this unit.
         public double fromMetres(final double metres) {
             return metres / metresPerUnit;
         }
     }
 
-    /**
-     * The scale every map has until it is calibrated: one centimetre per map
-     * unit, displayed in metric.
-     *
-     * <p>A default rather than an "unset" state because a map unit is an
-     * internal abstraction — there is no honest way to show one to a user, and
-     * a size with no unit on it is the thing this whole feature exists to
-     * remove. Calibrating with the Set Scale tool replaces it.</p>
-     */
+    /// The scale every map has until it is calibrated: one centimetre per map
+    /// unit, displayed in metric.
+    ///
+    /// A default rather than an "unset" state because a map unit is an
+    /// internal abstraction — there is no honest way to show one to a user, and
+    /// a size with no unit on it is the thing this whole feature exists to
+    /// remove. Calibrating with the Set Scale tool replaces it.
     public static final FloorMapMeasurementUnits DEFAULT =
             new FloorMapMeasurementUnits(Unit.CENTIMETRE, 1.0);
 
-    /** Significant figures every displayed value is rounded to. */
+    /// Significant figures every displayed value is rounded to.
     private static final int SIGNIFICANT_FIGURES = 3;
 
-    /**
-     * Decimal places kept by {@link #formatForInput}. Four places of a metre is
-     * a tenth of a millimetre — finer than any floor plan is drawn to, so a
-     * value round-trips through the field unchanged in practice.
-     */
+    /// Decimal places kept by [#formatForInput]. Four places of a metre is
+    /// a tenth of a millimetre — finer than any floor plan is drawn to, so a
+    /// value round-trips through the field unchanged in practice.
     private static final int INPUT_DECIMALS = 4;
 
-    /**
-     * A policy ceiling, not an overflow bound: above this magnitude the formatters stop
-     * pretending to render exact digits and fall back to
-     * {@link String#valueOf(double)}, so a nonsense scale factor produces obviously
-     * nonsense text. No real map is anywhere near it.
-     *
-     * <p>This used to be documented as the point where "the digit-assembly path would
-     * overflow a {@code long}", and it is not — it was about four orders of magnitude too
-     * high for {@link #INPUT_DECIMALS}. With four decimal places
-     * {@code Math.round(abs * 1e4)} saturates {@code long} from roughly {@code 9.2234e14},
-     * which is <em>below</em> this ceiling, so the window in between assembled its digits
-     * from {@link Long#MAX_VALUE}: {@code formatForInput(9.5e14)} returned
-     * {@code "922337203685477.5807"} — exactly the silently-wrong output the guard was
-     * meant to prevent. The real overflow guard now lives in
-     * {@link #formatToDecimals(double, int)}, derived from the arithmetic it protects, so
-     * this constant can no longer be set to a wrong value and break correctness.</p>
-     */
+    /// A policy ceiling, not an overflow bound: above this magnitude the formatters stop
+    /// pretending to render exact digits and fall back to
+    /// [String#valueOf(double)], so a nonsense scale factor produces obviously
+    /// nonsense text. No real map is anywhere near it.
+    ///
+    /// This used to be documented as the point where "the digit-assembly path would
+    /// overflow a `long`", and it is not — it was about four orders of magnitude too
+    /// high for [#INPUT_DECIMALS]. With four decimal places
+    /// `Math.round(abs * 1e4)` saturates `long` from roughly `9.2234e14`,
+    /// which is *below* this ceiling, so the window in between assembled its digits
+    /// from [Long#MAX_VALUE]: `formatForInput(9.5e14)` returned
+    /// `"922337203685477.5807"` — exactly the silently-wrong output the guard was
+    /// meant to prevent. The real overflow guard now lives in
+    /// [#formatToDecimals(double, int)], derived from the arithmetic it protects, so
+    /// this constant can no longer be set to a wrong value and break correctness.
     private static final double MAX_EXACT_MAGNITUDE = 1.0e15;
 
     @JsonProperty
@@ -187,43 +175,41 @@ public class FloorMapMeasurementUnits {
         this.unitsPerMapUnit = unitsPerMapUnit;
     }
 
-    /** Convenience for the common "1 map unit = 1 unit" case. */
+    /// Convenience for the common "1 map unit = 1 unit" case.
     public static FloorMapMeasurementUnits of(final Unit unit) {
         return new FloorMapMeasurementUnits(unit, 1.0);
     }
 
-    /** The unit distances are configured in, before promotion. */
+    /// The unit distances are configured in, before promotion.
     public Unit getUnit() {
         return unit;
     }
 
-    /** How many {@link #getUnit()} one map unit spans. */
+    /// How many [#getUnit()] one map unit spans.
     public double getUnitsPerMapUnit() {
         return unitsPerMapUnit;
     }
 
-    /**
-     * Whether this is safe to compute with.
-     *
-     * <p>A zero or non-finite {@code unitsPerMapUnit} divides straight into the
-     * grid's decade calculation, where it produces NaN spacing, NaN pattern
-     * coordinates and a canvas that renders <em>nothing</em> — no error, just a
-     * blank map. Every consumer checks this first.</p>
-     *
-     * <p>Cannot be named 'isValid' as this would trigger TestJsonSerialisation.testNoExtraProps()</p>
-     */
+    /// Whether this is safe to compute with.
+    ///
+    /// A zero or non-finite `unitsPerMapUnit` divides straight into the
+    /// grid's decade calculation, where it produces NaN spacing, NaN pattern
+    /// coordinates and a canvas that renders *nothing* — no error, just a
+    /// blank map. Every consumer checks this first.
+    ///
+    /// Cannot be named 'isValid' as this would trigger TestJsonSerialisation.testNoExtraProps()
     public boolean checkUnitIsValid() {
         return unit != null
                && Double.isFinite(unitsPerMapUnit)
                && unitsPerMapUnit > 0;
     }
 
-    /** Returns a copy measured in {@code newUnit}, keeping the scale factor. */
+    /// Returns a copy measured in `newUnit`, keeping the scale factor.
     public FloorMapMeasurementUnits withUnit(final Unit newUnit) {
         return new FloorMapMeasurementUnits(newUnit, unitsPerMapUnit);
     }
 
-    /** Returns a copy with the given scale factor, keeping the unit. */
+    /// Returns a copy with the given scale factor, keeping the unit.
     public FloorMapMeasurementUnits withUnitsPerMapUnit(final double newUnitsPerMapUnit) {
         return new FloorMapMeasurementUnits(unit, newUnitsPerMapUnit);
     }
@@ -232,21 +218,19 @@ public class FloorMapMeasurementUnits {
     // Conversion
     // ------------------------------------------------------------------------
 
-    /** Converts a map-space distance to the configured unit. */
+    /// Converts a map-space distance to the configured unit.
     public double toDisplayUnits(final double mapDistance) {
         return mapDistance * unitsPerMapUnit;
     }
 
-    /** Converts a distance in the configured unit back to map space. */
+    /// Converts a distance in the configured unit back to map space.
     public double toMapUnits(final double displayDistance) {
         return displayDistance / unitsPerMapUnit;
     }
 
-    /**
-     * Converts a distance expressed in {@code enteredIn} to map space, going via
-     * metres so the entered unit need not be the configured one — the
-     * calibration dialog lets the user type "2.4 m" on a map configured in feet.
-     */
+    /// Converts a distance expressed in `enteredIn` to map space, going via
+    /// metres so the entered unit need not be the configured one — the
+    /// calibration dialog lets the user type "2.4 m" on a map configured in feet.
     public double toMapUnits(final double distance, final Unit enteredIn) {
         if (enteredIn == null || unit == null) {
             return toMapUnits(distance);
@@ -254,18 +238,16 @@ public class FloorMapMeasurementUnits {
         return toMapUnits(unit.fromMetres(enteredIn.toMetres(distance)));
     }
 
-    /**
-     * Converts a map-space distance into a specific unit, the inverse of
-     * {@link #toMapUnits(double, Unit)}.
-     *
-     * <p>Used where a value must be shown in one fixed unit rather than the
-     * best-fitting one — an editable field, where a box that silently changed
-     * between mm and km as you typed would be unusable.</p>
-     *
-     * @param mapDistance the distance in map units
-     * @param target      the unit to express it in
-     * @return the distance in {@code target} units
-     */
+    /// Converts a map-space distance into a specific unit, the inverse of
+    /// [#toMapUnits(double, Unit)].
+    ///
+    /// Used where a value must be shown in one fixed unit rather than the
+    /// best-fitting one — an editable field, where a box that silently changed
+    /// between mm and km as you typed would be unusable.
+    ///
+    /// @param mapDistance the distance in map units
+    /// @param target      the unit to express it in
+    /// @return the distance in `target` units
     public double toUnit(final double mapDistance, final Unit target) {
         if (target == null || unit == null) {
             return toDisplayUnits(mapDistance);
@@ -277,77 +259,67 @@ public class FloorMapMeasurementUnits {
     // Formatting
     // ------------------------------------------------------------------------
 
-    /**
-     * The single entry point for every surface that displays a size: hands back
-     * a labelled real-world measurement whether or not the document has been
-     * calibrated.
-     *
-     * <p>Surfaces call this rather than testing for null themselves, so exactly
-     * one place knows what an uncalibrated map measures in.</p>
-     *
-     * @param units       the document's units; {@code null} (uncalibrated) and
-     *                    invalid both fall back to {@link #DEFAULT}
-     * @param mapDistance the distance in map units
-     * @return e.g. {@code "40 cm"}, {@code "12.5 m"}, {@code "1.2 km"}
-     */
+    /// The single entry point for every surface that displays a size: hands back
+    /// a labelled real-world measurement whether or not the document has been
+    /// calibrated.
+    ///
+    /// Surfaces call this rather than testing for null themselves, so exactly
+    /// one place knows what an uncalibrated map measures in.
+    ///
+    /// @param units       the document's units; `null` (uncalibrated) and
+    ///         invalid both fall back to [#DEFAULT]
+    /// @param mapDistance the distance in map units
+    /// @return e.g. `"40 cm"`, `"12.5 m"`, `"1.2 km"`
     public static String format(final FloorMapMeasurementUnits units, final double mapDistance) {
         return orDefault(units).format(mapDistance);
     }
 
-    /**
-     * A width and height as one measurement — {@code "2.4 m × 1.1 m"} — for the
-     * readout shown while an object is being resized.
-     *
-     * @param units          the document's units; may be {@code null}
-     * @param widthMapUnits  the width in map units
-     * @param heightMapUnits the height in map units
-     * @return the formatted size
-     */
+    /// A width and height as one measurement — `"2.4 m × 1.1 m"` — for the
+    /// readout shown while an object is being resized.
+    ///
+    /// @param units          the document's units; may be `null`
+    /// @param widthMapUnits  the width in map units
+    /// @param heightMapUnits the height in map units
+    /// @return the formatted size
     public static String formatSize(final FloorMapMeasurementUnits units,
                                     final double widthMapUnits,
                                     final double heightMapUnits) {
         return format(units, widthMapUnits) + " × " + format(units, heightMapUnits);
     }
 
-    /**
-     * A position as one measurement — {@code "X 4.5 m, Y 2.1 m"} — for the
-     * readout shown while an object is being moved.
-     *
-     * <p>The axes are named rather than left as a bare pair of numbers: map
-     * space is Y-up, and an unlabelled pair invites the reader to guess which
-     * way round it is.</p>
-     *
-     * @param units      the document's units; may be {@code null}
-     * @param xMapUnits  the X position in map units
-     * @param yMapUnits  the Y position in map units
-     * @return the formatted position
-     */
+    /// A position as one measurement — `"X 4.5 m, Y 2.1 m"` — for the
+    /// readout shown while an object is being moved.
+    ///
+    /// The axes are named rather than left as a bare pair of numbers: map
+    /// space is Y-up, and an unlabelled pair invites the reader to guess which
+    /// way round it is.
+    ///
+    /// @param units      the document's units; may be `null`
+    /// @param xMapUnits  the X position in map units
+    /// @param yMapUnits  the Y position in map units
+    /// @return the formatted position
     public static String formatPosition(final FloorMapMeasurementUnits units,
                                         final double xMapUnits,
                                         final double yMapUnits) {
         return "X " + format(units, xMapUnits) + ", Y " + format(units, yMapUnits);
     }
 
-    /**
-     * The units to measure with: the document's own, or {@link #DEFAULT} when it
-     * has none or its stored scale is unusable.
-     *
-     * @param units the document's units; may be {@code null}
-     * @return usable units; never {@code null}
-     */
+    /// The units to measure with: the document's own, or [#DEFAULT] when it
+    /// has none or its stored scale is unusable.
+    ///
+    /// @param units the document's units; may be `null`
+    /// @return usable units; never `null`
     public static FloorMapMeasurementUnits orDefault(final FloorMapMeasurementUnits units) {
         return units != null && units.checkUnitIsValid()
                 ? units
                 : DEFAULT;
     }
 
-    /**
-     * Formats a map-space distance in the configured unit, promoted to the
-     * largest unit of the same family that leaves a value of at least one.
-     *
-     * @param mapDistance the distance in map units
-     * @return e.g. {@code "850 m"}, {@code "1.2 km"}
-     */
+    /// Formats a map-space distance in the configured unit, promoted to the
+    /// largest unit of the same family that leaves a value of at least one.
+    ///
+    /// @param mapDistance the distance in map units
+    /// @return e.g. `"850 m"`, `"1.2 km"`
     public String format(final double mapDistance) {
         if (!checkUnitIsValid()) {
             return DEFAULT.format(mapDistance);
@@ -360,11 +332,9 @@ public class FloorMapMeasurementUnits {
         return formatNumber(best.fromMetres(metres)) + " " + best.getSymbol();
     }
 
-    /**
-     * The largest unit in {@code family} that leaves {@code metres} at a value of
-     * one or more, falling back to the family's smallest unit for distances below
-     * all of them.
-     */
+    /// The largest unit in `family` that leaves `metres` at a value of
+    /// one or more, falling back to the family's smallest unit for distances below
+    /// all of them.
     static Unit promote(final double metres, final Family family) {
         final double abs = Math.abs(metres);
         Unit smallest = null;
@@ -386,26 +356,24 @@ public class FloorMapMeasurementUnits {
                 : smallest;
     }
 
-    /**
-     * Rounds to {@link #SIGNIFICANT_FIGURES} significant figures and renders
-     * without trailing zeros or an exponent — {@code "1.2"}, {@code "850"},
-     * {@code "0.05"}.
-     *
-     * <p>Whole units are never rounded away: {@code 5279} renders as
-     * {@code "5279"}, not {@code "5280"}. Significant figures here buy back
-     * decimal places on small values; they must not throw away precision the
-     * reader can see the point of.</p>
-     *
-     * <p>Assembles the digits from a {@code long} rather than going through
-     * {@link Double#toString}, which would leak binary-representation noise
-     * ({@code "1.2000000000000002"}) and scientific notation into the UI.</p>
-     *
-     * <p>Public because unit-less numbers need the same treatment: the Settings
-     * tab renders the stored scale factor with it.</p>
-     *
-     * @param value the number to render
-     * @return the rendered number, without a unit
-     */
+    /// Rounds to [#SIGNIFICANT_FIGURES] significant figures and renders
+    /// without trailing zeros or an exponent — `"1.2"`, `"850"`,
+    /// `"0.05"`.
+    ///
+    /// Whole units are never rounded away: `5279` renders as
+    /// `"5279"`, not `"5280"`. Significant figures here buy back
+    /// decimal places on small values; they must not throw away precision the
+    /// reader can see the point of.
+    ///
+    /// Assembles the digits from a `long` rather than going through
+    /// [Double#toString], which would leak binary-representation noise
+    /// (`"1.2000000000000002"`) and scientific notation into the UI.
+    ///
+    /// Public because unit-less numbers need the same treatment: the Settings
+    /// tab renders the stored scale factor with it.
+    ///
+    /// @param value the number to render
+    /// @return the rendered number, without a unit
     public static String formatNumber(final double value) {
         if (!Double.isFinite(value)) {
             return String.valueOf(value);
@@ -425,19 +393,17 @@ public class FloorMapMeasurementUnits {
         return formatToDecimals(value, Math.max(0, Math.min(9, SIGNIFICANT_FIGURES - 1 - exponent)));
     }
 
-    /**
-     * Renders a number for an <em>editable</em> field: fixed precision rather
-     * than significant figures, without trailing zeros or an exponent.
-     *
-     * <p>{@link #formatNumber} must not be used for this. Rounding to three
-     * significant figures turns a position of 1234.5 into "1230", so opening a
-     * dialog and pressing OK without touching anything would move the object
-     * several metres. Fixed decimals keep every digit the user could act on;
-     * {@link #INPUT_DECIMALS} places is a tenth of a millimetre.</p>
-     *
-     * @param value the number to render
-     * @return the rendered number, without a unit
-     */
+    /// Renders a number for an *editable* field: fixed precision rather
+    /// than significant figures, without trailing zeros or an exponent.
+    ///
+    /// [#formatNumber] must not be used for this. Rounding to three
+    /// significant figures turns a position of 1234.5 into "1230", so opening a
+    /// dialog and pressing OK without touching anything would move the object
+    /// several metres. Fixed decimals keep every digit the user could act on;
+    /// [#INPUT_DECIMALS] places is a tenth of a millimetre.
+    ///
+    /// @param value the number to render
+    /// @return the rendered number, without a unit
     public static String formatForInput(final double value) {
         if (!Double.isFinite(value)) {
             return String.valueOf(value);
@@ -451,19 +417,17 @@ public class FloorMapMeasurementUnits {
         return formatToDecimals(value, INPUT_DECIMALS);
     }
 
-    /**
-     * Rounds to {@code decimals} places and assembles the digits from a
-     * {@code long}, so no binary-representation noise or scientific notation can
-     * reach the UI.
-     *
-     * <p>Falls back to {@link String#valueOf(double)} when the scaled value would not fit
-     * in a {@code long}. The bound is computed from {@code decimals} rather than being a
-     * fixed number, because it depends on it: at {@code decimals = 4} the limit is about
-     * {@code 9.2234e14}, at {@code decimals = 0} it is about {@code 9.2234e18}. A single
-     * hardcoded ceiling cannot be right for both, and {@link Math#round(double)} does not report
-     * saturation — it silently returns {@link Long#MAX_VALUE}, which the digit assembly
-     * below would then format as though it were the user's number.</p>
-     */
+    /// Rounds to `decimals` places and assembles the digits from a
+    /// `long`, so no binary-representation noise or scientific notation can
+    /// reach the UI.
+    ///
+    /// Falls back to [String#valueOf(double)] when the scaled value would not fit
+    /// in a `long`. The bound is computed from `decimals` rather than being a
+    /// fixed number, because it depends on it: at `decimals = 4` the limit is about
+    /// `9.2234e14`, at `decimals = 0` it is about `9.2234e18`. A single
+    /// hardcoded ceiling cannot be right for both, and [Math#round(double)] does not report
+    /// saturation — it silently returns [Long#MAX_VALUE], which the digit assembly
+    /// below would then format as though it were the user's number.
     private static String formatToDecimals(final double value, final int decimals) {
         final double abs = Math.abs(value);
         final double multiplier = Math.pow(10, decimals);
@@ -501,21 +465,19 @@ public class FloorMapMeasurementUnits {
     // Calibration
     // ------------------------------------------------------------------------
 
-    /**
-     * Derives a scale from a measured line: the user drags across something whose
-     * real length they know and types that length in.
-     *
-     * @param mapLength  the length of the drawn line in map units; must be finite
-     *                   and positive
-     * @param realLength the real-world length the user typed; must be finite and
-     *                   positive
-     * @param enteredIn  the unit the user typed the length in
-     * @param displayIn  the unit the map should be displayed in afterwards —
-     *                   usually {@code enteredIn}, but they can differ
-     * @return the calibrated units, or {@code null} if either length is not a
-     * usable positive number (the caller shows a validation message rather than
-     * writing a scale that would blank the canvas)
-     */
+    /// Derives a scale from a measured line: the user drags across something whose
+    /// real length they know and types that length in.
+    ///
+    /// @param mapLength  the length of the drawn line in map units; must be finite
+    ///         and positive
+    /// @param realLength the real-world length the user typed; must be finite and
+    ///         positive
+    /// @param enteredIn  the unit the user typed the length in
+    /// @param displayIn  the unit the map should be displayed in afterwards —
+    ///         usually `enteredIn`, but they can differ
+    /// @return the calibrated units, or `null` if either length is not a
+    ///         usable positive number (the caller shows a validation message rather than
+    ///         writing a scale that would blank the canvas)
     public static FloorMapMeasurementUnits calibrate(final double mapLength,
                                                      final double realLength,
                                                      final Unit enteredIn,
@@ -533,11 +495,9 @@ public class FloorMapMeasurementUnits {
                 : null;
     }
 
-    /**
-     * {@code true} if {@code length} cannot be used as a calibration length — i.e. it is
-     * NaN, infinite, zero or negative. Reports the <em>unusable</em> case, so
-     * {@code calibrate} reads as "reject if unusable".
-     */
+    /// `true` if `length` cannot be used as a calibration length — i.e. it is
+    /// NaN, infinite, zero or negative. Reports the *unusable* case, so
+    /// `calibrate` reads as "reject if unusable".
     private static boolean isUnusableLength(final double length) {
         return !Double.isFinite(length) || !(length > 0);
     }
@@ -546,19 +506,17 @@ public class FloorMapMeasurementUnits {
     // Scale bar sizing
     // ------------------------------------------------------------------------
 
-    /**
-     * The largest "nice" length not exceeding {@code maxLength} — one of
-     * 1, 2 or 5 times a power of ten.
-     *
-     * <p>Used by the scale bar, which unlike the grid cannot settle for powers of
-     * ten alone: a bar allowed only to decade-step would spend most of the zoom
-     * range at a tenth of its available width. Expressed in whatever unit the
-     * caller is working in, so it serves display units and map units alike.</p>
-     *
-     * @param maxLength the longest the bar may be; non-finite or non-positive
-     *                  input yields {@code 0}
-     * @return the chosen length, or {@code 0} when none fits
-     */
+    /// The largest "nice" length not exceeding `maxLength` — one of
+    /// 1, 2 or 5 times a power of ten.
+    ///
+    /// Used by the scale bar, which unlike the grid cannot settle for powers of
+    /// ten alone: a bar allowed only to decade-step would spend most of the zoom
+    /// range at a tenth of its available width. Expressed in whatever unit the
+    /// caller is working in, so it serves display units and map units alike.
+    ///
+    /// @param maxLength the longest the bar may be; non-finite or non-positive
+    ///         input yields `0`
+    /// @return the chosen length, or `0` when none fits
     public static double niceRoundLength(final double maxLength) {
         if (!Double.isFinite(maxLength) || maxLength <= 0) {
             return 0;

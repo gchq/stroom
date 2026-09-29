@@ -25,10 +25,8 @@ import static org.assertj.core.api.Assertions.within;
 
 class TestFloorMapMarker {
 
-    /**
-     * The path is one closed teardrop: up a tail edge, the long way round the
-     * head, down the other edge, across the rounded tip.
-     */
+    /// The path is one closed teardrop: up a tail edge, the long way round the
+    /// head, down the other edge, across the rounded tip.
     @Test
     void testPathIsAClosedTeardrop() {
         final String path = FloorMapMarker.getPath();
@@ -42,14 +40,12 @@ class TestFloorMapMarker {
         assertThat(path).doesNotContain("\"");
     }
 
-    /**
-     * The tip is rounded off rather than coming to a point — a sharp vertex is
-     * unpleasant at map sizes and spikes when scaled down.
-     *
-     * <p>The fillet has to be a real arc between the two edges: big enough to see,
-     * and small enough that the tail still converges rather than turning the pin
-     * into a balloon.</p>
-     */
+    /// The tip is rounded off rather than coming to a point — a sharp vertex is
+    /// unpleasant at map sizes and spikes when scaled down.
+    ///
+    /// The fillet has to be a real arc between the two edges: big enough to see,
+    /// and small enough that the tail still converges rather than turning the pin
+    /// into a balloon.
     @Test
     void testTipIsRounded() {
         assertThat(FloorMapMarker.TIP_RADIUS).isGreaterThan(0);
@@ -57,14 +53,12 @@ class TestFloorMapMarker {
         assertThat(FloorMapMarker.TIP_RADIUS).isLessThan(FloorMapMarker.HEAD_RADIUS / 2);
     }
 
-    /**
-     * The fillet is tangent to both tail edges, so the rounding is smooth from
-     * whichever side it is followed.
-     *
-     * <p>Recomputes where the fillet meets an edge and checks the fillet's centre
-     * is exactly {@link FloorMapMarker#TIP_RADIUS} from that edge, measured
-     * perpendicular to it.</p>
-     */
+    /// The fillet is tangent to both tail edges, so the rounding is smooth from
+    /// whichever side it is followed.
+    ///
+    /// Recomputes where the fillet meets an edge and checks the fillet's centre
+    /// is exactly [FloorMapMarker#TIP_RADIUS] from that edge, measured
+    /// perpendicular to it.
     @Test
     void testTheFilletIsTangentToBothEdges() {
         final double distance = FloorMapMarker.TIP_Y - FloorMapMarker.HEAD_Y;
@@ -93,10 +87,8 @@ class TestFloorMapMarker {
                 .isCloseTo(FloorMapMarker.TIP_RADIUS, within(1e-9));
     }
 
-    /**
-     * The marker reads as a circle with a tail, not as a teardrop — the shape the
-     * client asked for. The tail still has to be there, or it is just a circle.
-     */
+    /// The marker reads as a circle with a tail, not as a teardrop — the shape the
+    /// client asked for. The tail still has to be there, or it is just a circle.
     @Test
     void testTheTailIsSubtleButPresent() {
         assertThat(FloorMapMarker.tailOverhang())
@@ -108,15 +100,13 @@ class TestFloorMapMarker {
                 .isGreaterThan(4 * FloorMapMarker.tailOverhang());
     }
 
-    /**
-     * Built with one square root and no inverse trig — the angles are only ever
-     * needed as ratios, and the right triangle supplies all of them.
-     *
-     * <p>Checked by recomputing a tangent point the trigonometric way and
-     * confirming the path carries the same number. Guards against someone
-     * "simplifying" the derivation into {@code Math.atan} and quietly changing
-     * the shape.</p>
-     */
+    /// Built with one square root and no inverse trig — the angles are only ever
+    /// needed as ratios, and the right triangle supplies all of them.
+    ///
+    /// Checked by recomputing a tangent point the trigonometric way and
+    /// confirming the path carries the same number. Guards against someone
+    /// "simplifying" the derivation into `Math.atan` and quietly changing
+    /// the shape.
     @Test
     void testTheTrigFreeDerivationAgreesWithTrigonometry() {
         final double distance = FloorMapMarker.TIP_Y - FloorMapMarker.HEAD_Y;
@@ -133,7 +123,7 @@ class TestFloorMapMarker {
         assertThat(FloorMapMarker.getPath()).contains(String.valueOf(trigFree));
     }
 
-    /** The rounded tip stops short of the vertex the edges would have met at. */
+    /// The rounded tip stops short of the vertex the edges would have met at.
     @Test
     void testTheDrawnShapeStopsAboveTheVirtualVertex() {
         assertThat(FloorMapMarker.bottomY())
@@ -143,14 +133,12 @@ class TestFloorMapMarker {
                 .isGreaterThan(FloorMapMarker.HEAD_Y + FloorMapMarker.HEAD_RADIUS);
     }
 
-    /**
-     * The tail's straight edges are true tangents to the head, which is what
-     * makes the join smooth rather than kinked.
-     *
-     * <p>Recomputes the tangent point from the published constants and checks the
-     * two things tangency means: it is on the circle, and the radius to it is
-     * perpendicular to the line from the tip.</p>
-     */
+    /// The tail's straight edges are true tangents to the head, which is what
+    /// makes the join smooth rather than kinked.
+    ///
+    /// Recomputes the tangent point from the published constants and checks the
+    /// two things tangency means: it is on the circle, and the radius to it is
+    /// perpendicular to the line from the tip.
     @Test
     void testTailMeetsTheHeadAtATangent() {
         final double distance = FloorMapMarker.TIP_Y - FloorMapMarker.HEAD_Y;
@@ -175,7 +163,7 @@ class TestFloorMapMarker {
         assertThat((radiusX * edgeX) + (radiusY * edgeY)).isCloseTo(0, within(1e-9));
     }
 
-    /** The whole marker stays inside the grid it shares with the icons. */
+    /// The whole marker stays inside the grid it shares with the icons.
     @Test
     void testMarkerFitsTheGrid() {
         assertThat(FloorMapMarker.HEAD_Y - FloorMapMarker.HEAD_RADIUS)
@@ -189,15 +177,13 @@ class TestFloorMapMarker {
                 .isLessThanOrEqualTo(FloorMapMarker.GRID);
     }
 
-    /**
-     * The furthest-reaching icon still clears the head's rim once shrunk into it
-     * — the reason {@link FloorMapMarker#ICON_SCALE} is what it is.
-     *
-     * <p>Against the <em>inner</em> edge of the white outline, not the path: the
-     * outline is centred on the path, so it covers half its width of the fill,
-     * and an icon that merely fits the radius would have its extremities painted
-     * over.</p>
-     */
+    /// The furthest-reaching icon still clears the head's rim once shrunk into it
+    /// — the reason [FloorMapMarker#ICON_SCALE] is what it is.
+    ///
+    /// Against the *inner* edge of the white outline, not the path: the
+    /// outline is centred on the path, so it covers half its width of the fill,
+    /// and an icon that merely fits the radius would have its extremities painted
+    /// over.
     @Test
     void testTheWidestIconFitsInsideTheHead() {
         final double reach = FloorMapMarker.MAX_ICON_INK_RADIUS * FloorMapMarker.ICON_SCALE;
@@ -209,11 +195,9 @@ class TestFloorMapMarker {
                 .isLessThan(usableRadius);
     }
 
-    /**
-     * The recorded worst-case ink radius is a real measurement of the set, so it
-     * has to stay ahead of what the icons could possibly reach — and behind the
-     * grid corner, or it is not measuring anything.
-     */
+    /// The recorded worst-case ink radius is a real measurement of the set, so it
+    /// has to stay ahead of what the icons could possibly reach — and behind the
+    /// grid corner, or it is not measuring anything.
     @Test
     void testTheRecordedInkRadiusIsPlausible() {
         final double gridCorner = Math.sqrt(2) * (FloorMapMarker.GRID / 2);
@@ -227,7 +211,7 @@ class TestFloorMapMarker {
                 .isGreaterThan(gridHalf);
     }
 
-    /** The icon is centred in the head, not in the grid. */
+    /// The icon is centred in the head, not in the grid.
     @Test
     void testIconTransformCentresOnTheHead() {
         final String transform = FloorMapMarker.iconTransform();
@@ -247,14 +231,14 @@ class TestFloorMapMarker {
         assertThat(centreY).isCloseTo(FloorMapMarker.HEAD_Y, within(1e-9));
     }
 
-    /** The selection ring shows outside the white outline rather than under it. */
+    /// The selection ring shows outside the white outline rather than under it.
     @Test
     void testSelectionRingIsWiderThanTheOutline() {
         assertThat(FloorMapMarker.SELECTION_WIDTH)
                 .isGreaterThan(FloorMapMarker.OUTLINE_WIDTH);
     }
 
-    /** Marker and icons share one grid, so a single transform places the pair. */
+    /// Marker and icons share one grid, so a single transform places the pair.
     @Test
     void testMarkerSharesTheIconGrid() {
         assertThat(FloorMapMarker.GRID).isEqualTo(FloorMapIcon.GRID);

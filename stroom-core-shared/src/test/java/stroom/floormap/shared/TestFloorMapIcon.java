@@ -25,11 +25,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFloorMapIcon {
 
-    /**
-     * Every icon can actually be drawn. Cheap, but the paths are generated, and a
-     * blank one would show as an invisible glyph on the map rather than as an
-     * error anywhere.
-     */
+    /// Every icon can actually be drawn. Cheap, but the paths are generated, and a
+    /// blank one would show as an invisible glyph on the map rather than as an
+    /// error anywhere.
     @Test
     void testEveryIconHasAPathAndALabel() {
         assertThat(FloorMapIcon.values()).isNotEmpty();
@@ -46,12 +44,10 @@ class TestFloorMapIcon {
         }
     }
 
-    /**
-     * Paths are interpolated into trusted SVG, so nothing in one may be able to
-     * close the attribute and start another. They are compile-time constants, so
-     * this cannot fail from data — it fails when a new icon is added with a stray
-     * quote in it.
-     */
+    /// Paths are interpolated into trusted SVG, so nothing in one may be able to
+    /// close the attribute and start another. They are compile-time constants, so
+    /// this cannot fail from data — it fails when a new icon is added with a stray
+    /// quote in it.
     @Test
     void testPathsCannotBreakOutOfAnAttribute() {
         for (final FloorMapIcon icon : FloorMapIcon.values()) {
@@ -64,7 +60,7 @@ class TestFloorMapIcon {
         }
     }
 
-    /** Two icons with the same label would be indistinguishable in the picker. */
+    /// Two icons with the same label would be indistinguishable in the picker.
     @Test
     void testLabelsAreUnique() {
         final Set<String> labels = new HashSet<>();
@@ -75,7 +71,7 @@ class TestFloorMapIcon {
         }
     }
 
-    /** The client-requested icons are present, whatever else the set grows to hold. */
+    /// The client-requested icons are present, whatever else the set grows to hold.
     @Test
     void testTheRequestedIconsExist() {
         assertThat(FloorMapIcon.fromName("PERSON")).isNotNull();
@@ -83,15 +79,13 @@ class TestFloorMapIcon {
         assertThat(FloorMapIcon.fromName("PRINTER")).isNotNull();
     }
 
-    /**
-     * A stored name resolves back to its icon, and anything unrecognised resolves
-     * to {@code null} rather than throwing.
-     *
-     * <p>The lenient half matters: the name comes out of a saved document, which
-     * may have been written by a version carrying an icon this one has never heard
-     * of, or edited by hand. That must degrade to "draws its shape", not to a
-     * broken editor.</p>
-     */
+    /// A stored name resolves back to its icon, and anything unrecognised resolves
+    /// to `null` rather than throwing.
+    ///
+    /// The lenient half matters: the name comes out of a saved document, which
+    /// may have been written by a version carrying an icon this one has never heard
+    /// of, or edited by hand. That must degrade to "draws its shape", not to a
+    /// broken editor.
     @Test
     void testFromNameRoundTripsAndIsLenient() {
         for (final FloorMapIcon icon : FloorMapIcon.values()) {
@@ -104,10 +98,8 @@ class TestFloorMapIcon {
         assertThat(FloorMapIcon.fromName("person")).isNull();
     }
 
-    /**
-     * The transform maps the icon's grid onto a glyph of the given half-size: the
-     * grid's centre lands on the origin and its corners on {@code ±halfSize}.
-     */
+    /// The transform maps the icon's grid onto a glyph of the given half-size: the
+    /// grid's centre lands on the origin and its corners on `±halfSize`.
     @Test
     void testTransformFitsTheGlyphBox() {
         assertThat(FloorMapIcon.transform(12))
@@ -117,10 +109,8 @@ class TestFloorMapIcon {
                 .isEqualTo("translate(-6.0,-6.0) scale(0.5)");
     }
 
-    /**
-     * A layer style built from an icon carries it, and carries nothing else —
-     * a leftover shape or image would outrank or contradict it in the renderer.
-     */
+    /// A layer style built from an icon carries it, and carries nothing else —
+    /// a leftover shape or image would outrank or contradict it in the renderer.
     @Test
     void testTypeStyleCarriesTheIconAlone() {
         final TypeStyle style = TypeStyle.ofIcon("gate", FloorMapIcon.GATE, "#ff0000");
@@ -134,10 +124,8 @@ class TestFloorMapIcon {
         assertThat(style.getColour()).isEqualTo("#ff0000");
     }
 
-    /**
-     * An icon name no longer recognised reads as "no icon" everywhere, so the
-     * layer falls back to its shape instead of drawing nothing.
-     */
+    /// An icon name no longer recognised reads as "no icon" everywhere, so the
+    /// layer falls back to its shape instead of drawing nothing.
     @Test
     void testUnknownIconNameReadsAsNoIcon() {
         final TypeStyle style = new TypeStyle("gate", null, "#ff0000", null, "RETIRED_ICON");
@@ -147,7 +135,7 @@ class TestFloorMapIcon {
         assertThat(style.hasIcon()).isFalse();
     }
 
-    /** A style with no icon is unaffected — the field is optional. */
+    /// A style with no icon is unaffected — the field is optional.
     @Test
     void testStylesWithoutIconsAreUnaffected() {
         final TypeStyle shapeStyle = new TypeStyle("desk", TypeStyle.Shape.SQUARE, "#00ff00");

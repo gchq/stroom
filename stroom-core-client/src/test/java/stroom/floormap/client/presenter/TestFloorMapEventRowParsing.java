@@ -36,11 +36,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Covers the whole path a single events row travels — query result → parsed
- * entity → position on the map — because the two halves fail identically from
- * the outside: the entities just stop appearing.
- */
+/// Covers the whole path a single events row travels — query result → parsed
+/// entity → position on the map — because the two halves fail identically from
+/// the outside: the entities just stop appearing.
 class TestFloorMapEventRowParsing {
 
     private static final String ENTITY_COLUMN = FloorMapEventsQuery.ENTITY_ID_COLUMN;
@@ -48,18 +46,16 @@ class TestFloorMapEventRowParsing {
     private static final String REF_COLUMN = FloorMapEventsQuery.LOCATION_REF_COLUMN;
     private static final String TIME_COLUMN = FloorMapEventsQuery.EFFECTIVE_TIME_COLUMN;
 
-    /** The mapping a new document gets, which is what the default query aliases. */
+    /// The mapping a new document gets, which is what the default query aliases.
     private static final FloorMapEventColumns DEFAULTS = FloorMapEventColumns.defaults();
 
-    /**
-     * The default query must alias exactly the columns a new document is told to read.
-     *
-     * <p>Both the query text and the default mapping are generated from
-     * {@link FloorMapEventRole}, so they agree by construction. This asserts the construction
-     * actually holds — and that the surrounding StroomQL still quotes each name as a column alias
-     * rather than, say, interpolating it somewhere harmless. The {@code Event Type} defect was
-     * exactly this pairing coming apart.</p>
-     */
+    /// The default query must alias exactly the columns a new document is told to read.
+    ///
+    /// Both the query text and the default mapping are generated from
+    /// [FloorMapEventRole], so they agree by construction. This asserts the construction
+    /// actually holds — and that the surrounding StroomQL still quotes each name as a column alias
+    /// rather than, say, interpolating it somewhere harmless. The `Event Type` defect was
+    /// exactly this pairing coming apart.
     @Test
     void testDefaultQueryAliasesEveryRolesDefaultColumn() {
         final String query = FloorMapEventsQuery.defaultQuery();
@@ -83,7 +79,7 @@ class TestFloorMapEventRowParsing {
     // latestPerEntity - reducing a query window to one row per entity
     // -----------------------------------------------------------------------
 
-    /** ISO-8601 times, the form Stroom emits with no pattern preference set. */
+    /// ISO-8601 times, the form Stroom emits with no pattern preference set.
     @Test
     void testLatestPerEntityKeepsTheNewestIsoTimeForEachEntity() {
         final List<Row> reduced = FloorMapQueryPresenter.latestPerEntity(
@@ -101,7 +97,7 @@ class TestFloorMapEventRowParsing {
         assertThat(reduced.get(1).getValues().get(2)).isEqualTo("9, 9");
     }
 
-    /** Out-of-order rows must not fool it - the newest wins wherever it sits in the result. */
+    /// Out-of-order rows must not fool it - the newest wins wherever it sits in the result.
     @Test
     void testLatestPerEntityIgnoresRowOrderWhenTimesAreComparable() {
         final List<Row> reduced = FloorMapQueryPresenter.latestPerEntity(
@@ -116,7 +112,7 @@ class TestFloorMapEventRowParsing {
         assertThat(reduced.getFirst().getValues().get(2)).isEqualTo("newest");
     }
 
-    /** Epoch milliseconds must compare numerically, not as text - "9" is not after "10". */
+    /// Epoch milliseconds must compare numerically, not as text - "9" is not after "10".
     @Test
     void testLatestPerEntityComparesEpochMillisNumerically() {
         final List<Row> reduced = FloorMapQueryPresenter.latestPerEntity(
@@ -132,7 +128,7 @@ class TestFloorMapEventRowParsing {
         assertThat(reduced.getFirst().getValues().get(2)).isEqualTo("later");
     }
 
-    /** With no time column the last row for an entity wins, deterministically. */
+    /// With no time column the last row for an entity wins, deterministically.
     @Test
     void testLatestPerEntityFallsBackToLastRowWinsWithNoTimeColumn() {
         final List<Column> columns = new ArrayList<>();
@@ -149,12 +145,10 @@ class TestFloorMapEventRowParsing {
         assertThat(reduced.getFirst().getValues().get(1)).isEqualTo("last");
     }
 
-    /**
-     * A store that already deduplicates server-side must pass through untouched.
-     *
-     * <p>SqlTemporalStore returns one row per key, so this pass has to be a no-op there rather
-     * than quietly dropping or reordering anything.</p>
-     */
+    /// A store that already deduplicates server-side must pass through untouched.
+    ///
+    /// SqlTemporalStore returns one row per key, so this pass has to be a no-op there rather
+    /// than quietly dropping or reordering anything.
     @Test
     void testLatestPerEntityIsANoOpOnAlreadyUniqueRows() {
         final List<Row> rows = List.of(
@@ -168,7 +162,7 @@ class TestFloorMapEventRowParsing {
         assertThat(reduced).containsExactlyElementsOf(rows);
     }
 
-    /** Columns for the three-column shape the default events query produces. */
+    /// Columns for the three-column shape the default events query produces.
     private static List<Column> timedColumns() {
         final List<Column> columns = new ArrayList<>();
         columns.add(Column.builder().id(TIME_COLUMN).name(TIME_COLUMN).build());
@@ -181,7 +175,7 @@ class TestFloorMapEventRowParsing {
         return Row.builder().values(Arrays.asList(time, entity, location)).build();
     }
 
-    /** Coordinates baked into the event, used as they stand. */
+    /// Coordinates baked into the event, used as they stand.
     @Test
     void testCoordinateRowsAreParsedAndPassedThrough() {
         final List<FloorMapObject> parsed = FloorMapQueryPresenter.parseRows(
@@ -196,10 +190,8 @@ class TestFloorMapEventRowParsing {
         assertThat(placed.getFirst().getY()).isEqualTo(340);
     }
 
-    /**
-     * The shape that fixes the stale-position bug: the row names the object, and
-     * the entity lands wherever that object currently is.
-     */
+    /// The shape that fixes the stale-position bug: the row names the object, and
+    /// the entity lands wherever that object currently is.
     @Test
     void testReferenceRowsAreParsedAndPlacedOnTheObject() {
         final List<FloorMapObject> parsed = FloorMapQueryPresenter.parseRows(
@@ -215,7 +207,7 @@ class TestFloorMapEventRowParsing {
         assertThat(placed.getFirst().getY()).isEqualTo(20);
     }
 
-    /** An email entity id with no type column still reads as a person. */
+    /// An email entity id with no type column still reads as a person.
     @Test
     void testTypeFallsBackToPersonForAnEmailId() {
         final List<FloorMapObject> parsed = FloorMapQueryPresenter.parseRows(
@@ -224,11 +216,9 @@ class TestFloorMapEventRowParsing {
         assertThat(parsed.getFirst().getType()).isEqualTo("person");
     }
 
-    /**
-     * Both location roles pointing at columns the query does not select yields nothing at all —
-     * the silent failure that looks like animation being switched off, and the reason
-     * {@code FloorMapMapPresenter} logs this case.
-     */
+    /// Both location roles pointing at columns the query does not select yields nothing at all —
+    /// the silent failure that looks like animation being switched off, and the reason
+    /// `FloorMapMapPresenter` logs this case.
     @Test
     void testBothLocationRolesUnmappedYieldsNoEntities() {
         final FloorMapEventColumns mapping = DEFAULTS
@@ -240,12 +230,10 @@ class TestFloorMapEventRowParsing {
                 .isEmpty();
     }
 
-    /**
-     * Either location role on its own is enough.
-     *
-     * <p>A store whose events only ever carry fact keys has no coordinate column at all, and
-     * leaving that role unset must not disable the map.</p>
-     */
+    /// Either location role on its own is enough.
+    ///
+    /// A store whose events only ever carry fact keys has no coordinate column at all, and
+    /// leaving that role unset must not disable the map.
     @Test
     void testOneLocationRoleIsEnough() {
         final FloorMapEventColumns refOnly = DEFAULTS.with(FloorMapEventRole.LOCATION, null);
@@ -259,7 +247,7 @@ class TestFloorMapEventRowParsing {
                 .hasSize(1);
     }
 
-    /** A row with neither is skipped, not placed at the origin. */
+    /// A row with neither is skipped, not placed at the origin.
     @Test
     void testRowWithNoLocationAtAllIsSkipped() {
         assertThat(FloorMapQueryPresenter.parseRows(
@@ -267,13 +255,11 @@ class TestFloorMapEventRowParsing {
                 .isEmpty();
     }
 
-    /**
-     * Both set: coordinates win, and the contradiction is reported.
-     *
-     * <p>Coordinates win because they need no lookup. It is reported because only one of the two
-     * can be true, so a row carrying both is bad data rather than a preference — and reported
-     * <b>once</b> per result, since the same rows arrive three times a second during playback.</p>
-     */
+    /// Both set: coordinates win, and the contradiction is reported.
+    ///
+    /// Coordinates win because they need no lookup. It is reported because only one of the two
+    /// can be true, so a row carrying both is bad data rather than a preference — and reported
+    /// **once** per result, since the same rows arrive three times a second during playback.
     @Test
     void testCoordinatesWinOverAReferenceAndTheClashIsReportedOnce() {
         final List<String> warnings = new ArrayList<>();
@@ -291,12 +277,10 @@ class TestFloorMapEventRowParsing {
         assertThat(warnings.getFirst()).contains("a@x.org").contains("both");
     }
 
-    /**
-     * A malformed coordinate is reported as such, not read as a fact key.
-     *
-     * <p>The single-column scheme could not do this: anything that was not two numbers became a
-     * reference, so a typo in a position was reported as a missing desk.</p>
-     */
+    /// A malformed coordinate is reported as such, not read as a fact key.
+    ///
+    /// The single-column scheme could not do this: anything that was not two numbers became a
+    /// reference, so a typo in a position was reported as a missing desk.
     @Test
     void testMalformedCoordinatesAreReportedRatherThanTreatedAsAKey() {
         final List<String> warnings = new ArrayList<>();
@@ -308,7 +292,7 @@ class TestFloorMapEventRowParsing {
         assertThat(warnings.getFirst()).contains("120.5 340");
     }
 
-    /** A fact key that looks like coordinates works, which the single-column scheme made impossible. */
+    /// A fact key that looks like coordinates works, which the single-column scheme made impossible.
     @Test
     void testAReferenceMayLookLikeCoordinates() {
         final List<FloorMapObject> parsed = FloorMapQueryPresenter.parseRows(
@@ -318,7 +302,7 @@ class TestFloorMapEventRowParsing {
         assertThat(parsed.getFirst().getLocationRef()).isEqualTo("100, 200");
     }
 
-    /** The type column is read from the mapping, not from a column literally named "type". */
+    /// The type column is read from the mapping, not from a column literally named "type".
     @Test
     void testTypeComesFromTheMappedColumn() {
         final List<Column> columns = new ArrayList<>();
@@ -339,15 +323,16 @@ class TestFloorMapEventRowParsing {
 
     // -----------------------------------------------------------------------
 
-    /** The facts a floor plan would supply: the gate the events reference. */
+    /// The facts a floor plan would supply: the gate the events reference.
     private static List<Fact> facts() {
         return Collections.singletonList(new Fact(
                 "G-MAIN_ENTRANCE", "gate", null,
                 FloorMapTransformationMatrix.identity(), new double[]{10, 20}));
     }
 
-    /** A two-value row, for the latestPerEntity cases that never reach the location split. */
-    private static Row twoColumnRow(final String entityId, final String location) {
+    /// A two-value row, for the latestPerEntity cases that never reach the location split.
+    private static Row twoColumnRow(@SuppressWarnings("SameParameterValue") final String entityId,
+                                    final String location) {
         return Row.builder().values(Arrays.asList(entityId, location)).build();
     }
 

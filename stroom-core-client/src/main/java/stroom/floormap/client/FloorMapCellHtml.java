@@ -19,31 +19,27 @@ package stroom.floormap.client;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
-/**
- * Shared cell markup for the floor map's data grids.
- *
- * <p>Grid cells are single {@code nowrap} lines that ellipsise when the column is
- * too narrow (see {@code ui/css/celltable/DataGrid.css}), so detail that will not
- * fit goes in a {@code title} tooltip instead of wrapping. Both the tracking
- * panel's Area column and the Groups panel's columns need that, so the markup
- * lives here rather than being written twice.</p>
- */
+/// Shared cell markup for the floor map's data grids.
+///
+/// Grid cells are single `nowrap` lines that ellipsise when the column is
+/// too narrow (see `ui/css/celltable/DataGrid.css`), so detail that will not
+/// fit goes in a `title` tooltip instead of wrapping. Both the tracking
+/// panel's Area column and the Groups panel's columns need that, so the markup
+/// lives here rather than being written twice.
 public final class FloorMapCellHtml {
 
     private FloorMapCellHtml() {
         // Utility class.
     }
 
-    /**
-     * Cell text wrapped in a span carrying a {@code title} tooltip.
-     *
-     * <p>Both are escaped — entity ids, area names and group names are
-     * document/query data.</p>
-     *
-     * @param text    the visible cell text; {@code null} renders empty
-     * @param tooltip the hover detail; {@code null} renders no tooltip text
-     * @return the cell markup
-     */
+    /// Cell text wrapped in a span carrying a `title` tooltip.
+    ///
+    /// Both are escaped — entity ids, area names and group names are
+    /// document/query data.
+    ///
+    /// @param text    the visible cell text; `null` renders empty
+    /// @param tooltip the hover detail; `null` renders no tooltip text
+    /// @return the cell markup
     public static SafeHtml cell(final String text, final String tooltip) {
         final SafeHtmlBuilder builder = new SafeHtmlBuilder();
         builder.appendHtmlConstant("<span title=\"");
@@ -54,16 +50,14 @@ public final class FloorMapCellHtml {
         return builder.toSafeHtml();
     }
 
-    /**
-     * Cell text preceded by a swatch, both inside one tooltipped span — the
-     * Groups panel's Name column, where the swatch shows the group's highlight
-     * colour.
-     *
-     * @param swatch  markup for the leading graphic (already safe)
-     * @param text    the visible cell text; {@code null} renders empty
-     * @param tooltip the hover detail; {@code null} renders no tooltip text
-     * @return the cell markup
-     */
+    /// Cell text preceded by a swatch, both inside one tooltipped span — the
+    /// Groups panel's Name column, where the swatch shows the group's highlight
+    /// colour.
+    ///
+    /// @param swatch  markup for the leading graphic (already safe)
+    /// @param text    the visible cell text; `null` renders empty
+    /// @param tooltip the hover detail; `null` renders no tooltip text
+    /// @return the cell markup
     public static SafeHtml cellWithSwatch(final SafeHtml swatch,
                                           final String text,
                                           final String tooltip) {

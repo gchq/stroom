@@ -32,23 +32,21 @@ import com.gwtplatform.mvp.client.View;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * A reusable, tabbed dock hosted on the right-hand edge of the Floor Map canvas
- * in both the Map and Editor tabs. It holds control panels as curve tabs (the
- * same chrome as the document tab bar) and shows the active tab's content in a
- * {@link LayerContainer}.
- *
- * <p>Panels are registered with {@link #addTab(String, PresenterWidget)}; the
- * first tab added becomes the active tab. This single call is the integration
- * point for further panels — nothing else in the dock needs to
- * change to host a new tab.</p>
- *
- * <p>Dock chrome state (which tab is active) is held transiently here; the host
- * views own visibility and width (via their split panels).</p>
- */
+/// A reusable, tabbed dock hosted on the right-hand edge of the Floor Map canvas
+/// in both the Map and Editor tabs. It holds control panels as curve tabs (the
+/// same chrome as the document tab bar) and shows the active tab's content in a
+/// [LayerContainer].
+///
+/// Panels are registered with [#addTab(String, PresenterWidget)]; the
+/// first tab added becomes the active tab. This single call is the integration
+/// point for further panels — nothing else in the dock needs to
+/// change to host a new tab.
+///
+/// Dock chrome state (which tab is active) is held transiently here; the host
+/// views own visibility and width (via their split panels).
 public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
 
-    /** Tab → its content presenter, in insertion (display) order. */
+    /// Tab → its content presenter, in insertion (display) order.
     private final Map<TabData, PresenterWidget<?>> tabContent = new LinkedHashMap<>();
 
     private TabData selectedTab;
@@ -61,26 +59,22 @@ public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
                 .addSelectionHandler(event -> selectTab(event.getSelectedItem())));
     }
 
-    /**
-     * Adds a tab hosting the given content presenter.
-     *
-     * @param label   the tab label
-     * @param content the presenter shown when the tab is active
-     * @return the {@link TabData} handle for the new tab
-     */
+    /// Adds a tab hosting the given content presenter.
+    ///
+    /// @param label   the tab label
+    /// @param content the presenter shown when the tab is active
+    /// @return the [TabData] handle for the new tab
     public TabData addTab(final String label, final PresenterWidget<?> content) {
         final TabData tab = new TabDataImpl(label);
         addTab(tab, content);
         return tab;
     }
 
-    /**
-     * Adds a tab hosting the given content presenter, with full control over the
-     * tab's presentation (icon/tooltip/closeable) via the supplied {@link TabData}.
-     *
-     * @param tab     the tab descriptor
-     * @param content the presenter shown when the tab is active
-     */
+    /// Adds a tab hosting the given content presenter, with full control over the
+    /// tab's presentation (icon/tooltip/closeable) via the supplied [TabData].
+    ///
+    /// @param tab     the tab descriptor
+    /// @param content the presenter shown when the tab is active
     public void addTab(final TabData tab, final PresenterWidget<?> content) {
         tabContent.put(tab, content);
         getView().getTabBar().addTab(tab);
@@ -90,11 +84,9 @@ public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
         }
     }
 
-    /**
-     * Makes the given tab active, showing its content.
-     *
-     * @param tab the tab to select; ignored if {@code null} or unknown
-     */
+    /// Makes the given tab active, showing its content.
+    ///
+    /// @param tab the tab to select; ignored if `null` or unknown
     public void selectTab(final TabData tab) {
         if (tab == null) {
             return;
@@ -108,24 +100,18 @@ public class FloorMapDockPresenter extends MyPresenterWidget<FloorMapDockView> {
         selectedTab = tab;
     }
 
-    /**
-     * @return the currently active tab, or {@code null} if the dock has no tabs.
-     */
+    /// @return the currently active tab, or `null` if the dock has no tabs.
     public TabData getSelectedTab() {
         return selectedTab;
     }
 
-    /**
-     * @return the tab bar, for callers that need to hide/show or query tabs.
-     */
+    /// @return the tab bar, for callers that need to hide/show or query tabs.
     public TabBar getTabBar() {
         return getView().getTabBar();
     }
 
-    /**
-     * View contract for the dock: a tab bar plus a container for the active
-     * tab's content.
-     */
+    /// View contract for the dock: a tab bar plus a container for the active
+    /// tab's content.
     public interface FloorMapDockView extends View {
 
         TabBar getTabBar();

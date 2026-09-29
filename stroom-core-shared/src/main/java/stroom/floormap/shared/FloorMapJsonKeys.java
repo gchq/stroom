@@ -16,86 +16,66 @@
 
 package stroom.floormap.shared;
 
-/**
- * JSON field-name constants for the temporal-store entry value schema
- * used across the floor map feature.
- */
+/// JSON field-name constants for the temporal-store entry value schema
+/// used across the floor map feature.
 public final class FloorMapJsonKeys {
 
     public static final String TYPE = "type";
     public static final String NAME = "name";
 
-    /**
-     * Object ID and type identifier for the background layer/object
-     * in the floor map canvas.
-     */
+    /// Object ID and type identifier for the background layer/object
+    /// in the floor map canvas.
     public static final String BACKGROUND = "background";
 
-    /**
-     * Type identifier for person objects in the floor map canvas.
-     * Objects with this type receive animated movement and trail rendering
-     * during timeline playback.
-     */
+    /// Type identifier for person objects in the floor map canvas.
+    /// Objects with this type receive animated movement and trail rendering
+    /// during timeline playback.
     public static final String PERSON = "person";
 
-    /**
-     * Type identifier for user-drawn area polygons in the floor map canvas.
-     * Area facts carry a {@code geometry} vertex array and render as filled
-     * polygons beneath other objects.
-     */
+    /// Type identifier for user-drawn area polygons in the floor map canvas.
+    /// Area facts carry a `geometry` vertex array and render as filled
+    /// polygons beneath other objects.
     public static final String AREA = "area";
 
-    /**
-     * JSON field name for an area's polygon vertices — a flat array
-     * {@code [x0, y0, x1, y1, ...]} in the fact's local frame.
-     */
+    /// JSON field name for an area's polygon vertices — a flat array of
+    /// alternating x and y values in the fact's local frame.
     public static final String GEOMETRY = "geometry";
 
-    /**
-     * JSON field name for an area's fill opacity (number in [0, 1]).
-     */
+    /// JSON field name for an area's fill opacity (number in `[0, 1]`).
     public static final String OPACITY = "opacity";
 
-    /**
-     * Display name for the background object in the fact list UI.
-     */
+    /// Display name for the background object in the fact list UI.
     public static final String BACKGROUND_DISPLAY_NAME = "Background";
 
-    /**
-     * ID prefix applied to SVG {@code <g>} wrapper elements in the canvas.
-     *
-     * <p>Each map object is rendered inside a {@code <g>} whose ID is
-     * {@code SVG_GROUP_PREFIX + objectKey}. The click-detection logic uses
-     * this prefix to distinguish wrapper groups (ignored) from the actual
-     * clickable shape elements (whose IDs are the raw object keys).</p>
-     *
-     * <p>The prefix uses a double-underscore convention ({@code "__g_"}) to
-     * avoid collisions with user-chosen object keys — users are unlikely to
-     * name objects starting with {@code "__"}.</p>
-     */
+    /// ID prefix applied to SVG `<g>` wrapper elements in the canvas.
+    ///
+    /// Each map object is rendered inside a `<g>` whose ID is
+    /// `SVG_GROUP_PREFIX + objectKey`. The click-detection logic uses
+    /// this prefix to distinguish wrapper groups (ignored) from the actual
+    /// clickable shape elements (whose IDs are the raw object keys).
+    ///
+    /// The prefix uses a double-underscore convention (`"__g_"`) to
+    /// avoid collisions with user-chosen object keys — users are unlikely to
+    /// name objects starting with `"__"`.
     public static final String SVG_GROUP_PREFIX = "__g_";
 
-    /**
-     * ID prefix applied to the selection transform handles (scale/rotate) drawn
-     * over the current selection in edit mode. The mousedown hit-test checks
-     * this prefix <em>first</em> so a handle drag starts a scale/rotate gesture
-     * rather than being treated as a click on an object literally named
-     * {@code "__handle_..."}. The id format is {@code HANDLE_PREFIX + role}
-     * (e.g. {@code "__handle_scale-nw"}, {@code "__handle_rotate"}).
-     */
+    /// ID prefix applied to the selection transform handles (scale/rotate) drawn
+    /// over the current selection in edit mode. The mousedown hit-test checks
+    /// this prefix *first* so a handle drag starts a scale/rotate gesture
+    /// rather than being treated as a click on an object literally named
+    /// `"__handle_..."`. The id format is `HANDLE_PREFIX + role`
+    /// (e.g. `"__handle_scale-nw"`, `"__handle_rotate"`).
     public static final String HANDLE_PREFIX = "__handle_";
 
-    /**
-     * ID prefix applied to a cluster's summary glyph — the single glyph drawn in
-     * place of entities too close together on screen to be told apart (see
-     * {@code FloorMapClusterOverlay}). The id format is
-     * {@code CLUSTER_PREFIX + FloorMapCluster#getKey()}.
-     *
-     * <p>A cluster is <strong>not</strong> an entity: it has no row in the
-     * tracking roster and no fact behind it, so the mousedown hit-test must not
-     * report it as an object. It carries its own prefix for exactly that reason —
-     * the object hit-test skips it, and a separate resolver recognises it.</p>
-     */
+    /// ID prefix applied to a cluster's summary glyph — the single glyph drawn in
+    /// place of entities too close together on screen to be told apart (see
+    /// `FloorMapClusterOverlay`). The id format is
+    /// `CLUSTER_PREFIX + FloorMapCluster#getKey()`.
+    ///
+    /// A cluster is **not** an entity: it has no row in the
+    /// tracking roster and no fact behind it, so the mousedown hit-test must not
+    /// report it as an object. It carries its own prefix for exactly that reason —
+    /// the object hit-test skips it, and a separate resolver recognises it.
     public static final String CLUSTER_PREFIX = "__cluster_";
 
     private FloorMapJsonKeys() {

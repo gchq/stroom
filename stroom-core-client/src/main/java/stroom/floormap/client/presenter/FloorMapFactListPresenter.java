@@ -47,36 +47,33 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * Presenter for the Fact List panel — a grid that lists all objects (facts)
- * known to the current floor map, allowing the user to select one for editing.
- *
- * <p>Used by the <strong>Editor tab</strong> ({@link FloorMapEditorPresenter}) only: selection in
- * the grid drives the Time List and Properties panels so the user can edit temporal entries for
- * the selected object. The Map tab's dock hosts Tracking, Layers and Groups instead.</p>
- *
- * <p>The grid displays three columns: <em>Key</em>, <em>Type</em>, and <em>Name</em>,
- * populated from {@link FactObject} instances that are derived from
- * {@link stroom.util.shared.TemporalEntry} records.</p>
- *
- * <p>The toolbar provides:</p>
- * <ul>
- *   <li><strong>Add</strong> — adds a new object (delegated via {@link #setAddConsumer(Runnable)}).</li>
- *   <li><strong>Delete</strong> — deletes the currently selected object (delegated via
- *       {@link #setDeleteConsumer(Consumer)}). Disabled when nothing is selected.</li>
- *   <li><strong>Show All</strong> (toggle) — when ON, instructs the parent presenter to ignore
- *       the current time filter and display all objects; when OFF, reverts to time-filtered
- *       mode.</li>
- * </ul>
- *
- * <p>Renamed from {@code FloorMapObjectListPresenter}.</p>
- */
+/// Presenter for the Fact List panel — a grid that lists all objects (facts)
+/// known to the current floor map, allowing the user to select one for editing.
+///
+/// Used by the **Editor tab** ([FloorMapEditorPresenter]) only: selection in
+/// the grid drives the Time List and Properties panels so the user can edit temporal entries for
+/// the selected object. The Map tab's dock hosts Tracking, Layers and Groups instead.
+///
+/// The grid displays three columns: *Key*, *Type*, and *Name*,
+/// populated from [FactObject] instances that are derived from
+/// [stroom.util.shared.TemporalEntry] records.
+///
+/// The toolbar provides:
+///
+/// - **Add** — adds a new object (delegated via [#setAddConsumer(Runnable)]).
+/// - **Delete** — deletes the currently selected object (delegated via
+///   [#setDeleteConsumer(Consumer)]). Disabled when nothing is selected.
+/// - **Show All** (toggle) — when ON, instructs the parent presenter to ignore
+///   the current time filter and display all objects; when OFF, reverts to time-filtered
+///   mode.
+///
+/// Renamed from `FloorMapObjectListPresenter`.
 public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactListView> {
 
     private final MyDataGrid<FactObject> dataGrid;
     private final ListDataProvider<FactObject> dataProvider = new ListDataProvider<>();
     private final MultiSelectionModelImpl<FactObject> selectionModel;
-    /** Called with the full multi-selection on every change. Used by the Editor tab. */
+    /// Called with the full multi-selection on every change. Used by the Editor tab.
     private Consumer<List<FactObject>> multiSelectionConsumer;
     private Runnable showAllConsumer;
     private Runnable showTimeFilteredConsumer;
@@ -87,31 +84,27 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
     private Runnable addConsumer;
     private Consumer<String> deleteConsumer;
 
-    /**
-     * This grid's element id, so the canvas can name it as the map's text alternative
-     * via {@code aria-describedby}. Minted per instance, not a constant.
-     *
-     * <p>A previous version of this comment argued for a fixed id: the reference
-     * crosses presenters, so threading a handle through "purely to learn a string"
-     * looked like coupling for nothing, and the Editor tab has only one Fact List panel so the id
-     * "cannot collide with itself". The second half is true and beside the point —
-     * Stroom opens documents in tabs, so the collision is with <em>another
-     * document's</em> grid, not with this one's. Two floor maps open at once gave two
-     * elements the same id, and each canvas's {@code aria-describedby} then resolved
-     * to whichever came first in the DOM. Nothing looks wrong to a sighted user; the
-     * screen reader simply describes the wrong map.</p>
-     *
-     * <p>The coupling objection also does not hold: the consumer already holds this
-     * presenter (FloorMapEditorPresenter.floorMapFactListPresenter), so it reads the id from the instance.</p>
-     */
+    /// This grid's element id, so the canvas can name it as the map's text alternative
+    /// via `aria-describedby`. Minted per instance, not a constant.
+    ///
+    /// A previous version of this comment argued for a fixed id: the reference
+    /// crosses presenters, so threading a handle through "purely to learn a string"
+    /// looked like coupling for nothing, and the Editor tab has only one Fact List panel so the id
+    /// "cannot collide with itself". The second half is true and beside the point —
+    /// Stroom opens documents in tabs, so the collision is with *another
+    /// document's* grid, not with this one's. Two floor maps open at once gave two
+    /// elements the same id, and each canvas's `aria-describedby` then resolved
+    /// to whichever came first in the DOM. Nothing looks wrong to a sighted user; the
+    /// screen reader simply describes the wrong map.
+    ///
+    /// The coupling objection also does not hold: the consumer already holds this
+    /// presenter (FloorMapEditorPresenter.floorMapFactListPresenter), so it reads the id from the instance.
     private final String gridElementId = FloorMapAria.uniqueId("floormap-fact-list-grid");
 
-    /**
-     * The fact grid's element id, for the canvas to point
-     * {@code aria-describedby} at.
-     *
-     * @return the grid's element id
-     */
+    /// The fact grid's element id, for the canvas to point
+    /// `aria-describedby` at.
+    ///
+    /// @return the grid's element id
     public String getGridElementId() {
         return gridElementId;
     }
@@ -253,45 +246,39 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
         dataGrid.addColumn(nameColumn, "Name");
     }
 
-    /**
-     * Replaces the entire grid data with the supplied list.
-     *
-     * <p>Both the backing {@link ListDataProvider} and the visible
-     * {@link MyDataGrid} row data are updated. The current selection is
-     * <em>not</em> automatically adjusted — callers should follow up with
-     * {@link #setSelected(String)} as appropriate.</p>
-     *
-     * @param data the list of fact objects to display; must not be {@code null}
-     */
+    /// Replaces the entire grid data with the supplied list.
+    ///
+    /// Both the backing [ListDataProvider] and the visible
+    /// [MyDataGrid] row data are updated. The current selection is
+    /// *not* automatically adjusted — callers should follow up with
+    /// [#setSelected(String)] as appropriate.
+    ///
+    /// @param data the list of fact objects to display; must not be `null`
     public void setData(final List<FactObject> data) {
         dataProvider.setList(data);
         dataGrid.setRowData(0, data);
     }
 
-    /**
-     * Selects the grid row whose key matches the given value.
-     *
-     * <p>If {@code key} is {@code null} or no matching row is found, the
-     * current selection is cleared. This is the primary mechanism the Editor tab uses to restore
-     * a previous selection after the grid data has been refreshed.</p>
-     *
-     * @param key the temporal-store key to look for; may be {@code null}
-     */
+    /// Selects the grid row whose key matches the given value.
+    ///
+    /// If `key` is `null` or no matching row is found, the
+    /// current selection is cleared. This is the primary mechanism the Editor tab uses to restore
+    /// a previous selection after the grid data has been refreshed.
+    ///
+    /// @param key the temporal-store key to look for; may be `null`
     public void setSelected(final String key) {
         setSelectedKeys(key == null
                 ? java.util.Collections.emptyList()
                 : java.util.Collections.singletonList(key));
     }
 
-    /**
-     * Selects every row whose key is in {@code keys}, replacing the current
-     * selection. Unknown keys are ignored; a {@code null}/empty collection
-     * clears the selection. Does <em>not</em> fire the selection consumers
-     * (this is the programmatic inbound path used to reflect a selection made
-     * elsewhere, e.g. on the canvas).
-     *
-     * @param keys the keys to select; may be {@code null}
-     */
+    /// Selects every row whose key is in `keys`, replacing the current
+    /// selection. Unknown keys are ignored; a `null`/empty collection
+    /// clears the selection. Does *not* fire the selection consumers
+    /// (this is the programmatic inbound path used to reflect a selection made
+    /// elsewhere, e.g. on the canvas).
+    ///
+    /// @param keys the keys to select; may be `null`
     public void setSelectedKeys(final Collection<String> keys) {
         final List<FactObject> list = dataProvider.getList();
         final List<FactObject> toSelect = new ArrayList<>();
@@ -305,70 +292,56 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
         selectionModel.setSelectedItems(toSelect);
     }
 
-    /**
-     * Returns the primary (first) selected {@link FactObject}, or {@code null}
-     * if nothing is selected.
-     *
-     * @return the primary selected fact object, or {@code null}
-     */
+    /// Returns the primary (first) selected [FactObject], or `null`
+    /// if nothing is selected.
+    ///
+    /// @return the primary selected fact object, or `null`
     public FactObject getSelectedObject() {
         return selectionModel.getSelected();
     }
 
-    /**
-     * Registers a callback invoked whenever the grid selection changes, with the
-     * full multi-selection (empty when nothing is selected). Used by the Editor
-     * tab to keep the canvas selection and side panels in sync.
-     *
-     * @param multiSelectionConsumer called on every selection change
-     */
+    /// Registers a callback invoked whenever the grid selection changes, with the
+    /// full multi-selection (empty when nothing is selected). Used by the Editor
+    /// tab to keep the canvas selection and side panels in sync.
+    ///
+    /// @param multiSelectionConsumer called on every selection change
     public void setMultiSelectionConsumer(final Consumer<List<FactObject>> multiSelectionConsumer) {
         this.multiSelectionConsumer = multiSelectionConsumer;
     }
 
-    /**
-     * Sets the action to run when the user clicks the Add button.
-     *
-     * @param addConsumer called when the add button is clicked
-     */
+    /// Sets the action to run when the user clicks the Add button.
+    ///
+    /// @param addConsumer called when the add button is clicked
     public void setAddConsumer(final Runnable addConsumer) {
         this.addConsumer = addConsumer;
     }
 
-    /**
-     * Sets the action to run when the user clicks the Delete button.
-     * The consumer receives the key of the selected fact.
-     *
-     * @param deleteConsumer called with the selected fact's key
-     */
+    /// Sets the action to run when the user clicks the Delete button.
+    /// The consumer receives the key of the selected fact.
+    ///
+    /// @param deleteConsumer called with the selected fact's key
     public void setDeleteConsumer(final Consumer<String> deleteConsumer) {
         this.deleteConsumer = deleteConsumer;
     }
 
-    /**
-     * Sets the action to run when the user toggles "Show all" ON.
-     *
-     * @param showAllConsumer called when show-all is activated
-     */
+    /// Sets the action to run when the user toggles "Show all" ON.
+    ///
+    /// @param showAllConsumer called when show-all is activated
     public void setShowAllConsumer(final Runnable showAllConsumer) {
         this.showAllConsumer = showAllConsumer;
     }
 
-    /**
-     * Sets the action to run when the user toggles "Show all" OFF.
-     *
-     * @param showTimeFilteredConsumer called when time-filtered mode is restored
-     */
+    /// Sets the action to run when the user toggles "Show all" OFF.
+    ///
+    /// @param showTimeFilteredConsumer called when time-filtered mode is restored
     public void setShowTimeFilteredConsumer(final Runnable showTimeFilteredConsumer) {
         this.showTimeFilteredConsumer = showTimeFilteredConsumer;
     }
 
     // -----------------------------------------------------------------------
 
-    /**
-     * Represents a single object (fact) entry shown in the list.
-     * Identified by its temporal-store key; carries display name and type.
-     */
+    /// Represents a single object (fact) entry shown in the list.
+    /// Identified by its temporal-store key; carries display name and type.
     @SuppressWarnings("ClassCanBeRecord")
     public static class FactObject {
 
@@ -382,14 +355,12 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
             this.type = type;
         }
 
-        /**
-         * Creates a {@link FactObject} from a {@link stroom.util.shared.TemporalEntry}
-         * by parsing the JSON value for {@code name} and {@code type}.
-         *
-         * @param entry  the temporal entry; must not be {@code null}
-         * @param schema the value schema used to resolve field paths
-         * @return a new fact object; never {@code null}
-         */
+        /// Creates a [FactObject] from a [stroom.util.shared.TemporalEntry]
+        /// by parsing the JSON value for `name` and `type`.
+        ///
+        /// @param entry  the temporal entry; must not be `null`
+        /// @param schema the value schema used to resolve field paths
+        /// @return a new fact object; never `null`
         public static FactObject fromEntry(final stroom.util.shared.TemporalEntry entry,
                                            final List<FloorMapFieldMapping> schema) {
             String name = entry.getKey();
@@ -448,27 +419,21 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
         }
     }
 
-    /**
-     * View contract for the Fact List panel.
-     *
-     * <p>Implementations provide the layout that hosts the data grid and
-     * the toolbar strip above it.</p>
-     */
+    /// View contract for the Fact List panel.
+    ///
+    /// Implementations provide the layout that hosts the data grid and
+    /// the toolbar strip above it.
     public interface FloorMapFactListView extends View {
 
-        /**
-         * Sets the data-grid widget into the main content area of the panel.
-         *
-         * @param gridWidget the data grid widget; must not be {@code null}
-         */
+        /// Sets the data-grid widget into the main content area of the panel.
+        ///
+        /// @param gridWidget the data grid widget; must not be `null`
         void setGridView(Widget gridWidget);
 
-        /**
-         * Sets the toolbar widget (containing Add, Delete, Show All buttons)
-         * into the toolbar area above the grid.
-         *
-         * @param toolbarWidget the toolbar widget; must not be {@code null}
-         */
+        /// Sets the toolbar widget (containing Add, Delete, Show All buttons)
+        /// into the toolbar area above the grid.
+        ///
+        /// @param toolbarWidget the toolbar widget; must not be `null`
         void setToolbar(Widget toolbarWidget);
     }
 }

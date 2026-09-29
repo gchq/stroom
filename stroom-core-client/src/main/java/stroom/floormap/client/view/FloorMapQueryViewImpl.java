@@ -21,6 +21,7 @@ import stroom.floormap.client.presenter.FloorMapQueryPresenter.FloorMapQueryView
 import stroom.floormap.shared.FloorMapEventColumns;
 import stroom.floormap.shared.FloorMapEventRole;
 import stroom.item.client.SelectionBox;
+import stroom.util.client.Console;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -35,25 +36,21 @@ import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 
-/**
- * View implementation for the floor map query configuration panel.
- *
- * <p>Embeds the standard query editor and exposes column-mapping dropdowns that
- * let the user select which result columns should be used as the entity ID and
- * location ID when plotting facts on the floor map.</p>
- */
+/// View implementation for the floor map query configuration panel.
+///
+/// Embeds the standard query editor and exposes column-mapping dropdowns that
+/// let the user select which result columns should be used as the entity ID and
+/// location ID when plotting facts on the floor map.
 public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView {
 
     private final Widget widget;
 
-    /**
-     * The dropdown for each role.
-     *
-     * <p>Built once from the {@code @UiField}s rather than looked up per call, so the mapping
-     * between a role and its control is stated in exactly one place. A role added to
-     * {@link FloorMapEventRole} without a field here fails on the first {@code get}, which is the
-     * failure mode to want: the alternative is a role that silently cannot be set.</p>
-     */
+    /// The dropdown for each role.
+    ///
+    /// Built once from the `@UiField`s rather than looked up per call, so the mapping
+    /// between a role and its control is stated in exactly one place. A role added to
+    /// [FloorMapEventRole] without a field here fails on the first `get`, which is the
+    /// failure mode to want: the alternative is a role that silently cannot be set.
     private final Map<FloorMapEventRole, SelectionBox<String>> boxesByRole =
             new EnumMap<>(FloorMapEventRole.class);
 
@@ -84,8 +81,13 @@ public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView
         // the <label for> resolves to a non-labelable element, naming nothing. Every box announced
         // as unnamed. Name the inner input directly instead; the label text is duplicated here
         // deliberately, since the FormGroup's copy cannot reach it.
-        boxesByRole.forEach((role, box) ->
-                FloorMapAria.labelInnerControl(box, role.getDisplayName() + " Column"));
+        boxesByRole.forEach((role, box) -> {
+            final String label = role.getDisplayName() + " Column";
+            if (!FloorMapAria.labelInnerControl(box, label)) {
+                Console.error("Floor map: could not find the input inside the '" + label
+                              + "' selection box to give it an accessible name.");
+            }
+        });
     }
 
     @Override
@@ -98,14 +100,12 @@ public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView
         columnMappingsContainer.setVisible(visible);
     }
 
-    /**
-     * Replaces the available items in every column-mapping dropdown with the given column names,
-     * preceded by an empty "none selected" entry.
-     *
-     * <p>The empty entry is what makes a role <em>unmappable</em> as well as mappable, which
-     * matters for both location roles: a store whose events only carry fact keys has no coordinate
-     * column, and pointing the role at some other column would be worse than leaving it unset.</p>
-     */
+    /// Replaces the available items in every column-mapping dropdown with the given column names,
+    /// preceded by an empty "none selected" entry.
+    ///
+    /// The empty entry is what makes a role *unmappable* as well as mappable, which
+    /// matters for both location roles: a store whose events only carry fact keys has no coordinate
+    /// column, and pointing the role at some other column would be worse than leaving it unset.
     @Override
     public void setAvailableColumns(final List<String> columnNames) {
         boxesByRole.values().forEach(box -> populateSelectionBox(box, columnNames));
@@ -131,17 +131,15 @@ public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView
         });
     }
 
-    /**
-     * Registers a handler notified whenever the user changes any role's dropdown.
-     *
-     * <p>Without this the mapping was <b>unsaveable on its own</b>: the tab marks the document
-     * dirty from {@code addChangeHandler}, which only tracks the <em>query editor</em>, so changing
-     * a dropdown left the save icon disabled and the edit was lost on the next tab switch. It
-     * persisted only as a passenger on an unrelated query-text edit, which is worse than not
-     * working — it worked sometimes.</p>
-     *
-     * @param handler run on each change; {@code null} to remove
-     */
+    /// Registers a handler notified whenever the user changes any role's dropdown.
+    ///
+    /// Without this the mapping was **unsaveable on its own**: the tab marks the document
+    /// dirty from `addChangeHandler`, which only tracks the *query editor*, so changing
+    /// a dropdown left the save icon disabled and the edit was lost on the next tab switch. It
+    /// persisted only as a passenger on an unrelated query-text edit, which is worse than not
+    /// working — it worked sometimes.
+    ///
+    /// @param handler run on each change; `null` to remove
     @Override
     public void setColumnChangeHandler(final Runnable handler) {
         //noinspection unused e

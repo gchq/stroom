@@ -22,15 +22,13 @@ import stroom.query.api.Column;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * The query and columns a {@link FloorMapEventStoreDataPresenter} starts with.
- *
- * <p>Held apart from the presenter so they can be tested. {@code AbstractQueryDataPresenter} calls
- * {@code GWT.create()} in a static initialiser, so touching any static member of a subclass - even
- * a plain string constant - initialises that superclass and throws outside a browser. The same
- * separation {@code HistogramDataModel} uses, for the same reason: the part worth testing must not
- * sit behind something that cannot run.</p>
- */
+/// The query and columns a [FloorMapEventStoreDataPresenter] starts with.
+///
+/// Held apart from the presenter so they can be tested. `AbstractQueryDataPresenter` calls
+/// `GWT.create()` in a static initialiser, so touching any static member of a subclass - even
+/// a plain string constant - initialises that superclass and throws outside a browser. The same
+/// separation `HistogramDataModel` uses, for the same reason: the part worth testing must not
+/// sit behind something that cannot run.
 final class FloorMapEventStoreDataDefaults {
 
     // The grid shown before the query is first run - column headers over an empty table, and
@@ -78,29 +76,27 @@ final class FloorMapEventStoreDataDefaults {
         // Constants only.
     }
 
-    /**
-     * The Plan B temporal state default, plus the event properties the floor map reads.
-     *
-     * <p><b>One line, necessarily.</b> The query editor is a {@code g:TextBox} - a single-line
-     * {@code <input>} - so {@code setText} discards newlines rather than wrapping. A multi-line
-     * default does not come back multi-line; it comes back with the line breaks removed and the
-     * tokens either side fused, which is how {@code limit 100} became {@code limit 100select}.
-     * {@code FloorMapEventsQuery.defaultQuery()} may span lines because the Events Query tab has a
-     * real editor. This one may not.</p>
-     *
-     * <p>{@code Key} keeps its Plan B name rather than the floor map's {@code Entity ID} alias: this
-     * tab reads the store, and the store's column is {@code Key}. The five aliases come from
-     * {@link FloorMapEventsQuery} rather than literal text so that renaming one changes the events
-     * query and this tab together - the same reason that class exists at all.</p>
-     *
-     * <p>The store is named directly rather than through {@code param('EventStore')}: the Data tab
-     * runs against the document it is part of, and {@code AbstractQueryDataPresenter.onRun} sends
-     * no params. That also means no {@code readMode} or {@code asAt}, so this takes the ordinary
-     * range read rather than the map's point-in-time snapshot.</p>
-     *
-     * @param storeName the store document's name
-     * @return the default query text, on a single line; never null
-     */
+    /// The Plan B temporal state default, plus the event properties the floor map reads.
+    ///
+    /// **One line, necessarily.** The query editor is a `g:TextBox` - a single-line
+    /// `<input>` - so `setText` discards newlines rather than wrapping. A multi-line
+    /// default does not come back multi-line; it comes back with the line breaks removed and the
+    /// tokens either side fused, which is how `limit 100` became `limit 100select`.
+    /// `FloorMapEventsQuery.defaultQuery()` may span lines because the Events Query tab has a
+    /// real editor. This one may not.
+    ///
+    /// `Key` keeps its Plan B name rather than the floor map's `Entity ID` alias: this
+    /// tab reads the store, and the store's column is `Key`. The five aliases come from
+    /// [FloorMapEventsQuery] rather than literal text so that renaming one changes the events
+    /// query and this tab together - the same reason that class exists at all.
+    ///
+    /// The store is named directly rather than through `param('EventStore')`: the Data tab
+    /// runs against the document it is part of, and `AbstractQueryDataPresenter.onRun` sends
+    /// no params. That also means no `readMode` or `asAt`, so this takes the ordinary
+    /// range read rather than the map's point-in-time snapshot.
+    ///
+    /// @param storeName the store document's name
+    /// @return the default query text, on a single line; never null
     static String query(final String storeName) {
         return "from \"" + storeName + "\" limit 100"
                + " select EffectiveTime as \"" + FloorMapEventsQuery.EFFECTIVE_TIME_COLUMN + "\""
@@ -113,11 +109,9 @@ final class FloorMapEventStoreDataDefaults {
                + ", jq(Value, '.message') as \"" + FloorMapEventsQuery.MESSAGE_COLUMN + "\"";
     }
 
-    /**
-     * The eight columns, in the order the grid shows them.
-     *
-     * @return the default column list; never null
-     */
+    /// The eight columns, in the order the grid shows them.
+    ///
+    /// @return the default column list; never null
     static List<Column> columns() {
         return Arrays.asList(
                 TIME_COL, KEY_COL, VALUE_COL, LOCATION_COL, LOCATION_REF_COL, TYPE_COL, STATUS_COL, MESSAGE_COL);

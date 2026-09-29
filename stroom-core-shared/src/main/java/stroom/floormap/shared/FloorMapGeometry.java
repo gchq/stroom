@@ -16,43 +16,39 @@
 
 package stroom.floormap.shared;
 
-/**
- * Plain 2D polygon geometry — the single containment algorithm shared by the
- * FloorMap client and the {@code pointIsInsideXYPolygon} XSLT function.
- *
- * <p>Containment is an <strong>even-odd</strong> (ray-cast) test with an
- * axis-aligned bounding box prefilter, matching the {@code fill-rule="evenodd"}
- * the area renderer paints with — so what looks filled on the canvas is exactly
- * what tests as inside.</p>
- *
- * <p>Holds no GWT or DOM types so it can be unit-tested on the JVM and compiled
- * to JavaScript.</p>
- *
- * <p><strong>Coordinate space:</strong> every method here is space-agnostic —
- * it simply compares numbers. Callers are responsible for making the polygon
- * and the point share one space; for FloorMap that space is always
- * <strong>map space</strong>.</p>
- */
+/// Plain 2D polygon geometry — the single containment algorithm shared by the
+/// FloorMap client and the `pointIsInsideXYPolygon` XSLT function.
+///
+/// Containment is an **even-odd** (ray-cast) test with an
+/// axis-aligned bounding box prefilter, matching the `fill-rule="evenodd"`
+/// the area renderer paints with — so what looks filled on the canvas is exactly
+/// what tests as inside.
+///
+/// Holds no GWT or DOM types so it can be unit-tested on the JVM and compiled
+/// to JavaScript.
+///
+/// **Coordinate space:** every method here is space-agnostic —
+/// it simply compares numbers. Callers are responsible for making the polygon
+/// and the point share one space; for FloorMap that space is always
+/// **map space**.
 public final class FloorMapGeometry {
 
     private FloorMapGeometry() {
         // Utility class.
     }
 
-    /**
-     * Tests whether the point {@code (x, y)} lies inside the polygon, using an
-     * even-odd ray cast behind an AABB prefilter.
-     *
-     * <p>Points exactly on an edge are not guaranteed either way (the usual
-     * caveat for this family of tests) — the result is stable, but which side a
-     * boundary point falls on depends on the edge's orientation.</p>
-     *
-     * @param polygon the polygon vertices {@code [[x,y], ...]}; a polygon with
-     *                fewer than 3 usable vertices contains nothing
-     * @param x       the test point's x
-     * @param y       the test point's y
-     * @return {@code true} if the point is inside
-     */
+    /// Tests whether the point `(x, y)` lies inside the polygon, using an
+    /// even-odd ray cast behind an AABB prefilter.
+    ///
+    /// Points exactly on an edge are not guaranteed either way (the usual
+    /// caveat for this family of tests) — the result is stable, but which side a
+    /// boundary point falls on depends on the edge's orientation.
+    ///
+    /// @param polygon the polygon vertices `{{x, y}, ...}`; a polygon with
+    ///         fewer than 3 usable vertices contains nothing
+    /// @param x       the test point's x
+    /// @param y       the test point's y
+    /// @return `true` if the point is inside
     public static boolean contains(final double[][] polygon, final double x, final double y) {
         if (polygon == null || polygon.length < 3) {
             return false;
@@ -81,14 +77,12 @@ public final class FloorMapGeometry {
         return inside;
     }
 
-    /**
-     * Returns the axis-aligned bounding box of the polygon as
-     * {@code {minX, minY, maxX, maxY}}, or {@code null} if it has no usable
-     * vertices.
-     *
-     * @param polygon the polygon vertices {@code [[x,y], ...]}; may be {@code null}
-     * @return the bounds, or {@code null}
-     */
+    /// Returns the axis-aligned bounding box of the polygon as
+    /// `{minX, minY, maxX, maxY}`, or `null` if it has no usable
+    /// vertices.
+    ///
+    /// @param polygon the polygon vertices `{{x, y}, ...}`; may be `null`
+    /// @return the bounds, or `null`
     public static double[] aabb(final double[][] polygon) {
         if (polygon == null || polygon.length == 0) {
             return null;
@@ -112,16 +106,14 @@ public final class FloorMapGeometry {
                 : null;
     }
 
-    /**
-     * Returns the unsigned area of the polygon via the shoelace formula.
-     *
-     * <p>Used to rank nested areas: when a point falls inside several
-     * overlapping areas, the smallest one is the most specific answer to
-     * "which area is it in?".</p>
-     *
-     * @param polygon the polygon vertices {@code [[x,y], ...]}; may be {@code null}
-     * @return the unsigned area, or {@code 0} for a degenerate polygon
-     */
+    /// Returns the unsigned area of the polygon via the shoelace formula.
+    ///
+    /// Used to rank nested areas: when a point falls inside several
+    /// overlapping areas, the smallest one is the most specific answer to
+    /// "which area is it in?".
+    ///
+    /// @param polygon the polygon vertices `{{x, y}, ...}`; may be `null`
+    /// @return the unsigned area, or `0` for a degenerate polygon
     public static double area(final double[][] polygon) {
         if (polygon == null || polygon.length < 3) {
             return 0;
@@ -146,7 +138,7 @@ public final class FloorMapGeometry {
     /// occupant badge and camera anchor sit, so every caller has to agree on it —
     /// which is why there is exactly one implementation.
     ///
-    /// @param polygon the polygon vertices `[[x,y], ...]`; may be `null`.
+    /// @param polygon the polygon vertices `{{x, y}, ...}`; may be `null`.
     ///         Rows that are `null` or shorter than two elements are
     ///         skipped, as in [#aabb(double\[\]\[\])]
     /// @return the centroid, or `null`

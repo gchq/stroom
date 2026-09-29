@@ -44,11 +44,9 @@ class TestFloorMapAreaOverlay {
         return new FloorMapObject(id, FloorMapJsonKeys.PERSON, x, y);
     }
 
-    /**
-     * Two concentric areas at (100,100) — a small "bay" drawn within a large
-     * "warehouse" — with alice inside both and bob outside both. The bay is not
-     * an occupant of the warehouse: areas are never located inside anything.
-     */
+    /// Two concentric areas at (100,100) — a small "bay" drawn within a large
+    /// "warehouse" — with alice inside both and bob outside both. The bay is not
+    /// an occupant of the warehouse: areas are never located inside anything.
     private static FloorMapAreaMembership nestedMembership() {
         final List<Fact> facts = Arrays.asList(
                 area("warehouse", 100),
@@ -57,10 +55,8 @@ class TestFloorMapAreaOverlay {
                 Arrays.asList(event("alice", 100, 100), event("bob", 900, 900)));
     }
 
-    /**
-     * Focusing an entity flags the areas containing it — the direction the
-     * plan calls "highlight areas containing facts".
-     */
+    /// Focusing an entity flags the areas containing it — the direction the
+    /// plan calls "highlight areas containing facts".
     @Test
     void testFocusEntityHighlightsContainingAreas() {
         final FloorMapAreaOverlay overlay =
@@ -72,7 +68,7 @@ class TestFloorMapAreaOverlay {
         assertThat(overlay.hasRelated()).isTrue();
     }
 
-    /** Focusing an area flags its occupants — the reciprocal direction. */
+    /// Focusing an area flags its occupants — the reciprocal direction.
     @Test
     void testFocusAreaHighlightsOccupants() {
         final FloorMapAreaOverlay overlay =
@@ -82,10 +78,8 @@ class TestFloorMapAreaOverlay {
         assertThat(overlay.isRelated("bob")).isFalse();
     }
 
-    /**
-     * Focusing the outer area flags the person inside it but NOT the area drawn
-     * within it — areas are never occupants, so nesting is never highlighted.
-     */
+    /// Focusing the outer area flags the person inside it but NOT the area drawn
+    /// within it — areas are never occupants, so nesting is never highlighted.
     @Test
     void testFocusOuterAreaDoesNotHighlightEnclosedArea() {
         final FloorMapAreaOverlay overlay =
@@ -95,7 +89,7 @@ class TestFloorMapAreaOverlay {
         assertThat(overlay.isRelated("bay")).isFalse();
     }
 
-    /** The focused thing is never flagged as related to itself. */
+    /// The focused thing is never flagged as related to itself.
     @Test
     void testFocusNotRelatedToItself() {
         assertThat(FloorMapAreaOverlay.of(nestedMembership(), "bay").isRelated("bay"))
@@ -104,7 +98,7 @@ class TestFloorMapAreaOverlay {
                 .isFalse();
     }
 
-    /** Badges are produced with nothing focused; only the highlight needs focus. */
+    /// Badges are produced with nothing focused; only the highlight needs focus.
     @Test
     void testCountsWithoutFocus() {
         final FloorMapAreaOverlay overlay = FloorMapAreaOverlay.of(nestedMembership(), null);
@@ -115,10 +109,8 @@ class TestFloorMapAreaOverlay {
         assertThat(overlay.getOccupantCount("warehouse")).isEqualTo(1);
     }
 
-    /**
-     * An empty area carries no count, so the view draws no badge rather than a
-     * "0".
-     */
+    /// An empty area carries no count, so the view draws no badge rather than a
+    /// "0".
     @Test
     void testEmptyAreaHasNoCount() {
         final FloorMapAreaMembership membership = FloorMapAreaMembership.compute(
@@ -131,13 +123,14 @@ class TestFloorMapAreaOverlay {
     @Test
     void testNullsAreSafe() {
         assertThat(FloorMapAreaOverlay.of(null, "alice")).isSameAs(FloorMapAreaOverlay.EMPTY);
+        //noinspection ConstantValue
         assertThat(FloorMapAreaOverlay.EMPTY.isRelated(null)).isFalse();
         assertThat(FloorMapAreaOverlay.EMPTY.isRelated("anything")).isFalse();
         assertThat(FloorMapAreaOverlay.EMPTY.getOccupantCount(null)).isNull();
         assertThat(FloorMapAreaOverlay.EMPTY.hasRelated()).isFalse();
     }
 
-    /** A membership with no areas at all yields the shared empty instance. */
+    /// A membership with no areas at all yields the shared empty instance.
     @Test
     void testNoAreasYieldsEmpty() {
         assertThat(FloorMapAreaOverlay.of(FloorMapAreaMembership.EMPTY, "alice"))

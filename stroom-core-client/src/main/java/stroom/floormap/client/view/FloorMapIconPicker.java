@@ -28,21 +28,19 @@ import com.google.gwt.user.client.ui.Label;
 import java.util.EnumMap;
 import java.util.Map;
 
-/**
- * Grid of the built-in {@link FloorMapIcon}s, one of which can be selected.
- *
- * <p>Every icon is drawn <strong>in the layer's own colour</strong> rather than a
- * neutral grey, so the grid previews the decision instead of merely listing the
- * options — pick a colour, and the whole grid restates what that colour looks
- * like. {@link #setColour} rebuilds for that reason.</p>
- *
- * <p>Each cell names its icon underneath, wrapping rather than truncating: a grid
- * of pictograms alone would make the user guess which drawing is meant to be the
- * badge reader.</p>
- */
+/// Grid of the built-in [FloorMapIcon]s, one of which can be selected.
+///
+/// Every icon is drawn **in the layer's own colour** rather than a
+/// neutral grey, so the grid previews the decision instead of merely listing the
+/// options — pick a colour, and the whole grid restates what that colour looks
+/// like. [#setColour] rebuilds for that reason.
+///
+/// Each cell names its icon underneath, wrapping rather than truncating: a grid
+/// of pictograms alone would make the user guess which drawing is meant to be the
+/// badge reader.
 public class FloorMapIconPicker extends Composite {
 
-    /** Size of each cell's icon in pixels. */
+    /// Size of each cell's icon in pixels.
     private static final int ICON_SIZE_PX = 30;
 
     private static final String CELL_STYLE = "floormap-icon-picker__cell";
@@ -79,6 +77,7 @@ public class FloorMapIconPicker extends Composite {
         label.addStyleName("floormap-icon-picker__label");
         cell.add(label);
 
+        //noinspection unused event
         cell.addDomHandler(event -> {
             // Disabled means "this mode is not in use", not "these icons are
             // gone" — the grid stays legible so the user can see what switching
@@ -94,17 +93,15 @@ public class FloorMapIconPicker extends Composite {
         return cell;
     }
 
-    /** The chosen icon, or {@code null} if none is chosen. */
+    /// The chosen icon, or `null` if none is chosen.
     public FloorMapIcon getValue() {
         return selected;
     }
 
-    /**
-     * Selects an icon without firing the change handler, so the presenter can
-     * populate the grid without it looking like a user edit.
-     *
-     * @param icon the icon to select, or {@code null} to select none
-     */
+    /// Selects an icon without firing the change handler, so the presenter can
+    /// populate the grid without it looking like a user edit.
+    ///
+    /// @param icon the icon to select, or `null` to select none
     public void setValue(final FloorMapIcon icon) {
         if (selected != null) {
             cells.get(selected).removeStyleName(SELECTED_STYLE);
@@ -115,11 +112,9 @@ public class FloorMapIconPicker extends Composite {
         }
     }
 
-    /**
-     * Redraws every icon in the given colour.
-     *
-     * @param colour a hex colour, or {@code null} for the built-in default
-     */
+    /// Redraws every icon in the given colour.
+    ///
+    /// @param colour a hex colour, or `null` for the built-in default
     public void setColour(final String colour) {
         if (this.colour == null
                 ? colour == null
@@ -135,13 +130,13 @@ public class FloorMapIconPicker extends Composite {
         }
     }
 
-    /** Whether clicks select an icon. A disabled grid is dimmed, not emptied. */
+    /// Whether clicks select an icon. A disabled grid is dimmed, not emptied.
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
         grid.setStyleName("floormap-icon-picker--disabled", !enabled);
     }
 
-    /** Registers the handler run when the user picks an icon. */
+    /// Registers the handler run when the user picks an icon.
     public void setChangeHandler(final Runnable changeHandler) {
         this.changeHandler = changeHandler;
     }

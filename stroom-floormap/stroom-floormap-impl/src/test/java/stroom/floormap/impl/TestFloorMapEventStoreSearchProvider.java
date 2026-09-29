@@ -36,13 +36,11 @@ import java.util.function.Function;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * The read contract: what a caller must say to get a snapshot, and where the expiry floor comes from.
- *
- * <p>This is the part of the design that replaced a read mode inferred from whether a time term
- * happened to be {@code <} rather than {@code >}. The rules are therefore worth pinning precisely —
- * an accidental relaxation here would put the guessing back.</p>
- */
+/// The read contract: what a caller must say to get a snapshot, and where the expiry floor comes from.
+///
+/// This is the part of the design that replaced a read mode inferred from whether a time term
+/// happened to be `<` rather than `>`. The rules are therefore worth pinning precisely —
+/// an accidental relaxation here would put the guessing back.
 class TestFloorMapEventStoreSearchProvider {
 
     private static final Instant AS_AT = Instant.parse("2026-01-01T12:00:00.000Z");
@@ -182,15 +180,13 @@ class TestFloorMapEventStoreSearchProvider {
                 .isEqualTo(AS_AT.minusSeconds(24 * 3600L));
     }
 
-    /**
-     * A store of another type is refused where the document is resolved.
-     *
-     * <p>{@code PlanBDocCache} resolves by name across every registered Plan B type, so a name
-     * belonging to another type resolves to that type's document. Checked once, at resolution,
-     * rather than on the snapshot path alone — the range read would otherwise serve another store's
-     * rows quite happily, and the snapshot read would seek over an encoding that is not prefix-free
-     * and drop keys in silence.</p>
-     */
+    /// A store of another type is refused where the document is resolved.
+    ///
+    /// `PlanBDocCache` resolves by name across every registered Plan B type, so a name
+    /// belonging to another type resolves to that type's document. Checked once, at resolution,
+    /// rather than on the snapshot path alone — the range read would otherwise serve another store's
+    /// rows quite happily, and the snapshot read would seek over an encoding that is not prefix-free
+    /// and drop keys in silence.
     @Test
     void storeOfAnotherTypeIsRefused() {
         final PlanBDoc otherType = PlanBDoc.builder()
@@ -208,14 +204,12 @@ class TestFloorMapEventStoreSearchProvider {
     // The dispatch: which read actually runs.
     // ------------------------------------------------------------------
 
-    /**
-     * A shard manager that hands out one reader and remembers nothing else.
-     *
-     * <p>A Mockito mock with a custom answer rather than a plain stub, because {@code get} takes a
-     * {@code Function} and runs it — the behaviour under test is which method that function calls,
-     * so the double has to actually invoke it. A stubbed {@code get} would return without running
-     * anything, and the test would pass against a provider that did nothing at all.</p>
-     */
+    /// A shard manager that hands out one reader and remembers nothing else.
+    ///
+    /// A Mockito mock with a custom answer rather than a plain stub, because `get` takes a
+    /// `Function` and runs it — the behaviour under test is which method that function calls,
+    /// so the double has to actually invoke it. A stubbed `get` would return without running
+    /// anything, and the test would pass against a provider that did nothing at all.
     private static ShardManager shardManagerServing(final Db<?, ?> reader) {
         final ShardManager shardManager = Mockito.mock(ShardManager.class);
         Mockito.when(shardManager.get(Mockito.anyString(), Mockito.any()))
@@ -228,47 +222,46 @@ class TestFloorMapEventStoreSearchProvider {
 
     @Test
     void withoutAnAsAtTheOrdinaryReadRuns() {
-        final TemporalStateDb reader = Mockito.mock(TemporalStateDb.class);
+        try (final TemporalStateDb reader = Mockito.mock(TemporalStateDb.class)) {
+            FloorMapEventStoreSearchProvider.readThrough(
+                    shardManagerServing(reader), "events", null, null, null, null, null, null, null);
 
-        FloorMapEventStoreSearchProvider.readThrough(
-                shardManagerServing(reader), "events", null, null, null, null, null, null, null);
-
-        Mockito.verify(reader).search(Mockito.any(), Mockito.any(), Mockito.any(),
-                Mockito.any(), Mockito.any());
-        Mockito.verify(reader, Mockito.never()).searchSnapshot(
-                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
-                Mockito.any(), Mockito.any());
+            Mockito.verify(reader).search(Mockito.any(), Mockito.any(), Mockito.any(),
+                    Mockito.any(), Mockito.any());
+            Mockito.verify(reader, Mockito.never()).searchSnapshot(
+                    Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                    Mockito.any(), Mockito.any());
+        }
     }
 
     @Test
     void withAnAsAtTheSnapshotRunsAndCarriesTheFloor() {
-        final TemporalStateDb reader = Mockito.mock(TemporalStateDb.class);
         final Instant floor = AS_AT.minusSeconds(3600L);
 
-        FloorMapEventStoreSearchProvider.readThrough(
-                shardManagerServing(reader), "events", null, null, null, null, null, AS_AT, floor);
+        try (final TemporalStateDb reader = Mockito.mock(TemporalStateDb.class)) {
+            FloorMapEventStoreSearchProvider.readThrough(
+                    shardManagerServing(reader), "events", null, null, null, null, null, AS_AT, floor);
 
-        Mockito.verify(reader).searchSnapshot(
-                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
-                Mockito.eq(AS_AT), Mockito.eq(floor));
-        Mockito.verify(reader, Mockito.never()).search(
-                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+            Mockito.verify(reader).searchSnapshot(
+                    Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                    Mockito.eq(AS_AT), Mockito.eq(floor));
+            Mockito.verify(reader, Mockito.never()).search(
+                    Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        }
     }
 
-    /**
-     * A store that is not a temporal state store cannot serve a snapshot.
-     *
-     * <p>Holds by construction — the document type fixes {@code stateType} — so this is here for the
-     * case where it somehow does not, to fail with something a person can act on rather than by
-     * reading an encoding that is not prefix-free.</p>
-     */
+    /// A store that is not a temporal state store cannot serve a snapshot.
+    ///
+    /// Holds by construction — the document type fixes `stateType` — so this is here for the
+    /// case where it somehow does not, to fail with something a person can act on rather than by
+    /// reading an encoding that is not prefix-free.
     @Test
     void snapshotOverTheWrongKindOfStoreIsRefused() {
-        final Db<?, ?> notTemporal = Mockito.mock(Db.class);
-
-        assertThatThrownBy(() -> FloorMapEventStoreSearchProvider.readThrough(
-                shardManagerServing(notTemporal), "events", null, null, null, null, null, AS_AT, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("temporal state store");
+        try (final Db<?, ?> notTemporal = Mockito.mock(Db.class)) {
+            assertThatThrownBy(() -> FloorMapEventStoreSearchProvider.readThrough(
+                    shardManagerServing(notTemporal), "events", null, null, null, null, null, AS_AT, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("temporal state store");
+        }
     }
 }

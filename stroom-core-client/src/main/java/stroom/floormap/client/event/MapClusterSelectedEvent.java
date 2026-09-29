@@ -23,19 +23,17 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-/**
- * Event fired when a cluster's summary glyph is clicked on the floor map canvas.
- *
- * <p>Deliberately <strong>not</strong> a {@link MapObjectSelectedEvent}: a cluster
- * is not an entity. It has no row in the tracking roster and no fact behind it, so
- * announcing it as a selected object would name an entity the user cannot see and
- * did not aim at. The owning tab responds by listing the members instead, which is
- * what makes them reachable.</p>
- *
- * <p>Carries the whole cluster rather than its key, because the cluster is a
- * per-frame value: by the time a handler ran, the next frame may have dissolved
- * it, and the list the user asked for is the one they clicked on.</p>
- */
+/// Event fired when a cluster's summary glyph is clicked on the floor map canvas.
+///
+/// Deliberately **not** a [MapObjectSelectedEvent]: a cluster
+/// is not an entity. It has no row in the tracking roster and no fact behind it, so
+/// announcing it as a selected object would name an entity the user cannot see and
+/// did not aim at. The owning tab responds by listing the members instead, which is
+/// what makes them reachable.
+///
+/// Carries the whole cluster rather than its key, because the cluster is a
+/// per-frame value: by the time a handler ran, the next frame may have dissolved
+/// it, and the list the user asked for is the one they clicked on.
 public class MapClusterSelectedEvent extends GwtEvent<Handler> {
 
     private static Type<Handler> TYPE;
@@ -66,16 +64,14 @@ public class MapClusterSelectedEvent extends GwtEvent<Handler> {
         handler.onSelect(this);
     }
 
-    /** The clicked cluster, as it was drawn on the frame that was clicked. */
+    /// The clicked cluster, as it was drawn on the frame that was clicked.
     public FloorMapCluster getCluster() {
         return cluster;
     }
 
     // --------------------------------------------------------------------------------
 
-    /**
-     * Handler for {@link MapClusterSelectedEvent}.
-     */
+    /// Handler for [MapClusterSelectedEvent].
     public interface Handler extends EventHandler {
 
         void onSelect(MapClusterSelectedEvent event);

@@ -38,7 +38,7 @@ class TestFloorMapClusterOverlay {
 
     private static final double THRESHOLD = 10;
 
-    /** Mirrors {@code FloorMapClusterOverlay.SPREAD_LIMIT}, which is private. */
+    /// Mirrors `FloorMapClusterOverlay.SPREAD_LIMIT`, which is private.
     private static final double SPREAD_LIMIT = 2.0;
 
     private static FloorMapObject event(final String id, final double x, final double y) {
@@ -52,7 +52,7 @@ class TestFloorMapClusterOverlay {
         return new FloorMapObject(id, type, x, y);
     }
 
-    /** An imageless, vertex-less fact — the kind drawn as a fixed-size glyph. */
+    /// An imageless, vertex-less fact — the kind drawn as a fixed-size glyph.
     private static Fact pointFact(final String key,
                                   final String type,
                                   final double mapX,
@@ -84,11 +84,9 @@ class TestFloorMapClusterOverlay {
     // The two reported problems
     // =========================================================================
 
-    /**
-     * Ten users at the identical position — the reported case where only the
-     * last-painted glyph is visible and the other nine are unreachable. They are
-     * zero apart, so they merge at any threshold, i.e. at any zoom.
-     */
+    /// Ten users at the identical position — the reported case where only the
+    /// last-painted glyph is visible and the other nine are unreachable. They are
+    /// zero apart, so they merge at any threshold, i.e. at any zoom.
     @Test
     void testCoincidentEntitiesMerge() {
         final List<FloorMapObject> events = new ArrayList<>();
@@ -108,11 +106,9 @@ class TestFloorMapClusterOverlay {
         assertThat(overlay.getClusteredEntityCount()).isEqualTo(10);
     }
 
-    /**
-     * Coincident entities merge no matter how far in the user zooms: the
-     * threshold shrinks with zoom but their separation is zero. This is why the
-     * toggle, not zooming, is the escape hatch for this case.
-     */
+    /// Coincident entities merge no matter how far in the user zooms: the
+    /// threshold shrinks with zoom but their separation is zero. This is why the
+    /// toggle, not zooming, is the escape hatch for this case.
     @Test
     void testCoincidentEntitiesMergeAtEveryZoom() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -126,11 +122,9 @@ class TestFloorMapClusterOverlay {
         }
     }
 
-    /**
-     * The zoomed-out case: entities far enough apart to be distinct stay
-     * separate, and merge only once the threshold grows past their separation —
-     * which is what zooming out does.
-     */
+    /// The zoomed-out case: entities far enough apart to be distinct stay
+    /// separate, and merge only once the threshold grows past their separation —
+    /// which is what zooming out does.
     @Test
     void testZoomingOutMergesDistinctEntities() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -153,7 +147,7 @@ class TestFloorMapClusterOverlay {
     // Partition rules
     // =========================================================================
 
-    /** A lone entity is not a cluster — it renders normally. */
+    /// A lone entity is not a cluster — it renders normally.
     @Test
     void testSingletonIsNotACluster() {
         final FloorMapClusterOverlay overlay = clusterEvents(
@@ -164,10 +158,8 @@ class TestFloorMapClusterOverlay {
         assertThat(overlay.getClusterFor("alice")).isNull();
     }
 
-    /**
-     * Two entities of different types at the same spot do not merge: clusters are
-     * homogeneous, so each keeps its own colour, shape and layer dimming.
-     */
+    /// Two entities of different types at the same spot do not merge: clusters are
+    /// homogeneous, so each keeps its own colour, shape and layer dimming.
     @Test
     void testTypesClusterSeparately() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -185,10 +177,8 @@ class TestFloorMapClusterOverlay {
         assertThat(overlay.getClusters().get(1).getLabel()).isEqualTo("2 users");
     }
 
-    /**
-     * A crowd of one type mixed with a lone entity of another leaves the lone one
-     * rendering normally.
-     */
+    /// A crowd of one type mixed with a lone entity of another leaves the lone one
+    /// rendering normally.
     @Test
     void testLoneEntityOfOtherTypeIsUnaffected() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -202,14 +192,12 @@ class TestFloorMapClusterOverlay {
         assertThat(overlay.isClustered("printer1")).isFalse();
     }
 
-    /**
-     * The tracked entity is merged in like any other, and its cluster reports it.
-     *
-     * <p>Excluding it instead would draw a second glyph a few pixels from the
-     * cluster's, leaving the tracked entity underneath it and invisible. Two glyphs
-     * at one spot is the crowding this feature exists to remove, so the focus is
-     * folded in and the cluster drawn around it.</p>
-     */
+    /// The tracked entity is merged in like any other, and its cluster reports it.
+    ///
+    /// Excluding it instead would draw a second glyph a few pixels from the
+    /// cluster's, leaving the tracked entity underneath it and invisible. Two glyphs
+    /// at one spot is the crowding this feature exists to remove, so the focus is
+    /// folded in and the cluster drawn around it.
     @Test
     void testFocusedEntityIsClusteredAndReported() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -228,11 +216,9 @@ class TestFloorMapClusterOverlay {
         assertThat(cluster.hasFocusedMember()).isTrue();
     }
 
-    /**
-     * A focused cluster is anchored on the focused member, not on the crowd's
-     * centroid — so the glyph sits where the camera is pointing and does not drift
-     * off the tracked entity as the people around them move.
-     */
+    /// A focused cluster is anchored on the focused member, not on the crowd's
+    /// centroid — so the glyph sits where the camera is pointing and does not drift
+    /// off the tracked entity as the people around them move.
     @Test
     void testFocusedClusterIsAnchoredOnTheFocusedMember() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -253,10 +239,8 @@ class TestFloorMapClusterOverlay {
         assertThat(focused.getMapY()).isEqualTo(8);
     }
 
-    /**
-     * A focused entity with no neighbours is still not a cluster — it renders as
-     * itself, exactly as before.
-     */
+    /// A focused entity with no neighbours is still not a cluster — it renders as
+    /// itself, exactly as before.
     @Test
     void testLoneFocusedEntityIsNotACluster() {
         assertThat(FloorMapClusterOverlay.compute(
@@ -267,10 +251,8 @@ class TestFloorMapClusterOverlay {
                 .isTrue();
     }
 
-    /**
-     * A focused id that is nowhere near the crowd leaves that crowd unfocused —
-     * focus is a property of membership, not of the frame.
-     */
+    /// A focused id that is nowhere near the crowd leaves that crowd unfocused —
+    /// focus is a property of membership, not of the frame.
     @Test
     void testFocusElsewhereLeavesAClusterUnfocused() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -285,12 +267,10 @@ class TestFloorMapClusterOverlay {
         assertThat(overlay.getClusters().getFirst().getFocusedMemberId()).isNull();
     }
 
-    /**
-     * Two focused members in one cluster cannot happen from the Map tab (its
-     * selection is single, and multi-select lives in edit mode where clustering is
-     * off), but the representative must still be deterministic rather than
-     * traversal-dependent: it is the first in sorted member order.
-     */
+    /// Two focused members in one cluster cannot happen from the Map tab (its
+    /// selection is single, and multi-select lives in edit mode where clustering is
+    /// off), but the representative must still be deterministic rather than
+    /// traversal-dependent: it is the first in sorted member order.
     @Test
     void testMultipleFocusedMembersPickTheFirstInOrder() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -305,17 +285,15 @@ class TestFloorMapClusterOverlay {
         assertThat(cluster.getFocusedMemberId()).isEqualTo("bob");
     }
 
-    /**
-     * The merge pass repeats, so a cluster is no longer capped at twice the
-     * threshold — but the spread guard still keeps it on a leash: no member ends
-     * up further than {@code SPREAD_LIMIT} thresholds from its seed, so no two
-     * members are further than twice that from each other.
-     *
-     * <p>The corridor is the case the guard exists for. Without it, repeating the
-     * pass would chain a dense line together round after round into one badge
-     * standing for entities nowhere near it; here 60 entities spread over 59 units
-     * stay in several clusters, none spanning more than 40.</p>
-     */
+    /// The merge pass repeats, so a cluster is no longer capped at twice the
+    /// threshold — but the spread guard still keeps it on a leash: no member ends
+    /// up further than `SPREAD_LIMIT` thresholds from its seed, so no two
+    /// members are further than twice that from each other.
+    ///
+    /// The corridor is the case the guard exists for. Without it, repeating the
+    /// pass would chain a dense line together round after round into one badge
+    /// standing for entities nowhere near it; here 60 entities spread over 59 units
+    /// stay in several clusters, none spanning more than 40.
     @Test
     void testClusterSpreadIsBounded() {
         // A dense line of entities one unit apart, which single-linkage
@@ -344,18 +322,16 @@ class TestFloorMapClusterOverlay {
     // Why the pass repeats
     // =========================================================================
 
-    /**
-     * The residue a single pass leaves, and the reason clustering read as barely
-     * working: two crowds each merge, and then their <em>badges</em> — drawn at
-     * the centroids, not at the seeds — end up on top of each other. Repeating the
-     * pass merges them.
-     *
-     * <p>Two knots of three, 11 apart, threshold 10. No member of one is within
-     * the threshold of any member of the other, so the first pass can only form
-     * two clusters — and then draws their badges 11 apart, overlapping, because a
-     * badge standing for three is wider than one standing for one. The second
-     * round merges them.</p>
-     */
+    /// The residue a single pass leaves, and the reason clustering read as barely
+    /// working: two crowds each merge, and then their *badges* — drawn at
+    /// the centroids, not at the seeds — end up on top of each other. Repeating the
+    /// pass merges them.
+    ///
+    /// Two knots of three, 11 apart, threshold 10. No member of one is within
+    /// the threshold of any member of the other, so the first pass can only form
+    /// two clusters — and then draws their badges 11 apart, overlapping, because a
+    /// badge standing for three is wider than one standing for one. The second
+    /// round merges them.
     @Test
     void testCollidingClustersMerge() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -373,16 +349,14 @@ class TestFloorMapClusterOverlay {
                 .containsExactly("a1", "a2", "a3", "b1", "b2", "b3");
     }
 
-    /**
-     * The other half of the residue: an entity out of reach of every seed, but
-     * sitting right on the badge of the cluster that formed next to it. One pass
-     * left it as a lone glyph under that badge for ever, because nothing offered
-     * it a second chance; the next round does.
-     *
-     * <p>{@code straggler} is 11 from {@code a1} — the seed — so the first pass
-     * cannot take it, but only 6 from the centroid the cluster ends up drawn
-     * at.</p>
-     */
+    /// The other half of the residue: an entity out of reach of every seed, but
+    /// sitting right on the badge of the cluster that formed next to it. One pass
+    /// left it as a lone glyph under that badge for ever, because nothing offered
+    /// it a second chance; the next round does.
+    ///
+    /// `straggler` is 11 from `a1` — the seed — so the first pass
+    /// cannot take it, but only 6 from the centroid the cluster ends up drawn
+    /// at.
     @Test
     void testStragglerIsAdoptedByTheClusterItSitsOn() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -398,11 +372,9 @@ class TestFloorMapClusterOverlay {
         assertThat(overlay.isClustered("straggler")).isTrue();
     }
 
-    /**
-     * Merging is not unconditional: entities genuinely far apart still get their
-     * own glyphs however many rounds run, or zooming in would never separate
-     * anything.
-     */
+    /// Merging is not unconditional: entities genuinely far apart still get their
+    /// own glyphs however many rounds run, or zooming in would never separate
+    /// anything.
     @Test
     void testDistinctCrowdsStayDistinct() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -418,15 +390,13 @@ class TestFloorMapClusterOverlay {
                 Arrays.asList("b1", "b2"));
     }
 
-    /**
-     * A bigger badge covers more of the map, so it merges anything within
-     * <em>its</em> reach rather than a lone entity's — otherwise the glyph is
-     * drawn over entities it does not speak for.
-     *
-     * <p>{@code far} is 11.5 from the crowd's centroid: beyond a lone entity's
-     * threshold of 10, but inside the reach of the grown glyph a crowd of twelve
-     * is drawn at.</p>
-     */
+    /// A bigger badge covers more of the map, so it merges anything within
+    /// *its* reach rather than a lone entity's — otherwise the glyph is
+    /// drawn over entities it does not speak for.
+    ///
+    /// `far` is 11.5 from the crowd's centroid: beyond a lone entity's
+    /// threshold of 10, but inside the reach of the grown glyph a crowd of twelve
+    /// is drawn at.
     @Test
     void testAGrownGlyphReachesFurther() {
         final List<FloorMapObject> crowd = new ArrayList<>();
@@ -446,11 +416,9 @@ class TestFloorMapClusterOverlay {
         assertThat(overlay.isClustered("zfar")).isTrue();
     }
 
-    /**
-     * The rounds converge: running the pass to its cap gives the same answer as
-     * stopping as soon as a round merges nothing, so the cap is a backstop rather
-     * than something the result depends on.
-     */
+    /// The rounds converge: running the pass to its cap gives the same answer as
+    /// stopping as soon as a round merges nothing, so the cap is a backstop rather
+    /// than something the result depends on.
     @Test
     void testRepeatedMergingConverges() {
         final List<FloorMapObject> events = new ArrayList<>();
@@ -480,23 +448,21 @@ class TestFloorMapClusterOverlay {
         assertThat(overlay.getClusters()).isNotEmpty();
     }
 
-    /**
-     * The whole point of repeating the pass, asserted end to end on a screenful of
-     * entities: the canvas draws a handful of badges instead of a crowd, and the
-     * badges are not sitting on top of each other.
-     *
-     * <p>150 entities scattered over a 900&times;600 canvas at the live merge
-     * distance. A single pass left 85 glyphs with a third of them overlapping
-     * something, which is what "clustering barely does anything" looked like;
-     * repeating it leaves 32.</p>
-     *
-     * <p>Not <em>no</em> overlaps, because that is not what the algorithm
-     * promises: the spread guard will refuse a merge that would make a badge
-     * speak for entities scattered too far behind it, and refusing leaves the two
-     * badges where they are. What is asserted is that every overlap left on screen
-     * is one of those — a leash decision, not residue the pass failed to
-     * clear.</p>
-     */
+    /// The whole point of repeating the pass, asserted end to end on a screenful of
+    /// entities: the canvas draws a handful of badges instead of a crowd, and the
+    /// badges are not sitting on top of each other.
+    ///
+    /// 150 entities scattered over a 900×600 canvas at the live merge
+    /// distance. A single pass left 85 glyphs with a third of them overlapping
+    /// something, which is what "clustering barely does anything" looked like;
+    /// repeating it leaves 32.
+    ///
+    /// Not *no* overlaps, because that is not what the algorithm
+    /// promises: the spread guard will refuse a merge that would make a badge
+    /// speak for entities scattered too far behind it, and refusing leaves the two
+    /// badges where they are. What is asserted is that every overlap left on screen
+    /// is one of those — a leash decision, not residue the pass failed to
+    /// clear.
     @Test
     void testAScreenfulOfEntitiesCollapsesToAFewNonOverlappingGlyphs() {
         // The live value: a 60px glyph plus clearance for its pill and caption.
@@ -569,7 +535,7 @@ class TestFloorMapClusterOverlay {
     // Glyph size
     // =========================================================================
 
-    /** A cluster's glyph grows with its count, logarithmically and capped. */
+    /// A cluster's glyph grows with its count, logarithmically and capped.
     @Test
     void testSizeFactorGrowsWithCountAndIsCapped() {
         assertThat(FloorMapCluster.sizeFactor(0)).isEqualTo(1.0);
@@ -584,11 +550,9 @@ class TestFloorMapClusterOverlay {
                 .isEqualTo(FloorMapCluster.maxSizeFactor());
     }
 
-    /**
-     * A big badge is hoverable to its edge: the hit radius is scaled by the same
-     * factor the glyph is, or its outer ring would look part of the glyph and not
-     * respond.
-     */
+    /// A big badge is hoverable to its edge: the hit radius is scaled by the same
+    /// factor the glyph is, or its outer ring would look part of the glyph and not
+    /// respond.
     @Test
     void testHitRadiusFollowsTheGlyphSize() {
         final List<FloorMapObject> events = new ArrayList<>();
@@ -605,11 +569,9 @@ class TestFloorMapClusterOverlay {
         assertThat(overlay.clusterNear(10 * factor * 1.01, 0, 10)).isNull();
     }
 
-    /**
-     * A cluster is keyed on its lowest member id, not on whichever member seeded
-     * the merge — so gaining a member does not silently make it a different
-     * cluster and tear down an open hover panel.
-     */
+    /// A cluster is keyed on its lowest member id, not on whichever member seeded
+    /// the merge — so gaining a member does not silently make it a different
+    /// cluster and tear down an open hover panel.
     @Test
     void testClusterIsKeyedOnItsLowestMemberId() {
         final FloorMapClusterOverlay overlay = clusterEvents(Arrays.asList(
@@ -629,7 +591,7 @@ class TestFloorMapClusterOverlay {
         assertThat(after.getCluster("alice").size()).isEqualTo(4);
     }
 
-    /** No entity ends up in two clusters, and none is silently dropped. */
+    /// No entity ends up in two clusters, and none is silently dropped.
     @Test
     void testEveryEntityIsInAtMostOneCluster() {
         final List<FloorMapObject> events = new ArrayList<>();
@@ -660,7 +622,7 @@ class TestFloorMapClusterOverlay {
     // Determinism, and what does or does not change the partition
     // =========================================================================
 
-    /** The same input gives the same output, whatever order the rows arrive in. */
+    /// The same input gives the same output, whatever order the rows arrive in.
     @Test
     void testResultDoesNotDependOnInputOrder() {
         final List<FloorMapObject> events = new ArrayList<>();
@@ -673,16 +635,14 @@ class TestFloorMapClusterOverlay {
         assertThat(clusterEvents(reversed)).isEqualTo(clusterEvents(events));
     }
 
-    /**
-     * Panning cannot change the clustering, because the pan is not an input:
-     * {@link FloorMapClusterOverlay#compute} sees map positions and a map-space
-     * threshold, and no screen offset. Panning changes only the offsets, so the
-     * partition it is handed is byte-for-byte the one it had before.
-     *
-     * <p>This is the reason the lattice is anchored at the map origin rather than
-     * at the screen — a screen-space lattice would take the offsets as input and
-     * reshuffle every cluster as the user dragged.</p>
-     */
+    /// Panning cannot change the clustering, because the pan is not an input:
+    /// [FloorMapClusterOverlay#compute] sees map positions and a map-space
+    /// threshold, and no screen offset. Panning changes only the offsets, so the
+    /// partition it is handed is byte-for-byte the one it had before.
+    ///
+    /// This is the reason the lattice is anchored at the map origin rather than
+    /// at the screen — a screen-space lattice would take the offsets as input and
+    /// reshuffle every cluster as the user dragged.
     @Test
     void testPanCannotChangeThePartition() {
         final List<FloorMapObject> events = new ArrayList<>();
@@ -695,20 +655,18 @@ class TestFloorMapClusterOverlay {
                 .isEqualTo(memberLists(clusterEvents(events)));
     }
 
-    /**
-     * Recorded, not desired: because the lattice is anchored at the map origin,
-     * where the cell boundaries fall relative to a crowd can decide which member
-     * seeds it — so the same relative arrangement of entities can partition
-     * differently at a different place on the map.
-     *
-     * <p>Here {@code z} and {@code a} share a cell in the first arrangement, so
-     * {@code a} (lower id) seeds and reaches all three; shifted by half a cell
-     * they fall in separate cells, {@code z} seeds first, and {@code m} is then
-     * out of reach. Both outcomes are valid partitions — every cluster is still
-     * within the threshold of its seed and no entity is in two clusters — and no
-     * user action produces this shift, since panning does not move entities. It
-     * is asserted so the behaviour is documented rather than discovered.</p>
-     */
+    /// Recorded, not desired: because the lattice is anchored at the map origin,
+    /// where the cell boundaries fall relative to a crowd can decide which member
+    /// seeds it — so the same relative arrangement of entities can partition
+    /// differently at a different place on the map.
+    ///
+    /// Here `z` and `a` share a cell in the first arrangement, so
+    /// `a` (lower id) seeds and reaches all three; shifted by half a cell
+    /// they fall in separate cells, `z` seeds first, and `m` is then
+    /// out of reach. Both outcomes are valid partitions — every cluster is still
+    /// within the threshold of its seed and no entity is in two clusters — and no
+    /// user action produces this shift, since panning does not move entities. It
+    /// is asserted so the behaviour is documented rather than discovered.
     @Test
     void testCellBoundariesCanDecideTheSeed() {
         // Ids deliberately out of positional order, so which cell they share
@@ -728,7 +686,7 @@ class TestFloorMapClusterOverlay {
                 .containsExactly(Arrays.asList("a", "z"));
     }
 
-    /** Zooming — and only zooming — changes the partition. */
+    /// Zooming — and only zooming — changes the partition.
     @Test
     void testZoomChangesThePartition() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -741,11 +699,9 @@ class TestFloorMapClusterOverlay {
                 .hasSize(1);
     }
 
-    /**
-     * Renaming an entity does not reshuffle the map: seeds are chosen by
-     * position (row-major over the lattice), with the id only breaking ties
-     * inside one cell.
-     */
+    /// Renaming an entity does not reshuffle the map: seeds are chosen by
+    /// position (row-major over the lattice), with the id only breaking ties
+    /// inside one cell.
     @Test
     void testRenamingDoesNotReshuffleClusters() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -770,7 +726,7 @@ class TestFloorMapClusterOverlay {
         }
     }
 
-    /** Member ids are sorted, so the hover list's order is predictable. */
+    /// Member ids are sorted, so the hover list's order is predictable.
     @Test
     void testMemberIdsAreSorted() {
         final FloorMapClusterOverlay overlay = clusterEvents(Arrays.asList(
@@ -782,7 +738,7 @@ class TestFloorMapClusterOverlay {
                 .containsExactly("alice", "mary", "zach");
     }
 
-    /** The cluster is drawn at its members' centroid, not at the seed. */
+    /// The cluster is drawn at its members' centroid, not at the seed.
     @Test
     void testClusterSitsAtTheCentroid() {
         final FloorMapClusterOverlay overlay = clusterEvents(Arrays.asList(
@@ -797,7 +753,7 @@ class TestFloorMapClusterOverlay {
     // What clusters and what does not
     // =========================================================================
 
-    /** Point facts — objects drawn as fixed-size glyphs — cluster like entities. */
+    /// Point facts — objects drawn as fixed-size glyphs — cluster like entities.
     @Test
     void testPointFactsCluster() {
         final List<Fact> facts = Arrays.asList(
@@ -811,11 +767,9 @@ class TestFloorMapClusterOverlay {
         assertThat(overlay.getClusters().getFirst().getLabel()).isEqualTo("2 objects");
     }
 
-    /**
-     * A fact's map position is {@code worldToMap} applied to its coords, never
-     * either alone — the same route the renderer takes. Two facts whose coords
-     * are identical but whose matrices place them far apart must not merge.
-     */
+    /// A fact's map position is `worldToMap` applied to its coords, never
+    /// either alone — the same route the renderer takes. Two facts whose coords
+    /// are identical but whose matrices place them far apart must not merge.
     @Test
     void testFactPositionComesFromTheFullTransform() {
         final List<Fact> facts = Arrays.asList(
@@ -826,11 +780,9 @@ class TestFloorMapClusterOverlay {
                 .isTrue();
     }
 
-    /**
-     * Images and areas scale with the map, so they shrink as the user zooms out
-     * instead of crowding — they are excluded, which is also what stops a floor
-     * plan being merged into a badge.
-     */
+    /// Images and areas scale with the map, so they shrink as the user zooms out
+    /// instead of crowding — they are excluded, which is also what stops a floor
+    /// plan being merged into a badge.
     @Test
     void testImagesAndAreasNeverCluster() {
         final List<Fact> facts = Arrays.asList(
@@ -843,7 +795,7 @@ class TestFloorMapClusterOverlay {
                 .isTrue();
     }
 
-    /** A background never clusters, by key or by type. */
+    /// A background never clusters, by key or by type.
     @Test
     void testBackgroundsNeverCluster() {
         final List<Fact> facts = Arrays.asList(
@@ -856,10 +808,8 @@ class TestFloorMapClusterOverlay {
                 pointFact("x", FloorMapJsonKeys.BACKGROUND, 0, 0))).isFalse();
     }
 
-    /**
-     * An id present as both a live event and a static fact twin is counted once,
-     * at its event position — the live one, as everywhere else.
-     */
+    /// An id present as both a live event and a static fact twin is counted once,
+    /// at its event position — the live one, as everywhere else.
     @Test
     void testFactTwinOfAnEventIsCountedOnce() {
         final List<Fact> facts = Arrays.asList(
@@ -878,7 +828,7 @@ class TestFloorMapClusterOverlay {
                 .containsExactly("alice", "bob");
     }
 
-    /** Entities with no type still cluster, and fall back to the union term. */
+    /// Entities with no type still cluster, and fall back to the union term.
     @Test
     void testUntypedEntitiesCluster() {
         final FloorMapClusterOverlay overlay = clusterEvents(Arrays.asList(
@@ -890,7 +840,7 @@ class TestFloorMapClusterOverlay {
         assertThat(overlay.getClusters().getFirst().getLabel()).isEqualTo("2 entities");
     }
 
-    /** An entity with no usable id cannot be tracked back to, so it is skipped. */
+    /// An entity with no usable id cannot be tracked back to, so it is skipped.
     @Test
     void testEntitiesWithoutIdsAreSkipped() {
         final FloorMapClusterOverlay overlay = clusterEvents(Arrays.asList(
@@ -905,7 +855,7 @@ class TestFloorMapClusterOverlay {
     // Lookups and guards
     // =========================================================================
 
-    /** Hover and click resolve a cluster by its key; a stale key resolves to null. */
+    /// Hover and click resolve a cluster by its key; a stale key resolves to null.
     @Test
     void testLookupByKey() {
         final FloorMapClusterOverlay overlay = clusterEvents(Arrays.asList(
@@ -921,10 +871,8 @@ class TestFloorMapClusterOverlay {
         assertThat(cluster.contains("carol")).isFalse();
     }
 
-    /**
-     * A non-positive or non-finite threshold disables clustering rather than
-     * merging everything or nothing silently — the canvas's zero-divisor trap.
-     */
+    /// A non-positive or non-finite threshold disables clustering rather than
+    /// merging everything or nothing silently — the canvas's zero-divisor trap.
     @Test
     void testInvalidThresholdDisablesClustering() {
         final List<FloorMapObject> events = Arrays.asList(
@@ -939,7 +887,7 @@ class TestFloorMapClusterOverlay {
         }
     }
 
-    /** The screen radius converts to a map distance by dividing out the zoom. */
+    /// The screen radius converts to a map distance by dividing out the zoom.
     @Test
     void testMapThreshold() {
         assertThat(FloorMapClusterOverlay.mapThreshold(45, 1)).isEqualTo(45);
@@ -949,10 +897,8 @@ class TestFloorMapClusterOverlay {
         assertThat(FloorMapClusterOverlay.mapThreshold(45, 0.1)).isCloseTo(450, within(1e-9));
     }
 
-    /**
-     * An unusable scale yields 0 — "do not cluster" — rather than a NaN that
-     * would blank or scramble the frame with no error.
-     */
+    /// An unusable scale yields 0 — "do not cluster" — rather than a NaN that
+    /// would blank or scramble the frame with no error.
     @Test
     void testMapThresholdGuardsTheDivisor() {
         assertThat(FloorMapClusterOverlay.mapThreshold(45, 0)).isEqualTo(0);
@@ -966,7 +912,7 @@ class TestFloorMapClusterOverlay {
     // Resolving what the pointer is over
     // =========================================================================
 
-    /** A point inside the hit radius resolves to the cluster; outside, to nothing. */
+    /// A point inside the hit radius resolves to the cluster; outside, to nothing.
     @Test
     void testClusterNear() {
         final FloorMapClusterOverlay overlay = clusterEvents(Arrays.asList(
@@ -981,11 +927,9 @@ class TestFloorMapClusterOverlay {
         assertThat(FloorMapClusterOverlay.EMPTY.clusterNear(0, 0, 10)).isNull();
     }
 
-    /**
-     * Overlapping clusters resolve to the nearest, not the first. Per-type
-     * clustering means two clusters can sit on top of each other, and the pointer
-     * has to pick the one whose glyph it is actually over.
-     */
+    /// Overlapping clusters resolve to the nearest, not the first. Per-type
+    /// clustering means two clusters can sit on top of each other, and the pointer
+    /// has to pick the one whose glyph it is actually over.
     @Test
     void testClusterNearPicksTheNearest() {
         final FloorMapClusterOverlay overlay = clusterEvents(Arrays.asList(
@@ -999,7 +943,7 @@ class TestFloorMapClusterOverlay {
         assertThat(Objects.requireNonNull(overlay.clusterNear(107, 100, 20)).getType()).isEqualTo("device");
     }
 
-    /** Null and empty inputs are safe. */
+    /// Null and empty inputs are safe.
     @Test
     void testEmptyInputs() {
         assertThat(FloorMapClusterOverlay.compute(null, null, THRESHOLD, null))

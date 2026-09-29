@@ -20,10 +20,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Tests for {@link FloorMapQueryThrottle}, the rate limit on playback's server
- * queries.
- */
+/// Tests for [FloorMapQueryThrottle], the rate limit on playback's server
+/// queries.
 class TestFloorMapQueryThrottle {
 
     private static final double INTERVAL_MS = 300.0;
@@ -72,19 +70,17 @@ class TestFloorMapQueryThrottle {
                 .isTrue();
     }
 
-    /**
-     * The regression test for the query storm.
-     *
-     * <p>A second of playback at 60 fps is 60 frames. However often the timeline wraps
-     * during it — and at high speed over a short range it wraps on <em>every</em>
-     * frame — the number of permitted queries must stay bounded by the interval, not
-     * scale with the frame rate.</p>
-     *
-     * <p>Before the fix, the playback loop reset the throttle on each wrap, so this
-     * scenario issued a query on all 60 frames, and because each tick fires both a
-     * facts and an events search that meant about 120 result stores torn down and
-     * rebuilt per second.</p>
-     */
+    /// The regression test for the query storm.
+    ///
+    /// A second of playback at 60 fps is 60 frames. However often the timeline wraps
+    /// during it — and at high speed over a short range it wraps on *every*
+    /// frame — the number of permitted queries must stay bounded by the interval, not
+    /// scale with the frame rate.
+    ///
+    /// Before the fix, the playback loop reset the throttle on each wrap, so this
+    /// scenario issued a query on all 60 frames, and because each tick fires both a
+    /// facts and an events search that meant about 120 result stores torn down and
+    /// rebuilt per second.
     @Test
     void testWrappingEveryFrameCannotDefeatTheRateLimit() {
         final FloorMapQueryThrottle throttle = new FloorMapQueryThrottle(INTERVAL_MS);
@@ -108,7 +104,7 @@ class TestFloorMapQueryThrottle {
         assertThat(permitted).isGreaterThan(0);
     }
 
-    /** Over a long run the rate stays proportional to elapsed time, not frame count. */
+    /// Over a long run the rate stays proportional to elapsed time, not frame count.
     @Test
     void testRateStaysProportionalToElapsedTimeOverALongRun() {
         final FloorMapQueryThrottle throttle = new FloorMapQueryThrottle(INTERVAL_MS);
@@ -127,7 +123,7 @@ class TestFloorMapQueryThrottle {
         assertThat(permitted).isGreaterThanOrEqualTo(ceiling - 2);
     }
 
-    /** A zero interval degrades to "always permit" rather than misbehaving. */
+    /// A zero interval degrades to "always permit" rather than misbehaving.
     @Test
     void testZeroIntervalPermitsEveryFrame() {
         final FloorMapQueryThrottle throttle = new FloorMapQueryThrottle(0);

@@ -22,20 +22,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * One row of the cluster member list: everything the dialog shows about a
- * single member, resolved up front.
- *
- * <p>Resolved up front so the grid's columns and
- * {@link FloorMapClusterFilter} do no lookups — the filter re-runs on every
- * keystroke over a list that can hold hundreds of members, and a name or area
- * resolver called per cell per keystroke is the difference between a search box
- * that keeps up and one that does not.</p>
- *
- * <p>A plain immutable class rather than a record, matching the rest of the
- * GWT-compiled source. Holds no GWT or DOM types so it can be unit-tested on
- * the JVM.</p>
- */
+/// One row of the cluster member list: everything the dialog shows about a
+/// single member, resolved up front.
+///
+/// Resolved up front so the grid's columns and
+/// [FloorMapClusterFilter] do no lookups — the filter re-runs on every
+/// keystroke over a list that can hold hundreds of members, and a name or area
+/// resolver called per cell per keystroke is the difference between a search box
+/// that keeps up and one that does not.
+///
+/// A plain immutable class rather than a record, matching the rest of the
+/// GWT-compiled source. Holds no GWT or DOM types so it can be unit-tested on
+/// the JVM.
 @SuppressWarnings("ClassCanBeRecord") // Must compile under GWT
 public final class FloorMapClusterMember {
 
@@ -45,18 +43,16 @@ public final class FloorMapClusterMember {
     private final List<String> areaNames;
     private final List<String> groupNames;
 
-    /**
-     * @param id         the entity id; the row's identity
-     * @param name       the display name shown to the user; callers should
-     *                   already have fallen back to the id when the entity has
-     *                   no name
-     * @param type       the entity type; the same for every member of one
-     *                   cluster, since clustering runs per type
-     * @param areaNames  the containing area names, innermost first; may be
-     *                   {@code null} or empty
-     * @param groupNames the names of the groups this member belongs to; may be
-     *                   {@code null} or empty
-     */
+    /// @param id         the entity id; the row's identity
+    /// @param name       the display name shown to the user; callers should
+    ///         already have fallen back to the id when the entity has
+    ///         no name
+    /// @param type       the entity type; the same for every member of one
+    ///         cluster, since clustering runs per type
+    /// @param areaNames  the containing area names, innermost first; may be
+    ///         `null` or empty
+    /// @param groupNames the names of the groups this member belongs to; may be
+    ///         `null` or empty
     public FloorMapClusterMember(final String id,
                                  final String name,
                                  final String type,
@@ -87,12 +83,12 @@ public final class FloorMapClusterMember {
         return type;
     }
 
-    /** Containing area names, innermost first; empty when in none. */
+    /// Containing area names, innermost first; empty when in none.
     public List<String> getAreaNames() {
         return areaNames;
     }
 
-    /** Names of the groups this member belongs to; empty when in none. */
+    /// Names of the groups this member belongs to; empty when in none.
     public List<String> getGroupNames() {
         return groupNames;
     }

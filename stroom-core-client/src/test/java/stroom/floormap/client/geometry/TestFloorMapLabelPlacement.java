@@ -33,7 +33,7 @@ class TestFloorMapLabelPlacement {
     private static final double VIEWPORT_W = 1600;
     private static final double VIEWPORT_H = 900;
 
-    /** A 80x14 caption centred at (x, y). */
+    /// A 80x14 caption centred at (x, y).
     private static Label label(final String key,
                                final double x,
                                final double y,
@@ -46,7 +46,7 @@ class TestFloorMapLabelPlacement {
                 Arrays.asList(labels), VIEWPORT_W, VIEWPORT_H);
     }
 
-    /** Captions that do not touch are all drawn — the ordinary, uncrowded case. */
+    /// Captions that do not touch are all drawn — the ordinary, uncrowded case.
     @Test
     void testNonOverlappingLabelsAreAllPlaced() {
         assertThat(place(
@@ -56,10 +56,8 @@ class TestFloorMapLabelPlacement {
                 .containsExactlyInAnyOrder("a", "b", "c");
     }
 
-    /**
-     * The reported case: a user and a desk at the same spot. Both glyphs are still
-     * drawn — only the less important caption steps aside.
-     */
+    /// The reported case: a user and a desk at the same spot. Both glyphs are still
+    /// drawn — only the less important caption steps aside.
     @Test
     void testOverlappingLabelsKeepTheHigherPriority() {
         final Set<String> visible = place(
@@ -69,7 +67,7 @@ class TestFloorMapLabelPlacement {
         assertThat(visible).containsExactly("alice");
     }
 
-    /** Priority decides, not input order. */
+    /// Priority decides, not input order.
     @Test
     void testPriorityWinsRegardlessOfInputOrder() {
         assertThat(place(
@@ -82,10 +80,8 @@ class TestFloorMapLabelPlacement {
                 .containsExactly("alice");
     }
 
-    /**
-     * Equal priority breaks on the key, so a frame cannot place different labels
-     * depending on the order rows arrived in — that would read as flicker.
-     */
+    /// Equal priority breaks on the key, so a frame cannot place different labels
+    /// depending on the order rows arrived in — that would read as flicker.
     @Test
     void testEqualPriorityBreaksOnKeyDeterministically() {
         assertThat(place(
@@ -98,9 +94,7 @@ class TestFloorMapLabelPlacement {
                 .containsExactly("alice");
     }
 
-    /**
-     * The whole result is order-independent, not just the winner of one pair.
-     */
+    /// The whole result is order-independent, not just the winner of one pair.
     @Test
     void testResultDoesNotDependOnInputOrder() {
         final List<Label> labels = new ArrayList<>();
@@ -114,7 +108,7 @@ class TestFloorMapLabelPlacement {
                 .isEqualTo(FloorMapLabelPlacement.place(labels, VIEWPORT_W, VIEWPORT_H));
     }
 
-    /** Nothing placed ever overlaps anything else placed. */
+    /// Nothing placed ever overlaps anything else placed.
     @Test
     void testPlacedLabelsNeverOverlap() {
         final List<Label> labels = new ArrayList<>();
@@ -147,7 +141,7 @@ class TestFloorMapLabelPlacement {
         }
     }
 
-    /** Captions that merely abut are both readable, so both are kept. */
+    /// Captions that merely abut are both readable, so both are kept.
     @Test
     void testTouchingEdgesDoNotCount() {
         // 80 wide, centred at 100 and 180 → they share the edge at x=140.
@@ -157,11 +151,9 @@ class TestFloorMapLabelPlacement {
                 .containsExactlyInAnyOrder("a", "b");
     }
 
-    /**
-     * A caption entirely off-screen is not drawn — and, importantly, does not
-     * reserve space, or something just outside the view would silently suppress a
-     * caption the user can see.
-     */
+    /// A caption entirely off-screen is not drawn — and, importantly, does not
+    /// reserve space, or something just outside the view would silently suppress a
+    /// caption the user can see.
     @Test
     void testOffScreenLabelsAreDroppedAndReserveNothing() {
         final Set<String> visible = place(
@@ -172,13 +164,13 @@ class TestFloorMapLabelPlacement {
         assertThat(visible).containsExactly("onscreen");
     }
 
-    /** A caption straddling the edge is still partly visible, so it is kept. */
+    /// A caption straddling the edge is still partly visible, so it is kept.
     @Test
     void testPartlyVisibleLabelsAreKept() {
         assertThat(place(label("edge", 10, 500, 0))).containsExactly("edge");
     }
 
-    /** With no viewport known yet, nothing is culled for being off-screen. */
+    /// With no viewport known yet, nothing is culled for being off-screen.
     @Test
     void testNoViewportDisablesCulling() {
         assertThat(FloorMapLabelPlacement.place(
@@ -186,7 +178,7 @@ class TestFloorMapLabelPlacement {
                 .containsExactly("far");
     }
 
-    /** Null and empty inputs are safe. */
+    /// Null and empty inputs are safe.
     @Test
     void testEmptyInputs() {
         assertThat(FloorMapLabelPlacement.place(null, VIEWPORT_W, VIEWPORT_H)).isEmpty();
@@ -194,10 +186,8 @@ class TestFloorMapLabelPlacement {
                 Collections.emptyList(), VIEWPORT_W, VIEWPORT_H)).isEmpty();
     }
 
-    /**
-     * Crowding costs the least important captions, never the most important. A
-     * tracked entity's name survives a pile-up that drops everything else.
-     */
+    /// Crowding costs the least important captions, never the most important. A
+    /// tracked entity's name survives a pile-up that drops everything else.
     @Test
     void testTheMostImportantLabelAlwaysSurvives() {
         final List<Label> labels = new ArrayList<>();

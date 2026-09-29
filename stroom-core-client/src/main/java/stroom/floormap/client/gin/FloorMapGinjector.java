@@ -16,8 +16,6 @@
 
 package stroom.floormap.client.gin;
 
-/**
- * GIN injector interface for the floor map feature.
- */
+/// GIN injector interface for the floor map feature.
 public interface FloorMapGinjector {
 }

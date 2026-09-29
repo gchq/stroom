@@ -31,11 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFloorMapAreaMembership {
 
-    /**
-     * An axis-aligned rectangular area, stored the way the editor stores one:
-     * vertices centred on the centroid in a local frame, placed by a
-     * translation to the centroid.
-     */
+    /// An axis-aligned rectangular area, stored the way the editor stores one:
+    /// vertices centred on the centroid in a local frame, placed by a
+    /// translation to the centroid.
     private static Fact area(final String key,
                              final double centreX,
                              final double centreY,
@@ -90,10 +88,8 @@ class TestFloorMapAreaMembership {
         assertThat(membership.getOccupantCount("bay")).isZero();
     }
 
-    /**
-     * An entity with no known position at this instant is simply absent — the
-     * roster keeps its row, but membership has nothing to say about it.
-     */
+    /// An entity with no known position at this instant is simply absent — the
+    /// roster keeps its row, but membership has nothing to say about it.
     @Test
     void testUnknownEntity() {
         final FloorMapAreaMembership membership = FloorMapAreaMembership.compute(
@@ -124,11 +120,9 @@ class TestFloorMapAreaMembership {
     // Multi-valued / nested membership
     // -----------------------------------------------------------------------
 
-    /**
-     * Nested areas both contain the entity, and the list is ordered innermost
-     * (smallest) first so the head is the most specific answer — regardless of
-     * the order the areas arrived in.
-     */
+    /// Nested areas both contain the entity, and the list is ordered innermost
+    /// (smallest) first so the head is the most specific answer — regardless of
+    /// the order the areas arrived in.
     @Test
     void testNestedAreasOrderedInnermostFirst() {
         final List<Fact> facts = Arrays.asList(
@@ -144,7 +138,7 @@ class TestFloorMapAreaMembership {
         assertThat(membership.getOccupantCount("bay")).isEqualTo(1);
     }
 
-    /** The same holds when the smaller area is supplied first. */
+    /// The same holds when the smaller area is supplied first.
     @Test
     void testNestedAreasOrderIndependentOfInput() {
         final List<Fact> facts = Arrays.asList(
@@ -156,7 +150,7 @@ class TestFloorMapAreaMembership {
         assertThat(membership.getAreaKeys("alice")).containsExactly("bay", "warehouse");
     }
 
-    /** A point in the outer area but outside the inner one is only in the outer. */
+    /// A point in the outer area but outside the inner one is only in the outer.
     @Test
     void testInOuterAreaOnly() {
         final List<Fact> facts = Arrays.asList(
@@ -168,11 +162,9 @@ class TestFloorMapAreaMembership {
         assertThat(membership.getAreaKeys("alice")).containsExactly("warehouse");
     }
 
-    /**
-     * Areas are never located inside anything — only objects and users are. An
-     * area drawn wholly within another reports no containing area, and does not
-     * count as an occupant of it.
-     */
+    /// Areas are never located inside anything — only objects and users are. An
+    /// area drawn wholly within another reports no containing area, and does not
+    /// count as an occupant of it.
     @Test
     void testAreaIsNeverInsideAnotherArea() {
         final List<Fact> facts = Arrays.asList(
@@ -190,10 +182,8 @@ class TestFloorMapAreaMembership {
         assertThat(membership.getAreaKeys()).containsExactlyInAnyOrder("warehouse", "bay");
     }
 
-    /**
-     * A nested area does not inflate the enclosing area's occupant count — the
-     * count is objects and users only, which is what the canvas badge shows.
-     */
+    /// A nested area does not inflate the enclosing area's occupant count — the
+    /// count is objects and users only, which is what the canvas badge shows.
     @Test
     void testNestedAreaDoesNotCountAsOccupant() {
         final List<Fact> facts = Arrays.asList(
@@ -206,7 +196,7 @@ class TestFloorMapAreaMembership {
         assertThat(membership.getOccupants("bay")).containsExactly("alice");
     }
 
-    /** Objects and users near an area's edge are still located inside it. */
+    /// Objects and users near an area's edge are still located inside it.
     @Test
     void testPointOccupantsNearEdgeAreLocated() {
         final List<Fact> facts = Arrays.asList(
@@ -223,7 +213,7 @@ class TestFloorMapAreaMembership {
     // Which facts count
     // -----------------------------------------------------------------------
 
-    /** A static point fact (a gate, a computer) is located inside its area. */
+    /// A static point fact (a gate, a computer) is located inside its area.
     @Test
     void testStaticFactInsideArea() {
         final List<Fact> facts = Arrays.asList(
@@ -235,10 +225,8 @@ class TestFloorMapAreaMembership {
         assertThat(membership.getInnermostAreaKey("computer1")).isEqualTo("bay");
     }
 
-    /**
-     * A background is never an occupant — its placement origin is arbitrary, so
-     * "Background is in the loading bay" would be noise.
-     */
+    /// A background is never an occupant — its placement origin is arbitrary, so
+    /// "Background is in the loading bay" would be noise.
     @Test
     void testBackgroundIsNeverAnOccupant() {
         final List<Fact> facts = Arrays.asList(
@@ -251,10 +239,8 @@ class TestFloorMapAreaMembership {
         assertThat(membership.getOccupants("bay")).isEmpty();
     }
 
-    /**
-     * A fact carrying its own image renders as that image, not as a polygon, so
-     * it must not be treated as an area either — the test and the paint agree.
-     */
+    /// A fact carrying its own image renders as that image, not as a polygon, so
+    /// it must not be treated as an area either — the test and the paint agree.
     @Test
     void testImageBearingFactIsNotAnArea() {
         final double[][] local = new double[][]{{-5, -5}, {5, -5}, {5, 5}, {-5, 5}};
@@ -270,7 +256,7 @@ class TestFloorMapAreaMembership {
         assertThat(membership.getAreaKeys()).isEmpty();
     }
 
-    /** Null/empty ids are ignored rather than producing phantom rows. */
+    /// Null/empty ids are ignored rather than producing phantom rows.
     @Test
     void testUnusableIdsIgnored() {
         final List<Fact> facts = Arrays.asList(
@@ -283,11 +269,9 @@ class TestFloorMapAreaMembership {
         assertThat(membership.getOccupants("bay")).isEmpty();
     }
 
-    /**
-     * When an id exists both as an event and as an image-bearing fact twin, the
-     * live event position wins — the twin must not overwrite it with the fact's
-     * static placement.
-     */
+    /// When an id exists both as an event and as an image-bearing fact twin, the
+    /// live event position wins — the twin must not overwrite it with the fact's
+    /// static placement.
     @Test
     void testEventPositionWinsOverFactTwin() {
         final List<Fact> facts = Arrays.asList(
@@ -327,7 +311,7 @@ class TestFloorMapAreaMembership {
         assertThat(membership.isArea("alice")).isFalse();
     }
 
-    /** Empty areas are absent from the counts map, so no badge is drawn. */
+    /// Empty areas are absent from the counts map, so no badge is drawn.
     @Test
     void testEmptyAreaAbsentFromCounts() {
         final FloorMapAreaMembership membership = FloorMapAreaMembership.compute(
@@ -337,11 +321,9 @@ class TestFloorMapAreaMembership {
         assertThat(membership.getOccupantCounts()).doesNotContainKey("bay");
     }
 
-    /**
-     * Only entities that are inside something appear in the entity set — it
-     * drives the tracking panel's "last seen in" history, which has nothing to
-     * record for an entity in no area.
-     */
+    /// Only entities that are inside something appear in the entity set — it
+    /// drives the tracking panel's "last seen in" history, which has nothing to
+    /// record for an entity in no area.
     @Test
     void testEntityIds() {
         final List<Fact> facts = Arrays.asList(
@@ -357,10 +339,8 @@ class TestFloorMapAreaMembership {
     // equals — used to skip redraws when a refresh changed nothing
     // -----------------------------------------------------------------------
 
-    /**
-     * Two snapshots of the same unchanged scene are equal, so a playback refresh
-     * that moved nobody between areas costs no redraw.
-     */
+    /// Two snapshots of the same unchanged scene are equal, so a playback refresh
+    /// that moved nobody between areas costs no redraw.
     @Test
     void testEqualForUnchangedScene() {
         final List<Fact> facts = Collections.singletonList(area("bay", 100, 100, 50, 50));
@@ -371,7 +351,7 @@ class TestFloorMapAreaMembership {
                 .hasSameHashCodeAs(FloorMapAreaMembership.compute(facts, events));
     }
 
-    /** Moving an entity out of an area makes the snapshots unequal. */
+    /// Moving an entity out of an area makes the snapshots unequal.
     @Test
     void testNotEqualWhenEntityLeaves() {
         final List<Fact> facts = Collections.singletonList(area("bay", 100, 100, 50, 50));
@@ -382,11 +362,9 @@ class TestFloorMapAreaMembership {
                         Collections.singletonList(event("alice", 900, 900))));
     }
 
-    /**
-     * Moving <em>within</em> the same area leaves the snapshots equal — position
-     * is not part of the containment relation, so a walk across a room costs no
-     * grid redraw.
-     */
+    /// Moving *within* the same area leaves the snapshots equal — position
+    /// is not part of the containment relation, so a walk across a room costs no
+    /// grid redraw.
     @Test
     void testEqualWhenMovingWithinSameArea() {
         final List<Fact> facts = Collections.singletonList(area("bay", 100, 100, 50, 50));
@@ -397,7 +375,7 @@ class TestFloorMapAreaMembership {
                         Collections.singletonList(event("alice", 110, 110))));
     }
 
-    /** A rotated area still contains the points that visually fall inside it. */
+    /// A rotated area still contains the points that visually fall inside it.
     @Test
     void testRotatedArea() {
         final double[][] local = new double[][]{{-10, -10}, {10, -10}, {10, 10}, {-10, 10}};

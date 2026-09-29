@@ -58,10 +58,8 @@ class TestFloorMapEditorModel {
     // Selection state
     // -----------------------------------------------------------------------
 
-    /**
-     * A freshly-constructed model has no selection, is at time zero, has
-     * "show all facts" off, and has no pending changes.
-     */
+    /// A freshly-constructed model has no selection, is at time zero, has
+    /// "show all facts" off, and has no pending changes.
     @Test
     void testInitialState() {
         assertThat(model.getSelectedFactKey()).isNull();
@@ -70,18 +68,14 @@ class TestFloorMapEditorModel {
         assertThat(model.hasPendingChanges()).isFalse();
     }
 
-    /**
-     * Setting the selected fact key stores it and it can be read back.
-     */
+    /// Setting the selected fact key stores it and it can be read back.
     @Test
     void testSelectFact() {
         model.setSelectedFactKey("gate-1");
         assertThat(model.getSelectedFactKey()).isEqualTo("gate-1");
     }
 
-    /**
-     * Setting the selected fact key to {@code null} clears the selection.
-     */
+    /// Setting the selected fact key to `null` clears the selection.
     @Test
     void testDeselectFact() {
         model.setSelectedFactKey("gate-1");
@@ -89,18 +83,14 @@ class TestFloorMapEditorModel {
         assertThat(model.getSelectedFactKey()).isNull();
     }
 
-    /**
-     * The selected time can be set and read back.
-     */
+    /// The selected time can be set and read back.
     @Test
     void testTimeChange() {
         model.setSelectedTime(12345L);
         assertThat(model.getSelectedTime()).isEqualTo(12345L);
     }
 
-    /**
-     * The "show all facts" flag can be toggled on and off.
-     */
+    /// The "show all facts" flag can be toggled on and off.
     @Test
     void testShowAllToggle() {
         model.setShowAllFacts(true);
@@ -113,10 +103,8 @@ class TestFloorMapEditorModel {
     // onEntriesFetched
     // -----------------------------------------------------------------------
 
-    /**
-     * Fetched server entries are stored, and the returned merged list
-     * includes any pending creation staged before the fetch completed.
-     */
+    /// Fetched server entries are stored, and the returned merged list
+    /// includes any pending creation staged before the fetch completed.
     @Test
     void testOnEntriesFetched_storesAndMerges() {
         final List<TemporalEntry> server = List.of(entry("k1", 100, "{}"));
@@ -127,10 +115,8 @@ class TestFloorMapEditorModel {
         assertThat(model.getServerEntriesAtCurrentTime()).hasSize(1);
     }
 
-    /**
-     * Fetching {@code null} entries is treated as an empty server result
-     * rather than throwing.
-     */
+    /// Fetching `null` entries is treated as an empty server result
+    /// rather than throwing.
     @Test
     void testOnEntriesFetched_null() {
         final List<TemporalEntry> merged = model.onEntriesFetched(null);
@@ -142,10 +128,8 @@ class TestFloorMapEditorModel {
     // buildMergedTimeList
     // -----------------------------------------------------------------------
 
-    /**
-     * The merged time list only includes entries whose key matches the
-     * currently selected fact.
-     */
+    /// The merged time list only includes entries whose key matches the
+    /// currently selected fact.
     @Test
     void testBuildMergedTimeList_filtersToSelectedKey() {
         model.setSelectedFactKey("k1");
@@ -159,10 +143,8 @@ class TestFloorMapEditorModel {
         assertThat(result).allSatisfy(e -> assertThat(e.getKey()).isEqualTo("k1"));
     }
 
-    /**
-     * The merged time list is returned sorted by effective time, regardless
-     * of the input order.
-     */
+    /// The merged time list is returned sorted by effective time, regardless
+    /// of the input order.
     @Test
     void testBuildMergedTimeList_sorted() {
         model.setSelectedFactKey("k1");
@@ -177,10 +159,8 @@ class TestFloorMapEditorModel {
         assertThat(result.get(2).getEffectiveTimeMs()).isEqualTo(300);
     }
 
-    /**
-     * A pending creation for the selected fact appears in the merged time
-     * list alongside the server-known entries.
-     */
+    /// A pending creation for the selected fact appears in the merged time
+    /// list alongside the server-known entries.
     @Test
     void testBuildMergedTimeList_includesPendingCreation() {
         model.setSelectedFactKey("k1");
@@ -191,10 +171,8 @@ class TestFloorMapEditorModel {
         assertThat(result).hasSize(2);
     }
 
-    /**
-     * A pending deletion for the selected fact hides the matching entry from
-     * the merged time list.
-     */
+    /// A pending deletion for the selected fact hides the matching entry from
+    /// the merged time list.
     @Test
     void testBuildMergedTimeList_excludesPendingDeletion() {
         model.setSelectedFactKey("k1");
@@ -213,9 +191,7 @@ class TestFloorMapEditorModel {
     // findActiveIndexAtTime
     // -----------------------------------------------------------------------
 
-    /**
-     * A query time before the earliest entry has no active entry, i.e. -1.
-     */
+    /// A query time before the earliest entry has no active entry, i.e. -1.
     @Test
     void testFindActiveIndex_beforeAll() {
         final List<TemporalEntry> timeList = List.of(
@@ -224,10 +200,8 @@ class TestFloorMapEditorModel {
         assertThat(FloorMapEditorModel.findActiveIndexAtTime(timeList, 50)).isEqualTo(-1);
     }
 
-    /**
-     * A query time that exactly matches an entry's effective time returns
-     * that entry's index.
-     */
+    /// A query time that exactly matches an entry's effective time returns
+    /// that entry's index.
     @Test
     void testFindActiveIndex_exactMatch() {
         final List<TemporalEntry> timeList = List.of(
@@ -237,10 +211,8 @@ class TestFloorMapEditorModel {
         assertThat(FloorMapEditorModel.findActiveIndexAtTime(timeList, 200)).isEqualTo(1);
     }
 
-    /**
-     * A query time falling between two entries returns the index of the
-     * most recent entry at or before that time.
-     */
+    /// A query time falling between two entries returns the index of the
+    /// most recent entry at or before that time.
     @Test
     void testFindActiveIndex_betweenEntries() {
         final List<TemporalEntry> timeList = List.of(
@@ -251,10 +223,8 @@ class TestFloorMapEditorModel {
         assertThat(FloorMapEditorModel.findActiveIndexAtTime(timeList, 250)).isEqualTo(1);
     }
 
-    /**
-     * A query time after the latest entry returns the index of the last
-     * entry, since it remains the active value going forward.
-     */
+    /// A query time after the latest entry returns the index of the last
+    /// entry, since it remains the active value going forward.
     @Test
     void testFindActiveIndex_afterAll() {
         final List<TemporalEntry> timeList = List.of(
@@ -263,9 +233,7 @@ class TestFloorMapEditorModel {
         assertThat(FloorMapEditorModel.findActiveIndexAtTime(timeList, 999)).isEqualTo(1);
     }
 
-    /**
-     * An empty time list has no active entry at any time, i.e. -1.
-     */
+    /// An empty time list has no active entry at any time, i.e. -1.
     @Test
     void testFindActiveIndex_empty() {
         assertThat(FloorMapEditorModel.findActiveIndexAtTime(List.of(), 100)).isEqualTo(-1);
@@ -275,14 +243,12 @@ class TestFloorMapEditorModel {
     // Staging edits
     // -----------------------------------------------------------------------
 
-    /**
-     * A version move stages both halves: the old shard is deleted and the entry reappears
-     * at its new time.
-     *
-     * <p>This was previously two adjacent statements in the presenter, so nothing could
-     * check that both happened. Recording only the upsert leaves the original in place —
-     * the user asks for a version to move and gets a second version instead, silently.</p>
-     */
+    /// A version move stages both halves: the old shard is deleted and the entry reappears
+    /// at its new time.
+    ///
+    /// This was previously two adjacent statements in the presenter, so nothing could
+    /// check that both happened. Recording only the upsert leaves the original in place —
+    /// the user asks for a version to move and gets a second version instead, silently.
     @Test
     void testStageVersionMove_removesTheOldShardAndAddsTheNew() {
         final TemporalEntry original = entry("gate-1", 1_000L, "{}");
@@ -298,11 +264,9 @@ class TestFloorMapEditorModel {
         assertThat(merged.get(0).getEffectiveTimeMs()).isEqualTo(5_000L);
     }
 
-    /**
-     * A "move" to the time the entry is already at is not a move: it must not delete and
-     * re-add the same shard, so the verb is safe to call without the caller first checking
-     * whether the time actually changed.
-     */
+    /// A "move" to the time the entry is already at is not a move: it must not delete and
+    /// re-add the same shard, so the verb is safe to call without the caller first checking
+    /// whether the time actually changed.
     @Test
     void testStageVersionMove_sameTimeIsAPlainUpdate() {
         final TemporalEntry original = entry("gate-1", 1_000L, "{}");
@@ -319,7 +283,7 @@ class TestFloorMapEditorModel {
         assertThat(merged).hasSize(1);
     }
 
-    /** A clone keeps the original alongside the new version. */
+    /// A clone keeps the original alongside the new version.
     @Test
     void testStageUpdate_doesNotRemoveAnything() {
         final TemporalEntry original = entry("gate-1", 1_000L, "{}");
@@ -334,19 +298,15 @@ class TestFloorMapEditorModel {
     // Key generation
     // -----------------------------------------------------------------------
 
-    /**
-     * A generated object key starts with the requested prefix followed by a
-     * separator.
-     */
+    /// A generated object key starts with the requested prefix followed by a
+    /// separator.
     @Test
     void testGenerateObjectKey_prefixPreserved() {
         final String key = model.generateObjectKey("gate");
         assertThat(key).startsWith("gate-");
     }
 
-    /**
-     * Two successive calls with the same prefix generate distinct keys.
-     */
+    /// Two successive calls with the same prefix generate distinct keys.
     @Test
     void testGenerateObjectKey_unique() {
         final String k1 = model.generateObjectKey("obj");
@@ -354,16 +314,14 @@ class TestFloorMapEditorModel {
         assertThat(k1).isNotEqualTo(k2);
     }
 
-    /**
-     * Key generation avoids colliding with a key already known to the model
-     * from previously-fetched server entries.
-     *
-     * <p>Uses a scripted {@link Random} so the collision actually happens. With a
-     * real {@code Random} the first draw has a 1-in-99,999 chance of hitting the
-     * pre-seeded number, so the assertion passed whether or not the collision check
-     * existed — the test attested to nothing. Here the first draw is forced to
-     * collide, so removing the check in {@code generateObjectKey} fails this test.</p>
-     */
+    /// Key generation avoids colliding with a key already known to the model
+    /// from previously-fetched server entries.
+    ///
+    /// Uses a scripted [Random] so the collision actually happens. With a
+    /// real `Random` the first draw has a 1-in-99,999 chance of hitting the
+    /// pre-seeded number, so the assertion passed whether or not the collision check
+    /// existed — the test attested to nothing. Here the first draw is forced to
+    /// collide, so removing the check in `generateObjectKey` fails this test.
     @Test
     void testGenerateObjectKey_avoidsExisting() {
         final FloorMapEditorModel m = modelWithRandom(new ScriptedRandom(12345, 54321));
@@ -371,13 +329,11 @@ class TestFloorMapEditorModel {
         assertThat(m.generateObjectKey("gate")).isEqualTo("gate-54321");
     }
 
-    /**
-     * A key known only from the selected fact's time list is still avoided.
-     *
-     * <p>This is the case the old implementation missed: it built its key set from
-     * the time-filtered canvas snapshot alone, so a shard of the selected fact
-     * sitting outside that snapshot was invisible and could be collided with.</p>
-     */
+    /// A key known only from the selected fact's time list is still avoided.
+    ///
+    /// This is the case the old implementation missed: it built its key set from
+    /// the time-filtered canvas snapshot alone, so a shard of the selected fact
+    /// sitting outside that snapshot was invisible and could be collided with.
     @Test
     void testGenerateObjectKey_avoidsKeyKnownOnlyFromSelectedFactTimeList() {
         final FloorMapEditorModel m = modelWithRandom(new ScriptedRandom(12345, 54321));
@@ -386,13 +342,11 @@ class TestFloorMapEditorModel {
         assertThat(m.generateObjectKey("gate")).isEqualTo("gate-54321");
     }
 
-    /**
-     * A key staged for deletion is not handed out again.
-     *
-     * <p>{@code applyTo} removes a deleted entry from the merged list, so the key
-     * looks free. Reusing it would race the flush — whether the new object survived
-     * would depend on the order the server applied the delete and the create.</p>
-     */
+    /// A key staged for deletion is not handed out again.
+    ///
+    /// `applyTo` removes a deleted entry from the merged list, so the key
+    /// looks free. Reusing it would race the flush — whether the new object survived
+    /// would depend on the order the server applied the delete and the create.
     @Test
     void testGenerateObjectKey_avoidsKeyPendingDeletion() {
         final FloorMapEditorModel m = modelWithRandom(new ScriptedRandom(12345, 54321));
@@ -402,10 +356,8 @@ class TestFloorMapEditorModel {
         assertThat(m.generateObjectKey("gate")).isEqualTo("gate-54321");
     }
 
-    /**
-     * A selected key is avoided even when the snapshot no longer contains it, which
-     * is reachable when a selection outlives the fetch it was made against.
-     */
+    /// A selected key is avoided even when the snapshot no longer contains it, which
+    /// is reachable when a selection outlives the fetch it was made against.
     @Test
     void testGenerateObjectKey_avoidsSelectedKeyMissingFromSnapshot() {
         final FloorMapEditorModel m = modelWithRandom(new ScriptedRandom(12345, 54321));
@@ -414,15 +366,13 @@ class TestFloorMapEditorModel {
         assertThat(m.generateObjectKey("gate")).isEqualTo("gate-54321");
     }
 
-    /** A model with a specific {@link Random}, sharing this test's warning collector. */
+    /// A model with a specific [Random], sharing this test's warning collector.
     private FloorMapEditorModel modelWithRandom(final Random random) {
         return new FloorMapEditorModel(random, warnings::add);
     }
 
-    /**
-     * A {@link Random} yielding preset values from {@code nextInt(int)}, repeating the
-     * last once exhausted, so a test can force a key collision on demand.
-     */
+    /// A [Random] yielding preset values from `nextInt(int)`, repeating the
+    /// last once exhausted, so a test can force a key collision on demand.
     private static final class ScriptedRandom extends Random {
 
         @Serial
@@ -447,10 +397,8 @@ class TestFloorMapEditorModel {
     // cloneEntryAtTime
     // -----------------------------------------------------------------------
 
-    /**
-     * Cloning an entry at a new time copies the source value and key while
-     * moving the effective time to the requested value.
-     */
+    /// Cloning an entry at a new time copies the source value and key while
+    /// moving the effective time to the requested value.
     @Test
     void testCloneEntryAtTime_copiesValue() {
         final TemporalEntry source = entry("k1", 100, "{\"type\":\"gate\"}");
@@ -461,10 +409,8 @@ class TestFloorMapEditorModel {
         assertThat(clone.getKey()).isEqualTo("k1");
     }
 
-    /**
-     * Cloning with a {@code null} source produces an entry with an empty
-     * JSON object value rather than throwing.
-     */
+    /// Cloning with a `null` source produces an entry with an empty
+    /// JSON object value rather than throwing.
     @Test
     void testCloneEntryAtTime_nullSource() {
         final TemporalEntry clone = FloorMapEditorModel.cloneEntryAtTime(
@@ -477,10 +423,8 @@ class TestFloorMapEditorModel {
     // buildNewEntryAtTime
     // -----------------------------------------------------------------------
 
-    /**
-     * A new entry built at a time between two shards is stamped with that time
-     * and inherits its value from the earlier (in-effect) shard.
-     */
+    /// A new entry built at a time between two shards is stamped with that time
+    /// and inherits its value from the earlier (in-effect) shard.
     @Test
     void testBuildNewEntryAtTime_betweenShards_clonesActiveShard() {
         model.setSelectedFactKey("k1");
@@ -495,10 +439,8 @@ class TestFloorMapEditorModel {
         assertThat(created.getValue()).isEqualTo("{\"type\":\"gate\"}");
     }
 
-    /**
-     * A new entry built after the latest shard inherits that latest shard's
-     * value.
-     */
+    /// A new entry built after the latest shard inherits that latest shard's
+    /// value.
     @Test
     void testBuildNewEntryAtTime_afterAllShards_clonesLatest() {
         model.setSelectedFactKey("k1");
@@ -511,11 +453,9 @@ class TestFloorMapEditorModel {
         assertThat(created.getValue()).isEqualTo("{\"type\":\"camera\"}");
     }
 
-    /**
-     * A time exactly on an existing shard clones that shard (the collision case
-     * that arises when the scrubber snaps to a selected row); the pending-change
-     * upsert then treats saving it as a replace rather than a duplicate.
-     */
+    /// A time exactly on an existing shard clones that shard (the collision case
+    /// that arises when the scrubber snaps to a selected row); the pending-change
+    /// upsert then treats saving it as a replace rather than a duplicate.
     @Test
     void testBuildNewEntryAtTime_exactlyOnShard_clonesThatShard() {
         model.setSelectedFactKey("k1");
@@ -528,10 +468,8 @@ class TestFloorMapEditorModel {
         assertThat(created.getValue()).isEqualTo("{\"type\":\"camera\"}");
     }
 
-    /**
-     * A time before every shard has no active shard, so a blank entry is built
-     * at the requested time.
-     */
+    /// A time before every shard has no active shard, so a blank entry is built
+    /// at the requested time.
     @Test
     void testBuildNewEntryAtTime_beforeAllShards_blankValue() {
         model.setSelectedFactKey("k1");
@@ -544,10 +482,8 @@ class TestFloorMapEditorModel {
         assertThat(created.getValue()).isEqualTo("{}");
     }
 
-    /**
-     * The source shard is chosen from the merged list, so a pending creation
-     * (not yet flushed to the server) can be the shard cloned from.
-     */
+    /// The source shard is chosen from the merged list, so a pending creation
+    /// (not yet flushed to the server) can be the shard cloned from.
     @Test
     void testBuildNewEntryAtTime_clonesFromPendingCreation() {
         model.setSelectedFactKey("k1");
@@ -563,12 +499,10 @@ class TestFloorMapEditorModel {
     // buildDuplicateEntry
     // -----------------------------------------------------------------------
 
-    /**
-     * A duplicate is created under the new key at the requested effective time,
-     * with its placement-matrix translation (indices 4, 5) shifted by (dx, dy) —
-     * the offset that positions image facts, which are placed solely by the
-     * matrix.
-     */
+    /// A duplicate is created under the new key at the requested effective time,
+    /// with its placement-matrix translation (indices 4, 5) shifted by (dx, dy) —
+    /// the offset that positions image facts, which are placed solely by the
+    /// matrix.
     @Test
     void testBuildDuplicateEntry_offsetsMatrixTranslation() {
         final TemporalEntry source = entry("gate-1", 100,
@@ -585,10 +519,8 @@ class TestFloorMapEditorModel {
         assertThat(m[5]).isCloseTo(70.0, within(0.001));
     }
 
-    /**
-     * The offset changes only the matrix translation; rotation/scale (a, b, c, d)
-     * are preserved.
-     */
+    /// The offset changes only the matrix translation; rotation/scale (a, b, c, d)
+    /// are preserved.
     @Test
     void testBuildDuplicateEntry_preservesRotationScale() {
         final TemporalEntry source = entry("bg", 100,
@@ -606,10 +538,8 @@ class TestFloorMapEditorModel {
         assertThat(m[5]).isCloseTo(80.0, within(0.001));
     }
 
-    /**
-     * When the source has no placement matrix it defaults to identity before the
-     * offset is applied, so the duplicate lands at (dx, dy).
-     */
+    /// When the source has no placement matrix it defaults to identity before the
+    /// offset is applied, so the duplicate lands at (dx, dy).
     @Test
     void testBuildDuplicateEntry_defaultsToIdentityWhenNoMatrix() {
         final TemporalEntry source = entry("gate-1", 100, "{\"type\":\"gate\"}");
@@ -621,9 +551,7 @@ class TestFloorMapEditorModel {
         assertThat(m).containsExactly(1.0, 0.0, 0.0, 1.0, 50.0, 50.0);
     }
 
-    /**
-     * The duplicate's label is repointed at the new key.
-     */
+    /// The duplicate's label is repointed at the new key.
     @Test
     void testBuildDuplicateEntry_relabelsToNewKey() {
         final TemporalEntry source = entry("gate-1", 100,
@@ -636,10 +564,8 @@ class TestFloorMapEditorModel {
                 .isEqualTo("gate-1-copy");
     }
 
-    /**
-     * The offset is applied to the matrix, not to POSITION, so a fact's coords
-     * are carried over unchanged.
-     */
+    /// The offset is applied to the matrix, not to POSITION, so a fact's coords
+    /// are carried over unchanged.
     @Test
     void testBuildDuplicateEntry_leavesPositionCoordsUntouched() {
         final TemporalEntry source = entry("gate-1", 100,
@@ -662,11 +588,9 @@ class TestFloorMapEditorModel {
     // default.
     // -----------------------------------------------------------------------
 
-    /**
-     * Translating a background shifts the translation components (indices 4, 5)
-     * of its WORLD_TO_MAP matrix, and leaves the POSITION coords field
-     * untouched.
-     */
+    /// Translating a background shifts the translation components (indices 4, 5)
+    /// of its WORLD_TO_MAP matrix, and leaves the POSITION coords field
+    /// untouched.
     @Test
     void testBackgroundTranslate_updatesMatrixTranslation() {
         model.onEntriesFetched(List.of(entry("background", 100,
@@ -690,10 +614,8 @@ class TestFloorMapEditorModel {
         assertThat(coords[1]).isCloseTo(5.0, within(0.001));
     }
 
-    /**
-     * Translating a background preserves the existing rotation/scale components
-     * (a, b, c, d) of its WORLD_TO_MAP matrix, changing only translation.
-     */
+    /// Translating a background preserves the existing rotation/scale components
+    /// (a, b, c, d) of its WORLD_TO_MAP matrix, changing only translation.
     @Test
     void testBackgroundTranslate_preservesRotationScale() {
         model.onEntriesFetched(List.of(entry("background", 100,
@@ -717,10 +639,8 @@ class TestFloorMapEditorModel {
         assertThat(m[5]).isCloseTo(80.0, within(0.001));
     }
 
-    /**
-     * When the background entry has no WORLD_TO_MAP matrix, it defaults to
-     * identity before the translation is applied.
-     */
+    /// When the background entry has no WORLD_TO_MAP matrix, it defaults to
+    /// identity before the translation is applied.
     @Test
     void testBackgroundTranslate_defaultsToIdentityWhenMissing() {
         model.onEntriesFetched(List.of(entry("background", 100,
@@ -741,10 +661,8 @@ class TestFloorMapEditorModel {
     // Pending changes integration
     // -----------------------------------------------------------------------
 
-    /**
-     * A pending creation appears in the merged canvas entries alongside the
-     * server-known objects.
-     */
+    /// A pending creation appears in the merged canvas entries alongside the
+    /// server-known objects.
     @Test
     void testPendingCreation_visibleInMergedList() {
         model.onEntriesFetched(List.of(entry("k1", 100, "{}")));
@@ -753,10 +671,8 @@ class TestFloorMapEditorModel {
         assertThat(merged).hasSize(2);
     }
 
-    /**
-     * A pending update overlays the server entry's value in the merged
-     * canvas entries rather than appearing as an extra entry.
-     */
+    /// A pending update overlays the server entry's value in the merged
+    /// canvas entries rather than appearing as an extra entry.
     @Test
     void testPendingUpdate_replacesInMergedList() {
         model.onEntriesFetched(List.of(entry("k1", 100, "{\"old\":true}")));
@@ -766,10 +682,8 @@ class TestFloorMapEditorModel {
         assertThat(merged.getFirst().getValue()).isEqualTo("{\"new\":true}");
     }
 
-    /**
-     * A pending deletion hides the matching object from the merged canvas
-     * entries, leaving other objects visible.
-     */
+    /// A pending deletion hides the matching object from the merged canvas
+    /// entries, leaving other objects visible.
     @Test
     void testPendingDeletion_hiddenFromMergedList() {
         model.onEntriesFetched(List.of(
@@ -782,16 +696,14 @@ class TestFloorMapEditorModel {
         assertThat(merged.getFirst().getKey()).isEqualTo("k2");
     }
 
-    /**
-     * A flush clears only the prefix it actually sent, so an edit made while the
-     * save was in flight survives to be flushed next time.
-     *
-     * <p>This replaces a test of the old {@code clearPendingChanges()}, which
-     * cleared the whole buffer and has been removed. Clearing everything is the
-     * one thing a flush must not do: it is indistinguishable from a correct flush
-     * right up until a user edits during a save, at which point their edit is
-     * silently dropped.</p>
-     */
+    /// A flush clears only the prefix it actually sent, so an edit made while the
+    /// save was in flight survives to be flushed next time.
+    ///
+    /// This replaces a test of the old `clearPendingChanges()`, which
+    /// cleared the whole buffer and has been removed. Clearing everything is the
+    /// one thing a flush must not do: it is indistinguishable from a correct flush
+    /// right up until a user edits during a save, at which point their edit is
+    /// silently dropped.
     @Test
     void testFlushClearsOnlyTheSentPrefix() {
         model.getPendingChanges().recordCreation(entry("k1", 100, "{}"));
@@ -817,10 +729,8 @@ class TestFloorMapEditorModel {
         assertThat(model.hasPendingChanges()).isFalse();
     }
 
-    /**
-     * {@code clearSent} clamps, so an overlapping double-flush cannot clear more
-     * than is there.
-     */
+    /// `clearSent` clamps, so an overlapping double-flush cannot clear more
+    /// than is there.
     @Test
     void testClearSentClampsSoOverlappingFlushesAreIdempotent() {
         model.getPendingChanges().recordCreation(entry("k1", 100, "{}"));
@@ -835,10 +745,8 @@ class TestFloorMapEditorModel {
     // Time shard management
     // -----------------------------------------------------------------------
 
-    /**
-     * A fact with several time shards produces a merged time list
-     * containing all of them, sorted by effective time.
-     */
+    /// A fact with several time shards produces a merged time list
+    /// containing all of them, sorted by effective time.
     @Test
     void testTimeListShards_multipleTimesForSameKey() {
         model.setSelectedFactKey("k1");
@@ -854,10 +762,8 @@ class TestFloorMapEditorModel {
         assertThat(timeList.get(2).getEffectiveTimeMs()).isEqualTo(300);
     }
 
-    /**
-     * Staging deletion of a middle time entry suggests selecting the index
-     * immediately before the deleted entry's former position.
-     */
+    /// Staging deletion of a middle time entry suggests selecting the index
+    /// immediately before the deleted entry's former position.
     @Test
     void testTimeEntryDeletion_suggestsPreviousIndex() {
         model.setSelectedFactKey("k1");
@@ -873,10 +779,8 @@ class TestFloorMapEditorModel {
         assertThat(suggestedIndex).isEqualTo(0);
     }
 
-    /**
-     * Staging deletion of the first time entry, with nothing before it,
-     * suggests no selection (index -1).
-     */
+    /// Staging deletion of the first time entry, with nothing before it,
+    /// suggests no selection (index -1).
     @Test
     void testTimeEntryDeletion_deletingFirst_suggestsMinusOne() {
         model.setSelectedFactKey("k1");
@@ -889,10 +793,8 @@ class TestFloorMapEditorModel {
         assertThat(suggestedIndex).isEqualTo(-1);
     }
 
-    /**
-     * A newly staged time version for the selected fact appears in the
-     * merged time list at its effective time.
-     */
+    /// A newly staged time version for the selected fact appears in the
+    /// merged time list at its effective time.
     @Test
     void testAddTimeVersion_appearsInTimeList() {
         model.setSelectedFactKey("k1");
@@ -905,10 +807,8 @@ class TestFloorMapEditorModel {
         assertThat(timeList.get(1).getEffectiveTimeMs()).isEqualTo(200);
     }
 
-    /**
-     * When entries for multiple facts are present, the merged time list only
-     * shows entries for the currently selected fact.
-     */
+    /// When entries for multiple facts are present, the merged time list only
+    /// shows entries for the currently selected fact.
     @Test
     void testOnlySelectedFactShownInTimeList() {
         model.setSelectedFactKey("k1");
@@ -926,11 +826,9 @@ class TestFloorMapEditorModel {
     // parseForCanvas
     // -----------------------------------------------------------------------
 
-    /**
-     * Parsing a valid batch of entries for the canvas yields one fact per
-     * entry — the image (background) fact and the regular object — with no
-     * warnings emitted.
-     */
+    /// Parsing a valid batch of entries for the canvas yields one fact per
+    /// entry — the image (background) fact and the regular object — with no
+    /// warnings emitted.
     @Test
     void testParseForCanvas() {
         final List<TemporalEntry> entries = List.of(
@@ -946,12 +844,10 @@ class TestFloorMapEditorModel {
         assertThat(warnings).as("valid entries should not emit warnings").isEmpty();
     }
 
-    /**
-     * The canvas shows, per key, the single shard active at the scrubber time —
-     * so an object never renders (or drags) as several overlaid time versions,
-     * and moving the scrubber changes which shard is shown. Here the scrubber
-     * sits between shards, so the earlier one is active and the later is ignored.
-     */
+    /// The canvas shows, per key, the single shard active at the scrubber time —
+    /// so an object never renders (or drags) as several overlaid time versions,
+    /// and moving the scrubber changes which shard is shown. Here the scrubber
+    /// sits between shards, so the earlier one is active and the later is ignored.
     @Test
     void testParseForCanvas_showsShardActiveAtSelectedTime() {
         model.setSelectedTime(250);
@@ -971,12 +867,10 @@ class TestFloorMapEditorModel {
         assertThat(facts.stream().anyMatch(f -> "g1".equals(f.getKey()))).isTrue();
     }
 
-    /**
-     * When the entry list holds several shards per key (e.g. pending changes
-     * staged at other effective times overlaid on the server data) and the
-     * scrubber sits at/after all of them, each key shows its latest active
-     * shard — no key is dropped.
-     */
+    /// When the entry list holds several shards per key (e.g. pending changes
+    /// staged at other effective times overlaid on the server data) and the
+    /// scrubber sits at/after all of them, each key shows its latest active
+    /// shard — no key is dropped.
     @Test
     void testParseForCanvas_scrubberAtLatest_keepsAllKeys() {
         model.setSelectedTime(1000);
@@ -992,11 +886,9 @@ class TestFloorMapEditorModel {
         assertThat(bg.getImage()).as("latest active shard (t=300) wins").isEqualTo("new.png");
     }
 
-    /**
-     * With the scrubber time unset ({@code <= 0}) the time filter is skipped and
-     * the latest shard per key wins, so the canvas is not blanked before the
-     * scrubber is initialised.
-     */
+    /// With the scrubber time unset (`<= 0`) the time filter is skipped and
+    /// the latest shard per key wins, so the canvas is not blanked before the
+    /// scrubber is initialised.
     @Test
     void testParseForCanvas_collapsesToLatestWhenTimeUnset() {
         model.setSelectedTime(0);
@@ -1010,10 +902,8 @@ class TestFloorMapEditorModel {
         assertThat(facts.getFirst().getImage()).as("latest shard (t=300) wins").isEqualTo("new.png");
     }
 
-    /**
-     * A malformed entry in the canvas batch is skipped and reported via the
-     * model's warning callback, while the well-formed entry still parses.
-     */
+    /// A malformed entry in the canvas batch is skipped and reported via the
+    /// model's warning callback, while the well-formed entry still parses.
     @Test
     void testParseForCanvas_malformedEntry_emitsWarning() {
         final List<TemporalEntry> entries = List.of(
@@ -1029,10 +919,8 @@ class TestFloorMapEditorModel {
         assertThat(warnings.getFirst()).contains("bad");
     }
 
-    /**
-     * Every malformed entry in the canvas batch produces its own warning via
-     * the model's warning callback.
-     */
+    /// Every malformed entry in the canvas batch produces its own warning via
+    /// the model's warning callback.
     @Test
     void testParseForCanvas_multipleMalformed_emitsAllWarnings() {
         final List<TemporalEntry> entries = List.of(
@@ -1046,9 +934,7 @@ class TestFloorMapEditorModel {
         assertThat(warnings.get(1)).contains("bad2");
     }
 
-    /**
-     * Parsing an empty entry list for the canvas emits no warnings.
-     */
+    /// Parsing an empty entry list for the canvas emits no warnings.
     @Test
     void testParseForCanvas_noWarningsOnEmpty() {
         model.parseForCanvas(List.of(), SCHEMA, ACCESSOR);
@@ -1059,10 +945,8 @@ class TestFloorMapEditorModel {
     // buildUpdatedEntryWithMatrix
     // -----------------------------------------------------------------------
 
-    /**
-     * The static helper writes the full six-component matrix into the requested
-     * role's field.
-     */
+    /// The static helper writes the full six-component matrix into the requested
+    /// role's field.
     @Test
     void testBuildUpdatedEntryWithMatrix_writesFullMatrix() {
         final TemporalEntry original = entry("g1", 100, "{\"type\":\"gate\"}");
@@ -1077,7 +961,7 @@ class TestFloorMapEditorModel {
     // Selection as a set
     // -----------------------------------------------------------------------
 
-    /** The single-select façade sets/clears the whole selection. */
+    /// The single-select façade sets/clears the whole selection.
     @Test
     void testSelection_singleSelectFacade() {
         model.setSelectedFactKey("a");
@@ -1089,7 +973,7 @@ class TestFloorMapEditorModel {
         assertThat(model.getSelectedFactKeys()).isEmpty();
     }
 
-    /** setSelection replaces the whole selection, preserving order. */
+    /// setSelection replaces the whole selection, preserving order.
     @Test
     void testSelection_setSelection() {
         model.setSelection(List.of("x", "y", "z"));
@@ -1097,7 +981,7 @@ class TestFloorMapEditorModel {
         assertThat(model.getSelectedFactKey()).isEqualTo("x");
     }
 
-    /** Deleting a selected fact removes it from the selection. */
+    /// Deleting a selected fact removes it from the selection.
     @Test
     void testSelection_stageDeletionDeselects() {
         final TemporalEntry shard = entry("k1", 100, "{}");
@@ -1111,11 +995,9 @@ class TestFloorMapEditorModel {
     // transformFacts (group move / rotate / scale via a map-space transform)
     // -----------------------------------------------------------------------
 
-    /**
-     * Rotating a group 90° about a pivot repositions each fact (its e,f) AND
-     * rotates its own orientation (a,b,c,d). Facts a=(anchor 5,10) and
-     * b=(anchor 15,10) rotate 90° CCW about (10,10) → anchors (10,5) and (10,15).
-     */
+    /// Rotating a group 90° about a pivot repositions each fact (its e,f) AND
+    /// rotates its own orientation (a,b,c,d). Facts a=(anchor 5,10) and
+    /// b=(anchor 15,10) rotate 90° CCW about (10,10) → anchors (10,5) and (10,15).
     @Test
     void testTransformFacts_groupRotate90_repositionsAndReorients() {
         model.onEntriesFetched(List.of(
@@ -1130,7 +1012,7 @@ class TestFloorMapEditorModel {
         assertMatrix(mergedMatrix("b"), 0, 1, -1, 0, 10, 15);
     }
 
-    /** Scaling a group 2× about a pivot scales orientation and spreads anchors. */
+    /// Scaling a group 2× about a pivot scales orientation and spreads anchors.
     @Test
     void testTransformFacts_groupScale2xAboutPivot() {
         model.onEntriesFetched(List.of(
@@ -1144,10 +1026,8 @@ class TestFloorMapEditorModel {
         assertMatrix(mergedMatrix("b"), 2, 0, 0, 2, 20, 10);
     }
 
-    /**
-     * A single fact rotated about its own anchor keeps its anchor fixed and
-     * takes on the rotation in a,b,c,d.
-     */
+    /// A single fact rotated about its own anchor keeps its anchor fixed and
+    /// takes on the rotation in a,b,c,d.
     @Test
     void testTransformFacts_singleFactRotateAboutOwnCentre() {
         model.onEntriesFetched(List.of(
@@ -1160,7 +1040,7 @@ class TestFloorMapEditorModel {
         assertMatrix(mergedMatrix("g"), cos45, cos45, -cos45, cos45, 50, 50);
     }
 
-    /** A missing matrix defaults to identity before the transform is applied. */
+    /// A missing matrix defaults to identity before the transform is applied.
     @Test
     void testTransformFacts_defaultsToIdentityWhenNoMatrix() {
         model.onEntriesFetched(List.of(entry("g", 100, "{\"type\":\"img\"}")));
@@ -1171,7 +1051,7 @@ class TestFloorMapEditorModel {
         assertMatrix(mergedMatrix("g"), 1, 0, 0, 1, 5, 5);
     }
 
-    /** Unknown ids are skipped; the return count reflects only facts found. */
+    /// Unknown ids are skipped; the return count reflects only facts found.
     @Test
     void testTransformFacts_batchSkipsUnknown() {
         model.onEntriesFetched(List.of(
@@ -1183,14 +1063,14 @@ class TestFloorMapEditorModel {
         assertThat(n).isEqualTo(2);
     }
 
-    /** Null/empty id collections are a no-op returning zero. */
+    /// Null/empty id collections are a no-op returning zero.
     @Test
     void testTransformFacts_emptyIds_returnsZero() {
         assertThat(model.transformFacts(List.of(),
                 FloorMapTransformationMatrix.scale(2, 2), SCHEMA, ACCESSOR)).isZero();
     }
 
-    /** A null/empty schema throws. */
+    /// A null/empty schema throws.
     @Test
     void testTransformFacts_noSchema_throws() {
         model.onEntriesFetched(List.of(
@@ -1200,7 +1080,7 @@ class TestFloorMapEditorModel {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    /** The transform edits WORLD_TO_MAP only; POSITION coords are untouched. */
+    /// The transform edits WORLD_TO_MAP only; POSITION coords are untouched.
     @Test
     void testTransformFacts_leavesPositionCoordsUntouched() {
         model.onEntriesFetched(List.of(
@@ -1237,10 +1117,8 @@ class TestFloorMapEditorModel {
     // onTimeListFetched
     // -----------------------------------------------------------------------
 
-    /**
-     * Entries fetched for the time list are stored sorted by effective time,
-     * regardless of the order they were fetched in.
-     */
+    /// Entries fetched for the time list are stored sorted by effective time,
+    /// regardless of the order they were fetched in.
     @Test
     void testOnTimeListFetched_sortsEntries() {
         model.onTimeListFetched(List.of(
@@ -1254,10 +1132,8 @@ class TestFloorMapEditorModel {
         assertThat(stored.get(2).getEffectiveTimeMs()).isEqualTo(300);
     }
 
-    /**
-     * Fetching a {@code null} time list is treated as an empty result rather
-     * than throwing.
-     */
+    /// Fetching a `null` time list is treated as an empty result rather
+    /// than throwing.
     @Test
     void testOnTimeListFetched_null_yieldsEmpty() {
         model.onTimeListFetched(null);
@@ -1268,12 +1144,10 @@ class TestFloorMapEditorModel {
     // buildAreaEntry
     // -----------------------------------------------------------------------
 
-    /**
-     * Map-space vertices are stored in the local frame centred on their
-     * centroid, placed by {@code WORLD_TO_MAP = translate(centroid)}, so
-     * local + translation reproduces the original map coordinates and the
-     * scale/rotate handles pivot about the middle.
-     */
+    /// Map-space vertices are stored in the local frame centred on their
+    /// centroid, placed by `WORLD_TO_MAP = translate(centroid)`, so
+    /// local + translation reproduces the original map coordinates and the
+    /// scale/rotate handles pivot about the middle.
     @Test
     void testBuildAreaEntry_centroidLocalFrame() {
         final List<double[]> mapVertices = List.of(
@@ -1308,7 +1182,7 @@ class TestFloorMapEditorModel {
         }
     }
 
-    /** Fewer than three vertices is rejected. */
+    /// Fewer than three vertices is rejected.
     @Test
     void testBuildAreaEntry_tooFewVertices() {
         assertThatThrownBy(() -> FloorMapEditorModel.buildAreaEntry(
@@ -1341,10 +1215,8 @@ class TestFloorMapEditorModel {
                 .hasMessageContaining("[x, y]");
     }
 
-    /**
-     * A schema without the GEOMETRY role fails loudly instead of silently
-     * writing to a null path (which the accessors ignore).
-     */
+    /// A schema without the GEOMETRY role fails loudly instead of silently
+    /// writing to a null path (which the accessors ignore).
     @Test
     void testBuildAreaEntry_missingRoleFailsLoudly() {
         assertThatThrownBy(() -> FloorMapEditorModel.buildAreaEntry(
@@ -1366,12 +1238,10 @@ class TestFloorMapEditorModel {
     // Edits target the shard active at the scrubber (regression)
     // -----------------------------------------------------------------------
 
-    /**
-     * With a pending time-version at a later effective time than the server
-     * shard, a transform must update the shard the canvas is showing (the one
-     * active at {@code selectedTime}), not merely the first key match — which
-     * would silently move the historical server shard instead.
-     */
+    /// With a pending time-version at a later effective time than the server
+    /// shard, a transform must update the shard the canvas is showing (the one
+    /// active at `selectedTime`), not merely the first key match — which
+    /// would silently move the historical server shard instead.
     @Test
     void testTransformFacts_targetsActiveShardNotFirstMatch() {
         // Server shard at t=100 (translation 10,20); pending time-version at
@@ -1404,11 +1274,9 @@ class TestFloorMapEditorModel {
         assertThat(m100[5]).isCloseTo(20.0, within(0.001));
     }
 
-    /**
-     * A geometry edit on a schema with no {@code GEOMETRY} mapping must be a
-     * no-op that stages nothing (and so leaves the document clean), rather than
-     * recording an identical Update that only marks the doc dirty.
-     */
+    /// A geometry edit on a schema with no `GEOMETRY` mapping must be a
+    /// no-op that stages nothing (and so leaves the document clean), rather than
+    /// recording an identical Update that only marks the doc dirty.
     @Test
     void testUpdateFactGeometry_noGeometryRole_stagesNothing() {
         model.onEntriesFetched(List.of(entry("area-1", 100, "{\"type\":\"area\"}")));
@@ -1426,11 +1294,9 @@ class TestFloorMapEditorModel {
     // Delete all shards (regression)
     // -----------------------------------------------------------------------
 
-    /**
-     * Deleting a fact must stage a deletion for every shard supplied (all
-     * effective times), plus any pending creation for the key — so no time
-     * version survives to resurrect the fact.
-     */
+    /// Deleting a fact must stage a deletion for every shard supplied (all
+    /// effective times), plus any pending creation for the key — so no time
+    /// version survives to resurrect the fact.
     @Test
     void testStageFactDeletionForAllShards_deletesEveryVersion() {
         final List<TemporalEntry> serverShards = List.of(
@@ -1448,11 +1314,9 @@ class TestFloorMapEditorModel {
         assertThat(afterServer).noneMatch(e -> e.getKey().equals("k1"));
     }
 
-    /**
-     * {@link FloorMapEditorModel#selectedFactHasEntryAtTime(long)} detects an
-     * existing shard at an exact effective time (so "Add Time Version" can warn
-     * instead of overwriting).
-     */
+    /// [FloorMapEditorModel#selectedFactHasEntryAtTime(long)] detects an
+    /// existing shard at an exact effective time (so "Add Time Version" can warn
+    /// instead of overwriting).
     @Test
     void testSelectedFactHasEntryAtTime() {
         model.setSelectedFactKey("k1");

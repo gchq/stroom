@@ -22,11 +22,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * The classification is the easy half. What earns its place is the <em>filtering</em>: the guards
- * this replaces existed because reporting on first sight is wrong, and a version that reports
- * eagerly would be worse than the silence it fixes.
- */
+/// The classification is the easy half. What earns its place is the *filtering*: the guards
+/// this replaces existed because reporting on first sight is wrong, and a version that reports
+/// eagerly would be worse than the silence it fixes.
 class TestFloorMapStageReporter {
 
     private static final long TICK = 300L;   // the playback throttle
@@ -47,7 +45,7 @@ class TestFloorMapStageReporter {
         assertThat(FloorMapStageReporter.classify(0, 0, 9, 0)).isEqualTo(Stage.NO_EVENT_ROWS);
     }
 
-    /** Rows but no entities is the column-name mismatch, which is the commonest misconfiguration. */
+    /// Rows but no entities is the column-name mismatch, which is the commonest misconfiguration.
     @Test
     void testRowsButNoEntitiesNamesTheParse() {
         assertThat(FloorMapStageReporter.classify(10, 0, 9, 0))
@@ -64,18 +62,16 @@ class TestFloorMapStageReporter {
         assertThat(FloorMapStageReporter.classify(10, 4, 9, 0)).isEqualTo(Stage.NO_PLACEMENTS);
     }
 
-    /**
-     * Empty facts with entities drawn is normal, not a fault.
-     *
-     * <p>An entity whose location is literal coordinates needs no facts at all, so a map made
-     * entirely of those has none — and must not be told it is broken.</p>
-     */
+    /// Empty facts with entities drawn is normal, not a fault.
+    ///
+    /// An entity whose location is literal coordinates needs no facts at all, so a map made
+    /// entirely of those has none — and must not be told it is broken.
     @Test
     void testNoFactsIsNotReportedWhenEntitiesAreStillDrawn() {
         assertThat(FloorMapStageReporter.classify(10, 4, 0, 4)).isEqualTo(Stage.NONE);
     }
 
-    /** The cascade stops at the first empty stage; later ones were never reached. */
+    /// The cascade stops at the first empty stage; later ones were never reached.
     @Test
     void testEverythingEmptyNamesTheQueryRatherThanTheLastStage() {
         assertThat(FloorMapStageReporter.classify(0, 0, 0, 0)).isEqualTo(Stage.NO_EVENT_ROWS);
@@ -85,7 +81,7 @@ class TestFloorMapStageReporter {
     // Filtering — the half that matters
     // -----------------------------------------------------------------------
 
-    /** The transient startup sequence: facts arrive a tick after events. Must stay silent. */
+    /// The transient startup sequence: facts arrive a tick after events. Must stay silent.
     @Test
     void testTheTransientFactsAfterEventsSequenceReportsNothing() {
         final FloorMapStageReporter reporter = new FloorMapStageReporter();
@@ -109,11 +105,9 @@ class TestFloorMapStageReporter {
                 .isEqualTo(Stage.NO_ENTITIES_PARSED);
     }
 
-    /**
-     * The regression this design exists for: a <b>paused</b> map observes once and then not again
-     * until something asks. Two observations a long way apart must report, because the stage has
-     * genuinely persisted - a count of observations could never satisfy this.
-     */
+    /// The regression this design exists for: a **paused** map observes once and then not again
+    /// until something asks. Two observations a long way apart must report, because the stage has
+    /// genuinely persisted - a count of observations could never satisfy this.
     @Test
     void testTwoObservationsFarApartReportWithoutATickStream() {
         final FloorMapStageReporter reporter = new FloorMapStageReporter();
@@ -123,14 +117,14 @@ class TestFloorMapStageReporter {
                 .isEqualTo(Stage.NO_FACTS);
     }
 
-    /** One observation is never enough, however late it is - there is nothing to compare it to. */
+    /// One observation is never enough, however late it is - there is nothing to compare it to.
     @Test
     void testASingleObservationNeverReports() {
         final FloorMapStageReporter reporter = new FloorMapStageReporter();
         assertThat(reporter.observe(10, 0, 9, 0, T0 + 60_000)).isNull();
     }
 
-    /** Once per episode, not once per tick — otherwise it nags for as long as the map is open. */
+    /// Once per episode, not once per tick — otherwise it nags for as long as the map is open.
     @Test
     void testAPersistentStageIsReportedOnlyOnce() {
         final FloorMapStageReporter reporter = new FloorMapStageReporter();
@@ -143,7 +137,7 @@ class TestFloorMapStageReporter {
         assertThat(reports).isEqualTo(1);
     }
 
-    /** A different failure is a different episode and gets its own message. */
+    /// A different failure is a different episode and gets its own message.
     @Test
     void testADifferentStageIsReportedSeparately() {
         final FloorMapStageReporter reporter = new FloorMapStageReporter();
@@ -166,7 +160,7 @@ class TestFloorMapStageReporter {
         assertThat(second).isEqualTo(Stage.NO_EVENT_ROWS);
     }
 
-    /** Recovering and failing again is a new episode, so it speaks again. */
+    /// Recovering and failing again is a new episode, so it speaks again.
     @Test
     void testRecoveringAndFailingAgainReportsAgain() {
         final FloorMapStageReporter reporter = new FloorMapStageReporter();
@@ -184,13 +178,11 @@ class TestFloorMapStageReporter {
         assertThat(reports).isEqualTo(1);
     }
 
-    /**
-     * A scrub must not accumulate evidence across unrelated instants.
-     *
-     * <p>Without the reset, dragging through a sparse stretch would count one empty observation per
-     * position visited and eventually report a configuration problem where there is simply no data
-     * at those times.</p>
-     */
+    /// A scrub must not accumulate evidence across unrelated instants.
+    ///
+    /// Without the reset, dragging through a sparse stretch would count one empty observation per
+    /// position visited and eventually report a configuration problem where there is simply no data
+    /// at those times.
     @Test
     void testResetOnTimeChangeStartsTheCountAgain() {
         final FloorMapStageReporter reporter = new FloorMapStageReporter();
@@ -242,14 +234,12 @@ class TestFloorMapStageReporter {
         }
     }
 
-    /**
-     * No status line may name a single column setting.
-     *
-     * <p>{@link Stage#NO_ENTITIES_PARSED} used to say "no entity matched the Entity ID column", and
-     * the first time it appeared in anger the Entity ID column was correct — both <em>location</em>
-     * roles were the problem. A line that sends the reader to the wrong setting is worse than
-     * silence, so the canvas names the stage and the console names the specifics.</p>
-     */
+    /// No status line may name a single column setting.
+    ///
+    /// [Stage#NO_ENTITIES_PARSED] used to say "no entity matched the Entity ID column", and
+    /// the first time it appeared in anger the Entity ID column was correct — both *location*
+    /// roles were the problem. A line that sends the reader to the wrong setting is worse than
+    /// silence, so the canvas names the stage and the console names the specifics.
     @Test
     void noStatusTextBlamesOneParticularColumn() {
         for (final Stage stage : Stage.values()) {

@@ -16,18 +16,16 @@
 
 package stroom.floormap.client.value;
 
-/**
- * An opaque wrapper around a parsed value, which may be backed by either
- * a GWT {@code JSONObject} (for JSON format), a GWT XML {@code Document}
- * (for XML format), or any other implementation-specific object (e.g. a
- * {@code Map} in tests).
- *
- * <p>Consumers should never cast or inspect the underlying object directly.
- * Instead, all access should go through a {@link ValueAccessor}, which
- * provides format-independent read/write operations.</p>
- *
- * @see ValueAccessor
- */
+/// An opaque wrapper around a parsed value, which may be backed by either
+/// a GWT `JSONObject` (for JSON format), a GWT XML `Document`
+/// (for XML format), or any other implementation-specific object (e.g. a
+/// `Map` in tests).
+///
+/// Consumers should never cast or inspect the underlying object directly.
+/// Instead, all access should go through a [ValueAccessor], which
+/// provides format-independent read/write operations.
+///
+/// @see ValueAccessor
 public final class ParsedValue {
 
     private final Object backing;
@@ -36,13 +34,11 @@ public final class ParsedValue {
         this.backing = backing;
     }
 
-    /**
-     * Returns the underlying backing object.
-     *
-     * <p>Only {@link ValueAccessor} implementations should call this.</p>
-     *
-     * @return the backing object (never {@code null})
-     */
+    /// Returns the underlying backing object.
+    ///
+    /// Only [ValueAccessor] implementations should call this.
+    ///
+    /// @return the backing object (never `null`)
     public Object getBacking() {
         return backing;
     }

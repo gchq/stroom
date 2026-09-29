@@ -24,59 +24,54 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * The wording of the hover panel that describes <em>one</em> entity — the
- * single-object counterpart to {@link FloorMapClusterLabel}, which words the
- * same panel for a cluster.
- *
- * <p>A glyph on the map says almost nothing about what it is: the shape carries
- * its type at best, and the caption (when there is room for one) carries its
- * name. This is what the pointer is for — name, type, which area it is standing
- * in, and where that is in real units, without selecting anything or leaving
- * the map.</p>
- *
- * <h2>What is said, and what is left out</h2>
- * <ul>
- *   <li><strong>Every containing area is named</strong>, innermost first, in
- *       the same words the Tracking panel and the cluster dialog use — one
- *       entity must not read differently in two places.</li>
- *   <li><strong>Areas are only mentioned on a map that has areas.</strong>
- *       "Not inside an area" is worth saying where areas exist and this entity
- *       is in none of them; on a map with no areas at all it is noise on every
- *       hover, so the line is dropped ({@code null} rather than an empty
- *       list).</li>
- *   <li><strong>The id is shown only when it is not already the caption.</strong>
- *       An unnamed entity is captioned by its id, and repeating it as a detail
- *       line would say nothing twice.</li>
- * </ul>
- *
- * <p>Holds no GWT or DOM types so it can be unit-tested on the JVM. Note that
- * {@code String.format} is unavailable under GWT, hence the concatenation.</p>
- */
+/// The wording of the hover panel that describes *one* entity — the
+/// single-object counterpart to [FloorMapClusterLabel], which words the
+/// same panel for a cluster.
+///
+/// A glyph on the map says almost nothing about what it is: the shape carries
+/// its type at best, and the caption (when there is room for one) carries its
+/// name. This is what the pointer is for — name, type, which area it is standing
+/// in, and where that is in real units, without selecting anything or leaving
+/// the map.
+///
+/// ## What is said, and what is left out
+///
+/// - **Every containing area is named**, innermost first, in
+///   the same words the Tracking panel and the cluster dialog use — one
+///   entity must not read differently in two places.
+/// - **Areas are only mentioned on a map that has areas.**
+///   "Not inside an area" is worth saying where areas exist and this entity
+///   is in none of them; on a map with no areas at all it is noise on every
+///   hover, so the line is dropped (`null` rather than an empty
+///   list).
+/// - **The id is shown only when it is not already the caption.**
+///   An unnamed entity is captioned by its id, and repeating it as a detail
+///   line would say nothing twice.
+///
+/// Holds no GWT or DOM types so it can be unit-tested on the JVM. Note that
+/// `String.format` is unavailable under GWT, hence the concatenation.
 public final class FloorMapHoverDetail {
 
-    /** Said when the map has areas but the entity is inside none of them. */
+    /// Said when the map has areas but the entity is inside none of them.
     private static final String NO_AREA = "Not inside an area";
 
-    /** Bullet prefix for one area in a multi-area list. */
+    /// Bullet prefix for one area in a multi-area list.
     private static final String BULLET = "• ";
 
     private FloorMapHoverDetail() {
         // Utility class.
     }
 
-    /**
-     * The panel's heading: the entity's display name, falling back to its id.
-     *
-     * <p>An entity with no name is not nameless to the user — its id is what
-     * every grid shows for it — so the caption is never empty while there is
-     * anything at all to identify it by.</p>
-     *
-     * @param id   the entity id; may be {@code null}
-     * @param name the resolved display name; {@code null} or blank falls back
-     *             to the id
-     * @return the caption, or {@code null} when there is neither
-     */
+    /// The panel's heading: the entity's display name, falling back to its id.
+    ///
+    /// An entity with no name is not nameless to the user — its id is what
+    /// every grid shows for it — so the caption is never empty while there is
+    /// anything at all to identify it by.
+    ///
+    /// @param id   the entity id; may be `null`
+    /// @param name the resolved display name; `null` or blank falls back
+    ///         to the id
+    /// @return the caption, or `null` when there is neither
     public static String caption(final String id, final String name) {
         if (NullSafe.isNonBlankString(name)) {
             return name.trim();
@@ -86,31 +81,29 @@ public final class FloorMapHoverDetail {
                 : null;
     }
 
-    /**
-     * The detail lines shown under the caption, in reading order: what kind of
-     * thing it is, where it is standing, where that is, and — only when it adds
-     * anything — what it is called in the store.
-     *
-     * <p>Every argument is optional: a line whose input is missing is simply not
-     * emitted, so a bare fact with nothing but a key still produces a usable
-     * panel rather than a column of blanks.</p>
-     *
-     * @param type         the entity type, e.g. {@code "person"}; {@code null}
-     *                     or blank omits the line
-     * @param areaNames    the containing area names, innermost first; an empty
-     *                     list reads "not inside an area", and {@code null}
-     *                     omits the subject entirely (used when the map has no
-     *                     areas to be inside)
-     * @param positionText the pre-formatted position, e.g.
-     *                     {@code "X 4.5 m, Y 2.1 m"} from
-     *                     {@link FloorMapMeasurementUnits#formatPosition};
-     *                     {@code null} or blank omits the line
-     * @param id           the entity id; omitted when blank or when it is
-     *                     already the caption
-     * @param caption      the caption from {@link #caption}, so the id line can
-     *                     tell whether it would be a repeat
-     * @return the lines to render; never {@code null}, possibly empty
-     */
+    /// The detail lines shown under the caption, in reading order: what kind of
+    /// thing it is, where it is standing, where that is, and — only when it adds
+    /// anything — what it is called in the store.
+    ///
+    /// Every argument is optional: a line whose input is missing is simply not
+    /// emitted, so a bare fact with nothing but a key still produces a usable
+    /// panel rather than a column of blanks.
+    ///
+    /// @param type         the entity type, e.g. `"person"`; `null`
+    ///         or blank omits the line
+    /// @param areaNames    the containing area names, innermost first; an empty
+    ///         list reads "not inside an area", and `null`
+    ///         omits the subject entirely (used when the map has no
+    ///         areas to be inside)
+    /// @param positionText the pre-formatted position, e.g.
+    ///         `"X 4.5 m, Y 2.1 m"` from
+    ///         [FloorMapMeasurementUnits#formatPosition];
+    ///         `null` or blank omits the line
+    /// @param id           the entity id; omitted when blank or when it is
+    ///         already the caption
+    /// @param caption      the caption from [#caption], so the id line can
+    ///         tell whether it would be a repeat
+    /// @return the lines to render; never `null`, possibly empty
     public static List<String> lines(final String type,
                                      final List<String> areaNames,
                                      final String positionText,
@@ -133,19 +126,17 @@ public final class FloorMapHoverDetail {
         return Collections.unmodifiableList(lines);
     }
 
-    /**
-     * The area part of the panel: nothing on a map without areas, one line when
-     * the entity is in none or exactly one, and a counted list — one area per
-     * line, innermost first — when it is in several.
-     *
-     * <p>Every area is named rather than summarised as "+2", for the same reason
-     * {@link FloorMapAreaCellText#joinNames} names them all: the names are the
-     * answer the reader came for.</p>
-     *
-     * @param areaNames the containing area names, innermost first; {@code null}
-     *                  means the map has no areas
-     * @return the lines; never {@code null}
-     */
+    /// The area part of the panel: nothing on a map without areas, one line when
+    /// the entity is in none or exactly one, and a counted list — one area per
+    /// line, innermost first — when it is in several.
+    ///
+    /// Every area is named rather than summarised as "+2", for the same reason
+    /// [FloorMapAreaCellText#joinNames] names them all: the names are the
+    /// answer the reader came for.
+    ///
+    /// @param areaNames the containing area names, innermost first; `null`
+    ///         means the map has no areas
+    /// @return the lines; never `null`
     public static List<String> areaLines(final List<String> areaNames) {
         if (areaNames == null) {
             return Collections.emptyList();

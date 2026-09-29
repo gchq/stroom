@@ -23,19 +23,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * A test-only {@link ValueAccessor} implementation backed by
- * {@code Map<String, Object>}. Uses {@link JsonUtil} (Jackson) for JSON
- * parsing/serialisation, which is available on the server classpath but NOT
- * in GWT.
- *
- * <p>This enables testing of {@link FloorMapEntryParser},
- * {@link FloorMapEditorModel}, and other shared logic without any GWT
- * dependency.</p>
- *
- * <p>Paths follow the same convention as the GWT accessors: a dot-prefixed
- * key such as {@code ".type"} maps to the JSON property {@code "type"}.</p>
- */
+/// A test-only [ValueAccessor] implementation backed by
+/// `Map<String, Object>`. Uses [JsonUtil] (Jackson) for JSON
+/// parsing/serialisation, which is available on the server classpath but NOT
+/// in GWT.
+///
+/// This enables testing of [FloorMapEntryParser],
+/// [FloorMapEditorModel], and other shared logic without any GWT
+/// dependency.
+///
+/// Paths follow the same convention as the GWT accessors: a dot-prefixed
+/// key such as `".type"` maps to the JSON property `"type"`.
 public class MapValueAccessor implements ValueAccessor {
 
     public static final MapValueAccessor INSTANCE = new MapValueAccessor();

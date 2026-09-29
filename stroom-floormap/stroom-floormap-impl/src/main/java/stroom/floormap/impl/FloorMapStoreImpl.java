@@ -39,29 +39,27 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Singleton implementation of {@link FloorMapStore} built on {@link AbstractDocumentStore},
- * which handles the standard document CRUD, import/export and dependency delegation.
- * <p>
- * This class adds floor-map specific behaviour: it materialises newly created documents as a
- * processing user, copies the document when duplicating, and remaps the facts/events store
- * references it depends on.
- *
- * <p>Documents of this type can own uploaded assets (images used as fact graphics and map
- * backgrounds), held by the {@code stroom.document.asset} subsystem in its own table keyed on the
- * owning document's UUID rather than inside the serialised document. Nothing in
- * {@link AbstractDocumentStore} knows about them, so every lifecycle operation that should carry
- * them has to say so explicitly — export, import, copy and delete are all overridden below for
- * that reason alone. This mirrors {@code VisualisationStoreImpl}, the other owner of assets;
- * the two should be changed together.</p>
- *
- * <p>The duplicate is a genuine copy rather than an aliasing one: {@code FloorMapDoc.copy()} copies
- * the document's {@code valueSchema}, {@code typeStyles} and {@code groups} collections, and their
- * elements expose no setters, so nothing is shared with the original. That was not true when this
- * class was written — the collections were assigned by reference and a duplicated document shared
- * list instances with its source — so do not weaken {@code FloorMapDoc.Builder}'s copying without
- * revisiting this.</p>
- */
+/// Singleton implementation of [FloorMapStore] built on [AbstractDocumentStore],
+/// which handles the standard document CRUD, import/export and dependency delegation.
+///
+/// This class adds floor-map specific behaviour: it materialises newly created documents as a
+/// processing user, copies the document when duplicating, and remaps the facts/events store
+/// references it depends on.
+///
+/// Documents of this type can own uploaded assets (images used as fact graphics and map
+/// backgrounds), held by the `stroom.document.asset` subsystem in its own table keyed on the
+/// owning document's UUID rather than inside the serialised document. Nothing in
+/// [AbstractDocumentStore] knows about them, so every lifecycle operation that should carry
+/// them has to say so explicitly — export, import, copy and delete are all overridden below for
+/// that reason alone. This mirrors `VisualisationStoreImpl`, the other owner of assets;
+/// the two should be changed together.
+///
+/// The duplicate is a genuine copy rather than an aliasing one: `FloorMapDoc.copy()` copies
+/// the document's `valueSchema`, `typeStyles` and `groups` collections, and their
+/// elements expose no setters, so nothing is shared with the original. That was not true when this
+/// class was written — the collections were assigned by reference and a duplicated document shared
+/// list instances with its source — so do not weaken `FloorMapDoc.Builder`'s copying without
+/// revisiting this.
 @Singleton
 class FloorMapStoreImpl extends AbstractDocumentStore<FloorMapDoc> implements FloorMapStore {
 
@@ -130,12 +128,10 @@ class FloorMapStoreImpl extends AbstractDocumentStore<FloorMapDoc> implements Fl
         return copyDocRef;
     }
 
-    /**
-     * Deletes the document and the assets it owns.
-     *
-     * <p>Without this the rows in the asset table outlive the document that owned them: nothing
-     * else is keyed to find them, so the blobs are unreachable and permanent.</p>
-     */
+    /// Deletes the document and the assets it owns.
+    ///
+    /// Without this the rows in the asset table outlive the document that owned them: nothing
+    /// else is keyed to find them, so the blobs are unreachable and permanent.
     @Override
     public void deleteDocument(final DocRef docRef) {
         super.deleteDocument(docRef);
@@ -146,13 +142,11 @@ class FloorMapStoreImpl extends AbstractDocumentStore<FloorMapDoc> implements Fl
         }
     }
 
-    /**
-     * Imports the document, then restores the assets that travelled with it.
-     *
-     * <p>The assets arrive as <em>path</em> assets — sub-paths beside the document's own entries —
-     * rather than extension assets, because their names are user-chosen file names and there is no
-     * fixed set of them.</p>
-     */
+    /// Imports the document, then restores the assets that travelled with it.
+    ///
+    /// The assets arrive as *path* assets — sub-paths beside the document's own entries —
+    /// rather than extension assets, because their names are user-chosen file names and there is no
+    /// fixed set of them.
     @Override
     public DocRef importDocument(final DocRef docRef,
                                  final ImportExportDocument importExportDocument,
@@ -175,13 +169,11 @@ class FloorMapStoreImpl extends AbstractDocumentStore<FloorMapDoc> implements Fl
         return storeDocRef;
     }
 
-    /**
-     * Exports the document together with the assets it owns.
-     *
-     * <p>Assets are not part of the serialised document, so a content pack built without this
-     * carries a floor map whose graphics and backgrounds are all absent on import — and it fails
-     * on the importing system, silently, rather than at export time where it could be noticed.</p>
-     */
+    /// Exports the document together with the assets it owns.
+    ///
+    /// Assets are not part of the serialised document, so a content pack built without this
+    /// carries a floor map whose graphics and backgrounds are all absent on import — and it fails
+    /// on the importing system, silently, rather than at export time where it could be noticed.
     @Override
     public ImportExportDocument exportDocument(final DocRef docRef,
                                                final boolean omitAuditFields,

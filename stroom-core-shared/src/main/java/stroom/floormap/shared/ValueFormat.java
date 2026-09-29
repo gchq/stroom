@@ -16,19 +16,13 @@
 
 package stroom.floormap.shared;
 
-/**
- * Defines the serialisation format of temporal store entry values in a floor
- * map. {@link #JSON} is the default format.
- */
+/// Defines the serialisation format of temporal store entry values in a floor
+/// map. [#JSON] is the default format.
 public enum ValueFormat {
 
-    /**
-     * Values are serialised as JSON.
-     */
+    /// Values are serialised as JSON.
     JSON,
 
-    /**
-     * Values are serialised as XML.
-     */
+    /// Values are serialised as XML.
     XML
 }

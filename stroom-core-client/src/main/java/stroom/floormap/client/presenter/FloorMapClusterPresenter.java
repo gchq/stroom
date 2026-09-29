@@ -52,50 +52,47 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * Lists the members of one cluster, so entities merged into a summary glyph stay
- * reachable.
- *
- * <p>This is the part that actually answers the original problem. Ten users at one
- * desk were not merely invisible, they were <em>unreachable</em>: nothing on the
- * canvas could be clicked to get at the nine underneath. A count on the glyph says
- * how many there are; the hover tooltip names them; this dialog is where one can be
- * picked out and followed.</p>
- *
- * <p>Choosing a row tracks that entity — the same path the Tracking panel uses — and
- * closes the dialog, because the thing the user then wants to look at is the map.</p>
- *
- * <h2>Finding one member</h2>
- * <p>A crowded map is exactly where clusters get big, and a flat list of several
- * hundred is no more use than the crowd it replaced. A search box and — where the
- * members actually differ — Area and Group dropdowns narrow the list, and rows are
- * ordered by name, since the cluster's own order is an artefact of how the
- * clustering lattice was walked. There is deliberately <strong>no type
- * filter</strong>: clustering runs per type, so every member here shares one. The
- * wording and the matching rules live in the shared, unit-tested
- * {@link FloorMapClusterFilter}.</p>
- *
- * <p>The <strong>Area</strong> column has the single meaning it has everywhere else:
- * <em>which area is this member inside?</em> It carries no "last seen in" fallback,
- * unlike the Tracking panel's version — this dialog describes one drawn frame and
- * holds no history. Every member of a cluster has a position by construction, so
- * that fallback would have nothing to say.</p>
- */
+/// Lists the members of one cluster, so entities merged into a summary glyph stay
+/// reachable.
+///
+/// This is the part that actually answers the original problem. Ten users at one
+/// desk were not merely invisible, they were *unreachable*: nothing on the
+/// canvas could be clicked to get at the nine underneath. A count on the glyph says
+/// how many there are; the hover tooltip names them; this dialog is where one can be
+/// picked out and followed.
+///
+/// Choosing a row tracks that entity — the same path the Tracking panel uses — and
+/// closes the dialog, because the thing the user then wants to look at is the map.
+///
+/// ## Finding one member
+///
+/// A crowded map is exactly where clusters get big, and a flat list of several
+/// hundred is no more use than the crowd it replaced. A search box and — where the
+/// members actually differ — Area and Group dropdowns narrow the list, and rows are
+/// ordered by name, since the cluster's own order is an artefact of how the
+/// clustering lattice was walked. There is deliberately **no type
+/// filter**: clustering runs per type, so every member here shares one. The
+/// wording and the matching rules live in the shared, unit-tested
+/// [FloorMapClusterFilter].
+///
+/// The **Area** column has the single meaning it has everywhere else:
+/// *which area is this member inside?* It carries no "last seen in" fallback,
+/// unlike the Tracking panel's version — this dialog describes one drawn frame and
+/// holds no history. Every member of a cluster has a position by construction, so
+/// that fallback would have nothing to say.
 public class FloorMapClusterPresenter
         extends MyPresenterWidget<FloorMapClusterView>
         implements FloorMapClusterUiHandlers {
 
-    /** Column text for a member that is not inside any area. */
+    /// Column text for a member that is not inside any area.
     private static final String NO_AREA = "—";
 
-    /** Column text for a member that belongs to no group. */
+    /// Column text for a member that belongs to no group.
     private static final String NO_GROUP = "—";
 
-    /**
-     * Room for a dozen or so rows before the grid pages, over the map. Wider than
-     * the columns strictly need so the search box and both dropdowns sit on one
-     * line rather than wrapping.
-     */
+    /// Room for a dozen or so rows before the grid pages, over the map. Wider than
+    /// the columns strictly need so the search box and both dropdowns sit on one
+    /// line rather than wrapping.
     private static final PopupSize POPUP_SIZE = PopupSize.resizable(700, 500);
 
     private final MyDataGrid<FloorMapClusterMember> dataGrid;
@@ -104,15 +101,13 @@ public class FloorMapClusterPresenter
             new SingleSelectionModel<>();
     private final ButtonView trackButton;
 
-    /**
-     * Every member of the cluster being shown, name-sorted — the list the search
-     * and dropdowns filter. Held because filtering must always run against the
-     * whole cluster: narrowing an already-narrowed list would make the controls
-     * one-way, and backspacing in the search box would never bring rows back.
-     */
+    /// Every member of the cluster being shown, name-sorted — the list the search
+    /// and dropdowns filter. Held because filtering must always run against the
+    /// whole cluster: narrowing an already-narrowed list would make the controls
+    /// one-way, and backspacing in the search box would never bring rows back.
     private final List<FloorMapClusterMember> allMembers = new ArrayList<>();
 
-    /** Called with a member id when the user picks one; set per {@link #show}. */
+    /// Called with a member id when the user picks one; set per [#show].
     private Consumer<String> onTrack;
 
     @Inject
@@ -163,23 +158,21 @@ public class FloorMapClusterPresenter
                 }));
     }
 
-    /**
-     * Shows the member list for a cluster.
-     *
-     * @param cluster      the clicked cluster
-     * @param nameResolver resolves a member id to its display name, so a name here
-     *                     matches the name in every grid; may be {@code null}
-     * @param membership   the area-containment snapshot backing the Area column;
-     *                     may be {@code null}
-     * @param typeOf       resolves a member id to its entity type; may be
-     *                     {@code null}, in which case the cluster's own type is
-     *                     used for every row (they are all of one type anyway)
-     * @param groupNamesOf resolves a member id to the names of the groups it
-     *                     belongs to; may be {@code null} on a host with no Groups
-     *                     panel, which leaves the Group column empty and the Group
-     *                     filter unoffered
-     * @param onTrack      called with the chosen member's id
-     */
+    /// Shows the member list for a cluster.
+    ///
+    /// @param cluster      the clicked cluster
+    /// @param nameResolver resolves a member id to its display name, so a name here
+    ///         matches the name in every grid; may be `null`
+    /// @param membership   the area-containment snapshot backing the Area column;
+    ///         may be `null`
+    /// @param typeOf       resolves a member id to its entity type; may be
+    ///         `null`, in which case the cluster's own type is
+    ///         used for every row (they are all of one type anyway)
+    /// @param groupNamesOf resolves a member id to the names of the groups it
+    ///         belongs to; may be `null` on a host with no Groups
+    ///         panel, which leaves the Group column empty and the Group
+    ///         filter unoffered
+    /// @param onTrack      called with the chosen member's id
     public void show(final FloorMapCluster cluster,
                      final Function<String, String> nameResolver,
                      final FloorMapAreaMembership membership,
@@ -229,6 +222,7 @@ public class FloorMapClusterPresenter
         selectionModel.clear();
         trackButton.setEnabled(false);
 
+        //noinspection unused e
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(POPUP_SIZE)
@@ -236,26 +230,23 @@ public class FloorMapClusterPresenter
                 .caption(cluster.getLabel() + " in this cluster")
                 // Typing is the most likely next action in a dialog opened to
                 // find someone, so the search box takes the caret.
-                //noinspection unused e
                 .onShow(e -> getView().focusSearch())
                 .fire();
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void onFilterChange() {
         applyFilter();
     }
 
-    /**
-     * Re-runs the search and the dropdowns over the whole cluster and shows what
-     * survives.
-     *
-     * <p>A selected row that the filter has just hidden is deselected: leaving it
-     * selected would leave the Track button live for a member no longer on
-     * screen, which is one click away from following someone the user cannot
-     * see.</p>
-     */
+    /// Re-runs the search and the dropdowns over the whole cluster and shows what
+    /// survives.
+    ///
+    /// A selected row that the filter has just hidden is deselected: leaving it
+    /// selected would leave the Track button live for a member no longer on
+    /// screen, which is one click away from following someone the user cannot
+    /// see.
     private void applyFilter() {
         final List<FloorMapClusterMember> visible = FloorMapClusterFilter.filter(
                 allMembers,
@@ -270,7 +261,7 @@ public class FloorMapClusterPresenter
         }
     }
 
-    /** Tracks the selected member and closes, since the map is what to look at next. */
+    /// Tracks the selected member and closes, since the map is what to look at next.
     private void trackSelected() {
         final FloorMapClusterMember selected = selectionModel.getSelectedObject();
         if (selected != null && onTrack != null) {
@@ -279,11 +270,9 @@ public class FloorMapClusterPresenter
         }
     }
 
-    /**
-     * The names of every area containing a member, innermost (most specific)
-     * first — the same order and the same joining the Tracking panel's Area column
-     * uses, so the two never read differently for one entity.
-     */
+    /// The names of every area containing a member, innermost (most specific)
+    /// first — the same order and the same joining the Tracking panel's Area column
+    /// uses, so the two never read differently for one entity.
     private static List<String> areaNamesFor(final String memberId,
                                              final FloorMapAreaMembership membership,
                                              final Function<String, String> nameResolver) {
@@ -349,11 +338,9 @@ public class FloorMapClusterPresenter
         dataGrid.addColumn(idColumn, "Id");
     }
 
-    /**
-     * Renders one Area cell. The cell is a single {@code nowrap} line that
-     * ellipsises, so where a member is in several areas the tooltip repeats the
-     * list in full, one per line.
-     */
+    /// Renders one Area cell. The cell is a single `nowrap` line that
+    /// ellipsises, so where a member is in several areas the tooltip repeats the
+    /// list in full, one per line.
     private static SafeHtml areaCell(final FloorMapClusterMember member) {
         final List<String> areaNames = member.getAreaNames();
         if (areaNames.isEmpty()) {
@@ -372,10 +359,8 @@ public class FloorMapClusterPresenter
         return FloorMapCellHtml.cell(joined, tooltip.toString());
     }
 
-    /**
-     * Renders one Group cell: every group the member belongs to, with the full
-     * list repeated in the tooltip for when the column is too narrow to show it.
-     */
+    /// Renders one Group cell: every group the member belongs to, with the full
+    /// list repeated in the tooltip for when the column is too narrow to show it.
     private static SafeHtml groupCell(final FloorMapClusterMember member) {
         final List<String> groupNames = member.getGroupNames();
         if (groupNames.isEmpty()) {
@@ -398,64 +383,48 @@ public class FloorMapClusterPresenter
     // --------------------------------------------------------------------------------
 
 
-    /**
-     * The dialog's chrome: a search box, up to two dropdown filters, and the grid
-     * beneath them.
-     */
+    /// The dialog's chrome: a search box, up to two dropdown filters, and the grid
+    /// beneath them.
     public interface FloorMapClusterView extends View, HasUiHandlers<FloorMapClusterUiHandlers> {
 
-        /**
-         * Sets the widget shown below the filter bar — the pager-wrapped member
-         * grid.
-         *
-         * @param view the data view
-         */
+        /// Sets the widget shown below the filter bar — the pager-wrapped member
+        /// grid.
+        ///
+        /// @param view the data view
         void setDataView(View view);
 
-        /**
-         * Populates the Area dropdown, or hides it.
-         *
-         * @param options the options from
-         *                {@link FloorMapClusterFilter#areaOptions}, whose first
-         *                entry is the "any" option. An <strong>empty</strong> list
-         *                hides the control: a dropdown whose every option selects
-         *                the same rows is furniture
-         */
+        /// Populates the Area dropdown, or hides it.
+        ///
+        /// @param options the options from
+        ///         [FloorMapClusterFilter#areaOptions], whose first
+        ///         entry is the "any" option. An **empty** list
+        ///         hides the control: a dropdown whose every option selects
+        ///         the same rows is furniture
         void setAreaFilterOptions(List<String> options);
 
-        /**
-         * Populates the Group dropdown, or hides it.
-         *
-         * @param options the options from
-         *                {@link FloorMapClusterFilter#groupOptions}; empty hides
-         *                the control
-         */
+        /// Populates the Group dropdown, or hides it.
+        ///
+        /// @param options the options from
+        ///         [FloorMapClusterFilter#groupOptions]; empty hides
+        ///         the control
         void setGroupFilterOptions(List<String> options);
 
-        /**
-         * @return the current search text; never {@code null}
-         */
+        /// @return the current search text; never `null`
         String getSearchText();
 
-        /**
-         * @return the selected Area option, or {@code null} when not offered
-         */
+        /// @return the selected Area option, or `null` when not offered
         String getAreaFilter();
 
-        /**
-         * @return the selected Group option, or {@code null} when not offered
-         */
+        /// @return the selected Group option, or `null` when not offered
         String getGroupFilter();
 
-        /**
-         * Empties the search box and returns both dropdowns to their "any" option
-         * <strong>without</strong> notifying the handlers — the caller is
-         * mid-rebuild and applies the filter itself once the new options are in
-         * place.
-         */
+        /// Empties the search box and returns both dropdowns to their "any" option
+        /// **without** notifying the handlers — the caller is
+        /// mid-rebuild and applies the filter itself once the new options are in
+        /// place.
         void clearFilters();
 
-        /** Puts the caret in the search box. */
+        /// Puts the caret in the search box.
         void focusSearch();
     }
 }

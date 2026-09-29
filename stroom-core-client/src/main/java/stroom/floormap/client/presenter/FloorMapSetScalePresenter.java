@@ -30,34 +30,30 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;
 
-/**
- * The dialog that turns a line measured on the canvas into the map's scale.
- *
- * <p>The user has just dragged across something whose real length they know;
- * this asks what that length is, and
- * {@link FloorMapMeasurementUnits#calibrate} does the arithmetic. It is the
- * <strong>only</strong> way to scale a map: there is no numeric scale-factor
- * field anywhere, because for a background image placed by eye nobody knows
- * that number.</p>
- *
- * <p>The unit drop-down says what unit the <em>typed</em> distance is in — a
- * doorway is naturally given in metres, a desk in centimetres. It is not a
- * display preference: maps are always measured in metric, promoting through
- * mm/cm/m/km as the value warrants, so the scale is stored in
- * {@link #STORAGE_UNIT} regardless of what was typed.</p>
- */
+/// The dialog that turns a line measured on the canvas into the map's scale.
+///
+/// The user has just dragged across something whose real length they know;
+/// this asks what that length is, and
+/// [FloorMapMeasurementUnits#calibrate] does the arithmetic. It is the
+/// **only** way to scale a map: there is no numeric scale-factor
+/// field anywhere, because for a background image placed by eye nobody knows
+/// that number.
+///
+/// The unit drop-down says what unit the *typed* distance is in — a
+/// doorway is naturally given in metres, a desk in centimetres. It is not a
+/// display preference: maps are always measured in metric, promoting through
+/// mm/cm/m/km as the value warrants, so the scale is stored in
+/// [#STORAGE_UNIT] regardless of what was typed.
 public class FloorMapSetScalePresenter extends MyPresenterWidget<FloorMapSetScaleView> {
 
-    /** The unit the distance is assumed to be typed in until changed. */
+    /// The unit the distance is assumed to be typed in until changed.
     private static final Unit DEFAULT_ENTRY_UNIT = Unit.METRE;
 
-    /**
-     * The unit every calibration is stored in, matching
-     * {@link FloorMapMeasurementUnits#DEFAULT}. Which unit a scale is stored in
-     * has no effect on what is displayed — formatting promotes through the
-     * metric ladder either way — so storing them all alike keeps saved documents
-     * comparable.
-     */
+    /// The unit every calibration is stored in, matching
+    /// [FloorMapMeasurementUnits#DEFAULT]. Which unit a scale is stored in
+    /// has no effect on what is displayed — formatting promotes through the
+    /// metric ladder either way — so storing them all alike keeps saved documents
+    /// comparable.
     private static final Unit STORAGE_UNIT = Unit.CENTIMETRE;
 
     @Inject
@@ -66,15 +62,13 @@ public class FloorMapSetScalePresenter extends MyPresenterWidget<FloorMapSetScal
         super(eventBus, view);
     }
 
-    /**
-     * Shows the dialog for a measurement just taken on the canvas.
-     *
-     * @param mapLength the measured length in map units; must be {@code > 0}
-     * @param current   the map's current units, used to preseed the unit choice
-     *                  and to show what the line measures today; may be
-     *                  {@code null} on an uncalibrated map
-     * @param onOk      called with the calibrated units when the user confirms
-     */
+    /// Shows the dialog for a measurement just taken on the canvas.
+    ///
+    /// @param mapLength the measured length in map units; must be `> 0`
+    /// @param current   the map's current units, used to preseed the unit choice
+    ///         and to show what the line measures today; may be
+    ///         `null` on an uncalibrated map
+    /// @param onOk      called with the calibrated units when the user confirms
     public void show(final double mapLength,
                      final FloorMapMeasurementUnits current,
                      final Consumer<FloorMapMeasurementUnits> onOk) {
@@ -85,6 +79,7 @@ public class FloorMapSetScalePresenter extends MyPresenterWidget<FloorMapSetScal
         // user is about to correct.
         getView().setCurrentReading(FloorMapMeasurementUnits.format(current, mapLength));
 
+        //noinspection unused e
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption("Set Scale")
@@ -116,7 +111,7 @@ public class FloorMapSetScalePresenter extends MyPresenterWidget<FloorMapSetScal
                 .fire();
     }
 
-    /** The typed distance, or {@code null} if it is not a usable positive number. */
+    /// The typed distance, or `null` if it is not a usable positive number.
     private static Double parseDistance(final String text) {
         if (text == null || text.trim().isEmpty()) {
             return null;
@@ -131,13 +126,11 @@ public class FloorMapSetScalePresenter extends MyPresenterWidget<FloorMapSetScal
         }
     }
 
-    /**
-     * View contract: a distance field, a unit chooser, and a read-only note of
-     * what the measured line comes to at the map's current scale.
-     */
+    /// View contract: a distance field, a unit chooser, and a read-only note of
+    /// what the measured line comes to at the map's current scale.
     public interface FloorMapSetScaleView extends View {
 
-        /** Sets the text describing what the line measures at the current scale. */
+        /// Sets the text describing what the line measures at the current scale.
         void setCurrentReading(String reading);
 
         void setDistance(String distance);
@@ -148,7 +141,7 @@ public class FloorMapSetScalePresenter extends MyPresenterWidget<FloorMapSetScal
 
         Unit getUnit();
 
-        /** Puts keyboard focus in the distance field. */
+        /// Puts keyboard focus in the distance field.
         void focus();
     }
 }

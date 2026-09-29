@@ -21,7 +21,7 @@ import stroom.query.client.view.QueryDataViewImpl;
 
 import com.google.inject.Inject;
 
-/** The shared query editor and results grid, as {@code PlanBDataViewImpl} uses it. */
+/// The shared query editor and results grid, as `PlanBDataViewImpl` uses it.
 public class FloorMapEventStoreDataViewImpl extends QueryDataViewImpl implements FloorMapEventStoreDataView {
 
     @Inject

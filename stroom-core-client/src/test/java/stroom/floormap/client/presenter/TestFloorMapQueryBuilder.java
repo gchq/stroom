@@ -31,11 +31,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-/**
- * Tests for {@link FloorMapQueryBuilder} — verifying that the generated
- * StroomQL queries and column aliases are correct for both JSON and XML
- * value formats.
- */
+/// Tests for [FloorMapQueryBuilder] — verifying that the generated
+/// StroomQL queries and column aliases are correct for both JSON and XML
+/// value formats.
 class TestFloorMapQueryBuilder {
 
     // ---- buildFactsQuery (JSON) ----
@@ -263,15 +261,13 @@ class TestFloorMapQueryBuilder {
     }
     // ---- interpolated paths are escaped for the enclosing StroomQL literal ----
 
-    /**
-     * A schema path containing a double quote must not close the StroomQL literal
-     * it is interpolated into.
-     *
-     * <p>Schema paths come from the Settings grid, so this is ordinary user input
-     * rather than a hostile edge case. Unescaped, {@code .a"b} produced
-     * {@code jq(Value, ".a"b")} — the literal ends at the second quote and the rest
-     * is stray tokens, so the whole query fails to parse.</p>
-     */
+    /// A schema path containing a double quote must not close the StroomQL literal
+    /// it is interpolated into.
+    ///
+    /// Schema paths come from the Settings grid, so this is ordinary user input
+    /// rather than a hostile edge case. Unescaped, `.a"b` produced
+    /// `jq(Value, ".a"b")` — the literal ends at the second quote and the rest
+    /// is stray tokens, so the whole query fails to parse.
     @Test
     void testBuildExtractExpression_json_escapesQuoteInPath() {
         final String expr = FloorMapQueryBuilder.buildExtractExpression(
@@ -283,11 +279,9 @@ class TestFloorMapQueryBuilder {
         assertUnescapesTo(expr, "jq(Value, ", ".\"a\\\"b\"");
     }
 
-    /**
-     * An XPath may legitimately contain quotes — a predicate such as
-     * {@code /entry[@type="gate"]} is perfectly ordinary — so the XML branch has to
-     * escape them too.
-     */
+    /// An XPath may legitimately contain quotes — a predicate such as
+    /// `/entry[@type="gate"]` is perfectly ordinary — so the XML branch has to
+    /// escape them too.
     @Test
     void testBuildExtractExpression_xml_escapesQuotesInXPath() {
         final String expr = FloorMapQueryBuilder.buildExtractExpression(
@@ -298,7 +292,7 @@ class TestFloorMapQueryBuilder {
         assertUnescapesTo(expr, "xpath(Value, ", "/entry[@type=\"gate\"]");
     }
 
-    /** A backslash in a path is escaped so it survives unescaping intact. */
+    /// A backslash in a path is escaped so it survives unescaping intact.
     @Test
     void testBuildExtractExpression_xml_escapesBackslash() {
         final String expr = FloorMapQueryBuilder.buildExtractExpression(
@@ -306,7 +300,7 @@ class TestFloorMapQueryBuilder {
         assertUnescapesTo(expr, "xpath(Value, ", "/entry/a\\b");
     }
 
-    /** Ordinary paths are unchanged, so the common case reads as before. */
+    /// Ordinary paths are unchanged, so the common case reads as before.
     @Test
     void testBuildExtractExpression_ordinaryPathsAreUnchanged() {
         assertThat(FloorMapQueryBuilder.buildExtractExpression(".type", ValueFormat.JSON))
@@ -315,12 +309,10 @@ class TestFloorMapQueryBuilder {
                 .isEqualTo("xpath(Value, \"/entry/type\")");
     }
 
-    /**
-     * Extracts the quoted literal from {@code prefix"..."} and asserts that
-     * unescaping it — exactly as the query tokeniser does — recovers
-     * {@code expected}. Checking the round trip rather than only the literal text
-     * proves the escaping is actually correct rather than merely different.
-     */
+    /// Extracts the quoted literal from `prefix"..."` and asserts that
+    /// unescaping it — exactly as the query tokeniser does — recovers
+    /// `expected`. Checking the round trip rather than only the literal text
+    /// proves the escaping is actually correct rather than merely different.
     private static void assertUnescapesTo(final String expression,
                                           final String prefix,
                                           final String expected) {
@@ -336,15 +328,13 @@ class TestFloorMapQueryBuilder {
 
     // ---- the alias is injective, and safe once emitted ----
 
-    /**
-     * Distinct paths must give distinct aliases, for every collision the old derivation
-     * allowed.
-     *
-     * <p>This is the assertion that matters. The consumer looks a column up <em>by</em>
-     * alias, so two paths sharing one alias do not merely produce an odd heading — two
-     * roles resolve to the same column index and the map draws with the wrong data,
-     * silently.</p>
-     */
+    /// Distinct paths must give distinct aliases, for every collision the old derivation
+    /// allowed.
+    ///
+    /// This is the assertion that matters. The consumer looks a column up *by*
+    /// alias, so two paths sharing one alias do not merely produce an odd heading — two
+    /// roles resolve to the same column index and the map draws with the wrong data,
+    /// silently.
     @Test
     void testBuildColumnAlias_isInjective() {
         // JSON: the old hyphen-to-underscore mangle collapsed these two.
@@ -359,14 +349,12 @@ class TestFloorMapQueryBuilder {
         assertThat(List.of(a, b, c, d)).doesNotHaveDuplicates();
     }
 
-    /**
-     * A path containing characters that would break an unquoted identifier still produces
-     * valid query text, because the alias is quoted where it is emitted.
-     *
-     * <p>The old code claimed to produce a "SQL-safe" alias but only replaced hyphens, and
-     * only for JSON — so a path of {@code .my key} yielded the bare alias {@code my key}
-     * and the whole generated query failed to parse.</p>
-     */
+    /// A path containing characters that would break an unquoted identifier still produces
+    /// valid query text, because the alias is quoted where it is emitted.
+    ///
+    /// The old code claimed to produce a "SQL-safe" alias but only replaced hyphens, and
+    /// only for JSON — so a path of `.my key` yielded the bare alias `my key`
+    /// and the whole generated query failed to parse.
     @Test
     void testBuildFactsQuery_aliasWithSpaceIsQuoted() {
         final String query = FloorMapQueryBuilder.buildFactsQuery(
@@ -377,7 +365,7 @@ class TestFloorMapQueryBuilder {
         assertUnescapesTo(lastQuotedLiteral(query), "my key");
     }
 
-    /** A quote in the path cannot terminate the alias literal early. */
+    /// A quote in the path cannot terminate the alias literal early.
     @Test
     void testBuildFactsQuery_aliasWithQuoteIsEscaped() {
         final String query = FloorMapQueryBuilder.buildFactsQuery(
@@ -388,10 +376,8 @@ class TestFloorMapQueryBuilder {
         assertUnescapesTo(lastQuotedLiteral(query), "a\"b");
     }
 
-    /**
-     * An XML {@code text()} path — which the old derivation emitted verbatim and unquoted,
-     * producing {@code as text()} — is now a quoted alias.
-     */
+    /// An XML `text()` path — which the old derivation emitted verbatim and unquoted,
+    /// producing `as text()` — is now a quoted alias.
     @Test
     void testBuildFactsQuery_xmlFunctionCallPathIsQuoted() {
         final String query = FloorMapQueryBuilder.buildFactsQuery(
@@ -401,7 +387,7 @@ class TestFloorMapQueryBuilder {
         assertThat(query).contains(" as \"entry/name/text()\"");
     }
 
-    /** The alias the query carries is exactly the one the consumer matches against. */
+    /// The alias the query carries is exactly the one the consumer matches against.
     @Test
     void testEmittedAliasUnescapesToTheBareAlias() {
         for (final String path : List.of(".type", ".tm-world-to-map", ".my key", ".a\"b")) {
@@ -413,7 +399,7 @@ class TestFloorMapQueryBuilder {
         }
     }
 
-    /** The text of the last quoted literal in {@code query}, including its quotes. */
+    /// The text of the last quoted literal in `query`, including its quotes.
     private static String lastQuotedLiteral(final String query) {
         final int end = query.lastIndexOf('"');
         final int start = query.lastIndexOf(" as \"") + " as ".length();
@@ -421,7 +407,7 @@ class TestFloorMapQueryBuilder {
         return query.substring(start, end + 1);
     }
 
-    /** Asserts the tokeniser reads {@code literal} back as {@code expected}. */
+    /// Asserts the tokeniser reads `literal` back as `expected`.
     private static void assertUnescapesTo(final String literal, final String expected) {
         final char[] chars = literal.toCharArray();
         assertThat(QuotedStringUtil.unescape(chars, 0, chars.length - 1, '\\'))
@@ -468,13 +454,11 @@ class TestFloorMapQueryBuilder {
                 .contains("param('" + FloorMapQueryBuilder.PARAM_BUCKET_WIDTH + "')");
     }
 
-    /**
-     * Every width the ladder can produce must be a duration {@code floorTime} accepts.
-     *
-     * <p>The query no longer embeds the width, so this checks the ladder itself rather than the
-     * query text: an ISO-8601 duration of digits and unit letters, which is what
-     * {@code Duration.parse} takes.</p>
-     */
+    /// Every width the ladder can produce must be a duration `floorTime` accepts.
+    ///
+    /// The query no longer embeds the width, so this checks the ladder itself rather than the
+    /// query text: an ISO-8601 duration of digits and unit letters, which is what
+    /// `Duration.parse` takes.
     @Test
     void everyWidthOnTheLadderIsAnIsoDuration() {
         final long[] ranges = {0L, 3600_000L, 86_400_000L, 30L * 86_400_000L, 400L * 86_400_000L};
@@ -502,21 +486,19 @@ class TestFloorMapQueryBuilder {
         assertThat(query).doesNotContain("where");
     }
 
-    /**
-     * The extent must be grouped, and the grouped column must be selected.
-     *
-     * <p>This test previously asserted the opposite - a bare
-     * {@code select min(EffectiveTime), max(EffectiveTime)} - because the design note recorded
-     * "aggregates with no group by yield a single row" as an assumption to confirm at runtime, and
-     * nobody confirmed it. Run against a real store, that query returns one row <em>per event</em>
-     * with {@code min == max}: every row is its own group. The timeline then collapsed to a
-     * zero-width range and reported "No events in this time range", with Show All unable to fix it
-     * because it re-ran the same query.</p>
-     *
-     * <p>Grouping by a constant makes the whole store one group - but only if the grouped column is
-     * also selected. {@code group by allRows} without {@code allRows} in the {@code select} list
-     * does not aggregate either, which is the second half of the same trap.</p>
-     */
+    /// The extent must be grouped, and the grouped column must be selected.
+    ///
+    /// This test previously asserted the opposite - a bare
+    /// `select min(EffectiveTime), max(EffectiveTime)` - because the design note recorded
+    /// "aggregates with no group by yield a single row" as an assumption to confirm at runtime, and
+    /// nobody confirmed it. Run against a real store, that query returns one row *per event*
+    /// with `min == max`: every row is its own group. The timeline then collapsed to a
+    /// zero-width range and reported "No events in this time range", with Show All unable to fix it
+    /// because it re-ran the same query.
+    ///
+    /// Grouping by a constant makes the whole store one group - but only if the grouped column is
+    /// also selected. `group by allRows` without `allRows` in the `select` list
+    /// does not aggregate either, which is the second half of the same trap.
     @Test
     void theDefaultExtentQueryCollapsesToASingleRow() {
         final String query = FloorMapQueryBuilder.defaultExtentQuery();

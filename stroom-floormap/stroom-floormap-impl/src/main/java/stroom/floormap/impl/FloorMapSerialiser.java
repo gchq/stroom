@@ -26,12 +26,10 @@ import jakarta.inject.Inject;
 
 import java.io.IOException;
 
-/**
- * Handles serialisation and deserialisation of {@link FloorMapDoc} documents
- * for the document store.
- * <p>
- * Delegates to a {@link Serialiser2} instance created by the {@link Serialiser2Factory}.
- */
+/// Handles serialisation and deserialisation of [FloorMapDoc] documents
+/// for the document store.
+///
+/// Delegates to a [Serialiser2] instance created by the [Serialiser2Factory].
 public class FloorMapSerialiser implements DocumentSerialiser2<FloorMapDoc> {
 
     private final Serialiser2<FloorMapDoc> delegate;

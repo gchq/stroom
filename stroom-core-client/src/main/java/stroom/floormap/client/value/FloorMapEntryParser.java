@@ -29,45 +29,41 @@ import java.util.List;
 import java.util.function.Consumer;
 
 
-/**
- * Shared utility that parses a list of {@link TemporalEntry}
- * objects into an ordered list of {@link Fact}s — the authoritative model the
- * canvas renders from. Backgrounds, static facts and events are all just facts.
- *
- * <p>Parsing is driven by a list of {@link FloorMapFieldMapping}s (the value
- * schema). Each mapping's {@link Role} determines how the extracted value is
- * interpreted. A schema must always be provided; it is stored in the
- * {@link FloorMapDoc} and configured via the Settings tab.</p>
- *
- * <p>Both JSON and XML value formats are supported. The caller supplies
- * an appropriate {@link ValueAccessor} implementation for parsing and field
- * extraction.</p>
- *
- * <p>This class has no GWT dependencies and can be tested with standard
- * JUnit.</p>
- */
+/// Shared utility that parses a list of [TemporalEntry]
+/// objects into an ordered list of [Fact]s — the authoritative model the
+/// canvas renders from. Backgrounds, static facts and events are all just facts.
+///
+/// Parsing is driven by a list of [FloorMapFieldMapping]s (the value
+/// schema). Each mapping's [Role] determines how the extracted value is
+/// interpreted. A schema must always be provided; it is stored in the
+/// [FloorMapDoc] and configured via the Settings tab.
+///
+/// Both JSON and XML value formats are supported. The caller supplies
+/// an appropriate [ValueAccessor] implementation for parsing and field
+/// extraction.
+///
+/// This class has no GWT dependencies and can be tested with standard
+/// JUnit.
 public final class FloorMapEntryParser {
 
     private FloorMapEntryParser() {
         // Utility class
     }
 
-    /**
-     * Parses temporal entries into an ordered list of {@link Fact}s.
-     *
-     * <p>Every entry becomes one fact placed by its {@code WORLD_TO_MAP} matrix —
-     * backgrounds are not special-cased; a background is simply an entry that
-     * carries an image (and typically a {@code "background"} type for z-order).
-     * The optional {@code POSITION} coords are read for every fact (used by the
-     * imageless default-graphic renderer); an image fact usually has none.</p>
-     *
-     * @param entries         the temporal entries to parse; may be {@code null} or empty
-     * @param schema          the value schema to use; may be {@code null}
-     * @param accessor        the value accessor for parsing; must not be {@code null}
-     * @param warningConsumer callback for warning messages (e.g. malformed entries);
-     *                        may be {@code null} to silently ignore warnings
-     * @return the ordered fact list; never {@code null}
-     */
+    /// Parses temporal entries into an ordered list of [Fact]s.
+    ///
+    /// Every entry becomes one fact placed by its `WORLD_TO_MAP` matrix —
+    /// backgrounds are not special-cased; a background is simply an entry that
+    /// carries an image (and typically a `"background"` type for z-order).
+    /// The optional `POSITION` coords are read for every fact (used by the
+    /// imageless default-graphic renderer); an image fact usually has none.
+    ///
+    /// @param entries         the temporal entries to parse; may be `null` or empty
+    /// @param schema          the value schema to use; may be `null`
+    /// @param accessor        the value accessor for parsing; must not be `null`
+    /// @param warningConsumer callback for warning messages (e.g. malformed entries);
+    ///         may be `null` to silently ignore warnings
+    /// @return the ordered fact list; never `null`
     public static List<Fact> parse(
             final List<TemporalEntry> entries,
             final List<FloorMapFieldMapping> schema,
@@ -153,32 +149,30 @@ public final class FloorMapEntryParser {
         return facts;
     }
 
-    /**
-     * Parses a 6-element transformation matrix from a numeric array at the
-     * given path. Returns {@link FloorMapTransformationMatrix#identity()} if
-     * the path is null or the array is missing/malformed — an absent matrix
-     * means "place this fact without transforming it", which is a legitimate
-     * state.
-     *
-     * <p>A matrix that <em>is</em> present but unusable is a different matter and
-     * is rejected. "Unusable" covers three cases: the value cannot be read as six
-     * numbers at all, there are fewer than six of them, or the six form a
-     * degenerate transform that collapses the fact to a single point. All three
-     * can only be corrupt data, and all three used to be accepted silently — the
-     * degenerate case then went on to quietly mis-transform every coordinate
-     * derived from it, including coordinates the vertex editor writes back to the
-     * document. Throwing means the caller's per-entry handler skips the entry and
-     * reports it, so the user learns which row is bad rather than wondering why an
-     * object sits at the origin.</p>
-     *
-     * <p>The distinction that matters is <em>present</em> versus
-     * <em>absent</em>, which is why this consults
-     * {@link ValueAccessor#hasValue} rather than inferring absence from a
-     * {@code null} array. Data arriving from a stream may legitimately omit the
-     * matrix, and that must stay silent; data that is there but wrong must not.</p>
-     *
-     * @throws IllegalArgumentException if a matrix is present but unusable
-     */
+    /// Parses a 6-element transformation matrix from a numeric array at the
+    /// given path. Returns [FloorMapTransformationMatrix#identity()] if
+    /// the path is null or the array is missing/malformed — an absent matrix
+    /// means "place this fact without transforming it", which is a legitimate
+    /// state.
+    ///
+    /// A matrix that *is* present but unusable is a different matter and
+    /// is rejected. "Unusable" covers three cases: the value cannot be read as six
+    /// numbers at all, there are fewer than six of them, or the six form a
+    /// degenerate transform that collapses the fact to a single point. All three
+    /// can only be corrupt data, and all three used to be accepted silently — the
+    /// degenerate case then went on to quietly mis-transform every coordinate
+    /// derived from it, including coordinates the vertex editor writes back to the
+    /// document. Throwing means the caller's per-entry handler skips the entry and
+    /// reports it, so the user learns which row is bad rather than wondering why an
+    /// object sits at the origin.
+    ///
+    /// The distinction that matters is *present* versus
+    /// *absent*, which is why this consults
+    /// [ValueAccessor#hasValue] rather than inferring absence from a
+    /// `null` array. Data arriving from a stream may legitimately omit the
+    /// matrix, and that must stay silent; data that is there but wrong must not.
+    ///
+    /// @throws IllegalArgumentException if a matrix is present but unusable
     private static FloorMapTransformationMatrix parseMatrix(
             final ValueAccessor accessor, final ParsedValue parsed,
             final String path) {
@@ -207,18 +201,16 @@ public final class FloorMapEntryParser {
         return matrix;
     }
 
-    /**
-     * Folds a flat {@code [x0, y0, x1, y1, ...]} geometry array into vertex
-     * pairs. Returns {@code null} for a missing or too-short array (fewer
-     * than 3 vertices). A trailing odd value is ignored.
-     *
-     * <p>Public because the stored form is flat wherever geometry is read — the
-     * properties dialog measures an area's outline from the same array this
-     * parser folds.</p>
-     *
-     * @param flat the stored geometry array; may be {@code null}
-     * @return the vertex pairs, or {@code null} if there are fewer than three
-     */
+    /// Folds a flat `{x0, y0, x1, y1, ...}` geometry array into vertex
+    /// pairs. Returns `null` for a missing or too-short array (fewer
+    /// than 3 vertices). A trailing odd value is ignored.
+    ///
+    /// Public because the stored form is flat wherever geometry is read — the
+    /// properties dialog measures an area's outline from the same array this
+    /// parser folds.
+    ///
+    /// @param flat the stored geometry array; may be `null`
+    /// @return the vertex pairs, or `null` if there are fewer than three
     public static double[][] parseVertices(final double[] flat) {
         if (flat == null || flat.length < 6) {
             return null;

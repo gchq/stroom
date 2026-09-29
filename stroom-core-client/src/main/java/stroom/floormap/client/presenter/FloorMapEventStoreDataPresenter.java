@@ -31,22 +31,20 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 
-/**
- * The Data tab of a {@link FloorMapEventStoreDoc} - an editable query over the store's own rows.
- *
- * <p>The same tab a Plan B store has, and deliberately the same shape, because it answers the same
- * question: what is actually in here? It differs only in the default query, which adds the five
- * event properties the floor map reads out of the JSON value. A Plan B store shows {@code Value} as
- * one opaque blob, which is the right default when the store's contents are unknown; here they are
- * known, so the tab shows them.</p>
- *
- * <p>No {@code switch} on state type, unlike {@code PlanBDataPresenter}: this document type fixes
- * {@code TEMPORAL_STATE}, so there is one shape and one default.</p>
- *
- * <p>The query carries neither {@code readMode} nor {@code asAt}, so it takes the ordinary range
- * read rather than the map's point-in-time snapshot - the tab is for inspecting rows, not for
- * reconstructing a moment.</p>
- */
+/// The Data tab of a [FloorMapEventStoreDoc] - an editable query over the store's own rows.
+///
+/// The same tab a Plan B store has, and deliberately the same shape, because it answers the same
+/// question: what is actually in here? It differs only in the default query, which adds the five
+/// event properties the floor map reads out of the JSON value. A Plan B store shows `Value` as
+/// one opaque blob, which is the right default when the store's contents are unknown; here they are
+/// known, so the tab shows them.
+///
+/// No `switch` on state type, unlike `PlanBDataPresenter`: this document type fixes
+/// `TEMPORAL_STATE`, so there is one shape and one default.
+///
+/// The query carries neither `readMode` nor `asAt`, so it takes the ordinary range
+/// read rather than the map's point-in-time snapshot - the tab is for inspecting rows, not for
+/// reconstructing a moment.
 public class FloorMapEventStoreDataPresenter
         extends AbstractQueryDataPresenter<
                 FloorMapEventStoreDataPresenter.FloorMapEventStoreDataView, FloorMapEventStoreDoc> {

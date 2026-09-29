@@ -34,17 +34,15 @@ class TestFloorMapScreenGeometry {
     private static final double OBJECT_SIZE = 60;
     private static final double TOL = 1e-6;
 
-    /** No aspect ratios known (square fallback). */
+    /// No aspect ratios known (square fallback).
     private static final FloorMapScreenGeometry.AspectRatioSource NO_AR = ignored -> null;
 
     private FloorMapScreenGeometry geometry(final double scale, final double ox, final double oy) {
         return new FloorMapScreenGeometry(scale, ox, oy, IMAGE_DISPLAY_WIDTH, OBJECT_SIZE, NO_AR, null);
     }
 
-    /**
-     * Geometry for a map whose {@code type} layer draws {@code graphicUrl} at the
-     * given aspect ratio.
-     */
+    /// Geometry for a map whose `type` layer draws `graphicUrl` at the
+    /// given aspect ratio.
     private FloorMapScreenGeometry geometryWithLayerGraphic() {
         return new FloorMapScreenGeometry(1, 0, 0, IMAGE_DISPLAY_WIDTH, OBJECT_SIZE,
                 url -> "/assets/x/wide.png".equals(url) ? 4.0
@@ -65,7 +63,7 @@ class TestFloorMapScreenGeometry {
 
     // -----------------------------------------------------------------------
 
-    /** A point glyph is a fixed OBJECT_SIZE box around its projected anchor (Y-flip). */
+    /// A point glyph is a fixed OBJECT_SIZE box around its projected anchor (Y-flip).
     @Test
     void testPointGlyphBounds() {
         // scale 2, offset (100, 200); map (10, 5) → screen (100+2*10, 200-2*5) = (120, 190).
@@ -77,7 +75,7 @@ class TestFloorMapScreenGeometry {
         assertThat(b[3]).isCloseTo(190 + 30, within(TOL));
     }
 
-    /** An area's screen bounds are the AABB of its projected vertices. */
+    /// An area's screen bounds are the AABB of its projected vertices.
     @Test
     void testAreaBounds() {
         final Fact area = areaFact("a", new double[][]{{0, 0}, {10, 0}, {10, 10}});
@@ -90,7 +88,7 @@ class TestFloorMapScreenGeometry {
         assertThat(b[3]).isCloseTo(0, within(TOL));    // maxY (from y=0)
     }
 
-    /** contentMapBounds is scale/pan independent and covers all facts. */
+    /// contentMapBounds is scale/pan independent and covers all facts.
     @Test
     void testContentMapBounds() {
         final double[] b = geometry(7, 3, 9).contentMapBounds(List.of(
@@ -103,7 +101,7 @@ class TestFloorMapScreenGeometry {
         assertThat(geometry(1, 0, 0).contentMapBounds(List.of())).isNull();
     }
 
-    /** Marquee hit test returns facts whose screen AABB intersects the rect. */
+    /// Marquee hit test returns facts whose screen AABB intersects the rect.
     @Test
     void testHitTestRect() {
         final List<Fact> facts = List.of(pointFact("in", 0, 0), pointFact("out", 1000, 1000));
@@ -112,7 +110,7 @@ class TestFloorMapScreenGeometry {
         assertThat(hits).containsExactly("in");
     }
 
-    /** A single tiny selection is padded out to the minimum frame size. */
+    /// A single tiny selection is padded out to the minimum frame size.
     @Test
     void testSelectionFrame_padsToMinimum() {
         final double[] f = geometry(1, 0, 0).selectionFrame(
@@ -128,7 +126,7 @@ class TestFloorMapScreenGeometry {
                 List.of(pointFact("p", 0, 0)), Set.of(), 24)).isNull();
     }
 
-    /** Image bounds use the render-wrapper transform; square fallback when aspect unknown. */
+    /// Image bounds use the render-wrapper transform; square fallback when aspect unknown.
     @Test
     void testImageBounds_squareFallback() {
         final Fact img = new Fact("bg", "background", "asset://x.png",
@@ -146,7 +144,7 @@ class TestFloorMapScreenGeometry {
     // Layer graphics — the drawn box and the measured box must agree
     // -----------------------------------------------------------------------
 
-    /** A square graphic occupies exactly the shape glyph's box. */
+    /// A square graphic occupies exactly the shape glyph's box.
     @Test
     void testGraphicBox_squareMatchesTheGlyphExactly() {
         final double[] box = FloorMapScreenGeometry.graphicBox(OBJECT_SIZE, 1.0);
@@ -154,7 +152,7 @@ class TestFloorMapScreenGeometry {
         assertThat(box[1]).isCloseTo(OBJECT_SIZE, within(TOL));
     }
 
-    /** A non-square graphic keeps the glyph's AREA, so it reads at the same size. */
+    /// A non-square graphic keeps the glyph's AREA, so it reads at the same size.
     @Test
     void testGraphicBox_matchesAreaNotBounds() {
         final double[] box = FloorMapScreenGeometry.graphicBox(OBJECT_SIZE, 4.0);
@@ -166,7 +164,7 @@ class TestFloorMapScreenGeometry {
         assertThat(box[0] / box[1]).isCloseTo(4.0, within(TOL));
     }
 
-    /** An extreme ratio is capped so a banner cannot become an unreadable sliver. */
+    /// An extreme ratio is capped so a banner cannot become an unreadable sliver.
     @Test
     void testGraphicBox_capsTheLongestEdge() {
         final double[] box = FloorMapScreenGeometry.graphicBox(OBJECT_SIZE, 100.0);
@@ -176,7 +174,7 @@ class TestFloorMapScreenGeometry {
         assertThat(box[0] / box[1]).isCloseTo(100.0, within(1e-6));
     }
 
-    /** An unknown or nonsense ratio falls back to square, matching the renderer. */
+    /// An unknown or nonsense ratio falls back to square, matching the renderer.
     @Test
     void testGraphicBox_fallsBackToSquareWhenRatioUnusable() {
         for (final Double bad : new Double[]{null, 0.0, -2.0, Double.NaN, Double.POSITIVE_INFINITY}) {
@@ -186,11 +184,9 @@ class TestFloorMapScreenGeometry {
         }
     }
 
-    /**
-     * The regression this fixes: a fact on a layer that draws a wide image must
-     * measure as that wide box, not as a square, or a marquee over its outer edges
-     * misses it and the selection frame is drawn inside the glyph.
-     */
+    /// The regression this fixes: a fact on a layer that draws a wide image must
+    /// measure as that wide box, not as a square, or a marquee over its outer edges
+    /// misses it and the selection frame is drawn inside the glyph.
     @Test
     void testFactScreenBounds_usesTheLayerGraphicBox() {
         final Fact fact = pointFact("f", 0, 0);
@@ -202,7 +198,7 @@ class TestFloorMapScreenGeometry {
         assertThat(b[3] - b[1]).isCloseTo(30, within(TOL));
     }
 
-    /** A layer with no graphic still measures as a square glyph. */
+    /// A layer with no graphic still measures as a square glyph.
     @Test
     void testFactScreenBounds_squareWhenLayerHasNoGraphic() {
         final FloorMapScreenGeometry g = new FloorMapScreenGeometry(
@@ -214,15 +210,13 @@ class TestFloorMapScreenGeometry {
         assertThat(b[3] - b[1]).isCloseTo(OBJECT_SIZE, within(TOL));
     }
 
-    /**
-     * The projection flips Y, and the exposed method agrees with the bounds computed
-     * internally.
-     *
-     * <p>The last pair of assertions is the point of extracting this: the same formula
-     * previously existed as three hand-written copies, one of them in the view where nothing
-     * could test it. Tying the public method to {@code factScreenBounds} means a change to
-     * one that does not match the other fails here.</p>
-     */
+    /// The projection flips Y, and the exposed method agrees with the bounds computed
+    /// internally.
+    ///
+    /// The last pair of assertions is the point of extracting this: the same formula
+    /// previously existed as three hand-written copies, one of them in the view where nothing
+    /// could test it. Tying the public method to `factScreenBounds` means a change to
+    /// one that does not match the other fails here.
     @Test
     void testMapToScreen_flipsYAndMatchesTheInternalProjection() {
         final FloorMapScreenGeometry g = geometry(2, 100, 50);
@@ -243,13 +237,11 @@ class TestFloorMapScreenGeometry {
         assertThat((bounds[1] + bounds[3]) / 2).isCloseTo(30.0, within(TOL));
     }
 
-    /**
-     * A fact the renderer will not draw is not selectable by marquee either.
-     *
-     * <p>Its screen bounds are a zero-size box at the origin, so before this it was caught
-     * by almost any marquee — the user could rubber-band an object they could not see, then
-     * drag it. Drawing and hit-testing now agree, via {@link Fact#hasUsablePlacement()}.</p>
-     */
+    /// A fact the renderer will not draw is not selectable by marquee either.
+    ///
+    /// Its screen bounds are a zero-size box at the origin, so before this it was caught
+    /// by almost any marquee — the user could rubber-band an object they could not see, then
+    /// drag it. Drawing and hit-testing now agree, via [Fact#hasUsablePlacement()].
     @Test
     void testHitTestRect_ignoresFactsWithNoUsablePlacement() {
         final Fact placeable = pointFact("visible", 0, 0);
@@ -262,7 +254,7 @@ class TestFloorMapScreenGeometry {
                 .containsExactly("visible");
     }
 
-    /** A wide graphic is caught by a marquee that overlaps only its outer edge. */
+    /// A wide graphic is caught by a marquee that overlaps only its outer edge.
     @Test
     void testHitTestRect_catchesTheWideGraphicsEdge() {
         final Fact fact = pointFact("f", 0, 0);

@@ -32,7 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-/** The editor for a {@link FloorMapEventStoreDoc}. */
+/// The editor for a [FloorMapEventStoreDoc].
 public class FloorMapEventStorePresenter
         extends DocTabPresenter<LinkTabPanelView, FloorMapEventStoreDoc> {
 
@@ -56,7 +56,7 @@ public class FloorMapEventStorePresenter
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
         addTab(DATA, new DocTabProvider<>(dataPresenterProvider::get));
         addTab(DOCUMENTATION,
-                new MarkdownTabProvider<FloorMapEventStoreDoc>(eventBus, markdownEditPresenterProvider) {
+                new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
                     @Override
                     public void onRead(final MarkdownEditPresenter presenter,
                                        final DocRef docRef,

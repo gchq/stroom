@@ -22,12 +22,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFloorMapGeometry {
 
-    /** A 10x10 square with its lower-left corner at the origin. */
+    /// A 10x10 square with its lower-left corner at the origin.
     private static double[][] square() {
         return new double[][]{{0, 0}, {10, 0}, {10, 10}, {0, 10}};
     }
 
-    /** A concave "C" shape opening to the right, spanning 0..10 in both axes. */
+    /// A concave "C" shape opening to the right, spanning 0..10 in both axes.
     private static double[][] concave() {
         return new double[][]{
                 {0, 0}, {10, 0}, {10, 3}, {3, 3}, {3, 7}, {10, 7}, {10, 10}, {0, 10}};
@@ -49,19 +49,15 @@ class TestFloorMapGeometry {
         assertThat(FloorMapGeometry.contains(square(), -0.001, 5)).isFalse();
     }
 
-    /**
-     * The AABB prefilter must reject a far-away point without consulting the
-     * edges — same answer, and the path most calls take.
-     */
+    /// The AABB prefilter must reject a far-away point without consulting the
+    /// edges — same answer, and the path most calls take.
     @Test
     void testContainsFarAway() {
         assertThat(FloorMapGeometry.contains(square(), 1000, 1000)).isFalse();
     }
 
-    /**
-     * A concave polygon's notch is outside even though it is inside the
-     * bounding box — the case an AABB-only test would get wrong.
-     */
+    /// A concave polygon's notch is outside even though it is inside the
+    /// bounding box — the case an AABB-only test would get wrong.
     @Test
     void testContainsConcaveNotch() {
         assertThat(FloorMapGeometry.contains(concave(), 6, 5)).isFalse();
@@ -71,10 +67,8 @@ class TestFloorMapGeometry {
         assertThat(FloorMapGeometry.contains(concave(), 1.5, 5)).isTrue();
     }
 
-    /**
-     * Winding direction must not change the answer — the editor can produce
-     * either depending on which way the user drew the polygon.
-     */
+    /// Winding direction must not change the answer — the editor can produce
+    /// either depending on which way the user drew the polygon.
     @Test
     void testContainsIgnoresWindingDirection() {
         final double[][] clockwise = new double[][]{{0, 0}, {0, 10}, {10, 10}, {10, 0}};
@@ -133,7 +127,7 @@ class TestFloorMapGeometry {
         assertThat(FloorMapGeometry.centroid(square())).containsExactly(5, 5);
     }
 
-    /** The vertex mean, not the area-weighted centroid: extra vertices pull it. */
+    /// The vertex mean, not the area-weighted centroid: extra vertices pull it.
     @Test
     void testCentroidIsVertexMean() {
         final double[][] polygon = new double[][]{{0, 0}, {3, 0}, {6, 0}, {0, 6}};
@@ -148,6 +142,7 @@ class TestFloorMapGeometry {
 
     @Test
     void testCentroidNoUsableVertices() {
+        //noinspection ConstantValue
         assertThat(FloorMapGeometry.centroid(null)).isNull();
         assertThat(FloorMapGeometry.centroid(new double[0][])).isNull();
         assertThat(FloorMapGeometry.centroid(new double[][]{null, {1}})).isNull();

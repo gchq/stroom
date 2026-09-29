@@ -58,12 +58,10 @@ class TestFloorMapGroupSnapshot {
     // Positioned-ness must NOT come from FloorMapAreaMembership
     // ------------------------------------------------------------------------
 
-    /**
-     * The regression this class exists for. A map with <strong>no areas at
-     * all</strong> makes {@code FloorMapAreaMembership.compute} return
-     * {@code EMPTY}; sourcing positioned-ness from it would report zero members
-     * here.
-     */
+    /// The regression this class exists for. A map with **no areas at
+    /// all** makes `FloorMapAreaMembership.compute` return
+    /// `EMPTY`; sourcing positioned-ness from it would report zero members
+    /// here.
     @Test
     void testPositionedCountOnMapWithNoAreas() {
         final List<FloorMapGroup> groups =
@@ -83,10 +81,8 @@ class TestFloorMapGroupSnapshot {
         assertThat(snapshot.getAreaCounts("maintenance")).isEmpty();
     }
 
-    /**
-     * A member standing outside every area is still positioned — the second way
-     * {@code getEntityIds()} would have under-reported.
-     */
+    /// A member standing outside every area is still positioned — the second way
+    /// `getEntityIds()` would have under-reported.
     @Test
     void testMemberOutsideEveryAreaIsStillPositioned() {
         final List<FloorMapGroup> groups = Collections.singletonList(group("g", "inside", "outside"));
@@ -118,7 +114,7 @@ class TestFloorMapGroupSnapshot {
         assertThat(snapshot.getPositionedIds("g")).containsExactly("alice");
     }
 
-    /** A static object fact counts as positioned — groups are generic over ids. */
+    /// A static object fact counts as positioned — groups are generic over ids.
     @Test
     void testStaticFactMemberIsPositioned() {
         final List<FloorMapGroup> groups = Collections.singletonList(group("g", "gate-3"));
@@ -130,12 +126,10 @@ class TestFloorMapGroupSnapshot {
         assertThat(snapshot.getPositionedCount("g")).isEqualTo(1);
     }
 
-    /**
-     * An id present in both queries is counted once. Events are consulted first,
-     * matching {@code FloorMapAreaMembership}'s "a live event position beats a
-     * static fact twin" rule, so the positioned total and the area breakdown can
-     * never disagree about which ids count.
-     */
+    /// An id present in both queries is counted once. Events are consulted first,
+    /// matching `FloorMapAreaMembership`'s "a live event position beats a
+    /// static fact twin" rule, so the positioned total and the area breakdown can
+    /// never disagree about which ids count.
     @Test
     void testEventAndFactTwinCountOnce() {
         final List<FloorMapGroup> groups = Collections.singletonList(group("g", "alice"));
@@ -156,7 +150,7 @@ class TestFloorMapGroupSnapshot {
     // Area breakdown
     // ------------------------------------------------------------------------
 
-    /** Nested areas each count the member — membership is multi-valued. */
+    /// Nested areas each count the member — membership is multi-valued.
     @Test
     void testNestedAreasBothCountTheMember() {
         final List<FloorMapGroup> groups = Collections.singletonList(group("g", "alice"));
@@ -170,7 +164,7 @@ class TestFloorMapGroupSnapshot {
                 .containsOnly(entry("bay", 1), entry("warehouse", 1));
     }
 
-    /** Areas are listed most-populated first, so the panel needs no re-sort. */
+    /// Areas are listed most-populated first, so the panel needs no re-sort.
     @Test
     void testAreaCountsOrderedMostPopulatedFirst() {
         final List<FloorMapGroup> groups =
@@ -192,7 +186,7 @@ class TestFloorMapGroupSnapshot {
         assertThat(snapshot.getAreaCounts("g")).containsExactly(entry("alpha", 2), entry("beta", 1));
     }
 
-    /** Groups are independent: one group's members never leak into another's counts. */
+    /// Groups are independent: one group's members never leak into another's counts.
     @Test
     void testGroupsAreIndependent() {
         final List<FloorMapGroup> groups = Arrays.asList(
@@ -213,10 +207,8 @@ class TestFloorMapGroupSnapshot {
     // Redraw guard and null-safety
     // ------------------------------------------------------------------------
 
-    /**
-     * Content-based equality is what lets the panel skip redraws through ~300ms
-     * playback refreshes.
-     */
+    /// Content-based equality is what lets the panel skip redraws through ~300ms
+    /// playback refreshes.
     @Test
     void testEqualityIsContentBased() {
         final List<FloorMapGroup> groups = Collections.singletonList(group("g", "alice", "bob"));

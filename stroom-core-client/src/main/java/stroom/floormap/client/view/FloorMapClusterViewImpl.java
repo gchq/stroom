@@ -33,18 +33,16 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import java.util.List;
 import javax.inject.Inject;
 
-/**
- * View for the cluster member dialog: a filter bar over the member grid.
- *
- * <p>The three controls are equals — the search box and both dropdowns narrow
- * the same list — so they sit on one line rather than the search box being
- * promoted above the filters.</p>
- *
- * <p>A dropdown with nothing to choose between is <em>hidden</em> rather than
- * disabled (see {@link #setAreaFilterOptions}): a cluster standing wholly inside
- * one room has nothing to say about areas, and a greyed control would only
- * invite the user to work out why.</p>
- */
+/// View for the cluster member dialog: a filter bar over the member grid.
+///
+/// The three controls are equals — the search box and both dropdowns narrow
+/// the same list — so they sit on one line rather than the search box being
+/// promoted above the filters.
+///
+/// A dropdown with nothing to choose between is *hidden* rather than
+/// disabled (see [#setAreaFilterOptions]): a cluster standing wholly inside
+/// one room has nothing to say about areas, and a greyed control would only
+/// invite the user to work out why.
 public class FloorMapClusterViewImpl
         extends ViewWithUiHandlers<FloorMapClusterUiHandlers>
         implements FloorMapClusterView {
@@ -64,13 +62,11 @@ public class FloorMapClusterViewImpl
     @UiField
     SimplePanel data;
 
-    /**
-     * True while the controls are being repopulated for a new cluster, so the
-     * resulting value changes are not reported as the user filtering. Without it
-     * every showing would run the filter several times over, and — worse — would
-     * do so between clearing the options and setting the new ones, when the
-     * dropdowns momentarily hold values belonging to the previous cluster.
-     */
+    /// True while the controls are being repopulated for a new cluster, so the
+    /// resulting value changes are not reported as the user filtering. Without it
+    /// every showing would run the filter several times over, and — worse — would
+    /// do so between clearing the options and setting the new ones, when the
+    /// dropdowns momentarily hold values belonging to the previous cluster.
     private boolean populating;
 
     @Inject
@@ -110,23 +106,21 @@ public class FloorMapClusterViewImpl
         data.setWidget(view.asWidget());
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void setAreaFilterOptions(final List<String> options) {
         populate(areaFilterGroup, areaFilter, options);
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void setGroupFilterOptions(final List<String> options) {
         populate(groupFilterGroup, groupFilter, options);
     }
 
-    /**
-     * Fills one dropdown and shows it, or hides it when there is nothing to
-     * choose between. The first option is the "any" one, and is selected — a
-     * freshly shown dialog filters nothing.
-     */
+    /// Fills one dropdown and shows it, or hides it when there is nothing to
+    /// choose between. The first option is the "any" one, and is selected — a
+    /// freshly shown dialog filters nothing.
     private void populate(final FormGroup group,
                           final SelectionBox<String> box,
                           final List<String> options) {
@@ -136,6 +130,7 @@ public class FloorMapClusterViewImpl
             final boolean offered = options != null && !options.isEmpty();
             if (offered) {
                 box.addItems(options);
+                //noinspection SequencedCollectionMethodCanBeUsed getFirst() not in GWT
                 box.setValue(options.get(0));
             }
             group.setVisible(offered);
@@ -144,13 +139,13 @@ public class FloorMapClusterViewImpl
         }
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public String getSearchText() {
         return quickFilter.getText();
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public String getAreaFilter() {
         // A hidden control constrains nothing; its stale value must not survive
@@ -160,7 +155,7 @@ public class FloorMapClusterViewImpl
                 : null;
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public String getGroupFilter() {
         return groupFilterGroup.isVisible()
@@ -168,7 +163,7 @@ public class FloorMapClusterViewImpl
                 : null;
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void clearFilters() {
         populating = true;
@@ -184,7 +179,7 @@ public class FloorMapClusterViewImpl
         }
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     public void focusSearch() {
         quickFilter.forceFocus();

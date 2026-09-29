@@ -29,66 +29,62 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-/**
- * Turns a StroomQL result table into {@link Fact}s for the canvas.
- *
- * <p>This lived as a private method on {@code FloorMapMapPresenter} — a GWT presenter, so
- * untestable — even though the work is pure: match schema roles to result columns, parse each
- * row's comma-separated values, and collapse the rows to one fact per key. Moving it here
- * makes the Map tab's entire ingest path testable on the JVM, which is where the parsing
- * mistakes it is prone to actually get caught.</p>
- *
- * <h3>Why the number parsing here differs from its neighbours</h3>
- * <p>Three sibling parsers exist and none of them is a drop-in replacement, so resist the
- * urge to unify them:</p>
- * <ul>
- *   <li>{@link FloorMapEntryParser} reads a <em>structured</em> value (JSON object or XML
- *       document) through a {@link ValueAccessor}. Here the input is the flattened text a
- *       result table carries, e.g. {@code "[1.0, 2.0]"}.</li>
- *   <li>{@link XmlValueText#parseCommaSeparatedNumbers(String)} is all-or-nothing: one bad
- *       element yields {@code null} for the whole array. That is correct there, because a
- *       partially-parsed coordinate array silently mis-places an object. It is
- *       <strong>deliberately not</strong> the rule here, because these parsers read only the
- *       leading values they need and have always ignored trailing extras — tightening that
- *       would stop placing objects that place correctly today.</li>
- *   <li>The accessors' {@code getArray} contract is stricter again.</li>
- * </ul>
- *
- * <p>The behaviour below is preserved exactly as it was in the presenter. Any change to it
- * is a decision about live maps, not a refactor.</p>
- */
+/// Turns a StroomQL result table into [Fact]s for the canvas.
+///
+/// This lived as a private method on `FloorMapMapPresenter` — a GWT presenter, so
+/// untestable — even though the work is pure: match schema roles to result columns, parse each
+/// row's comma-separated values, and collapse the rows to one fact per key. Moving it here
+/// makes the Map tab's entire ingest path testable on the JVM, which is where the parsing
+/// mistakes it is prone to actually get caught.
+///
+/// ### Why the number parsing here differs from its neighbours
+///
+/// Three sibling parsers exist and none of them is a drop-in replacement, so resist the
+/// urge to unify them:
+///
+/// - [FloorMapEntryParser] reads a *structured* value (JSON object or XML
+///   document) through a [ValueAccessor]. Here the input is the flattened text a
+///   result table carries, e.g. `"[1.0, 2.0]"`.
+/// - [XmlValueText#parseCommaSeparatedNumbers(String)] is all-or-nothing: one bad
+///   element yields `null` for the whole array. That is correct there, because a
+///   partially-parsed coordinate array silently mis-places an object. It is
+///   **deliberately not** the rule here, because these parsers read only the
+///   leading values they need and have always ignored trailing extras — tightening that
+///   would stop placing objects that place correctly today.
+/// - The accessors' `getArray` contract is stricter again.
+///
+/// The behaviour below is preserved exactly as it was in the presenter. Any change to it
+/// is a decision about live maps, not a refactor.
 public final class FloorMapFactTableParser {
 
-    /** The result column carrying the temporal-store key; matched case-insensitively. */
+    /// The result column carrying the temporal-store key; matched case-insensitively.
     private static final String KEY_COLUMN = "Key";
 
-    /** Vertex pairs below this count are not a polygon. */
+    /// Vertex pairs below this count are not a polygon.
     private static final int MIN_VERTICES = 3;
 
-    /** A transformation matrix needs six components. */
+    /// A transformation matrix needs six components.
     private static final int MATRIX_COMPONENTS = 6;
 
     private FloorMapFactTableParser() {
         // Static utility.
     }
 
-    /**
-     * Parses a result table into one {@link Fact} per key.
-     *
-     * <p>The query returns every effective-time shard of every key, in ascending
-     * effective-time order, so a later shard overwrites an earlier one — the canvas shows a
-     * single current instance per object rather than every time version at once. Distinct
-     * keys (several backgrounds, say) are all preserved, in first-seen order.</p>
-     *
-     * @param columns     the result columns; {@code null} yields an empty list
-     * @param rows        the result rows; {@code null} yields an empty list
-     * @param aliasByRole the column alias expected for each schema role, as produced by the
-     *                    query builder. A role absent from the map, or mapped to
-     *                    {@code null}, simply goes unmatched — pre-area schemas have no
-     *                    geometry or opacity role, and that is not an error.
-     * @param warnings    receives a message per unparseable value; may be {@code null}
-     * @return the facts, never {@code null}
-     */
+    /// Parses a result table into one [Fact] per key.
+    ///
+    /// The query returns every effective-time shard of every key, in ascending
+    /// effective-time order, so a later shard overwrites an earlier one — the canvas shows a
+    /// single current instance per object rather than every time version at once. Distinct
+    /// keys (several backgrounds, say) are all preserved, in first-seen order.
+    ///
+    /// @param columns     the result columns; `null` yields an empty list
+    /// @param rows        the result rows; `null` yields an empty list
+    /// @param aliasByRole the column alias expected for each schema role, as produced by the
+    ///         query builder. A role absent from the map, or mapped to
+    ///         `null`, simply goes unmatched — pre-area schemas have no
+    ///         geometry or opacity role, and that is not an error.
+    /// @param warnings    receives a message per unparseable value; may be `null`
+    /// @return the facts, never `null`
     public static List<Fact> parse(final List<Column> columns,
                                    final List<Row> rows,
                                    final Map<Role, String> aliasByRole,
@@ -184,15 +180,13 @@ public final class FloorMapFactTableParser {
         return new ArrayList<>(factsByKey.values());
     }
 
-    /**
-     * Parses {@code "[x, y]"} into {@code {x, y}}.
-     *
-     * <p>Square brackets and quotes are optional; values beyond the first two are ignored,
-     * which is why this is not
-     * {@link XmlValueText#parseCommaSeparatedNumbers(String)}.</p>
-     *
-     * @return the pair, or {@code null} when absent or unparseable
-     */
+    /// Parses `"[x, y]"` into `{x, y}`.
+    ///
+    /// Square brackets and quotes are optional; values beyond the first two are ignored,
+    /// which is why this is not
+    /// [XmlValueText#parseCommaSeparatedNumbers(String)].
+    ///
+    /// @return the pair, or `null` when absent or unparseable
     static double[] parseCoords(final String str, final Consumer<String> warnings) {
         final String[] parts = split(str);
         if (parts == null) {
@@ -212,14 +206,12 @@ public final class FloorMapFactTableParser {
         return null;
     }
 
-    /**
-     * Parses a flat {@code "[x0, y0, x1, y1, ...]"} geometry into vertex pairs.
-     *
-     * <p>A trailing odd value is ignored, matching {@link FloorMapEntryParser}.</p>
-     *
-     * @return the vertices, or {@code null} when absent, unparseable, or fewer than
-     *         {@value #MIN_VERTICES} pairs
-     */
+    /// Parses a flat `"[x0, y0, x1, y1, ...]"` geometry into vertex pairs.
+    ///
+    /// A trailing odd value is ignored, matching [FloorMapEntryParser].
+    ///
+    /// @return the vertices, or `null` when absent, unparseable, or fewer than
+    ///         {@value #MIN_VERTICES} pairs
     static double[][] parseVertices(final String str, final Consumer<String> warnings) {
         final String[] parts = split(str);
         if (parts == null) {
@@ -242,13 +234,11 @@ public final class FloorMapFactTableParser {
         }
     }
 
-    /**
-     * Parses a six-component {@code "[a, b, c, d, e, f]"} matrix.
-     *
-     * @return the matrix, or {@link FloorMapTransformationMatrix#identity()} when absent or
-     *         unparseable — a fact with no usable matrix still has to be placed somewhere,
-     *         and identity is the neutral choice
-     */
+    /// Parses a six-component `"[a, b, c, d, e, f]"` matrix.
+    ///
+    /// @return the matrix, or [FloorMapTransformationMatrix#identity()] when absent or
+    ///         unparseable — a fact with no usable matrix still has to be placed somewhere,
+    ///         and identity is the neutral choice
     static FloorMapTransformationMatrix parseMatrix(final String str,
                                                     final Consumer<String> warnings) {
         final String[] parts = split(str);
@@ -272,7 +262,7 @@ public final class FloorMapFactTableParser {
         return FloorMapTransformationMatrix.identity();
     }
 
-    /** Parses a single double, or {@code null} for blank or unparseable input. */
+    /// Parses a single double, or `null` for blank or unparseable input.
     static Double parseNullableDouble(final String str) {
         if (NullSafe.isBlankString(str)) {
             return null;
@@ -284,11 +274,9 @@ public final class FloorMapFactTableParser {
         }
     }
 
-    /**
-     * Strips the optional {@code []} wrapper and any quotes, then splits on commas.
-     *
-     * @return the parts, or {@code null} when there is nothing to parse
-     */
+    /// Strips the optional `[]` wrapper and any quotes, then splits on commas.
+    ///
+    /// @return the parts, or `null` when there is nothing to parse
     private static String[] split(final String str) {
         if (NullSafe.isBlankString(str)) {
             return null;
@@ -305,7 +293,7 @@ public final class FloorMapFactTableParser {
                 : null;
     }
 
-    /** The value at {@code index}, or {@code null} when the column is absent or short. */
+    /// The value at `index`, or `null` when the column is absent or short.
     private static String valueAt(final List<String> values, final int index) {
         return index != -1 && values.size() > index
                 ? values.get(index)

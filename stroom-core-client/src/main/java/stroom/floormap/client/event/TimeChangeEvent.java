@@ -20,9 +20,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-/**
- * Event fired when the selected time changes on the floor map timeline.
- */
+/// Event fired when the selected time changes on the floor map timeline.
 public class TimeChangeEvent extends GwtEvent<TimeChangeEvent.TimeChangeHandler> {
 
     private static Type<TimeChangeHandler> TYPE;
@@ -32,11 +30,10 @@ public class TimeChangeEvent extends GwtEvent<TimeChangeEvent.TimeChangeHandler>
         this.time = time;
     }
 
-    /**
-     * Fires a time change event.
-     * @param handlers The handler source.
-     * @param time The new time value in milliseconds.
-     */
+    /// Fires a time change event.
+    ///
+    /// @param handlers The handler source.
+    /// @param time The new time value in milliseconds.
     public static void fire(final HasHandlers handlers, final long time) {
         handlers.fireEvent(new TimeChangeEvent(time));
     }
@@ -58,18 +55,14 @@ public class TimeChangeEvent extends GwtEvent<TimeChangeEvent.TimeChangeHandler>
         handler.onTimeChange(this);
     }
 
-    /**
-     * @return The new time value in milliseconds.
-     */
+    /// @return The new time value in milliseconds.
     public long getTime() {
         return time;
     }
 
     // --------------------------------------------------------------------------------
 
-    /**
-     * Handler interface for {@link TimeChangeEvent}.
-     */
+    /// Handler interface for [TimeChangeEvent].
     public interface TimeChangeHandler extends EventHandler {
 
         void onTimeChange(TimeChangeEvent event);

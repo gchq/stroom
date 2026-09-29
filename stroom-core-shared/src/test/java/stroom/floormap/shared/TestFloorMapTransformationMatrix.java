@@ -30,11 +30,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.Assertions.withinPercentage;
 
-/**
- * Tests for {@link FloorMapTransformationMatrix} — construction, rotation,
- * inversion (including rejection of singular matrices), SVG formatting,
- * equality and JSON serialisation round-trip.
- */
+/// Tests for [FloorMapTransformationMatrix] — construction, rotation,
+/// inversion (including rejection of singular matrices), SVG formatting,
+/// equality and JSON serialisation round-trip.
 class TestFloorMapTransformationMatrix {
 
     private static final double TOLERANCE = 1e-9;
@@ -141,11 +139,9 @@ class TestFloorMapTransformationMatrix {
         assertMatrixCloseTo(inverse, new FloorMapTransformationMatrix(0.25, 0, 0, 0.2, 0, 0));
     }
 
-    /**
-     * The property the drag-and-drop maths relies on (FloorMapNotes.md
-     * section 3): transforming a point and then applying the inverse must
-     * recover the original point exactly (within floating-point tolerance).
-     */
+    /// The property the drag-and-drop maths relies on (FloorMapNotes.md
+    /// section 3): transforming a point and then applying the inverse must
+    /// recover the original point exactly (within floating-point tolerance).
     @TestFactory
     Stream<DynamicTest> testInverseRecoversOriginalPoint() {
         final double[] originalPoint = {12.5, -7.25};
@@ -178,17 +174,15 @@ class TestFloorMapTransformationMatrix {
                 .build();
     }
 
-    /**
-     * A genuinely singular matrix cannot be inverted, and {@code inverse()} must
-     * say so rather than return a plausible-looking answer.
-     *
-     * <p>This used to assert the opposite — that {@code inverse()} falls back to
-     * the identity. That fallback was the quiet middle link in a chain that
-     * ended in corrupted stored geometry: the identity is indistinguishable from
-     * a successful inversion, so callers converted coordinates through it,
-     * got their input back unchanged, and persisted it as though it had been
-     * transformed.</p>
-     */
+    /// A genuinely singular matrix cannot be inverted, and `inverse()` must
+    /// say so rather than return a plausible-looking answer.
+    ///
+    /// This used to assert the opposite — that `inverse()` falls back to
+    /// the identity. That fallback was the quiet middle link in a chain that
+    /// ended in corrupted stored geometry: the identity is indistinguishable from
+    /// a successful inversion, so callers converted coordinates through it,
+    /// got their input back unchanged, and persisted it as though it had been
+    /// transformed.
     @TestFactory
     Stream<DynamicTest> testInverseOfSingularMatrixThrows() {
         return TestUtil.buildDynamicTestStream()
@@ -219,17 +213,15 @@ class TestFloorMapTransformationMatrix {
                 .build();
     }
 
-    /**
-     * A very small <em>uniform</em> scale is invertible and must be inverted, not
-     * written off as singular.
-     *
-     * <p>This is the case the old absolute tolerance ({@code |det| < 1e-9}) got
-     * wrong. The matrix below scales by one part in a million, giving a
-     * determinant of {@code 1e-12} — small, but exactly representable and
-     * perfectly invertible. Asserting the real inverse here is what forces the
-     * singularity test to be <em>relative</em> to the magnitude of the terms
-     * rather than an absolute floor.</p>
-     */
+    /// A very small *uniform* scale is invertible and must be inverted, not
+    /// written off as singular.
+    ///
+    /// This is the case the old absolute tolerance (`|det| < 1e-9`) got
+    /// wrong. The matrix below scales by one part in a million, giving a
+    /// determinant of `1e-12` — small, but exactly representable and
+    /// perfectly invertible. Asserting the real inverse here is what forces the
+    /// singularity test to be *relative* to the magnitude of the terms
+    /// rather than an absolute floor.
     @Test
     void testInverseOfVerySmallUniformScaleIsExact() {
         final FloorMapTransformationMatrix matrix =
@@ -354,14 +346,13 @@ class TestFloorMapTransformationMatrix {
     // Helpers
     // -----------------------------------------------------------------------
 
-    /**
-     * Applies the affine transform to a point, mirroring the rendering maths
-     * in FloorMapCanvasPresenter:
-     * <pre>
-     *   x' = a * x + c * y + e
-     *   y' = b * x + d * y + f
-     * </pre>
-     */
+    /// Applies the affine transform to a point, mirroring the rendering maths
+    /// in FloorMapCanvasPresenter:
+    ///
+    /// ```
+    /// x' = a * x + c * y + e
+    /// y' = b * x + d * y + f
+    /// ```
     private static double[] apply(final FloorMapTransformationMatrix matrix,
                                   final double x,
                                   final double y) {
@@ -380,11 +371,9 @@ class TestFloorMapTransformationMatrix {
         assertThat(actual.getF()).isCloseTo(expected.getF(), within(TOLERANCE));
     }
 
-    /**
-     * Repositioning must leave scale and rotation alone and put the fact's own
-     * point exactly where it was asked for — the arithmetic shared by a canvas
-     * drag and a typed position.
-     */
+    /// Repositioning must leave scale and rotation alone and put the fact's own
+    /// point exactly where it was asked for — the arithmetic shared by a canvas
+    /// drag and a typed position.
     @Test
     void testPlacingPutsTheStoredPointAtTheGivenMapPosition() {
         final FloorMapTransformationMatrix m =
@@ -402,7 +391,7 @@ class TestFloorMapTransformationMatrix {
         assertThat(placed.getD()).isCloseTo(m.getD(), within(1e-9));
     }
 
-    /** With coordinates at the origin the translation simply is the position. */
+    /// With coordinates at the origin the translation simply is the position.
     @Test
     void testPlacingAtOriginCoordsSetsTheTranslation() {
         final FloorMapTransformationMatrix placed =
@@ -412,7 +401,7 @@ class TestFloorMapTransformationMatrix {
         assertThat(placed.getF()).isCloseTo(-7, within(1e-9));
     }
 
-    /** Placing a fact where it already is must change nothing. */
+    /// Placing a fact where it already is must change nothing.
     @Test
     void testPlacingAtTheCurrentPositionIsANoOp() {
         final FloorMapTransformationMatrix m =
@@ -426,13 +415,11 @@ class TestFloorMapTransformationMatrix {
     // hasInverse must screen every component, not just the linear four
     // -----------------------------------------------------------------------
 
-    /**
-     * A non-finite translation used to pass hasInverse(), because only a, b, c and d reach the
-     * determinant. inverse() then "succeeded" and returned a matrix whose invE/invF were NaN or
-     * infinite - which is exactly the plausible-looking wrong answer inverse() documents as being
-     * worse than throwing. The vertex editor writes converted coordinates back to the document,
-     * so a silently non-finite inverse corrupts what gets saved.
-     */
+    /// A non-finite translation used to pass hasInverse(), because only a, b, c and d reach the
+    /// determinant. inverse() then "succeeded" and returned a matrix whose invE/invF were NaN or
+    /// infinite - which is exactly the plausible-looking wrong answer inverse() documents as being
+    /// worse than throwing. The vertex editor writes converted coordinates back to the document,
+    /// so a silently non-finite inverse corrupts what gets saved.
     @TestFactory
     Stream<DynamicTest> testHasInverseRejectsAnyNonFiniteComponent() {
         return Stream.of(
@@ -456,7 +443,7 @@ class TestFloorMapTransformationMatrix {
                         }));
     }
 
-    /** The guard must not reject matrices that are perfectly invertible. */
+    /// The guard must not reject matrices that are perfectly invertible.
     @Test
     void testHasInverseStillAcceptsAFiniteInvertibleMatrix() {
         final FloorMapTransformationMatrix m =
@@ -466,7 +453,7 @@ class TestFloorMapTransformationMatrix {
         assertThat(m.inverse()).isNotNull();
     }
 
-    /** A large but finite translation is invertible; only non-finite values are rejected. */
+    /// A large but finite translation is invertible; only non-finite values are rejected.
     @Test
     void testHasInverseAcceptsALargeFiniteTranslation() {
         final FloorMapTransformationMatrix m =

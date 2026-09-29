@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFloorMapDocSession {
 
-    /** A pre-area schema (no Geometry/Fill/Opacity roles). */
+    /// A pre-area schema (no Geometry/Fill/Opacity roles).
     private static final List<FloorMapFieldMapping> PRE_AREA_SCHEMA = List.of(
             new FloorMapFieldMapping(".type", Role.TYPE, "Type", null),
             new FloorMapFieldMapping(".coords", Role.POSITION, "Coords", null),
@@ -62,7 +62,7 @@ class TestFloorMapDocSession {
 
     // -----------------------------------------------------------------------
 
-    /** With nothing staged, the effective lists are the entity's and write is a no-op. */
+    /// With nothing staged, the effective lists are the entity's and write is a no-op.
     @Test
     void testNoPendingEdits() {
         final FloorMapDoc d = doc(List.of(GATE));
@@ -72,7 +72,7 @@ class TestFloorMapDocSession {
         assertThat(session.applyToWrite(d)).isSameAs(d);
     }
 
-    /** A Layers-panel edit becomes the effective + written type styles. */
+    /// A Layers-panel edit becomes the effective + written type styles.
     @Test
     void testStageTypeStyles() {
         final FloorMapDoc d = doc(List.of(GATE));
@@ -83,7 +83,7 @@ class TestFloorMapDocSession {
         assertThat(session.applyToWrite(d).getTypeStyles()).containsExactly(GATE, door);
     }
 
-    /** Staging the area upgrade adds the area schema roles and the "area" style. */
+    /// Staging the area upgrade adds the area schema roles and the "area" style.
     @Test
     void testStageAreaUpgrade() {
         final FloorMapDoc d = doc(List.of(GATE));
@@ -97,10 +97,8 @@ class TestFloorMapDocSession {
         assertThat(FloorMapDocSession.hasAreaStyle(written.getTypeStyles())).isTrue();
     }
 
-    /**
-     * A Layers edit made around a pending area upgrade must NOT drop the "area"
-     * style — onWrite folds it in (the wedge-fix regression).
-     */
+    /// A Layers edit made around a pending area upgrade must NOT drop the "area"
+    /// style — onWrite folds it in (the wedge-fix regression).
     @Test
     void testLayersEditAroundAreaUpgradeKeepsAreaStyle() {
         final FloorMapDoc d = doc(List.of(GATE));
@@ -113,7 +111,7 @@ class TestFloorMapDocSession {
         assertThat(FloorMapDocSession.hasAreaStyle(written.getTypeStyles())).isTrue();
     }
 
-    /** The area upgrade is dropped after read only once schema AND style are present. */
+    /// The area upgrade is dropped after read only once schema AND style are present.
     @Test
     void testReconcileDropsAreaUpgradeWhenPersisted() {
         final FloorMapDoc d = doc(List.of(GATE));
@@ -128,7 +126,7 @@ class TestFloorMapDocSession {
         assertThat(session.hasPendingDocEdits()).isFalse();
     }
 
-    /** sessionEntity applies pending edits to the returned document. */
+    /// sessionEntity applies pending edits to the returned document.
     @Test
     void testSessionEntityAppliesPending() {
         final FloorMapDoc d = doc(List.of(GATE));
@@ -146,7 +144,7 @@ class TestFloorMapDocSession {
     private static final FloorMapGroup MAINTENANCE =
             new FloorMapGroup("g1", "Maintenance", "#8e24aa", List.of("bob@x.com"));
 
-    /** A Groups-panel edit becomes the effective + written groups. */
+    /// A Groups-panel edit becomes the effective + written groups.
     @Test
     void testStageGroups() {
         final FloorMapDoc d = doc(List.of(GATE));
@@ -157,7 +155,7 @@ class TestFloorMapDocSession {
         assertThat(session.applyToWrite(d).getGroups()).containsExactly(MAINTENANCE);
     }
 
-    /** With nothing staged, the document's own groups stand and write is a no-op. */
+    /// With nothing staged, the document's own groups stand and write is a no-op.
     @Test
     void testGroupsWithoutPendingEdit() {
         final FloorMapDoc d = doc(List.of(GATE))
@@ -167,10 +165,8 @@ class TestFloorMapDocSession {
         assertThat(session.applyToWrite(d)).isSameAs(d);
     }
 
-    /**
-     * The Editor's schema/type-style staging and the Map's group staging touch
-     * disjoint fields, so one tab's pending edit can never clobber the other's.
-     */
+    /// The Editor's schema/type-style staging and the Map's group staging touch
+    /// disjoint fields, so one tab's pending edit can never clobber the other's.
     @Test
     void testGroupsAndTypeStylesDoNotInterfere() {
         final FloorMapDoc d = doc(List.of(GATE));
@@ -183,7 +179,7 @@ class TestFloorMapDocSession {
         assertThat(written.getGroups()).containsExactly(MAINTENANCE);
     }
 
-    /** The groups edit is dropped once a re-read shows it persisted. */
+    /// The groups edit is dropped once a re-read shows it persisted.
     @Test
     void testReconcileDropsGroupsWhenPersisted() {
         final FloorMapDoc d = doc(List.of(GATE));
@@ -198,11 +194,9 @@ class TestFloorMapDocSession {
         assertThat(session.hasPendingDocEdits()).isFalse();
     }
 
-    /**
-     * Deleting the last group stages an empty list; a document carrying either
-     * {@code null} or {@code []} counts as having persisted it. Left pending, the
-     * document would stay dirty forever.
-     */
+    /// Deleting the last group stages an empty list; a document carrying either
+    /// `null` or `[]` counts as having persisted it. Left pending, the
+    /// document would stay dirty forever.
     @Test
     void testReconcileTreatsEmptyAndNullGroupsAsEqual() {
         final FloorMapDoc noGroups = doc(List.of(GATE));
@@ -212,7 +206,7 @@ class TestFloorMapDocSession {
         assertThat(session.hasPendingDocEdits()).isFalse();
     }
 
-    /** A rename is staged and written like any other group edit. */
+    /// A rename is staged and written like any other group edit.
     @Test
     void testStageRenamedGroup() {
         final FloorMapDoc d = doc(List.of(GATE))
@@ -231,12 +225,10 @@ class TestFloorMapDocSession {
     // The copy-builder trap
     // -----------------------------------------------------------------------
 
-    /**
-     * Every FloorMap tab's {@code onWrite} returns {@code doc.copy()…build()}, so
-     * a field the copy-builder forgets is silently deleted when the user saves
-     * from a tab that does not itself write it. This is the one-line test that
-     * catches "saving from the Settings tab wiped all my groups".
-     */
+    /// Every FloorMap tab's `onWrite` returns `doc.copy()…build()`, so
+    /// a field the copy-builder forgets is silently deleted when the user saves
+    /// from a tab that does not itself write it. This is the one-line test that
+    /// catches "saving from the Settings tab wiped all my groups".
     @Test
     void testCopyBuilderPreservesGroups() {
         final FloorMapDoc d = doc(List.of(GATE))
@@ -248,10 +240,8 @@ class TestFloorMapDocSession {
         assertThat(rewritten.getGroups()).containsExactly(MAINTENANCE);
     }
 
-    /**
-     * The document's dirty check diffs the written doc against the read one, so a
-     * group edit has to make the two unequal or the save button never lights up.
-     */
+    /// The document's dirty check diffs the written doc against the read one, so a
+    /// group edit has to make the two unequal or the save button never lights up.
     @Test
     void testGroupEditMakesDocumentUnequal() {
         final FloorMapDoc before = doc(List.of(GATE))
@@ -273,7 +263,7 @@ class TestFloorMapDocSession {
     // Measurement units (Set Scale)
     // -----------------------------------------------------------------------
 
-    /** A calibration becomes the session's effective units and is written on save. */
+    /// A calibration becomes the session's effective units and is written on save.
     @Test
     void testStageMeasurementUnits() {
         final FloorMapDoc d = doc(List.of(GATE));
@@ -286,7 +276,7 @@ class TestFloorMapDocSession {
         assertThat(session.sessionEntity(d).getMeasurementUnits()).isEqualTo(units);
     }
 
-    /** With nothing staged the entity's own units show through untouched. */
+    /// With nothing staged the entity's own units show through untouched.
     @Test
     void testUnstagedUnitsComeFromTheEntity() {
         final FloorMapMeasurementUnits stored = new FloorMapMeasurementUnits(Unit.FOOT, 2.0);
@@ -296,10 +286,8 @@ class TestFloorMapDocSession {
         assertThat(session.applyToWrite(d)).isSameAs(d);
     }
 
-    /**
-     * Staging null — "this map has no scale" — is a real edit, and must be
-     * distinguishable from having staged nothing at all.
-     */
+    /// Staging null — "this map has no scale" — is a real edit, and must be
+    /// distinguishable from having staged nothing at all.
     @Test
     void testStagingNullUnitsClearsTheScale() {
         final FloorMapMeasurementUnits stored = new FloorMapMeasurementUnits(Unit.METRE, 1.0);
@@ -311,7 +299,7 @@ class TestFloorMapDocSession {
         assertThat(session.applyToWrite(d).getMeasurementUnits()).isNull();
     }
 
-    /** Once the document comes back carrying the calibration, the staged copy is dropped. */
+    /// Once the document comes back carrying the calibration, the staged copy is dropped.
     @Test
     void testReconcileDropsPersistedUnits() {
         final FloorMapMeasurementUnits units = new FloorMapMeasurementUnits(Unit.METRE, 0.187);
@@ -323,7 +311,7 @@ class TestFloorMapDocSession {
         assertThat(session.hasPendingDocEdits()).isFalse();
     }
 
-    /** A read that does NOT carry the calibration must keep it staged. */
+    /// A read that does NOT carry the calibration must keep it staged.
     @Test
     void testReconcileKeepsUnsavedUnits() {
         final FloorMapDoc unsaved = doc(List.of(GATE));
@@ -336,7 +324,7 @@ class TestFloorMapDocSession {
                 .isEqualTo(new FloorMapMeasurementUnits(Unit.METRE, 0.187));
     }
 
-    /** Staged units must not disturb the other staged edits, nor they it. */
+    /// Staged units must not disturb the other staged edits, nor they it.
     @Test
     void testUnitsComposeWithOtherStagedEdits() {
         final FloorMapDoc d = doc(List.of(GATE));

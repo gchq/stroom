@@ -41,7 +41,7 @@ class TestFloorMapMeasurementUnits {
         assertThat(units.toMapUnits(5)).isCloseTo(10, within(1e-9));
     }
 
-    /** The calibration dialog lets a value be typed in a unit the map is not configured in. */
+    /// The calibration dialog lets a value be typed in a unit the map is not configured in.
     @Test
     void testConvertsFromAnotherUnit() {
         final FloorMapMeasurementUnits units = metres(1.0);
@@ -80,7 +80,7 @@ class TestFloorMapMeasurementUnits {
         assertThat(metres(1.0).format(0.005)).isEqualTo("5 mm");
     }
 
-    /** Below the smallest unit in the family we stay there rather than inventing one. */
+    /// Below the smallest unit in the family we stay there rather than inventing one.
     @Test
     void testFallsBackToSmallestUnitInFamily() {
         assertThat(metres(1.0).format(0.0001)).isEqualTo("0.1 mm");
@@ -97,7 +97,7 @@ class TestFloorMapMeasurementUnits {
         assertThat(feet.format(7392)).isEqualTo("1.4 mi");
     }
 
-    /** Promotion must never cross families: an imperial map does not sprout millimetres. */
+    /// Promotion must never cross families: an imperial map does not sprout millimetres.
     @Test
     void testPromotionStaysWithinItsFamily() {
         final FloorMapMeasurementUnits inches = new FloorMapMeasurementUnits(Unit.INCH, 1.0);
@@ -120,11 +120,9 @@ class TestFloorMapMeasurementUnits {
     // Uncalibrated documents
     // ------------------------------------------------------------------------
 
-    /**
-     * A map unit is an internal abstraction and is never shown to a user, so an
-     * uncalibrated map measures in the default of one centimetre per map unit
-     * rather than in bare "map units".
-     */
+    /// A map unit is an internal abstraction and is never shown to a user, so an
+    /// uncalibrated map measures in the default of one centimetre per map unit
+    /// rather than in bare "map units".
     @Test
     void testUncalibratedMapsMeasureInTheDefaultScale() {
         assertThat(FloorMapMeasurementUnits.DEFAULT.getUnit()).isEqualTo(Unit.CENTIMETRE);
@@ -134,7 +132,7 @@ class TestFloorMapMeasurementUnits {
         assertThat(FloorMapMeasurementUnits.format(null, 1250)).isEqualTo("12.5 m");
     }
 
-    /** No surface may render a bare number, or the units in which map space is counted. */
+    /// No surface may render a bare number, or the units in which map space is counted.
     @Test
     void testNothingEverFormatsWithoutARealUnit() {
         for (final double distance : new double[]{0, 0.5, 1, 10, 1000, 123456}) {
@@ -150,10 +148,8 @@ class TestFloorMapMeasurementUnits {
         }
     }
 
-    /**
-     * The static entry point every surface uses: null and unusable units both
-     * fall back to the default scale, so no caller carries its own null branch.
-     */
+    /// The static entry point every surface uses: null and unusable units both
+    /// fall back to the default scale, so no caller carries its own null branch.
     @Test
     void testStaticFormatFallsBackForNullOrInvalidUnits() {
         assertThat(FloorMapMeasurementUnits.format(null, 10)).isEqualTo("10 cm");
@@ -182,7 +178,7 @@ class TestFloorMapMeasurementUnits {
         assertThat(FloorMapMeasurementUnits.formatNumber(0.10)).isEqualTo("0.1");
     }
 
-    /** Left-padding matters: 5 thousandths is 0.005, not 0.5. */
+    /// Left-padding matters: 5 thousandths is 0.005, not 0.5.
     @Test
     void testPadsFractionalDigits() {
         assertThat(FloorMapMeasurementUnits.formatNumber(0.005)).isEqualTo("0.005");
@@ -197,14 +193,14 @@ class TestFloorMapMeasurementUnits {
         assertThat(FloorMapMeasurementUnits.formatNumber(0.00123456)).isEqualTo("0.00123");
     }
 
-    /** Whole units are never rounded away — the reader can see those digits. */
+    /// Whole units are never rounded away — the reader can see those digits.
     @Test
     void testKeepsWholeUnitPrecision() {
         assertThat(FloorMapMeasurementUnits.formatNumber(5279)).isEqualTo("5279");
         assertThat(FloorMapMeasurementUnits.formatNumber(123456)).isEqualTo("123456");
     }
 
-    /** No binary noise ("1.2000000000000002") and no exponent leaks into the UI. */
+    /// No binary noise ("1.2000000000000002") and no exponent leaks into the UI.
     @Test
     void testAvoidsFloatingPointNoise() {
         assertThat(FloorMapMeasurementUnits.formatNumber(0.1 + 0.2)).isEqualTo("0.3");
@@ -221,10 +217,8 @@ class TestFloorMapMeasurementUnits {
     // Validity
     // ------------------------------------------------------------------------
 
-    /**
-     * A zero or non-finite factor produces NaN grid spacing, which renders an
-     * entirely blank canvas with no error — hence the guard.
-     */
+    /// A zero or non-finite factor produces NaN grid spacing, which renders an
+    /// entirely blank canvas with no error — hence the guard.
     @Test
     void testRejectsUnusableScaleFactors() {
         assertThat(metres(0).checkUnitIsValid()).isFalse();
@@ -250,7 +244,7 @@ class TestFloorMapMeasurementUnits {
         assertThat(units.getUnitsPerMapUnit()).isCloseTo(0.187, within(1e-9));
     }
 
-    /** Calibrating then converting back must return the line we measured. */
+    /// Calibrating then converting back must return the line we measured.
     @Test
     void testCalibrateRoundTrips() {
         final FloorMapMeasurementUnits units =
@@ -261,7 +255,7 @@ class TestFloorMapMeasurementUnits {
         assertThat(units.format(240)).isEqualTo("18.7 m");
     }
 
-    /** The typed unit and the display unit need not match. */
+    /// The typed unit and the display unit need not match.
     @Test
     void testCalibrateConvertsBetweenUnits() {
         // 10 ft measured, but the map is to be shown in metres.
@@ -273,10 +267,8 @@ class TestFloorMapMeasurementUnits {
         assertThat(units.getUnitsPerMapUnit()).isCloseTo(0.03048, within(1e-9));
     }
 
-    /**
-     * Rather than writing a scale that would blank the canvas, an unusable
-     * measurement yields null for the caller to report.
-     */
+    /// Rather than writing a scale that would blank the canvas, an unusable
+    /// measurement yields null for the caller to report.
     @Test
     void testCalibrateRejectsUnusableInput() {
         assertThat(FloorMapMeasurementUnits.calibrate(0, 10, Unit.METRE, Unit.METRE)).isNull();
@@ -300,7 +292,7 @@ class TestFloorMapMeasurementUnits {
         assertThat(FloorMapMeasurementUnits.niceRoundLength(0.4)).isCloseTo(0.2, within(1e-9));
     }
 
-    /** An exact decade must pick itself, not the next one down. */
+    /// An exact decade must pick itself, not the next one down.
     @Test
     void testNiceRoundLengthKeepsExactDecades() {
         assertThat(FloorMapMeasurementUnits.niceRoundLength(100)).isCloseTo(100, within(1e-9));
@@ -344,7 +336,7 @@ class TestFloorMapMeasurementUnits {
     // Gesture readouts
     // ------------------------------------------------------------------------
 
-    /** The size shown while an object is being resized. */
+    /// The size shown while an object is being resized.
     @Test
     void testFormatsSize() {
         assertThat(FloorMapMeasurementUnits.formatSize(metres(1), 2.4, 1.1))
@@ -355,14 +347,14 @@ class TestFloorMapMeasurementUnits {
                 .isEqualTo("12.5 m × 20 cm");
     }
 
-    /** An uncalibrated map still reports a real size, at the default scale. */
+    /// An uncalibrated map still reports a real size, at the default scale.
     @Test
     void testFormatsSizeWithoutUnits() {
         assertThat(FloorMapMeasurementUnits.formatSize(null, 240, 110))
                 .isEqualTo("2.4 m × 1.1 m");
     }
 
-    /** The position shown while an object is being moved, with both axes named. */
+    /// The position shown while an object is being moved, with both axes named.
     @Test
     void testFormatsPosition() {
         assertThat(FloorMapMeasurementUnits.formatPosition(metres(1), 4.5, 2.1))
@@ -382,10 +374,8 @@ class TestFloorMapMeasurementUnits {
     // Editable fields
     // ------------------------------------------------------------------------
 
-    /**
-     * A specific unit, not the best-fitting one: an input box that changed
-     * between mm and km as the user typed would be unusable.
-     */
+    /// A specific unit, not the best-fitting one: an input box that changed
+    /// between mm and km as the user typed would be unusable.
     @Test
     void testConvertsToASpecificUnit() {
         // The default scale: 450 map units is 450 cm, i.e. 4.5 m.
@@ -395,7 +385,7 @@ class TestFloorMapMeasurementUnits {
         assertThat(metres(1).toUnit(1, Unit.CENTIMETRE)).isCloseTo(100, within(1e-9));
     }
 
-    /** toUnit and toMapUnits must be exact inverses, or a dialog edit drifts. */
+    /// toUnit and toMapUnits must be exact inverses, or a dialog edit drifts.
     @Test
     void testToUnitRoundTripsWithToMapUnits() {
         for (final FloorMapMeasurementUnits units :
@@ -411,10 +401,8 @@ class TestFloorMapMeasurementUnits {
         }
     }
 
-    /**
-     * Significant figures would destroy an editable value — 1234.5 would come
-     * back as 1230, moving the object several metres on OK.
-     */
+    /// Significant figures would destroy an editable value — 1234.5 would come
+    /// back as 1230, moving the object several metres on OK.
     @Test
     void testInputFormattingKeepsEveryActionableDigit() {
         assertThat(FloorMapMeasurementUnits.formatForInput(1234.5)).isEqualTo("1234.5");
@@ -433,20 +421,18 @@ class TestFloorMapMeasurementUnits {
         assertThat(FloorMapMeasurementUnits.formatForInput(0.1 + 0.2)).isEqualTo("0.3");
     }
 
-    /**
-     * Nothing in the window below {@link Long#MAX_VALUE} may emit corrupted digits.
-     *
-     * <p>{@code formatForInput} rounds into a {@code long} after multiplying by 1e4, so the
-     * product saturates from about {@code 9.2234e14}. The magnitude ceiling was set at
-     * {@code 1e15} — above the saturation point — so this window assembled its digits from
-     * {@code Long.MAX_VALUE} and {@code formatForInput(9.5e14)} returned
-     * {@code "922337203685477.5807"}. No test covered it, and the value is one a bad scale
-     * factor can reach even though no real floor plan can.</p>
-     *
-     * <p>The assertion is a round-trip rather than an exact string, because what matters is
-     * that the text means the number — whether it is rendered as assembled digits or handed
-     * to {@code String.valueOf} is an implementation choice either side of the bound.</p>
-     */
+    /// Nothing in the window below [Long#MAX_VALUE] may emit corrupted digits.
+    ///
+    /// `formatForInput` rounds into a `long` after multiplying by 1e4, so the
+    /// product saturates from about `9.2234e14`. The magnitude ceiling was set at
+    /// `1e15` — above the saturation point — so this window assembled its digits from
+    /// `Long.MAX_VALUE` and `formatForInput(9.5e14)` returned
+    /// `"922337203685477.5807"`. No test covered it, and the value is one a bad scale
+    /// factor can reach even though no real floor plan can.
+    ///
+    /// The assertion is a round-trip rather than an exact string, because what matters is
+    /// that the text means the number — whether it is rendered as assembled digits or handed
+    /// to `String.valueOf` is an implementation choice either side of the bound.
     @Test
     void testFormatForInputNeverEmitsCorruptDigitsNearTheLongLimit() {
         final double[] values = {
@@ -467,17 +453,15 @@ class TestFloorMapMeasurementUnits {
         }
     }
 
-    /**
-     * A characterisation guard, not a proof: {@code formatNumber} was never affected by the
-     * overflow bug, because its decimal count collapses to 0 for large magnitudes and so its
-     * safe bound is around {@code 9.2234e18}. This test passes with or without the guard in
-     * {@code formatToDecimals}.
-     *
-     * <p>It is here because that safety is incidental — it falls out of the
-     * significant-figures arithmetic rather than being intended. Raising
-     * {@code SIGNIFICANT_FIGURES}, or changing how the decimal count is derived, could push
-     * this formatter into the same window without anything else noticing.</p>
-     */
+    /// A characterisation guard, not a proof: `formatNumber` was never affected by the
+    /// overflow bug, because its decimal count collapses to 0 for large magnitudes and so its
+    /// safe bound is around `9.2234e18`. This test passes with or without the guard in
+    /// `formatToDecimals`.
+    ///
+    /// It is here because that safety is incidental — it falls out of the
+    /// significant-figures arithmetic rather than being intended. Raising
+    /// `SIGNIFICANT_FIGURES`, or changing how the decimal count is derived, could push
+    /// this formatter into the same window without anything else noticing.
     @Test
     void testFormatNumberRoundTripsNearTheLongLimit() {
         for (final double value : new double[]{9.0e14, 9.5e14, 9.99e14}) {

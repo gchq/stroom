@@ -31,20 +31,18 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-/**
- * A test-only {@link ValueAccessor} implementation backed by the JDK's
- * {@code javax.xml.parsers} / {@code org.w3c.dom} APIs, which are available
- * on the server/test classpath but NOT in GWT.
- *
- * <p>This mirrors the path conventions of the real GWT
- * {@code stroom.floormap.client.value.XmlValueAccessor} implementation exactly
- * (XPath-from-root syntax such as {@code "/entry/type"}, attributes via
- * {@code "/entry/@type"}, comma-separated numeric arrays), so that
- * {@link FloorMapEntryParser} and {@link FloorMapEditorModel} can be
- * exercised against XML-formatted values without any GWT dependency.</p>
- *
- * @see MapValueAccessor the equivalent JSON-flavoured test double
- */
+/// A test-only [ValueAccessor] implementation backed by the JDK's
+/// `javax.xml.parsers` / `org.w3c.dom` APIs, which are available
+/// on the server/test classpath but NOT in GWT.
+///
+/// This mirrors the path conventions of the real GWT
+/// `stroom.floormap.client.value.XmlValueAccessor` implementation exactly
+/// (XPath-from-root syntax such as `"/entry/type"`, attributes via
+/// `"/entry/@type"`, comma-separated numeric arrays), so that
+/// [FloorMapEntryParser] and [FloorMapEditorModel] can be
+/// exercised against XML-formatted values without any GWT dependency.
+///
+/// @see MapValueAccessor the equivalent JSON-flavoured test double
 public class DomValueAccessor implements ValueAccessor {
 
     public static final DomValueAccessor INSTANCE = new DomValueAccessor();
@@ -192,17 +190,15 @@ public class DomValueAccessor implements ValueAccessor {
         return serializeElement(doc.getDocumentElement());
     }
 
-    /**
-     * Mirrors production {@code XmlValueAccessor.serializeElement}, deliberately
-     * hand-rolled rather than delegating to a JAXP {@code Transformer}.
-     *
-     * <p>This used to use a {@code Transformer}, which was a trap: the JDK
-     * serialiser is complete and correct, so round-trip tests written against this
-     * double passed while the production serialiser — a hand-written recursion
-     * over node types — silently dropped whole categories of node. The double has
-     * to be as limited as the thing it stands in for, or the tests attest to
-     * nothing.</p>
-     */
+    /// Mirrors production `XmlValueAccessor.serializeElement`, deliberately
+    /// hand-rolled rather than delegating to a JAXP `Transformer`.
+    ///
+    /// This used to use a `Transformer`, which was a trap: the JDK
+    /// serialiser is complete and correct, so round-trip tests written against this
+    /// double passed while the production serialiser — a hand-written recursion
+    /// over node types — silently dropped whole categories of node. The double has
+    /// to be as limited as the thing it stands in for, or the tests attest to
+    /// nothing.
     private static String serializeElement(final Element elem) {
         final StringBuilder sb = new StringBuilder();
         sb.append("<").append(elem.getTagName());
@@ -338,20 +334,16 @@ public class DomValueAccessor implements ValueAccessor {
         return null;
     }
 
-    /**
-     * Strips any namespace prefix (e.g. {@code "ns:type"} → {@code "type"}),
-     * matching the namespace-agnostic behaviour of the real
-     * {@code stroom.floormap.client.value.XmlValueAccessor}.
-     */
+    /// Strips any namespace prefix (e.g. `"ns:type"` → `"type"`),
+    /// matching the namespace-agnostic behaviour of the real
+    /// `stroom.floormap.client.value.XmlValueAccessor`.
     private static String localName(final String qualifiedName) {
         final int colon = qualifiedName.indexOf(':');
         return colon >= 0 ? qualifiedName.substring(colon + 1) : qualifiedName;
     }
 
-    /**
-     * Mirrors production {@code XmlValueAccessor.getTextContent}, including its
-     * treatment of CDATA sections as character data.
-     */
+    /// Mirrors production `XmlValueAccessor.getTextContent`, including its
+    /// treatment of CDATA sections as character data.
     private static String getTextContent(final Element elem) {
         final StringBuilder sb = new StringBuilder();
         final NodeList children = elem.getChildNodes();

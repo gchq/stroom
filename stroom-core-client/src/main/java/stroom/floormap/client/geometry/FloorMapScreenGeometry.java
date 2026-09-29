@@ -25,58 +25,50 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Pure map/screen geometry for the floor-map canvas — fact bounding boxes,
- * content bounds, marquee hit-testing and the selection frame. Extracted from
- * the GWT view so the projection maths (which must stay in lock-step with the
- * renderer's transform pipeline) is unit-testable on the JVM.
- *
- * <p>Screen projection matches the view's draw transform: a map point
- * {@code (mx, my)} maps to screen {@code (offsetX + scale·mx, offsetY − scale·my)}
- * (map space is Y-up, SVG is Y-down). Image facts are placed by the render
- * wrapper {@code worldToMap · translate(0,h) · scale(1,-1)}, matching
- * {@code FloorMapCanvasViewImpl.appendImageGlyph}.</p>
- *
- * <p>Holds no GWT/DOM types. The view constructs one per query with the
- * last-drawn scale/pan and an {@link AspectRatioSource} backed by its image
- * aspect-ratio cache.</p>
- */
+/// Pure map/screen geometry for the floor-map canvas — fact bounding boxes,
+/// content bounds, marquee hit-testing and the selection frame. Extracted from
+/// the GWT view so the projection maths (which must stay in lock-step with the
+/// renderer's transform pipeline) is unit-testable on the JVM.
+///
+/// Screen projection matches the view's draw transform: a map point
+/// `(mx, my)` maps to screen `(offsetX + scale·mx, offsetY − scale·my)`
+/// (map space is Y-up, SVG is Y-down). Image facts are placed by the render
+/// wrapper `worldToMap · translate(0,h) · scale(1,-1)`, matching
+/// `FloorMapCanvasViewImpl.appendImageGlyph`.
+///
+/// Holds no GWT/DOM types. The view constructs one per query with the
+/// last-drawn scale/pan and an [AspectRatioSource] backed by its image
+/// aspect-ratio cache.
 public final class FloorMapScreenGeometry {
 
-    /** Supplies an image's aspect ratio (width/height) by URL, or {@code null} if unknown. */
+    /// Supplies an image's aspect ratio (width/height) by URL, or `null` if unknown.
     public interface AspectRatioSource {
 
         Double aspectRatio(String imageUrl);
     }
 
-    /**
-     * Longest edge a layer graphic may occupy, as a multiple of the glyph size —
-     * stops a banner-shaped image becoming an unreadably wide sliver once its box
-     * is area-matched. See {@link #graphicBox}.
-     */
+    /// Longest edge a layer graphic may occupy, as a multiple of the glyph size —
+    /// stops a banner-shaped image becoming an unreadably wide sliver once its box
+    /// is area-matched. See [#graphicBox].
     public static final double MAX_GRAPHIC_EDGE_RATIO = 2.0;
 
-    /**
-     * The screen size, in pixels, of the square box a point glyph occupies —
-     * an event entity or an imageless, vertex-less fact, drawn at a fixed screen
-     * size whatever the zoom.
-     *
-     * <p>Lives here, rather than only in the renderer, because it is not just a
-     * drawing detail: clustering merges entities whose glyphs would overlap, so
-     * the merge distance is a function of this. Two independent constants that
-     * had to agree by hand is exactly how the merge distance ended up smaller
-     * than the glyph it was meant to keep clear.</p>
-     */
+    /// The screen size, in pixels, of the square box a point glyph occupies —
+    /// an event entity or an imageless, vertex-less fact, drawn at a fixed screen
+    /// size whatever the zoom.
+    ///
+    /// Lives here, rather than only in the renderer, because it is not just a
+    /// drawing detail: clustering merges entities whose glyphs would overlap, so
+    /// the merge distance is a function of this. Two independent constants that
+    /// had to agree by hand is exactly how the merge distance ended up smaller
+    /// than the glyph it was meant to keep clear.
     public static final int POINT_GLYPH_SIZE_PX = 60;
 
-    /**
-     * The map-space width an image fact is rendered at before its placement
-     * matrix scales it — so an image's size on the map is this times the
-     * matrix's scale, and its height that divided by the image's aspect ratio.
-     *
-     * <p>Lives here so the renderer and anything that needs to state or set an
-     * image's real-world size agree on the same base.</p>
-     */
+    /// The map-space width an image fact is rendered at before its placement
+    /// matrix scales it — so an image's size on the map is this times the
+    /// matrix's scale, and its height that divided by the image's aspect ratio.
+    ///
+    /// Lives here so the renderer and anything that needs to state or set an
+    /// image's real-world size agree on the same base.
     public static final double DEFAULT_IMAGE_DISPLAY_WIDTH = 1000;
 
     private final double scale;
@@ -87,18 +79,16 @@ public final class FloorMapScreenGeometry {
     private final AspectRatioSource aspectRatioSource;
     private final List<TypeStyle> typeStyles;
 
-    /**
-     * @param scale             the last-drawn zoom scale
-     * @param offsetX           the last-drawn pan offset X (screen px)
-     * @param offsetY           the last-drawn pan offset Y (screen px)
-     * @param imageDisplayWidth the map-space width image facts render at
-     * @param objectSize        the fixed on-screen size (px) of an imageless glyph
-     * @param aspectRatioSource supplies image aspect ratios (may return {@code null})
-     * @param typeStyles        per-type styles, so a layer that draws an image is
-     *                          measured at the box that image actually occupies;
-     *                          may be {@code null}, in which case every imageless
-     *                          fact measures as a square glyph
-     */
+    /// @param scale             the last-drawn zoom scale
+    /// @param offsetX           the last-drawn pan offset X (screen px)
+    /// @param offsetY           the last-drawn pan offset Y (screen px)
+    /// @param imageDisplayWidth the map-space width image facts render at
+    /// @param objectSize        the fixed on-screen size (px) of an imageless glyph
+    /// @param aspectRatioSource supplies image aspect ratios (may return `null`)
+    /// @param typeStyles        per-type styles, so a layer that draws an image is
+    ///         measured at the box that image actually occupies;
+    ///         may be `null`, in which case every imageless
+    ///         fact measures as a square glyph
     public FloorMapScreenGeometry(final double scale,
                                   final double offsetX,
                                   final double offsetY,
@@ -115,27 +105,25 @@ public final class FloorMapScreenGeometry {
         this.typeStyles = typeStyles;
     }
 
-    /**
-     * The on-screen {@code {width, height}} a layer graphic is drawn at, sized so it
-     * carries the <strong>same visual weight as a shape glyph</strong>.
-     *
-     * <p>Matching the shape's bounding box is not enough: a shape is solid ink out
-     * to its box edge, whereas an image preserving its aspect ratio inside a square
-     * box only reaches the edge on its longer side. So the box matches the shape
-     * box's <em>area</em> instead — for aspect ratio {@code r} that is
-     * {@code (S·√r, S/√r)}, which has area {@code S²} for every {@code r} and gives
-     * a square image exactly {@code S × S}.</p>
-     *
-     * <p>This lives here, rather than in the renderer, because hit-testing and the
-     * selection frame must use the identical box. When they disagreed, a wide icon
-     * drew 120×30 but hit-tested as 60×60, so a marquee over its outer edges missed
-     * it and the selection frame was drawn inside the glyph.</p>
-     *
-     * @param objectSize  the glyph size {@code S} in screen px
-     * @param aspectRatio the image's width/height, or {@code null} when not yet
-     *                    known (the caller then draws it square)
-     * @return a two-element {@code {width, height}} in screen px
-     */
+    /// The on-screen `{width, height}` a layer graphic is drawn at, sized so it
+    /// carries the **same visual weight as a shape glyph**.
+    ///
+    /// Matching the shape's bounding box is not enough: a shape is solid ink out
+    /// to its box edge, whereas an image preserving its aspect ratio inside a square
+    /// box only reaches the edge on its longer side. So the box matches the shape
+    /// box's *area* instead — for aspect ratio `r` that is
+    /// `(S·√r, S/√r)`, which has area `S²` for every `r` and gives
+    /// a square image exactly `S × S`.
+    ///
+    /// This lives here, rather than in the renderer, because hit-testing and the
+    /// selection frame must use the identical box. When they disagreed, a wide icon
+    /// drew 120×30 but hit-tested as 60×60, so a marquee over its outer edges missed
+    /// it and the selection frame was drawn inside the glyph.
+    ///
+    /// @param objectSize  the glyph size `S` in screen px
+    /// @param aspectRatio the image's width/height, or `null` when not yet
+    ///         known (the caller then draws it square)
+    /// @return a two-element `{width, height}` in screen px
     public static double[] graphicBox(final double objectSize, final Double aspectRatio) {
         if (aspectRatio == null
                 || aspectRatio <= 0
@@ -157,10 +145,8 @@ public final class FloorMapScreenGeometry {
         return new double[]{width, height};
     }
 
-    /**
-     * The asset URL of the image configured as {@code type}'s layer graphic, or
-     * {@code null} to draw a shape. Mirrors the renderer's lookup.
-     */
+    /// The asset URL of the image configured as `type`'s layer graphic, or
+    /// `null` to draw a shape. Mirrors the renderer's lookup.
     private String graphicForType(final String type) {
         if (type != null && typeStyles != null) {
             for (final TypeStyle style : typeStyles) {
@@ -172,17 +158,15 @@ public final class FloorMapScreenGeometry {
         return null;
     }
 
-    /**
-     * Returns a fact's on-screen bounding box {@code {minX, minY, maxX, maxY}};
-     * never {@code null}. Dispatch order matches the renderer: image wins over
-     * vertices, else a fixed-size glyph box.
-     *
-     * <p>This used to document a {@code null} return "if the fact has no matrix",
-     * which cannot happen: {@link Fact}'s canonical constructor - the only way to
-     * build one, including via {@code withWorldToMap} and {@code withVertices} -
-     * substitutes {@link FloorMapTransformationMatrix#identity()} for a null
-     * matrix. The claim had propagated into null checks at the call sites.</p>
-     */
+    /// Returns a fact's on-screen bounding box `{minX, minY, maxX, maxY}`;
+    /// never `null`. Dispatch order matches the renderer: image wins over
+    /// vertices, else a fixed-size glyph box.
+    ///
+    /// This used to document a `null` return "if the fact has no matrix",
+    /// which cannot happen: [Fact]'s canonical constructor - the only way to
+    /// build one, including via `withWorldToMap` and `withVertices` -
+    /// substitutes [FloorMapTransformationMatrix#identity()] for a null
+    /// matrix. The claim had propagated into null checks at the call sites.
     public double[] factScreenBounds(final Fact fact) {
         final FloorMapTransformationMatrix w2m = fact.getWorldToMap();
         if (!fact.hasImage() && fact.hasVertices()) {
@@ -219,11 +203,9 @@ public final class FloorMapScreenGeometry {
         return new double[]{sx - halfW, sy - halfH, sx + halfW, sy + halfH};
     }
 
-    /**
-     * Returns the map-space bounding box {@code {minX, minY, maxX, maxY}} of all
-     * facts, or {@code null} if there is none. Independent of the current
-     * scale/pan (used to compute an initial zoom-to-fit).
-     */
+    /// Returns the map-space bounding box `{minX, minY, maxX, maxY}` of all
+    /// facts, or `null` if there is none. Independent of the current
+    /// scale/pan (used to compute an initial zoom-to-fit).
     public double[] contentMapBounds(final List<Fact> facts) {
         if (NullSafe.isEmptyCollection(facts)) {
             return null;
@@ -257,10 +239,8 @@ public final class FloorMapScreenGeometry {
         return any ? acc : null;
     }
 
-    /**
-     * Returns the keys of facts whose on-screen AABB intersects the rectangle
-     * {@code {minX, minY, maxX, maxY}} (element pixels); touch counts as a hit.
-     */
+    /// Returns the keys of facts whose on-screen AABB intersects the rectangle
+    /// `{minX, minY, maxX, maxY}` (element pixels); touch counts as a hit.
     public Set<String> hitTestRect(final List<Fact> facts, final double[] rectPx) {
         final Set<String> hits = new HashSet<>();
         if (facts == null || rectPx == null) {
@@ -282,11 +262,9 @@ public final class FloorMapScreenGeometry {
         return hits;
     }
 
-    /**
-     * Returns the screen-space bounding box of the selected facts (union of
-     * their on-screen bounds), padded to {@code minFramePx} so handles stay
-     * separable. Returns {@code null} when nothing is selected or laid out.
-     */
+    /// Returns the screen-space bounding box of the selected facts (union of
+    /// their on-screen bounds), padded to `minFramePx` so handles stay
+    /// separable. Returns `null` when nothing is selected or laid out.
     public double[] selectionFrame(final List<Fact> facts,
                                    final Set<String> selectedIds,
                                    final double minFramePx) {
@@ -321,11 +299,9 @@ public final class FloorMapScreenGeometry {
         return acc;
     }
 
-    /**
-     * The four corners of an image fact in map space, via the render wrapper
-     * transform {@code worldToMap · translate(0,h) · scale(1,-1)}. Aspect ratio
-     * falls back to square when unknown, matching the renderer's pre-load state.
-     */
+    /// The four corners of an image fact in map space, via the render wrapper
+    /// transform `worldToMap · translate(0,h) · scale(1,-1)`. Aspect ratio
+    /// falls back to square when unknown, matching the renderer's pre-load state.
     private double[][] imageCornersMap(final Fact fact, final FloorMapTransformationMatrix w2m) {
         final Double ar = aspectRatioSource != null
                 ? aspectRatioSource.aspectRatio(fact.getImage())
@@ -345,44 +321,40 @@ public final class FloorMapScreenGeometry {
         return new double[]{Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
     }
 
-    /**
-     * Projects a point from map space to screen space.
-     *
-     * <p>The Y flip is the whole reason this exists as a named method: map space is Y-up and
-     * the SVG viewport is Y-down, so the correct projection is {@code +} on X and {@code -}
-     * on Y. Get that wrong and objects still appear on the map, just mirrored about the
-     * horizontal axis - which on a symmetrical floor plan can go unnoticed indefinitely.
-     * This class owned the formula but kept it private, so callers needing a point-level
-     * projection re-derived it by hand.</p>
-     *
-     * <p><strong>Not the same as
-     * {@link FloorMapViewport#mapToScreen(double, double, FloorMapTransformationMatrix)}</strong>,
-     * despite the name. That one takes a point in a fact's <em>world</em> frame and applies
-     * the background matrix first, so the Y flip is already inside the matrix and the
-     * projection that follows is {@code +} on both axes. This one takes a point already in
-     * <em>map</em> space and so must apply the flip itself. Using either where the other
-     * belongs produces a vertically mirrored result, which is why both spell out which
-     * space they expect.</p>
-     *
-     * @param mapX the x coordinate in map space
-     * @param mapY the y coordinate in map space
-     * @return {@code {screenX, screenY}}
-     */
+    /// Projects a point from map space to screen space.
+    ///
+    /// The Y flip is the whole reason this exists as a named method: map space is Y-up and
+    /// the SVG viewport is Y-down, so the correct projection is `+` on X and `-`
+    /// on Y. Get that wrong and objects still appear on the map, just mirrored about the
+    /// horizontal axis - which on a symmetrical floor plan can go unnoticed indefinitely.
+    /// This class owned the formula but kept it private, so callers needing a point-level
+    /// projection re-derived it by hand.
+    ///
+    /// **Not the same as
+    /// [FloorMapViewport#mapToScreen(double, double, FloorMapTransformationMatrix)]**,
+    /// despite the name. That one takes a point in a fact's *world* frame and applies
+    /// the background matrix first, so the Y flip is already inside the matrix and the
+    /// projection that follows is `+` on both axes. This one takes a point already in
+    /// *map* space and so must apply the flip itself. Using either where the other
+    /// belongs produces a vertically mirrored result, which is why both spell out which
+    /// space they expect.
+    ///
+    /// @param mapX the x coordinate in map space
+    /// @param mapY the y coordinate in map space
+    /// @return `{screenX, screenY}`
     public double[] mapToScreen(final double mapX, final double mapY) {
         return new double[]{mapToScreenX(mapX), mapToScreenY(mapY)};
     }
 
-    /**
-     * Projects a point with an explicit viewport, for callers holding scale and pan directly
-     * rather than a {@code FloorMapScreenGeometry}.
-     *
-     * @param mapX    the x coordinate in map space
-     * @param mapY    the y coordinate in map space
-     * @param scale   pixels per map unit
-     * @param offsetX the pan offset in screen pixels
-     * @param offsetY the pan offset in screen pixels
-     * @return {@code {screenX, screenY}}
-     */
+    /// Projects a point with an explicit viewport, for callers holding scale and pan directly
+    /// rather than a `FloorMapScreenGeometry`.
+    ///
+    /// @param mapX    the x coordinate in map space
+    /// @param mapY    the y coordinate in map space
+    /// @param scale   pixels per map unit
+    /// @param offsetX the pan offset in screen pixels
+    /// @param offsetY the pan offset in screen pixels
+    /// @return `{screenX, screenY}`
     public static double[] mapToScreen(final double mapX,
                                        final double mapY,
                                        final double scale,
@@ -391,15 +363,13 @@ public final class FloorMapScreenGeometry {
         return new double[]{offsetX + scale * mapX, offsetY - scale * mapY};
     }
 
-    /**
-     * The X half of {@link #mapToScreen(double, double)}, allocation-free for the render
-     * path - {@code expandScreen} runs once per vertex per fact per frame.
-     */
+    /// The X half of [#mapToScreen(double, double)], allocation-free for the render
+    /// path - `expandScreen` runs once per vertex per fact per frame.
     public double mapToScreenX(final double mapX) {
         return offsetX + scale * mapX;
     }
 
-    /** The Y half of {@link #mapToScreen(double, double)}, including the Y-up to Y-down flip. */
+    /// The Y half of [#mapToScreen(double, double)], including the Y-up to Y-down flip.
     public double mapToScreenY(final double mapY) {
         return offsetY - scale * mapY;
     }

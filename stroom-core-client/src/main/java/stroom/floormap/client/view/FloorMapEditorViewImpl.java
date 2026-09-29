@@ -27,76 +27,70 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/**
- * View implementation for the FloorMap Editor tab.
- *
- * <h3>Layout</h3>
- * <pre>
- * ┌─────────────────────────────────────────┬────────────┐
- * │            Map Canvas  (MAIN)           │    DOCK    │  canvas fills,
- * │                                         │            │  dock east
- * ├─────────────────────────────────────────┴────────────┤  ◄─ draggable
- * │              Timeline control (TIMELINE)             │  fixed, see
- * ├───────────────────────────┬──────────────────────────┤  TIMELINE_HEIGHT
- * │      Fact List            │        Time List         │  ~1/3 total height
- * │     (FACT_LIST)           │       (TIME_LIST)        │
- * └───────────────────────────┴──────────────────────────┘
- *          ~50% width         ▲         ~50% width
- *                             └── draggable
- * </pre>
- *
- * Uses three nested {@link ThinSplitLayoutPanel}s plus a {@link DockLayoutPanel}:
- * <ul>
- *   <li><b>Outer (vertical)</b> — top area vs bottom strip (draggable).</li>
- *   <li><b>Top-inner (horizontal)</b> — canvas (fill) beside the right-hand dock
- *       (fixed east, hideable via the toolbar toggle).</li>
- *   <li><b>Bottom-inner (horizontal)</b> — two equal columns, Fact List | Time List
- *       (draggable).</li>
- *   <li><b>{@code DockLayoutPanel}</b> — combines the timeline (fixed north) with the
- *       bottom-inner columns; this is why the timeline is not a child of the top
- *       area even though it is drawn directly beneath the canvas.</li>
- * </ul>
- */
+/// View implementation for the FloorMap Editor tab.
+///
+/// ### Layout
+///
+/// ```
+/// ┌─────────────────────────────────────────┬────────────┐
+/// │            Map Canvas  (MAIN)           │    DOCK    │  canvas fills,
+/// │                                         │            │  dock east
+/// ├─────────────────────────────────────────┴────────────┤  ◄─ draggable
+/// │              Timeline control (TIMELINE)             │  fixed, see
+/// ├───────────────────────────┬──────────────────────────┤  TIMELINE_HEIGHT
+/// │      Fact List            │        Time List         │  ~1/3 total height
+/// │     (FACT_LIST)           │       (TIME_LIST)        │
+/// └───────────────────────────┴──────────────────────────┘
+///          ~50% width         ▲         ~50% width
+///                             └── draggable
+/// ```
+///
+/// Uses three nested [ThinSplitLayoutPanel]s plus a [DockLayoutPanel]:
+///
+/// - **Outer (vertical)** — top area vs bottom strip (draggable).
+/// - **Top-inner (horizontal)** — canvas (fill) beside the right-hand dock
+///   (fixed east, hideable via the toolbar toggle).
+/// - **Bottom-inner (horizontal)** — two equal columns, Fact List | Time List
+///   (draggable).
+/// - **`DockLayoutPanel`** — combines the timeline (fixed north) with the
+///   bottom-inner columns; this is why the timeline is not a child of the top
+///   area even though it is drawn directly beneath the canvas.
 public class FloorMapEditorViewImpl extends ViewImpl implements FloorMapEditorView {
 
     // -----------------------------------------------------------------------
     // Outer (vertical) split — top area vs bottom strip
     // -----------------------------------------------------------------------
 
-    /** Initial height of the bottom strip in pixels. */
+    /// Initial height of the bottom strip in pixels.
     private static final int BOTTOM_STRIP_INITIAL_HEIGHT = 250;
 
-    /**
-     * Proportional height of the bottom strip — 1/3 of total, leaving 2/3 for the canvas and
-     * right-hand dock above. The timeline is inside this strip, not above it.
-     */
+    /// Proportional height of the bottom strip — 1/3 of total, leaving 2/3 for the canvas and
+    /// right-hand dock above. The timeline is inside this strip, not above it.
     private static final double BOTTOM_STRIP_SPLIT = 1.0 / 3.0;
 
     // -----------------------------------------------------------------------
     // Top-inner (vertical) split — canvas above timeline
     // -----------------------------------------------------------------------
 
-    /**
-     * Fixed height of the timeline strip in pixels. The timeline is a compact
-     * bar (date pickers, scrubber, play button, speed selector) and does not
-     * need to be user-resizable — it is docked to the north of the bottom strip, above the Fact
-     * and Time lists, with no split ratio, so it keeps this fixed height when the window is
-     * resized.
-     */
+    /// Fixed height of the timeline strip in pixels. The timeline is a compact
+    /// bar (date pickers, scrubber, play button, speed selector) and does not
+    /// need to be user-resizable — it is docked to the north of the bottom strip, above the Fact
+    /// and Time lists, with no split ratio, so it keeps this fixed height when the window is
+    /// resized.
     private static final int TIMELINE_HEIGHT = 110;
 
     // -----------------------------------------------------------------------
     // Bottom-inner (horizontal) split — Fact List beside Time List
     // -----------------------------------------------------------------------
 
-    /** Initial width of the West-anchored Fact List column; the Time List fills the rest. */
+    /// Initial width of the West-anchored Fact List column; the Time List fills the rest.
     private static final int BOTTOM_COLUMN_INITIAL_WIDTH = 300;
 
     // -----------------------------------------------------------------------
     // Top-inner (horizontal) split — canvas beside the right-hand dock
     // -----------------------------------------------------------------------
 
-    /** Initial width of the right-hand dock in pixels. */
+    /// Initial width of the right-hand dock in pixels.
     private static final int DOCK_INITIAL_WIDTH = 200;
 
     // -----------------------------------------------------------------------
@@ -166,19 +160,17 @@ public class FloorMapEditorViewImpl extends ViewImpl implements FloorMapEditorVi
         return outerSplitPanel;
     }
 
-    /**
-     * Routes GWTP slot content into the correct panel — all five slots:
-     * <ul>
-     *   <li>{@link FloorMapEditorPresenter#MAIN}       → canvas panel (centre of the top area)</li>
-     *   <li>{@link FloorMapEditorPresenter#DOCK}       → right-hand dock, beside the canvas</li>
-     *   <li>{@link FloorMapEditorPresenter#TIMELINE}   → timeline strip (north of the bottom
-     *       strip, fixed height)</li>
-     *   <li>{@link FloorMapEditorPresenter#FACT_LIST}  → bottom-left column</li>
-     *   <li>{@link FloorMapEditorPresenter#TIME_LIST}  → bottom-right column (fills remaining
-     *       space)</li>
-     * </ul>
-     * Properties are shown as a modal dialog and have no slot.
-     */
+    /// Routes GWTP slot content into the correct panel — all five slots:
+    ///
+    /// - [FloorMapEditorPresenter#MAIN]       → canvas panel (centre of the top area)
+    /// - [FloorMapEditorPresenter#DOCK]       → right-hand dock, beside the canvas
+    /// - [FloorMapEditorPresenter#TIMELINE]   → timeline strip (north of the bottom
+    ///   strip, fixed height)
+    /// - [FloorMapEditorPresenter#FACT_LIST]  → bottom-left column
+    /// - [FloorMapEditorPresenter#TIME_LIST]  → bottom-right column (fills remaining
+    ///   space)
+    ///
+    /// Properties are shown as a modal dialog and have no slot.
     @Override
     public void setInSlot(final Object slot, final Widget content) {
         if (FloorMapEditorPresenter.MAIN.equals(slot)) {

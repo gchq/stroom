@@ -20,25 +20,23 @@ import stroom.floormap.shared.FloorMapGeometry;
 import stroom.floormap.shared.FloorMapTransformationMatrix;
 import stroom.util.shared.NullSafe;
 
-/**
- * A single parsed floor-map fact — the unified model behind backgrounds,
- * static facts and events (see the FloorMap coordinate/rendering redesign).
- *
- * <p>Every renderable thing on a floor map is a {@code Fact}. A background is
- * simply a fact that carries an image and sits at a low z-order; an event
- * (person) is a fact from the event stream that may or may not carry an
- * image.</p>
- *
- * <p>Instances are immutable, produced by {@code FloorMapEntryParser} from a
- * {@link stroom.util.shared.TemporalEntry}. This is a plain, GWT-friendly value
- * object with no serialisation dependencies — it never crosses the wire (the
- * {@code TemporalEntry} does).</p>
- *
- * <p>{@link #getWorldToMap()} holds the affine that places this fact into map
- * space. Every fact — backgrounds included — uses {@code WORLD_TO_MAP}; a
- * background is not special-cased, it is simply an image fact placed by its own
- * matrix and painted early (low z-order).</p>
- */
+/// A single parsed floor-map fact — the unified model behind backgrounds,
+/// static facts and events (see the FloorMap coordinate/rendering redesign).
+///
+/// Every renderable thing on a floor map is a `Fact`. A background is
+/// simply a fact that carries an image and sits at a low z-order; an event
+/// (person) is a fact from the event stream that may or may not carry an
+/// image.
+///
+/// Instances are immutable, produced by `FloorMapEntryParser` from a
+/// [stroom.util.shared.TemporalEntry]. This is a plain, GWT-friendly value
+/// object with no serialisation dependencies — it never crosses the wire (the
+/// `TemporalEntry` does).
+///
+/// [#getWorldToMap()] holds the affine that places this fact into map
+/// space. Every fact — backgrounds included — uses `WORLD_TO_MAP`; a
+/// background is not special-cased, it is simply an image fact placed by its own
+/// matrix and painted early (low z-order).
 public final class Fact {
 
     private final String key;
@@ -51,16 +49,14 @@ public final class Fact {
     private final Double opacity;
     private final String label;
 
-    /**
-     * @param key        the temporal-store key (fact identity within a map)
-     * @param type       the fact type ({@code ""} if unset); also drives z-order
-     * @param image      the Asset Store image URL, or {@code null} if none
-     * @param worldToMap the affine placing this fact into map space; never {@code null}
-     * @param position   world-space coordinates {@code [x, y]} for a point fact,
-     *                   or {@code null} (e.g. for a background)
-     * @throws IllegalArgumentException if the position does not hold exactly two
-     *                                  elements
-     */
+    /// @param key        the temporal-store key (fact identity within a map)
+    /// @param type       the fact type (`""` if unset); also drives z-order
+    /// @param image      the Asset Store image URL, or `null` if none
+    /// @param worldToMap the affine placing this fact into map space; never `null`
+    /// @param position   world-space coordinates `{x, y}` for a point fact,
+    ///         or `null` (e.g. for a background)
+    /// @throws IllegalArgumentException if the position does not hold exactly two
+    ///         elements
     public Fact(final String key,
                 final String type,
                 final String image,
@@ -69,24 +65,22 @@ public final class Fact {
         this(key, type, image, worldToMap, position, null, null, null);
     }
 
-    /**
-     * @param key        the temporal-store key (fact identity within a map)
-     * @param type       the fact type ({@code ""} if unset); also drives z-order
-     * @param image      the Asset Store image URL, or {@code null} if none
-     * @param worldToMap the affine placing this fact into map space; never {@code null}
-     * @param position   world-space coordinates {@code [x, y]} for a point fact,
-     *                   or {@code null} (e.g. for a background)
-     * @param vertices   area polygon vertices {@code [[x,y], ...]} in the fact's
-     *                   local frame (placed by {@code worldToMap}), or {@code null}
-     *                   for a non-area fact
-     * @param fill       area fill colour (hex string), or {@code null} to use the
-     *                   type's default colour
-     * @param opacity    area fill opacity in {@code [0, 1]}, or {@code null} for
-     *                   the default
-     * @throws IllegalArgumentException if the position, or any vertex, does not
-     *                                  hold exactly two elements, or a vertex is
-     *                                  {@code null}
-     */
+    /// @param key        the temporal-store key (fact identity within a map)
+    /// @param type       the fact type (`""` if unset); also drives z-order
+    /// @param image      the Asset Store image URL, or `null` if none
+    /// @param worldToMap the affine placing this fact into map space; never `null`
+    /// @param position   world-space coordinates `{x, y}` for a point fact,
+    ///         or `null` (e.g. for a background)
+    /// @param vertices   area polygon vertices `{{x, y}, ...}` in the fact's
+    ///         local frame (placed by `worldToMap`), or `null`
+    ///         for a non-area fact
+    /// @param fill       area fill colour (hex string), or `null` to use the
+    ///         type's default colour
+    /// @param opacity    area fill opacity in `[0, 1]`, or `null` for
+    ///         the default
+    /// @throws IllegalArgumentException if the position, or any vertex, does not
+    ///         hold exactly two elements, or a vertex is
+    ///         `null`
     public Fact(final String key,
                 final String type,
                 final String image,
@@ -98,27 +92,25 @@ public final class Fact {
         this(key, type, image, worldToMap, position, vertices, fill, opacity, null);
     }
 
-    /**
-     * @param key        the temporal-store key (fact identity within a map)
-     * @param type       the fact type ({@code ""} if unset); also drives z-order
-     * @param image      the Asset Store image URL, or {@code null} if none
-     * @param worldToMap the affine placing this fact into map space; never {@code null}
-     * @param position   world-space coordinates {@code [x, y]} for a point fact,
-     *                   or {@code null} (e.g. for a background)
-     * @param vertices   area polygon vertices {@code [[x,y], ...]} in the fact's
-     *                   local frame (placed by {@code worldToMap}), or {@code null}
-     *                   for a non-area fact
-     * @param fill       area fill colour (hex string), or {@code null} to use the
-     *                   type's default colour
-     * @param opacity    area fill opacity in {@code [0, 1]}, or {@code null} for
-     *                   the default
-     * @param label      the user-facing name from the {@code LABEL} role, or
-     *                   {@code null} when the schema does not map it (or the
-     *                   fact has no name)
-     * @throws IllegalArgumentException if the position, or any vertex, does not
-     *                                  hold exactly two elements, or a vertex is
-     *                                  {@code null}
-     */
+    /// @param key        the temporal-store key (fact identity within a map)
+    /// @param type       the fact type (`""` if unset); also drives z-order
+    /// @param image      the Asset Store image URL, or `null` if none
+    /// @param worldToMap the affine placing this fact into map space; never `null`
+    /// @param position   world-space coordinates `{x, y}` for a point fact,
+    ///         or `null` (e.g. for a background)
+    /// @param vertices   area polygon vertices `{{x, y}, ...}` in the fact's
+    ///         local frame (placed by `worldToMap`), or `null`
+    ///         for a non-area fact
+    /// @param fill       area fill colour (hex string), or `null` to use the
+    ///         type's default colour
+    /// @param opacity    area fill opacity in `[0, 1]`, or `null` for
+    ///         the default
+    /// @param label      the user-facing name from the `LABEL` role, or
+    ///         `null` when the schema does not map it (or the
+    ///         fact has no name)
+    /// @throws IllegalArgumentException if the position, or any vertex, does not
+    ///         hold exactly two elements, or a vertex is
+    ///         `null`
     public Fact(final String key,
                 final String type,
                 final String image,
@@ -149,35 +141,33 @@ public final class Fact {
         return type;
     }
 
-    /** The image URL, or {@code null} if this fact has no image. */
+    /// The image URL, or `null` if this fact has no image.
     public String getImage() {
         return image;
     }
 
-    /** {@code true} if this fact has an image (and so scales in map space). */
+    /// `true` if this fact has an image (and so scales in map space).
     public boolean hasImage() {
         return NullSafe.isNonEmptyString(image);
     }
 
-    /** The affine that places this fact into map space; never {@code null}. */
+    /// The affine that places this fact into map space; never `null`.
     public FloorMapTransformationMatrix getWorldToMap() {
         return worldToMap;
     }
 
-    /** World coordinates {@code [x, y]} for a point fact, or {@code null}. */
+    /// World coordinates `{x, y}` for a point fact, or `null`.
     public double[] getPosition() {
         return copyPosition(position);
     }
 
-    /**
-     * Area polygon vertices {@code [[x,y], ...]} in the fact's local frame,
-     * or {@code null} if this fact is not an area.
-     */
+    /// Area polygon vertices `{{x, y}, ...}` in the fact's local frame,
+    /// or `null` if this fact is not an area.
     public double[][] getVertices() {
         return copyVertices(vertices);
     }
 
-    /** {@code true} if this fact is a renderable area polygon (≥ 3 vertices). */
+    /// `true` if this fact is a renderable area polygon (≥ 3 vertices).
     public boolean hasVertices() {
         return vertices != null && vertices.length >= 3;
     }
@@ -192,58 +182,51 @@ public final class Fact {
         return hasVertices() && !hasImage();
     }
 
-    /** The area fill colour (hex string), or {@code null} for the type default. */
+    /// The area fill colour (hex string), or `null` for the type default.
     public String getFill() {
         return fill;
     }
 
-    /** The area fill opacity in {@code [0, 1]}, or {@code null} for the default. */
+    /// The area fill opacity in `[0, 1]`, or `null` for the default.
     public Double getOpacity() {
         return opacity;
     }
 
-    /**
-     * The user-facing name from the {@code LABEL} role, or {@code null} when the
-     * schema does not map it or the fact is unnamed. Editable via the object
-     * properties dialog's Name field; distinct from {@link #getKey()}, which is
-     * the fact's identity and never changes.
-     */
+    /// The user-facing name from the `LABEL` role, or `null` when the
+    /// schema does not map it or the fact is unnamed. Editable via the object
+    /// properties dialog's Name field; distinct from [#getKey()], which is
+    /// the fact's identity and never changes.
     public String getLabel() {
         return label;
     }
 
-    /**
-     * The label if this fact has a non-blank one, otherwise {@code null} — the
-     * form callers want when falling back to a key-derived display name.
-     */
+    /// The label if this fact has a non-blank one, otherwise `null` — the
+    /// form callers want when falling back to a key-derived display name.
     public String getLabelOrNull() {
         return NullSafe.isNonBlankString(label)
                 ? label
                 : null;
     }
 
-    /**
-     * Returns this fact's anchor point in map space — the point a camera
-     * should centre on when the fact is tracked. Dispatch matches the
-     * renderer's (an image wins over vertices):
-     * <ul>
-     *   <li>Image fact: the centre of the placed image rectangle. Images render
-     *       at a fixed width with height derived from the aspect ratio; the
-     *       render wrapper transform is
-     *       {@code worldToMap · translate(0,h) · scale(1,-1)}, and applying it
-     *       to the image centre {@code (w/2, h/2)} reduces to
-     *       {@code worldToMap · (w/2, h/2)}.</li>
-     *   <li>Area fact: the local-frame vertex centroid pushed through
-     *       {@code worldToMap}.</li>
-     *   <li>Point fact: its position pushed through {@code worldToMap}.</li>
-     * </ul>
-     *
-     * @param imageDisplayWidth the fixed map-space width images render at
-     * @param aspectRatio       the image's width/height ratio, or {@code null}
-     *                          when not yet known (treated as square, matching
-     *                          the renderer's pre-load fallback)
-     * @return the anchor {@code [mapX, mapY]}; never {@code null}
-     */
+    /// Returns this fact's anchor point in map space — the point a camera
+    /// should centre on when the fact is tracked. Dispatch matches the
+    /// renderer's (an image wins over vertices):
+    ///
+    /// - Image fact: the centre of the placed image rectangle. Images render
+    ///   at a fixed width with height derived from the aspect ratio; the
+    ///   render wrapper transform is
+    ///   `worldToMap · translate(0,h) · scale(1,-1)`, and applying it
+    ///   to the image centre `(w/2, h/2)` reduces to
+    ///   `worldToMap · (w/2, h/2)`.
+    /// - Area fact: the local-frame vertex centroid pushed through
+    ///   `worldToMap`.
+    /// - Point fact: its position pushed through `worldToMap`.
+    ///
+    /// @param imageDisplayWidth the fixed map-space width images render at
+    /// @param aspectRatio       the image's width/height ratio, or `null`
+    ///         when not yet known (treated as square, matching
+    ///         the renderer's pre-load fallback)
+    /// @return the anchor `{mapX, mapY}`; never `null`
     public double[] mapAnchor(final double imageDisplayWidth, final Double aspectRatio) {
         if (hasImage()) {
             final double aspect = aspectRatio != null ? aspectRatio : 1.0;
@@ -302,50 +285,44 @@ public final class Fact {
         return out;
     }
 
-    /**
-     * Whether this fact's {@code worldToMap} can actually place it.
-     *
-     * <p>A singular matrix - the all-zero one being the common case - collapses the fact to
-     * nothing, and it fails in two different silent ways depending on the fact. An image or
-     * area emits {@code matrix(0,0,0,0,0,0)}, a non-invertible CTM, so the browser declines
-     * to draw it while it stays hit-testable as a zero-size box: an object the user can
-     * select but cannot see. An imageless point instead transforms to {@code (0,0)}
-     * whatever its own coordinates say, so it piles up at the origin and looks like an
-     * object legitimately placed there.</p>
-     *
-     * <p>Both are worth refusing rather than drawing wrongly, so the renderer skips these
-     * and hit-testing ignores them. This predicate exists so those two decisions cannot
-     * drift apart - a fact that is not drawn must not be selectable, which is precisely the
-     * combination that made the original behaviour so hard to make sense of.</p>
-     *
-     * @return {@code true} when the matrix is usable
-     */
+    /// Whether this fact's `worldToMap` can actually place it.
+    ///
+    /// A singular matrix - the all-zero one being the common case - collapses the fact to
+    /// nothing, and it fails in two different silent ways depending on the fact. An image or
+    /// area emits `matrix(0,0,0,0,0,0)`, a non-invertible CTM, so the browser declines
+    /// to draw it while it stays hit-testable as a zero-size box: an object the user can
+    /// select but cannot see. An imageless point instead transforms to `(0,0)`
+    /// whatever its own coordinates say, so it piles up at the origin and looks like an
+    /// object legitimately placed there.
+    ///
+    /// Both are worth refusing rather than drawing wrongly, so the renderer skips these
+    /// and hit-testing ignores them. This predicate exists so those two decisions cannot
+    /// drift apart - a fact that is not drawn must not be selectable, which is precisely the
+    /// combination that made the original behaviour so hard to make sense of.
+    ///
+    /// @return `true` when the matrix is usable
     public boolean hasUsablePlacement() {
         return worldToMap.hasInverse();
     }
 
-    /**
-     * Returns a copy of this fact with a different placement matrix — used for
-     * live transform previews. All other fields (including area geometry) are
-     * carried over unchanged.
-     */
+    /// Returns a copy of this fact with a different placement matrix — used for
+    /// live transform previews. All other fields (including area geometry) are
+    /// carried over unchanged.
     public Fact withWorldToMap(final FloorMapTransformationMatrix newWorldToMap) {
         return new Fact(key, type, image, newWorldToMap, position, vertices, fill, opacity, label);
     }
 
-    /**
-     * Returns a copy of this fact with different area vertices (local frame) —
-     * used for live vertex-edit previews. All other fields are carried over
-     * unchanged.
-     *
-     * @throws IllegalArgumentException if any new vertex is {@code null} or does
-     *                                  not hold exactly two elements
-     */
+    /// Returns a copy of this fact with different area vertices (local frame) —
+    /// used for live vertex-edit previews. All other fields are carried over
+    /// unchanged.
+    ///
+    /// @throws IllegalArgumentException if any new vertex is `null` or does
+    ///         not hold exactly two elements
     public Fact withVertices(final double[][] newVertices) {
         return new Fact(key, type, image, worldToMap, position, newVertices, fill, opacity, label);
     }
 
-    /// Defensively copies a position, checking that it really is an `[x, y]` pair.
+    /// Defensively copies a position, checking that it really is an `{x, y}` pair.
     /// Like a malformed vertex this is a caller bug rather than bad user data, and
     /// left unchecked it either reads whichever coordinates happen to be there or
     /// throws an `ArrayIndexOutOfBoundsException` from the middle of a constructor,
@@ -368,7 +345,7 @@ public final class Fact {
     }
 
     /// Defensively copies a vertex array, checking that every row really is an
-    /// `[x, y]` pair. A malformed row is a programming error in the caller rather
+    /// `{x, y}` pair. A malformed row is a programming error in the caller rather
     /// than bad user data - the parsers only ever emit two-element rows - so it
     /// fails loudly here instead of surviving as a vertex that silently drops out
     /// of hit-testing and rendering further downstream.

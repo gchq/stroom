@@ -30,55 +30,53 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * The live state of every {@link FloorMapGroup} at one timeline instant — which
- * members are on the map right now, and which areas they are standing in.
- *
- * <p>Recomputed on every facts <em>or</em> events query refresh, exactly like
- * {@link FloorMapAreaMembership} (the two queries refresh independently). It is
- * value-equal on content so the Groups panel can skip a redraw when a refresh
- * changed nothing — playback refreshes land roughly every 300ms and would
- * otherwise re-render the grid continuously.</p>
- *
- * <h3>Where "positioned" comes from</h3>
- * <p>Deliberately <strong>not</strong> from {@link FloorMapAreaMembership}, which
- * cannot answer this question: {@code compute} returns
- * {@link FloorMapAreaMembership#EMPTY} when the map has no areas at all, and
- * {@link FloorMapAreaMembership#getEntityIds()} only ever lists entities inside
- * <em>at least one</em> area. Sourcing positioned-ness from it would report zero
- * members on every map without areas, and would omit any member standing outside
- * every area. So positioned-ness is taken from the events and facts lists
- * directly, and the membership snapshot is used <em>only</em> for the area
- * breakdown.</p>
- *
- * <p>A member counts as positioned when it appears in the events stream at this
- * instant, or exists as a fact — including an area or background, since a group
- * is generic over ids and those genuinely are on the map. Its area breakdown may
- * still be empty: {@link FloorMapAreaMembership} excludes areas and backgrounds
- * from occupancy for its own reasons, and this class does not second-guess it.</p>
- *
- * <h3>Honesty constraint (carried over from the occupant badge)</h3>
- * <p>The positioned count counts <strong>members with a position at this
- * instant</strong>. An entity whose events have gone quiet has no position and is
- * not counted, so the number can fall without anyone moving. It is not a
- * head-count of who is present on site, and must not be labelled as one.</p>
- *
- * <p>Holds no GWT or DOM types so it can be unit-tested on the JVM.</p>
- */
+/// The live state of every [FloorMapGroup] at one timeline instant — which
+/// members are on the map right now, and which areas they are standing in.
+///
+/// Recomputed on every facts *or* events query refresh, exactly like
+/// [FloorMapAreaMembership] (the two queries refresh independently). It is
+/// value-equal on content so the Groups panel can skip a redraw when a refresh
+/// changed nothing — playback refreshes land roughly every 300ms and would
+/// otherwise re-render the grid continuously.
+///
+/// ### Where "positioned" comes from
+///
+/// Deliberately **not** from [FloorMapAreaMembership], which
+/// cannot answer this question: `compute` returns
+/// [FloorMapAreaMembership#EMPTY] when the map has no areas at all, and
+/// [FloorMapAreaMembership#getEntityIds()] only ever lists entities inside
+/// *at least one* area. Sourcing positioned-ness from it would report zero
+/// members on every map without areas, and would omit any member standing outside
+/// every area. So positioned-ness is taken from the events and facts lists
+/// directly, and the membership snapshot is used *only* for the area
+/// breakdown.
+///
+/// A member counts as positioned when it appears in the events stream at this
+/// instant, or exists as a fact — including an area or background, since a group
+/// is generic over ids and those genuinely are on the map. Its area breakdown may
+/// still be empty: [FloorMapAreaMembership] excludes areas and backgrounds
+/// from occupancy for its own reasons, and this class does not second-guess it.
+///
+/// ### Honesty constraint (carried over from the occupant badge)
+///
+/// The positioned count counts **members with a position at this
+/// instant**. An entity whose events have gone quiet has no position and is
+/// not counted, so the number can fall without anyone moving. It is not a
+/// head-count of who is present on site, and must not be labelled as one.
+///
+/// Holds no GWT or DOM types so it can be unit-tested on the JVM.
 public final class FloorMapGroupSnapshot {
 
-    /** No groups, or no positioned members in any of them. */
+    /// No groups, or no positioned members in any of them.
     public static final FloorMapGroupSnapshot EMPTY = new FloorMapGroupSnapshot(
             Collections.emptyMap(), Collections.emptyMap());
 
-    /** Positioned member ids, by group id, in group member order. */
+    /// Positioned member ids, by group id, in group member order.
     private final Map<String, List<String>> positionedByGroup;
 
-    /**
-     * Per group id, how many of its positioned members are in each area, keyed by
-     * area fact key. Ordered most-populated first (area key as the tiebreak) so
-     * the panel can list them in a useful order without re-sorting.
-     */
+    /// Per group id, how many of its positioned members are in each area, keyed by
+    /// area fact key. Ordered most-populated first (area key as the tiebreak) so
+    /// the panel can list them in a useful order without re-sorting.
     private final Map<String, Map<String, Integer>> areaCountsByGroup;
 
     private FloorMapGroupSnapshot(final Map<String, List<String>> positionedByGroup,
@@ -87,16 +85,14 @@ public final class FloorMapGroupSnapshot {
         this.areaCountsByGroup = areaCountsByGroup;
     }
 
-    /**
-     * Computes the snapshot for the given groups.
-     *
-     * @param groups     the document's groups; may be {@code null}
-     * @param facts      the facts at this instant; may be {@code null}
-     * @param events     the event entities at this instant; may be {@code null}
-     * @param membership the area containment at this instant, used only for the
-     *                   area breakdown; may be {@code null}
-     * @return the snapshot; never {@code null}
-     */
+    /// Computes the snapshot for the given groups.
+    ///
+    /// @param groups     the document's groups; may be `null`
+    /// @param facts      the facts at this instant; may be `null`
+    /// @param events     the event entities at this instant; may be `null`
+    /// @param membership the area containment at this instant, used only for the
+    ///         area breakdown; may be `null`
+    /// @return the snapshot; never `null`
     public static FloorMapGroupSnapshot compute(final List<FloorMapGroup> groups,
                                                 final List<Fact> facts,
                                                 final List<FloorMapObject> events,
@@ -145,15 +141,13 @@ public final class FloorMapGroupSnapshot {
                         Collections.unmodifiableMap(areaCountsByGroup));
     }
 
-    /**
-     * Every id that has a position on the map at this instant.
-     *
-     * <p>Events first, then facts, matching {@link FloorMapAreaMembership}'s rule
-     * that a live event position beats a static fact twin for the same id. For a
-     * mere "is it positioned" test the order does not change the answer, but the
-     * two must agree on <em>which</em> ids count or the positioned total and the
-     * area breakdown could disagree.</p>
-     */
+    /// Every id that has a position on the map at this instant.
+    ///
+    /// Events first, then facts, matching [FloorMapAreaMembership]'s rule
+    /// that a live event position beats a static fact twin for the same id. For a
+    /// mere "is it positioned" test the order does not change the answer, but the
+    /// two must agree on *which* ids count or the positioned total and the
+    /// area breakdown could disagree.
     private static Set<String> positionedIds(final List<Fact> facts,
                                              final List<FloorMapObject> events) {
         final Set<String> ids = new LinkedHashSet<>();
@@ -174,7 +168,7 @@ public final class FloorMapGroupSnapshot {
         return ids;
     }
 
-    /** Re-orders an area-count map most-populated first, area key as tiebreak. */
+    /// Re-orders an area-count map most-populated first, area key as tiebreak.
     private static Map<String, Integer> sortedByCountDesc(final Map<String, Integer> counts) {
         final List<Map.Entry<String, Integer>> entries = new ArrayList<>(counts.entrySet());
         entries.sort((a, b) -> {
@@ -190,13 +184,11 @@ public final class FloorMapGroupSnapshot {
         return Collections.unmodifiableMap(sorted);
     }
 
-    /**
-     * The ids of the group's members that have a position at this instant, in
-     * membership order.
-     *
-     * @param groupId the group id; may be {@code null}
-     * @return the positioned member ids; empty when none are
-     */
+    /// The ids of the group's members that have a position at this instant, in
+    /// membership order.
+    ///
+    /// @param groupId the group id; may be `null`
+    /// @return the positioned member ids; empty when none are
     public List<String> getPositionedIds(final String groupId) {
         final List<String> ids = groupId != null
                 ? positionedByGroup.get(groupId)
@@ -206,22 +198,18 @@ public final class FloorMapGroupSnapshot {
                 : Collections.emptyList();
     }
 
-    /**
-     * How many of the group's members have a position at this instant.
-     *
-     * @param groupId the group id; may be {@code null}
-     */
+    /// How many of the group's members have a position at this instant.
+    ///
+    /// @param groupId the group id; may be `null`
     public int getPositionedCount(final String groupId) {
         return getPositionedIds(groupId).size();
     }
 
-    /**
-     * How many of the group's positioned members are in each area, most-populated
-     * area first.
-     *
-     * @param groupId the group id; may be {@code null}
-     * @return area key → member count; empty when no member is in any area
-     */
+    /// How many of the group's positioned members are in each area, most-populated
+    /// area first.
+    ///
+    /// @param groupId the group id; may be `null`
+    /// @return area key → member count; empty when no member is in any area
     public Map<String, Integer> getAreaCounts(final String groupId) {
         final Map<String, Integer> counts = groupId != null
                 ? areaCountsByGroup.get(groupId)

@@ -36,34 +36,32 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/**
- * View for the layer appearance dialog.
- *
- * <pre>
- * Graphic   (•) Shape   ( ) Icon   ( ) Image
- * Shape     [ Circle            ▾ ]
- * Icon      [ ▦ grid of built-in icons ]
- * Image     [ /assets/…/van.svg   ] [Upload]
- * Colour    [ ■ ]
- * ─────────────────────────────────
- * Preview   [▣]  fixed size on the map
- * </pre>
- *
- * <p>The Shape, Icon and Image rows are mutually exclusive — the {@code Graphic}
- * radios disable the two the mode does not use, so it is always clear which one
- * the layer will actually draw. Colour stays enabled throughout: a shape and an
- * icon are both filled with it, and even in image mode it still colours areas of
- * the type and the glyph label.</p>
- */
+/// View for the layer appearance dialog.
+///
+/// ```
+/// Graphic   (•) Shape   ( ) Icon   ( ) Image
+/// Shape     [ Circle            ▾ ]
+/// Icon      [ ▦ grid of built-in icons ]
+/// Image     [ /assets/…/van.svg   ] [Upload]
+/// Colour    [ ■ ]
+/// ─────────────────────────────────
+/// Preview   [▣]  fixed size on the map
+/// ```
+///
+/// The Shape, Icon and Image rows are mutually exclusive — the `Graphic`
+/// radios disable the two the mode does not use, so it is always clear which one
+/// the layer will actually draw. Colour stays enabled throughout: a shape and an
+/// icon are both filled with it, and even in image mode it still colours areas of
+/// the type and the glyph label.
 public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLayerStyleView {
 
-    /** Size of the preview graphic in pixels. */
+    /// Size of the preview graphic in pixels.
     private static final int PREVIEW_SIZE_PX = 32;
 
-    /** Shared name grouping the mode radios into one selection. */
+    /// Shared name grouping the mode radios into one selection.
     private static final String MODE_GROUP = "floormap-layer-graphic-mode";
 
-    /** Applied to whichever of the Shape / Icon / Image rows the mode ignores. */
+    /// Applied to whichever of the Shape / Icon / Image rows the mode ignores.
     private static final String DIMMED_ROW_STYLE = "floormap-layer-style-row-dimmed";
 
     private static final int ROW_GRAPHIC = 0;
@@ -197,10 +195,8 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
         return panel;
     }
 
-    /**
-     * Radio groups fire a change on both the newly-selected and the deselected
-     * button, so enablement and the preview are refreshed once per real change.
-     */
+    /// Radio groups fire a change on both the newly-selected and the deselected
+    /// button, so enablement and the preview are refreshed once per real change.
     private void onModeChanged() {
         applyModeEnablement();
         fireChange();
@@ -216,7 +212,7 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
         setRowDimmed(ROW_IMAGE, mode != GraphicMode.IMAGE);
     }
 
-    /** Dims the row that the current mode does not use. */
+    /// Dims the row that the current mode does not use.
     private void setRowDimmed(final int row, final boolean dimmed) {
         if (dimmed) {
             grid.getRowFormatter().addStyleName(row, DIMMED_ROW_STYLE);
@@ -246,11 +242,9 @@ public class FloorMapLayerStyleViewImpl extends ViewImpl implements FloorMapLaye
         return shapeBox.getValue();
     }
 
-    /**
-     * The presenter resolves the layer's effective colour before calling this, so
-     * the input is simply shown as given (a non-hex value normalises to black
-     * inside {@link ColourBox} — the native control has no empty state).
-     */
+    /// The presenter resolves the layer's effective colour before calling this, so
+    /// the input is simply shown as given (a non-hex value normalises to black
+    /// inside [ColourBox] — the native control has no empty state).
     @Override
     public void setColour(final String colour) {
         colourBox.setValue(colour);

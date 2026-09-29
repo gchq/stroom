@@ -25,23 +25,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
-/**
- * Which result column of the events query carries each {@link FloorMapEventRole}.
- *
- * <p>Stored on the document as a list rather than a map, matching {@code valueSchema} and keeping
- * the Events Query tab's control order stable; {@link #byRole()} gives callers the lookup they
- * actually want.</p>
- *
- * <p>A role absent from the list, or present with a blank column, is <b>unmapped</b> — which is
- * legitimate for every role but {@link FloorMapEventRole#ENTITY_ID}. An events store that only
- * ever carries fact keys has no {@link FloorMapEventRole#LOCATION} column, and saying so is better
- * than pointing the role at a column that does not exist.</p>
- */
+/// Which result column of the events query carries each [FloorMapEventRole].
+///
+/// Stored on the document as a list rather than a map, matching `valueSchema` and keeping
+/// the Events Query tab's control order stable; [#getColumn(FloorMapEventRole)] gives callers
+/// the lookup they actually want.
+///
+/// A role absent from the list, or present with a blank column, is **unmapped** — which is
+/// legitimate for every role but [FloorMapEventRole#ENTITY_ID]. An events store that only
+/// ever carries fact keys has no [FloorMapEventRole#LOCATION] column, and saying so is better
+/// than pointing the role at a column that does not exist.
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class FloorMapEventColumns {
@@ -54,17 +50,15 @@ public class FloorMapEventColumns {
         this.entries = entries == null ? new ArrayList<>() : new ArrayList<>(entries);
     }
 
-    /**
-     * The mapping the default events query implies.
-     *
-     * <p>Seeded from each role's own {@link FloorMapEventRole#getDefaultColumn()}, which is also
-     * what the query builder emits after {@code as} — so a freshly created map, and a map whose
-     * mapping was never set, both agree with the query text by construction. That pairing is
-     * exactly what the {@code Event Type} defect broke, where the query said {@code Event Type}
-     * and the parser looked for {@code type}.</p>
-     *
-     * @return a mapping naming every role's default column
-     */
+    /// The mapping the default events query implies.
+    ///
+    /// Seeded from each role's own [FloorMapEventRole#getDefaultColumn()], which is also
+    /// what the query builder emits after `as` — so a freshly created map, and a map whose
+    /// mapping was never set, both agree with the query text by construction. That pairing is
+    /// exactly what the `Event Type` defect broke, where the query said `Event Type`
+    /// and the parser looked for `type`.
+    ///
+    /// @return a mapping naming every role's default column
     public static FloorMapEventColumns defaults() {
         final List<Entry> list = new ArrayList<>();
         for (final FloorMapEventRole role : FloorMapEventRole.values()) {
@@ -77,12 +71,10 @@ public class FloorMapEventColumns {
         return entries;
     }
 
-    /**
-     * The column named for {@code role}, or {@code null} if the role is unmapped.
-     *
-     * @param role the role to look up; may be {@code null}
-     * @return the column name, or {@code null}
-     */
+    /// The column named for `role`, or `null` if the role is unmapped.
+    ///
+    /// @param role the role to look up; may be `null`
+    /// @return the column name, or `null`
     public String getColumn(final FloorMapEventRole role) {
         if (role == null) {
             return null;
@@ -96,33 +88,15 @@ public class FloorMapEventColumns {
         return null;
     }
 
-    /**
-     * Every mapped role, for a caller that wants to iterate rather than ask role by role.
-     *
-     * @return role to column, omitting unmapped roles; never {@code null}
-     */
-    public Map<FloorMapEventRole, String> byRole() {
-        final Map<FloorMapEventRole, String> map = new EnumMap<>(FloorMapEventRole.class);
-        for (final FloorMapEventRole role : FloorMapEventRole.values()) {
-            final String column = getColumn(role);
-            if (column != null) {
-                map.put(role, column);
-            }
-        }
-        return map;
-    }
-
-    /**
-     * A copy with {@code role} pointing at {@code column}, or unmapped when {@code column} is
-     * blank.
-     *
-     * <p>Immutable rather than mutating, so the Events Query tab can build a candidate mapping
-     * without disturbing the document until it is written.</p>
-     *
-     * @param role   the role to set; {@code null} returns this unchanged
-     * @param column the column name, or {@code null}/blank to unmap the role
-     * @return a new mapping
-     */
+    /// A copy with `role` pointing at `column`, or unmapped when `column` is
+    /// blank.
+    ///
+    /// Immutable rather than mutating, so the Events Query tab can build a candidate mapping
+    /// without disturbing the document until it is written.
+    ///
+    /// @param role   the role to set; `null` returns this unchanged
+    /// @param column the column name, or `null`/blank to unmap the role
+    /// @return a new mapping
     public FloorMapEventColumns with(final FloorMapEventRole role, final String column) {
         if (role == null) {
             return this;
@@ -164,9 +138,7 @@ public class FloorMapEventColumns {
         return "FloorMapEventColumns" + entries;
     }
 
-    /**
-     * One role-to-column pairing.
-     */
+    /// One role-to-column pairing.
     @JsonInclude(Include.NON_NULL)
     @JsonPropertyOrder(alphabetic = true)
     public static class Entry {

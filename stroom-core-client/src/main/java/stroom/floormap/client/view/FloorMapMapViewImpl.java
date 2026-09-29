@@ -27,17 +27,15 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/**
- * View implementation for the floor map canvas area.
- *
- * <p>Uses a UiBinder layout to host the map canvas in the main area,
- * the right-hand dock in a resizable east column beside it, and the timeline
- * control strip docked beneath both at a fixed, non-resizable height.
- * Slot routing directs content from
- * {@link FloorMapMapPresenter#MAP} into the map panel,
- * {@link FloorMapMapPresenter#DOCK} into the dock panel, and
- * {@link FloorMapMapPresenter#TIMELINE} into the timeline panel.</p>
- */
+/// View implementation for the floor map canvas area.
+///
+/// Uses a UiBinder layout to host the map canvas in the main area,
+/// the right-hand dock in a resizable east column beside it, and the timeline
+/// control strip docked beneath both at a fixed, non-resizable height.
+/// Slot routing directs content from
+/// [FloorMapMapPresenter#MAP] into the map panel,
+/// [FloorMapMapPresenter#DOCK] into the dock panel, and
+/// [FloorMapMapPresenter#TIMELINE] into the timeline panel.
 public class FloorMapMapViewImpl extends ViewImpl implements FloorMapMapView {
 
     private final Widget widget;
@@ -61,9 +59,7 @@ public class FloorMapMapViewImpl extends ViewImpl implements FloorMapMapView {
         return widget;
     }
 
-    /**
-     * Routes GWTP slot content into the map, dock, or timeline panel.
-     */
+    /// Routes GWTP slot content into the map, dock, or timeline panel.
     @Override
     public void setInSlot(final Object slot, final Widget content) {
         if (FloorMapMapPresenter.MAP.equals(slot)) {

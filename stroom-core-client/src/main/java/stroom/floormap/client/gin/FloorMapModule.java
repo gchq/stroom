@@ -85,10 +85,8 @@ import stroom.floormap.client.view.FloorMapTimelineSettingsViewImpl;
 import stroom.floormap.client.view.FloorMapTimelineViewImpl;
 import stroom.floormap.client.view.FloorMapTrackingViewImpl;
 
-/**
- * GIN module for the Floor Map feature.
- * Binds the presenters and views for the floor map components.
- */
+/// GIN module for the Floor Map feature.
+/// Binds the presenters and views for the floor map components.
 public class FloorMapModule extends PluginModule {
 
     @Override

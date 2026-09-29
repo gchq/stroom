@@ -20,45 +20,41 @@ import stroom.util.shared.NullSafe;
 
 import java.util.List;
 
-/**
- * The wording used in the area columns of the tracking and groups panels.
- *
- * <p>The tracking panel's <strong>Area</strong> column has a single meaning on
- * every row — <em>which area is this inside?</em> — so there is one form of words,
- * and it lives here where it can be unit-tested without a GWT presenter. The
- * Groups panel's <strong>Areas</strong> column answers the same question for a
- * whole group, and so shares the wording with a member count appended.</p>
- *
- * <p>{@link #joinNames} is the plain name-list join and is used beyond the area
- * columns — the cluster dialog's <strong>Group</strong> column lists group names
- * with it — so that a list of names reads the same wherever one is shown.</p>
- *
- * <p>Holds no GWT or DOM types so it can be unit-tested on the JVM.</p>
- */
+/// The wording used in the area columns of the tracking and groups panels.
+///
+/// The tracking panel's **Area** column has a single meaning on
+/// every row — *which area is this inside?* — so there is one form of words,
+/// and it lives here where it can be unit-tested without a GWT presenter. The
+/// Groups panel's **Areas** column answers the same question for a
+/// whole group, and so shares the wording with a member count appended.
+///
+/// [#joinNames] is the plain name-list join and is used beyond the area
+/// columns — the cluster dialog's **Group** column lists group names
+/// with it — so that a list of names reads the same wherever one is shown.
+///
+/// Holds no GWT or DOM types so it can be unit-tested on the JVM.
 public final class FloorMapAreaCellText {
 
-    /** Separator between area names. */
+    /// Separator between area names.
     private static final String NAME_SEPARATOR = ", ";
 
     private FloorMapAreaCellText() {
         // Utility class.
     }
 
-    /**
-     * Every containing area named, in the order given (innermost first, so the
-     * most specific area reads first).
-     *
-     * <p>Applies to any row — an entity or a nested area — because the column
-     * treats them identically.</p>
-     *
-     * <p>The grid cell is a single {@code nowrap} line that ellipses when the
-     * column is too narrow, so the full list is safe to emit here — the caller
-     * repeats it in the cell's tooltip for when it is clipped.</p>
-     *
-     * @param names the resolved area display names, in display order; may be
-     *              {@code null} or empty
-     * @return the comma-separated names, or {@code ""} when there are none
-     */
+    /// Every containing area named, in the order given (innermost first, so the
+    /// most specific area reads first).
+    ///
+    /// Applies to any row — an entity or a nested area — because the column
+    /// treats them identically.
+    ///
+    /// The grid cell is a single `nowrap` line that ellipses when the
+    /// column is too narrow, so the full list is safe to emit here — the caller
+    /// repeats it in the cell's tooltip for when it is clipped.
+    ///
+    /// @param names the resolved area display names, in display order; may be
+    ///         `null` or empty
+    /// @return the comma-separated names, or `""` when there are none
     public static String joinNames(final List<String> names) {
         if (NullSafe.isEmptyCollection(names)) {
             return "";
@@ -76,22 +72,20 @@ public final class FloorMapAreaCellText {
         return joined.toString();
     }
 
-    /**
-     * Every area named with how many of a group's members are in it —
-     * {@code "Loading Bay (2), Office (1)"}.
-     *
-     * <p>Every area is named rather than summarised, for the same reason
-     * {@link #joinNames} does: a {@code "+2"} would hide exactly the names the
-     * user is looking for. The two lists are parallel; a name with no matching
-     * count renders bare, and a blank name is skipped along with its count.</p>
-     *
-     * @param names  the resolved area display names, in display order; may be
-     *               {@code null} or empty
-     * @param counts the member count for each name, positionally matched; may be
-     *               {@code null}
-     * @return the comma-separated names with counts, or {@code ""} when there are
-     *         none
-     */
+    /// Every area named with how many of a group's members are in it —
+    /// `"Loading Bay (2), Office (1)"`.
+    ///
+    /// Every area is named rather than summarised, for the same reason
+    /// [#joinNames] does: a `"+2"` would hide exactly the names the
+    /// user is looking for. The two lists are parallel; a name with no matching
+    /// count renders bare, and a blank name is skipped along with its count.
+    ///
+    /// @param names  the resolved area display names, in display order; may be
+    ///         `null` or empty
+    /// @param counts the member count for each name, positionally matched; may be
+    ///         `null`
+    /// @return the comma-separated names with counts, or `""` when there are
+    ///         none
     public static String joinNamesWithCounts(final List<String> names,
                                              final List<Integer> counts) {
         if (NullSafe.isEmptyCollection(names)) {

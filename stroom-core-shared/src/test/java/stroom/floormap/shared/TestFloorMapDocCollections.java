@@ -8,22 +8,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Tests that {@link FloorMapDoc}'s collections are owned by the document rather than
- * shared with whoever supplied or read them.
- *
- * <p>Before this, the lists were stored and handed out by reference, so the document
- * was immutable only by convention — upheld by every presenter remembering to copy
- * before mutating, and silently broken by anything that forgot. These tests move that
- * guarantee from convention to enforcement.</p>
- */
+/// Tests that [FloorMapDoc]'s collections are owned by the document rather than
+/// shared with whoever supplied or read them.
+///
+/// Before this, the lists were stored and handed out by reference, so the document
+/// was immutable only by convention — upheld by every presenter remembering to copy
+/// before mutating, and silently broken by anything that forgot. These tests move that
+/// guarantee from convention to enforcement.
 class TestFloorMapDocCollections {
 
     private static FloorMapDoc.Builder builder() {
         return FloorMapDoc.builder().uuid("uuid-1").name("map-1");
     }
 
-    /** Mutating the caller's list after building must not change the document. */
+    /// Mutating the caller's list after building must not change the document.
     @Test
     void testBuilderCopiesIncomingLists() {
         final List<TypeStyle> styles = new ArrayList<>();
@@ -38,7 +36,7 @@ class TestFloorMapDocCollections {
                 .hasSize(1);
     }
 
-    /** The document's own list cannot be edited through its getter. */
+    /// The document's own list cannot be edited through its getter.
     @Test
     void testGettersReturnUnmodifiableLists() {
         final FloorMapDoc doc = builder()
@@ -54,11 +52,9 @@ class TestFloorMapDocCollections {
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
-    /**
-     * Two documents built from one builder must not share list instances — the
-     * aliasing that made the server's duplicate-document path share state with its
-     * source.
-     */
+    /// Two documents built from one builder must not share list instances — the
+    /// aliasing that made the server's duplicate-document path share state with its
+    /// source.
     @Test
     void testCopyDoesNotAliasTheOriginalsLists() {
         final FloorMapDoc original = builder()
@@ -73,7 +69,7 @@ class TestFloorMapDocCollections {
                 .isNotSameAs(original.getTypeStyles());
     }
 
-    /** Absent stays absent: null must not be normalised to an empty list. */
+    /// Absent stays absent: null must not be normalised to an empty list.
     @Test
     void testNullCollectionsArePreserved() {
         final FloorMapDoc doc = builder().build();
@@ -81,7 +77,7 @@ class TestFloorMapDocCollections {
         assertThat(doc.getGroups()).isNull();
     }
 
-    /** An unset value schema still yields the immutable default. */
+    /// An unset value schema still yields the immutable default.
     @Test
     void testAbsentValueSchemaYieldsTheImmutableDefault() {
         final FloorMapDoc doc = builder().build();

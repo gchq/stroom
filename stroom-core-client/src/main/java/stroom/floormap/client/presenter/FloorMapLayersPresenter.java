@@ -54,36 +54,34 @@ import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-/**
- * The <strong>Layers</strong> panel — a dock tab listing the floor map's type
- * layers (front-to-back = z-order), each with a three-state visibility control.
- *
- * <p>Layers map to record types; the ordered list comes from the document's
- * {@link TypeStyle} entries (via {@link #setLayers(List)}). Per-layer visibility
- * is a <em>transient</em> client-side overlay (not persisted): each layer cycles
- * <em>full → 30% opacity → off</em>. Changes are pushed to the canvas through the
- * {@link #setChangeHandler(Runnable) change handler}; the host presenter reads
- * {@link #getHiddenTypes()} / {@link #getDimmedTypes()} and forwards them to
- * {@code FloorMapCanvasPresenter.setLayerVisibility(...)}.</p>
- *
- * <p>Editor-only controls are implemented here and shown when
- * {@link #setEditorMode(boolean)} is set: drag-and-keyboard reordering (which
- * rewrites the document's {@link TypeStyle} order, so it persists), a per-layer
- * lock that stops its items being moved on the canvas, and an appearance dialog
- * per layer. The lock is transient client-side state; the order and appearance
- * are document edits.</p>
- */
+/// The **Layers** panel — a dock tab listing the floor map's type
+/// layers (front-to-back = z-order), each with a three-state visibility control.
+///
+/// Layers map to record types; the ordered list comes from the document's
+/// [TypeStyle] entries (via [#setLayers(List)]). Per-layer visibility
+/// is a *transient* client-side overlay (not persisted): each layer cycles
+/// *full → 30% opacity → off*. Changes are pushed to the canvas through the
+/// [change handler][#setChangeHandler(Runnable)]; the host presenter reads
+/// [#getHiddenTypes()] / [#getDimmedTypes()] and forwards them to
+/// `FloorMapCanvasPresenter.setLayerVisibility(...)`.
+///
+/// Editor-only controls are implemented here and shown when
+/// [#setEditorMode(boolean)] is set: drag-and-keyboard reordering (which
+/// rewrites the document's [TypeStyle] order, so it persists), a per-layer
+/// lock that stops its items being moved on the canvas, and an appearance dialog
+/// per layer. The lock is transient client-side state; the order and appearance
+/// are document edits.
 public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersView> {
 
-    /** Visibility state per type: 0 = hidden, 1 = 30% opacity, 2 = full. */
+    /// Visibility state per type: 0 = hidden, 1 = 30% opacity, 2 = full.
     private static final int OFF = 0;
     private static final int DIM = 1;
     private static final int FULL = 2;
 
     private final Map<String, Integer> visibilityByType = new LinkedHashMap<>();
-    /** Transient per-type lock state (Editor only): locked items can't be moved. */
+    /// Transient per-type lock state (Editor only): locked items can't be moved.
     private final Set<String> lockedTypes = new HashSet<>();
-    /** Types seen in the loaded data but not yet a saved layer (Editor only). */
+    /// Types seen in the loaded data but not yet a saved layer (Editor only).
     private final Set<String> seenTypes = new HashSet<>();
     private final FlowPanel list = new FlowPanel();
 
@@ -91,24 +89,22 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
     private boolean editorMode;
     private Runnable changeHandler;
     private Consumer<List<TypeStyle>> typeStylesEditHandler;
-    /** Opens the appearance dialog for a layer and calls back with the edited style. */
+    /// Opens the appearance dialog for a layer and calls back with the edited style.
     private BiConsumer<TypeStyle, Consumer<TypeStyle>> styleEditor;
-    /** Runs a full-store type discovery scan (Editor only). */
+    /// Runs a full-store type discovery scan (Editor only).
     private Runnable discoverHandler;
 
-    /** Highlight colour for the drag-reorder drop indicator. */
+    /// Highlight colour for the drag-reorder drop indicator.
     private static final String DROP_INDICATOR = "#2196f3";
-    /** Source row index during a drag-reorder, or -1 when not dragging. */
+    /// Source row index during a drag-reorder, or -1 when not dragging.
     private int dragFromIndex = -1;
 
-    /**
-     * The layer whose reorder grip should take focus after the next
-     * {@link #rebuild()}, or {@code null}.
-     *
-     * <p>Keyboard reordering rebuilds the whole list, which destroys the button
-     * the keystroke came from. Without handing focus back, a keyboard user gets
-     * exactly one move per visit to the panel.</p>
-     */
+    /// The layer whose reorder grip should take focus after the next
+    /// [#rebuild()], or `null`.
+    ///
+    /// Keyboard reordering rebuilds the whole list, which destroys the button
+    /// the keystroke came from. Without handing focus back, a keyboard user gets
+    /// exactly one move per visit to the panel.
     private String focusGripForType;
 
     @Inject
@@ -119,55 +115,43 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         view.setList(list);
     }
 
-    /**
-     * @param editorMode {@code true} on the Editor tab (enables authoring
-     *                   controls - reorder, lock, appearance, discovery); {@code false} on the Map tab
-     */
+    /// @param editorMode `true` on the Editor tab (enables authoring
+    ///         controls - reorder, lock, appearance, discovery); `false` on the Map tab
     public void setEditorMode(final boolean editorMode) {
         this.editorMode = editorMode;
     }
 
-    /**
-     * @param changeHandler run whenever a layer's visibility changes, so the host
-     *                      can push {@link #getHiddenTypes()}/{@link #getDimmedTypes()}
-     *                      to the canvas
-     */
+    /// @param changeHandler run whenever a layer's visibility changes, so the host
+    ///         can push [#getHiddenTypes()]/[#getDimmedTypes()]
+    ///         to the canvas
     public void setChangeHandler(final Runnable changeHandler) {
         this.changeHandler = changeHandler;
     }
 
-    /**
-     * @param handler receives the new ordered type-styles list whenever the
-     *                panel reorders layers (Editor only), so the host can apply
-     *                and persist the change. The list order is the z-order.
-     */
+    /// @param handler receives the new ordered type-styles list whenever the
+    ///         panel reorders layers (Editor only), so the host can apply
+    ///         and persist the change. The list order is the z-order.
     public void setTypeStylesEditHandler(final Consumer<List<TypeStyle>> handler) {
         this.typeStylesEditHandler = handler;
     }
 
-    /**
-     * @param styleEditor opens the appearance dialog for a layer's {@link TypeStyle}
-     *                    and invokes the callback with the edited style (Editor only)
-     */
+    /// @param styleEditor opens the appearance dialog for a layer's [TypeStyle]
+    ///         and invokes the callback with the edited style (Editor only)
     public void setStyleEditor(final BiConsumer<TypeStyle, Consumer<TypeStyle>> styleEditor) {
         this.styleEditor = styleEditor;
     }
 
-    /**
-     * @param discoverHandler runs a full facts-store type-discovery scan; when
-     *                        set (Editor only) a Discover action is shown
-     */
+    /// @param discoverHandler runs a full facts-store type-discovery scan; when
+    ///         set (Editor only) a Discover action is shown
     public void setDiscoverHandler(final Runnable discoverHandler) {
         this.discoverHandler = discoverHandler;
         rebuild();
     }
 
-    /**
-     * Merges the given discovered types into the saved layers (new types are
-     * appended alphabetically) and persists via the edit handler.
-     *
-     * @param types the discovered type names
-     */
+    /// Merges the given discovered types into the saved layers (new types are
+    /// appended alphabetically) and persists via the edit handler.
+    ///
+    /// @param types the discovered type names
     public void mergeDiscovered(final Collection<String> types) {
         final int before = layers.size();
         final List<TypeStyle> newList = TypeStyle.merge(new ArrayList<>(layers), types);
@@ -181,12 +165,10 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         }
     }
 
-    /**
-     * Sets the types observed in the currently-loaded data. Any that aren't yet
-     * a saved layer are shown (Editor only) as provisional rows the user can add.
-     *
-     * @param types the observed types; {@code null} treated as empty
-     */
+    /// Sets the types observed in the currently-loaded data. Any that aren't yet
+    /// a saved layer are shown (Editor only) as provisional rows the user can add.
+    ///
+    /// @param types the observed types; `null` treated as empty
     public void setSeenTypes(final Set<String> types) {
         final Set<String> next = types != null
                 ? types
@@ -198,13 +180,11 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         }
     }
 
-    /**
-     * Sets the ordered layers from the document's type styles. Existing per-type
-     * visibility is preserved; newly-appearing types default to fully visible,
-     * and state for types no longer present is dropped.
-     *
-     * @param typeStyles the ordered type styles; {@code null} treated as empty
-     */
+    /// Sets the ordered layers from the document's type styles. Existing per-type
+    /// visibility is preserved; newly-appearing types default to fully visible,
+    /// and state for types no longer present is dropped.
+    ///
+    /// @param typeStyles the ordered type styles; `null` treated as empty
     public void setLayers(final List<TypeStyle> typeStyles) {
         layers = typeStyles != null
                 ? typeStyles
@@ -225,23 +205,17 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         rebuild();
     }
 
-    /**
-     * @return types that are currently hidden (not drawn or hit-tested)
-     */
+    /// @return types that are currently hidden (not drawn or hit-tested)
     public Set<String> getHiddenTypes() {
         return typesInState(OFF);
     }
 
-    /**
-     * @return types that are currently dimmed to 30% opacity
-     */
+    /// @return types that are currently dimmed to 30% opacity
     public Set<String> getDimmedTypes() {
         return typesInState(DIM);
     }
 
-    /**
-     * @return types currently locked against movement (Editor only)
-     */
+    /// @return types currently locked against movement (Editor only)
     public Set<String> getLockedTypes() {
         return new HashSet<>(lockedTypes);
     }
@@ -295,14 +269,12 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         }
     }
 
-    /**
-     * A line explaining an empty panel.
-     *
-     * <p>A floor map with no type styles saved is a perfectly ordinary state — entities and facts
-     * render with defaults — but a blank panel reads as a failure, and this feature has enough
-     * silent-empty states already. On the Editor tab the message names the action that fills it; on
-     * the Map tab it says where that action lives, since layers cannot be added from here.</p>
-     */
+    /// A line explaining an empty panel.
+    ///
+    /// A floor map with no type styles saved is a perfectly ordinary state — entities and facts
+    /// render with defaults — but a blank panel reads as a failure, and this feature has enough
+    /// silent-empty states already. On the Editor tab the message names the action that fills it; on
+    /// the Map tab it says where that action lives, since layers cannot be added from here.
     private Widget buildEmptyPlaceholder() {
         final Label label = new Label(editorMode
                 ? "No layers yet. Types found in the data appear here, or use Discover types."
@@ -336,7 +308,7 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         return footer;
     }
 
-    /** A discovered-but-unsaved type: name + an add button to make it a layer. */
+    /// A discovered-but-unsaved type: name + an add button to make it a layer.
     private Widget buildProvisionalRow(final String type) {
         final FlowPanel row = new FlowPanel();
         row.addStyleName("floormap-layer-row");
@@ -357,7 +329,7 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         return row;
     }
 
-    /** Promotes a discovered type to a saved layer and persists via the handler. */
+    /// Promotes a discovered type to a saved layer and persists via the handler.
     private void promote(final String type) {
         final List<TypeStyle> newList = TypeStyle.merge(
                 new ArrayList<>(layers), Collections.singletonList(type));
@@ -368,7 +340,7 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         }
     }
 
-    /** Replaces the style for {@code edited}'s type and persists via the handler. */
+    /// Replaces the style for `edited`'s type and persists via the handler.
     private void applyStyle(final TypeStyle edited) {
         final List<TypeStyle> newList = new ArrayList<>(layers);
         for (int k = 0; k < newList.size(); k++) {
@@ -384,12 +356,10 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         }
     }
 
-    /**
-     * Moves the layer from index {@code from} to the given insertion index
-     * (0..size, in current-list terms), then notifies the edit handler with the
-     * new order (Editor only). List order is z-order. {@code insertionIndex ==
-     * size} drops at the very bottom.
-     */
+    /// Moves the layer from index `from` to the given insertion index
+    /// (0..size, in current-list terms), then notifies the edit handler with the
+    /// new order (Editor only). List order is z-order. `insertionIndex ==
+    /// size` drops at the very bottom.
     private void reorderTo(final int from, final int insertionIndex) {
         if (from < 0 || from >= layers.size()) {
             return;
@@ -405,18 +375,16 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         commitOrder(newList);
     }
 
-    /**
-     * Moves the layer at {@code from} by {@code delta} positions — the keyboard
-     * equivalent of a drag-reorder, bound to the arrow keys on a row's grip.
-     *
-     * <p>Stated as a signed step rather than reusing {@link #reorderTo}'s
-     * insertion index because the two speak different languages: an insertion
-     * index has to account for the moved item's own removal (hence the
-     * {@code -1} adjustment there), and threading "move down one" through that
-     * conversion reads as an off-by-one waiting to happen. A move that would
-     * leave the list is a no-op, so holding the key at either end does
-     * nothing.</p>
-     */
+    /// Moves the layer at `from` by `delta` positions — the keyboard
+    /// equivalent of a drag-reorder, bound to the arrow keys on a row's grip.
+    ///
+    /// Stated as a signed step rather than reusing [#reorderTo]'s
+    /// insertion index because the two speak different languages: an insertion
+    /// index has to account for the moved item's own removal (hence the
+    /// `-1` adjustment there), and threading "move down one" through that
+    /// conversion reads as an off-by-one waiting to happen. A move that would
+    /// leave the list is a no-op, so holding the key at either end does
+    /// nothing.
     private void moveBy(final int from, final int delta) {
         final int to = from + delta;
         if (from < 0 || from >= layers.size() || to < 0 || to >= layers.size()) {
@@ -440,17 +408,15 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
                 + (to + 1) + " of " + newList.size());
     }
 
-    /**
-     * Adopts {@code newList} as the layer order, redraws and persists — the one
-     * path out of both the drag and the keyboard reorder, so they cannot drift.
-     * A no-change reorder (dropped back where it started) returns without
-     * touching the document.
-     *
-     * @return {@code true} if the order changed and was committed. The keyboard path
-     *         uses this to decide whether to announce a move: announcing one that was
-     *         refused here would tell a screen-reader user something happened when
-     *         nothing did.
-     */
+    /// Adopts `newList` as the layer order, redraws and persists — the one
+    /// path out of both the drag and the keyboard reorder, so they cannot drift.
+    /// A no-change reorder (dropped back where it started) returns without
+    /// touching the document.
+    ///
+    /// @return `true` if the order changed and was committed. The keyboard path
+    ///         uses this to decide whether to announce a move: announcing one that was
+    ///         refused here would tell a screen-reader user something happened when
+    ///         nothing did.
     private boolean commitOrder(final List<TypeStyle> newList) {
         if (newList.equals(layers)) {
             return false;
@@ -463,7 +429,7 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         return true;
     }
 
-    /** True if the pointer is below the vertical midpoint of the given row. */
+    /// True if the pointer is below the vertical midpoint of the given row.
     private static boolean isBelowMidpoint(final int clientY, final Element rowEl) {
         return clientY > rowEl.getAbsoluteTop() + (rowEl.getOffsetHeight() / 2);
     }
@@ -625,19 +591,17 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         return row;
     }
 
-    /** Size of each row's graphic preview in pixels. */
+    /// Size of each row's graphic preview in pixels.
     private static final int SWATCH_SIZE_PX = 16;
 
-    /**
-     * The lowest opacity an <em>enabled</em> control's graphic may be drawn at
-     * here and still clear 3:1 against the panel background (WCAG 1.4.11).
-     *
-     * <p>Body text at 0.45 over the light theme's white composites to about
-     * #969696 — 2.96:1, just under. These icons are the only indication of a
-     * layer's visibility and lock state, so they are exactly the "meaningful
-     * non-text content" the rule is about, and cannot be treated as decoration.
-     * Disabled controls are exempt, but none of these are disabled.</p>
-     */
+    /// The lowest opacity an *enabled* control's graphic may be drawn at
+    /// here and still clear 3:1 against the panel background (WCAG 1.4.11).
+    ///
+    /// Body text at 0.45 over the light theme's white composites to about
+    /// #969696 — 2.96:1, just under. These icons are the only indication of a
+    /// layer's visibility and lock state, so they are exactly the "meaningful
+    /// non-text content" the rule is about, and cannot be treated as decoration.
+    /// Disabled controls are exempt, but none of these are disabled.
     private static final double MIN_ENABLED_ICON_OPACITY = 0.7;
 
     private void applyLockState(final InlineSvgButton lock,
@@ -678,13 +642,11 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         }
     }
 
-    /**
-     * Dims a layer's name in step with its visibility state.
-     *
-     * <p>The hidden state's floor is 0.65 rather than the icons' 0.7 because this
-     * is text, which needs 4.5:1 rather than 3:1: 0.55 over white composites to
-     * about #7e7e7e — 4.06:1, short of the mark.</p>
-     */
+    /// Dims a layer's name in step with its visibility state.
+    ///
+    /// The hidden state's floor is 0.65 rather than the icons' 0.7 because this
+    /// is text, which needs 4.5:1 rather than 3:1: 0.55 over white composites to
+    /// about #7e7e7e — 4.06:1, short of the mark.
     private void applyNameState(final Label name, final int state) {
         final double opacity = state == OFF
                 ? 0.65
@@ -694,21 +656,17 @@ public class FloorMapLayersPresenter extends MyPresenterWidget<FloorMapLayersVie
         name.getElement().getStyle().setOpacity(opacity);
     }
 
-    /**
-     * View contract: a toolbar area (header/actions) above a scrolling list.
-     */
+    /// View contract: a toolbar area (header/actions) above a scrolling list.
     public interface FloorMapLayersView extends View {
 
         void setList(Widget listWidget);
 
-        /**
-         * Announces {@code message} through the panel's live region.
-         *
-         * <p>A keyboard reorder produces no visible change a screen reader can pick up
-         * — the row simply appears elsewhere in a list it is not reading — so without
-         * this the move is silent and the user cannot tell whether the keystroke did
-         * anything, let alone where the layer ended up.</p>
-         */
+        /// Announces `message` through the panel's live region.
+        ///
+        /// A keyboard reorder produces no visible change a screen reader can pick up
+        /// — the row simply appears elsewhere in a list it is not reading — so without
+        /// this the move is silent and the user cannot tell whether the keystroke did
+        /// anything, let alone where the layer ended up.
         void announce(String message);
     }
 }

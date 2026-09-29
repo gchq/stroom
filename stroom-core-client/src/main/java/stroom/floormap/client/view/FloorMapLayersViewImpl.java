@@ -26,10 +26,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/**
- * View implementation for the Layers panel — a scrolling list of layer rows.
- * The panel needs no title of its own (the dock tab already reads "Layers").
- */
+/// View implementation for the Layers panel — a scrolling list of layer rows.
+/// The panel needs no title of its own (the dock tab already reads "Layers").
 public class FloorMapLayersViewImpl extends ViewImpl implements FloorMapLayersView {
 
     private final FlowPanel root;

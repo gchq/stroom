@@ -32,9 +32,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
-/**
- * REST resource interface for fetching and updating {@link FloorMapDoc} documents.
- */
+/// REST resource interface for fetching and updating [FloorMapDoc] documents.
 @Tag(name = "Queries")
 @Path("/floormap" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)

@@ -30,11 +30,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Pins the highlight precedence table before the canvas view is refactored onto
- * it, so the existing area-related behaviour cannot drift while group highlight
- * is added.
- */
+/// Pins the highlight precedence table before the canvas view is refactored onto
+/// it, so the existing area-related behaviour cannot drift while group highlight
+/// is added.
 class TestFloorMapHighlight {
 
     private static final String PURPLE = "#8e24aa";
@@ -52,7 +50,7 @@ class TestFloorMapHighlight {
         return new FloorMapObject(id, FloorMapJsonKeys.PERSON, x, y);
     }
 
-    /** Alice inside "bay", bob outside it, with "bay" focused. */
+    /// Alice inside "bay", bob outside it, with "bay" focused.
     private static FloorMapAreaOverlay areaOverlayFocusedOnBay() {
         final List<Fact> facts = Collections.singletonList(area());
         final List<FloorMapObject> events = Arrays.asList(
@@ -70,7 +68,7 @@ class TestFloorMapHighlight {
     // Precedence
     // ------------------------------------------------------------------------
 
-    /** Group beats area-related: the group highlight was explicitly asked for. */
+    /// Group beats area-related: the group highlight was explicitly asked for.
     @Test
     void testGroupBeatsAreaRelated() {
         final FloorMapHighlight highlight = FloorMapHighlight.of(
@@ -80,7 +78,7 @@ class TestFloorMapHighlight {
         assertThat(highlight.isDashed("alice")).isFalse();
     }
 
-    /** Area-related still applies to an entity in no shown group. */
+    /// Area-related still applies to an entity in no shown group.
     @Test
     void testAreaRelatedAppliesWhenNotGrouped() {
         final FloorMapHighlight highlight = FloorMapHighlight.of(
@@ -90,7 +88,7 @@ class TestFloorMapHighlight {
         assertThat(highlight.isDashed("alice")).isTrue();
     }
 
-    /** A group member outside any area relation is still highlighted. */
+    /// A group member outside any area relation is still highlighted.
     @Test
     void testGroupAppliesWithoutAnyAreaRelation() {
         final FloorMapHighlight highlight = FloorMapHighlight.of(
@@ -110,11 +108,9 @@ class TestFloorMapHighlight {
         assertThat(highlight.isDashed("nobody")).isFalse();
     }
 
-    /**
-     * The dash is what distinguishes the two sources, so it must be carried
-     * separately from the colour rather than inferred from it: a group whose
-     * colour happens to equal the area-related green is still drawn solid.
-     */
+    /// The dash is what distinguishes the two sources, so it must be carried
+    /// separately from the colour rather than inferred from it: a group whose
+    /// colour happens to equal the area-related green is still drawn solid.
     @Test
     void testGreenGroupIsStillSolid() {
         final FloorMapHighlight highlight = FloorMapHighlight.of(
@@ -125,7 +121,7 @@ class TestFloorMapHighlight {
         assertThat(highlight.isDashed("alice")).isFalse();
     }
 
-    /** An area can itself be a group member, and then takes the group colour. */
+    /// An area can itself be a group member, and then takes the group colour.
     @Test
     void testAreaCanCarryGroupColour() {
         final FloorMapHighlight highlight = FloorMapHighlight.of(
@@ -138,7 +134,7 @@ class TestFloorMapHighlight {
     // Empty / null behaviour — the no-groups path must be exactly as before
     // ------------------------------------------------------------------------
 
-    /** With no groups anywhere, resolution reduces to plain area containment. */
+    /// With no groups anywhere, resolution reduces to plain area containment.
     @Test
     void testWithoutGroupsBehavesAsAreaOverlayAlone() {
         final FloorMapAreaOverlay areas = areaOverlayFocusedOnBay();
@@ -168,11 +164,9 @@ class TestFloorMapHighlight {
         assertThat(FloorMapHighlight.EMPTY.colourFor("alice")).isNull();
     }
 
-    /**
-     * A user's first group must not look like a related-entity highlight. The
-     * counterpart of {@code TestFloorMapGroup.testDefaultColourAvoidsReservedColours},
-     * kept here because the group colour is shared code and this one is not.
-     */
+    /// A user's first group must not look like a related-entity highlight. The
+    /// counterpart of `TestFloorMapGroup.testDefaultColourAvoidsReservedColours`,
+    /// kept here because the group colour is shared code and this one is not.
     @Test
     void testRelatedColourDiffersFromGroupDefault() {
         assertThat(FloorMapHighlight.RELATED_COLOUR)

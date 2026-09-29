@@ -18,27 +18,23 @@ package stroom.floormap.client.value;
 
 import stroom.floormap.shared.ValueFormat;
 
-/**
- * GWT client-side factory for obtaining {@link ValueAccessor} implementations
- * based on the configured {@link ValueFormat}.
- *
- * <p>A factory rather than a method on the {@link ValueAccessor} interface itself:
- * it lives in the client package because the concrete implementations
- * ({@link JsonValueAccessor}, {@link XmlValueAccessor}) depend on GWT libraries,
- * which the shared interface must not.</p>
- */
+/// GWT client-side factory for obtaining [ValueAccessor] implementations
+/// based on the configured [ValueFormat].
+///
+/// A factory rather than a method on the [ValueAccessor] interface itself:
+/// it lives in the client package because the concrete implementations
+/// ([JsonValueAccessor], [XmlValueAccessor]) depend on GWT libraries,
+/// which the shared interface must not.
 public final class ValueAccessorFactory {
 
     private ValueAccessorFactory() {
         // Utility class
     }
 
-    /**
-     * Returns the appropriate {@link ValueAccessor} for the given format.
-     *
-     * @param format the value format; must not be {@code null}
-     * @return the accessor instance (singleton)
-     */
+    /// Returns the appropriate [ValueAccessor] for the given format.
+    ///
+    /// @param format the value format; must not be `null`
+    /// @return the accessor instance (singleton)
     public static ValueAccessor forFormat(final ValueFormat format) {
         return switch (format) {
             case JSON -> JsonValueAccessor.INSTANCE;

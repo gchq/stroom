@@ -23,14 +23,12 @@ import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 
-/**
- * {@link ValueAccessor} implementation for JSON values.
- *
- * <p>Paths use the dot-prefixed convention from
- * {@link ValuePathAccessor} (e.g. {@code ".type"} → JSON key
- * {@code "type"}). Numeric arrays are stored as {@link JSONArray}
- * instances containing {@link JSONNumber} elements.</p>
- */
+/// [ValueAccessor] implementation for JSON values.
+///
+/// Paths use the dot-prefixed convention from
+/// [ValuePathAccessor] (e.g. `".type"` → JSON key
+/// `"type"`). Numeric arrays are stored as [JSONArray]
+/// instances containing [JSONNumber] elements.
 public final class JsonValueAccessor implements ValueAccessor {
 
     static final JsonValueAccessor INSTANCE = new JsonValueAccessor();
@@ -39,16 +37,14 @@ public final class JsonValueAccessor implements ValueAccessor {
         // Singleton
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>In addition to the cases the contract lists, this returns {@code null} for
-     * input that parses perfectly well but is not a JSON <em>object</em> — the
-     * literal {@code null}, an array such as {@code [1,2]}, or a bare scalar. A
-     * value's paths address named fields, so anything without them is unusable
-     * here, and rejecting it up front is better than handing back a
-     * {@link ParsedValue} that fails on first access.</p>
-     */
+    /// {@inheritDoc}
+    ///
+    /// In addition to the cases the contract lists, this returns `null` for
+    /// input that parses perfectly well but is not a JSON *object* — the
+    /// literal `null`, an array such as `[1,2]`, or a bare scalar. A
+    /// value's paths address named fields, so anything without them is unusable
+    /// here, and rejecting it up front is better than handing back a
+    /// [ParsedValue] that fails on first access.
     @Override
     public ParsedValue parse(final String raw) {
         if (raw == null || raw.isEmpty()) {
@@ -68,19 +64,17 @@ public final class JsonValueAccessor implements ValueAccessor {
         return new ParsedValue(new JSONObject());
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>JSON is typed, so this also returns {@code null} when a value <em>is</em>
-     * present at {@code path} but is not a string — a number, boolean, array or
-     * object. Only {@link JSONValue#isString()} counts.</p>
-     *
-     * <p>Note this is deliberately <strong>not</strong> what the XML accessor does:
-     * XML element text carries no type, so there a numeric {@code 5} is simply the
-     * string {@code "5"}. The two answers differ for the same logical field, and
-     * both are correct for their format. Use {@link #getNumber} when a number is
-     * what you want, regardless of format.</p>
-     */
+    /// {@inheritDoc}
+    ///
+    /// JSON is typed, so this also returns `null` when a value *is*
+    /// present at `path` but is not a string — a number, boolean, array or
+    /// object. Only [JSONValue#isString()] counts.
+    ///
+    /// Note this is deliberately **not** what the XML accessor does:
+    /// XML element text carries no type, so there a numeric `5` is simply the
+    /// string `"5"`. The two answers differ for the same logical field, and
+    /// both are correct for their format. Use [#getNumber] when a number is
+    /// what you want, regardless of format.
     @Override
     public String getString(final ParsedValue value, final String path) {
         final JSONObject json = asJson(value);
@@ -218,9 +212,7 @@ public final class JsonValueAccessor implements ValueAccessor {
         return raw != null && raw.trim().startsWith("{");
     }
 
-    /**
-     * Extracts the {@link JSONObject} from a {@link ParsedValue}.
-     */
+    /// Extracts the [JSONObject] from a [ParsedValue].
     private static JSONObject asJson(final ParsedValue value) {
         if (value == null) {
             return null;
@@ -229,9 +221,7 @@ public final class JsonValueAccessor implements ValueAccessor {
         return backing instanceof JSONObject ? (JSONObject) backing : null;
     }
 
-    /**
-     * Strips the leading dot from a path to get the JSON key.
-     */
+    /// Strips the leading dot from a path to get the JSON key.
     private static String toKey(final String path) {
         if (path != null && path.startsWith(".")) {
             return path.substring(1);

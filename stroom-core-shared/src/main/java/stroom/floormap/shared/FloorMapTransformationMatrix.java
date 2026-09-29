@@ -23,32 +23,29 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
-/**
- * A 2D affine transformation matrix used to position and transform floor map
- * images and coordinates.
- * <p>
- * The six components {@code (a, b, c, d, e, f)} correspond to the SVG/CSS
- * {@code matrix(a, b, c, d, e, f)} notation, representing the transformation:
- * <pre>
- *   | a  c  e |
- *   | b  d  f |
- *   | 0  0  1 |
- * </pre>
- */
+/// A 2D affine transformation matrix used to position and transform floor map
+/// images and coordinates.
+///
+/// The six components `(a, b, c, d, e, f)` correspond to the SVG/CSS
+/// `matrix(a, b, c, d, e, f)` notation, representing the transformation:
+///
+/// ```
+/// | a  c  e |
+/// | b  d  f |
+/// | 0  0  1 |
+/// ```
 @JsonInclude(Include.NON_NULL)
 public class FloorMapTransformationMatrix {
 
-    /**
-     * Relative tolerance used to decide whether the determinant is
-     * indistinguishable from zero.
-     *
-     * <p>The test is <strong>relative</strong>, not absolute. An absolute
-     * threshold rejects legitimately invertible matrices: a uniform scale of
-     * one part in a million has determinant {@code 1e-12}, which is tiny but
-     * perfectly representable, and inverting it is both well-defined and
-     * necessary. Scaling the tolerance by the magnitude of the terms that
-     * formed the determinant keeps the test meaningful at any scale.</p>
-     */
+    /// Relative tolerance used to decide whether the determinant is
+    /// indistinguishable from zero.
+    ///
+    /// The test is **relative**, not absolute. An absolute
+    /// threshold rejects legitimately invertible matrices: a uniform scale of
+    /// one part in a million has determinant `1e-12`, which is tiny but
+    /// perfectly representable, and inverting it is both well-defined and
+    /// necessary. Scaling the tolerance by the magnitude of the terms that
+    /// formed the determinant keeps the test meaningful at any scale.
     private static final double SINGULARITY_RELATIVE_TOLERANCE = 1e-12;
 
     @JsonProperty
@@ -103,20 +100,16 @@ public class FloorMapTransformationMatrix {
         return f;
     }
 
-    /**
-     * Formats this matrix as an SVG {@code matrix(a,b,c,d,e,f)} string.
-     *
-     * @return the SVG matrix attribute value
-     */
+    /// Formats this matrix as an SVG `matrix(a,b,c,d,e,f)` string.
+    ///
+    /// @return the SVG matrix attribute value
     public String toSvgMatrix() {
         return "matrix(" + a + "," + b + "," + c + "," + d + "," + e + "," + f + ")";
     }
 
-    /**
-     * Returns the identity transformation (no scaling, rotation, or translation).
-     *
-     * @return the identity matrix
-     */
+    /// Returns the identity transformation (no scaling, rotation, or translation).
+    ///
+    /// @return the identity matrix
     public static FloorMapTransformationMatrix identity() {
         return new FloorMapTransformationMatrix(1, 0, 0, 1, 0, 0);
     }
@@ -148,12 +141,10 @@ public class FloorMapTransformationMatrix {
         return toSvgMatrix();
     }
 
-    /**
-     * Creates a rotation-only transformation matrix for the given angle.
-     *
-     * @param degrees the rotation angle in degrees (counter-clockwise positive)
-     * @return a new rotation matrix
-     */
+    /// Creates a rotation-only transformation matrix for the given angle.
+    ///
+    /// @param degrees the rotation angle in degrees (counter-clockwise positive)
+    /// @return a new rotation matrix
     public static FloorMapTransformationMatrix rotate(final double degrees) {
         final double radians = Math.toRadians(degrees);
         final double cos = Math.cos(radians);
@@ -163,40 +154,34 @@ public class FloorMapTransformationMatrix {
         return new FloorMapTransformationMatrix(cos, sin, -sin, cos, 0, 0);
     }
 
-    /**
-     * Returns a pure translation matrix.
-     *
-     * @param dx the x translation
-     * @param dy the y translation
-     * @return {@code (1,0,0,1,dx,dy)}
-     */
+    /// Returns a pure translation matrix.
+    ///
+    /// @param dx the x translation
+    /// @param dy the y translation
+    /// @return `(1,0,0,1,dx,dy)`
     public static FloorMapTransformationMatrix translate(final double dx, final double dy) {
         return new FloorMapTransformationMatrix(1, 0, 0, 1, dx, dy);
     }
 
-    /**
-     * Returns a pure scale matrix (about the origin).
-     *
-     * @param sx the x scale factor
-     * @param sy the y scale factor
-     * @return {@code (sx,0,0,sy,0,0)}
-     */
+    /// Returns a pure scale matrix (about the origin).
+    ///
+    /// @param sx the x scale factor
+    /// @param sy the y scale factor
+    /// @return `(sx,0,0,sy,0,0)`
     public static FloorMapTransformationMatrix scale(final double sx, final double sy) {
         return new FloorMapTransformationMatrix(sx, 0, 0, sy, 0, 0);
     }
 
-    /**
-     * Multiplies this matrix by {@code o}, returning {@code this · o}.
-     *
-     * <p>Convention (matching SVG/DOMMatrix {@code .multiply()} and CSS): for a
-     * column vector {@code v}, {@code this.multiply(o).transformPoint(v)} applies
-     * {@code o} <strong>first</strong>, then {@code this}. So to apply a map-space
-     * transform {@code T} to a fact whose placement is {@code worldToMap}, use
-     * {@code T.multiply(worldToMap)} (= {@code T · worldToMap}).</p>
-     *
-     * @param o the matrix to apply before this one
-     * @return the composed matrix {@code this · o}
-     */
+    /// Multiplies this matrix by `o`, returning `this · o`.
+    ///
+    /// Convention (matching SVG/DOMMatrix `.multiply()` and CSS): for a
+    /// column vector `v`, `this.multiply(o).transformPoint(v)` applies
+    /// `o` **first**, then `this`. So to apply a map-space
+    /// transform `T` to a fact whose placement is `worldToMap`, use
+    /// `T.multiply(worldToMap)` (= `T · worldToMap`).
+    ///
+    /// @param o the matrix to apply before this one
+    /// @return the composed matrix `this · o`
     public FloorMapTransformationMatrix multiply(final FloorMapTransformationMatrix o) {
         return new FloorMapTransformationMatrix(
                 a * o.a + c * o.b,
@@ -207,34 +192,30 @@ public class FloorMapTransformationMatrix {
                 b * o.e + d * o.f + f);
     }
 
-    /**
-     * Applies this matrix to the point {@code (x, y)}.
-     *
-     * @param x the x coordinate
-     * @param y the y coordinate
-     * @return {@code {a*x + c*y + e, b*x + d*y + f}}
-     */
+    /// Applies this matrix to the point `(x, y)`.
+    ///
+    /// @param x the x coordinate
+    /// @param y the y coordinate
+    /// @return `{a*x + c*y + e, b*x + d*y + f}`
     public double[] transformPoint(final double x, final double y) {
         return new double[]{a * x + c * y + e, b * x + d * y + f};
     }
 
-    /**
-     * Returns a copy whose translation places the fact's own point
-     * {@code (worldX, worldY)} at map position {@code (mapX, mapY)}, keeping the
-     * scale and rotation ({@code a, b, c, d}) untouched.
-     *
-     * <p>The inverse of {@link #transformPoint}: solving
-     * {@code mapX = a·worldX + c·worldY + e} for the translation. This is how a
-     * fact is repositioned without disturbing how it is sized or turned — the
-     * arithmetic behind both a canvas drag and a typed position, which is why
-     * the two agree.</p>
-     *
-     * @param worldX the fact's stored x coordinate, in its own frame
-     * @param worldY the fact's stored y coordinate, in its own frame
-     * @param mapX   where that point should land, in map space
-     * @param mapY   where that point should land, in map space
-     * @return the repositioned matrix
-     */
+    /// Returns a copy whose translation places the fact's own point
+    /// `(worldX, worldY)` at map position `(mapX, mapY)`, keeping the
+    /// scale and rotation (`a, b, c, d`) untouched.
+    ///
+    /// The inverse of [#transformPoint]: solving
+    /// `mapX = a·worldX + c·worldY + e` for the translation. This is how a
+    /// fact is repositioned without disturbing how it is sized or turned — the
+    /// arithmetic behind both a canvas drag and a typed position, which is why
+    /// the two agree.
+    ///
+    /// @param worldX the fact's stored x coordinate, in its own frame
+    /// @param worldY the fact's stored y coordinate, in its own frame
+    /// @param mapX   where that point should land, in map space
+    /// @param mapY   where that point should land, in map space
+    /// @return the repositioned matrix
     public FloorMapTransformationMatrix placing(final double worldX,
                                                 final double worldY,
                                                 final double mapX,
@@ -245,33 +226,29 @@ public class FloorMapTransformationMatrix {
                 mapY - (b * worldX + d * worldY));
     }
 
-    /**
-     * Returns a rotation about an arbitrary pivot {@code (px, py)} — i.e.
-     * {@code translate(px,py) · rotate(degrees) · translate(-px,-py)}. The pivot
-     * is left fixed by the resulting transform.
-     *
-     * @param degrees the rotation angle in degrees (counter-clockwise positive)
-     * @param px      the pivot x
-     * @param py      the pivot y
-     * @return the rotation-about-pivot matrix
-     */
+    /// Returns a rotation about an arbitrary pivot `(px, py)` — i.e.
+    /// `translate(px,py) · rotate(degrees) · translate(-px,-py)`. The pivot
+    /// is left fixed by the resulting transform.
+    ///
+    /// @param degrees the rotation angle in degrees (counter-clockwise positive)
+    /// @param px      the pivot x
+    /// @param py      the pivot y
+    /// @return the rotation-about-pivot matrix
     public static FloorMapTransformationMatrix rotateAbout(final double degrees,
                                                            final double px,
                                                            final double py) {
         return translate(px, py).multiply(rotate(degrees)).multiply(translate(-px, -py));
     }
 
-    /**
-     * Returns a scale about an arbitrary pivot {@code (px, py)} — i.e.
-     * {@code translate(px,py) · scale(sx,sy) · translate(-px,-py)}. The pivot is
-     * left fixed by the resulting transform.
-     *
-     * @param sx the x scale factor
-     * @param sy the y scale factor
-     * @param px the pivot x
-     * @param py the pivot y
-     * @return the scale-about-pivot matrix
-     */
+    /// Returns a scale about an arbitrary pivot `(px, py)` — i.e.
+    /// `translate(px,py) · scale(sx,sy) · translate(-px,-py)`. The pivot is
+    /// left fixed by the resulting transform.
+    ///
+    /// @param sx the x scale factor
+    /// @param sy the y scale factor
+    /// @param px the pivot x
+    /// @param py the pivot y
+    /// @return the scale-about-pivot matrix
     public static FloorMapTransformationMatrix scaleAbout(final double sx,
                                                           final double sy,
                                                           final double px,
@@ -279,27 +256,25 @@ public class FloorMapTransformationMatrix {
         return translate(px, py).multiply(scale(sx, sy)).multiply(translate(-px, -py));
     }
 
-    /**
-     * Whether this matrix can be inverted.
-     *
-     * <p>A matrix is non-invertible only if its determinant is zero (to within
-     * {@link #SINGULARITY_RELATIVE_TOLERANCE}, measured relative to the terms
-     * that formed it) or if any of its components is not finite. Within
-     * FloorMap that should never happen: every matrix the UI composes is
-     * invertible by construction, and matrices read from stored data are
-     * rejected at parse time by
-     * {@code FloorMapEntryParser}. Use this where you need to check data
-     * provenance rather than let {@link #inverse()} throw.</p>
-     *
-     * <p>Named {@code hasInverse} rather than {@code isInvertible} so Jackson cannot
-     * mistake it for a property: this class is serialised, and Jackson auto-detects
-     * {@code getXxx}/{@code isXxx}. A {@code hasXxx} name keeps it invisible without an
-     * {@code @JsonIgnore}, matching {@link TypeStyle#hasGraphic()} and the other
-     * {@code has*} helpers — and {@code TestJsonSerialisation} fails the build both on an
-     * undeclared extra getter and on a redundant {@code @JsonIgnore}.</p>
-     *
-     * @return {@code true} if {@link #inverse()} will succeed
-     */
+    /// Whether this matrix can be inverted.
+    ///
+    /// A matrix is non-invertible only if its determinant is zero (to within
+    /// [#SINGULARITY_RELATIVE_TOLERANCE], measured relative to the terms
+    /// that formed it) or if any of its components is not finite. Within
+    /// FloorMap that should never happen: every matrix the UI composes is
+    /// invertible by construction, and matrices read from stored data are
+    /// rejected at parse time by
+    /// `FloorMapEntryParser`. Use this where you need to check data
+    /// provenance rather than let [#inverse()] throw.
+    ///
+    /// Named `hasInverse` rather than `isInvertible` so Jackson cannot
+    /// mistake it for a property: this class is serialised, and Jackson auto-detects
+    /// `getXxx`/`isXxx`. A `hasXxx` name keeps it invisible without an
+    /// `@JsonIgnore`, matching [TypeStyle#hasGraphic()] and the other
+    /// `has*` helpers — and `TestJsonSerialisation` fails the build both on an
+    /// undeclared extra getter and on a redundant `@JsonIgnore`.
+    ///
+    /// @return `true` if [#inverse()] will succeed
     public boolean hasInverse() {
         // Check all six components, not just the four the determinant is built from. The
         // translation pair only reaches the inverse via invE/invF, so a non-finite e or f used
@@ -320,26 +295,24 @@ public class FloorMapTransformationMatrix {
         return Math.abs(det) > SINGULARITY_RELATIVE_TOLERANCE * magnitude;
     }
 
-    /**
-     * Computes the inverse of this transformation matrix.
-     *
-     * <p><strong>Throws rather than degrading.</strong> An earlier version of
-     * this method returned {@link #identity()} for a singular matrix. That was
-     * actively harmful: the identity is a perfectly plausible-looking answer,
-     * so every subsequent coordinate conversion appeared to succeed while
-     * silently returning its input unchanged — and in the vertex editor those
-     * unconverted coordinates were written back to the document. A wrong
-     * answer that looks right is worse than no answer.</p>
-     *
-     * <p>There is no circumstance in the FloorMap UI where a matrix legitimately
-     * cannot be inverted, so reaching the exception means bad data got past the
-     * parser or a caller composed a degenerate transform — both bugs worth
-     * surfacing. Call {@link #hasInverse()} first if you are handling data of
-     * uncertain provenance.</p>
-     *
-     * @return the inverse matrix; never {@code null}
-     * @throws IllegalStateException if this matrix is not invertible
-     */
+    /// Computes the inverse of this transformation matrix.
+    ///
+    /// **Throws rather than degrading.** An earlier version of
+    /// this method returned [#identity()] for a singular matrix. That was
+    /// actively harmful: the identity is a perfectly plausible-looking answer,
+    /// so every subsequent coordinate conversion appeared to succeed while
+    /// silently returning its input unchanged — and in the vertex editor those
+    /// unconverted coordinates were written back to the document. A wrong
+    /// answer that looks right is worse than no answer.
+    ///
+    /// There is no circumstance in the FloorMap UI where a matrix legitimately
+    /// cannot be inverted, so reaching the exception means bad data got past the
+    /// parser or a caller composed a degenerate transform — both bugs worth
+    /// surfacing. Call [#hasInverse()] first if you are handling data of
+    /// uncertain provenance.
+    ///
+    /// @return the inverse matrix; never `null`
+    /// @throws IllegalStateException if this matrix is not invertible
     public FloorMapTransformationMatrix inverse() {
         if (!hasInverse()) {
             throw new IllegalStateException(

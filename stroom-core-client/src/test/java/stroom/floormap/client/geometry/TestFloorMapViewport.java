@@ -28,11 +28,9 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-/**
- * Tests for {@link FloorMapViewport} — the pure pan/zoom/drag maths extracted
- * from the canvas presenter. Verifies coordinate conversions, the
- * zoom-toward-cursor invariant, scale clamping, and Edit-Mode drag deltas.
- */
+/// Tests for [FloorMapViewport] — the pure pan/zoom/drag maths extracted
+/// from the canvas presenter. Verifies coordinate conversions, the
+/// zoom-toward-cursor invariant, scale clamping, and Edit-Mode drag deltas.
 class TestFloorMapViewport {
 
     private static final double TOLERANCE = 1e-9;
@@ -46,10 +44,8 @@ class TestFloorMapViewport {
     // Round-trip: screenToMap and mapToScreen are exact inverses
     // -----------------------------------------------------------------------
 
-    /**
-     * For any viewport state and invertible background, mapping a screen point
-     * to map space and back must recover the original screen point.
-     */
+    /// For any viewport state and invertible background, mapping a screen point
+    /// to map space and back must recover the original screen point.
     @TestFactory
     Stream<DynamicTest> testScreenToMapRoundTrip() {
         final double screenX = 640;
@@ -94,10 +90,8 @@ class TestFloorMapViewport {
     // Zoom toward cursor
     // -----------------------------------------------------------------------
 
-    /**
-     * The defining property of zoom-toward-cursor: the map point directly under
-     * the cursor must not move on screen when zooming.
-     */
+    /// The defining property of zoom-toward-cursor: the map point directly under
+    /// the cursor must not move on screen when zooming.
     @Test
     void testZoom_keepsMapPointUnderCursorFixed() {
         final FloorMapViewport viewport = new FloorMapViewport(1.0, 30, 70);
@@ -141,11 +135,9 @@ class TestFloorMapViewport {
         assertThat(viewport.getScale()).isEqualTo(FloorMapViewport.MIN_SCALE);
     }
 
-    /**
-     * At the scale clamp the point under the cursor must still stay fixed — the
-     * offset shift uses the actually-applied ratio, so a wheel tick at the limit
-     * doesn't drift the view.
-     */
+    /// At the scale clamp the point under the cursor must still stay fixed — the
+    /// offset shift uses the actually-applied ratio, so a wheel tick at the limit
+    /// doesn't drift the view.
     @Test
     void testZoom_atClampKeepsCursorFixed() {
         final FloorMapViewport viewport = new FloorMapViewport(
@@ -185,12 +177,10 @@ class TestFloorMapViewport {
     // Item drag
     // -----------------------------------------------------------------------
 
-    /**
-     * Dragging a plotted item: a screen delta must become the map-space delta
-     * that, added to the item's map coordinates, lands it exactly under the
-     * cursor. We verify this against the round-trip: the map position of the
-     * cursor start and end points should differ by exactly the returned delta.
-     */
+    /// Dragging a plotted item: a screen delta must become the map-space delta
+    /// that, added to the item's map coordinates, lands it exactly under the
+    /// cursor. We verify this against the round-trip: the map position of the
+    /// cursor start and end points should differ by exactly the returned delta.
     @Test
     void testDragItemMapDelta_matchesScreenToMapDifference() {
         final FloorMapViewport viewport = new FloorMapViewport(1.5, 40, -30);
@@ -229,9 +219,7 @@ class TestFloorMapViewport {
     // followDelta (static, screen-space — used by the canvas's Y-up pipeline)
     // -----------------------------------------------------------------------
 
-    /**
-     * A screen point inside the central dead zone needs no pan.
-     */
+    /// A screen point inside the central dead zone needs no pan.
     @Test
     void testFollowDelta_insideDeadZoneIsZero() {
         assertThat(FloorMapViewport.followDelta(
@@ -243,10 +231,8 @@ class TestFloorMapViewport {
                 .containsExactly(0.0, 0.0);
     }
 
-    /**
-     * A point past a margin yields the minimal delta that lands it exactly on
-     * the margin boundary — per axis, independently.
-     */
+    /// A point past a margin yields the minimal delta that lands it exactly on
+    /// the margin boundary — per axis, independently.
     @Test
     void testFollowDelta_minimalDeltaPerAxis() {
         // Past the right edge only.
@@ -263,9 +249,7 @@ class TestFloorMapViewport {
         assertThat(top[1]).isCloseTo(VIEW_HEIGHT * MARGIN + 40, within(TOLERANCE));
     }
 
-    /**
-     * The zero-size guard applies to the static form too.
-     */
+    /// The zero-size guard applies to the static form too.
     @Test
     void testFollowDelta_zeroViewSizeIsZero() {
         assertThat(FloorMapViewport.followDelta(5000, 5000, 0, VIEW_HEIGHT, MARGIN))
@@ -278,20 +262,16 @@ class TestFloorMapViewport {
     // dampingFactor (damped camera-follow steps)
     // -----------------------------------------------------------------------
 
-    /**
-     * One time constant of elapsed time covers ~63% of the outstanding
-     * correction (1 - 1/e), the defining property of exponential damping.
-     */
+    /// One time constant of elapsed time covers ~63% of the outstanding
+    /// correction (1 - 1/e), the defining property of exponential damping.
     @Test
     void testDampingFactor_oneTimeConstant() {
         assertThat(FloorMapViewport.dampingFactor(300, 300))
                 .isCloseTo(1 - Math.exp(-1), within(TOLERANCE));
     }
 
-    /**
-     * Repeated small steps converge on the same total coverage as one large
-     * step of the same elapsed time — damping is frame-rate independent.
-     */
+    /// Repeated small steps converge on the same total coverage as one large
+    /// step of the same elapsed time — damping is frame-rate independent.
     @Test
     void testDampingFactor_frameRateIndependent() {
         // Two 150ms steps: remaining fraction after each is exp(-150/300).
@@ -302,11 +282,9 @@ class TestFloorMapViewport {
                 .isCloseTo(FloorMapViewport.dampingFactor(300, 300), within(TOLERANCE));
     }
 
-    /**
-     * The factor is a valid fraction: 0 for no elapsed time (no movement),
-     * approaching 1 for long gaps, and full (1) for a degenerate non-positive
-     * time constant.
-     */
+    /// The factor is a valid fraction: 0 for no elapsed time (no movement),
+    /// approaching 1 for long gaps, and full (1) for a degenerate non-positive
+    /// time constant.
     @Test
     void testDampingFactor_bounds() {
         assertThat(FloorMapViewport.dampingFactor(0, 300)).isEqualTo(0);

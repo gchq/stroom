@@ -39,7 +39,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 import javax.inject.Singleton;
 
-/** Makes a {@link FloorMapEventStoreDoc} creatable and openable from the explorer. */
+/// Makes a [FloorMapEventStoreDoc] creatable and openable from the explorer.
 @Singleton
 public class FloorMapEventStorePlugin extends DocumentPlugin<FloorMapEventStoreDoc> {
 

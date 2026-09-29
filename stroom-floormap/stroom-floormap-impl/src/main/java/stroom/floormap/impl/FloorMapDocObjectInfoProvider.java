@@ -22,20 +22,16 @@ import stroom.floormap.shared.FloorMapDoc;
 import event.logging.BaseObject;
 import event.logging.OtherObject;
 
-/**
- * Provides object information for event logging of {@link FloorMapDoc} documents.
- * <p>
- * Converts {@link FloorMapDoc} instances into {@link OtherObject} representations
- * suitable for the event logging framework.
- */
+/// Provides object information for event logging of [FloorMapDoc] documents.
+///
+/// Converts [FloorMapDoc] instances into [OtherObject] representations
+/// suitable for the event logging framework.
 class FloorMapDocObjectInfoProvider implements ObjectInfoProvider {
 
-    /**
-     * Creates an event-logging {@link BaseObject} from a {@link FloorMapDoc} instance.
-     *
-     * @param obj the object to convert, expected to be a {@link FloorMapDoc}
-     * @return an {@link OtherObject} populated with the document's type, UUID, name, and description
-     */
+    /// Creates an event-logging [BaseObject] from a [FloorMapDoc] instance.
+    ///
+    /// @param obj the object to convert, expected to be a [FloorMapDoc]
+    /// @return an [OtherObject] populated with the document's type, UUID, name, and description
     @Override
     public BaseObject createBaseObject(final Object obj) {
         final FloorMapDoc floorMapDoc = (FloorMapDoc) obj;
@@ -47,12 +43,10 @@ class FloorMapDocObjectInfoProvider implements ObjectInfoProvider {
                 .build();
     }
 
-    /**
-     * Returns the simple class name of the given object as the object type identifier.
-     *
-     * @param object the object whose type to determine
-     * @return the simple class name of the object
-     */
+    /// Returns the simple class name of the given object as the object type identifier.
+    ///
+    /// @param object the object whose type to determine
+    /// @return the simple class name of the object
     @Override
     public String getObjectType(final Object object) {
         return object.getClass().getSimpleName();

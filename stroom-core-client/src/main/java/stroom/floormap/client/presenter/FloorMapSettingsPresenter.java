@@ -16,9 +16,7 @@
 
 package stroom.floormap.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocPresenter;
@@ -40,7 +38,6 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -60,50 +57,35 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * Presenter for the <em>Settings</em> tab of a {@link FloorMapDoc}.
- *
- * <p>This presenter lets users configure:</p>
- * <ul>
- *   <li>The <strong>Events Store</strong> reference – a {@link FloorMapEventStoreDoc} read for
- *       floor-map event data. Nothing writes to it from here.</li>
- *   <li>The <strong>Facts Store</strong> reference – a {@link SqlTemporalStoreDoc} used to
- *       persist floor-map fact data.</li>
- *   <li>The <strong>Value Format</strong> – the serialisation format for map values
- *       (selected from the {@link ValueFormat} enum).</li>
- *   <li>The <strong>Value Schema</strong> – an editable grid of
- *       {@link FloorMapFieldMapping} entries that define the fields, their roles, paths,
- *       display names, and default values.</li>
- * </ul>
- *
- * <p>Per-type presentation (shape/colour/paint order) is configured on the
- * <em>Layers</em> panel (in the Map/Editor dock), not here.</p>
- *
- * <p>It extends {@link DocPresenter} and is embedded as a tab within
- * {@link FloorMapPresenter}'s tabbed view. The companion view interface is
- * {@link FloorMapSettingsView}.</p>
- *
- * @see FloorMapPresenter
- * @see FloorMapDoc
- * @see FloorMapFieldMapping
- */
+/// Presenter for the *Settings* tab of a [FloorMapDoc].
+///
+/// This presenter lets users configure:
+///
+/// - The **Events Store** reference – a [FloorMapEventStoreDoc] read for
+///   floor-map event data. Nothing writes to it from here.
+/// - The **Facts Store** reference – a [SqlTemporalStoreDoc] used to
+///   persist floor-map fact data.
+/// - The **Value Format** – the serialisation format for map values
+///   (selected from the [ValueFormat] enum).
+/// - The **Value Schema** – an editable grid of
+///   [FloorMapFieldMapping] entries that define the fields, their roles, paths,
+///   display names, and default values.
+///
+/// Per-type presentation (shape/colour/paint order) is configured on the
+/// *Layers* panel (in the Map/Editor dock), not here.
+///
+/// It extends [DocPresenter] and is embedded as a tab within
+/// [FloorMapPresenter]'s tabbed view. The companion view interface is
+/// [FloorMapSettingsView].
+///
+/// @see FloorMapPresenter
+/// @see FloorMapDoc
+/// @see FloorMapFieldMapping
 public class FloorMapSettingsPresenter
         extends DocPresenter<FloorMapSettingsView, FloorMapDoc>
         implements DirtyUiHandlers {
-
-
-    private final RestFactory restFactory;
-
-    /**
-     * The last events store known to be usable, so a rejected choice can be put back.
-     *
-     * <p>Reverting rather than clearing, because the likeliest way to land on an unusable store is
-     * a mis-click while one that works is already configured — and clearing would turn that into a
-     * second problem to notice and fix.</p>
-     */
 
     private final DocSelectionBoxPresenter eventsStoreRefPresenter;
     private final DocSelectionBoxPresenter factsStoreRefPresenter;
@@ -127,20 +109,16 @@ public class FloorMapSettingsPresenter
     private final ButtonView removeButton;
     private boolean readOnly;
 
-    /**
-     * Set once the Editor tab enables area support on this document; onRead
-     * then re-applies {@link #applyAreaPatch()} so the grid never reverts the
-     * upgrade before it is persisted.
-     */
+    /// Set once the Editor tab enables area support on this document; onRead
+    /// then re-applies [#applyAreaPatch()] so the grid never reverts the
+    /// upgrade before it is persisted.
     private boolean areaPatchActive;
 
     @Inject
     public FloorMapSettingsPresenter(final EventBus eventBus,
                                      final FloorMapSettingsView view,
-                                     final Provider<DocSelectionBoxPresenter> docSelectionBoxPresenterProvider,
-                                     final RestFactory restFactory) {
+                                     final Provider<DocSelectionBoxPresenter> docSelectionBoxPresenterProvider) {
         super(eventBus, view);
-        this.restFactory = restFactory;
 
         view.setUiHandlers(this);
 
@@ -201,18 +179,16 @@ public class FloorMapSettingsPresenter
         view.setSchemaGrid(schemaGrid);
     }
 
-    /**
-     * Builds the accessible name for a control in the schema grid.
-     *
-     * <p>Every row's control would otherwise announce identically ("Role", "Path", …), so the
-     * row's JSON path is included to distinguish them.</p>
-     *
-     * <p>Rows whose path is null or empty fall back to their 1-based position. Note a newly
-     * added row does <em>not</em> take that fallback: {@link #onAddMapping()} seeds the path
-     * with the placeholder {@code "."}, which is non-empty, so it announces as "Role for ."
-     * until the user types a real path. Only a persisted document with a blank path reaches
-     * the positional form.</p>
-     */
+    /// Builds the accessible name for a control in the schema grid.
+    ///
+    /// Every row's control would otherwise announce identically ("Role", "Path", …), so the
+    /// row's JSON path is included to distinguish them.
+    ///
+    /// Rows whose path is null or empty fall back to their 1-based position. Note a newly
+    /// added row does *not* take that fallback: [#onAddMapping()] seeds the path
+    /// with the placeholder `"."`, which is non-empty, so it announces as "Role for ."
+    /// until the user types a real path. Only a persisted document with a blank path reaches
+    /// the positional form.
     private String schemaCellLabel(final String columnName, final int rowIndex) {
         final List<FloorMapFieldMapping> list = schemaDataProvider.getList();
         String row = null;
@@ -228,29 +204,26 @@ public class FloorMapSettingsPresenter
         return columnName + " for " + row;
     }
 
-    /**
-     * Initialises the columns displayed in the Value Schema data grid.
-     *
-     * <p>Four editable columns are added in order:</p>
-     * <ol>
-     *   <li><strong>Role</strong> – a dropdown ({@link AccessibleSelectionCell}) of
-     *       {@link Role} values.</li>
-     *   <li><strong>Path</strong> – an {@link AccessibleTextInputCell} for the JSON path.</li>
-     *   <li><strong>Display Name</strong> – an {@link AccessibleTextInputCell} for the
-     *       label.</li>
-     *   <li><strong>Default</strong> – an {@link AccessibleTextInputCell} for the default
-     *       value.</li>
-     * </ol>
-     *
-     * <p>These are the accessible variants rather than GWT's {@code SelectionCell} and
-     * {@code EditTextCell}, both of which render {@code tabindex="-1"} and so cannot be
-     * reached by keyboard in a Stroom grid — see {@link AccessibleSelectionCell} for the
-     * reason.</p>
-     *
-     * <p>Because {@link FloorMapFieldMapping} is immutable, each column's
-     * {@code FieldUpdater} creates a replacement instance and swaps it in
-     * the data provider list at the same index.</p>
-     */
+    /// Initialises the columns displayed in the Value Schema data grid.
+    ///
+    /// Four editable columns are added in order:
+    ///
+    /// 1. **Role** – a dropdown ([AccessibleSelectionCell]) of
+    ///    [Role] values.
+    /// 2. **Path** – an [AccessibleTextInputCell] for the JSON path.
+    /// 3. **Display Name** – an [AccessibleTextInputCell] for the
+    ///    label.
+    /// 4. **Default** – an [AccessibleTextInputCell] for the default
+    ///    value.
+    ///
+    /// These are the accessible variants rather than GWT's `SelectionCell` and
+    /// `EditTextCell`, both of which render `tabindex="-1"` and so cannot be
+    /// reached by keyboard in a Stroom grid — see [AccessibleSelectionCell] for the
+    /// reason.
+    ///
+    /// Because [FloorMapFieldMapping] is immutable, each column's
+    /// `FieldUpdater` creates a replacement instance and swaps it in
+    /// the data provider list at the same index.
     private void initSchemaColumns() {
         // Role column – dropdown
         final List<String> roleOptions = Arrays.stream(Role.values())
@@ -325,22 +298,20 @@ public class FloorMapSettingsPresenter
         schemaGrid.addColumn(defaultColumn, "Default");
     }
 
-    /**
-     * Replaces the {@link FloorMapFieldMapping} at the given index in the
-     * data provider list with a new instance and marks the document as dirty.
-     *
-     * <p>It does not refresh the grid: mutating the data provider's list already redraws
-     * the affected row, and a full refresh here would be actively harmful — see the
-     * comment in the body.</p>
-     *
-     * @param index       the zero-based position in the list
-     * @param updated     the replacement mapping
-     * @param column      the column whose control was being edited, so focus can be put
-     *                    back on it if the row redraw drops it. Passed as the column rather
-     *                    than an index so the position is resolved from the grid at the
-     *                    moment it is needed — a hard-coded index would silently point at
-     *                    the wrong cell if a column were ever inserted.
-     */
+    /// Replaces the [FloorMapFieldMapping] at the given index in the
+    /// data provider list with a new instance and marks the document as dirty.
+    ///
+    /// It does not refresh the grid: mutating the data provider's list already redraws
+    /// the affected row, and a full refresh here would be actively harmful — see the
+    /// comment in the body.
+    ///
+    /// @param index       the zero-based position in the list
+    /// @param updated     the replacement mapping
+    /// @param column      the column whose control was being edited, so focus can be put
+    ///         back on it if the row redraw drops it. Passed as the column rather
+    ///         than an index so the position is resolved from the grid at the
+    ///         moment it is needed — a hard-coded index would silently point at
+    ///         the wrong cell if a column were ever inserted.
     private void replaceMapping(final int index,
                                 final FloorMapFieldMapping updated,
                                 final Column<FloorMapFieldMapping, String> column) {
@@ -365,16 +336,14 @@ public class FloorMapSettingsPresenter
         }
     }
 
-    /**
-     * Re-focuses the control at the given cell once the row redraw triggered by an edit has
-     * replaced it.
-     *
-     * <p>Only acts if focus was actually lost — if the user committed the edit by tabbing to
-     * a control in another row, that control survives the redraw and keeps focus, and
-     * stealing it back would be worse than the problem. The cost of the conservative choice
-     * is that a Tab <em>within</em> the edited row lands back on the cell just left, so the
-     * user tabs once more; that beats guessing at their intent.</p>
-     */
+    /// Re-focuses the control at the given cell once the row redraw triggered by an edit has
+    /// replaced it.
+    ///
+    /// Only acts if focus was actually lost — if the user committed the edit by tabbing to
+    /// a control in another row, that control survives the redraw and keeps focus, and
+    /// stealing it back would be worse than the problem. The cost of the conservative choice
+    /// is that a Tab *within* the edited row lands back on the cell just left, so the
+    /// user tabs once more; that beats guessing at their intent.
     private void restoreSchemaFocusAfterRedraw(final int rowIndex, final int columnIndex) {
         Scheduler.get().scheduleDeferred(() -> {
             final Element active = getActiveElement(Document.get());
@@ -405,39 +374,37 @@ public class FloorMapSettingsPresenter
         FloorMapAria.focusFirstFocusable(cell);
     }
 
-    /**
-     * Returns the document's currently focused element, or {@code null} if nothing is
-     * focused.
-     *
-     * <p><strong>Why this is JSNI.</strong> {@code document.activeElement} is not exposed by
-     * GWT: {@link Document} has {@code getElementById} and {@code getDocumentElement} but no
-     * {@code getActiveElement}, in 2.13.0 or any earlier version. There is no Java API to
-     * call, so reading it at all requires dropping to JavaScript. This project has no
-     * Elemental2 dependency, so {@code DomGlobal.document.activeElement} is not an option
-     * either.</p>
-     *
-     * <p><strong>Why it is duplicated rather than shared.</strong> The obvious home for this
-     * already exists — {@code stroom.widget.popup.client.view.CurrentFocus} declares the
-     * identical method as {@code public static native}. Its enclosing class is
-     * package-private, though, so nothing outside that package can reach it, and
-     * {@code AbstractTabBar} carries its own copy for the same reason. This is the third such
-     * copy. Making {@code CurrentFocus} public, or lifting the method into a shared client
-     * utility, would let the three collapse into one; that is a change to shared widget code
-     * and deliberately not made here. ({@code AnnotationEditPresenter} also reads
-     * {@code $doc.activeElement}, but inline inside an unrelated clipboard JSNI method, so it
-     * would not be folded in by the same change.)</p>
-     *
-     * <p><strong>Why it takes a {@link Document} parameter</strong> rather than using
-     * {@code $doc} directly, which would be shorter: purely to match the two widget copies
-     * above, so all three read alike and a future de-duplication is a straight lift.</p>
-     *
-     * <p>Used by {@link #restoreSchemaFocusAfterRedraw(int, int)} to tell "the redraw threw
-     * focus away" from "the user moved focus somewhere deliberately", which decides whether
-     * putting focus back is a repair or a theft.</p>
-     *
-     * @param doc the document to query, normally {@link Document#get()}
-     * @return the focused element, or {@code null} if there is none
-     */
+    /// Returns the document's currently focused element, or `null` if nothing is
+    /// focused.
+    ///
+    /// **Why this is JSNI.** `document.activeElement` is not exposed by
+    /// GWT: [Document] has `getElementById` and `getDocumentElement` but no
+    /// `getActiveElement`, in 2.13.0 or any earlier version. There is no Java API to
+    /// call, so reading it at all requires dropping to JavaScript. This project has no
+    /// Elemental2 dependency, so `DomGlobal.document.activeElement` is not an option
+    /// either.
+    ///
+    /// **Why it is duplicated rather than shared.** The obvious home for this
+    /// already exists — `stroom.widget.popup.client.view.CurrentFocus` declares the
+    /// identical method as `public static native`. Its enclosing class is
+    /// package-private, though, so nothing outside that package can reach it, and
+    /// `AbstractTabBar` carries its own copy for the same reason. This is the third such
+    /// copy. Making `CurrentFocus` public, or lifting the method into a shared client
+    /// utility, would let the three collapse into one; that is a change to shared widget code
+    /// and deliberately not made here. (`AnnotationEditPresenter` also reads
+    /// `$doc.activeElement`, but inline inside an unrelated clipboard JSNI method, so it
+    /// would not be folded in by the same change.)
+    ///
+    /// **Why it takes a [Document] parameter** rather than using
+    /// `$doc` directly, which would be shorter: purely to match the two widget copies
+    /// above, so all three read alike and a future de-duplication is a straight lift.
+    ///
+    /// Used by [#restoreSchemaFocusAfterRedraw(int, int)] to tell "the redraw threw
+    /// focus away" from "the user moved focus somewhere deliberately", which decides whether
+    /// putting focus back is a repair or a theft.
+    ///
+    /// @param doc the document to query, normally [Document#get()]
+    /// @return the focused element, or `null` if there is none
     private static native Element getActiveElement(Document doc) /*-{
         return doc.activeElement;
     }-*/;
@@ -449,6 +416,7 @@ public class FloorMapSettingsPresenter
         //noinspection unused e
         // No validation on selection: the picker only offers FloorMapEventStoreDoc, and that
         // type fixes its own state type, so there is no longer a wrong store to choose.
+        //noinspection unused e
         registerHandler(eventsStoreRefPresenter.addDataSelectionHandler(e -> onChange()));
         //noinspection unused e
         registerHandler(factsStoreRefPresenter.addDataSelectionHandler(e -> onChange()));
@@ -461,14 +429,12 @@ public class FloorMapSettingsPresenter
         registerHandler(removeButton.addClickHandler(e -> onRemoveMapping()));
     }
 
-    /**
-     * Handles the <em>Add</em> button click by creating a new
-     * {@link FloorMapFieldMapping} with role {@link Role#CUSTOM}, a placeholder
-     * path of {@code "."}, and a display name of {@code "New Field"}.
-     *
-     * <p>The new mapping is appended to the schema data provider, the grid is
-     * refreshed, and the document is marked as dirty via {@link #onChange()}.</p>
-     */
+    /// Handles the *Add* button click by creating a new
+    /// [FloorMapFieldMapping] with role [Role#CUSTOM], a placeholder
+    /// path of `"."`, and a display name of `"New Field"`.
+    ///
+    /// The new mapping is appended to the schema data provider, the grid is
+    /// refreshed, and the document is marked as dirty via [#onChange()].
     private void onAddMapping() {
         // Add a new CUSTOM field with empty path
         final FloorMapFieldMapping newMapping =
@@ -479,14 +445,12 @@ public class FloorMapSettingsPresenter
         onChange();
     }
 
-    /**
-     * Handles the <em>Remove</em> button click by deleting the currently selected
-     * {@link FloorMapFieldMapping} from the schema grid.
-     *
-     * <p>If no row is selected the method is a no-op. After removal the selection
-     * is cleared, the remove button is disabled, the grid is refreshed, and the
-     * document is marked as dirty via {@link #onChange()}.</p>
-     */
+    /// Handles the *Remove* button click by deleting the currently selected
+    /// [FloorMapFieldMapping] from the schema grid.
+    ///
+    /// If no row is selected the method is a no-op. After removal the selection
+    /// is cleared, the remove button is disabled, the grid is refreshed, and the
+    /// document is marked as dirty via [#onChange()].
     private void onRemoveMapping() {
         final FloorMapFieldMapping selected = schemaSelectionModel.getSelectedObject();
         if (selected != null) {
@@ -499,21 +463,17 @@ public class FloorMapSettingsPresenter
         }
     }
 
-    /**
-     * Synchronises the schema {@link ListDataProvider}'s list with the
-     * {@link MyDataGrid} widget, updating both the displayed rows and the total
-     * row count so the grid reflects the current state of the data provider.
-     */
+    /// Synchronises the schema [ListDataProvider]'s list with the
+    /// [MyDataGrid] widget, updating both the displayed rows and the total
+    /// row count so the grid reflects the current state of the data provider.
     private void refreshGrid() {
         final List<FloorMapFieldMapping> list = schemaDataProvider.getList();
         schemaGrid.setRowData(0, list);
         schemaGrid.setRowCount(list.size(), true);
     }
 
-    /**
-     * Pushes the read-only state into the schema grid's cells. Call before
-     * {@link #refreshGrid()}, since the cells only pick it up when they re-render.
-     */
+    /// Pushes the read-only state into the schema grid's cells. Call before
+    /// [#refreshGrid()], since the cells only pick it up when they re-render.
     private void setSchemaCellsReadOnly(final boolean readOnly) {
         roleCell.setReadOnly(readOnly);
         pathCell.setReadOnly(readOnly);
@@ -521,25 +481,22 @@ public class FloorMapSettingsPresenter
         defaultCell.setReadOnly(readOnly);
     }
 
-    /**
-     * Populates the view from a persisted {@link FloorMapDoc}.
-     *
-     * <p>The method performs the following steps:</p>
-     * <ol>
-     *   <li>Sets the Events Store and Facts Store selection boxes to the
-     *       references stored in the document and enables/disables them
-     *       according to the {@code readOnly} flag.</li>
-     *   <li>Selects the matching {@link ValueFormat} entry in the dropdown.</li>
-     *   <li>Copies the document's value schema list into the data provider and
-     *       refreshes the grid.</li>
-     *   <li>Enables or disables the <em>Add</em> and <em>Remove</em> toolbar
-     *       buttons based on the {@code readOnly} flag.</li>
-     * </ol>
-     *
-     * @param docRef      the {@link DocRef} identifying the document being read
-     * @param floorMapDoc the persisted document whose settings are displayed
-     * @param readOnly    {@code true} if the UI should be non-editable
-     */
+    /// Populates the view from a persisted [FloorMapDoc].
+    ///
+    /// The method performs the following steps:
+    ///
+    /// 1. Sets the Events Store and Facts Store selection boxes to the
+    ///    references stored in the document and enables/disables them
+    ///    according to the `readOnly` flag.
+    /// 2. Selects the matching [ValueFormat] entry in the dropdown.
+    /// 3. Copies the document's value schema list into the data provider and
+    ///    refreshes the grid.
+    /// 4. Enables or disables the *Add* and *Remove* toolbar
+    ///    buttons based on the `readOnly` flag.
+    ///
+    /// @param docRef      the [DocRef] identifying the document being read
+    /// @param floorMapDoc the persisted document whose settings are displayed
+    /// @param readOnly    `true` if the UI should be non-editable
     @Override
     protected void onRead(final DocRef docRef, final FloorMapDoc floorMapDoc, final boolean readOnly) {
         this.readOnly = readOnly;
@@ -589,16 +546,14 @@ public class FloorMapSettingsPresenter
         // through untouched and no cross-tab patching is needed.
     }
 
-    /**
-     * Merges the default area mappings ({@code GEOMETRY}/{@code FILL}/
-     * {@code OPACITY}) into the Value Schema grid, if absent. Called when the
-     * Editor tab enables area support on this document — this tab writes
-     * {@code valueSchema} wholesale from its grid state on save, so an unpatched
-     * grid would silently revert the upgrade. Idempotent; stays active so
-     * subsequent reads re-apply it until the upgrade is persisted (after which
-     * the merge is a no-op). The matching {@code "area"} type style is handled
-     * by the Layers panel.
-     */
+    /// Merges the default area mappings (`GEOMETRY`/`FILL`/
+    /// `OPACITY`) into the Value Schema grid, if absent. Called when the
+    /// Editor tab enables area support on this document — this tab writes
+    /// `valueSchema` wholesale from its grid state on save, so an unpatched
+    /// grid would silently revert the upgrade. Idempotent; stays active so
+    /// subsequent reads re-apply it until the upgrade is persisted (after which
+    /// the merge is a no-op). The matching `"area"` type style is handled
+    /// by the Layers panel.
     public void applyAreaPatch() {
         areaPatchActive = true;
         final ValueFormat vf = getEntity() != null
@@ -609,18 +564,16 @@ public class FloorMapSettingsPresenter
         refreshGrid();
     }
 
-    /**
-     * Reads the current UI state and produces an updated {@link FloorMapDoc}.
-     *
-     * <p>The selected value format is parsed from the dropdown; if parsing fails
-     * it falls back to {@link ValueFormat#JSON}. A new {@link FloorMapDoc} is
-     * built via the document's copy-builder, incorporating the currently selected
-     * events store reference, facts store reference, value format, and value
-     * schema list.</p>
-     *
-     * @param doc the existing document to base the updated copy on
-     * @return a new {@link FloorMapDoc} instance reflecting the current UI state
-     */
+    /// Reads the current UI state and produces an updated [FloorMapDoc].
+    ///
+    /// The selected value format is parsed from the dropdown; if parsing fails
+    /// it falls back to [ValueFormat#JSON]. A new [FloorMapDoc] is
+    /// built via the document's copy-builder, incorporating the currently selected
+    /// events store reference, facts store reference, value format, and value
+    /// schema list.
+    ///
+    /// @param doc the existing document to base the updated copy on
+    /// @return a new [FloorMapDoc] instance reflecting the current UI state
     @Override
     protected FloorMapDoc onWrite(final FloorMapDoc doc) {
         // Read value format from dropdown
@@ -645,69 +598,55 @@ public class FloorMapSettingsPresenter
                 .build();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Delegates to {@link #onChange()} to propagate the dirty state up to
-     * the parent {@link FloorMapPresenter}, which manages the document
-     * save lifecycle.</p>
-     */
+    /// {@inheritDoc}
+    ///
+    /// Delegates to [#onChange()] to propagate the dirty state up to
+    /// the parent [FloorMapPresenter], which manages the document
+    /// save lifecycle.
     @Override
     public void onDirty() {
         onChange();
     }
 
-    /**
-     * View contract for {@link FloorMapSettingsPresenter}.
-     *
-     * <p>Provides slots for the events/facts store selection widgets, the value
-     * format dropdown, and the value schema grid with its toolbar.</p>
-     */
+    /// View contract for [FloorMapSettingsPresenter].
+    ///
+    /// Provides slots for the events/facts store selection widgets, the value
+    /// format dropdown, and the value schema grid with its toolbar.
     public interface FloorMapSettingsView extends View, HasUiHandlers<DirtyUiHandlers>, ReadOnlyChangeHandler {
 
-        /**
-         * Sets the view widget for the Events Store document-selection box.
-         *
-         * @param view the {@link DocSelectionBoxPresenter} view
-         */
+        /// Sets the view widget for the Events Store document-selection box.
+        ///
+        /// @param view the [DocSelectionBoxPresenter] view
         void setEventsStoreRefView(View view);
 
-        /**
-         * Sets the view widget for the Facts Store document-selection box.
-         *
-         * @param view the {@link DocSelectionBoxPresenter} view
-         */
+        /// Sets the view widget for the Facts Store document-selection box.
+        ///
+        /// @param view the [DocSelectionBoxPresenter] view
         void setFactsStoreRefView(View view);
 
-        /** The timeline histogram query, as edited. */
+        /// The timeline histogram query, as edited.
         String getHistogramQuery();
 
         void setHistogramQuery(String query);
 
-        /** The "Show All" extent query, as edited. */
+        /// The "Show All" extent query, as edited.
         String getExtentQuery();
 
         void setExtentQuery(String query);
 
-        /**
-         * Sets the widget used for the Value Format dropdown.
-         *
-         * @param widget the {@link ListBox} (or equivalent) widget
-         */
+        /// Sets the widget used for the Value Format dropdown.
+        ///
+        /// @param widget the [ListBox] (or equivalent) widget
         void setValueFormatWidget(Widget widget);
 
-        /**
-         * Sets the toolbar widget (add/remove buttons) above the schema grid.
-         *
-         * @param toolbar the {@link ButtonPanel} widget
-         */
+        /// Sets the toolbar widget (add/remove buttons) above the schema grid.
+        ///
+        /// @param toolbar the [ButtonPanel] widget
         void setSchemaToolbar(Widget toolbar);
 
-        /**
-         * Sets the data grid widget that displays the Value Schema mappings.
-         *
-         * @param grid the {@link MyDataGrid} widget
-         */
+        /// Sets the data grid widget that displays the Value Schema mappings.
+        ///
+        /// @param grid the [MyDataGrid] widget
         void setSchemaGrid(Widget grid);
     }
 }

@@ -32,21 +32,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
-/**
- * Tests {@link FloorMapEntryParser} against XML-formatted temporal entry
- * values, using {@link DomValueAccessor} as a GWT-free stand-in for the real
- * {@code stroom.floormap.client.value.XmlValueAccessor}.
- *
- * <p>Mirrors {@link TestFloorMapEntryParser} (which exercises the JSON path
- * via {@link MapValueAccessor}), but with an XPath-style value schema and
- * XML entry payloads, to confirm the parser's format-independence actually
- * holds for the XML {@link ValueFormat}.</p>
- */
+/// Tests [FloorMapEntryParser] against XML-formatted temporal entry
+/// values, using [DomValueAccessor] as a GWT-free stand-in for the real
+/// `stroom.floormap.client.value.XmlValueAccessor`.
+///
+/// Mirrors [TestFloorMapEntryParser] (which exercises the JSON path
+/// via [MapValueAccessor]), but with an XPath-style value schema and
+/// XML entry payloads, to confirm the parser's format-independence actually
+/// holds for the XML [ValueFormat].
 class TestFloorMapEntryParserXml {
 
     private static final String MAP = "testMap";
 
-    /** XPath-style schema, mirroring {@link FloorMapFieldMapping#initialValueSchema()}. */
+    /// XPath-style schema, mirroring [FloorMapFieldMapping#initialValueSchema()].
     private static final List<FloorMapFieldMapping> SCHEMA = List.of(
             new FloorMapFieldMapping("/entry/type", Role.TYPE, "Type", null),
             new FloorMapFieldMapping("/entry/name", Role.LABEL, "Name", null),
@@ -67,9 +65,7 @@ class TestFloorMapEntryParserXml {
     // parse — null/empty inputs
     // -----------------------------------------------------------------------
 
-    /**
-     * A {@code null} entry list produces an empty fact list with no warnings.
-     */
+    /// A `null` entry list produces an empty fact list with no warnings.
     @Test
     void testParse_nullEntries() {
         final List<Fact> facts =
@@ -78,9 +74,7 @@ class TestFloorMapEntryParserXml {
         assertThat(warnings).isEmpty();
     }
 
-    /**
-     * An empty entry list produces an empty fact list with no warnings.
-     */
+    /// An empty entry list produces an empty fact list with no warnings.
     @Test
     void testParse_emptyEntries() {
         final List<Fact> facts =
@@ -93,12 +87,10 @@ class TestFloorMapEntryParserXml {
     // parse — background (image) entry
     // -----------------------------------------------------------------------
 
-    /**
-     * A background entry (declared via {@code <type>} and carrying an image)
-     * yields a single fact with that image and its world-to-map placement
-     * matrix. A background is not special-cased: it is just an image fact placed
-     * by {@code WORLD_TO_MAP}.
-     */
+    /// A background entry (declared via `<type>` and carrying an image)
+    /// yields a single fact with that image and its world-to-map placement
+    /// matrix. A background is not special-cased: it is just an image fact placed
+    /// by `WORLD_TO_MAP`.
     @Test
     void testParse_backgroundEntry() {
         final String xml = "<entry><type>background</type><img>floor1.png</img>"
@@ -120,11 +112,9 @@ class TestFloorMapEntryParserXml {
         assertThat(warnings).as("valid background should not emit warnings").isEmpty();
     }
 
-    /**
-     * An image-bearing entry with no {@code <type>} still becomes an image
-     * fact. (Under the new model there is no key- or type-based "background"
-     * detection: any fact carrying an image is an image fact.)
-     */
+    /// An image-bearing entry with no `<type>` still becomes an image
+    /// fact. (Under the new model there is no key- or type-based "background"
+    /// detection: any fact carrying an image is an image fact.)
     @Test
     void testParse_imageEntry_noType() {
         final String xml = "<entry><img>floor1.png</img></entry>";
@@ -143,10 +133,8 @@ class TestFloorMapEntryParserXml {
     // parse — regular object entries
     // -----------------------------------------------------------------------
 
-    /**
-     * A regular object entry with no world-to-map matrix is parsed with its
-     * raw (world) coordinates unchanged and an identity placement matrix.
-     */
+    /// A regular object entry with no world-to-map matrix is parsed with its
+    /// raw (world) coordinates unchanged and an identity placement matrix.
     @Test
     void testParse_regularObject_identityMatrix() {
         final String xml = "<entry><type>gate</type><name>Gate-1</name>"
@@ -167,11 +155,9 @@ class TestFloorMapEntryParserXml {
         assertThat(warnings).as("valid entry should not emit warnings").isEmpty();
     }
 
-    /**
-     * A regular object entry carries its world position and its world-to-map
-     * matrix. Composing the two (as the canvas does) maps the world point into
-     * map space (scale and translation applied).
-     */
+    /// A regular object entry carries its world position and its world-to-map
+    /// matrix. Composing the two (as the canvas does) maps the world point into
+    /// map space (scale and translation applied).
     @Test
     void testParse_regularObject_withWorldToMapTransform() {
         // World-to-map: scale 2x, translate (50, 100)
@@ -197,11 +183,9 @@ class TestFloorMapEntryParserXml {
         assertThat(mapY).isCloseTo(140.0, within(0.001));
     }
 
-    /**
-     * An object entry with no {@code <coords>} element has a {@code null}
-     * position (rather than defaulting to a point), and still parses without
-     * warning.
-     */
+    /// An object entry with no `<coords>` element has a `null`
+    /// position (rather than defaulting to a point), and still parses without
+    /// warning.
     @Test
     void testParse_missingCoords_nullPosition() {
         final String xml = "<entry><type>sensor</type><name>S1</name></entry>";
@@ -214,10 +198,8 @@ class TestFloorMapEntryParserXml {
         assertThat(facts.getFirst().getPosition()).isNull();
     }
 
-    /**
-     * An object entry with no world-to-map matrix defaults to the identity
-     * placement matrix, so its world position passes through unchanged.
-     */
+    /// An object entry with no world-to-map matrix defaults to the identity
+    /// placement matrix, so its world position passes through unchanged.
     @Test
     void testParse_missingMatrix_usesIdentity() {
         final String xml = "<entry><type>gate</type><coords>50,75</coords></entry>";
@@ -237,11 +219,9 @@ class TestFloorMapEntryParserXml {
     // parse — mixed entries
     // -----------------------------------------------------------------------
 
-    /**
-     * A mixed batch of one background (image) entry and several regular objects
-     * produces one fact per entry: the image fact carries the image, the others
-     * do not.
-     */
+    /// A mixed batch of one background (image) entry and several regular objects
+    /// produces one fact per entry: the image fact carries the image, the others
+    /// do not.
     @Test
     void testParse_backgroundAndMultipleObjects() {
         final String bgXml = "<entry><type>background</type><img>floor.png</img></entry>";
@@ -265,13 +245,11 @@ class TestFloorMapEntryParserXml {
     // parse — error handling
     // -----------------------------------------------------------------------
 
-    /**
-     * A value written as a CDATA section reads exactly like plain text.
-     *
-     * <p>CDATA and text differ only in how the source document escapes them; to a
-     * reader they are the same string. Ignoring CDATA made such a value read as
-     * absent, so a fact whose type or image was wrapped in CDATA lost it.</p>
-     */
+    /// A value written as a CDATA section reads exactly like plain text.
+    ///
+    /// CDATA and text differ only in how the source document escapes them; to a
+    /// reader they are the same string. Ignoring CDATA made such a value read as
+    /// absent, so a fact whose type or image was wrapped in CDATA lost it.
     @Test
     void testParse_cdataValuesAreRead() {
         final String xml = "<entry><type><![CDATA[gate]]></type>"
@@ -287,19 +265,17 @@ class TestFloorMapEntryParserXml {
         assertThat(warnings).isEmpty();
     }
 
-    /**
-     * Re-serialising after an edit must not destroy CDATA content or comments.
-     *
-     * <p>This is the regression test for the data loss that a plain object drag used
-     * to cause: the editor re-serialises the whole value on every transform, and the
-     * serialiser emitted only element and text nodes, so the contents of every CDATA
-     * section and comment were silently dropped from the saved document.</p>
-     *
-     * <p>CDATA content is preserved as escaped text rather than as a CDATA section.
-     * The two forms are equivalent to any XML reader, and escaping avoids having to
-     * split the payload around a literal {@code ]]>}. What must survive is the
-     * <em>content</em>, and it does.</p>
-     */
+    /// Re-serialising after an edit must not destroy CDATA content or comments.
+    ///
+    /// This is the regression test for the data loss that a plain object drag used
+    /// to cause: the editor re-serialises the whole value on every transform, and the
+    /// serialiser emitted only element and text nodes, so the contents of every CDATA
+    /// section and comment were silently dropped from the saved document.
+    ///
+    /// CDATA content is preserved as escaped text rather than as a CDATA section.
+    /// The two forms are equivalent to any XML reader, and escaping avoids having to
+    /// split the payload around a literal `]]>`. What must survive is the
+    /// *content*, and it does.
     @Test
     void testSerialize_preservesCdataContentAndComments() {
         final String xml = "<entry><type><![CDATA[gate & co]]></type>"
@@ -331,11 +307,9 @@ class TestFloorMapEntryParserXml {
         assertThat(warnings).isEmpty();
     }
 
-    /**
-     * An element that is present but holds an unreadable matrix is corrupt data and
-     * is reported, whereas an element that is simply absent is not — the same
-     * present-versus-absent distinction the JSON parser draws.
-     */
+    /// An element that is present but holds an unreadable matrix is corrupt data and
+    /// is reported, whereas an element that is simply absent is not — the same
+    /// present-versus-absent distinction the JSON parser draws.
     @Test
     void testParse_malformedMatrixIsReported_absentMatrixIsNot() {
         final List<Fact> bad = FloorMapEntryParser.parse(
@@ -361,11 +335,9 @@ class TestFloorMapEntryParserXml {
         assertThat(warnings).isEmpty();
     }
 
-    /**
-     * An entry whose value is not valid XML is skipped (excluded from the
-     * result) while other, well-formed entries still parse, and a warning is
-     * emitted for the bad one.
-     */
+    /// An entry whose value is not valid XML is skipped (excluded from the
+    /// result) while other, well-formed entries still parse, and a warning is
+    /// emitted for the bad one.
     @Test
     void testParse_malformedEntry_skippedWithWarning() {
         final TemporalEntry badEntry = entry("bad", 100, "<not-closed>");
@@ -383,10 +355,8 @@ class TestFloorMapEntryParserXml {
         assertThat(warnings.getFirst()).contains("bad");
     }
 
-    /**
-     * The warning emitted for a malformed entry includes that entry's key,
-     * so the user can identify which fact failed to parse.
-     */
+    /// The warning emitted for a malformed entry includes that entry's key,
+    /// so the user can identify which fact failed to parse.
     @Test
     void testParse_malformedEntry_warningContainsKey() {
         final TemporalEntry badEntry = entry("sensor-42", 100, "<unclosed");
@@ -400,10 +370,8 @@ class TestFloorMapEntryParserXml {
                 .contains("sensor-42");
     }
 
-    /**
-     * Multiple malformed entries in the same batch each produce their own
-     * warning, and do not prevent the well-formed entry from parsing.
-     */
+    /// Multiple malformed entries in the same batch each produce their own
+    /// warning, and do not prevent the well-formed entry from parsing.
     @Test
     void testParse_multipleMalformedEntries_emitsMultipleWarnings() {
         final List<Fact> facts = FloorMapEntryParser.parse(
@@ -418,10 +386,8 @@ class TestFloorMapEntryParserXml {
         assertThat(warnings.get(1)).contains("bad2");
     }
 
-    /**
-     * Passing a {@code null} warning consumer silently skips warning
-     * emission rather than throwing a {@code NullPointerException}.
-     */
+    /// Passing a `null` warning consumer silently skips warning
+    /// emission rather than throwing a `NullPointerException`.
     @Test
     void testParse_nullWarningConsumer_doesNotThrow() {
         final TemporalEntry badEntry = entry("bad", 100, "<not-closed>");
@@ -430,10 +396,8 @@ class TestFloorMapEntryParserXml {
         assertThat(facts).isEmpty();
     }
 
-    /**
-     * An entry with a {@code null} value is skipped and produces a warning
-     * that identifies the key and the fact that the value was null.
-     */
+    /// An entry with a `null` value is skipped and produces a warning
+    /// that identifies the key and the fact that the value was null.
     @Test
     void testParse_nullValue_emitsWarning() {
         final TemporalEntry nullValue = new TemporalEntry(MAP, "k1", 100L, null);
@@ -444,10 +408,8 @@ class TestFloorMapEntryParserXml {
         assertThat(warnings.getFirst()).contains("k1").contains("null");
     }
 
-    /**
-     * An entry with an empty-string value is skipped and produces a warning
-     * identifying the key.
-     */
+    /// An entry with an empty-string value is skipped and produces a warning
+    /// identifying the key.
     @Test
     void testParse_emptyValue_emitsWarning() {
         final TemporalEntry emptyValue = entry("k1", 100, "");
@@ -458,10 +420,8 @@ class TestFloorMapEntryParserXml {
         assertThat(warnings.getFirst()).contains("k1");
     }
 
-    /**
-     * An entry missing the {@code <type>} element still parses successfully,
-     * defaulting to an empty type string without emitting a warning.
-     */
+    /// An entry missing the `<type>` element still parses successfully,
+    /// defaulting to an empty type string without emitting a warning.
     @Test
     void testParse_nullType_usesEmptyString_noWarning() {
         final String xml = "<entry><coords>5,10</coords></entry>";
@@ -479,11 +439,9 @@ class TestFloorMapEntryParserXml {
     // parse — XML-specific: attribute-based paths
     // -----------------------------------------------------------------------
 
-    /**
-     * A schema mapping a role to an attribute path (e.g. {@code "/entry/@type"})
-     * reads the value from the XML attribute rather than a child element —
-     * a feature with no JSON equivalent.
-     */
+    /// A schema mapping a role to an attribute path (e.g. `"/entry/@type"`)
+    /// reads the value from the XML attribute rather than a child element —
+    /// a feature with no JSON equivalent.
     @Test
     void testParse_typeAsAttribute() {
         final List<FloorMapFieldMapping> attrSchema = List.of(
@@ -504,15 +462,13 @@ class TestFloorMapEntryParserXml {
     // parse — XML-specific: namespaces are ignored
     // -----------------------------------------------------------------------
 
-    /**
-     * An entry declaring a default namespace (via an unprefixed
-     * {@code xmlns="..."} attribute on the root) parses identically to the
-     * equivalent namespace-free document: elements are still matched by
-     * their plain path (e.g. {@code "/entry/type"}) and no warning is
-     * emitted. A default namespace does not add a prefix to element tag
-     * names, so this case already "just works" without any special
-     * namespace-handling logic — the same as a non-attribute-based read.
-     */
+    /// An entry declaring a default namespace (via an unprefixed
+    /// `xmlns="..."` attribute on the root) parses identically to the
+    /// equivalent namespace-free document: elements are still matched by
+    /// their plain path (e.g. `"/entry/type"`) and no warning is
+    /// emitted. A default namespace does not add a prefix to element tag
+    /// names, so this case already "just works" without any special
+    /// namespace-handling logic — the same as a non-attribute-based read.
     @Test
     void testParse_defaultNamespace_ignored() {
         final String xml = "<entry xmlns=\"http://example.com/floormap\">"
@@ -531,17 +487,15 @@ class TestFloorMapEntryParserXml {
         assertThat(warnings).as("a default namespace should not affect parsing").isEmpty();
     }
 
-    /**
-     * An entry declaring a prefixed namespace (e.g. {@code xmlns:fm="..."}
-     * with every element written as {@code <fm:...>}) still parses
-     * identically to the equivalent namespace-free document. The value
-     * schema's paths are plain, unprefixed names (e.g. {@code "/entry/type"}),
-     * and the parser must match elements by local name only, discarding the
-     * {@code fm:} prefix — i.e. the namespace prefix is ignored rather than
-     * causing the field to be missed. This also exercises numeric-array
-     * ({@code coords}, {@code tm-world-to-map}) extraction through prefixed
-     * elements, confirming the coordinate transform still applies.
-     */
+    /// An entry declaring a prefixed namespace (e.g. `xmlns:fm="..."`
+    /// with every element written as `<fm:...>`) still parses
+    /// identically to the equivalent namespace-free document. The value
+    /// schema's paths are plain, unprefixed names (e.g. `"/entry/type"`),
+    /// and the parser must match elements by local name only, discarding the
+    /// `fm:` prefix — i.e. the namespace prefix is ignored rather than
+    /// causing the field to be missed. This also exercises numeric-array
+    /// (`coords`, `tm-world-to-map`) extraction through prefixed
+    /// elements, confirming the coordinate transform still applies.
     @Test
     void testParse_prefixedNamespace_ignored() {
         final String xml = "<fm:entry xmlns:fm=\"http://example.com/floormap\">"
@@ -575,11 +529,9 @@ class TestFloorMapEntryParserXml {
     // Areas (GEOMETRY / FILL / OPACITY)
     // -----------------------------------------------------------------------
 
-    /**
-     * An XML area entry parses to a fact with vertices, fill and opacity —
-     * geometry as comma-separated numbers, opacity via the scalar
-     * {@code getNumber} path.
-     */
+    /// An XML area entry parses to a fact with vertices, fill and opacity —
+    /// geometry as comma-separated numbers, opacity via the scalar
+    /// `getNumber` path.
     @Test
     void testParse_areaEntry() {
         final List<FloorMapFieldMapping> schema = new ArrayList<>(SCHEMA);

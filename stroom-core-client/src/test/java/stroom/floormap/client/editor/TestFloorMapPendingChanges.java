@@ -44,45 +44,35 @@ class TestFloorMapPendingChanges {
     // isDirty / clear
     // -----------------------------------------------------------------------
 
-    /**
-     * A freshly-constructed instance has no pending changes.
-     */
+    /// A freshly-constructed instance has no pending changes.
     @Test
     void testInitiallyClean() {
         assertThat(pendingChanges.isDirty()).isFalse();
     }
 
-    /**
-     * Recording a creation marks the instance dirty.
-     */
+    /// Recording a creation marks the instance dirty.
     @Test
     void testDirtyAfterCreation() {
         pendingChanges.recordCreation(entry("k1", 100, "{}"));
         assertThat(pendingChanges.isDirty()).isTrue();
     }
 
-    /**
-     * Recording an update marks the instance dirty.
-     */
+    /// Recording an update marks the instance dirty.
     @Test
     void testDirtyAfterUpdate() {
         pendingChanges.recordUpdate(entry("k1", 100, "{\"v\":1}"));
         assertThat(pendingChanges.isDirty()).isTrue();
     }
 
-    /**
-     * Recording a deletion marks the instance dirty.
-     */
+    /// Recording a deletion marks the instance dirty.
     @Test
     void testDirtyAfterDeletion() {
         pendingChanges.recordDeletion(id("k1", 100));
         assertThat(pendingChanges.isDirty()).isTrue();
     }
 
-    /**
-     * {@link FloorMapPendingChanges#clear()} discards all recorded changes and
-     * returns the instance to a clean (not dirty) state.
-     */
+    /// [FloorMapPendingChanges#clear()] discards all recorded changes and
+    /// returns the instance to a clean (not dirty) state.
     @Test
     void testClearResetsDirty() {
         pendingChanges.recordCreation(entry("k1", 100, "{}"));
@@ -94,10 +84,8 @@ class TestFloorMapPendingChanges {
     // applyTo
     // -----------------------------------------------------------------------
 
-    /**
-     * With no pending changes, {@code applyTo} returns the server entries
-     * unmodified and in the same order.
-     */
+    /// With no pending changes, `applyTo` returns the server entries
+    /// unmodified and in the same order.
     @Test
     void testApplyTo_emptyChanges_returnsServerCopy() {
         final List<TemporalEntry> server = List.of(
@@ -109,27 +97,21 @@ class TestFloorMapPendingChanges {
         assertThat(result.get(1).getKey()).isEqualTo("k2");
     }
 
-    /**
-     * A {@code null} server list is treated as empty rather than throwing.
-     */
+    /// A `null` server list is treated as empty rather than throwing.
     @Test
     void testApplyTo_nullServer_returnsEmptyList() {
         final List<TemporalEntry> result = pendingChanges.applyTo(null);
         assertThat(result).isEmpty();
     }
 
-    /**
-     * An empty server list with no pending changes yields an empty result.
-     */
+    /// An empty server list with no pending changes yields an empty result.
     @Test
     void testApplyTo_emptyServer_returnsEmptyList() {
         final List<TemporalEntry> result = pendingChanges.applyTo(new ArrayList<>());
         assertThat(result).isEmpty();
     }
 
-    /**
-     * A pending creation is appended after the existing server entries.
-     */
+    /// A pending creation is appended after the existing server entries.
     @Test
     void testApplyTo_singleCreation() {
         pendingChanges.recordCreation(entry("k3", 300, "{\"c\":3}"));
@@ -139,10 +121,8 @@ class TestFloorMapPendingChanges {
         assertThat(result.get(1).getKey()).isEqualTo("k3");
     }
 
-    /**
-     * A pending update overlays (replaces the value of) the matching server
-     * entry rather than being appended alongside it.
-     */
+    /// A pending update overlays (replaces the value of) the matching server
+    /// entry rather than being appended alongside it.
     @Test
     void testApplyTo_singleUpdate_replaces() {
         pendingChanges.recordUpdate(entry("k1", 100, "{\"a\":\"updated\"}"));
@@ -152,10 +132,8 @@ class TestFloorMapPendingChanges {
         assertThat(result.getFirst().getValue()).isEqualTo("{\"a\":\"updated\"}");
     }
 
-    /**
-     * A pending deletion removes the matching entry from the merged result,
-     * leaving other server entries untouched.
-     */
+    /// A pending deletion removes the matching entry from the merged result,
+    /// leaving other server entries untouched.
     @Test
     void testApplyTo_singleDeletion_removes() {
         pendingChanges.recordDeletion(id("k1", 100));
@@ -165,10 +143,8 @@ class TestFloorMapPendingChanges {
         assertThat(result.getFirst().getKey()).isEqualTo("k2");
     }
 
-    /**
-     * An update recorded after a creation for the same key overlays the
-     * creation's value rather than producing a second entry.
-     */
+    /// An update recorded after a creation for the same key overlays the
+    /// creation's value rather than producing a second entry.
     @Test
     void testApplyTo_createThenUpdate() {
         pendingChanges.recordCreation(entry("k3", 300, "{\"c\":\"original\"}"));
@@ -178,10 +154,8 @@ class TestFloorMapPendingChanges {
         assertThat(result.getFirst().getValue()).isEqualTo("{\"c\":\"updated\"}");
     }
 
-    /**
-     * Deleting a natural key and then recreating it at the same key/time
-     * results in the recreated value surviving, not the deletion.
-     */
+    /// Deleting a natural key and then recreating it at the same key/time
+    /// results in the recreated value surviving, not the deletion.
     @Test
     void testApplyTo_deleteThenReCreate() {
         pendingChanges.recordDeletion(id("k1", 100));
@@ -192,10 +166,8 @@ class TestFloorMapPendingChanges {
         assertThat(result.getFirst().getValue()).isEqualTo("{\"a\":\"recreated\"}");
     }
 
-    /**
-     * A creation, update, and deletion recorded together are all applied
-     * correctly and independently to the server entries.
-     */
+    /// A creation, update, and deletion recorded together are all applied
+    /// correctly and independently to the server entries.
     @Test
     void testApplyTo_multipleOpsInOrder() {
         pendingChanges.recordCreation(entry("k3", 300, "{\"c\":3}"));
@@ -212,11 +184,9 @@ class TestFloorMapPendingChanges {
         assertThat(result.get(1).getKey()).isEqualTo("k3");
     }
 
-    /**
-     * When the same key appears at multiple effective times, a deletion
-     * targeting one time only removes that specific shard, leaving the
-     * other time's entry in place.
-     */
+    /// When the same key appears at multiple effective times, a deletion
+    /// targeting one time only removes that specific shard, leaving the
+    /// other time's entry in place.
     @Test
     void testApplyTo_duplicateKeys_differentTimes() {
         final List<TemporalEntry> server = List.of(
@@ -232,14 +202,12 @@ class TestFloorMapPendingChanges {
     // Natural-key matching with boxed Long identity
     // -----------------------------------------------------------------------
 
-    /**
-     * Natural-key matching must compare effective times by value, not by object
-     * identity. {@link Long} values outside the JVM's autobox cache
-     * ({@code -128}..{@code 127}) are distinct objects, so an accidental
-     * {@code ==} comparison would silently fail to match. This guards the update
-     * path: an update keyed on one {@code Long} instance must still overlay a
-     * server entry holding an equal-but-distinct {@code Long} instance.
-     */
+    /// Natural-key matching must compare effective times by value, not by object
+    /// identity. [Long] values outside the JVM's autobox cache
+    /// (`-128`..`127`) are distinct objects, so an accidental
+    /// `==` comparison would silently fail to match. This guards the update
+    /// path: an update keyed on one `Long` instance must still overlay a
+    /// server entry holding an equal-but-distinct `Long` instance.
     @Test
     void testApplyTo_update_effectiveTimeOutsideCacheRange() {
         final long serverTime = 1_000_000_000_000L;
@@ -255,11 +223,9 @@ class TestFloorMapPendingChanges {
         assertThat(result.getFirst().getValue()).isEqualTo("{\"v\":\"updated\"}");
     }
 
-    /**
-     * As above, but for the deletion path: a deletion keyed on one {@code Long}
-     * instance must remove a server entry holding an equal-but-distinct
-     * {@code Long} instance.
-     */
+    /// As above, but for the deletion path: a deletion keyed on one `Long`
+    /// instance must remove a server entry holding an equal-but-distinct
+    /// `Long` instance.
     @Test
     void testApplyTo_deletion_effectiveTimeOutsideCacheRange() {
         final long serverTime = 1_000_000_000_000L;
@@ -277,18 +243,14 @@ class TestFloorMapPendingChanges {
     // getChanges
     // -----------------------------------------------------------------------
 
-    /**
-     * With no operations recorded, {@code getChanges} returns an empty list.
-     */
+    /// With no operations recorded, `getChanges` returns an empty list.
     @Test
     void testGetChanges_empty() {
         assertThat(pendingChanges.getChanges()).isEmpty();
     }
 
-    /**
-     * {@code getChanges} returns operations in the exact order they were
-     * recorded, regardless of operation type.
-     */
+    /// `getChanges` returns operations in the exact order they were
+    /// recorded, regardless of operation type.
     @Test
     void testGetChanges_preservesOrder() {
         pendingChanges.recordCreation(entry("k1", 100, "{}"));

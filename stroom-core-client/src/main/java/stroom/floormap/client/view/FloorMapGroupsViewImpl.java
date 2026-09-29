@@ -25,15 +25,13 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/**
- * View implementation for the Groups panel.
- *
- * <p>Layout matches the Tracking panel: a toolbar pinned above the data grid with
- * a {@link DockLayoutPanel}, so the toolbar stays visible as rows load.</p>
- */
+/// View implementation for the Groups panel.
+///
+/// Layout matches the Tracking panel: a toolbar pinned above the data grid with
+/// a [DockLayoutPanel], so the toolbar stays visible as rows load.
 public class FloorMapGroupsViewImpl extends ViewImpl implements FloorMapGroupsView {
 
-    /** Height of the button toolbar in pixels. */
+    /// Height of the button toolbar in pixels.
     private static final int TOOLBAR_HEIGHT_PX = 26;
 
     private final DockLayoutPanel root;

@@ -60,59 +60,55 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
- * Presenter for the Tracking panel on the Map tab — a grid listing every
- * entity seen on the floor map: moving entities from the events stream
- * (people, assets, vehicles, or any other typed event object) plus the
- * static facts from the facts query (objects, backgrounds and areas).
- *
- * <p>Tracking is about things that move, so the grid lists <strong>event
- * entities only</strong> by default; the toolbar's <strong>Show Facts</strong>
- * toggle folds the fact-only rows in. The toggle is view state — it is not
- * persisted with the document, and the roster itself always holds everything so
- * flipping it back costs no query.</p>
- *
- * <p>The <strong>Area</strong> column answers exactly one question: <em>which
- * area is this object or user inside?</em> It names every containing area,
- * innermost (most specific) first, or {@code —} when the row is inside none.
- * <strong>Area rows always show {@code —}</strong> — area-inside-area is
- * deliberately not computed. Occupancy (how many entities are in an area) lives on
- * the canvas badge instead, so this column never means two different things.</p>
- *
- * <p>Detail that will not fit on the single-line cell — the containing areas
- * one-per-line, or where an entity was last seen — goes in the cell's
- * tooltip.</p>
- *
- * <p>Selecting a row tracks that entity: the parent presenter highlights it on
- * the canvas, centres the camera on it, and follows it as it moves. Because a
- * deliberate manual pan pauses following, clicking the
- * <em>already-selected</em> row re-invokes the selection consumer (a plain
- * {@code SelectionChangeEvent} would not fire) so the user can resume
- * following without deselecting first. The toolbar's single
- * <strong>Stop Tracking</strong> button clears the selection.</p>
- */
+/// Presenter for the Tracking panel on the Map tab — a grid listing every
+/// entity seen on the floor map: moving entities from the events stream
+/// (people, assets, vehicles, or any other typed event object) plus the
+/// static facts from the facts query (objects, backgrounds and areas).
+///
+/// Tracking is about things that move, so the grid lists **event
+/// entities only** by default; the toolbar's **Show Facts**
+/// toggle folds the fact-only rows in. The toggle is view state — it is not
+/// persisted with the document, and the roster itself always holds everything so
+/// flipping it back costs no query.
+///
+/// The **Area** column answers exactly one question: *which
+/// area is this object or user inside?* It names every containing area,
+/// innermost (most specific) first, or `—` when the row is inside none.
+/// **Area rows always show `—`** — area-inside-area is
+/// deliberately not computed. Occupancy (how many entities are in an area) lives on
+/// the canvas badge instead, so this column never means two different things.
+///
+/// Detail that will not fit on the single-line cell — the containing areas
+/// one-per-line, or where an entity was last seen — goes in the cell's
+/// tooltip.
+///
+/// Selecting a row tracks that entity: the parent presenter highlights it on
+/// the canvas, centres the camera on it, and follows it as it moves. Because a
+/// deliberate manual pan pauses following, clicking the
+/// *already-selected* row re-invokes the selection consumer (a plain
+/// `SelectionChangeEvent` would not fire) so the user can resume
+/// following without deselecting first. The toolbar's single
+/// **Stop Tracking** button clears the selection.
 public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackingView> {
 
-    /** Column text for a row that is not inside any area. */
+    /// Column text for a row that is not inside any area.
     private static final String NO_AREA = "—";
 
-    /**
-     * This grid's element id, so the canvas can name it as the map's text alternative
-     * via {@code aria-describedby}. Minted per instance, not a constant.
-     *
-     * <p>A previous version of this comment argued for a fixed id: the reference
-     * crosses presenters, so threading a handle through "purely to learn a string"
-     * looked like coupling for nothing, and the Map tab has only one Tracking panel so the id
-     * "cannot collide with itself". The second half is true and beside the point —
-     * Stroom opens documents in tabs, so the collision is with <em>another
-     * document's</em> grid, not with this one's. Two floor maps open at once gave two
-     * elements the same id, and each canvas's {@code aria-describedby} then resolved
-     * to whichever came first in the DOM. Nothing looks wrong to a sighted user; the
-     * screen reader simply describes the wrong map.</p>
-     *
-     * <p>The coupling objection also does not hold: the consumer already holds this
-     * presenter (FloorMapMapPresenter.floorMapTrackingPresenter), so it reads the id from the instance.</p>
-     */
+    /// This grid's element id, so the canvas can name it as the map's text alternative
+    /// via `aria-describedby`. Minted per instance, not a constant.
+    ///
+    /// A previous version of this comment argued for a fixed id: the reference
+    /// crosses presenters, so threading a handle through "purely to learn a string"
+    /// looked like coupling for nothing, and the Map tab has only one Tracking panel so the id
+    /// "cannot collide with itself". The second half is true and beside the point —
+    /// Stroom opens documents in tabs, so the collision is with *another
+    /// document's* grid, not with this one's. Two floor maps open at once gave two
+    /// elements the same id, and each canvas's `aria-describedby` then resolved
+    /// to whichever came first in the DOM. Nothing looks wrong to a sighted user; the
+    /// screen reader simply describes the wrong map.
+    ///
+    /// The coupling objection also does not hold: the consumer already holds this
+    /// presenter (FloorMapMapPresenter.floorMapTrackingPresenter), so it reads the id from the instance.
     private final String gridElementId = FloorMapAria.uniqueId("floormap-tracking-grid");
 
     private final MyDataGrid<EntityEntry> dataGrid;
@@ -124,44 +120,36 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
     private final ButtonView addToGroupButton;
     private final InlineSvgToggleButton showFactsButton;
 
-    /** Supplies the current groups for the "Add to Group" menu; may be {@code null}. */
+    /// Supplies the current groups for the "Add to Group" menu; may be `null`.
     private Supplier<List<FloorMapGroup>> groupsSupplier;
 
-    /** Adds an entity (second argument) to a group (first argument). */
+    /// Adds an entity (second argument) to a group (first argument).
     private BiConsumer<String, String> addToGroup;
 
-    /** Creates a new group containing the given entity. */
+    /// Creates a new group containing the given entity.
     private Consumer<String> createGroupWith;
 
-    /**
-     * The whole roster as last pushed by the parent, filtered down to the
-     * visible rows by {@link #applyFilter()}. Held so the Show Facts toggle can
-     * re-filter without waiting for the next query refresh.
-     */
+    /// The whole roster as last pushed by the parent, filtered down to the
+    /// visible rows by [#applyFilter()]. Held so the Show Facts toggle can
+    /// re-filter without waiting for the next query refresh.
     private final List<EntityEntry> allEntities = new ArrayList<>();
 
-    /** Whether fact-only rows are currently listed alongside event entities. */
+    /// Whether fact-only rows are currently listed alongside event entities.
     private boolean showFacts;
 
-    /**
-     * The current area-containment snapshot backing the Area column. Empty until
-     * the parent pushes one, so the column reads as "no area" rather than
-     * blowing up on a map with no areas.
-     */
+    /// The current area-containment snapshot backing the Area column. Empty until
+    /// the parent pushes one, so the column reads as "no area" rather than
+    /// blowing up on a map with no areas.
     private FloorMapAreaMembership areaMembership = FloorMapAreaMembership.EMPTY;
 
-    /**
-     * Resolves any entity id to the name shown to the user. Supplied by the
-     * parent, which owns the roster; falls back to the raw id.
-     */
+    /// Resolves any entity id to the name shown to the user. Supplied by the
+    /// parent, which owns the roster; falls back to the raw id.
     private Function<String, String> nameResolver;
 
-    /**
-     * Last area an entity was seen in, by entity id. The roster is accumulating
-     * — an entity with no events near the current instant keeps its row but has
-     * no position — so the column shows "no area" while the tooltip can still
-     * say where it was last seen.
-     */
+    /// Last area an entity was seen in, by entity id. The roster is accumulating
+    /// — an entity with no events near the current instant keeps its row but has
+    /// no position — so the column shows "no area" while the tooltip can still
+    /// say where it was last seen.
     private final Map<String, String> lastKnownAreaKey = new HashMap<>();
 
     @Inject
@@ -238,15 +226,13 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         registerHandler(addToGroupButton.addClickHandler(e -> showAddToGroupMenu()));
     }
 
-    /**
-     * Wires up the "Add to Group" action. Without this the button stays disabled,
-     * so a host that has no Groups panel (the Editor tab) simply does not offer it.
-     *
-     * @param groupsSupplier   supplies the current groups, in display order
-     * @param addToGroup       adds an entity (second argument) to a group by id
-     *                         (first argument)
-     * @param createGroupWith  creates a new group containing the given entity
-     */
+    /// Wires up the "Add to Group" action. Without this the button stays disabled,
+    /// so a host that has no Groups panel (the Editor tab) simply does not offer it.
+    ///
+    /// @param groupsSupplier   supplies the current groups, in display order
+    /// @param addToGroup       adds an entity (second argument) to a group by id
+    ///         (first argument)
+    /// @param createGroupWith  creates a new group containing the given entity
     public void setAddToGroupSupport(final Supplier<List<FloorMapGroup>> groupsSupplier,
                                      final BiConsumer<String, String> addToGroup,
                                      final Consumer<String> createGroupWith) {
@@ -257,14 +243,12 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
                 selectionModel.getSelectedObject() != null && groupsSupplier != null);
     }
 
-    /**
-     * Shows the group menu for the selected row: every existing group, then "New
-     * group with this entity".
-     *
-     * <p>A group the entity is <em>already</em> in is listed with a tick and
-     * disabled, rather than hidden — hiding it would leave the user wondering
-     * whether the group still exists.</p>
-     */
+    /// Shows the group menu for the selected row: every existing group, then "New
+    /// group with this entity".
+    ///
+    /// A group the entity is *already* in is listed with a tick and
+    /// disabled, rather than hidden — hiding it would leave the user wondering
+    /// whether the group still exists.
     private void showAddToGroupMenu() {
         final EntityEntry selected = selectionModel.getSelectedObject();
         if (selected == null || groupsSupplier == null) {
@@ -321,20 +305,16 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
                 .fire(this);
     }
 
-    /**
-     * The entity grid's element id, for the canvas to point
-     * {@code aria-describedby} at.
-     *
-     * @return the grid's element id
-     */
+    /// The entity grid's element id, for the canvas to point
+    /// `aria-describedby` at.
+    ///
+    /// @return the grid's element id
     public String getGridElementId() {
         return gridElementId;
     }
 
-    /**
-     * The Show Facts button's tooltip, worded for what a click will do next
-     * rather than for the state it is in.
-     */
+    /// The Show Facts button's tooltip, worded for what a click will do next
+    /// rather than for the state it is in.
     private String showFactsTitle() {
         return showFacts
                 ? "Hide Facts (objects, backgrounds and areas)"
@@ -383,13 +363,11 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         dataGrid.addColumn(idColumn, "Id");
     }
 
-    /**
-     * Renders one Area cell, with a {@code title} tooltip carrying the detail
-     * that will not fit on the cell's single line: the containing areas
-     * one-per-line for a nested entity, a fixed note for an area (areas are not located inside
-     * other areas - occupancy lives on the canvas badge, not here), or where an entity without a
-     * current position was last seen.
-     */
+    /// Renders one Area cell, with a `title` tooltip carrying the detail
+    /// that will not fit on the cell's single line: the containing areas
+    /// one-per-line for a nested entity, a fixed note for an area (areas are not located inside
+    /// other areas - occupancy lives on the canvas badge, not here), or where an entity without a
+    /// current position was last seen.
     private SafeHtml areaCell(final EntityEntry entry) {
         final String id = entry.getId();
 
@@ -428,7 +406,7 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         return cell(joined, tooltip.toString());
     }
 
-    /** Resolves each id to its display name, preserving order. */
+    /// Resolves each id to its display name, preserving order.
     private List<String> namesFor(final List<String> ids) {
         final List<String> names = new ArrayList<>(ids.size());
         for (final String id : ids) {
@@ -437,19 +415,15 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         return names;
     }
 
-    /**
-     * Wraps cell text in a span carrying a {@code title} tooltip, via the shared
-     * helper the Groups panel's cells also use.
-     */
+    /// Wraps cell text in a span carrying a `title` tooltip, via the shared
+    /// helper the Groups panel's cells also use.
     private static SafeHtml cell(final String text, final String tooltip) {
         return FloorMapCellHtml.cell(text, tooltip);
     }
 
-    /**
-     * The display name for any entity id — an area, a person, an object — or
-     * {@code null} when there is no id. Falls back to the raw id if the parent
-     * supplied no resolver or does not know the id.
-     */
+    /// The display name for any entity id — an area, a person, an object — or
+    /// `null` when there is no id. Falls back to the raw id if the parent
+    /// supplied no resolver or does not know the id.
     private String nameFor(final String id) {
         if (id == null) {
             return null;
@@ -463,17 +437,15 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         return id;
     }
 
-    /**
-     * Updates the Area column's backing snapshot.
-     *
-     * <p>Called on every facts/events query refresh (~300ms during playback), so
-     * the grid is only redrawn when the containment actually changed — otherwise
-     * playback would re-render the grid continuously.</p>
-     *
-     * @param areaMembership the new containment snapshot; may be {@code null}
-     * @param nameResolver   resolves any entity id (area, person, object) to its
-     *                       display name; may be {@code null} to show raw ids
-     */
+    /// Updates the Area column's backing snapshot.
+    ///
+    /// Called on every facts/events query refresh (~300ms during playback), so
+    /// the grid is only redrawn when the containment actually changed — otherwise
+    /// playback would re-render the grid continuously.
+    ///
+    /// @param areaMembership the new containment snapshot; may be `null`
+    /// @param nameResolver   resolves any entity id (area, person, object) to its
+    ///         display name; may be `null` to show raw ids
     public void setAreaMembership(final FloorMapAreaMembership areaMembership,
                                   final Function<String, String> nameResolver) {
         final FloorMapAreaMembership next = areaMembership != null
@@ -494,32 +466,28 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         }
     }
 
-    /**
-     * Replaces the entire grid data with the supplied list.
-     *
-     * <p>Only the rows passing the current Show Facts filter reach the grid; the
-     * full list is kept so the toggle can re-filter without a query refresh.</p>
-     *
-     * <p>The current selection is <em>not</em> automatically adjusted —
-     * callers should follow up with {@link #setSelected(String)}. Because
-     * {@link EntityEntry} equality is id-based, restoring the same id does not
-     * re-fire the selection consumer.</p>
-     *
-     * @param data the entities to display; must not be {@code null}
-     */
+    /// Replaces the entire grid data with the supplied list.
+    ///
+    /// Only the rows passing the current Show Facts filter reach the grid; the
+    /// full list is kept so the toggle can re-filter without a query refresh.
+    ///
+    /// The current selection is *not* automatically adjusted —
+    /// callers should follow up with [#setSelected(String)]. Because
+    /// [EntityEntry] equality is id-based, restoring the same id does not
+    /// re-fire the selection consumer.
+    ///
+    /// @param data the entities to display; must not be `null`
     public void setData(final List<EntityEntry> data) {
         allEntities.clear();
         allEntities.addAll(data);
         applyFilter();
     }
 
-    /**
-     * Pushes the rows passing the current Show Facts filter into the grid.
-     *
-     * <p>Hiding the facts while a fact row is being tracked would leave the
-     * canvas following something the panel no longer lists, so that selection is
-     * cleared — which stops tracking through the usual selection handler.</p>
-     */
+    /// Pushes the rows passing the current Show Facts filter into the grid.
+    ///
+    /// Hiding the facts while a fact row is being tracked would leave the
+    /// canvas following something the panel no longer lists, so that selection is
+    /// cleared — which stops tracking through the usual selection handler.
     private void applyFilter() {
         final List<EntityEntry> visible;
         if (showFacts) {
@@ -542,29 +510,25 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         }
     }
 
-    /**
-     * Discards the containment snapshot and the last-seen-in history — called
-     * when the roster itself is reset (a (re-)opened document), so a new map
-     * cannot inherit the previous one's areas.
-     */
+    /// Discards the containment snapshot and the last-seen-in history — called
+    /// when the roster itself is reset (a (re-)opened document), so a new map
+    /// cannot inherit the previous one's areas.
     public void clearAreaState() {
         areaMembership = FloorMapAreaMembership.EMPTY;
         lastKnownAreaKey.clear();
     }
 
-    /**
-     * Selects the grid row whose entity id matches the given value.
-     *
-     * <p>A fact hidden by the Show Facts toggle is <em>revealed</em> rather than
-     * skipped: the caller is usually the canvas, where clicking a static object
-     * starts tracking it, and a tracked entity the panel refuses to list would
-     * leave the two views disagreeing. The toggle stays on afterwards.</p>
-     *
-     * <p>If {@code id} is {@code null} or matches nothing in the roster, the
-     * current selection is cleared.</p>
-     *
-     * @param id the entity id to look for; may be {@code null}
-     */
+    /// Selects the grid row whose entity id matches the given value.
+    ///
+    /// A fact hidden by the Show Facts toggle is *revealed* rather than
+    /// skipped: the caller is usually the canvas, where clicking a static object
+    /// starts tracking it, and a tracked entity the panel refuses to list would
+    /// leave the two views disagreeing. The toggle stays on afterwards.
+    ///
+    /// If `id` is `null` or matches nothing in the roster, the
+    /// current selection is cleared.
+    ///
+    /// @param id the entity id to look for; may be `null`
     public void setSelected(final String id) {
         if (id != null) {
             for (final EntityEntry entry : allEntities) {
@@ -580,7 +544,7 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         selectionModel.clear();
     }
 
-    /** Flips the Show Facts state, its button and the visible rows together. */
+    /// Flips the Show Facts state, its button and the visible rows together.
     private void setShowFacts(final boolean showFacts) {
         this.showFacts = showFacts;
         showFactsButton.setState(showFacts);
@@ -588,10 +552,8 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
         applyFilter();
     }
 
-    /**
-     * Returns the id of the currently selected entity, or {@code null} if
-     * nothing is selected.
-     */
+    /// Returns the id of the currently selected entity, or `null` if
+    /// nothing is selected.
     public String getSelectedId() {
         final EntityEntry selected = selectionModel.getSelectedObject();
         return selected != null
@@ -599,41 +561,33 @@ public class FloorMapTrackingPresenter extends MyPresenterWidget<FloorMapTrackin
                 : null;
     }
 
-    /**
-     * Registers a callback invoked whenever the tracked entity changes.
-     *
-     * <p>The consumer receives the newly selected {@link EntityEntry}, or
-     * {@code null} when tracking stops. It is also re-invoked with the current
-     * entry when the already-selected row is clicked again (re-centre /
-     * resume-follow gesture).</p>
-     *
-     * @param selectionConsumer called on every selection change or re-click
-     */
+    /// Registers a callback invoked whenever the tracked entity changes.
+    ///
+    /// The consumer receives the newly selected [EntityEntry], or
+    /// `null` when tracking stops. It is also re-invoked with the current
+    /// entry when the already-selected row is clicked again (re-centre /
+    /// resume-follow gesture).
+    ///
+    /// @param selectionConsumer called on every selection change or re-click
     public void setSelectionConsumer(final Consumer<EntityEntry> selectionConsumer) {
         this.selectionConsumer = selectionConsumer;
     }
 
-    /**
-     * View contract for the Tracking panel.
-     *
-     * <p>Implementations provide the layout that hosts the data grid and the
-     * toolbar strip above it.</p>
-     */
+    /// View contract for the Tracking panel.
+    ///
+    /// Implementations provide the layout that hosts the data grid and the
+    /// toolbar strip above it.
     public interface FloorMapTrackingView extends View {
 
-        /**
-         * Sets the data-grid widget into the main content area of the panel.
-         *
-         * @param gridWidget the data grid widget; must not be {@code null}
-         */
+        /// Sets the data-grid widget into the main content area of the panel.
+        ///
+        /// @param gridWidget the data grid widget; must not be `null`
         void setGridView(Widget gridWidget);
 
-        /**
-         * Sets the toolbar widget (containing the Stop Tracking button) into
-         * the toolbar area above the grid.
-         *
-         * @param toolbarWidget the toolbar widget; must not be {@code null}
-         */
+        /// Sets the toolbar widget (containing the Stop Tracking button) into
+        /// the toolbar area above the grid.
+        ///
+        /// @param toolbarWidget the toolbar widget; must not be `null`
         void setToolbar(Widget toolbarWidget);
     }
 }

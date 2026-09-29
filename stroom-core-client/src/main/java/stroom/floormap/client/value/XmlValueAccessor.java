@@ -22,41 +22,41 @@ import com.google.gwt.xml.client.Node;
 import com.google.gwt.xml.client.NodeList;
 import com.google.gwt.xml.client.XMLParser;
 
-/**
- * {@link ValueAccessor} implementation for XML values.
- *
- * <p>Paths use XPath-from-root syntax (e.g. {@code "/entry/type"}).
- * Attributes are accessed via {@code @} notation
- * (e.g. {@code "/entry/@type"}).</p>
- *
- * <h3>Namespace support</h3>
- * <p>This implementation does <b>not</b> support XML namespaces.
- * Paths match elements by local name only. This is intentional:
- * floor map values are user-defined and authored by Stroom, making
- * namespace-qualified XML unlikely in practice.</p>
- *
- * <p>If namespace support is needed in future, the extension path
- * is:</p>
- * <ol>
- *   <li>Add a namespace-prefix-to-URI mapping to the floor map
- *       settings (e.g. {@code ns} → {@code http://example.com/schema})</li>
- *   <li>Support namespace-aware path syntax
- *       (e.g. {@code /ns:entry/ns:type})</li>
- *   <li>Use {@code getElementsByTagNameNS()} /
- *       {@code getAttributeNS()} instead of the non-namespace-aware
- *       equivalents used here</li>
- *   <li>Emit {@code xmlns} declarations when serialising</li>
- * </ol>
- * <p>GWT's {@code com.google.gwt.xml.client} API already provides
- * {@code Node.getNamespaceURI()}, {@code getPrefix()}, and
- * {@code getLocalName()}, so no architectural changes to the
- * {@link ValueAccessor} interface are required.</p>
- *
- * <h3>Numeric arrays</h3>
- * <p>Numeric arrays (coordinates, transformation matrices) are stored
- * as comma-separated text content
- * (e.g. {@code <coords>500.0,500.0</coords>}).</p>
- */
+/// [ValueAccessor] implementation for XML values.
+///
+/// Paths use XPath-from-root syntax (e.g. `"/entry/type"`).
+/// Attributes are accessed via `@` notation
+/// (e.g. `"/entry/@type"`).
+///
+/// ### Namespace support
+///
+/// This implementation does **not** support XML namespaces.
+/// Paths match elements by local name only. This is intentional:
+/// floor map values are user-defined and authored by Stroom, making
+/// namespace-qualified XML unlikely in practice.
+///
+/// If namespace support is needed in future, the extension path
+/// is:
+///
+/// 1. Add a namespace-prefix-to-URI mapping to the floor map
+///    settings (e.g. `ns` → `http://example.com/schema`)
+/// 2. Support namespace-aware path syntax
+///    (e.g. `/ns:entry/ns:type`)
+/// 3. Use `getElementsByTagNameNS()` /
+///    `getAttributeNS()` instead of the non-namespace-aware
+///    equivalents used here
+/// 4. Emit `xmlns` declarations when serialising
+///
+/// GWT's `com.google.gwt.xml.client` API already provides
+/// `Node.getNamespaceURI()`, `getPrefix()`, and
+/// `getLocalName()`, so no architectural changes to the
+/// [ValueAccessor] interface are required.
+///
+/// ### Numeric arrays
+///
+/// Numeric arrays (coordinates, transformation matrices) are stored
+/// as comma-separated text content
+/// (e.g. `<coords>500.0,500.0</coords>`).
 public final class XmlValueAccessor implements ValueAccessor {
 
     static final XmlValueAccessor INSTANCE = new XmlValueAccessor();
@@ -87,22 +87,20 @@ public final class XmlValueAccessor implements ValueAccessor {
         return new ParsedValue(doc);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>XML element text and attribute values carry no type, so anything present
-     * is a string: a field holding {@code 5} reads back as {@code "5"}, and CDATA reads as the
-     * text it wraps. Element text is trimmed, and a whitespace-only element reads as
-     * {@code null} rather than as an empty string — so the round trip is not byte-exact for
-     * values with leading or trailing whitespace.</p>
-     *
-     * <p>This is the counterpart to {@code JsonValueAccessor.getString}, which
-     * returns {@code null} for a present-but-non-string value because JSON
-     * <em>is</em> typed. The two therefore disagree for the same logical field.
-     * That asymmetry is a property of the formats rather than a defect in either
-     * implementation, and it is asserted from both sides in the accessor contract
-     * tests so that neither gets "corrected" into agreement with the other.</p>
-     */
+    /// {@inheritDoc}
+    ///
+    /// XML element text and attribute values carry no type, so anything present
+    /// is a string: a field holding `5` reads back as `"5"`, and CDATA reads as the
+    /// text it wraps. Element text is trimmed, and a whitespace-only element reads as
+    /// `null` rather than as an empty string — so the round trip is not byte-exact for
+    /// values with leading or trailing whitespace.
+    ///
+    /// This is the counterpart to `JsonValueAccessor.getString`, which
+    /// returns `null` for a present-but-non-string value because JSON
+    /// *is* typed. The two therefore disagree for the same logical field.
+    /// That asymmetry is a property of the formats rather than a defect in either
+    /// implementation, and it is asserted from both sides in the accessor contract
+    /// tests so that neither gets "corrected" into agreement with the other.
     @Override
     public String getString(final ParsedValue value,
                             final String path) {
@@ -239,9 +237,7 @@ public final class XmlValueAccessor implements ValueAccessor {
 
     // ---- Internal helpers ----
 
-    /**
-     * Extracts the {@link Document} from a {@link ParsedValue}.
-     */
+    /// Extracts the [Document] from a [ParsedValue].
     private static Document asDoc(final ParsedValue value) {
         if (value == null) {
             return null;
@@ -250,12 +246,10 @@ public final class XmlValueAccessor implements ValueAccessor {
         return backing instanceof Document ? (Document) backing : null;
     }
 
-    /**
-     * Resolves a path like {@code "/entry/type"} or
-     * {@code "/entry/@type"} to a parent element and a local
-     * name. Returns {@code null} if any intermediate element is
-     * missing.
-     */
+    /// Resolves a path like `"/entry/type"` or
+    /// `"/entry/@type"` to a parent element and a local
+    /// name. Returns `null` if any intermediate element is
+    /// missing.
     private static PathTarget resolvePath(final Document doc,
                                           final String path) {
         final String[] segments = splitPath(path);
@@ -291,10 +285,8 @@ public final class XmlValueAccessor implements ValueAccessor {
         return new PathTarget(current, last, false);
     }
 
-    /**
-     * Like {@link #resolvePath}, but creates intermediate elements
-     * if they don't exist.
-     */
+    /// Like [#resolvePath], but creates intermediate elements
+    /// if they don't exist.
     private static PathTarget resolveOrCreatePath(
             final Document doc, final String path) {
         final String[] segments = splitPath(path);
@@ -330,10 +322,8 @@ public final class XmlValueAccessor implements ValueAccessor {
         return new PathTarget(current, last, false);
     }
 
-    /**
-     * Splits a path like {@code "/entry/type"} into
-     * {@code ["entry", "type"]}. Leading slash is stripped.
-     */
+    /// Splits a path like `"/entry/type"` into
+    /// `{"entry", "type"}`. Leading slash is stripped.
     private static String[] splitPath(final String path) {
         String p = path;
         if (p.startsWith("/")) {
@@ -345,10 +335,8 @@ public final class XmlValueAccessor implements ValueAccessor {
         return p.split("/");
     }
 
-    /**
-     * Finds the first child element whose local name (i.e. tag name with any
-     * namespace prefix stripped) matches the given tag name.
-     */
+    /// Finds the first child element whose local name (i.e. tag name with any
+    /// namespace prefix stripped) matches the given tag name.
     private static Element findChildElement(
             final Element parent, final String tagName) {
         final NodeList children = parent.getChildNodes();
@@ -364,25 +352,21 @@ public final class XmlValueAccessor implements ValueAccessor {
         return null;
     }
 
-    /**
-     * Strips any namespace prefix (e.g. {@code "ns:type"} → {@code "type"})
-     * so that path matching is namespace-agnostic, per the class-level
-     * "Namespace support" note above.
-     */
+    /// Strips any namespace prefix (e.g. `"ns:type"` → `"type"`)
+    /// so that path matching is namespace-agnostic, per the class-level
+    /// "Namespace support" note above.
     private static String localName(final String qualifiedName) {
         final int colon = qualifiedName.indexOf(':');
         return colon >= 0 ? qualifiedName.substring(colon + 1) : qualifiedName;
     }
 
-    /**
-     * Gets the concatenated character data of an element's direct child nodes.
-     *
-     * <p>CDATA sections count as character data. XML draws a distinction between
-     * a text node and a CDATA section, but that distinction is purely about
-     * escaping in the source document — to anything reading the value they are the
-     * same string. Ignoring CDATA here made a value written as
-     * {@code <![CDATA[...]]>} read as absent.</p>
-     */
+    /// Gets the concatenated character data of an element's direct child nodes.
+    ///
+    /// CDATA sections count as character data. XML draws a distinction between
+    /// a text node and a CDATA section, but that distinction is purely about
+    /// escaping in the source document — to anything reading the value they are the
+    /// same string. Ignoring CDATA here made a value written as
+    /// `<![CDATA[...]]>` read as absent.
     private static String getTextContent(final Element elem) {
         final StringBuilder sb = new StringBuilder();
         final NodeList children = elem.getChildNodes();
@@ -397,10 +381,8 @@ public final class XmlValueAccessor implements ValueAccessor {
         return result.isEmpty() ? null : result;
     }
 
-    /**
-     * Sets the text content of an element, replacing any existing
-     * child nodes.
-     */
+    /// Sets the text content of an element, replacing any existing
+    /// child nodes.
     private static void setTextContent(final Element elem,
                                        final String text) {
         // Remove existing children.
@@ -413,23 +395,21 @@ public final class XmlValueAccessor implements ValueAccessor {
         }
     }
 
-    /**
-     * Serialises an element and its children to an XML string. GWT provides no
-     * built-in DOM serialiser, so this is a simple recursive implementation.
-     *
-     * <p>Handles four node types: elements, text, CDATA sections and comments.
-     * The first two were once the only ones handled, which meant a load-edit-save
-     * round trip silently deleted the <em>contents</em> of every CDATA section and
-     * every comment — and since the editor re-serialises on any object drag, that
-     * happened on the most ordinary edit there is.</p>
-     *
-     * <p>CDATA content is re-emitted as escaped text rather than as a CDATA
-     * section. The two are equivalent to every XML reader, and escaping avoids
-     * having to split the payload around any literal {@code ]]>} it contains, so
-     * the value survives exactly while the form is normalised. Comments are
-     * re-emitted as comments, since unlike CDATA there is no equivalent form to
-     * fall back on.</p>
-     */
+    /// Serialises an element and its children to an XML string. GWT provides no
+    /// built-in DOM serialiser, so this is a simple recursive implementation.
+    ///
+    /// Handles four node types: elements, text, CDATA sections and comments.
+    /// The first two were once the only ones handled, which meant a load-edit-save
+    /// round trip silently deleted the *contents* of every CDATA section and
+    /// every comment — and since the editor re-serialises on any object drag, that
+    /// happened on the most ordinary edit there is.
+    ///
+    /// CDATA content is re-emitted as escaped text rather than as a CDATA
+    /// section. The two are equivalent to every XML reader, and escaping avoids
+    /// having to split the payload around any literal `]]>` it contains, so
+    /// the value survives exactly while the form is normalised. Comments are
+    /// re-emitted as comments, since unlike CDATA there is no equivalent form to
+    /// fall back on.
     private static String serializeElement(final Element elem) {
         final StringBuilder sb = new StringBuilder();
         sb.append("<").append(elem.getTagName());
@@ -470,10 +450,8 @@ public final class XmlValueAccessor implements ValueAccessor {
         return sb.toString();
     }
 
-    /**
-     * Holds the result of resolving a path: the parent element,
-     * the local name of the target, and whether it's an attribute.
-     */
+    /// Holds the result of resolving a path: the parent element,
+    /// the local name of the target, and whether it's an attribute.
     private static final class PathTarget {
         final Element parent;
         final String localName;

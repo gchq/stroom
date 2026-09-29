@@ -26,12 +26,10 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/**
- * View for {@link stroom.floormap.client.presenter.FloorMapDockPresenter} — a
- * curve-tab bar over a layer container. Structurally the same as
- * {@code LinkTabPanelViewImpl}, kept as a dedicated pair to avoid re-binding the
- * shared {@code LinkTabPanelView} for a second presenter.
- */
+/// View for [stroom.floormap.client.presenter.FloorMapDockPresenter] — a
+/// curve-tab bar over a layer container. Structurally the same as
+/// `LinkTabPanelViewImpl`, kept as a dedicated pair to avoid re-binding the
+/// shared `LinkTabPanelView` for a second presenter.
 public class FloorMapDockViewImpl extends ViewImpl implements FloorMapDockView {
 
     private final Widget widget;

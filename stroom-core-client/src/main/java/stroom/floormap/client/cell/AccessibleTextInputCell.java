@@ -24,21 +24,19 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
-/**
- * A {@link TextInputCell} that a keyboard user can reach, and that a screen reader can name.
- *
- * <p>Same problem and same reasoning as {@link AccessibleSelectionCell}: GWT renders
- * {@code <input type="text" tabindex="-1">} on the assumption that the containing cell table
- * handles arrow-key navigation, which Stroom's {@code MyDataGrid} disables.
- *
- * <p>Note this replaces {@code EditTextCell} at its call sites rather than subclassing it.
- * {@code EditTextCell} renders static text and swaps to an input on click — or on Enter, but
- * only for a user who has already reached the cell through the table's own keyboard
- * navigation. There is nothing in the tab order to focus directly, so in a grid whose
- * navigation is unavailable it is effectively pointer-only. An always-present input is
- * reachable by Tab alone and, for a small settings grid, less surprising. The visible
- * consequence is that the cells now look like the input fields they are.
- */
+/// A [TextInputCell] that a keyboard user can reach, and that a screen reader can name.
+///
+/// Same problem and same reasoning as [AccessibleSelectionCell]: GWT renders
+/// `<input type="text" tabindex="-1">` on the assumption that the containing cell table
+/// handles arrow-key navigation, which Stroom's `MyDataGrid` disables.
+///
+/// Note this replaces `EditTextCell` at its call sites rather than subclassing it.
+/// `EditTextCell` renders static text and swaps to an input on click — or on Enter, but
+/// only for a user who has already reached the cell through the table's own keyboard
+/// navigation. There is nothing in the tab order to focus directly, so in a grid whose
+/// navigation is unavailable it is effectively pointer-only. An always-present input is
+/// reachable by Tab alone and, for a small settings grid, less surprising. The visible
+/// consequence is that the cells now look like the input fields they are.
 public class AccessibleTextInputCell extends TextInputCell {
 
     interface Template extends SafeHtmlTemplates {

@@ -29,17 +29,15 @@ class TestFloorMapAreaCellText {
     // joinNames — the one form of words for every row
     // -----------------------------------------------------------------------
 
-    /** A single area is just its name, with no separator. */
+    /// A single area is just its name, with no separator.
     @Test
     void testJoinSingle() {
         assertThat(FloorMapAreaCellText.joinNames(Collections.singletonList("Loading Bay")))
                 .isEqualTo("Loading Bay");
     }
 
-    /**
-     * Every containing area is named — this replaced a "Loading Bay +2" summary
-     * that hid the other names.
-     */
+    /// Every containing area is named — this replaced a "Loading Bay +2" summary
+    /// that hid the other names.
     @Test
     void testJoinListsEveryName() {
         assertThat(FloorMapAreaCellText.joinNames(
@@ -47,7 +45,7 @@ class TestFloorMapAreaCellText {
                 .isEqualTo("Loading Bay, Warehouse, Site B");
     }
 
-    /** Order is preserved, so innermost-first stays innermost-first. */
+    /// Order is preserved, so innermost-first stays innermost-first.
     @Test
     void testJoinPreservesOrder() {
         assertThat(FloorMapAreaCellText.joinNames(Arrays.asList("Inner", "Outer")))
@@ -56,7 +54,7 @@ class TestFloorMapAreaCellText {
                 .isEqualTo("Outer, Inner");
     }
 
-    /** Null/blank names are skipped without leaving a dangling separator. */
+    /// Null/blank names are skipped without leaving a dangling separator.
     @Test
     void testJoinSkipsBlanks() {
         assertThat(FloorMapAreaCellText.joinNames(
@@ -93,7 +91,7 @@ class TestFloorMapAreaCellText {
                 .isEqualTo("Loading Bay (3)");
     }
 
-    /** A name with no matching count still reads, just without one. */
+    /// A name with no matching count still reads, just without one.
     @Test
     void testJoinWithCountsToleratesShortCountList() {
         assertThat(FloorMapAreaCellText.joinNamesWithCounts(
@@ -104,7 +102,7 @@ class TestFloorMapAreaCellText {
                 .isEqualTo("Loading Bay, Office");
     }
 
-    /** A blank name drops its count with it, leaving no dangling separator. */
+    /// A blank name drops its count with it, leaving no dangling separator.
     @Test
     void testJoinWithCountsSkipsBlanks() {
         assertThat(FloorMapAreaCellText.joinNamesWithCounts(

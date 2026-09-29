@@ -33,14 +33,12 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 
-/**
- * Guice dependency injection module for the floor map feature.
- * <p>
- * Binds the {@link FloorMapStore} implementation and registers the
- * explorer action handler, import/export handler, content indexer,
- * document action handler, event logging object info provider, and
- * REST resource for floor map documents.
- */
+/// Guice dependency injection module for the floor map feature.
+///
+/// Binds the [FloorMapStore] implementation and registers the
+/// explorer action handler, import/export handler, content indexer,
+/// document action handler, event logging object info provider, and
+/// REST resource for floor map documents.
 public class FloorMapModule extends AbstractModule {
 
     @Override
@@ -69,16 +67,14 @@ public class FloorMapModule extends AbstractModule {
         bindEventStore();
     }
 
-    /**
-     * The FloorMap Event Store: a document of ours describing a Plan B store.
-     *
-     * <p>The {@link PlanBDocumentTypes} multibinding is the load-bearing line. It is what tells
-     * {@code PlanBDocCache} that documents of this type are Plan B stores, so a pipeline writing to
-     * a map name resolves one exactly as it resolves a {@code PlanBDoc}, and {@code ShardManager}
-     * finds it when deciding whether a shard is still live. Without it the document would persist
-     * and display but nothing could ever write to it, and its shard would be swept as an orphan.
-     * {@code PathwaysModule} registers {@code TracesDoc} the same way.</p>
-     */
+    /// The FloorMap Event Store: a document of ours describing a Plan B store.
+    ///
+    /// The [PlanBDocumentTypes] multibinding is the load-bearing line. It is what tells
+    /// `PlanBDocCache` that documents of this type are Plan B stores, so a pipeline writing to
+    /// a map name resolves one exactly as it resolves a `PlanBDoc`, and `ShardManager`
+    /// finds it when deciding whether a shard is still live. Without it the document would persist
+    /// and display but nothing could ever write to it, and its shard would be swept as an orphan.
+    /// `PathwaysModule` registers `TracesDoc` the same way.
     private void bindEventStore() {
         bind(FloorMapEventStoreStore.class).to(FloorMapEventStoreStoreImpl.class);
 

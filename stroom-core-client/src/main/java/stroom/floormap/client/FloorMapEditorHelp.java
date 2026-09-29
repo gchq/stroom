@@ -19,33 +19,29 @@ package stroom.floormap.client;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
-/**
- * Static help content for the Floor Map <b>Editor</b> tab.
- *
- * <p>Each method returns the HTML body shown in the in-app help popup fired by a
- * {@link stroom.widget.help.client.HelpButton} placed on the corresponding panel.
- * The strings are developer-authored constants (no user input), so they are wrapped
- * with {@link SafeHtmlUtils#fromTrustedString(String)} — the same mechanism the
- * Settings tab uses for its {@code <form:HelpHTML>} content, and rendered with the
- * shared {@code markdown} popup styling.</p>
- *
- * <p>The help is only wired up by the Editor tab, so it does not appear on the
- * read-only Map tab (which shares the canvas and timeline widgets).</p>
- *
- * @see stroom.floormap.client.presenter.FloorMapEditorPresenter
- */
+/// Static help content for the Floor Map **Editor** tab.
+///
+/// Each method returns the HTML body shown in the in-app help popup fired by a
+/// [stroom.widget.help.client.HelpButton] placed on the corresponding panel.
+/// The strings are developer-authored constants (no user input), so they are wrapped
+/// with [SafeHtmlUtils#fromTrustedString(String)] — the same mechanism the
+/// Settings tab uses for its `<form:HelpHTML>` content, and rendered with the
+/// shared `markdown` popup styling.
+///
+/// The help is only wired up by the Editor tab, so it does not appear on the
+/// read-only Map tab (which shares the canvas and timeline widgets).
+///
+/// @see stroom.floormap.client.presenter.FloorMapEditorPresenter
 public final class FloorMapEditorHelp {
 
     private FloorMapEditorHelp() {
         // Utility class.
     }
 
-    /**
-     * Help for the map canvas — the interaction model: selecting, moving,
-     * rotating, scaling, panning, zooming, and the modifier keys.
-     *
-     * @return the canvas help HTML body
-     */
+    /// Help for the map canvas — the interaction model: selecting, moving,
+    /// rotating, scaling, panning, zooming, and the modifier keys.
+    ///
+    /// @return the canvas help HTML body
     public static SafeHtml canvas() {
         return SafeHtmlUtils.fromTrustedString(
                 "<p>The map is the main editing surface. It shows the map's "
@@ -132,11 +128,9 @@ public final class FloorMapEditorHelp {
                 + "<em>Timeline</em> — has its own help button.</p>");
     }
 
-    /**
-     * Help for the Fact List panel.
-     *
-     * @return the Fact List help HTML body
-     */
+    /// Help for the Fact List panel.
+    ///
+    /// @return the Fact List help HTML body
     public static SafeHtml factList() {
         return SafeHtmlUtils.fromTrustedString(
                 "<p>Lists every <strong>object (fact)</strong> in the map — one row per object, "
@@ -160,11 +154,9 @@ public final class FloorMapEditorHelp {
                 + "</ul>");
     }
 
-    /**
-     * Help for the Time List panel.
-     *
-     * @return the Time List help HTML body
-     */
+    /// Help for the Time List panel.
+    ///
+    /// @return the Time List help HTML body
     public static SafeHtml timeList() {
         return SafeHtmlUtils.fromTrustedString(
                 "<p>Shows the <strong>time versions</strong> of the object selected in the Fact "
@@ -183,11 +175,9 @@ public final class FloorMapEditorHelp {
                 + "</ul>");
     }
 
-    /**
-     * Help for the Timeline control.
-     *
-     * @return the timeline help HTML body
-     */
+    /// Help for the Timeline control.
+    ///
+    /// @return the timeline help HTML body
     public static SafeHtml timeline() {
         return SafeHtmlUtils.fromTrustedString(
                 "<p>Chooses the point in time the map shows. Facts and moving events are drawn as "

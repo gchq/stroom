@@ -33,7 +33,7 @@ class TestFloorMapClusterFilter {
         return new FloorMapClusterMember(id, name, "person", areas, groups);
     }
 
-    /** Alice in the Loading Bay and on nights; Bob in the Office, no group. */
+    /// Alice in the Loading Bay and on nights; Bob in the Office, no group.
     private static List<FloorMapClusterMember> twoMembers() {
         return Arrays.asList(
                 member("user-1", "Alice", Collections.singletonList("Loading Bay"),
@@ -50,7 +50,7 @@ class TestFloorMapClusterFilter {
     // Search
     // -----------------------------------------------------------------------
 
-    /** Blank search is not a filter — it must not hide anything. */
+    /// Blank search is not a filter — it must not hide anything.
     @Test
     void testBlankSearchKeepsEverything() {
         final List<FloorMapClusterMember> members = twoMembers();
@@ -59,7 +59,7 @@ class TestFloorMapClusterFilter {
         assertThat(FloorMapClusterFilter.filter(members, "   ", null, null)).hasSize(2);
     }
 
-    /** Matching is case-insensitive substring, not prefix or whole-word. */
+    /// Matching is case-insensitive substring, not prefix or whole-word.
     @Test
     void testSearchIsCaseInsensitiveSubstring() {
         assertThat(names(FloorMapClusterFilter.filter(twoMembers(), "ALI", null, null)))
@@ -68,7 +68,7 @@ class TestFloorMapClusterFilter {
                 .containsExactly("Alice");
     }
 
-    /** Everything the row displays is searchable, not just the name. */
+    /// Everything the row displays is searchable, not just the name.
     @Test
     void testSearchCoversEveryDisplayedValue() {
         assertThat(names(FloorMapClusterFilter.filter(twoMembers(), "user-2", null, null)))
@@ -81,10 +81,8 @@ class TestFloorMapClusterFilter {
         assertThat(FloorMapClusterFilter.filter(twoMembers(), "person", null, null)).hasSize(2);
     }
 
-    /**
-     * Several words narrow rather than widen, and may land in different fields —
-     * "ali bay" is a name and an area, and finds the one row that has both.
-     */
+    /// Several words narrow rather than widen, and may land in different fields —
+    /// "ali bay" is a name and an area, and finds the one row that has both.
     @Test
     void testEveryTermMustMatchSomewhere() {
         assertThat(names(FloorMapClusterFilter.filter(twoMembers(), "ali bay", null, null)))
@@ -93,7 +91,7 @@ class TestFloorMapClusterFilter {
                 .isEmpty();
     }
 
-    /** No match is an empty list, not everything. */
+    /// No match is an empty list, not everything.
     @Test
     void testUnmatchedSearchFindsNothing() {
         assertThat(FloorMapClusterFilter.filter(twoMembers(), "zzz", null, null)).isEmpty();
@@ -103,7 +101,7 @@ class TestFloorMapClusterFilter {
     // Dropdowns
     // -----------------------------------------------------------------------
 
-    /** The "any" option is first, named areas next, "in none" last. */
+    /// The "any" option is first, named areas next, "in none" last.
     @Test
     void testAreaOptionsOrder() {
         final List<FloorMapClusterMember> members = Arrays.asList(
@@ -114,7 +112,7 @@ class TestFloorMapClusterFilter {
                 .containsExactly("Any area", "Loading Bay", "Office", "Not inside an area");
     }
 
-    /** A member in several areas contributes all of them, deduplicated. */
+    /// A member in several areas contributes all of them, deduplicated.
     @Test
     void testAreaOptionsAreDistinct() {
         final List<FloorMapClusterMember> members = Arrays.asList(
@@ -124,10 +122,8 @@ class TestFloorMapClusterFilter {
                 .containsExactly("Any area", "Server Rack", "Server Room");
     }
 
-    /**
-     * A dropdown that could only ever select all or nothing is not offered: every
-     * member in one area, or none of them in any, is no choice at all.
-     */
+    /// A dropdown that could only ever select all or nothing is not offered: every
+    /// member in one area, or none of them in any, is no choice at all.
     @Test
     void testNoDropdownWithoutAChoice() {
         final List<FloorMapClusterMember> allSameArea = Arrays.asList(
@@ -144,7 +140,7 @@ class TestFloorMapClusterFilter {
         assertThat(FloorMapClusterFilter.areaOptions(null)).isEmpty();
     }
 
-    /** Groups are offered on the same terms as areas. */
+    /// Groups are offered on the same terms as areas.
     @Test
     void testGroupOptions() {
         assertThat(FloorMapClusterFilter.groupOptions(twoMembers()))
@@ -158,7 +154,7 @@ class TestFloorMapClusterFilter {
     // Dropdown filtering
     // -----------------------------------------------------------------------
 
-    /** The "any" option, an unset control and an empty one all mean no constraint. */
+    /// The "any" option, an unset control and an empty one all mean no constraint.
     @Test
     void testAnyOptionConstrainsNothing() {
         assertThat(FloorMapClusterFilter.filter(twoMembers(), null, "Any area", "Any group"))
@@ -166,14 +162,14 @@ class TestFloorMapClusterFilter {
         assertThat(FloorMapClusterFilter.filter(twoMembers(), null, "", "")).hasSize(2);
     }
 
-    /** Selecting an area keeps only the members standing in it. */
+    /// Selecting an area keeps only the members standing in it.
     @Test
     void testAreaSelectionNarrows() {
         assertThat(names(FloorMapClusterFilter.filter(twoMembers(), null, "Office", null)))
                 .containsExactly("Bob");
     }
 
-    /** A member in several areas is kept by any one of them. */
+    /// A member in several areas is kept by any one of them.
     @Test
     void testMemberInSeveralAreasMatchesEach() {
         final List<FloorMapClusterMember> members = Collections.singletonList(
@@ -183,17 +179,15 @@ class TestFloorMapClusterFilter {
         assertThat(FloorMapClusterFilter.filter(members, null, "Office", null)).isEmpty();
     }
 
-    /**
-     * The option offered for a name spelled inconsistently keeps <em>every</em> member with
-     * that name, whatever its case.
-     *
-     * <p>This is the whole point of matching case-insensitively. The options are collected
-     * into a {@code TreeSet(String.CASE_INSENSITIVE_ORDER)}, so "Lobby" and "lobby" collapse
-     * to a single offered option — and matching used to use a case-sensitive
-     * {@code List.contains}, so selecting that one option silently dropped the member stored
-     * under the other spelling. There is no third option to pick instead and no message: the
-     * member is simply not in the list.</p>
-     */
+    /// The option offered for a name spelled inconsistently keeps *every* member with
+    /// that name, whatever its case.
+    ///
+    /// This is the whole point of matching case-insensitively. The options are collected
+    /// into a `TreeSet(String.CASE_INSENSITIVE_ORDER)`, so "Lobby" and "lobby" collapse
+    /// to a single offered option — and matching used to use a case-sensitive
+    /// `List.contains`, so selecting that one option silently dropped the member stored
+    /// under the other spelling. There is no third option to pick instead and no message: the
+    /// member is simply not in the list.
     @Test
     void testCaseVariantAreaNamesAreAllKeptByTheOfferedOption() {
         final List<FloorMapClusterMember> members = Arrays.asList(
@@ -210,7 +204,7 @@ class TestFloorMapClusterFilter {
                 .containsExactly("Alice", "Bob");
     }
 
-    /** The same for groups, which share the de-duplication and had the same mismatch. */
+    /// The same for groups, which share the de-duplication and had the same mismatch.
     @Test
     void testCaseVariantGroupNamesAreAllKeptByTheOfferedOption() {
         final List<FloorMapClusterMember> members = Arrays.asList(
@@ -225,10 +219,8 @@ class TestFloorMapClusterFilter {
                 .containsExactly("Alice", "Bob");
     }
 
-    /**
-     * A selection whose case matches no stored spelling still matches, so the filter cannot
-     * be broken by the option list being rebuilt from a differently-cased first sighting.
-     */
+    /// A selection whose case matches no stored spelling still matches, so the filter cannot
+    /// be broken by the option list being rebuilt from a differently-cased first sighting.
     @Test
     void testAreaSelectionIgnoresCaseEntirely() {
         final List<FloorMapClusterMember> members = Collections.singletonList(
@@ -240,7 +232,7 @@ class TestFloorMapClusterFilter {
         assertThat(FloorMapClusterFilter.filter(members, null, "Loading", null)).isEmpty();
     }
 
-    /** The "in none" options select exactly the members with nothing. */
+    /// The "in none" options select exactly the members with nothing.
     @Test
     void testNoneOptions() {
         assertThat(names(FloorMapClusterFilter.filter(
@@ -254,7 +246,7 @@ class TestFloorMapClusterFilter {
                 .containsExactly("B");
     }
 
-    /** The three controls narrow together — search within the filtered set. */
+    /// The three controls narrow together — search within the filtered set.
     @Test
     void testControlsCombineWithAnd() {
         final List<FloorMapClusterMember> members = Arrays.asList(
@@ -273,7 +265,7 @@ class TestFloorMapClusterFilter {
     // Sorting
     // -----------------------------------------------------------------------
 
-    /** Alphabetical by name regardless of case, with the id as a stable tiebreak. */
+    /// Alphabetical by name regardless of case, with the id as a stable tiebreak.
     @Test
     void testSortedByName() {
         final List<FloorMapClusterMember> members = Arrays.asList(
@@ -286,7 +278,7 @@ class TestFloorMapClusterFilter {
                 .containsExactly("a", "b", "z", "y");
     }
 
-    /** Sorting copies rather than reordering the caller's list. */
+    /// Sorting copies rather than reordering the caller's list.
     @Test
     void testSortDoesNotMutateInput() {
         final List<FloorMapClusterMember> members = twoMembers();

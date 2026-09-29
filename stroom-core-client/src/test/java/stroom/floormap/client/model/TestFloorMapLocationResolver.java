@@ -33,7 +33,7 @@ class TestFloorMapLocationResolver {
     // Telling the two location shapes apart
     // -----------------------------------------------------------------------
 
-    /** The shape events carry when the position was baked in at ingest. */
+    /// The shape events carry when the position was baked in at ingest.
     @Test
     void testParseCoordinates() {
         assertThat(FloorMapLocationResolver.parseCoordinates("120.5, -40"))
@@ -45,7 +45,7 @@ class TestFloorMapLocationResolver {
                 .containsExactly(-0.5, 7.0);
     }
 
-    /** Anything that is not two comma-separated numbers is not a position. */
+    /// Anything that is not two comma-separated numbers is not a position.
     @Test
     void testNonCoordinatesParseAsNull() {
         assertThat(FloorMapLocationResolver.parseCoordinates(null)).isNull();
@@ -59,14 +59,12 @@ class TestFloorMapLocationResolver {
         assertThat(FloorMapLocationResolver.parseCoordinates("120.5")).isNull();
     }
 
-    /**
-     * The three-part form is not coordinates, and is now nothing special.
-     *
-     * <p>It used to be <em>the</em> coordinate form, then a rejected legacy form that had to be
-     * recognised so it could be reported. With Location and Location Ref as separate columns there
-     * is nothing to disambiguate: a Location that is not two numbers is malformed, and the parser
-     * that reads it says so.</p>
-     */
+    /// The three-part form is not coordinates, and is now nothing special.
+    ///
+    /// It used to be *the* coordinate form, then a rejected legacy form that had to be
+    /// recognised so it could be reported. With Location and Location Ref as separate columns there
+    /// is nothing to disambiguate: a Location that is not two numbers is malformed, and the parser
+    /// that reads it says so.
     @Test
     void testThreePartValueIsNotCoordinates() {
         assertThat(FloorMapLocationResolver.parseCoordinates("mapA, 120.5, -40")).isNull();
@@ -74,13 +72,11 @@ class TestFloorMapLocationResolver {
         assertThat(FloorMapLocationResolver.parseCoordinates("1, 120.5, 340")).isNull();
     }
 
-    /**
-     * A reference is whatever the Location Ref column says, trimmed.
-     *
-     * <p>No shape rule at all, which is the point of the split: a fact key that looks like two
-     * numbers, or contains a comma, is now expressible. Under the single-column scheme neither
-     * was.</p>
-     */
+    /// A reference is whatever the Location Ref column says, trimmed.
+    ///
+    /// No shape rule at all, which is the point of the split: a fact key that looks like two
+    /// numbers, or contains a comma, is now expressible. Under the single-column scheme neither
+    /// was.
     @Test
     void testReferenceHasNoShapeRule() {
         assertThat(FloorMapLocationResolver.parseReference("100, 200")).isEqualTo("100, 200");
@@ -89,7 +85,7 @@ class TestFloorMapLocationResolver {
         assertThat(FloorMapLocationResolver.parseReference("  desk-101  ")).isEqualTo("desk-101");
     }
 
-    /** A non-coordinate value is the key of the fact the event happened at. */
+    /// A non-coordinate value is the key of the fact the event happened at.
     @Test
     void testParseReference() {
         assertThat(FloorMapLocationResolver.parseReference("DSK-L1-03")).isEqualTo("DSK-L1-03");
@@ -97,7 +93,7 @@ class TestFloorMapLocationResolver {
                 .isEqualTo("G-MAIN_ENTRANCE");
     }
 
-    /** Nothing named means nothing to resolve. */
+    /// Nothing named means nothing to resolve.
     @Test
     void testBlankIsNotAReference() {
         assertThat(FloorMapLocationResolver.parseReference(null)).isNull();
@@ -108,7 +104,7 @@ class TestFloorMapLocationResolver {
     // Placement
     // -----------------------------------------------------------------------
 
-    /** The point of the whole class: the entity is drawn where its object is NOW. */
+    /// The point of the whole class: the entity is drawn where its object is NOW.
     @Test
     void testReferencedEntityTakesTheFactsPosition() {
         final List<FloorMapObject> placed = FloorMapLocationResolver.resolve(
@@ -122,11 +118,9 @@ class TestFloorMapLocationResolver {
         assertThat(placed.getFirst().getY()).isEqualTo(400);
     }
 
-    /**
-     * Moving the object moves its visitors — the same events resolved against
-     * moved facts land somewhere else. This is the bug the class exists for:
-     * coordinates baked into an event at ingest cannot do this.
-     */
+    /// Moving the object moves its visitors — the same events resolved against
+    /// moved facts land somewhere else. This is the bug the class exists for:
+    /// coordinates baked into an event at ingest cannot do this.
     @Test
     void testMovingTheFactMovesTheEntity() {
         final List<FloorMapObject> events = Collections.singletonList(entityAt("DSK-L1-03"));
@@ -141,7 +135,7 @@ class TestFloorMapLocationResolver {
         assertThat(after.getFirst().getY()).isEqualTo(100);
     }
 
-    /** A fact placed by its matrix is followed there, not to its raw world coords. */
+    /// A fact placed by its matrix is followed there, not to its raw world coords.
     @Test
     void testPlacementFollowsTheFactsMatrix() {
         final Fact moved = new Fact("DSK-L1-03", "desk", null,
@@ -155,7 +149,7 @@ class TestFloorMapLocationResolver {
         assertThat(placed.getFirst().getY()).isEqualTo(80);
     }
 
-    /** An entity that brought its own coordinates is left exactly where it is. */
+    /// An entity that brought its own coordinates is left exactly where it is.
     @Test
     void testCoordinateBearingEntityPassesThrough() {
         final FloorMapObject baked = new FloorMapObject("user-42", "person", 11, 22);
@@ -167,10 +161,8 @@ class TestFloorMapLocationResolver {
         assertThat(placed).containsExactly(baked);
     }
 
-    /**
-     * A reference to a fact that is not on the map has no position, so the
-     * entity is dropped rather than stacked on the origin.
-     */
+    /// A reference to a fact that is not on the map has no position, so the
+    /// entity is dropped rather than stacked on the origin.
     @Test
     void testDanglingReferenceIsDropped() {
         assertThat(FloorMapLocationResolver.resolve(
@@ -179,11 +171,9 @@ class TestFloorMapLocationResolver {
                 .isEmpty();
     }
 
-    /**
-     * Facts arriving after the events is normal (the two queries refresh
-     * independently), so this must degrade to "not yet placed", not to a wrong
-     * placement — the caller resolves again once the facts land.
-     */
+    /// Facts arriving after the events is normal (the two queries refresh
+    /// independently), so this must degrade to "not yet placed", not to a wrong
+    /// placement — the caller resolves again once the facts land.
     @Test
     void testNoFactsYetDropsReferencedEntities() {
         assertThat(FloorMapLocationResolver.resolve(
@@ -193,7 +183,7 @@ class TestFloorMapLocationResolver {
                 .containsExactly("user-7");
     }
 
-    /** An area is located at its centroid, matching where containment tests it. */
+    /// An area is located at its centroid, matching where containment tests it.
     @Test
     void testReferenceToAnAreaUsesItsCentroid() {
         final Fact area = new Fact("BAY", "area", null,
@@ -211,7 +201,7 @@ class TestFloorMapLocationResolver {
         assertThat(placed.getFirst().getY()).isEqualTo(100);
     }
 
-    /** Null in, empty out — the caller always has a list to push. */
+    /// Null in, empty out — the caller always has a list to push.
     @Test
     void testNoEntities() {
         assertThat(FloorMapLocationResolver.resolve(null, null)).isEmpty();
@@ -221,7 +211,7 @@ class TestFloorMapLocationResolver {
     // Change detection
     // -----------------------------------------------------------------------
 
-    /** A facts refresh that moved nothing must not be pushed on as an update. */
+    /// A facts refresh that moved nothing must not be pushed on as an update.
     @Test
     void testSamePositions() {
         assertThat(FloorMapLocationResolver.samePositions(
@@ -230,7 +220,7 @@ class TestFloorMapLocationResolver {
                 .isTrue();
     }
 
-    /** Any move, disappearance or new arrival is a change. */
+    /// Any move, disappearance or new arrival is a change.
     @Test
     void testDifferentPositions() {
         final List<FloorMapObject> one =
@@ -249,7 +239,7 @@ class TestFloorMapLocationResolver {
 
     // -----------------------------------------------------------------------
 
-    /** An entity whose event named {@code ref} as the place it happened. */
+    /// An entity whose event named `ref` as the place it happened.
     private static FloorMapObject entityAt(final String ref) {
         final FloorMapObject object = new FloorMapObject("user-42", "person", 0, 0);
         object.setLocationRef(ref);

@@ -38,39 +38,35 @@ import com.gwtplatform.mvp.client.View;
 import java.util.Collections;
 import java.util.function.Consumer;
 
-/**
- * Modal dialog for editing a single layer's appearance — the graphic drawn for
- * facts of that type, held on its {@link TypeStyle}.
- *
- * <p>A layer draws one of three things, chosen by the {@code Graphic} radios: a
- * <strong>shape</strong> ({@link TypeStyle#getShape()} filled with
- * {@link TypeStyle#getColour()}), one of the built-in <strong>icons</strong>
- * ({@link FloorMapIcon}, filled with the same colour), or an
- * <strong>image</strong> ({@link TypeStyle#getGraphic()}) picked from the
- * document's asset store. The colour stays editable in image mode too, because it
- * is still used for areas of the type and for the glyph label.</p>
- *
- * <p>Only the chosen mode's graphic is stored, so the renderer's precedence —
- * image, then icon, then shape — never has to arbitrate between a live choice and
- * an abandoned one.</p>
- *
- * <p>Opened from the Editor Layers panel's per-row swatch. On OK it calls back
- * with a replacement {@code TypeStyle}, which the panel persists via the
- * type-styles bridge.</p>
- */
+/// Modal dialog for editing a single layer's appearance — the graphic drawn for
+/// facts of that type, held on its [TypeStyle].
+///
+/// A layer draws one of three things, chosen by the `Graphic` radios: a
+/// **shape** ([TypeStyle#getShape()] filled with
+/// [TypeStyle#getColour()]), one of the built-in **icons**
+/// ([FloorMapIcon], filled with the same colour), or an
+/// **image** ([TypeStyle#getGraphic()]) picked from the
+/// document's asset store. The colour stays editable in image mode too, because it
+/// is still used for areas of the type and for the glyph label.
+///
+/// Only the chosen mode's graphic is stored, so the renderer's precedence —
+/// image, then icon, then shape — never has to arbitrate between a live choice and
+/// an abandoned one.
+///
+/// Opened from the Editor Layers panel's per-row swatch. On OK it calls back
+/// with a replacement `TypeStyle`, which the panel persists via the
+/// type-styles bridge.
 public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayerStyleView> {
 
     private final DocumentAssetDropDownPresenter assetDropDownPresenter;
     private final Provider<DocumentAssetQuickUploadPresenter> quickUploadProvider;
 
-    /** The document owning the asset store the graphic is picked from. */
+    /// The document owning the asset store the graphic is picked from.
     private AbstractDoc document;
 
-    /**
-     * Bumped every time the dialog is shown, so an upload that completes after the
-     * user has moved on to a different layer is discarded rather than dropping its
-     * image into whichever layer is now being edited.
-     */
+    /// Bumped every time the dialog is shown, so an upload that completes after the
+    /// user has moved on to a different layer is discarded rather than dropping its
+    /// image into whichever layer is now being edited.
     private int showCount;
 
     @Inject
@@ -86,22 +82,19 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
         view.setUploadHandler(this::uploadGraphic);
         // Mode / shape / colour changes all alter what the preview should show.
         view.setChangeHandler(this::refreshPreview);
+        //noinspection unused event
         assetDropDownPresenter.addDataSelectionHandler(event -> refreshPreview());
     }
 
-    /**
-     * Sets the document whose asset store supplies layer graphics. Must be called
-     * before the dialog is shown, otherwise the picker has nothing to browse.
-     */
+    /// Sets the document whose asset store supplies layer graphics. Must be called
+    /// before the dialog is shown, otherwise the picker has nothing to browse.
     public void setDocument(final AbstractDoc document) {
         this.document = document;
         assetDropDownPresenter.setDocument(document);
     }
 
-    /**
-     * Uploads a new image into the document's asset store and selects it, so the
-     * user does not have to leave the dialog for the Assets tab.
-     */
+    /// Uploads a new image into the document's asset store and selects it, so the
+    /// user does not have to leave the dialog for the Assets tab.
     private void uploadGraphic() {
         if (document == null) {
             return;
@@ -119,25 +112,22 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
         });
     }
 
-    /**
-     * Pushes the current dialog state into the preview and keeps each chooser
-     * live only in the mode that uses it.
-     */
+    /// Pushes the current dialog state into the preview and keeps each chooser
+    /// live only in the mode that uses it.
     private void refreshPreview() {
         final GraphicMode mode = getView().getMode();
         assetDropDownPresenter.setEnabled(mode == GraphicMode.IMAGE);
         getView().setPreview(styleFrom(null, mode));
     }
 
-    /**
-     * The style the dialog currently describes, for {@code type}.
-     *
-     * <p>Only the chosen mode's graphic is carried, so switching mode and
-     * confirming genuinely replaces the graphic rather than leaving a stale value
-     * behind to win later — the renderer's precedence is image, then icon, then
-     * shape, so a leftover image would silently outrank a newly-picked icon.</p>
-     */
+    /// The style the dialog currently describes, for `type`.
+    ///
+    /// Only the chosen mode's graphic is carried, so switching mode and
+    /// confirming genuinely replaces the graphic rather than leaving a stale value
+    /// behind to win later — the renderer's precedence is image, then icon, then
+    /// shape, so a leftover image would silently outrank a newly-picked icon.
     private TypeStyle styleFrom(final String type, final GraphicMode mode) {
+        //noinspection EnhancedSwitchMigration
         switch (mode) {
             case IMAGE:
                 return new TypeStyle(type, null, getView().getColour(), selectedGraphic());
@@ -149,7 +139,7 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
         }
     }
 
-    /** The picked asset URL, or {@code null} when nothing is selected. */
+    /// The picked asset URL, or `null` when nothing is selected.
     private String selectedGraphic() {
         final String path = assetDropDownPresenter.getSelectedAssetPath();
         return path == null || path.isEmpty()
@@ -157,7 +147,7 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
                 : path;
     }
 
-    /** The chosen shape, or {@code null} for the default glyph. */
+    /// The chosen shape, or `null` for the default glyph.
     private Shape chosenShape() {
         final String name = getView().getShape();
         return FloorMapLayerStyleView.DEFAULT_SHAPE_LABEL.equals(name)
@@ -165,13 +155,11 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
                 : Shape.valueOf(name);
     }
 
-    /**
-     * Shows the dialog for the given layer.
-     *
-     * @param style the layer's current style; its {@code type} names the layer in
-     *              the caption and is carried through to the replacement
-     * @param onOk  called with the replacement style when the user confirms
-     */
+    /// Shows the dialog for the given layer.
+    ///
+    /// @param style the layer's current style; its `type` names the layer in
+    ///         the caption and is carried through to the replacement
+    /// @param onOk  called with the replacement style when the user confirms
     public void show(final TypeStyle style,
                      final Consumer<TypeStyle> onOk) {
         showCount++;
@@ -222,22 +210,20 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
                 .fire();
     }
 
-    /**
-     * View contract: a shape / icon / image mode toggle, a chooser for each, a
-     * colour chooser and a preview.
-     */
+    /// View contract: a shape / icon / image mode toggle, a chooser for each, a
+    /// colour chooser and a preview.
     public interface FloorMapLayerStyleView extends View {
 
-        /** Dropdown label for "no configured shape" (the default rectangle glyph). */
+        /// Dropdown label for "no configured shape" (the default rectangle glyph).
         String DEFAULT_SHAPE_LABEL = "(default)";
 
-        /** What a layer draws for facts of its type. */
+        /// What a layer draws for facts of its type.
         enum GraphicMode {
-            /** A coloured {@link Shape}. */
+            /// A coloured [Shape].
             SHAPE,
-            /** A built-in {@link FloorMapIcon}, filled with the layer's colour. */
+            /// A built-in [FloorMapIcon], filled with the layer's colour.
             ICON,
-            /** An image uploaded to the document's asset store. */
+            /// An image uploaded to the document's asset store.
             IMAGE
         }
 
@@ -249,29 +235,27 @@ public class FloorMapLayerStylePresenter extends MyPresenterWidget<FloorMapLayer
 
         String getColour();
 
-        /** Which of the three graphics the layer draws. */
+        /// Which of the three graphics the layer draws.
         void setMode(GraphicMode mode);
 
         GraphicMode getMode();
 
-        /** Selects a built-in icon, or {@code null} for none. */
+        /// Selects a built-in icon, or `null` for none.
         void setIcon(FloorMapIcon icon);
 
         FloorMapIcon getIcon();
 
-        /** Installs the asset picker widget the presenter owns. */
+        /// Installs the asset picker widget the presenter owns.
         void setAssetPickerView(Widget assetPickerView);
 
-        /** Registers the handler run when the user clicks the upload button. */
+        /// Registers the handler run when the user clicks the upload button.
         void setUploadHandler(Runnable handler);
 
-        /**
-         * Registers the handler run whenever the mode, shape or colour changes, so
-         * the presenter can refresh the preview.
-         */
+        /// Registers the handler run whenever the mode, shape or colour changes, so
+        /// the presenter can refresh the preview.
         void setChangeHandler(Runnable handler);
 
-        /** Renders a preview of the given style. */
+        /// Renders a preview of the given style.
         void setPreview(TypeStyle style);
     }
 }

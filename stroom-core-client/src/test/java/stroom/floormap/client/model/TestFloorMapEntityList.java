@@ -51,27 +51,21 @@ class TestFloorMapEntityList {
     // displayName
     // -----------------------------------------------------------------------
 
-    /**
-     * An email-style id is shortened to the portion before the '@', matching
-     * the canvas label rule.
-     */
+    /// An email-style id is shortened to the portion before the '@', matching
+    /// the canvas label rule.
     @Test
     void testDisplayNameEmail() {
         assertThat(FloorMapEntityList.displayName("alice@example.com")).isEqualTo("alice");
     }
 
-    /**
-     * An id without an '@' is used verbatim.
-     */
+    /// An id without an '@' is used verbatim.
     @Test
     void testDisplayNamePlainId() {
         assertThat(FloorMapEntityList.displayName("forklift-1")).isEqualTo("forklift-1");
     }
 
-    /**
-     * A leading '@' does not produce an empty display name — the full id is
-     * kept (the canvas rule only shortens when the '@' is beyond index 0).
-     */
+    /// A leading '@' does not produce an empty display name — the full id is
+    /// kept (the canvas rule only shortens when the '@' is beyond index 0).
     @Test
     void testDisplayNameLeadingAt() {
         assertThat(FloorMapEntityList.displayName("@odd-id")).isEqualTo("@odd-id");
@@ -86,10 +80,8 @@ class TestFloorMapEntityList {
     // Admission — every event type is tracked
     // -----------------------------------------------------------------------
 
-    /**
-     * All typed event objects are admitted, not just persons — the tracking
-     * panel covers everything coming through the events stream.
-     */
+    /// All typed event objects are admitted, not just persons — the tracking
+    /// panel covers everything coming through the events stream.
     @Test
     void testAdmitsAllTypes() {
         final boolean changed = entityList.update(Arrays.asList(
@@ -104,10 +96,8 @@ class TestFloorMapEntityList {
                 .containsExactly("alice@example.com", "asset-42", "forklift-1", "untyped-1");
     }
 
-    /**
-     * The entry records the entity's type; a null type is stored as an empty
-     * string so grid columns never render "null".
-     */
+    /// The entry records the entity's type; a null type is stored as an empty
+    /// string so grid columns never render "null".
     @Test
     void testStoresType() {
         entityList.update(Arrays.asList(
@@ -120,9 +110,7 @@ class TestFloorMapEntityList {
                 .containsExactly("person", "vehicle", "");
     }
 
-    /**
-     * Entities with null or empty ids cannot be listed or tracked and are skipped.
-     */
+    /// Entities with null or empty ids cannot be listed or tracked and are skipped.
     @Test
     void testSkipsNullAndEmptyIds() {
         final boolean changed = entityList.update(Arrays.asList(
@@ -138,10 +126,8 @@ class TestFloorMapEntityList {
     // Facts admission — the tracking panel covers static facts too
     // -----------------------------------------------------------------------
 
-    /**
-     * Static facts of every kind — point objects, backgrounds and areas — are
-     * admitted alongside event entities, keyed by their fact key.
-     */
+    /// Static facts of every kind — point objects, backgrounds and areas — are
+    /// admitted alongside event entities, keyed by their fact key.
     @Test
     void testUpdateFactsAdmitsAllKinds() {
         final boolean changed = entityList.updateFacts(Arrays.asList(
@@ -158,10 +144,8 @@ class TestFloorMapEntityList {
                 .containsExactly("background", "gate", "area");
     }
 
-    /**
-     * Facts with null or empty keys cannot be listed or tracked and are
-     * skipped, as are null list elements and a null list.
-     */
+    /// Facts with null or empty keys cannot be listed or tracked and are
+    /// skipped, as are null list elements and a null list.
     @Test
     void testUpdateFactsSkipsNullAndEmptyKeys() {
         assertThat(entityList.updateFacts(Arrays.asList(
@@ -172,11 +156,9 @@ class TestFloorMapEntityList {
         assertThat(entityList.getEntities()).isEmpty();
     }
 
-    /**
-     * Facts deduplicate against entries already admitted from the events
-     * stream (and vice versa) — first-seen type wins, and a repeat merge
-     * reports no change so the grid is not refreshed.
-     */
+    /// Facts deduplicate against entries already admitted from the events
+    /// stream (and vice versa) — first-seen type wins, and a repeat merge
+    /// reports no change so the grid is not refreshed.
     @Test
     void testUpdateFactsDedupesAgainstEvents() {
         entityList.update(Collections.singletonList(entity("gate-1", "vehicle")));
@@ -193,10 +175,8 @@ class TestFloorMapEntityList {
     // Fact / event classification — backs the tracking panel's Show Facts toggle
     // -----------------------------------------------------------------------
 
-    /**
-     * Entities from the events stream are flagged as such and static facts are
-     * not, so the tracking panel can list only what moves by default.
-     */
+    /// Entities from the events stream are flagged as such and static facts are
+    /// not, so the tracking panel can list only what moves by default.
     @Test
     void testClassifiesEventsAndFacts() {
         entityList.update(Collections.singletonList(person()));
@@ -209,12 +189,10 @@ class TestFloorMapEntityList {
                         tuple("gate-1", false));
     }
 
-    /**
-     * A fact-only entity that later turns up in the events stream is promoted
-     * to an event entity — it moves, so the default events-only view must list
-     * it whichever query saw it first. The promotion reports a change so the
-     * grid re-filters, and the first-seen name and type are kept.
-     */
+    /// A fact-only entity that later turns up in the events stream is promoted
+    /// to an event entity — it moves, so the default events-only view must list
+    /// it whichever query saw it first. The promotion reports a change so the
+    /// grid re-filters, and the first-seen name and type are kept.
     @Test
     void testFactIsPromotedWhenItStartsEmittingEvents() {
         entityList.updateFacts(Collections.singletonList(area("area-1", "Loading Bay")));
@@ -234,11 +212,9 @@ class TestFloorMapEntityList {
                 .isFalse();
     }
 
-    /**
-     * The reverse never happens: a fact carrying the same key as an entity
-     * already seen in the events stream does not demote it back out of the
-     * default view.
-     */
+    /// The reverse never happens: a fact carrying the same key as an entity
+    /// already seen in the events stream does not demote it back out of the
+    /// default view.
     @Test
     void testEventEntityIsNotDemotedByFact() {
         entityList.update(Collections.singletonList(entity("gate-1", "vehicle")));
@@ -253,10 +229,8 @@ class TestFloorMapEntityList {
     // Area naming — areas are named by their LABEL, other facts are not
     // -----------------------------------------------------------------------
 
-    /**
-     * An area is named by its user-facing LABEL, because its key is an opaque
-     * generated id that reads as noise in the tracking panel.
-     */
+    /// An area is named by its user-facing LABEL, because its key is an opaque
+    /// generated id that reads as noise in the tracking panel.
     @Test
     void testAreaUsesLabelAsDisplayName() {
         entityList.updateFacts(Collections.singletonList(
@@ -272,12 +246,10 @@ class TestFloorMapEntityList {
                 .containsExactly("area-7f2a3c");
     }
 
-    /**
-     * A keyed type lookup, the companion to {@link FloorMapEntityList#getDisplayName}.
-     * Callers naming many entities at once — the cluster member list, which can
-     * hold hundreds — need this rather than scanning {@code getEntities()}, which
-     * allocates and sorts the whole roster on every call.
-     */
+    /// A keyed type lookup, the companion to [FloorMapEntityList#getDisplayName].
+    /// Callers naming many entities at once — the cluster member list, which can
+    /// hold hundreds — need this rather than scanning `getEntities()`, which
+    /// allocates and sorts the whole roster on every call.
     @Test
     void testGetType() {
         entityList.update(Arrays.asList(
@@ -292,7 +264,7 @@ class TestFloorMapEntityList {
         assertThat(entityList.getType(null)).isNull();
     }
 
-    /** An unnamed or blank-named area falls back to its key. */
+    /// An unnamed or blank-named area falls back to its key.
     @Test
     void testAreaWithoutLabelFallsBackToKey() {
         entityList.updateFacts(Arrays.asList(
@@ -303,7 +275,7 @@ class TestFloorMapEntityList {
         assertThat(entityList.getDisplayName("area-2")).isEqualTo("area-2");
     }
 
-    /** A label is trimmed, so stray whitespace does not reach the grid. */
+    /// A label is trimmed, so stray whitespace does not reach the grid.
     @Test
     void testAreaLabelIsTrimmed() {
         entityList.updateFacts(Collections.singletonList(
@@ -312,10 +284,8 @@ class TestFloorMapEntityList {
         assertThat(entityList.getDisplayName("area-1")).isEqualTo("Loading Bay");
     }
 
-    /**
-     * Only areas are renamed. A named non-area fact keeps its key-derived name,
-     * so objects and backgrounds read exactly as they did before.
-     */
+    /// Only areas are renamed. A named non-area fact keeps its key-derived name,
+    /// so objects and backgrounds read exactly as they did before.
     @Test
     void testNonAreaFactKeepsKeyDerivedName() {
         final Fact namedGate = new Fact("gate-1", "gate", null, null, null,
@@ -325,10 +295,8 @@ class TestFloorMapEntityList {
         assertThat(entityList.getDisplayName("gate-1")).isEqualTo("gate-1");
     }
 
-    /**
-     * A fact carrying an image is not an area even with vertices (the renderer
-     * paints the image), so it is not renamed either.
-     */
+    /// A fact carrying an image is not an area even with vertices (the renderer
+    /// paints the image), so it is not renamed either.
     @Test
     void testImageBearingFactWithVerticesKeepsKeyDerivedName() {
         final Fact imageFact = new Fact("odd-1", "area", "/assets/x.png", null, null,
@@ -338,7 +306,7 @@ class TestFloorMapEntityList {
         assertThat(entityList.getDisplayName("odd-1")).isEqualTo("odd-1");
     }
 
-    /** An unknown id has no resolved name. */
+    /// An unknown id has no resolved name.
     @Test
     void testGetDisplayNameUnknown() {
         assertThat(entityList.getDisplayName("nobody")).isNull();
@@ -349,7 +317,7 @@ class TestFloorMapEntityList {
         return new Fact(key, type, null, null, null);
     }
 
-    /** An area fact — vertices and no image — with the given LABEL name. */
+    /// An area fact — vertices and no image — with the given LABEL name.
     private static Fact area(final String key, final String label) {
         return new Fact(key, FloorMapJsonKeys.AREA, null, null, null,
                 squareVertices(), null, null, label);
@@ -363,10 +331,8 @@ class TestFloorMapEntityList {
     // Deduplication and accumulation
     // -----------------------------------------------------------------------
 
-    /**
-     * The same id repeated within a single update produces one row, keeping
-     * the first-seen type.
-     */
+    /// The same id repeated within a single update produces one row, keeping
+    /// the first-seen type.
     @Test
     void testDedupesWithinUpdate() {
         entityList.update(Arrays.asList(
@@ -378,10 +344,8 @@ class TestFloorMapEntityList {
         assertThat(entities.getFirst().getType()).isEqualTo("vehicle");
     }
 
-    /**
-     * An entity absent from a later refresh stays in the roster — the roster
-     * is a union of everything seen, so playback refreshes don't drop rows.
-     */
+    /// An entity absent from a later refresh stays in the roster — the roster
+    /// is a union of everything seen, so playback refreshes don't drop rows.
     @Test
     void testAccumulatesAcrossUpdates() {
         entityList.update(Collections.singletonList(person()));
@@ -396,10 +360,8 @@ class TestFloorMapEntityList {
     // Change flag
     // -----------------------------------------------------------------------
 
-    /**
-     * The change flag is true only when membership actually changes, so the
-     * presenter can skip grid refreshes for repeat data.
-     */
+    /// The change flag is true only when membership actually changes, so the
+    /// presenter can skip grid refreshes for repeat data.
     @Test
     void testChangeFlag() {
         assertThat(entityList.update(Collections.singletonList(person())))
@@ -419,10 +381,8 @@ class TestFloorMapEntityList {
     // Sorting
     // -----------------------------------------------------------------------
 
-    /**
-     * Entities are sorted by display name case-insensitively with the full id
-     * as a tiebreak, and the order is stable across updates.
-     */
+    /// Entities are sorted by display name case-insensitively with the full id
+    /// as a tiebreak, and the order is stable across updates.
     @Test
     void testSortOrder() {
         entityList.update(Arrays.asList(
@@ -463,9 +423,7 @@ class TestFloorMapEntityList {
         assertThat(entityList.contains(null)).isFalse();
     }
 
-    /**
-     * Clearing empties the roster and the next update reports a change again.
-     */
+    /// Clearing empties the roster and the next update reports a change again.
     @Test
     void testClear() {
         entityList.update(Collections.singletonList(person()));
@@ -480,10 +438,8 @@ class TestFloorMapEntityList {
     // EntityEntry equality
     // -----------------------------------------------------------------------
 
-    /**
-     * Entry equality is id-based so a re-created entry for the same entity
-     * reads as already-selected to a selection model across grid data refreshes.
-     */
+    /// Entry equality is id-based so a re-created entry for the same entity
+    /// reads as already-selected to a selection model across grid data refreshes.
     @Test
     void testEntityEntryEqualsOnIdOnly() {
         final EntityEntry a = new EntityEntry("forklift-1", "forklift-1", "vehicle", true);
@@ -498,29 +454,25 @@ class TestFloorMapEntityList {
     // captionFor (canvas caption text)
     // -----------------------------------------------------------------------
 
-    /**
-     * A user-supplied {@code LABEL} wins, which is the whole point of the field.
-     *
-     * <p>Regression test for a real gap: the canvas caption path used to shorten the
-     * key and ignore the label entirely, so an object the user had named "Loading
-     * Bay" was captioned "gate-1" while the hover tooltip for the same object said
-     * "Loading Bay".</p>
-     */
+    /// A user-supplied `LABEL` wins, which is the whole point of the field.
+    ///
+    /// Regression test for a real gap: the canvas caption path used to shorten the
+    /// key and ignore the label entirely, so an object the user had named "Loading
+    /// Bay" was captioned "gate-1" while the hover tooltip for the same object said
+    /// "Loading Bay".
     @Test
     void testCaptionFor_prefersTheFactLabel() {
         assertThat(FloorMapEntityList.captionFor("gate-1@100", "Loading Bay", null))
                 .isEqualTo("Loading Bay");
     }
 
-    /**
-     * The label must beat the resolver, not the other way round.
-     *
-     * <p>This is the subtle one. The roster's resolver returns a key-derived name for
-     * everything except areas, and that name is never blank — so a resolver-first
-     * precedence would silently discard every user-supplied label. Consulting the
-     * resolver first would make the method useless for exactly the facts it exists
-     * to serve.</p>
-     */
+    /// The label must beat the resolver, not the other way round.
+    ///
+    /// This is the subtle one. The roster's resolver returns a key-derived name for
+    /// everything except areas, and that name is never blank — so a resolver-first
+    /// precedence would silently discard every user-supplied label. Consulting the
+    /// resolver first would make the method useless for exactly the facts it exists
+    /// to serve.
     @Test
     void testCaptionFor_labelBeatsAKeyDerivedResolver() {
         assertThat(FloorMapEntityList.captionFor(
@@ -528,17 +480,15 @@ class TestFloorMapEntityList {
                 .isEqualTo("Loading Bay");
     }
 
-    /**
-     * With no label — a live event entity, which has no {@link Fact} behind it — the
-     * resolver is the only source of a name.
-     */
+    /// With no label — a live event entity, which has no [Fact] behind it — the
+    /// resolver is the only source of a name.
     @Test
     void testCaptionFor_fallsBackToTheResolver() {
         assertThat(FloorMapEntityList.captionFor("user-42@100", null, ignored -> "Alice"))
                 .isEqualTo("Alice");
     }
 
-    /** A blank label or a blank resolver result is not a name. */
+    /// A blank label or a blank resolver result is not a name.
     @Test
     void testCaptionFor_blankValuesAreSkipped() {
         assertThat(FloorMapEntityList.captionFor("user-42@100", "   ", ignored -> "Alice"))
@@ -549,7 +499,7 @@ class TestFloorMapEntityList {
                 .isEqualTo("user-42");
     }
 
-    /** With nothing else available the key is shortened at the {@code @}. */
+    /// With nothing else available the key is shortened at the `@`.
     @Test
     void testCaptionFor_lastResortIsTheShortenedKey() {
         assertThat(FloorMapEntityList.captionFor("user-42@100", null, null))
@@ -558,13 +508,13 @@ class TestFloorMapEntityList {
                 .isEqualTo("plain-id");
     }
 
-    /** Never returns null, so a caller can hand the result straight to the renderer. */
+    /// Never returns null, so a caller can hand the result straight to the renderer.
     @Test
     void testCaptionFor_nullIdYieldsEmptyNotNull() {
         assertThat(FloorMapEntityList.captionFor(null, null, null)).isEmpty();
     }
 
-    /** Values are trimmed, so stray whitespace cannot shift a caption's placement. */
+    /// Values are trimmed, so stray whitespace cannot shift a caption's placement.
     @Test
     void testCaptionFor_trimsWhitespace() {
         assertThat(FloorMapEntityList.captionFor("k", "  Loading Bay  ", null))

@@ -25,29 +25,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Applies the per-type paint order (see {@link TypeStyle} and the redesign §6
- * "Type settings") to a list of facts.
- *
- * <p>Facts paint in the order their type appears in the configured
- * {@code typeStyles} list — earlier types behind later ones. A type <em>not</em>
- * in the configured order (e.g. one seen in the data but not yet discovered)
- * sorts <strong>last</strong>, so it paints on top and stays visible. Within a
- * single type, the original list order is preserved (a stable sort), which
- * carries the parser's entry order.</p>
- *
- * <p>Pure logic with no GWT dependencies, so it can be unit-tested directly.</p>
- */
+/// Applies the per-type paint order (see [TypeStyle] and the redesign §6
+/// "Type settings") to a list of facts.
+///
+/// Facts paint in the order their type appears in the configured
+/// `typeStyles` list — earlier types behind later ones. A type *not*
+/// in the configured order (e.g. one seen in the data but not yet discovered)
+/// sorts **last**, so it paints on top and stays visible. Within a
+/// single type, the original list order is preserved (a stable sort), which
+/// carries the parser's entry order.
+///
+/// Pure logic with no GWT dependencies, so it can be unit-tested directly.
 public final class FloorMapZOrder {
 
     private FloorMapZOrder() {
         // Utility class
     }
 
-    /**
-     * The index of {@code type} within the configured order, or
-     * {@link Integer#MAX_VALUE} if it is not configured (so it paints on top).
-     */
+    /// The index of `type` within the configured order, or
+    /// [Integer#MAX_VALUE] if it is not configured (so it paints on top).
     public static int indexOf(final String type, final List<TypeStyle> order) {
         if (order != null && type != null) {
             for (int i = 0; i < order.size(); i++) {
@@ -60,15 +56,13 @@ public final class FloorMapZOrder {
         return Integer.MAX_VALUE;
     }
 
-    /**
-     * Returns a new list of the given facts, stably ordered back-to-front by
-     * their type's position in {@code order}; unconfigured types come last.
-     *
-     * @param facts the facts to order (unchanged; a new list is returned)
-     * @param order the configured type styles, or {@code null}/empty (then the
-     *              input order is preserved)
-     * @return a new, paint-ordered list; never {@code null}
-     */
+    /// Returns a new list of the given facts, stably ordered back-to-front by
+    /// their type's position in `order`; unconfigured types come last.
+    ///
+    /// @param facts the facts to order (unchanged; a new list is returned)
+    /// @param order the configured type styles, or `null`/empty (then the
+    ///         input order is preserved)
+    /// @return a new, paint-ordered list; never `null`
     public static List<Fact> sort(final List<Fact> facts, final List<TypeStyle> order) {
         final List<Fact> result = new ArrayList<>();
         if (facts != null) {
@@ -91,12 +85,10 @@ public final class FloorMapZOrder {
         return result;
     }
 
-    /**
-     * Maps each configured type to its position in {@code order}.
-     *
-     * <p>Uses the <em>first</em> occurrence of a duplicated type, matching
-     * {@link #indexOf}.</p>
-     */
+    /// Maps each configured type to its position in `order`.
+    ///
+    /// Uses the *first* occurrence of a duplicated type, matching
+    /// [#indexOf].
     private static Map<String, Integer> indexByType(final List<TypeStyle> order) {
         final Map<String, Integer> indexByType = new HashMap<>();
         if (order != null) {

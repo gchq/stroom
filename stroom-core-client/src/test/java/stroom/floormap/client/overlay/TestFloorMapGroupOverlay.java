@@ -51,7 +51,7 @@ class TestFloorMapGroupOverlay {
         assertThat(overlay.hasAny()).isTrue();
     }
 
-    /** Groups start hidden, so an unshown group contributes nothing. */
+    /// Groups start hidden, so an unshown group contributes nothing.
     @Test
     void testHiddenGroupContributesNothing() {
         final List<FloorMapGroup> groups = Collections.singletonList(
@@ -76,10 +76,8 @@ class TestFloorMapGroupOverlay {
         assertThat(overlay.colourFor("alice")).isNull();
     }
 
-    /**
-     * An entity in two shown groups takes the colour of the first group in list
-     * order — predictable from the panel's row order rather than map iteration.
-     */
+    /// An entity in two shown groups takes the colour of the first group in list
+    /// order — predictable from the panel's row order rather than map iteration.
     @Test
     void testFirstShownGroupInListOrderWins() {
         final List<FloorMapGroup> groups = Arrays.asList(
@@ -93,7 +91,7 @@ class TestFloorMapGroupOverlay {
                 .isEqualTo(PURPLE);
     }
 
-    /** Highlighting keys on group id, so a rename cannot drop the highlight. */
+    /// Highlighting keys on group id, so a rename cannot drop the highlight.
     @Test
     void testRenameDoesNotDropHighlight() {
         final FloorMapGroup renamed = group("maintenance", PURPLE, "alice")

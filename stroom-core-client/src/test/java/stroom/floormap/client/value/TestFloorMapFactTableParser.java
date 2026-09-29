@@ -32,12 +32,10 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Covers the Map tab's ingest path, which until this class was extracted from
- * {@code FloorMapMapPresenter} could not be tested at all — it was a private method on a GWT
- * presenter, so the largest single body of parsing logic in the feature had no coverage while
- * its structured-value sibling {@link FloorMapEntryParser} had a full suite.
- */
+/// Covers the Map tab's ingest path, which until this class was extracted from
+/// `FloorMapMapPresenter` could not be tested at all — it was a private method on a GWT
+/// presenter, so the largest single body of parsing logic in the feature had no coverage while
+/// its structured-value sibling [FloorMapEntryParser] had a full suite.
 class TestFloorMapFactTableParser {
 
     private List<String> warnings;
@@ -51,7 +49,7 @@ class TestFloorMapFactTableParser {
     // Column matching
     // -----------------------------------------------------------------------
 
-    /** Roles are matched to columns by the alias the query builder produced, ignoring case. */
+    /// Roles are matched to columns by the alias the query builder produced, ignoring case.
     @Test
     void testColumnsAreMatchedByAliasIgnoringCase() {
         final List<Fact> facts = parse(
@@ -67,10 +65,8 @@ class TestFloorMapFactTableParser {
         assertThat(fact.getPosition()).containsExactly(10.0, 20.0);
     }
 
-    /**
-     * A role with no alias — the pre-area schemas have no geometry or opacity — goes
-     * unmatched rather than throwing, and the fact is still built.
-     */
+    /// A role with no alias — the pre-area schemas have no geometry or opacity — goes
+    /// unmatched rather than throwing, and the fact is still built.
     @Test
     void testUnmappedRolesAreNotAnError() {
         final List<Fact> facts = parse(
@@ -84,7 +80,7 @@ class TestFloorMapFactTableParser {
         assertThat(warnings).isEmpty();
     }
 
-    /** A column the schema does not name is ignored. */
+    /// A column the schema does not name is ignored.
     @Test
     void testUnknownColumnsAreIgnored() {
         final List<Fact> facts = parse(
@@ -95,7 +91,7 @@ class TestFloorMapFactTableParser {
         assertThat(facts).hasSize(1);
     }
 
-    /** A row shorter than the column list does not throw. */
+    /// A row shorter than the column list does not throw.
     @Test
     void testShortRowsAreTolerated() {
         final List<Fact> facts = parse(
@@ -108,7 +104,7 @@ class TestFloorMapFactTableParser {
         assertThat(facts.get(0).getPosition()).containsExactly(0.0, 0.0);
     }
 
-    /** Null columns or rows yield an empty list rather than an exception. */
+    /// Null columns or rows yield an empty list rather than an exception.
     @Test
     void testNullInputs() {
         assertThat(parse(null, List.of(), aliases())).isEmpty();
@@ -119,10 +115,8 @@ class TestFloorMapFactTableParser {
     // Collapsing shards
     // -----------------------------------------------------------------------
 
-    /**
-     * The query returns every effective-time shard in ascending order, so the last row for a
-     * key wins — the canvas shows one current instance per object, not every version at once.
-     */
+    /// The query returns every effective-time shard in ascending order, so the last row for a
+    /// key wins — the canvas shows one current instance per object, not every version at once.
     @Test
     void testLaterShardOverwritesEarlier() {
         final List<Fact> facts = parse(
@@ -136,7 +130,7 @@ class TestFloorMapFactTableParser {
         assertThat(facts.get(0).getPosition()).containsExactly(9.0, 9.0);
     }
 
-    /** Distinct keys are all kept, in the order first seen. */
+    /// Distinct keys are all kept, in the order first seen.
     @Test
     void testDistinctKeysArePreservedInOrder() {
         final List<Fact> facts = parse(
@@ -151,7 +145,7 @@ class TestFloorMapFactTableParser {
     // Value parsing
     // -----------------------------------------------------------------------
 
-    /** Brackets and quotes are optional decoration around the numbers. */
+    /// Brackets and quotes are optional decoration around the numbers.
     @Test
     void testCoordsAcceptBracketsAndQuotes() {
         assertThat(FloorMapFactTableParser.parseCoords("[1.5, 2.5]", null))
@@ -162,20 +156,18 @@ class TestFloorMapFactTableParser {
                 .containsExactly(1.5, 2.5);
     }
 
-    /**
-     * Values beyond the two needed are ignored.
-     *
-     * <p>Deliberately unlike {@link XmlValueText#parseCommaSeparatedNumbers(String)}, which is
-     * all-or-nothing. Tightening this would stop placing objects that place correctly today,
-     * so the leniency is pinned here on purpose rather than left to chance.</p>
-     */
+    /// Values beyond the two needed are ignored.
+    ///
+    /// Deliberately unlike [XmlValueText#parseCommaSeparatedNumbers(String)], which is
+    /// all-or-nothing. Tightening this would stop placing objects that place correctly today,
+    /// so the leniency is pinned here on purpose rather than left to chance.
     @Test
     void testCoordsIgnoreTrailingValues() {
         assertThat(FloorMapFactTableParser.parseCoords("[1, 2, 99, junk]", null))
                 .containsExactly(1.0, 2.0);
     }
 
-    /** An unparseable leading value fails the whole coordinate, with a warning. */
+    /// An unparseable leading value fails the whole coordinate, with a warning.
     @Test
     void testCoordsRejectUnparseableLeadingValue() {
         assertThat(FloorMapFactTableParser.parseCoords("[abc, 2]", warnings::add)).isNull();
@@ -184,14 +176,14 @@ class TestFloorMapFactTableParser {
         assertThat(warnings.get(0)).contains("coordinates");
     }
 
-    /** Too few values is a failure, not a partial result. */
+    /// Too few values is a failure, not a partial result.
     @Test
     void testCoordsRejectSingleValue() {
         assertThat(FloorMapFactTableParser.parseCoords("[1]", warnings::add)).isNull();
         assertThat(warnings).hasSize(1);
     }
 
-    /** Blank and null are absence, not failure — no warning. */
+    /// Blank and null are absence, not failure — no warning.
     @Test
     void testBlankValuesAreAbsenceNotFailure() {
         assertThat(FloorMapFactTableParser.parseCoords(null, warnings::add)).isNull();
@@ -201,7 +193,7 @@ class TestFloorMapFactTableParser {
         assertThat(warnings).isEmpty();
     }
 
-    /** A polygon needs three vertex pairs; a trailing odd value is ignored. */
+    /// A polygon needs three vertex pairs; a trailing odd value is ignored.
     @Test
     void testVertices() {
         assertThat(FloorMapFactTableParser.parseVertices("[0,0, 1,0, 1,1]", null))
@@ -213,7 +205,7 @@ class TestFloorMapFactTableParser {
         assertThat(FloorMapFactTableParser.parseVertices("[0,0, 1,1]", null)).isNull();
     }
 
-    /** A bad vertex fails the whole polygon, with a warning — never a partial outline. */
+    /// A bad vertex fails the whole polygon, with a warning — never a partial outline.
     @Test
     void testVerticesRejectUnparseableValue() {
         assertThat(FloorMapFactTableParser.parseVertices("[0,0, 1,x, 1,1]", warnings::add))
@@ -223,7 +215,7 @@ class TestFloorMapFactTableParser {
         assertThat(warnings.get(0)).contains("geometry");
     }
 
-    /** A matrix falls back to identity rather than null, so a fact is always placeable. */
+    /// A matrix falls back to identity rather than null, so a fact is always placeable.
     @Test
     void testMatrixFallsBackToIdentity() {
         assertThat(FloorMapFactTableParser.parseMatrix("[1,0,0,1,5,6]", null).getE())
@@ -245,7 +237,7 @@ class TestFloorMapFactTableParser {
         assertThat(warnings).hasSize(2);
     }
 
-    /** Opacity is optional and silently absent when unparseable — it is presentation only. */
+    /// Opacity is optional and silently absent when unparseable — it is presentation only.
     @Test
     void testNullableDouble() {
         assertThat(FloorMapFactTableParser.parseNullableDouble("0.5")).isEqualTo(0.5);
@@ -253,7 +245,7 @@ class TestFloorMapFactTableParser {
         assertThat(FloorMapFactTableParser.parseNullableDouble(null)).isNull();
     }
 
-    /** A full row exercises every role at once. */
+    /// A full row exercises every role at once.
     @Test
     void testFullRow() {
         final List<Fact> facts = parse(
@@ -306,7 +298,7 @@ class TestFloorMapFactTableParser {
         return Row.builder().values(Arrays.asList(values)).build();
     }
 
-    /** Alias map from flat {@code role, alias, role, alias} pairs. */
+    /// Alias map from flat `role, alias, role, alias` pairs.
     private static Map<Role, String> aliases(final Object... pairs) {
         final Map<Role, String> map = new HashMap<>();
         for (int i = 0; i < pairs.length; i += 2) {

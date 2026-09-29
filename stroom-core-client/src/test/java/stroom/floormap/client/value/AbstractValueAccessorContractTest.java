@@ -20,76 +20,72 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * The {@link ValueAccessor} contract, written once and run against every
- * implementation that can execute on the JVM.
- *
- * <h3>Why this test exists</h3>
- *
- * <p>FloorMap has four accessor implementations: the production JSON and XML pair
- * (GWT client classes), and a JVM-runnable double for each, used by the parser and
- * editor-model tests. A review found the doubles had drifted from production in five
- * separate ways, and the most serious was a straight contradiction: given an array
- * containing a non-numeric token, one implementation rejected the whole entry while
- * the other kept it with a fabricated zero in place of the bad token. That is the
- * branch that decides whether corrupt stored data is caught or silently accepted,
- * the two runtimes did opposite things, and <em>neither behaviour had a test</em>.</p>
- *
- * <p>The consequence was worse than a gap in coverage. Roughly 150 tests — the whole
- * of the parser and editor-model suites — ran against the doubles, so a green suite
- * was compatible with production being broken. The tests were not weak; they were
- * attesting to the wrong implementation.</p>
- *
- * <h3>What it can and cannot reach</h3>
- *
- * <p>The production accessors wrap GWT's JSON and DOM APIs and there is no
- * {@code GWTTestCase} infrastructure in this repository, so they cannot be executed
- * here — this test runs against the two doubles only. That limit is the reason the
- * format-level rules that need no DOM now live in {@link XmlValueText} and are
- * <em>shared</em> by the production XML accessor and its double rather than written
- * out twice: for those rules divergence is impossible rather than merely tested.
- * What remains implementation-specific is DOM and JSON traversal, and this contract
- * pins the observable behaviour a caller depends on.</p>
- *
- * <h3>What belongs here, and what does not</h3>
- *
- * <p>Only invariants that must hold <strong>identically for every format</strong>.
- * Genuine format differences stay in the per-format tests — most importantly, XML
- * element text is untyped, so {@code getString} on a numeric field returns the text,
- * whereas JSON is typed and returns {@code null} for a non-string. That is a
- * property of the formats, not a defect, and asserting it here would force one of
- * the two implementations to lie.</p>
- */
+/// The [ValueAccessor] contract, written once and run against every
+/// implementation that can execute on the JVM.
+///
+/// ### Why this test exists
+///
+/// FloorMap has four accessor implementations: the production JSON and XML pair
+/// (GWT client classes), and a JVM-runnable double for each, used by the parser and
+/// editor-model tests. A review found the doubles had drifted from production in five
+/// separate ways, and the most serious was a straight contradiction: given an array
+/// containing a non-numeric token, one implementation rejected the whole entry while
+/// the other kept it with a fabricated zero in place of the bad token. That is the
+/// branch that decides whether corrupt stored data is caught or silently accepted,
+/// the two runtimes did opposite things, and *neither behaviour had a test*.
+///
+/// The consequence was worse than a gap in coverage. Roughly 150 tests — the whole
+/// of the parser and editor-model suites — ran against the doubles, so a green suite
+/// was compatible with production being broken. The tests were not weak; they were
+/// attesting to the wrong implementation.
+///
+/// ### What it can and cannot reach
+///
+/// The production accessors wrap GWT's JSON and DOM APIs and there is no
+/// `GWTTestCase` infrastructure in this repository, so they cannot be executed
+/// here — this test runs against the two doubles only. That limit is the reason the
+/// format-level rules that need no DOM now live in [XmlValueText] and are
+/// *shared* by the production XML accessor and its double rather than written
+/// out twice: for those rules divergence is impossible rather than merely tested.
+/// What remains implementation-specific is DOM and JSON traversal, and this contract
+/// pins the observable behaviour a caller depends on.
+///
+/// ### What belongs here, and what does not
+///
+/// Only invariants that must hold **identically for every format**.
+/// Genuine format differences stay in the per-format tests — most importantly, XML
+/// element text is untyped, so `getString` on a numeric field returns the text,
+/// whereas JSON is typed and returns `null` for a non-string. That is a
+/// property of the formats, not a defect, and asserting it here would force one of
+/// the two implementations to lie.
 abstract class AbstractValueAccessorContractTest {
 
-    /** The implementation under test. */
+    /// The implementation under test.
     protected abstract ValueAccessor accessor();
 
-    /**
-     * A serialised document with one field holding the given comma-or-array
-     * spelling of a numeric list, e.g. {@code 1,2,3} for XML or {@code [1,2,3]} for
-     * JSON. Implementations translate as their format requires.
-     */
+    /// A serialised document with one field holding the given comma-or-array
+    /// spelling of a numeric list, e.g. `1,2,3` for XML or `[1,2,3]` for
+    /// JSON. Implementations translate as their format requires.
     protected abstract String docWithNumericArray(@SuppressWarnings("SameParameterValue") String field,
                                                   double... values);
 
-    /** A serialised document whose field holds an array with a non-numeric token. */
+    /// A serialised document whose field holds an array with a non-numeric token.
     protected abstract String docWithMalformedNumericArray(@SuppressWarnings("SameParameterValue") String field);
 
-    /** A serialised document whose field holds an empty array / empty text. */
+    /// A serialised document whose field holds an empty array / empty text.
     protected abstract String docWithEmptyNumericArray(@SuppressWarnings("SameParameterValue") String field);
 
-    /** A serialised document with one string-valued field. */
+    /// A serialised document with one string-valued field.
     protected abstract String docWithString(@SuppressWarnings("SameParameterValue") String field,
                                             @SuppressWarnings("SameParameterValue") String value);
 
-    /** A serialised document with no fields at all. */
+    /// A serialised document with no fields at all.
     protected abstract String emptyDoc();
 
-    /** The format's path expression for a top-level field. */
+    /// The format's path expression for a top-level field.
     protected abstract String path(String field);
 
-    /** Something this format cannot parse. */
+    /// Something this format cannot parse.
     protected abstract String unparseableRaw();
 
     // -----------------------------------------------------------------------
@@ -125,11 +121,9 @@ abstract class AbstractValueAccessorContractTest {
                 .containsExactly(1d, 2d, 3d);
     }
 
-    /**
-     * One bad token makes the whole array malformed. This is the assertion that was
-     * missing: a caller cannot tell a fabricated zero from a real one, so
-     * substituting a default for the offending element silently manufactures data.
-     */
+    /// One bad token makes the whole array malformed. This is the assertion that was
+    /// missing: a caller cannot tell a fabricated zero from a real one, so
+    /// substituting a default for the offending element silently manufactures data.
     @Test
     void testGetArray_malformedElementYieldsNullForTheWholeArray() {
         final ParsedValue value = accessor().parse(docWithMalformedNumericArray("coords"));
@@ -170,11 +164,9 @@ abstract class AbstractValueAccessorContractTest {
         assertThat(accessor().hasValue(value, path("type"))).isTrue();
     }
 
-    /**
-     * Present-but-unreadable still counts as present. The parser relies on this to
-     * tell "the stream omitted this field", which is normal and silent, from "the
-     * field is there and wrong", which the user must be told about.
-     */
+    /// Present-but-unreadable still counts as present. The parser relies on this to
+    /// tell "the stream omitted this field", which is normal and silent, from "the
+    /// field is there and wrong", which the user must be told about.
     @Test
     void testHasValue_trueWhenPresentButMalformed() {
         final ParsedValue value = accessor().parse(docWithMalformedNumericArray("coords"));
@@ -215,11 +207,9 @@ abstract class AbstractValueAccessorContractTest {
         assertThat(accessor().getArray(value, path("coords"))).containsExactly(7d, 9d);
     }
 
-    /**
-     * An edit survives serialisation and re-parsing. The editor re-serialises the
-     * whole value on every object drag, so anything lost here is lost from the saved
-     * document.
-     */
+    /// An edit survives serialisation and re-parsing. The editor re-serialises the
+    /// whole value on every object drag, so anything lost here is lost from the saved
+    /// document.
     @Test
     void testSerialize_thenReparse_preservesAnEdit() {
         final ParsedValue value = accessor().parse(docWithNumericArray("coords", 1, 2));
