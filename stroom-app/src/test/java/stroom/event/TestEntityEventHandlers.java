@@ -67,6 +67,8 @@ class TestEntityEventHandlers {
         });
     }
 
+    /// Checks that all classes annotated with EntityEventHandler or EntityEventHandlers have been
+    /// bound to EntityEvent.Handler in AppModule
     @Test
     void testBindings() {
         doWithEventHandlers(eventHandlers -> {

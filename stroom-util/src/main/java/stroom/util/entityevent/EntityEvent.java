@@ -19,6 +19,7 @@ package stroom.util.entityevent;
 import stroom.docref.DocRef;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -48,9 +49,12 @@ public class EntityEvent {
     @JsonProperty
     private final EntityAction action;
 
+    /// IF data is used, this is the class name of the serialized data.
     @JsonProperty
     private final String dataClassName;
 
+    /// This is additional event data in JSON form. Both sender and receiver should know how to parse it.
+    /// For simple string/long/int data, this is just the string form of the value.
     @JsonProperty
     private final String data;
 
@@ -233,6 +237,39 @@ public class EntityEvent {
         }
     }
 
+    /// When the entity event data is expected to be a simple {@link Long} value, return the {@link Long} value.
+    @JsonIgnore
+    public Long getLongData() {
+        final String expectedClassName = Long.class.getName();
+        if (expectedClassName.equals(dataClassName)) {
+            if (NullSafe.isNonBlankString(data)) {
+                return Long.parseLong(data.trim());
+            } else {
+                return null;
+            }
+        } else {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "dataClassName '{}' does not match '{}'", dataClassName, expectedClassName));
+        }
+    }
+
+    /// When the entity event data is expected to be a simple {@link Integer} value,
+    /// return the {@link Integer} value.
+    @JsonIgnore
+    public Integer getIntData() {
+        final String expectedClassName = Integer.class.getName();
+        if (expectedClassName.equals(dataClassName)) {
+            if (NullSafe.isNonBlankString(data)) {
+                return Integer.parseInt(data.trim());
+            } else {
+                return null;
+            }
+        } else {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "dataClassName '{}' does not match '{}'", dataClassName, expectedClassName));
+        }
+    }
+
     /**
      * Gets the optional entity event data, de-serialised into the supplied class.
      *
@@ -342,8 +379,8 @@ public class EntityEvent {
          * @param docRef The document reference.
          * @return The stage that accepts the optional old document reference or action.
          */
-        public DocRefStage docRef(final DocRef docRef) {
-            this.docRef = docRef;
+        public DocRefStage withDocRef(final DocRef docRef) {
+            this.docRef = Objects.requireNonNull(docRef);
             return new DocRefStage(this);
         }
     }
@@ -369,8 +406,8 @@ public class EntityEvent {
          * @param oldDocRef The document reference before the event.
          * @return The stage that accepts the action.
          */
-        public OldDocRefStage oldDocRef(final DocRef oldDocRef) {
-            builder.oldDocRef = oldDocRef;
+        public OldDocRefStage withOldDocRef(final DocRef oldDocRef) {
+            builder.oldDocRef = Objects.requireNonNull(oldDocRef);
             return new OldDocRefStage(builder);
         }
 
@@ -380,8 +417,8 @@ public class EntityEvent {
          * @param action The event action.
          * @return The stage that accepts optional event data and can fire the event.
          */
-        public ActionStage action(final EntityAction action) {
-            builder.action = action;
+        public ActionStage withAction(final EntityAction action) {
+            builder.action = Objects.requireNonNull(action);
             return new ActionStage(builder);
         }
     }
@@ -407,8 +444,8 @@ public class EntityEvent {
          * @param action The event action.
          * @return The stage that accepts optional event data and can fire the event.
          */
-        public ActionStage action(final EntityAction action) {
-            builder.action = action;
+        public ActionStage withAction(final EntityAction action) {
+            builder.action = Objects.requireNonNull(action);
             return new ActionStage(builder);
         }
     }
@@ -434,12 +471,10 @@ public class EntityEvent {
          * @param entityEventData The additional event data.
          * @return This stage.
          */
-        public ActionStage data(final EntityEventData entityEventData) {
-            if (entityEventData != null) {
-                builder.entityEventData = entityEventData;
-                builder.dataClassName = null;
-                builder.data = null;
-            }
+        public ActionStage withData(final EntityEventData entityEventData) {
+            builder.dataClassName = null;
+            builder.data = null;
+            builder.entityEventData = entityEventData;
             return this;
         }
 
@@ -450,7 +485,7 @@ public class EntityEvent {
          * @param json          The JSON encoded data.
          * @return This stage.
          */
-        public ActionStage data(final String dataClassName, final String json) {
+        public ActionStage withJsonData(final String dataClassName, final String json) {
             builder.dataClassName = dataClassName;
             builder.data = json;
             builder.entityEventData = null;
@@ -460,12 +495,42 @@ public class EntityEvent {
         /**
          * Sets additional event data that is a simple string, i.e. a single field value, e.g. a name.
          *
-         * @param strData The string value.
+         * @param strValue The string value.
          * @return This stage.
          */
-        public ActionStage data(final String strData) {
+        public ActionStage withStringData(@Nullable final String strValue) {
             builder.dataClassName = String.class.getName();
-            builder.data = strData;
+            builder.data = strValue;
+            builder.entityEventData = null;
+            return this;
+        }
+
+        /**
+         * Sets additional event data that is a simple long, i.e. a single field value, e.g. an ID.
+         *
+         * @param longValue The long value.
+         * @return This stage.
+         */
+        public ActionStage withLongData(@Nullable final Long longValue) {
+            builder.dataClassName = Long.class.getName();
+            builder.data = longValue != null
+                    ? longValue.toString()
+                    : null;
+            builder.entityEventData = null;
+            return this;
+        }
+
+        /**
+         * Sets additional event data that is a simple integer, i.e. a single field value, e.g. an ID.
+         *
+         * @param intValue The integer value.
+         * @return This stage.
+         */
+        public ActionStage withIntData(@Nullable final Integer intValue) {
+            builder.dataClassName = Integer.class.getName();
+            builder.data = intValue != null
+                    ? intValue.toString()
+                    : null;
             builder.entityEventData = null;
             return this;
         }

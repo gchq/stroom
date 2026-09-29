@@ -21,7 +21,6 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.api.IndexVolumeGroupService;
-import stroom.index.impl.db.jooq.Stroom;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexVolume;
@@ -88,6 +87,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Singleton // Because of currentVolumeMap
+// We hold a cache of volumes by volGroup so we have to handle both
 @EntityEventHandler(type = IndexVolumeServiceImpl.ENTITY_TYPE, action = {
         EntityAction.UPDATE,
         EntityAction.CREATE,
@@ -147,10 +147,10 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         this.volGroupNodeToVolSelectorCache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> volumeConfigProvider.get().getVolumeSelectorCache(),
-                volGroupNode -> createVolumeSelector());
+                this::createVolumeSelector);
     }
 
-    private HasCapacitySelector createVolumeSelector() {
+    private HasCapacitySelector createVolumeSelector(final VolGroupNode volGroupNode) {
         String requiredSelectorName = null;
 
         try {
@@ -158,6 +158,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage);
         }
+        LOGGER.debug("createVolumeSelector() - volGroupNode: {}, requiredSelectorName: {}",
+                volGroupNode, requiredSelectorName);
         return hasCapacitySelectorFactory.createSelectorOrDefault(requiredSelectorName);
     }
 
@@ -602,8 +604,27 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public void onChange(final EntityEvent event) {
-        // Simpler to just clear it all out and reload
-        clearCurrentVolumeMap();
+        LOGGER.debug("onChange() - event: {}", event);
+        if (event != null) {
+            // Simpler to just clear it all out and reload.
+            // Index volume changes are pretty rare.
+            // This map needs to be cleared for index or group changes.
+            clearCurrentVolumeMap();
+            final String type = NullSafe.get(event, EntityEvent::getDocRef, DocRef::getType);
+
+            final EntityAction action = event.getAction();
+            if (IndexVolumeGroupService.ENTITY_TYPE.equals(type)
+                && (action == EntityAction.UPDATE || action == EntityAction.DELETE)) {
+
+                final String groupName = event.getStringData();
+                if (groupName != null) {
+                    LOGGER.debug("onChange() - Invalidating entries for groupName: {}", groupName);
+                    volGroupNodeToVolSelectorCache.invalidateEntries(
+                            (volGroupNode, ignored) ->
+                                    Objects.equals(groupName, volGroupNode.groupName));
+                }
+            }
+        }
     }
 
     private synchronized void clearCurrentVolumeMap() {

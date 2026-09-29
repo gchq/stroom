@@ -27,15 +27,14 @@ import stroom.security.api.UserIdentityFactory;
 import stroom.security.shared.AppPermission;
 import stroom.util.NextNameGenerator;
 import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -46,15 +45,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 
 @Singleton
-// TODO why are we firing events. What is there to do when we receive them?
-@EntityEventHandler(type = IndexVolumeServiceImpl.ENTITY_TYPE, action = {
-        EntityAction.UPDATE,
-        EntityAction.CREATE,
-        EntityAction.DELETE})
 public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeGroupServiceImpl.class);
@@ -106,15 +101,21 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     @Override
     public IndexVolumeGroup getOrCreate(final String name) {
         ensureDefaultVolumes();
-        final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
-                .builder()
-                .name(name)
-                .stampAudit(securityContext)
-                .build();
-        final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
-        fireChange(EntityAction.CREATE);
-        return result;
+        IndexVolumeGroup indexVolumeGroup = securityContext.secureResult(() ->
+                indexVolumeGroupDao.get(name));
+        if (indexVolumeGroup == null) {
+            final IndexVolumeGroup newIndexVolumeGroup = IndexVolumeGroup
+                    .builder()
+                    .name(name)
+                    .stampAudit(securityContext)
+                    .build();
+            indexVolumeGroup = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
+                    () -> indexVolumeGroupDao.getOrCreate(newIndexVolumeGroup));
+            if (!Objects.equals(indexVolumeGroup, newIndexVolumeGroup)) {
+                fireChange(EntityAction.CREATE, name);
+            }
+        }
+        return indexVolumeGroup;
     }
 
     @Override
@@ -128,7 +129,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                 .build();
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
-        fireChange(EntityAction.CREATE);
+        fireChange(EntityAction.CREATE, result.getName());
         return result;
     }
 
@@ -137,7 +138,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         ensureDefaultVolumes();
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.update(indexVolumeGroup.copy().stampAudit(securityContext).build()));
-        fireChange(EntityAction.UPDATE);
+        fireChange(EntityAction.UPDATE, result.getName());
         return result;
     }
 
@@ -159,16 +160,20 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         securityContext.secure(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> {
                     //TODO Transaction?
+                    final IndexVolumeGroup indexVolumeGroup = indexVolumeGroupDao.get(id);
+                    Objects.requireNonNull(indexVolumeGroup, "IndexVolumeGroup with id " + id + " not found");
+
                     final List<IndexVolume> indexVolumesInGroup = indexVolumeDao.getAll()
                             .stream()
                             .filter(indexVolume ->
                                     indexVolume.getIndexVolumeGroupId().equals(id))
                             .toList();
+
                     indexVolumesInGroup.forEach(indexVolume ->
                             indexVolumeDao.delete(indexVolume.getId()));
                     indexVolumeGroupDao.delete(id);
+                    fireChange(EntityAction.DELETE, indexVolumeGroup.getName());
                 });
-        fireChange(EntityAction.DELETE);
     }
 
     public void ensureDefaultVolumes() {
@@ -277,17 +282,18 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         }
     }
 
-    private void fireChange(final EntityAction action) {
-        if (entityEventBusProvider != null) {
+    private void fireChange(final EntityAction action, final String groupName) {
+        NullSafe.consume(entityEventBusProvider, Provider::get, entityEventBus -> {
             try {
-                final EntityEventBus entityEventBus = entityEventBusProvider.get();
-                if (entityEventBus != null) {
-                    entityEventBus.fire(new EntityEvent(EVENT_DOCREF, action));
-                }
+                entityEventBus.buildFiring()
+                        .withDocRef(EVENT_DOCREF)
+                        .withAction(action)
+                        .withStringData(groupName)
+                        .fire();
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
-        }
+        });
     }
 
     @Override

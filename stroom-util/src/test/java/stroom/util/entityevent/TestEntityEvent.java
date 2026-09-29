@@ -29,6 +29,7 @@ import org.mockito.Mockito;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestEntityEvent {
 
@@ -46,11 +47,18 @@ class TestEntityEvent {
                 EntityAction.CREATE,
                 myEntityEventData);
 
-        final EntityEvent entityEvent2 = TestUtil.testSerialisation(entityEvent, EntityEvent.class);
-        final MyEntityEventData myEntityEventData2 = entityEvent2.getDataObject(MyEntityEventData.class);
+        final EntityEvent event2 = TestUtil.testSerialisation(entityEvent, EntityEvent.class);
+        final MyEntityEventData myEntityEventData2 = event2.getDataObject(MyEntityEventData.class);
 
         assertThat(myEntityEventData2)
                 .isEqualTo(myEntityEventData);
+
+        assertThatThrownBy(event2::getStringData)
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(event2::getLongData)
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(event2::getIntData)
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -81,8 +89,60 @@ class TestEntityEvent {
         final EntityEvent event2 = TestUtil.testSerialisation(entityEvent, EntityEvent.class);
         assertThat(event2.getStringData())
                 .isEqualTo("foo");
+        assertThatThrownBy(event2::getLongData)
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(event2::getIntData)
+                .isInstanceOf(IllegalArgumentException.class);
         assertThat(event2.getDataAsJson())
                 .isEqualTo("foo");
+    }
+
+    @Test
+    void testSerde4() {
+        final DocRef docRef = DocRef.builder()
+                .randomUuid()
+                .type("myDocRef")
+                .build();
+        final EntityEvent entityEvent = new EntityEvent(
+                docRef,
+                null,
+                EntityAction.CREATE,
+                Long.class.getName(),
+                "1234");
+
+        final EntityEvent event2 = TestUtil.testSerialisation(entityEvent, EntityEvent.class);
+        assertThat(event2.getLongData())
+                .isEqualTo(1234L);
+        assertThatThrownBy(event2::getStringData)
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(event2::getIntData)
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(event2.getDataAsJson())
+                .isEqualTo("1234");
+    }
+
+    @Test
+    void testSerde5() {
+        final DocRef docRef = DocRef.builder()
+                .randomUuid()
+                .type("myDocRef")
+                .build();
+        final EntityEvent entityEvent = new EntityEvent(
+                docRef,
+                null,
+                EntityAction.CREATE,
+                Integer.class.getName(),
+                "1234");
+
+        final EntityEvent event2 = TestUtil.testSerialisation(entityEvent, EntityEvent.class);
+        assertThat(event2.getIntData())
+                .isEqualTo(1234);
+        assertThatThrownBy(event2::getStringData)
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(event2::getLongData)
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(event2.getDataAsJson())
+                .isEqualTo("1234");
     }
 
     @Test
@@ -91,8 +151,8 @@ class TestEntityEvent {
         final DocRef docRef = DocRef.builder().type("myDocRef").randomUuid().build();
 
         EntityEvent.buildFiring(eventBus)
-                .docRef(docRef)
-                .action(EntityAction.CREATE)
+                .withDocRef(docRef)
+                .withAction(EntityAction.CREATE)
                 .fire();
 
         final ArgumentCaptor<EntityEvent> captor = ArgumentCaptor.forClass(EntityEvent.class);
@@ -108,10 +168,10 @@ class TestEntityEvent {
         final DocRef oldDocRef = DocRef.builder().type("myDocRef").randomUuid().build();
 
         EntityEvent.buildFiring(eventBus)
-                .docRef(docRef)
-                .oldDocRef(oldDocRef)
-                .action(EntityAction.UPDATE)
-                .data(MyEntityEventData.class.getName(), "{\"str\":\"foo\",\"aBool\":true}")
+                .withDocRef(docRef)
+                .withOldDocRef(oldDocRef)
+                .withAction(EntityAction.UPDATE)
+                .withJsonData(MyEntityEventData.class.getName(), "{\"str\":\"foo\",\"aBool\":true}")
                 .fire();
 
         final ArgumentCaptor<EntityEvent> captor = ArgumentCaptor.forClass(EntityEvent.class);
@@ -131,9 +191,9 @@ class TestEntityEvent {
         final MyEntityEventData eventData = new MyEntityEventData("foo", true);
 
         EntityEvent.buildFiring(eventBus)
-                .docRef(docRef)
-                .action(EntityAction.CREATE)
-                .data(eventData)
+                .withDocRef(docRef)
+                .withAction(EntityAction.CREATE)
+                .withData(eventData)
                 .fire();
 
         final ArgumentCaptor<EntityEvent> captor = ArgumentCaptor.forClass(EntityEvent.class);
@@ -148,12 +208,111 @@ class TestEntityEvent {
         final DocRef docRef = DocRef.builder().type("myDocRef").randomUuid().build();
 
         Assertions.assertThatThrownBy(() -> EntityEvent.buildFiring(eventBus)
-                        .docRef(docRef)
-                        .action(null)
+                        .withDocRef(docRef)
+                        .withAction(null)
                         .fire())
                 .isInstanceOf(NullPointerException.class)
                 .hasMessage("action");
         Mockito.verifyNoInteractions(eventBus);
+    }
+
+    @Test
+    void testBuildFiringWithStringData() {
+        final EntityEventBus eventBus = Mockito.mock(EntityEventBus.class);
+        final DocRef docRef = DocRef.builder()
+                .type("myDocRef")
+                .randomUuid()
+                .build();
+
+        EntityEvent.buildFiring(eventBus)
+                .withDocRef(docRef)
+                .withAction(EntityAction.CREATE)
+                .withStringData("foo")
+                .fire();
+
+        final ArgumentCaptor<EntityEvent> captor = ArgumentCaptor.forClass(EntityEvent.class);
+        Mockito.verify(eventBus)
+                .fire(captor.capture());
+        final EntityEvent firedEvent = captor.getValue();
+        assertThat(firedEvent)
+                .isEqualTo(new EntityEvent(
+                        docRef,
+                        null,
+                        EntityAction.CREATE,
+                        String.class.getName(),
+                        "foo"));
+        assertThat(firedEvent.getStringData())
+                .isEqualTo("foo");
+        assertThat(firedEvent.getDataClassName())
+                .isEqualTo(String.class.getName());
+        assertThat(firedEvent.getDataAsJson())
+                .isEqualTo("foo");
+    }
+
+    @Test
+    void testBuildFiringWithLongData() {
+        final EntityEventBus eventBus = Mockito.mock(EntityEventBus.class);
+        final DocRef docRef = DocRef.builder()
+                .type("myDocRef")
+                .randomUuid()
+                .build();
+
+        EntityEvent.buildFiring(eventBus)
+                .withDocRef(docRef)
+                .withAction(EntityAction.CREATE)
+                .withLongData(1234L)
+                .fire();
+
+        final ArgumentCaptor<EntityEvent> captor = ArgumentCaptor.forClass(EntityEvent.class);
+        Mockito.verify(eventBus)
+                .fire(captor.capture());
+        final EntityEvent firedEvent = captor.getValue();
+        assertThat(firedEvent)
+                .isEqualTo(new EntityEvent(
+                        docRef,
+                        null,
+                        EntityAction.CREATE,
+                        Long.class.getName(),
+                        "1234"));
+        assertThat(firedEvent.getLongData())
+                .isEqualTo(1234L);
+        assertThat(firedEvent.getDataClassName())
+                .isEqualTo(Long.class.getName());
+        assertThat(firedEvent.getDataAsJson())
+                .isEqualTo("1234");
+    }
+
+    @Test
+    void testBuildFiringWithIntData() {
+        final EntityEventBus eventBus = Mockito.mock(EntityEventBus.class);
+        final DocRef docRef = DocRef.builder()
+                .type("myDocRef")
+                .randomUuid()
+                .build();
+
+        EntityEvent.buildFiring(eventBus)
+                .withDocRef(docRef)
+                .withAction(EntityAction.CREATE)
+                .withIntData(1234)
+                .fire();
+
+        final ArgumentCaptor<EntityEvent> captor = ArgumentCaptor.forClass(EntityEvent.class);
+        Mockito.verify(eventBus)
+                .fire(captor.capture());
+        final EntityEvent firedEvent = captor.getValue();
+        assertThat(firedEvent)
+                .isEqualTo(new EntityEvent(
+                        docRef,
+                        null,
+                        EntityAction.CREATE,
+                        Integer.class.getName(),
+                        "1234"));
+        assertThat(firedEvent.getIntData())
+                .isEqualTo(1234);
+        assertThat(firedEvent.getDataClassName())
+                .isEqualTo(Integer.class.getName());
+        assertThat(firedEvent.getDataAsJson())
+                .isEqualTo("1234");
     }
 
 

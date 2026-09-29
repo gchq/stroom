@@ -24,6 +24,7 @@ import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -104,19 +105,16 @@ public class ProcessorProfileServiceImpl implements ProcessorProfileService {
     }
 
     private void fireChange(final EntityAction action, final String profileName) {
-        if (entityEventBusProvider != null) {
+        NullSafe.consume(entityEventBusProvider, Provider::get, entityEventBus -> {
             try {
-                final EntityEventBus entityEventBus = entityEventBusProvider.get();
-                if (entityEventBus != null) {
-                    entityEventBus.buildFiring()
-                            .docRef(EVENT_DOCREF)
-                            .action(action)
-                            .data(profileName)
-                            .fire();
-                }
+                entityEventBus.buildFiring()
+                        .withDocRef(EVENT_DOCREF)
+                        .withAction(action)
+                        .withStringData(profileName)
+                        .fire();
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
-        }
+        });
     }
 }
