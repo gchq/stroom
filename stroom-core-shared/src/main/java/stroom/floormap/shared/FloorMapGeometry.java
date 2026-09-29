@@ -107,6 +107,7 @@ public final class FloorMapGeometry {
     }
 
     /// Returns the unsigned area of the polygon via the shoelace formula.
+    /// See [Wikipedia - Shoelace Formula](https://en.wikipedia.org/wiki/Shoelace_formula)
     ///
     /// Used to rank nested areas: when a point falls inside several
     /// overlapping areas, the smallest one is the most specific answer to
@@ -140,7 +141,7 @@ public final class FloorMapGeometry {
     ///
     /// @param polygon the polygon vertices `{{x, y}, ...}`; may be `null`.
     ///         Rows that are `null` or shorter than two elements are
-    ///         skipped, as in [#aabb(double\[\]\[\])]
+    ///         skipped, as in [#aabb]
     /// @return the centroid, or `null`
     public static double[] centroid(final double[][] polygon) {
         if (polygon == null) {
