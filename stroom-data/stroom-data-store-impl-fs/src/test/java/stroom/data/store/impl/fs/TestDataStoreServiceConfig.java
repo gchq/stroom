@@ -45,7 +45,7 @@ class TestDataStoreServiceConfig {
     @Test
     void testFsyncEnabled_canBeDisabled() {
         final DataStoreServiceConfig config = JsonUtil.readValue(
-                "{\"fsyncEnabled\":\"DISABLED\"}", DataStoreServiceConfig.class);
+                "{\"fsyncMode\":\"DISABLED\"}", DataStoreServiceConfig.class);
 
         assertThat(config.getFsyncMode()).isEqualTo(FsyncMode.DISABLED);
     }
@@ -53,7 +53,7 @@ class TestDataStoreServiceConfig {
     @Test
     void testFsyncEnabled_survivesSerialisationRoundTrip() {
         final DataStoreServiceConfig original = JsonUtil.readValue(
-                "{\"fsyncEnabled\":\"DISABLED\"}", DataStoreServiceConfig.class);
+                "{\"fsyncMode\":\"DISABLED\"}", DataStoreServiceConfig.class);
 
         final String json = JsonUtil.writeValueAsString(original);
         final DataStoreServiceConfig restored = JsonUtil.readValue(json, DataStoreServiceConfig.class);
@@ -65,7 +65,7 @@ class TestDataStoreServiceConfig {
     void testFsyncEnabled_isCarriedByWithMethods() {
         // The with* copy methods must not silently reset the setting back to its default.
         final DataStoreServiceConfig config = JsonUtil.readValue(
-                "{\"fsyncEnabled\":\"DISABLED\"}", DataStoreServiceConfig.class);
+                "{\"fsyncMode\":\"DISABLED\"}", DataStoreServiceConfig.class);
 
         assertThat(config.withDeleteBatchSize(10).getFsyncMode()).isEqualTo(FsyncMode.DISABLED);
         assertThat(config.withDeletePurgeAge(StroomDuration.ofDays(2)).getFsyncMode())
