@@ -22,6 +22,7 @@ import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.exception.ThrowingSupplier;
 import stroom.util.io.FileSyncUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -80,14 +81,14 @@ public class DirQueue {
     private final Condition condition = lock.newCondition();
     private final QueueMonitor queueMonitor;
     private final String name;
-    private final boolean fsyncEnabled;
+    private final FsyncMode fsyncMode;
 
     DirQueue(final Path rootDir,
              final QueueMonitors queueMonitors,
              final FileStores fileStores,
              final int order,
              final String name) {
-        this(rootDir, queueMonitors, fileStores, order, name, false);
+        this(rootDir, queueMonitors, fileStores, order, name, FsyncMode.DISABLED);
     }
 
     DirQueue(final Path rootDir,
@@ -95,11 +96,11 @@ public class DirQueue {
              final FileStores fileStores,
              final int order,
              final String name,
-             final boolean fsyncEnabled) {
+             final FsyncMode fsyncMode) {
         this.rootDir = rootDir;
         this.queueMonitor = queueMonitors.create(order, name);
         this.name = name;
-        this.fsyncEnabled = fsyncEnabled;
+        this.fsyncMode = fsyncMode;
 
         // Create the root directory
         DirUtil.ensureDirExists(rootDir);
@@ -415,10 +416,10 @@ public class DirQueue {
                 try {
                     // Note whether the parent already existed, as DirUtil.ensureDirExists may create
                     // a whole branch of new dirs that each need forcing, not just the leaf.
-                    final boolean targetParentPreExisted = fsyncEnabled && Files.isDirectory(targetParent);
+                    final boolean targetParentPreExisted = Files.isDirectory(targetParent);
                     DirUtil.ensureDirExists(targetParent);
                     Files.move(sourceDir, targetDir, StandardCopyOption.ATOMIC_MOVE);
-                    if (fsyncEnabled) {
+                    if (fsyncMode.isEnabledForDirs()) {
                         // The move changes both the target and source parent dirs, so both must be
                         // forced for the move itself to survive a power failure. Forcing only the
                         // target would risk the item reappearing in the source queue and being

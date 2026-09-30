@@ -122,6 +122,6 @@ public class ForwardS3DestinationFactoryImpl implements ForwardS3DestinationFact
                 dirQueueFactory,
                 proxyServices,
                 fileStores,
-                fsyncConfig.isForwardingInputQueue());
+                fsyncConfig.getForwardingInputQueueMode());
     }
 }

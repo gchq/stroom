@@ -28,6 +28,7 @@ import stroom.meta.shared.Status;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.io.FileSyncUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.io.SeekableOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -70,21 +71,21 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
     private Meta meta;
     private boolean closed;
     private boolean deleted;
-    private final boolean fsyncEnabled;
+    private final FsyncMode fsyncMode;
     private long index;
 
     private FsTarget(final MetaService metaService,
                      final FsPathHelper fileSystemStreamPathHelper,
                      final Meta requestMetaData,
                      final Path volumePath,
-                     final boolean fsyncEnabled) {
+                     final FsyncMode fsyncMode) {
         this.metaService = metaService;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.meta = requestMetaData;
         this.volumePath = volumePath;
         this.parent = null;
         this.streamType = meta.getTypeName();
-        this.fsyncEnabled = fsyncEnabled;
+        this.fsyncMode = fsyncMode;
 
         validate();
     }
@@ -101,7 +102,7 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
         this.parent = parent;
         this.streamType = streamType;
         this.file = file;
-        this.fsyncEnabled = parent.fsyncEnabled;
+        this.fsyncMode = parent.fsyncMode;
         validate();
     }
 
@@ -114,10 +115,10 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
                                   final FsPathHelper fileSystemStreamPathHelper,
                                   final Meta meta,
                                   final Path rootPath,
-                                  final boolean fsyncEnabled) {
+                                  final FsyncMode fsyncMode) {
         LOGGER.debug(() -> LogUtil.message("create() - metaId: {}, rootPath: {}, streamType: {}",
                 meta.getId(), rootPath, meta.getTypeName()));
-        return new FsTarget(metaService, fileSystemStreamPathHelper, meta, rootPath, fsyncEnabled);
+        return new FsTarget(metaService, fileSystemStreamPathHelper, meta, rootPath, fsyncMode);
     }
 
     private void validate() {
@@ -189,7 +190,7 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
                 RuntimeException streamCloseException = null;
                 try {
                     closeStreams();
-                    if (fsyncEnabled) {
+                    if (fsyncMode.isEnabledForFiles()) {
                         // Force this target's own data file. Children force theirs in their own
                         // close(), which closeStreams() has just driven.
                         FileSyncUtil.syncFileIfExists(getFile());
@@ -207,11 +208,11 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
                         writeManifest();
 
                         if (streamCloseException == null) {
-                            if (fsyncEnabled) {
+                            if (fsyncMode.isAnyFsyncEnabled()) {
                                 // Everything this stream wrote must be durable before the database
                                 // is told the stream is valid, otherwise a power failure can leave
                                 // metadata referring to a stream whose contents never reached disk.
-                                syncManifestAndDir();
+                                syncManifestAndDir(fsyncMode);
                             }
 
                             // Unlock will update the meta data so set it back on the stream
@@ -241,17 +242,23 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
     /// A failure to force the manifest fails the close, so that the database is never told the
     /// stream is unlocked. Note that a failure to force a *directory* does not, as not every
     /// platform allows a directory to be opened as a channel; see {@link FileSyncUtil#syncDir}.
-    private void syncManifestAndDir() {
-        try {
-            FileSyncUtil.syncFileIfExists(fileSystemStreamPathHelper.getChildPath(
-                    getFile(), InternalStreamTypeNames.MANIFEST));
-        } catch (final IOException e) {
-            // If we cannot make the stream durable we must not let the database record it as
-            // unlocked, so fail the close instead.
-            LOGGER.error(() -> "syncManifestAndDir() - Unable to sync " + this, e);
-            throw new UncheckedIOException(e);
+    private void syncManifestAndDir(final FsyncMode fsyncMode) {
+        // Sync the manifest file
+        if (fsyncMode.isEnabledForFiles()) {
+            try {
+                FileSyncUtil.syncFileIfExists(fileSystemStreamPathHelper.getChildPath(
+                        getFile(), InternalStreamTypeNames.MANIFEST));
+            } catch (final IOException e) {
+                // If we cannot make the stream durable we must not let the database record it as
+                // unlocked, so fail the close instead.
+                LOGGER.error(() -> "syncManifestAndDir() - Unable to sync " + this, e);
+                throw new UncheckedIOException(e);
+            }
         }
-        FileSyncUtil.syncDirTree(getFile().getParent(), volumePath);
+        // Sync all the dirs above the manifest file
+        if (fsyncMode.isEnabledForDirs()) {
+            FileSyncUtil.syncDirTree(getFile().getParent(), volumePath);
+        }
     }
 
     private void unlock(final Meta meta, final AttributeMap attributeMap) {

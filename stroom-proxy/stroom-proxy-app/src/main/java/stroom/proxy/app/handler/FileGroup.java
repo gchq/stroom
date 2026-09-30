@@ -17,6 +17,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.util.io.FileSyncUtil;
+import stroom.util.io.FsyncMode;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -87,11 +88,15 @@ public class FileGroup {
     /// receive path writes all three files.
     ///
     /// @throws IOException If any of the files cannot be forced to disk.
-    public void sync() throws IOException {
-        for (final Path item : items()) {
-            FileSyncUtil.syncFileIfExists(item);
+    public void sync(final FsyncMode fsyncMode) throws IOException {
+        if (fsyncMode.isEnabledForFiles()) {
+            for (final Path item : items()) {
+                FileSyncUtil.syncFileIfExists(item);
+            }
         }
-        FileSyncUtil.syncDir(parentDir);
+        if (fsyncMode.isEnabledForDirs()) {
+            FileSyncUtil.syncDir(parentDir);
+        }
     }
 
     @Override

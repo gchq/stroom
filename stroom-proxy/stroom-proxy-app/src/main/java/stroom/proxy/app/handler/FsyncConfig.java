@@ -17,6 +17,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.util.config.annotations.RequiresProxyRestart;
+import stroom.util.io.FsyncMode;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 
@@ -37,7 +38,7 @@ import java.util.Objects;
 /// of them matter. They are configured separately because what they cost differs markedly, not
 /// because some are optional:
 ///
-/// * [#isReceiving()] is the expensive one, as it forces the whole of the received payload to
+/// * [#getReceivingMode()] is the expensive one, as it forces the whole of the received payload to
 ///   disk before a receipt response is returned to the sender. This is what makes the receipt
 ///   honest; a crash before the response is sent costs nothing, as the sender simply retries.
 /// * The queue settings are close to free. They force the directory entry created by the atomic
@@ -45,109 +46,107 @@ import java.util.Objects;
 ///   metadata flush rather than a flush of the data itself.
 ///
 /// The practical consequence is that turning off a queue setting saves very little, whereas
-/// turning off [#isReceiving()] buys back real throughput at the cost of the receipt guarantee.
+/// turning off [#getReceivingMode()] buys back real throughput at the cost of the receipt guarantee.
 /// That is the one to consider changing if receipt latency matters more than durability.
 ///
-/// Note that [#isReceiving()] also covers data that is rewritten after receipt, by the zip
+/// Note that [#getReceivingMode()] also covers data that is rewritten after receipt, by the zip
 /// splitter and the aggregator. Those phases write new files and then delete the originals that
 /// were forced on receipt, so without forcing the rewritten output the receipt guarantee would be
 /// lost partway through the pipeline.
 @JsonPropertyOrder(alphabetic = true)
 public class FsyncConfig extends AbstractConfig implements IsProxyConfig {
 
-    public static final boolean DEFAULT_IS_RECEIVING_ENABLED = true;
-    public static final boolean DEFAULT_IS_ZIP_SPLITTING_INPUT_QUEUE_ENABLED = true;
-    public static final boolean DEFAULT_IS_PRE_AGGREGATE_INPUT_QUEUE_ENABLED = true;
-    public static final boolean DEFAULT_IS_AGGREGATE_INPUT_QUEUE_ENABLED = true;
-    public static final boolean DEFAULT_IS_FORWARDING_INPUT_QUEUE_ENABLED = true;
+    public static final FsyncMode DEFAULT_RECEIVING_MODE = FsyncMode.ENABLED;
+    public static final FsyncMode DEFAULT_ZIP_SPLITTING_INPUT_QUEUE_MODE = FsyncMode.ENABLED;
+    public static final FsyncMode DEFAULT_PRE_AGGREGATE_INPUT_QUEUE_MODE = FsyncMode.ENABLED;
+    public static final FsyncMode DEFAULT_AGGREGATE_INPUT_QUEUE_MODE = FsyncMode.ENABLED;
+    public static final FsyncMode DEFAULT_FORWARDING_INPUT_QUEUE_MODE = FsyncMode.ENABLED;
 
-    private final boolean receiving;
-    private final boolean zipSplittingInputQueue;
-    private final boolean preAggregateInputQueue;
-    private final boolean aggregateInputQueue;
-    private final boolean forwardingInputQueue;
+    private final FsyncMode receivingMode;
+    private final FsyncMode zipSplittingInputQueueMode;
+    private final FsyncMode preAggregateInputQueueMode;
+    private final FsyncMode aggregateInputQueueMode;
+    private final FsyncMode forwardingInputQueueMode;
 
     public FsyncConfig() {
-        receiving = DEFAULT_IS_RECEIVING_ENABLED;
-        zipSplittingInputQueue = DEFAULT_IS_ZIP_SPLITTING_INPUT_QUEUE_ENABLED;
-        preAggregateInputQueue = DEFAULT_IS_PRE_AGGREGATE_INPUT_QUEUE_ENABLED;
-        aggregateInputQueue = DEFAULT_IS_AGGREGATE_INPUT_QUEUE_ENABLED;
-        forwardingInputQueue = DEFAULT_IS_FORWARDING_INPUT_QUEUE_ENABLED;
+        receivingMode = DEFAULT_RECEIVING_MODE;
+        zipSplittingInputQueueMode = DEFAULT_ZIP_SPLITTING_INPUT_QUEUE_MODE;
+        preAggregateInputQueueMode = DEFAULT_PRE_AGGREGATE_INPUT_QUEUE_MODE;
+        aggregateInputQueueMode = DEFAULT_AGGREGATE_INPUT_QUEUE_MODE;
+        forwardingInputQueueMode = DEFAULT_FORWARDING_INPUT_QUEUE_MODE;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public FsyncConfig(
-            @JsonProperty("receiving") final Boolean receiving,
-            @JsonProperty("zipSplittingInputQueue") final Boolean zipSplittingInputQueue,
-            @JsonProperty("preAggregateInputQueue") final Boolean preAggregateInputQueue,
-            @JsonProperty("aggregateInputQueue") final Boolean aggregateInputQueue,
-            @JsonProperty("forwardingInputQueue") final Boolean forwardingInputQueue) {
+            @JsonProperty("receivingMode") final FsyncMode receivingMode,
+            @JsonProperty("zipSplittingInputQueueMode") final FsyncMode zipSplittingInputQueueMode,
+            @JsonProperty("preAggregateInputQueueMode") final FsyncMode preAggregateInputQueueMode,
+            @JsonProperty("aggregateInputQueueMode") final FsyncMode aggregateInputQueueMode,
+            @JsonProperty("forwardingInputQueueMode") final FsyncMode forwardingInputQueueMode) {
 
-        this.receiving = Objects.requireNonNullElse(
-                receiving, DEFAULT_IS_RECEIVING_ENABLED);
-        this.zipSplittingInputQueue = Objects.requireNonNullElse(
-                zipSplittingInputQueue, DEFAULT_IS_ZIP_SPLITTING_INPUT_QUEUE_ENABLED);
-        this.preAggregateInputQueue = Objects.requireNonNullElse(
-                preAggregateInputQueue, DEFAULT_IS_PRE_AGGREGATE_INPUT_QUEUE_ENABLED);
-        this.aggregateInputQueue = Objects.requireNonNullElse(
-                aggregateInputQueue, DEFAULT_IS_AGGREGATE_INPUT_QUEUE_ENABLED);
-        this.forwardingInputQueue = Objects.requireNonNullElse(
-                forwardingInputQueue, DEFAULT_IS_FORWARDING_INPUT_QUEUE_ENABLED);
+        this.receivingMode = Objects.requireNonNullElse(
+                receivingMode, DEFAULT_RECEIVING_MODE);
+        this.zipSplittingInputQueueMode = Objects.requireNonNullElse(
+                zipSplittingInputQueueMode, DEFAULT_ZIP_SPLITTING_INPUT_QUEUE_MODE);
+        this.preAggregateInputQueueMode = Objects.requireNonNullElse(
+                preAggregateInputQueueMode, DEFAULT_PRE_AGGREGATE_INPUT_QUEUE_MODE);
+        this.aggregateInputQueueMode = Objects.requireNonNullElse(
+                aggregateInputQueueMode, DEFAULT_AGGREGATE_INPUT_QUEUE_MODE);
+        this.forwardingInputQueueMode = Objects.requireNonNullElse(
+                forwardingInputQueueMode, DEFAULT_FORWARDING_INPUT_QUEUE_MODE);
     }
 
-    @JsonPropertyDescription("If true, received data is forced to durable storage before a " +
-                             "receipt response is returned to the sender, as is any data rewritten " +
-                             "from it by the zip splitter or the aggregator. Turning this off means " +
-                             "the proxy may acknowledge data that is subsequently lost if the " +
-                             "machine loses power, but it will receive data faster.")
+    @JsonPropertyDescription("Controls whether received files, directories, or both are forced to " +
+                             "durable storage before a receipt response is returned to the sender, " +
+                             "as is any data rewritten from it by the zip splitter or the aggregator.")
     @RequiresProxyRestart
     @JsonProperty
-    public boolean isReceiving() {
-        return receiving;
+    public FsyncMode getReceivingMode() {
+        return receivingMode;
     }
 
-    @JsonPropertyDescription("If true, entries added to the zip splitting input queue are forced " +
-                             "to durable storage.")
+    @JsonPropertyDescription("Controls whether entries added to the zip splitting input queue have " +
+                             "their directories forced to durable storage.")
     @RequiresProxyRestart
     @JsonProperty
-    public boolean isZipSplittingInputQueue() {
-        return zipSplittingInputQueue;
+    public FsyncMode getZipSplittingInputQueueMode() {
+        return zipSplittingInputQueueMode;
     }
 
-    @JsonPropertyDescription("If true, entries added to the pre-aggregate input queue are forced " +
-                             "to durable storage.")
+    @JsonPropertyDescription("Controls whether entries added to the pre-aggregate input queue have " +
+                             "their directories forced to durable storage.")
     @RequiresProxyRestart
     @JsonProperty
-    public boolean isPreAggregateInputQueue() {
-        return preAggregateInputQueue;
+    public FsyncMode getPreAggregateInputQueueMode() {
+        return preAggregateInputQueueMode;
     }
 
-    @JsonPropertyDescription("If true, entries added to the aggregate input queue are forced " +
-                             "to durable storage.")
+    @JsonPropertyDescription("Controls whether entries added to the aggregate input queue have " +
+                             "their directories forced to durable storage.")
     @RequiresProxyRestart
     @JsonProperty
-    public boolean isAggregateInputQueue() {
-        return aggregateInputQueue;
+    public FsyncMode getAggregateInputQueueMode() {
+        return aggregateInputQueueMode;
     }
 
-    @JsonPropertyDescription("If true, entries added to the forwarding input queue, and to the " +
-                             "forward and retry queues of each forward destination, are forced to " +
-                             "durable storage.")
+    @JsonPropertyDescription("Controls whether entries added to the forwarding input queue, and to " +
+                             "the forward and retry queues of each forward destination, have their " +
+                             "directories forced to durable storage.")
     @RequiresProxyRestart
     @JsonProperty
-    public boolean isForwardingInputQueue() {
-        return forwardingInputQueue;
+    public FsyncMode getForwardingInputQueueMode() {
+        return forwardingInputQueueMode;
     }
 
     @Override
     public String toString() {
         return "FsyncConfig{" +
-               "receiving=" + receiving +
-               ", zipSplittingInputQueue=" + zipSplittingInputQueue +
-               ", preAggregateInputQueue=" + preAggregateInputQueue +
-               ", aggregateInputQueue=" + aggregateInputQueue +
-               ", forwardingInputQueue=" + forwardingInputQueue +
+               "receivingMode=" + receivingMode +
+               ", zipSplittingInputQueueMode=" + zipSplittingInputQueueMode +
+               ", preAggregateInputQueueMode=" + preAggregateInputQueueMode +
+               ", aggregateInputQueueMode=" + aggregateInputQueueMode +
+               ", forwardingInputQueueMode=" + forwardingInputQueueMode +
                '}';
     }
 }

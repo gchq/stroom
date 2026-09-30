@@ -26,6 +26,7 @@ import stroom.test.common.TestUtil;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.exception.ThrowingSupplier;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -95,7 +96,7 @@ class TestRetryingForwardDestination {
                 dirQueueFactory,
                 proxyServices,
                 mockFileStores,
-                false);
+                FsyncMode.DISABLED);
 
         proxyServices.start();
 
@@ -137,7 +138,7 @@ class TestRetryingForwardDestination {
                 dirQueueFactory,
                 proxyServices,
                 mockFileStores,
-                false);
+                FsyncMode.DISABLED);
 
         proxyServices.start();
 
@@ -186,7 +187,7 @@ class TestRetryingForwardDestination {
                 dirQueueFactory,
                 proxyServices,
                 mockFileStores,
-                false);
+                FsyncMode.DISABLED);
 
         proxyServices.start();
 

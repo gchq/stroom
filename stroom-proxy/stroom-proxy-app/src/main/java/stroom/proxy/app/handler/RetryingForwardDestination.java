@@ -23,6 +23,7 @@ import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -89,7 +90,7 @@ public class RetryingForwardDestination implements ForwardDestination {
                                       final DirQueueFactory dirQueueFactory,
                                       final ProxyServices proxyServices,
                                       final FileStores fileStores,
-                                      final boolean fsyncEnabled) {
+                                      final FsyncMode fsyncMode) {
 
         this.forwardQueueConfig = Objects.requireNonNull(forwardQueueConfig);
         this.delegateDestination = Objects.requireNonNull(delegateDestination);
@@ -107,12 +108,12 @@ public class RetryingForwardDestination implements ForwardDestination {
                 forwardingDir.resolve("01_forward"),
                 FORWARD_ORDER,
                 "forward - " + destinationName,
-                fsyncEnabled);
+                fsyncMode);
         retryQueue = dirQueueFactory.create(
                 forwardingDir.resolve("02_retry"),
                 RETRY_ORDER,
                 "retry - " + destinationName,
-                fsyncEnabled);
+                fsyncMode);
 
         final DirQueueTransfer forwarding = new DirQueueTransfer(
                 forwardQueue::next, this::forwardDir);
@@ -129,7 +130,7 @@ public class RetryingForwardDestination implements ForwardDestination {
 
         // Create failure destination.
         failureDestination = setupFailureDestination(
-                forwardQueueConfig, pathCreator, forwardingDir, fsyncEnabled);
+                forwardQueueConfig, pathCreator, forwardingDir, fsyncMode);
         delayForwardingFunc = createForwardDelayFunc(forwardQueueConfig);
 
         if (delegateDestination.hasLivenessCheck()) {
@@ -284,7 +285,7 @@ public class RetryingForwardDestination implements ForwardDestination {
     private ForwardFileDestination setupFailureDestination(final ForwardQueueConfig forwardQueueConfig,
                                                            final PathCreator simplePathCreator,
                                                            final Path forwardingDir,
-                                                           final boolean fsyncEnabled) {
+                                                           final FsyncMode fsyncMode) {
         final ForwardFileDestination failureDestination;
         final Path failureDir = forwardingDir.resolve("03_failure");
         final PathTemplateConfig errorSubPathTemplate = forwardQueueConfig.getErrorSubPathTemplate();
@@ -302,7 +303,7 @@ public class RetryingForwardDestination implements ForwardDestination {
                 null,
                 simplePathCreator,
                 true,
-                fsyncEnabled);
+                fsyncMode);
         fileStores.add(FORWARD_ORDER, "forward - " + destinationName + " - failure", failureDir);
         return failureDestination;
     }

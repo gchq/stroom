@@ -174,7 +174,7 @@ class FsStreamStore implements StreamStore {
                 fileSystemStreamPathHelper,
                 meta,
                 volumePath,
-                dataStoreServiceConfigProvider.get().isFsyncEnabled());
+                dataStoreServiceConfigProvider.get().getFsyncMode());
         // Force Creation of the files
         fsTarget.getOutputStream();
         return fsTarget;

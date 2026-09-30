@@ -36,6 +36,7 @@ import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -97,7 +98,7 @@ public class ZipReceiver implements Receiver {
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
 
     private final ReceiveDataConfig receiveDataConfig;
-    private final boolean fsyncOnReceipt;
+    private final FsyncMode fsyncModeOnReceipt;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
     private final ZipSplitter zipSplitter;
@@ -116,7 +117,7 @@ public class ZipReceiver implements Receiver {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.logStream = logStream;
         this.zipSplitter = zipSplitter;
-        this.fsyncOnReceipt = fsyncConfig.isReceiving();
+        this.fsyncModeOnReceipt = fsyncConfig.getReceivingMode();
 
         // Make receiving zip dir provider.
         receivingDirProvider = createDirProvider(dataDirProvider, DirNames.RECEIVING_ZIP);
@@ -287,8 +288,8 @@ public class ZipReceiver implements Receiver {
 
                 // Force the received data to disk before we acknowledge receipt of it, otherwise we
                 // may tell the sender the data is safe when it is still only in the page cache.
-                if (fsyncOnReceipt) {
-                    fileGroup.sync();
+                if (fsyncModeOnReceipt.isAnyFsyncEnabled()) {
+                    fileGroup.sync(fsyncModeOnReceipt);
                 }
 
                 // Move receiving dir to destination.
@@ -301,8 +302,8 @@ public class ZipReceiver implements Receiver {
                 AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
 
                 // As above, the data must be durable before the sender is told we have it.
-                if (fsyncOnReceipt) {
-                    fileGroup.sync();
+                if (fsyncModeOnReceipt.isAnyFsyncEnabled()) {
+                    fileGroup.sync(fsyncModeOnReceipt);
                 }
 
                 LOGGER.debug(() -> LogUtil.message("Pass {} to zipSplitter, isValid: {}, feedGroupCount: {}",

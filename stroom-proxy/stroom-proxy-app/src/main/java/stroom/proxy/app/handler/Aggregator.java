@@ -21,6 +21,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.DataDirProvider;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.zip.ZipUtil;
@@ -48,7 +49,7 @@ public class Aggregator {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Aggregator.class);
 
     private final CleanupDirQueue deleteDirQueue;
-    private final boolean fsyncRewrittenData;
+    private final FsyncMode fsyncModeForRewrittenData;
     private final NumberedDirProvider tempAggregatesDirProvider;
 
     private Consumer<Path> destination;
@@ -58,7 +59,7 @@ public class Aggregator {
                       final DataDirProvider dataDirProvider,
                       final FsyncConfig fsyncConfig) {
         this.deleteDirQueue = deleteDirQueue;
-        this.fsyncRewrittenData = fsyncConfig.isReceiving();
+        this.fsyncModeForRewrittenData = fsyncConfig.getReceivingMode();
 
         // Make temp aggregates dir.
         final Path aggregatesDir = dataDirProvider.get().resolve(DirNames.AGGREGATES);
@@ -176,11 +177,11 @@ public class Aggregator {
                     }
                 }
 
-                if (fsyncRewrittenData) {
+                if (fsyncModeForRewrittenData.isAnyFsyncEnabled()) {
                     // This aggregate is a freshly written file, not one of the sources synced on
                     // receipt, and those sources are deleted below. It must be forced to disk or
                     // the data the sender was told we had can still be lost.
-                    outputFileGroup.sync();
+                    outputFileGroup.sync(fsyncModeForRewrittenData);
                 }
 
                 // We have finished the merge so transfer the new item to be forwarded.

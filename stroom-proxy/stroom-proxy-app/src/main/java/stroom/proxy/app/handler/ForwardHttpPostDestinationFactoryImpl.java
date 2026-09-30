@@ -107,6 +107,6 @@ public class ForwardHttpPostDestinationFactoryImpl implements ForwardHttpPostDes
                 dirQueueFactory,
                 proxyServices,
                 fileStores,
-                proxyConfigProvider.get().getFsyncConfig().isForwardingInputQueue());
+                proxyConfigProvider.get().getFsyncConfig().getForwardingInputQueueMode());
     }
 }

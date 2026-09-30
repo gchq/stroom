@@ -19,6 +19,7 @@ package stroom.proxy.app.handler;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
+import stroom.util.io.FsyncMode;
 
 import jakarta.inject.Inject;
 
@@ -41,24 +42,22 @@ public class DirQueueFactory {
 
     /// Creates a queue rooted at `dirName` under the proxy data dir.
     ///
-    /// @param fsyncEnabled If true, the parent dir is forced to disk each time an item is added,
-    ///                     making the atomic move that commits the item durable.
+    /// @param fsyncMode Controls whether the parent dir is forced to disk each time an item is added.
     public DirQueue create(final String dirName,
                            final int order,
                            final String name,
-                           final boolean fsyncEnabled) {
+                           final FsyncMode fsyncMode) {
         final Path rootDir = dataDir.resolve(dirName);
-        return create(rootDir, order, name, fsyncEnabled);
+        return create(rootDir, order, name, fsyncMode);
     }
 
     /// Creates a queue rooted at `rootDir`.
     ///
-    /// @param fsyncEnabled If true, the parent dir is forced to disk each time an item is added,
-    ///                     making the atomic move that commits the item durable.
+    /// @param fsyncMode Controls whether the parent dir is forced to disk each time an item is added.
     public DirQueue create(final Path rootDir,
                            final int order,
                            final String name,
-                           final boolean fsyncEnabled) {
-        return new DirQueue(rootDir, queueMonitors, fileStores, order, name, fsyncEnabled);
+                           final FsyncMode fsyncMode) {
+        return new DirQueue(rootDir, queueMonitors, fileStores, order, name, fsyncMode);
     }
 }
