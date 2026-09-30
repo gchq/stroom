@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,28 +21,16 @@ import jakarta.inject.Singleton;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @Singleton
-public class DocumentActionHandlers {
+class DocumentActionHandlers {
 
     private final Map<DocumentTypeName, DocumentActionHandler> handlersMap;
 
     @Inject
     public DocumentActionHandlers(final Map<DocumentTypeName, DocumentActionHandler> handlersMap) {
         this.handlersMap = handlersMap;
-    }
-
-    public DocumentActionHandler<?> getHandler(final String type) {
-        return handlersMap.get(new DocumentTypeName(type));
-    }
-
-    public void forEach(final Consumer<DocumentActionHandler> consumer) {
-        handlersMap.values()
-                .stream()
-                .filter(Objects::nonNull)
-                .forEach(consumer);
     }
 
     public Stream<DocumentActionHandler> stream() {

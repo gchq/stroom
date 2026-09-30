@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,6 +147,8 @@ public class RuleEmailTemplatingService {
         NullSafe.consume(detection.getDetectionUniqueId(), val -> context.put("detectionUniqueId", val));
         NullSafe.consume(detection.getDetectionRevision(), val -> context.put("detectionRevision", val));
         NullSafe.consume(detection.getDefunct(), val -> context.put("defunct", val));
+        NullSafe.consume(detection.getLevel(), val -> context.put("level", val));
+        NullSafe.consume(detection.getStatus(), val -> context.put("status", val));
 
         NullSafe.consume(detection.getValues(), values -> {
             if (!values.isEmpty()) {

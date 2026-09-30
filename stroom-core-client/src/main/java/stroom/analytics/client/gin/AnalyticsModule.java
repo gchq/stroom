@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,14 @@ import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.Analy
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter;
 import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.AnalyticNotificationEditView;
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
+import stroom.analytics.client.presenter.AnalyticSettingsPresenter;
+import stroom.analytics.client.presenter.AnalyticSettingsPresenter.AnalyticSettingsView;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
+import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter;
+import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter.BatchExecutionScheduleEditView;
+import stroom.analytics.client.presenter.ExecutionScheduleRunNowPresenter;
+import stroom.analytics.client.presenter.ExecutionScheduleRunNowPresenter.ExecutionScheduleRunNowView;
 import stroom.analytics.client.presenter.ScheduledProcessEditPresenter;
 import stroom.analytics.client.presenter.ScheduledProcessEditView;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
@@ -42,8 +48,11 @@ import stroom.analytics.client.view.AnalyticEmailDestinationViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationEditViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
+import stroom.analytics.client.view.AnalyticSettingsViewImpl;
 import stroom.analytics.client.view.AnalyticStreamDestinationViewImpl;
+import stroom.analytics.client.view.BatchExecutionScheduleEditViewImpl;
 import stroom.analytics.client.view.DuplicateManagementViewImpl;
+import stroom.analytics.client.view.ExecutionScheduleRunNowViewImpl;
 import stroom.analytics.client.view.ScheduledProcessEditViewImpl;
 import stroom.analytics.client.view.ScheduledProcessingViewImpl;
 import stroom.analytics.client.view.StreamingProcessingViewImpl;
@@ -58,6 +67,9 @@ public class AnalyticsModule extends PluginModule {
 
         bind(AnalyticRulePresenter.class);
 
+        bindPresenterWidget(AnalyticSettingsPresenter.class,
+                AnalyticSettingsView.class,
+                AnalyticSettingsViewImpl.class);
         bindPresenterWidget(AnalyticNotificationEditPresenter.class,
                 AnalyticNotificationEditView.class,
                 AnalyticNotificationEditViewImpl.class);
@@ -82,6 +94,12 @@ public class AnalyticsModule extends PluginModule {
         bindPresenterWidget(ScheduledProcessingPresenter.class,
                 ScheduledProcessingView.class,
                 ScheduledProcessingViewImpl.class);
+        bindPresenterWidget(BatchExecutionScheduleEditPresenter.class,
+                BatchExecutionScheduleEditView.class,
+                BatchExecutionScheduleEditViewImpl.class);
+        bindPresenterWidget(ExecutionScheduleRunNowPresenter.class,
+                ExecutionScheduleRunNowView.class,
+                ExecutionScheduleRunNowViewImpl.class);
 
         bindSharedView(
                 AnalyticProcessingView.class,

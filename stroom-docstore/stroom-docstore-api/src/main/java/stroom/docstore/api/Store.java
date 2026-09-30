@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,18 @@
 package stroom.docstore.api;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docref.HasFindDocsByName;
 import stroom.docstore.shared.AbstractDoc;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 
 public interface Store<D extends AbstractDoc>
-        extends DocumentActionHandler<D>, HasFindDocsByName, ContentIndexable {
+        extends DocumentActionHandler<D>, ContentIndexable {
     // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
     // ---------------------------------------------------------------------
@@ -46,8 +44,6 @@ public interface Store<D extends AbstractDoc>
 
     void deleteDocument(DocRef docRef);
 
-    DocRefInfo info(DocRef docRef);
-
     // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
     // ---------------------------------------------------------------------
@@ -56,11 +52,7 @@ public interface Store<D extends AbstractDoc>
     // START OF HasDependencies
     // ---------------------------------------------------------------------
 
-    Map<DocRef, Set<DocRef>> getDependencies(DependencyRemapFunction<D> mapper);
-
-    Set<DocRef> getDependencies(DocRef docRef, DependencyRemapFunction<D> mapper);
-
-    void remapDependencies(DocRef docRef, Map<DocRef, DocRef> remappings, DependencyRemapFunction<D> mapper);
+    void remapDependencies(DocRef docRef, Map<DocRef, DocRef> remappings);
 
     // ---------------------------------------------------------------------
     // END OF HasDependencies
@@ -77,15 +69,15 @@ public interface Store<D extends AbstractDoc>
 
     DocRef importDocument(
             DocRef docRef,
-            Map<String, byte[]> dataMap,
+            ImportExportDocument importExportDocument,
             ImportState importState,
             ImportSettings importSettings);
 
-    Map<String, byte[]> exportDocument(DocRef docRef,
+    ImportExportDocument exportDocument(DocRef docRef,
                                        boolean omitAuditFields,
                                        List<Message> messageList);
 
-    Map<String, byte[]> exportDocument(DocRef docRef,
+    ImportExportDocument exportDocument(DocRef docRef,
                                        boolean omitAuditFields,
                                        List<Message> messageList,
                                        Function<D, D> function);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import stroom.docref.HasDisplayValue;
 import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.PrimitiveValueConverter;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -128,7 +128,7 @@ public class IndexShard {
                       @JsonProperty("partition") final String partition,
                       @JsonProperty("partitionFromTime") final Long partitionFromTime,
                       @JsonProperty("partitionToTime") final Long partitionToTime,
-                      @JsonProperty("documentCount") final int documentCount,
+                      @JsonProperty("documentCount") final Integer documentCount,
                       @JsonProperty("commitMs") final Long commitMs,
                       @JsonProperty("commitDurationMs") final Long commitDurationMs,
                       @JsonProperty("commitDocumentCount") final Integer commitDocumentCount,
@@ -142,11 +142,11 @@ public class IndexShard {
         this.partition = partition;
         this.partitionFromTime = partitionFromTime;
         this.partitionToTime = partitionToTime;
-        this.documentCount = documentCount;
+        this.documentCount = Objects.requireNonNullElse(documentCount, 0);
         this.commitMs = commitMs;
         this.commitDurationMs = commitDurationMs;
         this.commitDocumentCount = commitDocumentCount;
-        this.status = NullSafe.requireNonNullElse(status, IndexShardStatus.NEW);
+        this.status = Objects.requireNonNullElse(status, IndexShardStatus.NEW);
         this.fileSize = fileSize;
         this.indexVersion = indexVersion;
         this.volume = volume;

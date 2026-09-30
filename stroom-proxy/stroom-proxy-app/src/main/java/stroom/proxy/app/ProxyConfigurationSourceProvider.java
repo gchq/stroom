@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,14 @@
 
 package stroom.proxy.app;
 
-import stroom.util.io.DiffUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
-import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;
-import stroom.util.yaml.YamlUtil;
+import stroom.util.yaml.YamlV2Util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -79,7 +77,8 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
         try (final InputStream in = delegate.open(path)) {
             // This is the yaml tree after passing though the delegate
             // substitutions
-            final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
+            // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+            final ObjectMapper mapper = YamlV2Util.getVanillaObjectMapper();
             final JsonNode rootNode = mapper.readTree(in);
 
             Objects.requireNonNull(rootNode, () ->
@@ -123,7 +122,8 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
             throw new RuntimeException("No config node found at " + PROXY_CONFIG_JSON_POINTER);
         }
 
-        YamlUtil.mergeYamlNodeTrees(
+        // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+        YamlV2Util.mergeYamlNodeTrees(
                 objectMapper,
                 objectMapper2 ->
                         proxyConfigNode,
@@ -131,26 +131,26 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
                         objectMapper.valueToTree(defaultConfig));
     }
 
-    private void dumpYamlDiff(final String path,
-                              final InputStream in,
-                              final ObjectMapper mapper,
-                              final JsonNode rootNode) throws IOException {
-        in.reset();
-        try {
-            final String originalYaml = StreamUtil.streamToString(in);
-            final String newYaml = mapper.writeValueAsString(rootNode);
-            DiffUtil.unifiedDiff(
-                    originalYaml,
-                    newYaml,
-                    true,
-                    3,
-                    diffLines ->
-                            log("Comparing original and modified yaml:\n{}",
-                                    String.join("\n", diffLines)));
-        } catch (final IOException e) {
-            log("Unable to read file " + path, e);
-        }
-    }
+//    private void dumpYamlDiff(final String path,
+//                              final InputStream in,
+//                              final ObjectMapper mapper,
+//                              final JsonNode rootNode) throws IOException {
+//        in.reset();
+//        try {
+//            final String originalYaml = StreamUtil.streamToString(in);
+//            final String newYaml = mapper.writeValueAsString(rootNode);
+//            DiffUtil.unifiedDiff(
+//                    originalYaml,
+//                    newYaml,
+//                    true,
+//                    3,
+//                    diffLines ->
+//                            log("Comparing original and modified yaml:\n{}",
+//                                    String.join("\n", diffLines)));
+//        } catch (final Exception e) {
+//            log("Unable to read file " + path, e);
+//        }
+//    }
 
 
     private void mutateNodes(final JsonNode rootNode,
@@ -176,7 +176,7 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
                 mutateNodes(parent.get(i), names, valueMutator, path + "/" + i);
             }
         } else if (parent instanceof ObjectNode) {
-            parent.fields().forEachRemaining(entry -> {
+            parent.properties().forEach(entry -> {
                 final String valueNodePath = path + "/" + entry.getKey();
                 if (names.contains(entry.getKey())) {
                     // found our node so mutate it

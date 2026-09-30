@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 package stroom.planb.shared;
-
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,7 +35,7 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public final class SessionSettings
-        extends AbstractPlanBSettings
+        extends AbstractHttpStoreSettings
         implements HasCondenseSettings {
 
     @JsonProperty
@@ -54,8 +52,8 @@ public final class SessionSettings
                            @JsonProperty("condense") final DurationSetting condense,
                            @JsonProperty("keySchema") final SessionKeySchema keySchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.condense = NullSafe.requireNonNullElse(condense, new DurationSetting.Builder().build());
-        this.keySchema = NullSafe.requireNonNullElse(keySchema, new SessionKeySchema.Builder().build());
+        this.condense = Objects.requireNonNullElse(condense, new DurationSetting.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new SessionKeySchema.Builder().build());
     }
 
     @Override
@@ -99,7 +97,7 @@ public final class SessionSettings
                '}';
     }
 
-    public static class Builder extends AbstractBuilder<SessionSettings, Builder> {
+    public static class Builder extends AbstractHttpBuilder<SessionSettings, Builder> {
 
         private DurationSetting condense;
         private SessionKeySchema keySchema;

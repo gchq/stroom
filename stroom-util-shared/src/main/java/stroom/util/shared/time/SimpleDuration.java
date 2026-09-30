@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.util.shared.time;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,7 +29,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class SimpleDuration {
 
-    public static SimpleDuration ZERO = new SimpleDuration(0, TimeUnit.NANOSECONDS);
+    public static SimpleDuration ZERO = new SimpleDuration(0L, TimeUnit.NANOSECONDS);
 
     @JsonProperty
     private final long time;
@@ -36,11 +37,9 @@ public class SimpleDuration {
     private final TimeUnit timeUnit;
 
     @JsonCreator
-    public SimpleDuration(@JsonProperty("time") final long time,
+    public SimpleDuration(@JsonProperty("time") final Long time,
                           @JsonProperty("timeUnit") final TimeUnit timeUnit) {
-        this.time = time < 0
-                ? 0
-                : time;
+        this.time = Math.max(Objects.requireNonNullElse(time, 0L), 0L);
         this.timeUnit = timeUnit == null
                 ? TimeUnit.DAYS
                 : timeUnit;
@@ -68,6 +67,32 @@ public class SimpleDuration {
 
     public TimeUnit getTimeUnit() {
         return timeUnit;
+    }
+
+    /**
+     * The duration in milliseconds, for comparing two durations expressed in different units.
+     *
+     * <p>Approximate because months and years are not fixed length: a month counts as 31 days and
+     * a year as 365, matching {@code SimpleDurationUtil.convertToStroomDuration} so client and
+     * server agree. Use {@code SimpleDurationUtil.plus/minus} for real date arithmetic — those
+     * work in calendar terms and are exact.
+     */
+    @JsonIgnore
+    public long getApproxMillis() {
+        if (timeUnit == null) {
+            return 0L;
+        }
+        return switch (timeUnit) {
+            case NANOSECONDS -> time / 1_000_000L;
+            case MILLISECONDS -> time;
+            case SECONDS -> time * 1_000L;
+            case MINUTES -> time * 60_000L;
+            case HOURS -> time * 3_600_000L;
+            case DAYS -> time * 86_400_000L;
+            case WEEKS -> time * 7L * 86_400_000L;
+            case MONTHS -> time * 31L * 86_400_000L;
+            case YEARS -> time * 365L * 86_400_000L;
+        };
     }
 
     @Override

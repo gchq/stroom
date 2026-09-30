@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
-import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.FeedKey.FeedKeyInterner;
+import stroom.proxy.repo.FeedKeyInterner;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FeedKey;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -46,17 +46,17 @@ public class TestZipEntryGroup extends StroomUnitTest {
     @Test
     void test() throws IOException {
         final String data;
-        final FeedKeyInterner interner = FeedKey.createInterner();
+        final FeedKeyInterner interner = FeedKeyInterner.create();
         final FeedKey feedKey = interner.intern("test_feed", "test_type");
 
         // Write data
         try (final StringWriter writer = new StringWriter()) {
             for (int i = 0; i < ENTRIES; i++) {
                 final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(feedKey);
-                zipEntryGroup.setManifestEntry(new Entry(i + ".mf", 123));
-                zipEntryGroup.setMetaEntry(new Entry(i + ".meta", 234));
-                zipEntryGroup.setContextEntry(new Entry(i + ".ctx", 345));
-                zipEntryGroup.setDataEntry(new Entry(i + ".dat", 456));
+                zipEntryGroup.setManifestEntry(new Entry(i + ".mf", 123L));
+                zipEntryGroup.setMetaEntry(new Entry(i + ".meta", 234L));
+                zipEntryGroup.setContextEntry(new Entry(i + ".ctx", 345L));
+                zipEntryGroup.setDataEntry(new Entry(i + ".dat", 456L));
                 zipEntryGroup.write(writer);
             }
             writer.flush();
@@ -109,7 +109,7 @@ public class TestZipEntryGroup extends StroomUnitTest {
     @Test
     void test2(@TempDir final Path tempDir) throws IOException {
         final String data;
-        final FeedKeyInterner interner = FeedKey.createInterner();
+        final FeedKeyInterner interner = FeedKeyInterner.create();
         final FeedKey feedKey = interner.intern("test_feed", "test_type");
 
         // Write data
@@ -119,10 +119,10 @@ public class TestZipEntryGroup extends StroomUnitTest {
             writer.write("\n");
             for (int i = 0; i < ENTRIES; i++) {
                 final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(feedKey);
-                zipEntryGroup.setManifestEntry(new Entry(i + ".mf", 123));
-                zipEntryGroup.setMetaEntry(new Entry(i + ".meta", 234));
-                zipEntryGroup.setContextEntry(new Entry(i + ".ctx", 345));
-                zipEntryGroup.setDataEntry(new Entry(i + ".dat", 456));
+                zipEntryGroup.setManifestEntry(new Entry(i + ".mf", 123L));
+                zipEntryGroup.setMetaEntry(new Entry(i + ".meta", 234L));
+                zipEntryGroup.setContextEntry(new Entry(i + ".ctx", 345L));
+                zipEntryGroup.setDataEntry(new Entry(i + ".dat", 456L));
                 zipEntryGroup.write(writer);
             }
             // Wack in a few blank lines to make sure it copes with it

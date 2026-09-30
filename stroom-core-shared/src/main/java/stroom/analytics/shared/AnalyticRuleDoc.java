@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
+import stroom.query.shared.QueryTablePreferences;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,12 +34,14 @@ import java.util.List;
 import java.util.Objects;
 
 @Description(
-        "Defines an analytic rule which can be run to alert on events meeting a criteria.\n" +
-        "The criteria is defined using a StroomQL query.\n" +
-        "The analytic can be processed in different ways:\n\n" +
-        "* Streaming\n" +
-        "* Table Builder\n" +
-        "* Scheduled Query")
+    """
+    Defines an analytic rule which can be run to alert on events meeting a criteria.
+    The criteria is defined using a StroomQL query.
+    The analytic can be processed in different ways:
+    * Streaming
+    * Table Builder
+    * Scheduled Query
+    """)
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
@@ -48,8 +51,25 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
 
     private static final boolean INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE = true;
 
+    /**
+     * The includeRuleDocumentation field determines whether a rule's documentation
+     * will be included in any detections that it produces.
+     */
     @JsonProperty
     private final boolean includeRuleDocumentation;
+
+    /**
+     * A rule's level denotes its severity.
+     * A high level rule detection should be prioritised over a low level rule detection.
+     */
+    @JsonProperty
+    private final AnalyticRuleLevel level;
+
+    /**
+     * A rule's status denotes how reliable it is.
+     */
+    @JsonProperty
+    private final AnalyticRuleStatus status;
 
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
@@ -61,7 +81,6 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                            @JsonProperty("createUser") final String createUser,
                            @JsonProperty("updateUser") final String updateUser,
                            @JsonProperty("description") final String description,
-                           @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
                            @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                            @JsonProperty("parameters") final List<Param> parameters,
                            @JsonProperty("timeRange") final TimeRange timeRange,
@@ -71,9 +90,13 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                            @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
                            @JsonProperty("notifications") final List<NotificationConfig> notifications,
                            @JsonProperty("errorFeed") final DocRef errorFeed,
-                           @JsonProperty("rememberNotifications") final boolean rememberNotifications,
-                           @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
-                           @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
+                           @JsonProperty("rememberNotifications") final Boolean rememberNotifications,
+                           @JsonProperty("suppressDuplicateNotifications") final Boolean suppressDuplicateNotifications,
+                           @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
+                           @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences,
+                           @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
+                           @JsonProperty("level") final AnalyticRuleLevel level,
+                           @JsonProperty("status") final AnalyticRuleStatus status) {
         super(TYPE, uuid,
                 name,
                 version,
@@ -93,20 +116,25 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                 errorFeed,
                 rememberNotifications,
                 suppressDuplicateNotifications,
-                duplicateNotificationConfig);
+                duplicateNotificationConfig,
+                queryTablePreferences);
         this.includeRuleDocumentation = includeRuleDocumentation == null
                 ? INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE
                 : includeRuleDocumentation;
+        this.level = level;
+        this.status = status;
     }
 
-    /**
-     * The includeRuleDocumentation field determines whether a rule's documentation
-     * will be included in any detections that it produces.
-     *
-     * @return boolean value of includeRuleDocumentation
-     */
     public boolean isIncludeRuleDocumentation() {
         return includeRuleDocumentation;
+    }
+
+    public AnalyticRuleLevel getLevel() {
+        return level;
+    }
+
+    public AnalyticRuleStatus getStatus() {
+        return status;
     }
 
     /**
@@ -125,18 +153,22 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
             return false;
         }
         final AnalyticRuleDoc that = (AnalyticRuleDoc) o;
-        return includeRuleDocumentation == that.includeRuleDocumentation;
+        return includeRuleDocumentation == that.includeRuleDocumentation &&
+               level == that.level &&
+               status == that.status;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), includeRuleDocumentation);
+        return Objects.hash(super.hashCode(), includeRuleDocumentation, level, status);
     }
 
     @Override
     public String toString() {
         return "AnalyticRuleDoc{" +
                "includeRuleDocumentation=" + includeRuleDocumentation +
+               ", level=" + level +
+               ", status=" + status +
                '}';
     }
 
@@ -151,6 +183,8 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
     public static class Builder extends AbstractAnalyticRuleDocBuilder<AnalyticRuleDoc, Builder> {
 
         boolean includeRuleDocumentation = INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE;
+        AnalyticRuleLevel level;
+        AnalyticRuleStatus status;
 
         public Builder() {
         }
@@ -158,10 +192,22 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
         public Builder(final AnalyticRuleDoc doc) {
             super(doc);
             this.includeRuleDocumentation = doc.includeRuleDocumentation;
+            this.level = doc.level;
+            this.status = doc.status;
         }
 
         public Builder includeRuleDocumentation(final boolean includeRuleDocumentation) {
             this.includeRuleDocumentation = includeRuleDocumentation;
+            return self();
+        }
+
+        public Builder level(final AnalyticRuleLevel level) {
+            this.level = level;
+            return self();
+        }
+
+        public Builder status(final AnalyticRuleStatus status) {
+            this.status = status;
             return self();
         }
 
@@ -181,7 +227,6 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                     createUser,
                     updateUser,
                     description,
-                    includeRuleDocumentation,
                     languageVersion,
                     parameters,
                     timeRange,
@@ -193,7 +238,11 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                     errorFeed,
                     false,
                     false,
-                    duplicateNotificationConfig);
+                    duplicateNotificationConfig,
+                    queryTablePreferences,
+                    includeRuleDocumentation,
+                    level,
+                    status);
         }
     }
 }

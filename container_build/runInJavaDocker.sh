@@ -247,6 +247,7 @@ docker run \
   --env "BUILD_VERSION=${BUILD_VERSION:-SNAPSHOT}" \
   --env "DOCKER_USERNAME=${DOCKER_USERNAME}" \
   --env "DOCKER_PASSWORD=${DOCKER_PASSWORD}" \
+  --env "MYSQL_DB=${MYSQL_DB:-stroom}" \
   "${image_tag}" \
   "${run_cmd[@]}"
 

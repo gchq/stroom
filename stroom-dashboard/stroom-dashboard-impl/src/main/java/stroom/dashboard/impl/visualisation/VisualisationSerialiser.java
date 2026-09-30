@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,15 @@ package stroom.dashboard.impl.visualisation;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.docstore.shared.DocDataType;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.string.EncodingUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class VisualisationSerialiser implements DocumentSerialiser2<VisualisationDoc> {
 
@@ -39,9 +41,9 @@ public class VisualisationSerialiser implements DocumentSerialiser2<Visualisatio
     }
 
     @Override
-    public VisualisationDoc read(final Map<String, byte[]> data) throws IOException {
-        final VisualisationDoc.Builder builder = delegate.read(data).copy();
-        final String json = EncodingUtil.asString(data.get(JSON));
+    public VisualisationDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        final VisualisationDoc.Builder builder = delegate.read(importExportDocument).copy();
+        final String json = EncodingUtil.asString(importExportDocument.getExtAssetData(JSON));
         if (json != null) {
             builder.settings(json);
         }
@@ -49,12 +51,13 @@ public class VisualisationSerialiser implements DocumentSerialiser2<Visualisatio
     }
 
     @Override
-    public Map<String, byte[]> write(final VisualisationDoc document) throws IOException {
+    public ImportExportDocument write(final VisualisationDoc document) throws IOException {
         final String settings = document.getSettings();
-        final Map<String, byte[]> data = delegate.write(document.copy().settings(null).build());
+        final ImportExportDocument importExportDocument = delegate.write(document.copy().settings(null).build());
         if (settings != null) {
-            data.put(JSON, EncodingUtil.asBytes(settings));
+            importExportDocument.addExtAsset(
+                    new ByteArrayImportExportAsset(JSON, DocDataType.JSON, EncodingUtil.asBytes(settings)));
         }
-        return data;
+        return importExportDocument;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -466,7 +466,7 @@ public class DbTestUtil {
         try (final Statement statement = connection.createStatement()) {
             LOGGER.debug("Creating database '{}'", dbName);
             statement.executeUpdate("CREATE DATABASE `" + dbName +
-                                    "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;");
+                                    "` CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;");
 
             LOGGER.debug("Creating DB user '{}'", username);
             statement.executeUpdate("CREATE USER IF NOT EXISTS '" +

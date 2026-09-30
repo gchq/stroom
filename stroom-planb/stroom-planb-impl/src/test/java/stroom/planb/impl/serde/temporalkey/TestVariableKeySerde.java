@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ package stroom.planb.impl.serde.temporalkey;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
-import stroom.planb.impl.db.HashClashCommitRunnable;
-import stroom.planb.impl.db.HashLookupDb;
-import stroom.planb.impl.db.LmdbWriter;
-import stroom.planb.impl.db.PlanBEnv;
-import stroom.planb.impl.db.UidLookupDb;
-import stroom.planb.impl.db.UsedLookupsRecorder;
+import stroom.planb.impl.dao.HashClashCommitRunnable;
+import stroom.planb.impl.dao.HashLookupDb;
+import stroom.planb.impl.dao.LmdbWriter;
+import stroom.planb.impl.dao.PlanBEnv;
+import stroom.planb.impl.dao.UidLookupDb;
+import stroom.planb.impl.dao.UsedLookupsRecorder;
 import stroom.planb.impl.serde.hash.HashFactory;
 import stroom.planb.impl.serde.hash.HashFactoryFactory;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
@@ -40,6 +40,7 @@ import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
+import stroom.util.io.ByteSize;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
@@ -73,7 +74,11 @@ public class TestVariableKeySerde {
 
     private void testDir(final Path dbPath) {
         final ByteBuffers byteBuffers = new ByteBuffers(new ByteBufferFactoryImpl());
-        final TemporalStateSettings settings = new TemporalStateSettings.Builder().build();
+        // A few keys are written per run, so the env doesn't need the default 10GiB map size,
+        // especially as this test opens the env 100 times.
+        final TemporalStateSettings settings = new TemporalStateSettings.Builder()
+                .maxStoreSize(ByteSize.ofMebibytes(10).getBytes())
+                .build();
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
         try (final PlanBEnv env = new PlanBEnv(dbPath,
                 settings.getMaxStoreSize(),

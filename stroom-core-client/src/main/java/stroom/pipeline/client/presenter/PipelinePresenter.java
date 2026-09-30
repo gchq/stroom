@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,21 @@
 
 package stroom.pipeline.client.presenter;
 
+import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.AbstractTabProvider;
 import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
 import stroom.meta.shared.Meta;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
-import stroom.pipeline.client.event.HasChangeDataHandlers;
+import stroom.pipeline.client.event.DataLoadedEvent;
+import stroom.pipeline.client.event.DataLoadedEvent.DataLoadedHandler;
+import stroom.pipeline.client.event.HasDataLoadedHandlers;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
@@ -53,10 +55,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.List;
+import java.util.function.Consumer;
 import javax.inject.Provider;
 
 public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, PipelineDoc>
-        implements ChangeDataHandler<PipelineModel>, HasChangeDataHandlers<PipelineModel> {
+        implements HasDataLoadedHandlers<PipelineModel> {
 
     public static final TabData DATA = new TabDataImpl("Data");
     public static final TabData STRUCTURE = new TabDataImpl("Structure");
@@ -74,12 +77,11 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     private final PipelineModelFactory pipelineModelFactory;
 
     private PipelineModel pipelineModel;
-    private boolean doStepping = true;
+    private boolean steppingMetaListLoaded = false;
 
-    private boolean isAdmin;
-    private boolean hasManageProcessorsPermission;
-    private boolean initSize = false;
     private final InlineSvgToggleButton steppingModeButton;
+
+    private ExpressionOperator steppingMetaExpression = null;
 
     @Inject
     public PipelinePresenter(final EventBus eventBus,
@@ -99,7 +101,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
         this.pipelineModelFactory = pipelineModelFactory;
 
-        TabData selectedTab = null;
+        TabData defaultTab = null;
 
         if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION)) {
             addTab(DATA, new AbstractTabProvider<PipelineDoc, MetaPresenter>(eventBus) {
@@ -116,37 +118,51 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                     presenter.read(docRef, document, readOnly);
                 }
             });
-            selectedTab = DATA;
+            defaultTab = DATA;
         }
+
         steppingPresenter = steppingPresenterProvider.get();
+        pipelineStructurePresenter = structurePresenterProvider.get();
+
         steppingTabProvider = new AbstractTabProvider<PipelineDoc, SteppingPresenter>(getEventBus()) {
             @Override
             protected SteppingPresenter createPresenter() {
                 return steppingPresenter;
             }
-        };
-
-        pipelineStructurePresenter = structurePresenterProvider.get();
-
-        structureTabProvider = new AbstractTabProvider<PipelineDoc, PipelineStructurePresenter>(getEventBus()) {
-            @Override
-            protected PipelineStructurePresenter createPresenter() {
-                return pipelineStructurePresenter;
-            }
 
             @Override
-            public void onRead(final PipelineStructurePresenter presenter,
+            public void onRead(final SteppingPresenter presenter,
                                final DocRef docRef,
                                final PipelineDoc document,
                                final boolean readOnly) {
-                presenter.read(docRef, document, readOnly);
+                loadPipelineModel(docRef, model -> {
+                    steppingPresenter.setPipelineModel(model);
+                    steppingPresenter.setPipelineDoc(document);
+                    steppingPresenter.resize();
+                });
+
+                if (!steppingMetaListLoaded && steppingMetaExpression == null) {
+                    steppingMetaListLoaded = true;
+                    setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, null);
+                }
+            }
+        };
+
+        // A DocTabProvider (rather than a hand rolled AbstractTabProvider) so that the structure
+        // presenter's dirty events reach the tab content provider, and from there this presenter's
+        // onChange(). An AbstractTabProvider listens for dirty events fired by itself, which the
+        // structure presenter never does, so its edits used to go unnoticed.
+        structureTabProvider = new DocTabProvider<PipelineDoc>(() -> pipelineStructurePresenter) {
+            @Override
+            public void read(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
+                super.read(docRef, document, readOnly);
+                loadPipelineModel(docRef, pipelineStructurePresenter::setPipelineModel);
             }
         };
         addTab(STRUCTURE, structureTabProvider);
 
-        hasManageProcessorsPermission = securityContext
-                .hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION);
-        isAdmin = securityContext.hasAppPermission(AppPermission.ADMINISTRATOR);
+        final boolean hasManageProcessorsPermission = securityContext.hasAppPermission(
+                AppPermission.MANAGE_PROCESSORS_PERMISSION);
 
         if (hasManageProcessorsPermission) {
             addTab(PROCESSORS, new AbstractTabProvider<PipelineDoc, ProcessorPresenter>(eventBus) {
@@ -161,8 +177,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                                    final PipelineDoc document,
                                    final boolean readOnly) {
                     presenter.read(docRef, document, readOnly);
-                    presenter.setIsAdmin(isAdmin);
-                    presenter.setAllowUpdate(hasManageProcessorsPermission && !isReadOnly());
+                    presenter.setIsAdmin(securityContext.hasAppPermission(AppPermission.ADMINISTRATOR));
+                    presenter.setAllowUpdate(!isReadOnly());
                 }
             });
 
@@ -181,13 +197,13 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                 }
             });
 
-            if (selectedTab == null) {
-                selectedTab = PROCESSORS;
+            if (defaultTab == null) {
+                defaultTab = PROCESSORS;
             }
         }
 
-        if (selectedTab == null) {
-            selectedTab = STRUCTURE;
+        if (defaultTab == null) {
+            defaultTab = STRUCTURE;
         }
 
         addTab(DOCUMENTATION, new MarkdownTabProvider<PipelineDoc>(eventBus, markdownEditPresenterProvider) {
@@ -207,7 +223,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
-        selectTab(selectedTab);
+        setDefaultTab(defaultTab);
 
         steppingModeButton = new InlineSvgToggleButton();
         steppingModeButton.setSvg(SvgImage.STEP);
@@ -225,7 +241,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
                     steppingModeButton.setTitle("Enter Stepping Mode");
                 }
 
-                setSteppingMode(steppingModeButton.getState());
+                showSteppingMode(steppingModeButton.getState());
             }
         }));
     }
@@ -235,24 +251,9 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         steppingPresenter.beginStepping(stepType, stepLocation, meta, childStreamType);
     }
 
-    public void setSteppingMode(final boolean steppingMode) {
+    public void showSteppingMode(final boolean steppingMode) {
         if (steppingMode) {
-
             replaceTab(STRUCTURE, steppingTabProvider);
-
-            if (doStepping) {
-                doStepping = false;
-                if (pipelineStructurePresenter.getPipelineDoc() != null) {
-                    steppingPresenter.setPipelineDoc(pipelineStructurePresenter.getPipelineDoc());
-                }
-                steppingPresenter.setPipelineModel(pipelineModel);
-                steppingPresenter.beginStepping();
-            }
-
-            if (!initSize) {
-                initSize = true;
-                steppingPresenter.resize();
-            }
         } else {
             replaceTab(STRUCTURE, structureTabProvider);
         }
@@ -273,19 +274,13 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     protected void onBind() {
         super.onBind();
 
-        steppingPresenter.addPipelineChangeHandler(this::rebuildPipelineModel);
-        pipelineStructurePresenter.addPipelineChangeHandler(this::rebuildPipelineModel);
-    }
-
-    public void rebuildPipelineModel(final PipelineModel model) {
-        model.build();
-    }
-
-    @Override
-    public void onChange(final ChangeDataEvent<PipelineModel> event) {
-        this.pipelineModel = event.getData();
-        doStepping = true;
-        this.onChange();
+        // Editing an element's code (e.g. XSLT) while stepping does not change the PipelineDoc itself,
+        // so onChange()'s structure comparison won't detect it. The stepping presenter fires a
+        // ChangeEvent on each edit; route it directly to onChange() so the pipeline's Save button is
+        // re-evaluated via hasAssociatedDirty() (which checks steppingPresenter.getDirtyDocs()).
+        // Note that this must not touch the pipeline model: element code is not part of the pipeline
+        // structure, and rebuilding on each keypress makes the tree flash and the editor lag.
+        registerHandler(steppingPresenter.addChangeHandler(this::onChange));
     }
 
     @Override
@@ -310,21 +305,40 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     @Override
     protected void onRead(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
         super.onRead(docRef, document, readOnly);
-        steppingPresenter.setPipelineDoc(document);
     }
 
-    public void initPipelineModel(final DocRef docRef) {
+    public void loadPipelineModel(final DocRef docRef, final Consumer<PipelineModel> consumer) {
         pipelineElementTypesFactory.get(this, elementTypes ->
                 pipelineModelFactory.get(this, docRef, elementTypes, model -> {
                     if (pipelineModel == null) {
                         this.pipelineModel = model;
-                        pipelineModel.addChangeDataHandler(this);
-                        pipelineStructurePresenter.setPipelineModel(pipelineModel);
-                        steppingPresenter.setPipelineModel(pipelineModel);
+
+                        // The structure presenter recomputes dirty from the same event, so this
+                        // only has to keep the stepping view in step with the model.
+                        pipelineModel.addChangeDataHandler(event -> {
+                            this.pipelineModel = event.getData();
+                            steppingPresenter.setPipelineModel(pipelineModel);
+                        });
                     }
-                    ChangeDataEvent.fire(this, model);
+
+                    consumer.accept(model);
+                    DataLoadedEvent.fire(this, model);
                 })
         );
+    }
+
+    public void setSteppingMetaExpression(final ExpressionOperator expression) {
+        steppingMetaExpression = expression;
+    }
+
+    public void refreshSteppingMeta(final Runnable runnable) {
+        if (steppingMetaExpression != null) {
+            setMetaListExpression(steppingMetaExpression, runnable);
+        }
+    }
+
+    public boolean isSteppingInit() {
+        return steppingPresenter.getPipelineDoc() != null;
     }
 
     public List<DocRef> getDirtyDocs() {
@@ -337,21 +351,27 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         return dirtyDocs;
     }
 
-    public void saveDocs(final List<DocRef> docRefs) {
-        steppingPresenter.save(docRefs);
+    public void saveDocs(final List<DocRef> docRefs, final Runnable onComplete) {
+        steppingPresenter.save(docRefs, onComplete);
+    }
+
+    @Override
+    protected boolean hasAssociatedDirty() {
+        return !steppingPresenter.getDirtyDocs().isEmpty();
     }
 
     @Override
     protected PipelineDoc onWrite(final PipelineDoc document) {
-        return pipelineStructurePresenter.onWrite(document);
+        // Write via the tab content provider so that every tab contributes, including Documentation.
+        return super.onWrite(document);
     }
 
-    public void setMetaListExpression(final ExpressionOperator expressionOperator) {
-        steppingPresenter.setMetaListExpression(expressionOperator);
+    public void setMetaListExpression(final ExpressionOperator expressionOperator, final Runnable afterSet) {
+        steppingPresenter.setMetaListExpression(expressionOperator, afterSet);
     }
 
     @Override
-    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<PipelineModel> handler) {
-        return getEventBus().addHandlerToSource(ChangeDataEvent.getType(), this, handler);
+    public HandlerRegistration addDataLoadedHandler(final DataLoadedHandler<PipelineModel> handler) {
+        return getEventBus().addHandlerToSource(DataLoadedEvent.getType(), this, handler);
     }
 }

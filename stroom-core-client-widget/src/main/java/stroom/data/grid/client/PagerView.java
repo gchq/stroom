@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 
 import com.google.gwt.user.cellview.client.AbstractHasData;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.HTML;
 import com.gwtplatform.mvp.client.View;
 
 public interface PagerView extends View, TaskMonitorFactory {
@@ -31,6 +31,10 @@ public interface PagerView extends View, TaskMonitorFactory {
     ButtonView addButton(Preset preset);
 
     void addButton(ButtonView buttonView);
+
+    void addInfoLabel(HTML label);
+
+    HTML getInfoLabel(int index);
 
     ToggleButtonView addToggleButton(Preset primaryPreset,
                                      Preset secondaryPreset);

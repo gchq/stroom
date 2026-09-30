@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,12 @@ public class BuildInfo {
     private final String buildVersion;
 
     @JsonCreator
-    public BuildInfo(@JsonProperty("upTime") final long upTime,
+    public BuildInfo(@JsonProperty("upTime") final Long upTime,
                      @JsonProperty("buildVersion") final String buildVersion,
-                     @JsonProperty("buildTime") final long buildTime) {
-        this.upTime = upTime;
+                     @JsonProperty("buildTime") final Long buildTime) {
+        this.upTime = Objects.requireNonNullElse(upTime, 0L);
         this.buildVersion = buildVersion;
-        this.buildTime = buildTime;
+        this.buildTime = Objects.requireNonNullElse(buildTime, 0L);
     }
 
     public String getBuildVersion() {

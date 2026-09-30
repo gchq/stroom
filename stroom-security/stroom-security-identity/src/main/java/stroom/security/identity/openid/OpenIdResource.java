@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.Map;
 
 @Singleton
 @Tag(name = OpenIdResource.AUTHENTICATION_TAG)
-@Path("/oauth2/v1/noauth")
+@Path("/oauth2/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface OpenIdResource extends RestResource {
@@ -62,7 +62,9 @@ public interface OpenIdResource extends RestResource {
             @QueryParam(OpenId.REDIRECT_URI) @NotNull String redirectUri,
             @QueryParam(OpenId.NONCE) @Nullable String nonce,
             @QueryParam(OpenId.STATE) @Nullable String state,
-            @QueryParam(OpenId.PROMPT) @Nullable String prompt);
+            @QueryParam(OpenId.PROMPT) @Nullable String prompt,
+            @QueryParam(OpenId.CODE_CHALLENGE) @Nullable String codeChallenge,
+            @QueryParam(OpenId.CODE_CHALLENGE_METHOD) @Nullable String codeChallengeMethod);
 
     @Operation(
             summary = "Get a token from an access code or refresh token",

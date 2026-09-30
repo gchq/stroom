@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,14 @@ import java.util.function.Supplier;
         name = IsWeekend.NAME,
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = "Variable",
-        commonReturnType = ValDate.class,
+        commonReturnType = ValBoolean.class,
         commonReturnDescription = "Is the date a weekend day or not.",
         signatures = @FunctionSignature(
                 description = "Returns whether a date is part of the weekend or not.",
-                args = {}))
+                args = @FunctionArg(
+                        name = "time",
+                        description = "The time to test.",
+                        argType = Val.class)))
 class IsWeekend extends AbstractDateTimeFunction {
 
     static final String NAME = "isWeekend";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,13 +51,13 @@ public class DocContentMatch {
                            @JsonProperty("extension") final String extension,
                            @JsonProperty("location") final StringMatchLocation location,
                            @JsonProperty("sample") final String sample,
-                           @JsonProperty("sampleAtStartOfLine") final boolean sampleAtStartOfLine,
+                           @JsonProperty("sampleAtStartOfLine") final Boolean sampleAtStartOfLine,
                            @JsonProperty("tags") final List<String> tags) {
         this.docRef = docRef;
         this.extension = extension;
         this.location = location;
         this.sample = sample;
-        this.sampleAtStartOfLine = sampleAtStartOfLine;
+        this.sampleAtStartOfLine = Objects.requireNonNullElse(sampleAtStartOfLine, false);
         this.tags = tags;
     }
 

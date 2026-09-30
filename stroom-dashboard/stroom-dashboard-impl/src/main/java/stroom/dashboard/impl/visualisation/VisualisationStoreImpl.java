@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,45 +17,46 @@
 package stroom.dashboard.impl.visualisation;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
-import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.Message;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @Singleton
-class VisualisationStoreImpl implements VisualisationStore {
+class VisualisationStoreImpl
+        extends AbstractDocumentStore<VisualisationDoc>
+        implements VisualisationStore {
 
-    private final Store<VisualisationDoc> store;
+    private final VisualisationAssetService visualisationAssetService;
 
     @Inject
     VisualisationStoreImpl(final StoreFactory storeFactory,
-                           final VisualisationSerialiser serialiser) {
-        this.store = storeFactory.createStore(
+                           final SecurityContext securityContext,
+                           final VisualisationSerialiser serialiser,
+                           final VisualisationAssetService assetService) {
+        super(storeFactory,
+                securityContext,
                 serialiser,
                 VisualisationDoc.TYPE,
                 VisualisationDoc::builder,
                 VisualisationDoc::copy);
-    }
-
-    // ---------------------------------------------------------------------
-    // START OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public DocRef createDocument(final String name) {
-        return store.createDocument(name);
+        this.visualisationAssetService = assetService;
     }
 
     @Override
@@ -64,130 +65,69 @@ class VisualisationStoreImpl implements VisualisationStore {
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
-    }
-
-    @Override
-    public DocRef moveDocument(final DocRef docRef) {
-        return store.moveDocument(docRef);
-    }
-
-    @Override
-    public DocRef renameDocument(final DocRef docRef, final String name) {
-        return store.renameDocument(docRef, name);
+        // Copy reads the source document, so it needs VIEW on it. This override reaches
+        // getStore() directly, which is the unchecked handle, so the check the base applies is
+        // applied here.
+        checkDocumentPermission(docRef, DocumentPermission.VIEW);
+        final DocRef copyDocRef = getStore().copyDocument(docRef.getUuid(), newName);
+        try {
+            visualisationAssetService.copyAssetsToDoc(docRef, copyDocRef);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+        return copyDocRef;
     }
 
     @Override
     public void deleteDocument(final DocRef docRef) {
-        store.deleteDocument(docRef);
+        super.deleteDocument(docRef);
+        try {
+            visualisationAssetService.deleteAssetsForDoc(docRef);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public DocRefInfo info(final DocRef docRef) {
-        return store.info(docRef);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ExplorerActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(createMapper());
-    }
-
-    @Override
-    public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, createMapper());
-    }
-
-    @Override
-    public void remapDependencies(final DocRef docRef,
-                                  final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, createMapper());
-    }
-
-    private DependencyRemapFunction<VisualisationDoc> createMapper() {
+    protected DependencyRemapFunction<VisualisationDoc> getDependencyRemapFunction() {
         return (doc, dependencyRemapper) ->
                 doc.copy().scriptRef(dependencyRemapper.remap(doc.getScriptRef())).build();
     }
 
-    // ---------------------------------------------------------------------
-    // END OF HasDependencies
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public VisualisationDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
-    }
-
-    @Override
-    public VisualisationDoc writeDocument(final VisualisationDoc document) {
-        return store.writeDocument(document);
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF DocumentActionHandler
-    // ---------------------------------------------------------------------
-
-    // ---------------------------------------------------------------------
-    // START OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public Set<DocRef> listDocuments() {
-        return store.listDocuments();
-    }
-
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+
+        final DocRef storeDocRef = getStore().importDocument(docRef, importExportDocument, importState, importSettings);
+
+        // Import the path assets
+        try {
+            visualisationAssetService.setAssetsFromImport(docRef, importExportDocument.getPathAssets());
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+        return storeDocRef;
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
-    }
 
-    @Override
-    public String getType() {
-        return store.getType();
-    }
+        final ImportExportDocument importExportDocument = getStore()
+                .exportDocument(docRef, omitAuditFields, messageList);
 
-    @Override
-    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
-        return null;
-    }
-
-    // ---------------------------------------------------------------------
-    // END OF ImportExportActionHandler
-    // ---------------------------------------------------------------------
-
-    @Override
-    public List<DocRef> list() {
-        return store.list();
-    }
-
-    @Override
-    public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {
-        return store.findByNames(name, allowWildCards);
-    }
-
-    @Override
-    public Map<String, String> getIndexableData(final DocRef docRef) {
-        return store.getIndexableData(docRef);
+        // Get all the assets to be exported to sub-paths
+        try {
+            final Collection<ImportExportAsset> assets = visualisationAssetService.getAssetsForExport(docRef);
+            for (final ImportExportAsset asset : assets) {
+                importExportDocument.addPathAsset(asset);
+            }
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+        return importExportDocument;
     }
 }

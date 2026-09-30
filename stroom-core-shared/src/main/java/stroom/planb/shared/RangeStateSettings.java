@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 package stroom.planb.shared;
-
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,7 +35,7 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public final class RangeStateSettings
-        extends AbstractPlanBSettings {
+        extends AbstractHttpStoreSettings {
 
     @JsonProperty
     private final RangeKeySchema keySchema;
@@ -53,8 +51,8 @@ public final class RangeStateSettings
                               @JsonProperty("keySchema") final RangeKeySchema keySchema,
                               @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.keySchema = NullSafe.requireNonNullElse(keySchema, new RangeKeySchema.Builder().build());
-        this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new RangeKeySchema.Builder().build());
+        this.valueSchema = Objects.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
     }
 
     public RangeKeySchema getKeySchema() {
@@ -95,7 +93,7 @@ public final class RangeStateSettings
                '}';
     }
 
-    public static class Builder extends AbstractBuilder<RangeStateSettings, Builder> {
+    public static class Builder extends AbstractHttpBuilder<RangeStateSettings, Builder> {
 
         private RangeKeySchema keySchema;
         private StateValueSchema valueSchema;

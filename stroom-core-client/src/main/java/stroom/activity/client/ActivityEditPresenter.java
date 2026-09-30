@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
-import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -48,6 +47,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ActivityEditPresenter
@@ -305,9 +305,9 @@ public class ActivityEditPresenter
         String id = getId(element);
         String name = getName(element);
         // Fall back to using name.
-        id = NullSafe.requireNonNullElse(id, name);
+        id = Objects.requireNonNullElse(id, name);
         // Fall back to using id.
-        name = NullSafe.requireNonNullElse(name, id);
+        name = Objects.requireNonNullElse(name, id);
 
         return Prop
                 .builder()

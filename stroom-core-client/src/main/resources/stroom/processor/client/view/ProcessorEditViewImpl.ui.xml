@@ -19,15 +19,24 @@
         </form:FormGroup>
         <form:FormGroup identity="processorEditMaxProcessingTasks"
                         label="Max Processing Tasks"
-                        helpText="Choose the maximum number of tasks that will be processed concurrently across the cluster.">
+                        helpText="Choose the maximum number of tasks that will be processed concurrently across the cluster. Set to 0 for no limit.">
             <v:ValueSpinner ui:field="maxProcessingTasks"
-                            addStyleNames="dock-max"
-                            wrapValues="true"/>
+                            addStyleNames="dock-max"/>
         </form:FormGroup>
         <form:FormGroup identity="processorEditProfile"
                         label="Processing Profile"
                         helpText="The processing profile to use. Profiles control max concurrent tasks for individual nodes and the entire cluster.">
             <l:SelectionBox ui:field="profile"/>
+        </form:FormGroup>
+        <form:FormGroup identity="processorEditMaxTaskCreationDelayEnabled"
+                        label="Limit Task Creation Delay"
+                        helpText="Select if this filter needs tasks to be created more promptly than the rest of the cluster, e.g. a filter raising alerts from data that only arrives occasionally.">
+            <tickbox:CustomCheckBox ui:field="maxTaskCreationDelayEnabled"/>
+        </form:FormGroup>
+        <form:FormGroup identity="processorEditMaxTaskCreationDelay"
+                        label="Max Task Creation Delay"
+                        helpText="How long this filter will wait, at most, before it is checked for new data again after checks that found none. Filters that keep finding nothing are checked progressively less often, up to this limit, so lowering it makes this filter pick up new data sooner at the cost of checking for it more often. Leave unselected to use the cluster wide limit.">
+            <c:DurationPicker ui:field="maxTaskCreationDelay"/>
         </form:FormGroup>
         <form:FormGroup identity="processorEditExport" label="Include in Export">
             <tickbox:CustomCheckBox ui:field="export"/>

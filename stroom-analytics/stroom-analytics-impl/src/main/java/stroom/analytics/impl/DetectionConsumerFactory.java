@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,9 @@ public class DetectionConsumerFactory {
             if (notificationConfig.getDestination() instanceof
                     final NotificationStreamDestination streamDestination) {
                 final DetectionsWriter detectionsWriter = detectionsWriterProvider.get();
-                detectionsWriter.setFeed(streamDestination.getDestinationFeed());
+                if (!streamDestination.isUsingSourceFeed(analyticRuleDoc.getAnalyticProcessType())) {
+                    detectionsWriter.setFeed(streamDestination.getDestinationFeed());
+                }
                 return new DetectionConsumer() {
                     @Override
                     public void accept(final Detection detection) {
@@ -186,4 +188,5 @@ public class DetectionConsumerFactory {
 
         return null;
     }
+
 }

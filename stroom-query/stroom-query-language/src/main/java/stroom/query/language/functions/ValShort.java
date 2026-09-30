@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ public final class ValShort implements ValNumber {
     private final short value;
 
     @JsonCreator
-    private ValShort(@JsonProperty("value") final short value) {
-        this.value = value;
+    private ValShort(@JsonProperty("value") final Short value) {
+        this.value = Objects.requireNonNullElse(value, (short) 0);
     }
 
     public static ValShort create(final short value) {

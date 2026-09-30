@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ public interface ApiKeyCheckResource {
 
     String VERIFY_API_KEY_PATH_PART = "/verifyApiKey";
 
-    @SuppressWarnings("unused") // Called by proxy
+    @SuppressWarnings("unused") // Called by ProxyApiKeyCheckClient
     @POST
     @Path(ApiKeyCheckResource.VERIFY_API_KEY_PATH_PART)
     @Operation(

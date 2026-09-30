@@ -1,8 +1,23 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.factory;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
@@ -23,20 +38,12 @@ public class PipelineDataHolderFactory {
 
     private final PipelineStackLoader pipelineStackLoader;
     private final SecurityContext securityContext;
-    private final PipelineStore pipelineStore;
 
     @Inject
     public PipelineDataHolderFactory(final PipelineStackLoader pipelineStackLoader,
-                                     final SecurityContext securityContext,
-                                     final PipelineStore pipelineStore) {
+                                     final SecurityContext securityContext) {
         this.pipelineStackLoader = pipelineStackLoader;
         this.securityContext = securityContext;
-        this.pipelineStore = pipelineStore;
-    }
-
-    public PipelineDataHolder create(final DocRef docRef) {
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(docRef);
-        return create(pipelineDoc);
     }
 
     public PipelineDataHolder create(final PipelineDoc pipelineDoc) {

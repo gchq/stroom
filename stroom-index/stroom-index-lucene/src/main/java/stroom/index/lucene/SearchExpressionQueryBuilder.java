@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 package stroom.index.lucene;
 
+import stroom.ai.api.AiService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.lucene.analyser.AnalyzerFactory;
-import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
@@ -76,18 +76,18 @@ class SearchExpressionQueryBuilder {
     private final IndexFieldCache indexFieldCache;
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
-    private final OpenAIService openAIService;
+    private final AiService aiService;
 
     SearchExpressionQueryBuilder(final DocRef indexDocRef,
                                  final IndexFieldCache indexFieldCache,
                                  final WordListProvider wordListProvider,
                                  final DateTimeSettings dateTimeSettings,
-                                 final OpenAIService openAIService) {
+                                 final AiService aiService) {
         this.indexDocRef = indexDocRef;
         this.indexFieldCache = indexFieldCache;
         this.wordListProvider = wordListProvider;
         this.dateTimeSettings = dateTimeSettings;
-        this.openAIService = openAIService;
+        this.aiService = aiService;
     }
 
     public SearchExpressionQuery buildQuery(final ExpressionOperator expression) {
@@ -558,17 +558,17 @@ class SearchExpressionQueryBuilder {
         } else if (FieldType.DENSE_VECTOR.equals(indexField.getFldType())) {
             final DenseVectorFieldConfig denseVectorFieldConfig = indexField.getDenseVectorFieldConfig();
             if (denseVectorFieldConfig == null ||
-                denseVectorFieldConfig.getModelRef() == null) {
+                denseVectorFieldConfig.getEmbeddingModelRef() == null) {
                 throw new IllegalArgumentException("Vector embedding model is not defined for field " +
                                                    indexField);
             }
 
             try {
                 // Query the embeddings API for a vector representation of the query expression
-                final OpenAIModelDoc modelDoc = openAIService
-                        .getOpenAIModelDoc(denseVectorFieldConfig.getModelRef());
+                final OpenAIModelDoc modelDoc = aiService
+                        .getOpenAIModelDoc(denseVectorFieldConfig.getEmbeddingModelRef());
 
-                final EmbeddingModel embeddingModel = openAIService.getEmbeddingModel(modelDoc);
+                final EmbeddingModel embeddingModel = aiService.getEmbeddingModel(modelDoc);
                 final float[] queryVector = embeddingModel.embed(value).content().vector();
                 return KnnFloatVectorField.newVectorQuery(fieldName,
                         queryVector,
@@ -757,7 +757,6 @@ class SearchExpressionQueryBuilder {
     private Query getSubQuery(final IndexField field,
                               final String value,
                               final Set<String> terms) {
-        Query query = null;
 
         // Store terms for hit highlighting.
         String highlight = value;
@@ -772,6 +771,7 @@ class SearchExpressionQueryBuilder {
         // modify the query so that each word becomes a new term in a boolean
         // query.
         String val = value.trim();
+        Query query = null;
         if (!AnalyzerType.KEYWORD.equals(field.getAnalyzerType())) {
             // If the field has been analysed then we need to analyse the search
             // query to create matching terms.

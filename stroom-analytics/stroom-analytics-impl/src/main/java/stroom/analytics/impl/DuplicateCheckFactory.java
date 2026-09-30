@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.query.common.v2.CompiledColumns;
 
 import java.util.List;
@@ -31,5 +32,18 @@ public interface DuplicateCheckFactory {
      * store has not yet been initialised.
      */
     Optional<List<String>> fetchColumnNames(String analyticUuid);
+
+    /**
+     * Deletes the duplicate check stores of rules that no longer exist. Done here rather than
+     * on the dirs directly because this owns the pool that keeps a store's env open while it is
+     * borrowed, so it is the only thing that can tell whether a store's files are safe to
+     * unlink.
+     *
+     * @param currentRules ALL rules that still exist. Must be complete: a rule missing from it
+     *                     is treated as deleted and loses the record of what it has already
+     *                     notified on.
+     * @return The uuids of the stores actually deleted.
+     */
+    List<String> deleteUnusedStores(List<AnalyticRuleDoc> currentRules);
 
 }

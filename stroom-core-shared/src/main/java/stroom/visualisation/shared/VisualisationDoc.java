@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,9 +118,6 @@ public class VisualisationDoc extends AbstractDoc {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
@@ -128,10 +125,10 @@ public class VisualisationDoc extends AbstractDoc {
             return false;
         }
         final VisualisationDoc that = (VisualisationDoc) o;
-        return Objects.equals(description, that.description) &&
-               Objects.equals(functionName, that.functionName) &&
-               Objects.equals(scriptRef, that.scriptRef) &&
-               Objects.equals(settings, that.settings);
+        return Objects.equals(description, that.description)
+               && Objects.equals(functionName, that.functionName)
+               && Objects.equals(scriptRef, that.scriptRef)
+               && Objects.equals(settings, that.settings);
     }
 
     @Override

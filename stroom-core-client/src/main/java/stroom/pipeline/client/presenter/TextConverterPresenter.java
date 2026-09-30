@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,8 +70,8 @@ public class TextConverterPresenter extends DocTabPresenter<LinkTabPanelView, Te
                         editorPresenter::setText);
 
 
-                registerHandler(editorPresenter.addValueChangeHandler(event -> fireDirtyEvent(true)));
-                registerHandler(editorPresenter.addFormatHandler(event -> fireDirtyEvent(true)));
+                registerHandler(editorPresenter.addValueChangeHandler(event -> onChange()));
+                registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
                 return editorPresenter;
             }
 

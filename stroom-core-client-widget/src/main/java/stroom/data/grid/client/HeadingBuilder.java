@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 
+import java.util.Objects;
+
 public class HeadingBuilder {
 
     private HeadingAlignment headingAlignment = null;
@@ -40,7 +42,7 @@ public class HeadingBuilder {
     }
 
     public HeadingBuilder headingText(final SafeHtml headingText) {
-        this.headingText = NullSafe.requireNonNullElse(headingText, SafeHtmlUtils.EMPTY_SAFE_HTML);
+        this.headingText = Objects.requireNonNullElse(headingText, SafeHtmlUtils.EMPTY_SAFE_HTML);
         return this;
     }
 

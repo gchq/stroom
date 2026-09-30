@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -88,7 +89,8 @@ public class RetryingForwardDestination implements ForwardDestination {
                                       final PathCreator pathCreator,
                                       final DirQueueFactory dirQueueFactory,
                                       final ProxyServices proxyServices,
-                                      final FileStores fileStores) {
+                                      final FileStores fileStores,
+                                      final FsyncMode fsyncMode) {
 
         this.forwardQueueConfig = Objects.requireNonNull(forwardQueueConfig);
         this.delegateDestination = Objects.requireNonNull(delegateDestination);
@@ -105,11 +107,13 @@ public class RetryingForwardDestination implements ForwardDestination {
         forwardQueue = dirQueueFactory.create(
                 forwardingDir.resolve("01_forward"),
                 FORWARD_ORDER,
-                "forward - " + destinationName);
+                "forward - " + destinationName,
+                fsyncMode);
         retryQueue = dirQueueFactory.create(
                 forwardingDir.resolve("02_retry"),
                 RETRY_ORDER,
-                "retry - " + destinationName);
+                "retry - " + destinationName,
+                fsyncMode);
 
         final DirQueueTransfer forwarding = new DirQueueTransfer(
                 forwardQueue::next, this::forwardDir);
@@ -126,7 +130,7 @@ public class RetryingForwardDestination implements ForwardDestination {
 
         // Create failure destination.
         failureDestination = setupFailureDestination(
-                forwardQueueConfig, pathCreator, forwardingDir);
+                forwardQueueConfig, pathCreator, forwardingDir, fsyncMode);
         delayForwardingFunc = createForwardDelayFunc(forwardQueueConfig);
 
         if (delegateDestination.hasLivenessCheck()) {
@@ -280,18 +284,26 @@ public class RetryingForwardDestination implements ForwardDestination {
 
     private ForwardFileDestination setupFailureDestination(final ForwardQueueConfig forwardQueueConfig,
                                                            final PathCreator simplePathCreator,
-                                                           final Path forwardingDir) {
+                                                           final Path forwardingDir,
+                                                           final FsyncMode fsyncMode) {
         final ForwardFileDestination failureDestination;
         final Path failureDir = forwardingDir.resolve("03_failure");
         final PathTemplateConfig errorSubPathTemplate = forwardQueueConfig.getErrorSubPathTemplate();
         DirUtil.ensureDirExists(failureDir);
+        // Use atomic move here as the failure dir is within the proxy data dirs, rather
+        // than on the forward dest.
+        // For the same reason this uses the queue level fsync setting rather than the
+        // destination's own one: 03_failure is proxy internal state that sits alongside
+        // 01_forward and 02_retry, not something written to the external destination.
         failureDestination = new ForwardFileDestinationImpl(
                 failureDir,
                 destinationName + " (failures)",
                 errorSubPathTemplate,
                 null,
                 null,
-                simplePathCreator);
+                simplePathCreator,
+                true,
+                fsyncMode);
         fileStores.add(FORWARD_ORDER, "forward - " + destinationName + " - failure", failureDir);
         return failureDestination;
     }

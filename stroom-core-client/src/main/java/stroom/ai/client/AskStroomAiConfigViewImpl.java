@@ -17,10 +17,9 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
-import stroom.util.shared.time.SimpleDuration;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Button;
-import stroom.widget.customdatebox.client.DurationPicker;
-import stroom.widget.valuespinner.client.ValueSpinner;
+import stroom.widget.tab.client.presenter.TabBar;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -28,36 +27,34 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.LayerContainer;
+import com.gwtplatform.mvp.client.ViewImpl;
+
+import java.util.function.Consumer;
 
 public class AskStroomAiConfigViewImpl
-        extends ViewWithUiHandlers<AskStroomAiConfigUiHandlers>
+        extends ViewImpl
         implements AskStroomAiConfigView {
 
     private final Widget widget;
 
     @UiField
-    ValueSpinner maximumBatchSize;
+    TabBar tabBar;
     @UiField
-    ValueSpinner maximumTableInputRows;
+    LayerContainer layerContainer;
     @UiField
-    ValueSpinner memoryTokenLimit;
+    Button restoreFromDefaults;
     @UiField
-    DurationPicker memoryTimeToLive;
-    @UiField
-    Button setDefault;
+    Button setDefaults;
+
+    private Consumer<TaskMonitorFactory> onRestoreFromDefaultsHandler;
+    private Consumer<TaskMonitorFactory> onSetDefaultsHandler;
 
     @Inject
     public AskStroomAiConfigViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        setDefault.setVisible(false);
-
-        maximumBatchSize.setMin(1);
-        maximumBatchSize.setMax(1000000);
-        maximumTableInputRows.setMin(1);
-        maximumTableInputRows.setMax(1000000);
-        memoryTokenLimit.setMin(1);
-        memoryTokenLimit.setMax(1000000);
+        restoreFromDefaults.setVisible(true);
+        setDefaults.setVisible(false);
     }
 
     @Override
@@ -66,61 +63,45 @@ public class AskStroomAiConfigViewImpl
     }
 
     @Override
-    public void focus() {
-        maximumBatchSize.focus();
+    public TabBar getTabBar() {
+        return tabBar;
     }
 
     @Override
-    public void allowSetDefault(final boolean allow) {
-        setDefault.setVisible(allow);
+    public LayerContainer getLayerContainer() {
+        return layerContainer;
     }
 
     @Override
-    public void setMaximumBatchSize(final int maximumBatchSize) {
-        this.maximumBatchSize.setValue(maximumBatchSize);
+    public void setRestoreFromDefaults(final Consumer<TaskMonitorFactory> handler) {
+        this.onRestoreFromDefaultsHandler = handler;
     }
 
     @Override
-    public int getMaximumBatchSize() {
-        return maximumBatchSize.getIntValue();
+    public void allowSetDefaults(final boolean allow) {
+        setDefaults.setVisible(allow);
     }
 
     @Override
-    public void setMaximumTableInputRows(final int maximumTableInputRows) {
-        this.maximumTableInputRows.setValue(maximumTableInputRows);
+    public void setOnSetDefaults(final Consumer<TaskMonitorFactory> handler) {
+        this.onSetDefaultsHandler = handler;
     }
 
-    @Override
-    public int getMaximumTableInputRows() {
-        return maximumTableInputRows.getIntValue();
-    }
-
-    @Override
-    public void setMemoryTokenLimit(final int memoryTokenLimit) {
-        this.memoryTokenLimit.setValue(memoryTokenLimit);
-    }
-
-    @Override
-    public int getMemoryTokenLimit() {
-        return memoryTokenLimit.getIntValue();
-    }
-
-    @Override
-    public SimpleDuration getMemoryTimeToLive() {
-        return memoryTimeToLive.getValue();
-    }
-
-    @Override
-    public void setMemoryTimeToLive(final SimpleDuration memoryTimeToLive) {
-        this.memoryTimeToLive.setValue(memoryTimeToLive);
-    }
-
-    @UiHandler("setDefault")
-    public void onSetDefaultClick(final ClickEvent event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onSetDefault(setDefault);
+    @UiHandler("restoreFromDefaults")
+    public void onRestoreFromDefaultsClick(final ClickEvent event) {
+        if (onRestoreFromDefaultsHandler != null) {
+            onRestoreFromDefaultsHandler.accept(restoreFromDefaults);
         }
     }
+
+    @UiHandler("setDefaults")
+    public void onSetDefaultsClick(final ClickEvent event) {
+        if (onSetDefaultsHandler != null) {
+            onSetDefaultsHandler.accept(setDefaults);
+        }
+    }
+
+    // ---------------------------------------------------------------------
 
     public interface Binder extends UiBinder<Widget, AskStroomAiConfigViewImpl> {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 
 package stroom.contentindex;
 
+import stroom.cluster.api.ClusterNodeManager;
+import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.lock.mock.MockClusterLockService;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocContentHighlights;
@@ -23,29 +26,41 @@ import stroom.explorer.shared.DocContentMatch;
 import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindInContentRequest;
 import stroom.explorer.shared.StringMatch;
+import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.security.mock.MockSecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContextFactory;
+import stroom.task.shared.ThreadPool;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
+import stroom.util.io.TempDirProvider;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.nio.file.Path;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
 
-    @SuppressWarnings("checkstyle:linelength")
+    @SuppressWarnings({"checkstyle:linelength", "checkstyle:RegexpSingleline"})
     private static final String TEXT = """
             <?xml version="1.0" encoding="UTF-8" ?>
             <xsl:stylesheet xpath-default-namespace="records:2" xmlns="reference-data:2" xmlns:evt="event-logging:3"
@@ -56,7 +71,7 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
                         <xsl:apply-templates/>
                     </referenceData>
                 </xsl:template>
-
+            
                 <xsl:template match="record">
                     <reference>
                         <map>FILENO_TO_LOCATION_MAP</map>
@@ -75,21 +90,58 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
                 </xsl:template>
             </xsl:stylesheet>
             """;
+    private static ExecutorService executorService;
+    private static ExecutorProvider executorProvider;
+
+    private final ClusterLockService clusterLockService = new MockClusterLockService();
 
     @Inject
     private XsltStore xsltStore;
 
     private XsltDoc xsltDoc;
     private DocRef docRef;
+    private TempDirProvider tempDirProvider;
+    private PathCreator pathCreator;
 
     @Mock
     ExplorerNodeService explorerNodeService;
+    @Mock
+    private NodeInfo mockNodeInfo;
+    @Mock
+    private ClusterNodeManager mockClusterNodeManager;
+
+    @BeforeAll
+    static void beforeAll() {
+        executorService = Executors.newCachedThreadPool();
+        executorProvider = new ExecutorProvider() {
+
+            @Override
+            public Executor get() {
+                return executorService;
+            }
+
+            @Override
+            public Executor get(final ThreadPool threadPool) {
+                return executorService;
+            }
+        };
+    }
+
+    @AfterAll
+    static void afterAll() {
+        executorService.shutdown();
+    }
 
     @BeforeEach
     void setup() {
         docRef = xsltStore.createDocument("Test");
         xsltDoc = xsltStore.readDocument(docRef).copy().data(TEXT).build();
         xsltStore.writeDocument(xsltDoc);
+        final Path testDir = getCurrentTestDir();
+        tempDirProvider = () -> testDir.resolve("temp");
+        pathCreator = new SimplePathCreator(
+                () -> testDir.resolve("home"),
+                tempDirProvider);
     }
 
     @Test
@@ -136,11 +188,17 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
 
     private DocContentHighlights test(final StringMatch stringMatch) {
         final LuceneContentIndex contentIndex = new LuceneContentIndex(
-                this::getCurrentTestDir,
+                tempDirProvider,
+                pathCreator,
+                ContentIndexConfig::new,
                 Set.of(xsltStore),
                 new MockSecurityContext(),
                 new SimpleTaskContextFactory(),
-                explorerNodeService);
+                explorerNodeService,
+                executorProvider,
+                clusterLockService,
+                mockNodeInfo,
+                mockClusterNodeManager);
         contentIndex.reindex();
         contentIndex.flush();
 

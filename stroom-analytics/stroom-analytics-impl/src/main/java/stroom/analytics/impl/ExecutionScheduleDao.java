@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public interface ExecutionScheduleDao {
 
     ResultPage<ExecutionSchedule> fetchExecutionSchedule(ExecutionScheduleRequest request);
 
-    Optional<ExecutionSchedule> fetchScheduleById(int id);
+    Optional<ExecutionSchedule> fetchScheduleByUuid(String uuid);
 
     List<ExecutionSchedule> fetchSchedulesByRunAsUser(final String userUuid);
 
@@ -47,6 +47,10 @@ public interface ExecutionScheduleDao {
     ExecutionSchedule updateExecutionSchedule(ExecutionSchedule executionSchedule);
 
     Boolean deleteExecutionSchedule(ExecutionSchedule executionSchedule);
+
+    Boolean deleteExecutionSchedules(List<ExecutionSchedule> executionSchedules);
+
+    Boolean executeSchedulesNow(final List<ExecutionSchedule> schedules);
 
     Optional<ExecutionTracker> getTracker(ExecutionSchedule schedule);
 

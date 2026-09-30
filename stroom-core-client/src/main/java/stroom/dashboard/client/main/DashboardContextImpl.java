@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.TimeRange;
@@ -433,7 +434,10 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                             value = value.replaceAll("\\.?\\.", componentState.id);
                         }
                         value = ParamUtil.replaceParameters(value, paramMap::get);
-                        innerItems.add(term.copy().value(value).build());
+                        final ExpressionTerm expressionTerm = term.copy().value(value).build();
+                        if (ExpressionUtil.isValidTerm(expressionTerm, false)) {
+                            innerItems.add(expressionTerm);
+                        }
                     }
 
                     if (innerItems.size() > 1) {

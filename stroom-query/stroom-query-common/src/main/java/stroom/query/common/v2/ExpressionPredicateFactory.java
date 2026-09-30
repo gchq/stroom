@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -678,7 +678,7 @@ public class ExpressionPredicateFactory {
 
     private static <T> Optional<ScoringPredicate<T>> ifValue(final ExpressionTerm term,
                                                              final Supplier<ScoringPredicate<T>> supplier) {
-        if (NullSafe.isBlankString(term.getValue())) {
+        if (term.getValue() == null) {
             return Optional.empty();
         }
         return Optional.of(supplier.get());

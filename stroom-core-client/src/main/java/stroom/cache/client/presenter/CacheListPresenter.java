@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import stroom.cache.shared.CacheNamesResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -30,6 +29,7 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.PageResponse;
+import stroom.util.shared.PropertyPath;
 import stroom.util.shared.cache.CacheIdentity;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -78,6 +78,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
         this.delayedUpdate = new DelayedUpdate(this::update);
 
         final MyDataGrid<CacheIdentity> dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Caches");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
@@ -110,11 +111,14 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
         dataGrid.addResizableColumn(new Column<CacheIdentity, String>(new TextCell()) {
             @Override
             public String getValue(final CacheIdentity cacheIdentity) {
-                return cacheIdentity.getBasePropertyPath().toString();
+                final PropertyPath basePropertyPath = cacheIdentity.getBasePropertyPath();
+                if (basePropertyPath == null || basePropertyPath.isBlank()) {
+                    return "Cache not configurable";
+                } else {
+                    return basePropertyPath.toString();
+                }
             }
         }, "Property Path Base", 500);
-
-        dataGrid.addEndColumn(new EndColumn<>());
 
         final RestDataProvider<CacheIdentity, CacheNamesResponse> dataProvider =
                 new RestDataProvider<CacheIdentity, CacheNamesResponse>(getEventBus()) {
@@ -178,7 +182,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
             trimmed.add(list.get(i));
         }
         final CacheNamesResponse response = new CacheNamesResponse(trimmed,
-                new PageResponse(range.getStart(), trimmed.size(), total, true));
+                new PageResponse((long) range.getStart(), trimmed.size(), total, true));
         dataConsumer.accept(response);
     }
 

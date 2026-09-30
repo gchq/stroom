@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder(alphabetic = true)
+@JsonPropertyOrder({"name", "description", "details"})
 public class SystemInfoResult {
 
     @NotNull
@@ -118,7 +118,8 @@ public class SystemInfoResult {
 
         private String name;
         private String description = null;
-        private Map<String, Object> details = new HashMap<>();
+        // Use a LinkedHashMap so the caller can dictate order
+        private Map<String, Object> details = new LinkedHashMap<>();
 
         public Builder(final String name) {
             this.name = name;

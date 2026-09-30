@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.state.FeedHolder;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.CompiledColumn;
@@ -54,6 +55,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final ColumnFormatter fieldFormatter;
     private Provider<DetectionConsumer> detectionsConsumerProvider;
+    private final FeedHolder feedHolder;
 
     private DetectionConsumer detectionConsumer;
 
@@ -68,8 +70,10 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
 
     @Inject
     public DetectionConsumerProxy(final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                                  final AnalyticsConfig analyticsConfig) {
+                                  final AnalyticsConfig analyticsConfig,
+                                  final FeedHolder feedHolder) {
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
+        this.feedHolder = feedHolder;
         final DateTimeSettings dateTimeSettings = DateTimeSettings
                 .builder()
                 .localZoneId(analyticsConfig.getTimezone())
@@ -234,9 +238,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 .withDetectorName(analyticRuleDoc.getName())
                 .withDetectorUuid(analyticRuleDoc.getUuid())
                 .withDetectorVersion(analyticRuleDoc.getVersion())
-                .withDetailedDescription(analyticRuleDoc.isIncludeRuleDocumentation()
-                        ? analyticRuleDoc.getDescription()
-                        : null)
+                .withDetailedDescription(RuleUtil.getDetailedDescription(analyticRuleDoc))
                 .withRandomDetectionUniqueId()
                 .withDetectionRevision(0)
                 .withExecutionSchedule(NullSafe
@@ -246,6 +248,9 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 .notDefunct()
                 .withValues(values)
                 .withLinkedEvents(linkedEvents)
+                .withLevel(RuleUtil.getLevel(analyticRuleDoc))
+                .withStatus(RuleUtil.getStatus(analyticRuleDoc))
+                .withFeedName(feedHolder.getFeedName())
                 .build();
 
         final DetectionConsumer detectionConsumer = getDetectionConsumer();

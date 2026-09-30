@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #
 # Copyright 2016-2025 Crown Copyright
 #
@@ -14,66 +15,74 @@
 # limitations under the License.
 #
 
-cd stroom-meta/stroom-meta-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-dashboard/stroom-storedquery-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-data/stroom-data-store-impl-fs-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-node/stroom-node-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-security/stroom-security-identity-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-security/stroom-security-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-annotation/stroom-annotation-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-processor/stroom-processor-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-cluster/stroom-cluster-lock-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-activity/stroom-activity-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-processor/stroom-processor-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-annotation/stroom-annotation-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-cluster/stroom-cluster-lock-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-config/stroom-config-global-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-explorer/stroom-explorer-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-gitrepo/stroom-gitrepo-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-index/stroom-index-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-job/stroom-job-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-analytics/stroom-analytics-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-query/stroom-query-datasource-impl-db-jooq
-../../gradlew generateJooq
-cd -
-cd stroom-credentials/stroom-credentials-impl-db-jooq
-../../gradlew generateJooq
-cd -
+# Automatically discovers every module containing a jooq-codegen.xml file
+# and runs generateJooq in each one.  The Gradle task creates a fresh temp DB,
+# runs Flyway migrations, generates JOOQ code, then drops the DB.
+#
+# Usage: ./generate-jooq.sh [--dry-run]
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DRY_RUN=false
+
+
+if [[ "${1:-}" == "--dry-run" ]]; then
+  DRY_RUN=true
+  echo "DRY RUN — no gradle tasks will be executed"
+fi
+# Find all JOOQ modules: discover directories containing a jooq-codegen.xml file
+mapfile -t JOOQ_DIRS < <(
+  find "${SCRIPT_DIR}" \
+    -mindepth 3 -maxdepth 4 \
+    -name 'jooq-codegen.xml' \
+    -exec dirname {} \; \
+  | sort -u
+)
+
+if [[ ${#JOOQ_DIRS[@]} -eq 0 ]]; then
+  echo "No JOOQ modules found under ${SCRIPT_DIR}" >&2
+  exit 1
+fi
+
+echo "Found ${#JOOQ_DIRS[@]} jooq module(s):"
+for dir in "${JOOQ_DIRS[@]}"; do
+  echo "  ${dir#"${SCRIPT_DIR}/"}"
+done
+echo
+
+FAILED=()
+
+for dir in "${JOOQ_DIRS[@]}"; do
+  rel="${dir#"${SCRIPT_DIR}/"}"
+  # Convert dir path to Gradle project path, e.g.
+  # stroom-activity/stroom-activity-impl-db -> :stroom-activity:stroom-activity-impl-db
+  gradle_path=":$(echo "${rel}" | sed 's|/|:|g')"
+
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  generateJooq  →  ${gradle_path}"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  if [[ "${DRY_RUN}" == true ]]; then
+    echo "  (skipped — dry run)"
+    continue
+  fi
+
+  if "${SCRIPT_DIR}/gradlew" "${gradle_path}:generateJooq"; then
+    echo "  ✓ done"
+  else
+    echo "  ✗ FAILED" >&2
+    FAILED+=("${gradle_path}")
+  fi
+  echo
+done
+
+if [[ ${#FAILED[@]} -gt 0 ]]; then
+  echo "The following modules failed:" >&2
+  for f in "${FAILED[@]}"; do
+    echo "  ✗ ${f}" >&2
+  done
+  exit 1
+fi
+
+echo "All generateJooq tasks completed successfully."

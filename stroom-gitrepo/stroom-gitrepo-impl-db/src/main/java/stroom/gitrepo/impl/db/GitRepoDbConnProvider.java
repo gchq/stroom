@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,6 @@ import javax.sql.DataSource;
 /**
  * Interface for hooking into Flyway
  */
-interface GitRepoDbConnProvider extends DataSource {
+public interface GitRepoDbConnProvider extends DataSource {
     // No code
 }

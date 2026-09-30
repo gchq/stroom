@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ import javax.xml.transform.stream.StreamResult;
 public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
 
     private final SAXTransformerFactory transformerFactory = (SAXTransformerFactory) TransformerFactoryFactory
-            .newInstance();
+            .newInstance(true);
     private final MyWriter outputStreamWriter = new MyWriter(1000);
     private final List<DestinationProvider> appenders;
     private final List<StartPrefixMapping> prefixList = new ArrayList<>();

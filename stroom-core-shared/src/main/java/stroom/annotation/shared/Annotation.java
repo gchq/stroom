@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.annotation.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
@@ -31,14 +32,25 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Objects;
 
+@Description(
+        """
+        An annotation records notes and workflow state against one or more events, typically while \
+        investigating them.
+        Annotations are created from a table of search results rather than from the explorer tree.
+        Each one has a subject, a status, an optional assignee and a history of the changes made to it, \
+        and can be given comments, labels and collections to organise it.
+        A retention period controls how long it is kept.
+        """)
 @JsonInclude(Include.NON_NULL)
 public class Annotation extends AbstractDoc {
+
+    private static final long DEFAULT_ID = 0L;
 
     public static final String TYPE = "Annotation";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANNOTATION_DOCUMENT_TYPE;
 
     @JsonProperty
-    private final Long id;
+    private final long id;
     @JsonProperty
     private final String subject;
     @JsonProperty
@@ -80,7 +92,7 @@ public class Annotation extends AbstractDoc {
                       @JsonProperty("retentionPeriod") final SimpleDuration retentionPeriod,
                       @JsonProperty("retainUntilTimeMs") final Long retainUntilTimeMs) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-        this.id = id;
+        this.id = Objects.requireNonNullElse(id, DEFAULT_ID);
         this.subject = subject;
         this.status = status;
         this.assignedTo = assignedTo;
@@ -93,7 +105,7 @@ public class Annotation extends AbstractDoc {
         this.retainUntilTimeMs = retainUntilTimeMs;
     }
 
-    public Long getId() {
+    public long getId() {
         return id;
     }
 
@@ -138,6 +150,13 @@ public class Annotation extends AbstractDoc {
     }
 
     /**
+     * @return This {@link Annotation} represented by a {@link AnnotationIdentity}.
+     */
+    public AnnotationIdentity asAnnotationIdentity() {
+        return new AnnotationIdentity(getUuid(), id);
+    }
+
+    /**
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
     public static DocRef.TypedBuilder buildDocRef() {
@@ -172,6 +191,10 @@ public class Annotation extends AbstractDoc {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder extends AbstractBuilder<Annotation, Builder> {
 
         private Long id;
@@ -204,7 +227,7 @@ public class Annotation extends AbstractDoc {
             this.retainUntilTimeMs = doc.retainUntilTimeMs;
         }
 
-        public Builder id(final Long id) {
+        public Builder id(final long id) {
             this.id = id;
             return self();
         }

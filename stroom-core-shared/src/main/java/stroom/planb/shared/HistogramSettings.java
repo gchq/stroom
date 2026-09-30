@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 package stroom.planb.shared;
-
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,7 +35,7 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public final class HistogramSettings
-        extends AbstractPlanBSettings {
+        extends AbstractHttpStoreSettings {
 
     @JsonProperty
     private final HistogramKeySchema keySchema;
@@ -53,8 +51,8 @@ public final class HistogramSettings
                              @JsonProperty("keySchema") final HistogramKeySchema keySchema,
                              @JsonProperty("valueSchema") final HistogramValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.keySchema = NullSafe.requireNonNullElse(keySchema, new HistogramKeySchema.Builder().build());
-        this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new HistogramValueSchema.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new HistogramKeySchema.Builder().build());
+        this.valueSchema = Objects.requireNonNullElse(valueSchema, new HistogramValueSchema.Builder().build());
     }
 
     public HistogramKeySchema getKeySchema() {
@@ -95,7 +93,7 @@ public final class HistogramSettings
                '}';
     }
 
-    public static class Builder extends AbstractBuilder<HistogramSettings, Builder> {
+    public static class Builder extends AbstractHttpBuilder<HistogramSettings, Builder> {
 
         private HistogramKeySchema keySchema;
         private HistogramValueSchema valueSchema;

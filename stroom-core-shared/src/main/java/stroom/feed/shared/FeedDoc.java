@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import java.util.Objects;
 @Description(
         "The {{< glossary \"Feed\" >}} is Stroom's way of compartmentalising data that has been ingested or " +
         "created by a [Pipeline]({{< relref \"#pipeline\" >}}).\n" +
-        "Ingested data must specify the Feed that is it destined for.\n\n" +
+        "Ingested data must specify the Feed that it is destined for.\n\n" +
         "The Feed Document defines the character encoding for the data in the Feed, the type of data that " +
         "will be received into it (e.g. `Raw Events`) and optionally a Volume Group to use for " +
         "data storage.\n" +
@@ -69,6 +69,8 @@ import java.util.Objects;
         "volumeGroup"})
 @JsonInclude(Include.NON_NULL)
 public class FeedDoc extends AbstractDoc {
+
+    private static final boolean DEFAULT_REFERENCE = false;
 
     public static final String TYPE = "Feed";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.FEED_DOCUMENT_TYPE;
@@ -113,7 +115,7 @@ public class FeedDoc extends AbstractDoc {
                    @JsonProperty("encoding") final String encoding,
                    @JsonProperty("contextEncoding") final String contextEncoding,
                    @JsonProperty("retentionDayAge") final Integer retentionDayAge,
-                   @JsonProperty("reference") final boolean reference,
+                   @JsonProperty("reference") final Boolean reference,
                    @JsonProperty("streamType") final String streamType,
                    @JsonProperty("dataFormat") final String dataFormat,
                    @JsonProperty("contextFormat") final String contextFormat,
@@ -124,11 +126,11 @@ public class FeedDoc extends AbstractDoc {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = NullSafe.string(description);
         this.classification = NullSafe.string(classification);
-        this.encoding = NullSafe.requireNonNullElse(encoding, "UTF-8");
-        this.contextEncoding = NullSafe.requireNonNullElse(contextEncoding, "UTF-8");
+        this.encoding = Objects.requireNonNullElse(encoding, "UTF-8");
+        this.contextEncoding = Objects.requireNonNullElse(contextEncoding, "UTF-8");
         this.retentionDayAge = retentionDayAge;
-        this.reference = reference;
-        this.streamType = NullSafe.requireNonNullElse(streamType,
+        this.reference = Objects.requireNonNullElse(reference, DEFAULT_REFERENCE);
+        this.streamType = Objects.requireNonNullElse(streamType,
                 reference
                         ? StreamTypeNames.RAW_REFERENCE
                         : StreamTypeNames.RAW_EVENTS);
@@ -136,7 +138,7 @@ public class FeedDoc extends AbstractDoc {
         this.contextFormat = NullSafe.string(contextFormat);
         this.schema = NullSafe.string(schema);
         this.schemaVersion = NullSafe.string(schemaVersion);
-        this.status = NullSafe.requireNonNullElse(status, FeedStatus.RECEIVE);
+        this.status = Objects.requireNonNullElse(status, FeedStatus.RECEIVE);
         this.volumeGroup = NullSafe.string(volumeGroup);
     }
 
@@ -207,6 +209,10 @@ public class FeedDoc extends AbstractDoc {
     public String getVolumeGroup() {
         return volumeGroup;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum FeedStatus implements HasDisplayValue, HasPrimitiveValue {
         RECEIVE("Receive", 1),

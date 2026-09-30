@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -40,7 +39,7 @@ public class RangeKeySchema {
 
     @JsonCreator
     public RangeKeySchema(@JsonProperty("rangeType") final RangeType rangeType) {
-        this.rangeType = NullSafe.requireNonNullElse(rangeType, DEFAULT_RANGE_TYPE);
+        this.rangeType = Objects.requireNonNullElse(rangeType, DEFAULT_RANGE_TYPE);
     }
 
     public RangeType getRangeType() {

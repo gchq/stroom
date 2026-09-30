@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,6 +112,8 @@ public interface CacheManager extends AutoCloseable {
     }
 
     boolean exists(final String name);
+
+    void registerCache(String name, StroomCache<?, ?> cache);
 
     <K, V> StroomCache<K, V> getCache(final String name);
 

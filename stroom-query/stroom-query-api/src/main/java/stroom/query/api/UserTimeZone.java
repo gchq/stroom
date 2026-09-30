@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.query.api;
 
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -71,10 +70,10 @@ public final class UserTimeZone {
                         @JsonProperty("id") final String id,
                         @JsonProperty("offsetHours") final Integer offsetHours,
                         @JsonProperty("offsetMinutes") final Integer offsetMinutes) {
-        this.use = NullSafe.requireNonNullElse(use, Use.UTC);
-        this.id = NullSafe.requireNonNullElse(id, "");
-        this.offsetHours = NullSafe.requireNonNullElse(offsetHours, 0);
-        this.offsetMinutes = NullSafe.requireNonNullElse(offsetMinutes, 0);
+        this.use = Objects.requireNonNullElse(use, Use.UTC);
+        this.id = Objects.requireNonNullElse(id, "");
+        this.offsetHours = Objects.requireNonNullElse(offsetHours, 0);
+        this.offsetMinutes = Objects.requireNonNullElse(offsetMinutes, 0);
     }
 
     public static UserTimeZone local() {

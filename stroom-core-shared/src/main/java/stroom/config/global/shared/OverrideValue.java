@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,9 @@ public class OverrideValue<T> {
 
     // pkg private so GWT can see it
     @JsonCreator
-    OverrideValue(@JsonProperty("hasOverride") final boolean hasOverride,
+    OverrideValue(@JsonProperty("hasOverride") final Boolean hasOverride,
                   @JsonProperty("value") final T value) {
-        this.hasOverride = hasOverride;
+        this.hasOverride = Objects.requireNonNullElse(hasOverride, false);
         this.value = value;
     }
 

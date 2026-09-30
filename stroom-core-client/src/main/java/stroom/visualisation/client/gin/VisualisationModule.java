@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,21 @@ package stroom.visualisation.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.visualisation.client.VisualisationPlugin;
+import stroom.visualisation.client.presenter.VisualisationAssetsAddItemDialogPresenter;
+import stroom.visualisation.client.presenter.VisualisationAssetsAddItemDialogPresenter.VisualisationAssetsAddFolderDialogView;
+import stroom.visualisation.client.presenter.VisualisationAssetsEditAssetDialogPresenter;
+import stroom.visualisation.client.presenter.VisualisationAssetsEditAssetDialogPresenter.VisualisationAssetsEditAssetDialogView;
+import stroom.visualisation.client.presenter.VisualisationAssetsPresenter;
+import stroom.visualisation.client.presenter.VisualisationAssetsPresenter.VisualisationAssetsView;
+import stroom.visualisation.client.presenter.VisualisationAssetsUploadFileDialogPresenter;
+import stroom.visualisation.client.presenter.VisualisationAssetsUploadFileDialogPresenter.VisualisationAssetsUploadFileDialogView;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
+import stroom.visualisation.client.view.VisualisationAssetsAddItemDialogViewImpl;
+import stroom.visualisation.client.view.VisualisationAssetsEditAssetDialogViewImpl;
+import stroom.visualisation.client.view.VisualisationAssetsUploadFileDialogViewImpl;
+import stroom.visualisation.client.view.VisualisationAssetsViewImpl;
 import stroom.visualisation.client.view.VisualisationSettingsViewImpl;
 
 public class VisualisationModule extends PluginModule {
@@ -30,5 +42,16 @@ public class VisualisationModule extends PluginModule {
         bind(VisualisationPresenter.class);
         bindPresenterWidget(VisualisationSettingsPresenter.class, VisualisationSettingsView.class,
                 VisualisationSettingsViewImpl.class);
+        bindPresenterWidget(VisualisationAssetsPresenter.class, VisualisationAssetsView.class,
+                VisualisationAssetsViewImpl.class);
+        bindPresenterWidget(VisualisationAssetsUploadFileDialogPresenter.class,
+                VisualisationAssetsUploadFileDialogView.class,
+                VisualisationAssetsUploadFileDialogViewImpl.class);
+        bindPresenterWidget(VisualisationAssetsAddItemDialogPresenter.class,
+                VisualisationAssetsAddFolderDialogView.class,
+                VisualisationAssetsAddItemDialogViewImpl.class);
+        bindPresenterWidget(VisualisationAssetsEditAssetDialogPresenter.class,
+                VisualisationAssetsEditAssetDialogView.class,
+                VisualisationAssetsEditAssetDialogViewImpl.class);
     }
 }

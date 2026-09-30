@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.ai.shared;
 
 import stroom.dashboard.shared.DashboardSearchRequest;
@@ -11,16 +27,33 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public final class DashboardTableContext extends AskStroomAiContext {
 
     @JsonProperty
+    private final String description;
+    @JsonProperty
+    private final String node;
+    @JsonProperty
     private final DashboardSearchRequest searchRequest;
 
     @JsonCreator
-    public DashboardTableContext(@JsonProperty("chatMemoryId") final String chatMemoryId,
+    public DashboardTableContext(@JsonProperty("description") final String description,
+                                 @JsonProperty("node") final String node,
                                  @JsonProperty("searchRequest") final DashboardSearchRequest searchRequest) {
-        super(chatMemoryId);
+        this.description = description;
+        this.node = node;
         this.searchRequest = searchRequest;
+    }
+
+    @Override
+    public String getDescription() {
+        return description != null
+                ? description
+                : "Dashboard table";
     }
 
     public DashboardSearchRequest getSearchRequest() {
         return searchRequest;
+    }
+
+    public String getNode() {
+        return node;
     }
 }

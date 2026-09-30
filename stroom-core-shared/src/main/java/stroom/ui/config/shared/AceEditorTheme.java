@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,6 @@
 // THE SOFTWARE.
 
 package stroom.ui.config.shared;
-
-import stroom.util.shared.NullSafe;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -195,6 +193,6 @@ public enum AceEditorTheme {
 
     public static AceEditorTheme getDefaultEditorTheme(final ThemeType themeType) {
         return TYPE_TO_DEFAULT_THEME_MAP.get(
-                NullSafe.requireNonNullElse(themeType, Theme.DEFAULT_THEME_TYPE));
+                Objects.requireNonNullElse(themeType, Theme.DEFAULT_THEME_TYPE));
     }
 }

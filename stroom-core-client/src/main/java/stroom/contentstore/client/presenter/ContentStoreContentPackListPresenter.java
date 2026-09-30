@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import stroom.contentstore.shared.ContentStoreContentPack;
 import stroom.contentstore.shared.ContentStoreContentPackStatus;
 import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -54,7 +53,6 @@ public class ContentStoreContentPackListPresenter
     /** Points to top level of this page. Allows updating state of everything. */
     private ContentStorePresenter contentStorePresenter = null;
 
-    /** REST to the server */
     final RestFactory restFactory;
 
     /** Table of content packs */
@@ -73,12 +71,6 @@ public class ContentStoreContentPackListPresenter
     /** Index of the first item in the list of content packs */
     private static final int FIRST_ITEM_INDEX = 0;
 
-    /**
-     * Injected constructor.
-     * @param eventBus GWT event bus
-     * @param view Where this component is going to be inserted
-     * @param restFactory Creates connection to server
-     */
     @SuppressWarnings("unused")
     @Inject
     public ContentStoreContentPackListPresenter(final EventBus eventBus,
@@ -87,6 +79,7 @@ public class ContentStoreContentPackListPresenter
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid.setTableName("Content Packs");
 
         // Create the grid
         view.setDataWidget(dataGrid);
@@ -258,9 +251,6 @@ public class ContentStoreContentPackListPresenter
                         .withToolTip("Name of the Content Store")
                         .build(),
                 80);
-
-        // End the columns
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     /**
@@ -318,16 +308,20 @@ public class ContentStoreContentPackListPresenter
                             .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
                             .method(res -> res.checkContentUpgradeAvailable(cpws.getContentPack()))
                             .onSuccess(upgradeAvailable -> {
-                                if (upgradeAvailable.getValue()) {
-                                    cpws.setInstallationStatus(ContentStoreContentPackStatus.CONTENT_UPGRADABLE);
-                                    contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
-                                    if (contentStorePresenter != null) {
-                                        contentStorePresenter.updateState();
+                                if (upgradeAvailable.isOk()) {
+                                    if (upgradeAvailable.getValue() != null && upgradeAvailable.getValue()) {
+                                        cpws.setInstallationStatus(ContentStoreContentPackStatus.CONTENT_UPGRADABLE);
+                                        contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
+                                        if (contentStorePresenter != null) {
+                                            contentStorePresenter.updateState();
+                                        }
+                                    } else {
+                                        contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
                                     }
                                 } else {
+                                    cpws.setInstallationStatus(ContentStoreContentPackStatus.ERROR);
                                     contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
                                 }
-
                                 // Check the next item
                                 doUpgradeCheckOn(rowIndex + 1);
                             })

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,16 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
-import stroom.util.string.EncodingUtil;
+import stroom.docstore.shared.DocDataType;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Map;
 
 public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
 
@@ -47,12 +48,12 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
     }
 
     @Override
-    public DashboardDoc read(final Map<String, byte[]> data) throws IOException {
-        DashboardDoc document = delegate.read(data);
-        final byte[] jsonData = data.get(JSON);
-        if (jsonData != null) {
+    public DashboardDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        DashboardDoc document = delegate.read(importExportDocument);
+        final ImportExportAsset jsonAsset = importExportDocument.getExtAsset(JSON);
+        if (jsonAsset != null) {
             try {
-                final DashboardConfig dashboardConfig = getDashboardConfigFromJson(jsonData);
+                final DashboardConfig dashboardConfig = getDashboardConfigFromJson(jsonAsset);
                 document = document.copy().dashboardConfig(dashboardConfig).build();
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal dashboard config", e);
@@ -62,18 +63,23 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
     }
 
     @Override
-    public Map<String, byte[]> write(final DashboardDoc document) throws IOException {
+    public ImportExportDocument write(final DashboardDoc document) throws IOException {
         final DashboardConfig dashboardConfig = document.getDashboardConfig();
-        final Map<String, byte[]> data = delegate.write(document.copy().dashboardConfig(null).build());
+        final ImportExportDocument importExportDocument = delegate.write(document.copy().dashboardConfig(null).build());
         if (dashboardConfig != null) {
-            final StringWriter stringWriter = new StringWriter();
-            dashboardConfigSerialiser.write(stringWriter, dashboardConfig);
-            data.put(JSON, EncodingUtil.asBytes(stringWriter.toString()));
+            final byte[] jsonBytes = dashboardConfigSerialiser.writeAsBytes(dashboardConfig);
+            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(JSON, DocDataType.JSON, jsonBytes));
         }
-        return data;
+        return importExportDocument;
     }
 
-    public DashboardConfig getDashboardConfigFromJson(final byte[] jsonData) throws IOException {
-        return dashboardConfigSerialiser.read(jsonData);
+    public DashboardConfig getDashboardConfigFromJson(final ImportExportAsset asset) throws IOException {
+        return dashboardConfigSerialiser.read(asset);
+    }
+
+    public DashboardConfig getDashboardConfigFromJson(final byte[] data) throws IOException {
+        // Wrap the data in an asset for the serialiser
+        final ByteArrayImportExportAsset asset = new ByteArrayImportExportAsset("dummy", DocDataType.JSON, data);
+        return dashboardConfigSerialiser.read(asset);
     }
 }

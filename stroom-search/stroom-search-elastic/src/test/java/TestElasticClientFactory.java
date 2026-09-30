@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@
 import stroom.search.elastic.ElasticClientFactory;
 
 import org.apache.hc.core5.http.HttpHost;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestElasticClientFactory {
 
@@ -28,21 +29,32 @@ public class TestElasticClientFactory {
         final String hostName = "elastic.example.com.au";
         String url = "https://" + hostName;
         HttpHost host = ElasticClientFactory.hostFromUrl(url);
-        Assertions.assertNotNull(host, "Valid host is returned");
-        Assertions.assertEquals("https", host.getSchemeName());
-        Assertions.assertEquals(hostName, host.getHostName());
+        assertThat(host)
+                .as("Valid host is returned")
+                .isNotNull();
+        assertThat(host.getSchemeName())
+                .isEqualTo("https");
+        assertThat(host.getHostName())
+                .isEqualTo(hostName);
 
         // Scheme, hostname and port
         final int port = 9200;
+        //noinspection HttpUrlsUsage
         url = "http://" + hostName + ":9200";
         host = ElasticClientFactory.hostFromUrl(url);
-        Assertions.assertNotNull(host, "Valid host is returned");
-        Assertions.assertEquals(hostName, host.getHostName());
-        Assertions.assertEquals(port, host.getPort());
+        assertThat(host)
+                .as("Valid host is returned")
+                .isNotNull();
+        assertThat(host.getHostName())
+                .isEqualTo(hostName);
+        assertThat(host.getPort())
+                .isEqualTo(port);
 
         // Invalid URL
         url = hostName;
         host = ElasticClientFactory.hostFromUrl(url);
-        Assertions.assertNull(host, "No host is returned for an invalid URL");
+        assertThat(host)
+                .as("No host is returned for an invalid URL")
+                .isNull();
     }
 }

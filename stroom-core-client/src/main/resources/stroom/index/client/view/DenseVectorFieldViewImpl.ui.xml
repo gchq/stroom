@@ -8,7 +8,7 @@
         <form:FormGroup identity="EmbeddingModel"
                         label="Embedding Model"
                         helpText="Choose the AI model to convert field data to vectors.">
-            <g:SimplePanel ui:field="model"/>
+            <g:SimplePanel ui:field="embeddingModel"/>
         </form:FormGroup>
         <form:FormGroup identity="vectorSimilarityFunctionType"
                         label="Vector Similarity Function Type"
@@ -29,6 +29,26 @@
                         label="Nearest Neighbour Count"
                         helpText="The number of nearest neighbors to gather when querying.">
             <v:ValueSpinner ui:field="nearestNeighbourCount" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="RerankModel"
+                        label="Reranking Model"
+                        helpText="Choose the AI model to rerank KNN search results.">
+            <g:SimplePanel ui:field="rerankModel"/>
+        </form:FormGroup>
+        <form:FormGroup identity="rerankModelType"
+                        label="Rerank Model Type"
+                        helpText="The type or reranking model to use.">
+            <l:SelectionBox ui:field="rerankModelType" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="rerankBatchSize"
+                        label="Rerank Batch Size"
+                        helpText="The number of items to send to the rerank model in each batch.">
+            <v:ValueSpinner ui:field="rerankBatchSize" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="rerankScoreMinimum"
+                        label="Minimum rerank score"
+                        helpText="Choose the minimum score for reranking KNN results (default 0.8).">
+            <g:TextBox ui:field="rerankScoreMinimum"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

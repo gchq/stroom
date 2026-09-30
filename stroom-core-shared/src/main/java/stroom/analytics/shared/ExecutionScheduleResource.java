@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
+
+import java.util.List;
 
 @Tag(name = "ExecutionSchedule")
 @Path("/executionSchedule" + ResourcePaths.V1)
@@ -62,6 +64,14 @@ public interface ExecutionScheduleResource
                                     ExecutionSchedule executionSchedule);
 
     @POST
+    @Path("/deleteExecutionSchedules")
+    @Operation(
+            summary = "Delete Execution Schedules",
+            operationId = "deleteExecutionSchedules")
+    Boolean deleteExecutionSchedules(@Parameter(description = "executionSchedules", required = true)
+                                    List<ExecutionSchedule> executionSchedules);
+
+    @POST
     @Path("/fetchExecutionSchedule")
     @Operation(
             summary = "Fetch execution schedule",
@@ -84,4 +94,11 @@ public interface ExecutionScheduleResource
             operationId = "fetchTracker")
     ExecutionTracker fetchTracker(@Parameter(description = "request", required = true)
                                   ExecutionSchedule schedule);
+
+    @POST
+    @Path("/executeSchedulesNow")
+    @Operation(
+            summary = "Execute schedules now",
+            operationId = "executeSchedulesNow")
+    Boolean executeSchedulesNow(List<ExecutionSchedule> schedules);
 }

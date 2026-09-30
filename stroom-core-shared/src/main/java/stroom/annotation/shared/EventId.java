@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,10 @@ public class EventId {
     private final long eventId;
 
     @JsonCreator
-    public EventId(@JsonProperty("streamId") final long streamId,
-                   @JsonProperty("eventId") final long eventId) {
-        this.streamId = streamId;
-        this.eventId = eventId;
+    public EventId(@JsonProperty("streamId") final Long streamId,
+                   @JsonProperty("eventId") final Long eventId) {
+        this.streamId = Objects.requireNonNullElse(streamId, 0L);
+        this.eventId = Objects.requireNonNullElse(eventId, 0L);
     }
 
     public long getStreamId() {

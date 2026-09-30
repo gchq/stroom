@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class CurrentDbState {
@@ -38,10 +39,10 @@ public class CurrentDbState {
     private final Long lastEventTime;
 
     @JsonCreator
-    public CurrentDbState(@JsonProperty("streamId") final long streamId,
+    public CurrentDbState(@JsonProperty("streamId") final Long streamId,
                           @JsonProperty("eventId") final Long eventId,
                           @JsonProperty("lastEventTime") final Long lastEventTime) {
-        this.streamId = streamId;
+        this.streamId = Objects.requireNonNullElse(streamId, 0L);
         this.eventId = eventId;
         this.lastEventTime = lastEventTime;
     }
@@ -65,18 +66,17 @@ public class CurrentDbState {
     @Override
     public String toString() {
         return "CurrentDbState{" +
-                "streamId=" + streamId +
-                ", eventId=" + eventId +
-                ", lastEventTime=" + LocalDateTime.ofInstant(Instant.ofEpochMilli(lastEventTime), ZoneOffset.UTC) +
-                '}';
+               "streamId=" + streamId +
+               ", eventId=" + eventId +
+               ", lastEventTime=" + LocalDateTime.ofInstant(Instant.ofEpochMilli(lastEventTime), ZoneOffset.UTC) +
+               '}';
     }
 
     /**
      * Merges existingCurrentDbState with this to create a new state.
      */
     public CurrentDbState mergeExisting(final CurrentDbState existingCurrentDbState) {
-        final Long lastEventTime = NullSafe.requireNonNullElseGet(
-                this.lastEventTime,
+        final Long lastEventTime = Objects.requireNonNullElseGet(this.lastEventTime,
                 () -> NullSafe.get(existingCurrentDbState, CurrentDbState::getLastEventTime));
 
         return new CurrentDbState(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.util.shared.NullSafe;
 
 import java.util.Collection;
 import java.util.List;
@@ -385,33 +386,33 @@ public class ExpressionMatcher {
     }
 
     private boolean isInFolder(final String fieldName,
-                               final DocRef docRef,
+                               final DocRef folderDocRef,
                                final QueryField field,
                                final Object attribute) {
         if (FieldType.DOC_REF.equals(field.getFldType())) {
-            final String type = field.getDocRefType();
-            if (type != null && collectionService != null) {
-                final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
-                if (descendants != null && descendants.size() > 0) {
-                    if (attribute instanceof DocRef) {
-                        final String uuid = ((DocRef) attribute).getUuid();
+            final String fieldDocRefType = field.getDocRefType();
+            if (fieldDocRefType != null && collectionService != null) {
+                final Set<DocRef> descendants = collectionService.getDescendants(folderDocRef, fieldDocRefType);
+                if (NullSafe.hasItems(descendants)) {
+                    if (attribute instanceof final DocRef attrAsDocRef) {
+                        final String uuid = attrAsDocRef.getUuid();
                         if (uuid != null) {
-                            for (final DocRef descendant : descendants) {
-                                if (uuid.equals(descendant.getUuid())) {
-                                    return true;
-                                }
-                            }
+                            return descendants.stream()
+                                    .map(DocRef::getUuid)
+                                    .anyMatch(descendantUuid ->
+                                            Objects.equals(uuid, descendantUuid));
                         }
                     }
                 }
             }
         }
-
         return false;
     }
 
-    private boolean isDocRef(final String fieldName, final DocRef docRef,
-                             final QueryField field, final Object attribute) {
+    private boolean isDocRef(final String fieldName,
+                             final DocRef docRef,
+                             final QueryField field,
+                             final Object attribute) {
         if (attribute instanceof DocRef) {
             final String uuid = ((DocRef) attribute).getUuid();
             return (null != uuid && uuid.equals(docRef.getUuid()));

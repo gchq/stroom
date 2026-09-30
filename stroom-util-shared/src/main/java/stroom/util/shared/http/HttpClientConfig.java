@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.util.shared.http;
 
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
@@ -46,6 +45,7 @@ public class HttpClientConfig {
     private static final SimpleDuration DEFAULT_TIME_TO_LIVE =
             SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
     private static final boolean DEFAULT_COOKIES_ENABLED = false;
+    private static final boolean DEFAULT_FOLLOW_REDIRECTS = true;
     private static final int DEFAULT_MAX_CONNECTIONS = 1_024;
     private static final int DEFAULT_MAX_CONNECTIONS_PER_ROUTE = 1_024;
     private static final SimpleDuration DEFAULT_KEEP_ALIVE =
@@ -86,6 +86,13 @@ public class HttpClientConfig {
 
     @JsonProperty
     private final boolean cookiesEnabled;
+
+    @JsonPropertyDescription("Whether a redirect response (3xx) is followed. Some endpoints redirect in " +
+                             "order to authenticate, so a request that does not follow redirects will see " +
+                             "the redirect response itself rather than the resource it was after. " +
+                             "Default: true")
+    @JsonProperty
+    private final boolean followRedirects;
 
     @JsonProperty
     @Min(1)
@@ -133,30 +140,32 @@ public class HttpClientConfig {
             @JsonProperty("connectionRequestTimeout") final SimpleDuration connectionRequestTimeout,
             @JsonProperty("timeToLive") final SimpleDuration timeToLive,
             @JsonProperty("cookiesEnabled") final Boolean cookiesEnabled,
+            @JsonProperty("followRedirects") final Boolean followRedirects,
             @JsonProperty("maxConnections") final Integer maxConnections,
             @JsonProperty("maxConnectionsPerRoute") final Integer maxConnectionsPerRoute,
             @JsonProperty("keepAlive") final SimpleDuration keepAlive,
-            @JsonProperty("retries") final int retries,
+            @JsonProperty("retries") final Integer retries,
             @JsonProperty("userAgent") final String userAgent,
             @JsonProperty("proxy") final HttpProxyConfig proxy,
             @JsonProperty("validateAfterInactivityPeriod") final SimpleDuration validateAfterInactivityPeriod,
             @JsonProperty("tls") final HttpTlsConfig tls) {
-        this.timeout = NullSafe.requireNonNullElse(timeout, DEFAULT_TIMEOUT);
-        this.connectionTimeout = NullSafe.requireNonNullElse(connectionTimeout, DEFAULT_CONNECTION_TIMEOUT);
-        this.connectionRequestTimeout = NullSafe.requireNonNullElse(
+        this.timeout = Objects.requireNonNullElse(timeout, DEFAULT_TIMEOUT);
+        this.connectionTimeout = Objects.requireNonNullElse(connectionTimeout, DEFAULT_CONNECTION_TIMEOUT);
+        this.connectionRequestTimeout = Objects.requireNonNullElse(
                 connectionRequestTimeout, DEFAULT_CONNECTION_REQUEST_TIMEOUT);
-        this.timeToLive = NullSafe.requireNonNullElse(timeToLive, DEFAULT_TIME_TO_LIVE);
-        this.cookiesEnabled = NullSafe.requireNonNullElse(cookiesEnabled, DEFAULT_COOKIES_ENABLED);
-        this.maxConnections = NullSafe.requireNonNullElse(maxConnections, DEFAULT_MAX_CONNECTIONS);
-        this.maxConnectionsPerRoute = NullSafe.requireNonNullElse(
+        this.timeToLive = Objects.requireNonNullElse(timeToLive, DEFAULT_TIME_TO_LIVE);
+        this.cookiesEnabled = Objects.requireNonNullElse(cookiesEnabled, DEFAULT_COOKIES_ENABLED);
+        this.followRedirects = Objects.requireNonNullElse(followRedirects, DEFAULT_FOLLOW_REDIRECTS);
+        this.maxConnections = Objects.requireNonNullElse(maxConnections, DEFAULT_MAX_CONNECTIONS);
+        this.maxConnectionsPerRoute = Objects.requireNonNullElse(
                 maxConnectionsPerRoute, DEFAULT_MAX_CONNECTIONS_PER_ROUTE);
-        this.keepAlive = NullSafe.requireNonNullElse(keepAlive, DEFAULT_KEEP_ALIVE);
-        this.retries = retries;
+        this.keepAlive = Objects.requireNonNullElse(keepAlive, DEFAULT_KEEP_ALIVE);
+        this.retries = Objects.requireNonNullElse(retries, DEFAULT_RETRIES);
         this.userAgent = userAgent;
         this.proxy = proxy;
-        this.validateAfterInactivityPeriod = NullSafe.requireNonNullElse(
+        this.validateAfterInactivityPeriod = Objects.requireNonNullElse(
                 validateAfterInactivityPeriod, DEFAULT_VALIDATE_AFTER_INACTIVITY_PERIOD);
-        this.tls = NullSafe.requireNonNullElseGet(tls, () -> HttpTlsConfig.builder().build());
+        this.tls = Objects.requireNonNullElseGet(tls, () -> HttpTlsConfig.builder().build());
     }
 
     public SimpleDuration getKeepAlive() {
@@ -185,6 +194,10 @@ public class HttpClientConfig {
 
     public boolean isCookiesEnabled() {
         return cookiesEnabled;
+    }
+
+    public boolean isFollowRedirects() {
+        return followRedirects;
     }
 
     public int getMaxConnections() {
@@ -222,6 +235,7 @@ public class HttpClientConfig {
         }
         final HttpClientConfig that = (HttpClientConfig) o;
         return cookiesEnabled == that.cookiesEnabled &&
+               followRedirects == that.followRedirects &&
                maxConnections == that.maxConnections &&
                maxConnectionsPerRoute == that.maxConnectionsPerRoute &&
                retries == that.retries &&
@@ -243,6 +257,7 @@ public class HttpClientConfig {
                 connectionRequestTimeout,
                 timeToLive,
                 cookiesEnabled,
+                followRedirects,
                 maxConnections,
                 maxConnectionsPerRoute,
                 keepAlive,
@@ -261,6 +276,7 @@ public class HttpClientConfig {
                ", connectionRequestTimeout=" + connectionRequestTimeout +
                ", timeToLive=" + timeToLive +
                ", cookiesEnabled=" + cookiesEnabled +
+               ", followRedirects=" + followRedirects +
                ", maxConnections=" + maxConnections +
                ", maxConnectionsPerRoute=" + maxConnectionsPerRoute +
                ", keepAlive=" + keepAlive +
@@ -287,6 +303,7 @@ public class HttpClientConfig {
         private SimpleDuration connectionRequestTimeout = DEFAULT_CONNECTION_REQUEST_TIMEOUT;
         private SimpleDuration timeToLive = DEFAULT_TIME_TO_LIVE;
         private boolean cookiesEnabled = DEFAULT_COOKIES_ENABLED;
+        private boolean followRedirects = DEFAULT_FOLLOW_REDIRECTS;
         private int maxConnections = DEFAULT_MAX_CONNECTIONS;
         private int maxConnectionsPerRoute = DEFAULT_MAX_CONNECTIONS_PER_ROUTE;
         private SimpleDuration keepAlive = DEFAULT_KEEP_ALIVE;
@@ -305,6 +322,7 @@ public class HttpClientConfig {
             connectionRequestTimeout = httpClientConfig.connectionRequestTimeout;
             timeToLive = httpClientConfig.timeToLive;
             cookiesEnabled = httpClientConfig.cookiesEnabled;
+            followRedirects = httpClientConfig.followRedirects;
             maxConnections = httpClientConfig.maxConnections;
             maxConnectionsPerRoute = httpClientConfig.maxConnectionsPerRoute;
             keepAlive = httpClientConfig.keepAlive;
@@ -337,6 +355,11 @@ public class HttpClientConfig {
 
         public Builder cookiesEnabled(final boolean cookiesEnabled) {
             this.cookiesEnabled = cookiesEnabled;
+            return self();
+        }
+
+        public Builder followRedirects(final boolean followRedirects) {
+            this.followRedirects = followRedirects;
             return self();
         }
 
@@ -392,6 +415,7 @@ public class HttpClientConfig {
                     connectionRequestTimeout,
                     timeToLive,
                     cookiesEnabled,
+                    followRedirects,
                     maxConnections,
                     maxConnectionsPerRoute,
                     keepAlive,

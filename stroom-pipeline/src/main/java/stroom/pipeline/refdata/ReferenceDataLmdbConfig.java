@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfig, IsStroomConfig {
 
@@ -56,15 +58,17 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
     @SuppressWarnings("unused")
     @JsonCreator
     public ReferenceDataLmdbConfig(@JsonProperty("localDir") final String localDir,
-                                   @JsonProperty("maxReaders") final int maxReaders,
+                                   @JsonProperty("maxReaders") final Integer maxReaders,
                                    @JsonProperty("maxStoreSize") final ByteSize maxStoreSize,
-                                   @JsonProperty("readAheadEnabled") final boolean isReadAheadEnabled,
-                                   @JsonProperty("readerBlockedByWriter") final boolean isReaderBlockedByWriter) {
+                                   @JsonProperty("readAheadEnabled") final Boolean isReadAheadEnabled,
+                                   @JsonProperty("readerBlockedByWriter") final Boolean isReaderBlockedByWriter) {
         this.localDir = localDir;
-        this.maxReaders = maxReaders;
+        this.maxReaders = Objects.requireNonNullElse(maxReaders, DEFAULT_MAX_READERS);
         this.maxStoreSize = maxStoreSize;
-        this.isReadAheadEnabled = isReadAheadEnabled;
-        this.isReaderBlockedByWriter = isReaderBlockedByWriter;
+        this.isReadAheadEnabled =
+                Objects.requireNonNullElse(isReadAheadEnabled, DEFAULT_IS_READ_AHEAD_ENABLED);
+        this.isReaderBlockedByWriter =
+                Objects.requireNonNullElse(isReaderBlockedByWriter, DEFAULT_IS_READER_BLOCKED_BY_WRITER);
     }
 
     @Override

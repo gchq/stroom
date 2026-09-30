@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
+import stroom.config.global.shared.SetConfigValueRequest;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -35,12 +37,15 @@ import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.ui.config.shared.ExtendedUiConfig;
+import stroom.ui.config.shared.ReportUiDefaultConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
@@ -71,6 +76,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigResourceImpl.class);
 
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
+    private final Provider<DocumentEventLog> documentEventLogProvider;
     private final Provider<GlobalConfigService> globalConfigServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<UiConfig> uiConfig;
@@ -81,9 +87,12 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final Provider<AnnotationState> annotationStateProvider;
+    private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
+    private final Provider<ReportUiDefaultConfig> reportUiDefaultConfigProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
+                             final Provider<DocumentEventLog> documentEventLogProvider,
                              final Provider<GlobalConfigService> globalConfigServiceProvider,
                              final Provider<NodeService> nodeServiceProvider,
                              final Provider<UiConfig> uiConfig,
@@ -93,9 +102,14 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                              final Provider<AuthenticationConfig> authenticationConfigProvider,
                              final Provider<StroomReceiptPolicyConfig> stroomReceiptPolicyConfigProvider,
                              final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-                             final Provider<AnnotationState> annotationStateProvider) {
+                             final Provider<AnnotationState> annotationStateProvider,
+                             final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider,
+                             final Provider<ReportUiDefaultConfig> reportUiDefaultConfigProvider) {
 
+        this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
+        this.reportUiDefaultConfigProvider = reportUiDefaultConfigProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
+        this.documentEventLogProvider = Objects.requireNonNull(documentEventLogProvider);
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
         this.nodeServiceProvider = Objects.requireNonNull(nodeServiceProvider);
         this.uiConfig = uiConfig;
@@ -318,6 +332,99 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 stroomReceiptPolicyConfigProvider.get().getObfuscatedFields(),
                 receiveDataConfigProvider.get().getReceiptCheckMode(),
                 annotationStateProvider.get().getLastChangeTime());
+    }
+
+    /**
+     * Sets one of the UI defaults so that a user can promote the value they have just chosen without having to find
+     * the property in the global properties screen and work out how to format it. The value arrives in its natural
+     * form and is converted here.
+     * <p>
+     * Permission is enforced by {@link GlobalConfigService}, which requires MANAGE_PROPERTIES to update a property.
+     * </p>
+     */
+    @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    public Boolean setConfigValue(final SetConfigValueRequest request) {
+        RestUtil.requireNonNull(request, "request not supplied");
+        RestUtil.requireNonNull(request.getTarget(), "target not supplied");
+        RestUtil.requireNonNull(request.getPropertyName(), "propertyName not supplied");
+
+        // The client can't name the property by its full path because a config object's base path isn't serialised,
+        // so it names the object and the leaf property and we resolve the rest. An unknown property name is
+        // rejected by the config service.
+        final AbstractConfig config = switch (request.getTarget()) {
+            case ANALYTIC_UI_DEFAULT -> analyticUiDefaultConfigProvider.get();
+            case REPORT_UI_DEFAULT -> reportUiDefaultConfigProvider.get();
+        };
+
+        // Logged by hand because the auto logger cannot work out what this method changes. It
+        // infers an update from the method name, but the response is a Boolean so it cannot be used
+        // as the 'after', and SetConfigValueRequest carries no id for the auto logger to fetch a
+        // before/after with. Left to the auto logger, both would be null and no audit event would
+        // be produced at all.
+        final PropertyPath propertyPath = config.getFullPath(request.getPropertyName());
+        final ConfigProperty before = getPropertyForAudit(propertyPath);
+
+        try {
+            // Whichever value was supplied determines how it is stored, so the client never builds the string form.
+            if (request.getDocRefValue() != null) {
+                globalConfigServiceProvider.get()
+                        .setDocRef(config, request.getPropertyName(), request.getDocRefValue());
+            } else {
+                RestUtil.requireNonNull(request.getStringValue(), "no value supplied");
+                globalConfigServiceProvider.get()
+                        .setString(config, request.getPropertyName(), request.getStringValue());
+            }
+        } catch (final ConfigPropertyValidationException e) {
+            logSetConfigValue(before, getPropertyForAudit(propertyPath), request, e);
+            throw RestUtil.badRequest(e);
+        } catch (final RuntimeException e) {
+            logSetConfigValue(before, getPropertyForAudit(propertyPath), request, e);
+            throw e;
+        }
+
+        logSetConfigValue(before, getPropertyForAudit(propertyPath), request, null);
+        return true;
+    }
+
+    /// Reads a config property for the purposes of an audit event.
+    ///
+    /// Returns null rather than propagating, as failing to read the property for logging must not
+    /// stop the change itself from being reported or, worse, fail the request.
+    private ConfigProperty getPropertyForAudit(final PropertyPath propertyPath) {
+        try {
+            return globalConfigServiceProvider.get()
+                    .fetch(propertyPath)
+                    .orElse(null);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "getPropertyForAudit() - Unable to read property {} for logging: {}",
+                    propertyPath, LogUtil.exceptionMessage(e)), e);
+            return null;
+        }
+    }
+
+    /// Logs the change, naming the property so the event says which one was changed.
+    ///
+    /// If neither version of the property could be read, falls back to the request so that an audit
+    /// event is always produced. On the failure path that fallback goes in the 'before' slot, as the
+    /// requested value was never reached and must not be presented as the 'after'.
+    private void logSetConfigValue(final ConfigProperty before,
+                                   final ConfigProperty after,
+                                   final SetConfigValueRequest request,
+                                   final Throwable ex) {
+        final String typeId = StroomEventLoggingUtil.buildTypeId(this, "setConfigValue");
+        final String verb = LogUtil.message("Setting config property \"{}\"", request.getPropertyName());
+
+        if (before == null && after == null) {
+            if (ex == null) {
+                documentEventLogProvider.get().update(null, request, typeId, verb, ex);
+            } else {
+                documentEventLogProvider.get().update(request, null, typeId, verb, ex);
+            }
+        } else {
+            documentEventLogProvider.get().update(before, after, typeId, verb, ex);
+        }
     }
 
     private Query buildRawQuery(final String userInput) {

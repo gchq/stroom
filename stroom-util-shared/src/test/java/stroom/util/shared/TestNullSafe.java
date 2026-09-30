@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1576,6 +1576,31 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testRemoveNulls_List() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withSingleArgTestFunction(NullSafe::removeNulls)
+                .withAssertions(testOutcome -> {
+                    final List<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isUnmodifiable();
+                })
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(Collections.singletonList((String) null), Collections.emptyList())
+                .addCase(Arrays.asList(null, null, null), Collections.emptyList())
+                .addCase(List.of("foo"), List.of("foo"))
+                .addCase(Arrays.asList(null, "foo"), List.of("foo"))
+                .addCase(Arrays.asList(null, "foo", null), List.of("foo"))
+                .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .addCase(Arrays.asList(null, "foo", null, "bar", null), List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testMutableSet() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {
@@ -1593,6 +1618,31 @@ class TestNullSafe {
                 .addCase(Collections.emptySet(), Collections.emptySet())
                 .addCase(Set.of("foo"), Set.of("foo"))
                 .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRemoveNulls_Set() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {
+                })
+                .withSingleArgTestFunction(NullSafe::removeNulls)
+                .withAssertions(testOutcome -> {
+                    final Set<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isUnmodifiable();
+                })
+                .addCase(null, Collections.emptySet())
+                .addCase(Collections.emptySet(), Collections.emptySet())
+                .addCase(Collections.singleton(null), Collections.emptySet())
+                .addCase(new HashSet<>(Arrays.asList(null, null, null)), Collections.emptySet())
+                .addCase(Set.of("foo"), Set.of("foo"))
+                .addCase(new HashSet<>(Arrays.asList(null, "foo")), Set.of("foo"))
+                .addCase(new HashSet<>(Arrays.asList(null, "foo", null)), Set.of("foo"))
+                .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
+                .addCase(new HashSet<>(Arrays.asList(null, "foo", null, "bar", null)), Set.of("foo", "bar"))
                 .build();
     }
 
@@ -1637,7 +1687,8 @@ class TestNullSafe {
                         NullSafe.asSet(testCase.getInput()))
                 .withSimpleEqualityAssertion()
                 .addCase(null, Collections.emptySet())
-                .addCase(new String[]{}, Collections.emptySet())
+                .addCase(new String[0], Collections.emptySet())
+                .addCase(new String[]{"foo"}, Set.of("foo"))
                 .addCase(new String[]{"foo", "bar"}, Set.of("foo", "bar"))
                 .build();
     }
@@ -2382,6 +2433,94 @@ class TestNullSafe {
                 .addThrowsCase(
                         Tuple.of(nullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3),
                         NullPointerException.class)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonEmptyString1() {
+        final String defaultMsg = "Non-empty string required";
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withSingleArgTestFunction(NullSafe::requireNonEmptyString)
+                .withSimpleEqualityAssertion()
+                .addCase(" ", " ")
+                .addCase("foo", "foo")
+                .addThrowsCaseContaining(null, RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining("", RuntimeException.class, defaultMsg)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonEmptyString2() {
+        final String defaultMsg = "Non-empty string required";
+        final String msg = "Bad!";
+        final Supplier<String> nullMsgSupplier = () -> null;
+        final Supplier<String> msgSupplier = () -> msg;
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<String, Supplier<String>>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> NullSafe.requireNonEmptyString(
+                        testCase.getInput()._1(),
+                        testCase.getInput()._2()))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(" ", msgSupplier), " ")
+                .addCase(Tuple.of("foo", msgSupplier), "foo")
+                .addCase(Tuple.of("foo", null), "foo")
+                .addCase(Tuple.of("foo", nullMsgSupplier), "foo")
+                .addThrowsCaseContaining(Tuple.of(null, null), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of(null, nullMsgSupplier), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of(null, msgSupplier), RuntimeException.class, msg)
+                .addThrowsCaseContaining(Tuple.of("", null), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of("", nullMsgSupplier), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of("", msgSupplier), RuntimeException.class, msg)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonBlankString1() {
+        final String defaultMsg = "Non-blank string required";
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withSingleArgTestFunction(NullSafe::requireNonBlankString)
+                .withSimpleEqualityAssertion()
+                .addCase("foo", "foo")
+                .addThrowsCaseContaining(null, RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining("", RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(" ", RuntimeException.class, defaultMsg)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonBlankString2() {
+        final String defaultMsg = "Non-blank string required";
+        final String msg = "Bad!";
+        final Supplier<String> nullMsgSupplier = () -> null;
+        final Supplier<String> msgSupplier = () -> msg;
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<String, Supplier<String>>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> NullSafe.requireNonBlankString(
+                        testCase.getInput()._1(),
+                        testCase.getInput()._2()))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of("foo", msgSupplier), "foo")
+                .addCase(Tuple.of("foo", null), "foo")
+                .addCase(Tuple.of("foo", nullMsgSupplier), "foo")
+                .addThrowsCaseContaining(Tuple.of(null, null), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of(null, nullMsgSupplier), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of(null, msgSupplier), RuntimeException.class, msg)
+                .addThrowsCaseContaining(Tuple.of("", null), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of("", nullMsgSupplier), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of("", msgSupplier), RuntimeException.class, msg)
+                .addThrowsCaseContaining(Tuple.of(" ", null), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of(" ", nullMsgSupplier), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of(" ", msgSupplier), RuntimeException.class, msg)
                 .build();
     }
 

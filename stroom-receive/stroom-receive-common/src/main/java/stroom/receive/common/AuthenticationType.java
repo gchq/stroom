@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,31 @@ import stroom.docref.HasDisplayValue;
 
 public enum AuthenticationType implements HasDisplayValue {
     /**
-     * Authenticates using a Stroom Data Feed Key.
+     * Authenticates using a Stroom Data Feed Key whose hashed form exists
+     * in a Data Feed Identity file in the directory specified by the property
+     * '.receive.dataFeedIdentitiesDir'.
+     * <p>
+     * The client must also provide an identity in the header whose key is
+     * configured by '.receive.dataFeedOwnerMetaKey'.
      */
     DATA_FEED_KEY("Data feed key"),
+    /**
+     * Authenticates using an X509 certificate DN, that exists
+     * in a Data Feed Identity file in the directory specified by the property
+     * '.receive.dataFeedIdentitiesDir'. The DN is expected to be found in the header
+     * whose key is configured by '.receive.x509CertificateDnHeader'.
+     * <p>
+     * The client must also provide an identity in the header whose key is
+     * configured by '.receive.dataFeedOwnerMetaKey'.
+     */
+    CERTIFICATE_IDENTITY("Certificate identity"),
     /**
      * An OAuth token or a Stroom API Key
      */
     TOKEN("OAuth Token"),
     /**
      * Either authenticates the X509 certificate on the request
-     * or authenticates the DN from a header if .receive.x509CertificateDnHeader is set.
+     * or authenticates the DN from a header if '.receive.x509CertificateDnHeader' is set.
      */
     CERTIFICATE("Client certificate"),
     ;

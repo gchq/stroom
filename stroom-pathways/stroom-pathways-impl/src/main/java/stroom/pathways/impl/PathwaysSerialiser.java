@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ package stroom.pathways.impl;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.pathways.shared.PathwaysDoc;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class PathwaysSerialiser implements DocumentSerialiser2<PathwaysDoc> {
 
@@ -36,12 +36,12 @@ public class PathwaysSerialiser implements DocumentSerialiser2<PathwaysDoc> {
     }
 
     @Override
-    public PathwaysDoc read(final Map<String, byte[]> data) throws IOException {
-        return delegate.read(data);
+    public PathwaysDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument);
     }
 
     @Override
-    public Map<String, byte[]> write(final PathwaysDoc document) throws IOException {
+    public ImportExportDocument write(final PathwaysDoc document) throws IOException {
         return delegate.write(document);
     }
 }

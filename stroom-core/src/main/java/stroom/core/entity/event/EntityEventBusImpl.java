@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +46,6 @@ import java.util.function.Consumer;
 class EntityEventBusImpl implements EntityEventBus {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EntityEventBusImpl.class);
-    private static final Logger log = LoggerFactory.getLogger(EntityEventBusImpl.class);
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
@@ -81,7 +78,7 @@ class EntityEventBusImpl implements EntityEventBus {
     @Override
     public void fire(final EntityEvent event) {
         LOGGER.debug("fire() - event: {}", event);
-        if (started && event != null) {
+        if (event != null) {
             fireGlobally(event);
         }
     }
@@ -89,7 +86,7 @@ class EntityEventBusImpl implements EntityEventBus {
     @Override
     public void fire(final EntityEventBatch events) {
         LOGGER.debug("fire() - events: {}", events);
-        if (started && events != null && events.hasItems()) {
+        if (events != null && events.hasItems()) {
             fireGlobally(events);
         }
     }

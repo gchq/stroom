@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.query.client;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.item.client.BaseSelectionBox;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -173,13 +174,6 @@ public class TermEditor extends Composite {
         fieldListBox.setModel(fieldSelectionListModel);
     }
 
-    public void update(final Term term) {
-        final String value = term.getValue();
-        write(term);
-        term.setValue(value);
-        read(term);
-    }
-
     public void startEdit(final Term term) {
         if (!editing) {
             this.term = term;
@@ -204,15 +198,32 @@ public class TermEditor extends Composite {
     private void read(final Term term) {
         reading = true;
 
-        // Select the current value.
-        conditionListBox.setValue(null);
-        changeField(null, null, false);
-        fieldSelectionListModel.findFieldByName(term.getField(), fieldInfo -> {
-            fieldListBox.setValue(fieldInfo);
-            changeField(fieldInfo, term.getCondition(), false);
-        });
+        // See if the field is the same, if so then do not bother fetching field info from the server.
+        if (term.getField() != null && Objects.equals(
+                NullSafe.get(fieldListBox, BaseSelectionBox::getValue, QueryField::getFldName),
+                term.getField())) {
+            changeField(fieldListBox.getValue(), term.getCondition(), false);
+        } else if (term.getField() == null) {
+            // If the field is null then set the field box to null and update the other controls.
+            fieldListBox.setValue(null);
+            changeField(null, term.getCondition(), false);
+        } else {
+            // If the field is not null then go and fetch the field info and do a full update.
+            fieldListBox.setValue(null);
+            changeField(null, term.getCondition(), false);
+            fieldSelectionListModel.findFieldByName(term.getField(), fieldInfo -> {
+                fieldListBox.setValue(fieldInfo);
+                changeField(fieldInfo, term.getCondition(), false);
+            });
+        }
 
         reading = false;
+    }
+
+    public void write() {
+        if (editing) {
+            write(term);
+        }
     }
 
     private void write(final Term term) {
@@ -303,6 +314,8 @@ public class TermEditor extends Composite {
             fieldTypeLabel.setTitle(field.getFldType().getDescription());
             fieldTypeLabel.setVisible(true);
         } else {
+            fieldTypeLabel.setText("");
+            fieldTypeLabel.setTitle("");
             fieldTypeLabel.setVisible(false);
         }
     }
@@ -345,10 +358,12 @@ public class TermEditor extends Composite {
                 case IN_DICTIONARY,
                      IN_FOLDER,
                      IS_DOC_REF,
+                     IS_NOT_DOC_REF,
                      OF_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
                 case IS_USER_REF,
+                     IS_NOT_USER_REF,
                      USER_HAS_PERM,
                      USER_HAS_OWNER,
                      USER_HAS_DELETE,
@@ -408,7 +423,7 @@ public class TermEditor extends Composite {
             if (Condition.IN_DICTIONARY.equals(condition)) {
                 docSelectionBoxPresenter.setIncludedTypes("Dictionary");
             } else if (Condition.IN_FOLDER.equals(condition) || Condition.OF_DOC_REF.equals(condition)) {
-                docSelectionBoxPresenter.setIncludedTypes("Folder");
+                docSelectionBoxPresenter.setIncludedTypes(ExplorerConstants.FOLDER_LIKE);
                 docSelectionBoxPresenter.setAllowFolderSelection(true);
             } else if (FieldType.DOC_REF.equals(field.getFldType())) {
                 if (field.getDocRefType() != null) {
@@ -503,10 +518,6 @@ public class TermEditor extends Composite {
         registerHandler(date.addValueChangeHandler(e -> fireDirty()));
         registerHandler(dateFrom.addValueChangeHandler(e -> fireDirty()));
         registerHandler(dateTo.addValueChangeHandler(e -> fireDirty()));
-
-        registerHandler(date.addValueChangeHandler(event -> fireDirty()));
-        registerHandler(dateFrom.addValueChangeHandler(event -> fireDirty()));
-        registerHandler(dateTo.addValueChangeHandler(event -> fireDirty()));
 
         if (docSelectionBoxPresenter != null) {
             registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event -> {
@@ -603,6 +614,7 @@ public class TermEditor extends Composite {
 
     private void fireDirty() {
         if (!reading) {
+            write(term);
             if (uiHandlers != null) {
                 uiHandlers.onChange();
             }

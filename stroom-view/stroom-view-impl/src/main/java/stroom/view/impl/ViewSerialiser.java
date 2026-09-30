@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ package stroom.view.impl;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.view.shared.ViewDoc;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class ViewSerialiser implements DocumentSerialiser2<ViewDoc> {
 
@@ -36,14 +36,12 @@ public class ViewSerialiser implements DocumentSerialiser2<ViewDoc> {
     }
 
     @Override
-    public ViewDoc read(final Map<String, byte[]> data) throws IOException {
-        final ViewDoc document = delegate.read(data);
-        return document;
+    public ViewDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument);
     }
 
     @Override
-    public Map<String, byte[]> write(final ViewDoc document) throws IOException {
-        final Map<String, byte[]> data = delegate.write(document);
-        return data;
+    public ImportExportDocument write(final ViewDoc document) throws IOException {
+        return delegate.write(document);
     }
 }

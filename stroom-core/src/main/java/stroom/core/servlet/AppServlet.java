@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServlet;
@@ -41,8 +42,8 @@ public abstract class AppServlet extends HttpServlet {
 
     private static final String TITLE = "@TITLE@";
     private static final String ON_CONTEXT_MENU = "@ON_CONTEXT_MENU@";
-    private static final String SCRIPT = "@SCRIPT@";
     private static final String ROOT_CLASS = "@ROOT_CLASS@";
+    private static final String BOOTSTRAP = "@BOOTSTRAP@";
 
     private final Provider<UiConfig> uiConfigProvider;
     private final Provider<UserPreferencesService> userPreferencesServiceProvider;
@@ -77,13 +78,96 @@ public abstract class AppServlet extends HttpServlet {
         html = html.replace(ROOT_CLASS, classNames);
         html = html.replace(TITLE, uiConfig.getHtmlTitle());
         html = html.replace(ON_CONTEXT_MENU, uiConfig.getOncontextmenu());
-        html = html.replace(SCRIPT, getScript());
+        if (useBootstrap()) {
+            html = html.replace(BOOTSTRAP, getBootstrapScript(getScript()));
+        } else {
+            // Load the GWT script directly without auth check (e.g., for the sign-in page)
+            html = html.replace(BOOTSTRAP,
+                    "<script type=\"text/javascript\" src='" + getScript() + "'></script>");
+        }
 
         pw.write(html);
         pw.close();
     }
 
     abstract String getScript();
+
+    /**
+     * Whether to use the bootstrap auth-check script that verifies authentication
+     * via the BFF status endpoint before loading the GWT application.
+     * Subclasses can override to return false if the page should load the GWT
+     * script directly without an auth check (e.g., the sign-in page, which IS
+     * the login UI and must not redirect to the IdP).
+     */
+    boolean useBootstrap() {
+        return true;
+    }
+
+    /**
+     * Returns an inline JavaScript snippet that checks authentication status
+     * via the BFF auth flow endpoint before loading the GWT application script.
+     * If the user is not authenticated, the browser is redirected to the IdP.
+     * <p>
+     * When an authenticating edge proxy owns the auth flow there is no redirectUrl for the server
+     * to hand out, and a lapsed proxy session answers the fetch() with a cross-origin redirect the
+     * script cannot follow (it surfaces as a fetch error). Both cases are handled the same way: a
+     * one-shot, sessionStorage-guarded full page reload, which lets the proxy run its redirect as
+     * a top-level navigation. The guard stops a genuinely broken setup reloading forever.
+     */
+    private String getBootstrapScript(final String gwtScriptPath) {
+        // Build the status path from the same shared constant the resource is served under, so the
+        // bootstrap fetch can never drift from AuthFlowResource's @Path (e.g. the noauth removal).
+        final String statusPath = ResourcePaths.buildAuthenticatedApiPath(
+                ResourcePaths.AUTH_FLOW_PATH, "/status");
+        return """
+                <script type="text/javascript">
+                (function() {
+                  var RELOAD_KEY = 'stroomAuthReload';
+                  function reloadOnce(reason) {
+                    try {
+                      if (!sessionStorage.getItem(RELOAD_KEY)) {
+                        sessionStorage.setItem(RELOAD_KEY, '1');
+                        console.warn('Reloading to restart authentication: ' + reason);
+                        window.location.reload();
+                        return true;
+                      }
+                    } catch (e) {
+                      // sessionStorage unavailable - fall through to the error message.
+                    }
+                    return false;
+                  }
+                  function showError(message) {
+                    var el = document.getElementById('loadingText');
+                    if (el) el.textContent = 'Authentication error: ' + message;
+                  }
+                  fetch('%s?redirect_uri='
+                    + encodeURIComponent(window.location.href))
+                    .then(function(resp) {
+                      if (!resp.ok) throw new Error('Auth check failed: ' + resp.status);
+                      return resp.json();
+                    })
+                    .then(function(auth) {
+                      if (auth.authenticated) {
+                        try { sessionStorage.removeItem(RELOAD_KEY); } catch (e) { }
+                        var s = document.createElement('script');
+                        s.type = 'text/javascript';
+                        s.src = '%s';
+                        document.head.appendChild(s);
+                      } else if (auth.redirectUrl) {
+                        window.location.href = auth.redirectUrl;
+                      } else if (!reloadOnce('no redirect URL, authentication is edge-managed')) {
+                        showError('not signed in, and the authenticating proxy did not sign you in');
+                      }
+                    })
+                    .catch(function(err) {
+                      if (!reloadOnce(err.message)) {
+                        showError(err.message);
+                        console.error('Bootstrap auth check failed', err);
+                      }
+                    });
+                })();
+                </script>""".formatted(statusPath, gwtScriptPath);
+    }
 
 
     // --------------------------------------------------------------------------------

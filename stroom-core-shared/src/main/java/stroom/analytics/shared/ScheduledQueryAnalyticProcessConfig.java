@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,14 +49,14 @@ public final class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessCo
 
     @SuppressWarnings({"unused", "checkstyle:LineLength"})
     @JsonCreator
-    public ScheduledQueryAnalyticProcessConfig(@JsonProperty("enabled") final boolean enabled,
+    public ScheduledQueryAnalyticProcessConfig(@JsonProperty("enabled") final Boolean enabled,
                                                @JsonProperty("node") final String node,
                                                @JsonProperty("errorFeed") final DocRef errorFeed,
                                                @JsonProperty("minEventTimeMs") final Long minEventTimeMs,
                                                @JsonProperty("maxEventTimeMs") final Long maxEventTimeMs,
                                                @JsonProperty("timeToWaitForData") final SimpleDuration timeToWaitForData,
                                                @JsonProperty("queryFrequency") final SimpleDuration queryFrequency) {
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.node = node;
         this.errorFeed = errorFeed;
         this.minEventTimeMs = minEventTimeMs;

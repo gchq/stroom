@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class Config {
 
     public void write(final Writer writer, final String entityType) throws IOException {
         try {
-            final SAXTransformerFactory stf = (SAXTransformerFactory) TransformerFactoryFactory.newInstance();
+            final SAXTransformerFactory stf = (SAXTransformerFactory) TransformerFactoryFactory.newInstance(true);
             final TransformerHandler th = stf.newTransformerHandler();
             final Transformer transformer = th.getTransformer();
 

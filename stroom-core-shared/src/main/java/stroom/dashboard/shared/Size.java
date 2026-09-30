@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,10 @@ public class Size {
     private final int height;
 
     @JsonCreator
-    public Size(@JsonProperty("width") final int width,
-                @JsonProperty("height") final int height) {
-        this.width = width;
-        this.height = height;
+    public Size(@JsonProperty("width") final Integer width,
+                @JsonProperty("height") final Integer height) {
+        this.width = Objects.requireNonNullElse(width, 0);
+        this.height = Objects.requireNonNullElse(height, 0);
     }
 
     public int getWidth() {

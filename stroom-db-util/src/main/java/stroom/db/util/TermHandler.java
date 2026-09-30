@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package stroom.db.util;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
@@ -56,7 +56,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     private final ExpressionMapper.MultiConverter<T> converter;
     private final Provider<WordListProvider> wordListProvider;
     private final Provider<CollectionService> collectionServiceProvider;
-    private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<DocFinder> docFinderProvider;
     private final boolean useName;
     private final boolean fieldIsCaseSensitive;
 
@@ -65,7 +65,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                 final ExpressionMapper.MultiConverter<T> converter,
                 final Provider<WordListProvider> wordListProvider,
                 final Provider<CollectionService> collectionServiceProvider,
-                final Provider<DocRefInfoService> docRefInfoServiceProvider,
+                final Provider<DocFinder> docFinderProvider,
                 final boolean useName,
                 final boolean fieldIsCaseSensitive) {
         this.dataSourceField = dataSourceField;
@@ -73,7 +73,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
         this.converter = converter;
         this.wordListProvider = wordListProvider;
         this.collectionServiceProvider = collectionServiceProvider;
-        this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.docFinderProvider = docFinderProvider;
         this.useName = useName;
         this.fieldIsCaseSensitive = fieldIsCaseSensitive;
     }
@@ -192,6 +192,19 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                     }
                 }
             }
+            case IS_NOT_DOC_REF -> {
+                if (term.getDocRef() == null || term.getDocRef().getUuid() == null) {
+                    return field.isNull();
+                } else {
+                    final String docValue = getDocValue(term, term.getDocRef());
+                    final List<T> value = getValues(docValue);
+                    // IS_DOC_REF does not support wild carding so should only get one thing back
+                    // else fall through and match nothing
+                    if (value.size() == 1) {
+                        return field.notEqual(value.getFirst());
+                    }
+                }
+            }
             case IS_USER_REF -> {
                 if (term.getDocRef() == null || term.getDocRef().getUuid() == null) {
                     return field.isNull();
@@ -202,6 +215,19 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                     // else fall through and match nothing
                     if (value.size() == 1) {
                         return field.equal(value.getFirst());
+                    }
+                }
+            }
+            case IS_NOT_USER_REF -> {
+                if (term.getDocRef() == null || term.getDocRef().getUuid() == null) {
+                    return field.isNull();
+                } else {
+                    final String docValue = getDocValue(term, term.getDocRef());
+                    final List<T> value = getValues(docValue);
+                    // IS_NOT_DOC_REF does not support wild carding so should only get one thing back
+                    // else fall through and match nothing
+                    if (value.size() == 1) {
+                        return field.notEqual(value.getFirst());
                     }
                 }
             }
@@ -232,8 +258,8 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
      */
     private String getDocValue(final ExpressionTerm term, final DocRef docRef) {
         if (useName) {
-            if (docRefInfoServiceProvider != null) {
-                final Optional<String> resolvedName = docRefInfoServiceProvider.get().name(docRef);
+            if (docFinderProvider != null) {
+                final Optional<String> resolvedName = docFinderProvider.get().getName(docRef);
                 if (resolvedName.isEmpty()) {
                     throw new RuntimeException("Unable to find doc with reference '" +
                                                docRef +

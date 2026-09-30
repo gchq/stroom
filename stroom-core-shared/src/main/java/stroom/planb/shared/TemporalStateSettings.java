@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 package stroom.planb.shared;
-
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -38,7 +36,7 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public final class TemporalStateSettings
-        extends AbstractPlanBSettings
+        extends AbstractHttpStoreSettings
         implements HasCondenseSettings {
 
     @JsonProperty
@@ -58,9 +56,9 @@ public final class TemporalStateSettings
                                  @JsonProperty("keySchema") final TemporalStateKeySchema keySchema,
                                  @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.condense = NullSafe.requireNonNullElse(condense, new DurationSetting.Builder().build());
-        this.keySchema = NullSafe.requireNonNullElse(keySchema, new TemporalStateKeySchema.Builder().build());
-        this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
+        this.condense = Objects.requireNonNullElse(condense, new DurationSetting.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new TemporalStateKeySchema.Builder().build());
+        this.valueSchema = Objects.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
     }
 
     @Override
@@ -112,7 +110,7 @@ public final class TemporalStateSettings
                '}';
     }
 
-    public static class Builder extends AbstractBuilder<TemporalStateSettings, Builder> {
+    public static class Builder extends AbstractHttpBuilder<TemporalStateSettings, Builder> {
 
         private DurationSetting condense;
         private TemporalStateKeySchema keySchema;

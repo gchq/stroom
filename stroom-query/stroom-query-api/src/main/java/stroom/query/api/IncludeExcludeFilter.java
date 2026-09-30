@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.query.api;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"includes", "excludes"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  " +
                       "Either or both can be supplied")
@@ -55,8 +56,16 @@ public final class IncludeExcludeFilter {
                                 @JsonProperty("excludes") final String excludes,
                                 @JsonProperty("includeDictionaries") final List<DocRef> includeDictionaries,
                                 @JsonProperty("excludeDictionaries") final List<DocRef> excludeDictionaries) {
-        this.includes = includes;
-        this.excludes = excludes;
+        if (NullSafe.isBlankString(includes)) {
+            this.includes = null;
+        } else {
+            this.includes = includes;
+        }
+        if (NullSafe.isBlankString(excludes)) {
+            this.excludes = null;
+        } else {
+            this.excludes = excludes;
+        }
         this.includeDictionaries = includeDictionaries == null
                 ? new ArrayList<>()
                 : includeDictionaries;
@@ -90,13 +99,6 @@ public final class IncludeExcludeFilter {
             return false;
         }
         final IncludeExcludeFilter filter = (IncludeExcludeFilter) o;
-
-//        // TODO : REMOVE - GWT DEBUG
-//        final boolean b1 = Objects.equals(includes, filter.includes);
-//        final boolean b2 = Objects.equals(excludes, filter.excludes);
-//        final boolean b3 = Objects.equals(includeDictionaries, filter.includeDictionaries);
-//        final boolean b4 = Objects.equals(excludeDictionaries, filter.excludeDictionaries);
-
         return Objects.equals(includes, filter.includes) &&
                Objects.equals(excludes, filter.excludes) &&
                Objects.equals(includeDictionaries, filter.includeDictionaries) &&
