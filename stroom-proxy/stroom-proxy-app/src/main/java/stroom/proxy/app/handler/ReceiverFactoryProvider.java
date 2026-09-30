@@ -83,7 +83,7 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                     DirNames.FORWARDING_INPUT_QUEUE,
                     40,
                     "Forwarding Input Queue",
-                    fsyncConfig.isForwardingInputQueue());
+                    fsyncConfig.getForwardingInputQueueMode());
             // Move items from the forwarding queue to the forwarder(s).
             final DirQueueTransfer forwardingInputQueueTransfer =
                     new DirQueueTransfer(forwardInputQueue::next, forwarder::add);
@@ -139,7 +139,7 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                 DirNames.AGGREGATE_INPUT_QUEUE,
                 30,
                 "Aggregate Input Queue",
-                fsyncConfig.isAggregateInputQueue());
+                fsyncConfig.getAggregateInputQueueMode());
         // Move items from the pre aggregate queue to the aggregator.
         // TODO : Could use more than one thread here.
         final DirQueueTransfer aggregateInputQueueTransfer =
@@ -157,7 +157,7 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                 DirNames.PRE_AGGREGATE_INPUT_QUEUE,
                 20,
                 "Pre Aggregate Input Queue",
-                fsyncConfig.isPreAggregateInputQueue());
+                fsyncConfig.getPreAggregateInputQueueMode());
         // Move items from the file store to the pre aggregator.
         final DirQueueTransfer preAggregateInputQueueTransfer =
                 new DirQueueTransfer(preAggregateInputQueue::next, preAggregator::addDir);

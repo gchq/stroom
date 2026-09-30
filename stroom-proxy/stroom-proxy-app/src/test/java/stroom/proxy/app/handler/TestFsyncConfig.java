@@ -16,6 +16,7 @@
 
 package stroom.proxy.app.handler;
 
+import stroom.util.io.FsyncMode;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -28,53 +29,55 @@ class TestFsyncConfig {
     void testDefaults_allPhasesEnabled() {
         final FsyncConfig fsyncConfig = new FsyncConfig();
 
-        assertThat(fsyncConfig.isReceiving()).isTrue();
-        assertThat(fsyncConfig.isZipSplittingInputQueue()).isTrue();
-        assertThat(fsyncConfig.isPreAggregateInputQueue()).isTrue();
-        assertThat(fsyncConfig.isAggregateInputQueue()).isTrue();
-        assertThat(fsyncConfig.isForwardingInputQueue()).isTrue();
+        assertThat(fsyncConfig.getReceivingMode()).isEqualTo(FsyncMode.ENABLED);
+        assertThat(fsyncConfig.getZipSplittingInputQueueMode()).isEqualTo(FsyncMode.ENABLED);
+        assertThat(fsyncConfig.getPreAggregateInputQueueMode()).isEqualTo(FsyncMode.ENABLED);
+        assertThat(fsyncConfig.getAggregateInputQueueMode()).isEqualTo(FsyncMode.ENABLED);
+        assertThat(fsyncConfig.getForwardingInputQueueMode()).isEqualTo(FsyncMode.ENABLED);
     }
 
     @Test
     void testAbsentPropertiesFallBackToDefaults() {
         // An operator who has not set the section at all, or has set only part of it, must still
         // get the safe behaviour for the properties they omitted.
-        final FsyncConfig fsyncConfig = JsonUtil.readValue("{\"receiving\":false}", FsyncConfig.class);
+        final FsyncConfig fsyncConfig = JsonUtil.readValue("{\"receivingMode\":\"DISABLED\"}", FsyncConfig.class);
 
-        assertThat(fsyncConfig.isReceiving()).isFalse();
-        assertThat(fsyncConfig.isZipSplittingInputQueue()).isTrue();
-        assertThat(fsyncConfig.isPreAggregateInputQueue()).isTrue();
-        assertThat(fsyncConfig.isAggregateInputQueue()).isTrue();
-        assertThat(fsyncConfig.isForwardingInputQueue()).isTrue();
+        assertThat(fsyncConfig.getReceivingMode()).isEqualTo(FsyncMode.DISABLED);
+        assertThat(fsyncConfig.getZipSplittingInputQueueMode()).isEqualTo(FsyncMode.ENABLED);
+        assertThat(fsyncConfig.getPreAggregateInputQueueMode()).isEqualTo(FsyncMode.ENABLED);
+        assertThat(fsyncConfig.getAggregateInputQueueMode()).isEqualTo(FsyncMode.ENABLED);
+        assertThat(fsyncConfig.getForwardingInputQueueMode()).isEqualTo(FsyncMode.ENABLED);
     }
 
     @Test
     void testEachPhaseCanBeDisabledIndependently() {
         final FsyncConfig fsyncConfig = new FsyncConfig(
-                false,
-                true,
-                false,
-                true,
-                false);
+                FsyncMode.DISABLED,
+                FsyncMode.FILE_ONLY,
+                FsyncMode.DIR_ONLY,
+                FsyncMode.ENABLED,
+                FsyncMode.DISABLED);
 
-        assertThat(fsyncConfig.isReceiving()).isFalse();
-        assertThat(fsyncConfig.isZipSplittingInputQueue()).isTrue();
-        assertThat(fsyncConfig.isPreAggregateInputQueue()).isFalse();
-        assertThat(fsyncConfig.isAggregateInputQueue()).isTrue();
-        assertThat(fsyncConfig.isForwardingInputQueue()).isFalse();
+        assertThat(fsyncConfig.getReceivingMode()).isEqualTo(FsyncMode.DISABLED);
+        assertThat(fsyncConfig.getZipSplittingInputQueueMode()).isEqualTo(FsyncMode.FILE_ONLY);
+        assertThat(fsyncConfig.getPreAggregateInputQueueMode()).isEqualTo(FsyncMode.DIR_ONLY);
+        assertThat(fsyncConfig.getAggregateInputQueueMode()).isEqualTo(FsyncMode.ENABLED);
+        assertThat(fsyncConfig.getForwardingInputQueueMode()).isEqualTo(FsyncMode.DISABLED);
     }
 
     @Test
     void testSerialisationRoundTrip() {
-        final FsyncConfig original = new FsyncConfig(false, false, true, false, true);
+        final FsyncConfig original = new FsyncConfig(
+                FsyncMode.DISABLED, FsyncMode.FILE_ONLY, FsyncMode.DIR_ONLY,
+                FsyncMode.ENABLED, FsyncMode.DISABLED);
 
         final String json = JsonUtil.writeValueAsString(original);
         final FsyncConfig restored = JsonUtil.readValue(json, FsyncConfig.class);
 
-        assertThat(restored.isReceiving()).isEqualTo(original.isReceiving());
-        assertThat(restored.isZipSplittingInputQueue()).isEqualTo(original.isZipSplittingInputQueue());
-        assertThat(restored.isPreAggregateInputQueue()).isEqualTo(original.isPreAggregateInputQueue());
-        assertThat(restored.isAggregateInputQueue()).isEqualTo(original.isAggregateInputQueue());
-        assertThat(restored.isForwardingInputQueue()).isEqualTo(original.isForwardingInputQueue());
+        assertThat(restored.getReceivingMode()).isEqualTo(original.getReceivingMode());
+        assertThat(restored.getZipSplittingInputQueueMode()).isEqualTo(original.getZipSplittingInputQueueMode());
+        assertThat(restored.getPreAggregateInputQueueMode()).isEqualTo(original.getPreAggregateInputQueueMode());
+        assertThat(restored.getAggregateInputQueueMode()).isEqualTo(original.getAggregateInputQueueMode());
+        assertThat(restored.getForwardingInputQueueMode()).isEqualTo(original.getForwardingInputQueueMode());
     }
 }
