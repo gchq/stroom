@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.security.identity.client.ChangePasswordPlugin;
 import stroom.security.identity.client.presenter.AuthenticationErrorPresenter;
 import stroom.security.identity.client.presenter.ChangePasswordPresenter;
 import stroom.security.identity.client.presenter.LoginPresenter;
+import stroom.security.identity.client.presenter.ResetPasswordPresenter;
 
 import com.google.gwt.inject.client.AsyncProvider;
 import com.google.inject.Provider;
@@ -30,6 +31,8 @@ public interface ChangePasswordGinjector {
     Provider<LoginPresenter> getLoginPresenter();
 
     Provider<AuthenticationErrorPresenter> getAuthenticationErrorPresenter();
+
+    Provider<ResetPasswordPresenter> getResetPasswordPresenter();
 
     AsyncProvider<AccountsPlugin> getAccountsPlugin();
 

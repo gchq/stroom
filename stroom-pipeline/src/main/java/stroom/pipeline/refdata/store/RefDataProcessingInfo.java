@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,15 +43,16 @@ public class RefDataProcessingInfo {
     private final ProcessingState processingState;
 
     @JsonCreator
-    public RefDataProcessingInfo(@JsonProperty("createTimeEpochMs") final long createTimeEpochMs,
-                                 @JsonProperty("lastAccessedTimeEpochMs") final long lastAccessedTimeEpochMs,
-                                 @JsonProperty("effectiveTimeEpochMs") final long effectiveTimeEpochMs,
+    public RefDataProcessingInfo(@JsonProperty("createTimeEpochMs") final Long createTimeEpochMs,
+                                 @JsonProperty("lastAccessedTimeEpochMs") final Long lastAccessedTimeEpochMs,
+                                 @JsonProperty("effectiveTimeEpochMs") final Long effectiveTimeEpochMs,
                                  @JsonProperty("processingState") final ProcessingState processingState) {
-        this.createTimeEpochMs = createTimeEpochMs;
+        this.createTimeEpochMs = Objects.requireNonNullElse(createTimeEpochMs, 0L);
         // To make it clear that we only update the last access time at intervals to avoid
         // frequent writes, truncate the value.
-        this.lastAccessedTimeEpochMs = truncateLastAccessTime(lastAccessedTimeEpochMs);
-        this.effectiveTimeEpochMs = effectiveTimeEpochMs;
+        this.lastAccessedTimeEpochMs = truncateLastAccessTime(
+                Objects.requireNonNullElse(lastAccessedTimeEpochMs, 0L));
+        this.effectiveTimeEpochMs = Objects.requireNonNullElse(effectiveTimeEpochMs, 0L);
         this.processingState = processingState;
     }
 

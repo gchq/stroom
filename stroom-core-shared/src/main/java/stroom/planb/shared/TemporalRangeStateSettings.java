@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public final class TemporalRangeStateSettings
-        extends AbstractPlanBSettings
+        extends AbstractHttpStoreSettings
         implements HasCondenseSettings {
 
     @JsonProperty
@@ -109,7 +109,7 @@ public final class TemporalRangeStateSettings
                '}';
     }
 
-    public static class Builder extends AbstractBuilder<TemporalRangeStateSettings, Builder> {
+    public static class Builder extends AbstractHttpBuilder<TemporalRangeStateSettings, Builder> {
 
         private DurationSetting condense;
         private TemporalRangeKeySchema keySchema;

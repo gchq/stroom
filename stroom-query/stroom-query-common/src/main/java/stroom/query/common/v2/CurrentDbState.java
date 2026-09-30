@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,10 @@ public class CurrentDbState {
     private final Long lastEventTime;
 
     @JsonCreator
-    public CurrentDbState(@JsonProperty("streamId") final long streamId,
+    public CurrentDbState(@JsonProperty("streamId") final Long streamId,
                           @JsonProperty("eventId") final Long eventId,
                           @JsonProperty("lastEventTime") final Long lastEventTime) {
-        this.streamId = streamId;
+        this.streamId = Objects.requireNonNullElse(streamId, 0L);
         this.eventId = eventId;
         this.lastEventTime = lastEventTime;
     }

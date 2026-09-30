@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,9 @@ public class AnnotationIdentity implements HasId, HasUuid {
 
     @JsonCreator
     public AnnotationIdentity(@JsonProperty("uuid") final String uuid,
-                              @JsonProperty("id") final long id) {
+                              @JsonProperty("id") final Long id) {
         this.uuid = Objects.requireNonNull(uuid);
-        this.id = id;
+        this.id = Objects.requireNonNullElse(id, 0L);
     }
 
     public AnnotationIdentity(final DocRef docRef,

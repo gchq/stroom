@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,19 +185,33 @@ public class ByteBufferUtils {
     }
 
     public static String byteBufferInfo(final ByteBuffer byteBuffer) {
+        return byteBufferInfo(byteBuffer, true);
+    }
+
+    public static String byteBufferInfo(final ByteBuffer byteBuffer, final boolean decodeToStr) {
         if (byteBuffer == null) {
             return "null";
         }
 
         final String value = byteBufferToHexAll(byteBuffer);
-        return LogUtil.message("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}], asStr [{}]",
-                byteBuffer.capacity(),
-                byteBuffer.position(),
-                byteBuffer.limit(),
-                byteBuffer.remaining(),
-                value,
-                StandardCharsets.UTF_8.decode(byteBuffer.duplicate()));
+        if (decodeToStr) {
+            return LogUtil.message("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}], asStr [{}]",
+                    byteBuffer.capacity(),
+                    byteBuffer.position(),
+                    byteBuffer.limit(),
+                    byteBuffer.remaining(),
+                    value,
+                    StandardCharsets.UTF_8.decode(byteBuffer.duplicate()));
+        } else {
+            return LogUtil.message("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}]",
+                    byteBuffer.capacity(),
+                    byteBuffer.position(),
+                    byteBuffer.limit(),
+                    byteBuffer.remaining(),
+                    value);
+        }
     }
+
 
     /**
      * Compare two {@link ByteBuffer} objects as if they are longs
@@ -286,7 +300,7 @@ public class ByteBufferUtils {
     }
 
     public static boolean containsPrefix(final ByteBuffer buffer, final ByteBuffer prefixBuffer) {
-        final int pos =  prefixBuffer.mismatch(buffer);
+        final int pos = prefixBuffer.mismatch(buffer);
         return pos == -1 || pos == prefixBuffer.limit();
     }
 

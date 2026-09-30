@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,13 @@ import stroom.annotation.shared.AnnotationIdentity;
 import stroom.docref.DocRef;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEvent.EntityEventData;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.entityevent.EntityEventData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Objects;
 
 /**
  * Used for changes to the whole annotation, rather than a single field on it.
@@ -37,8 +39,8 @@ public class AnnotationIdEntityEventData implements EntityEventData {
     private final long annotationId;
 
     @JsonCreator
-    public AnnotationIdEntityEventData(@JsonProperty("annotationId") final long annotationId) {
-        this.annotationId = annotationId;
+    public AnnotationIdEntityEventData(@JsonProperty("annotationId") final Long annotationId) {
+        this.annotationId = Objects.requireNonNullElse(annotationId, 0L);
     }
 
     public long getAnnotationId() {

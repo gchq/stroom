@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,19 +66,19 @@ public class ExecutionSchedule {
     @JsonCreator
     public ExecutionSchedule(@JsonProperty("uuid") final String uuid,
                              @JsonProperty("name") final String name,
-                             @JsonProperty("enabled") final boolean enabled,
+                             @JsonProperty("enabled") final Boolean enabled,
                              @JsonProperty("nodeName") final String nodeName,
                              @JsonProperty("schedule") final Schedule schedule,
-                             @JsonProperty("contiguous") final boolean contiguous,
+                             @JsonProperty("contiguous") final Boolean contiguous,
                              @JsonProperty("scheduleBounds") final ScheduleBounds scheduleBounds,
                              @JsonProperty("owningDoc") final DocRef owningDoc,
                              @JsonProperty("runAsUser") final UserRef runAsUser) {
         this.uuid = uuid;
         this.name = name;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.nodeName = nodeName;
         this.schedule = schedule;
-        this.contiguous = contiguous;
+        this.contiguous = Objects.requireNonNullElse(contiguous, false);
         this.scheduleBounds = scheduleBounds;
         this.owningDoc = owningDoc;
         this.runAsUser = runAsUser;

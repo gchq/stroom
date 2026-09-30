@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class JobNode implements HasAuditInfoGetters, HasIntegerId {
                    @JsonProperty("nodeName") final String nodeName,
                    @JsonProperty("taskLimit") final Integer taskLimit,
                    @JsonProperty("schedule") final String schedule,
-                   @JsonProperty("enabled") final boolean enabled) {
+                   @JsonProperty("enabled") final Boolean enabled) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -86,7 +86,7 @@ public class JobNode implements HasAuditInfoGetters, HasIntegerId {
         this.nodeName = nodeName;
         this.taskLimit = taskLimit;
         this.schedule = schedule;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
     }
 
     @Override

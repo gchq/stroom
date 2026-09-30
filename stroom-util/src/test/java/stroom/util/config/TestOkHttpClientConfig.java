@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,16 @@ package stroom.util.config;
 
 import stroom.util.time.StroomDuration;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
 class TestOkHttpClientConfig {
 
     @Test
-    void testDeser_empty() throws JsonProcessingException {
+    void testDeser_empty() {
 
         final String json = "{}";
         final OkHttpClientConfig clientConfig = new ObjectMapper()
@@ -58,7 +57,7 @@ class TestOkHttpClientConfig {
     }
 
     @Test
-    void testDeser_withValues() throws JsonProcessingException {
+    void testDeser_withValues() {
 
         final String json = """
                 {

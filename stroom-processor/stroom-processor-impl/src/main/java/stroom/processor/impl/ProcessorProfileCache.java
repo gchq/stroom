@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,12 @@ package stroom.processor.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.node.api.NodeGroupCache;
+import stroom.node.api.NodeGroupState;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.processor.shared.ProfilePeriod;
 import stroom.query.language.functions.UserTimeZoneUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.Day;
@@ -36,10 +39,11 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Singleton
 public class ProcessorProfileCache implements Clearable {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorProfileCache.class);
 
     private static final String CACHE_NAME = "Processor Profile Cache";
     private static final ProfileResult ZERO = new ProfileResult(0, 0);
@@ -75,37 +79,54 @@ public class ProcessorProfileCache implements Clearable {
     }
 
     public ProfileResult getProfile(final String node, final String profileName) {
+        return getProfile(node, profileName, Instant.now());
+    }
+
+    public ProfileResult getProfile(final String node, final String profileName, final Instant now) {
         final Optional<ProcessorProfile> optionalProcessorProfile = get(profileName);
         final ProcessorProfile processorProfile = optionalProcessorProfile.orElseThrow(() ->
                 new RuntimeException("Processor profile called '" +
                                      profileName +
                                      "' not found"));
-        final Optional<Set<String>> optionalNodeGroupData = nodeGroupCache
-                .getIncludedGroupNodes(processorProfile.getNodeGroupName());
-        final Set<String> includedGroupNodes = optionalNodeGroupData.orElseThrow(() ->
+        final Optional<NodeGroupState> optionalNodeGroupData = nodeGroupCache
+                .getSelectedGroupNodes(processorProfile.getNodeGroupName());
+        final NodeGroupState nodeGroupState = optionalNodeGroupData.orElseThrow(() ->
                 new RuntimeException("No node group called '" +
                                      processorProfile.getNodeGroupName() +
                                      "' can be found for processor profile '" +
                                      processorProfile.getName() +
                                      "'"));
 
-        if (!includedGroupNodes.contains(node)) {
+        // If the node group is disabled then return zero tasks.
+        if (!nodeGroupState.isEnabled()) {
+            LOGGER.debug("Node group '{}' is disabled", nodeGroupState.getNodeGroup());
             return ZERO;
         }
 
-        return getProfile(processorProfile);
+        // If the node group does not include the requesting node then return zero tasks.
+        final boolean included = nodeGroupState.isIncludedNode(node);
+        if (!included) {
+            LOGGER.debug("Node '{}' is not included in group '{}'", node, nodeGroupState.getNodeGroup());
+            return ZERO;
+        }
+
+        return getProfile(processorProfile, now);
     }
 
     public ProfileResult getProfile(final String profileName) {
+        return getProfile(profileName, Instant.now());
+    }
+
+    public ProfileResult getProfile(final String profileName, final Instant now) {
         final Optional<ProcessorProfile> optionalProcessorProfile = get(profileName);
         final ProcessorProfile processorProfile = optionalProcessorProfile.orElseThrow(() ->
                 new RuntimeException("Processor profile called '" +
                                      profileName +
                                      "' not found"));
-        return getProfile(processorProfile);
+        return getProfile(processorProfile, now);
     }
 
-    public ProfileResult getProfile(final ProcessorProfile processorProfile) {
+    private ProfileResult getProfile(final ProcessorProfile processorProfile, final Instant now) {
         // If there are no periods defined then return zero.
         final List<ProfilePeriod> periods = processorProfile.getProfilePeriods();
         if (NullSafe.isEmptyCollection(periods)) {
@@ -113,7 +134,6 @@ public class ProcessorProfileCache implements Clearable {
         }
 
         // Get the configured time zone for the periods.
-        final Instant now = Instant.now();
         final ZoneId zoneId = UserTimeZoneUtil.getZoneId(processorProfile.getTimeZone(), null);
         final ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(now, zoneId);
         final int dayValue = zonedDateTime.getDayOfWeek().getValue();
@@ -133,15 +153,15 @@ public class ProcessorProfileCache implements Clearable {
                     }
                     // Check end time is after or equal.
                     if (!endTime.isBefore(zonedDateTime)) {
-                        int maxNodeTasks = Integer.MAX_VALUE;
+                        int maxNodeThreads = Integer.MAX_VALUE;
                         if (period.isLimitNodeThreads()) {
-                            maxNodeTasks = period.getMaxNodeThreads();
+                            maxNodeThreads = period.getMaxNodeThreads();
                         }
-                        int maxClusterTasks = Integer.MAX_VALUE;
+                        int maxClusterThreads = Integer.MAX_VALUE;
                         if (period.isLimitClusterThreads()) {
-                            maxClusterTasks = period.getMaxClusterThreads();
+                            maxClusterThreads = period.getMaxClusterThreads();
                         }
-                        return new ProfileResult(maxNodeTasks, maxClusterTasks);
+                        return new ProfileResult(maxNodeThreads, maxClusterThreads);
                     }
                 }
             }
@@ -158,7 +178,7 @@ public class ProcessorProfileCache implements Clearable {
                 .withNano(0);
     }
 
-    public record ProfileResult(int maxNodeTasks, int maxClusterTasks) {
+    public record ProfileResult(int maxNodeThreads, int maxClusterThreads) {
 
     }
 }

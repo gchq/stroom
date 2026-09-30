@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,7 @@ public class AppPermissionsEditPresenter
         this.securityContext = securityContext;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Application Permissions");
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<AppPermission> selectionEventManager = new DataGridSelectionEventManager<>(
                 dataGrid,
@@ -216,8 +217,6 @@ public class AppPermissionsEditPresenter
                         .withToolTip("Description of what the permission allows the user/group to do.")
                         .build(),
                 700);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private boolean hasPermission(final AppPermission permission) {

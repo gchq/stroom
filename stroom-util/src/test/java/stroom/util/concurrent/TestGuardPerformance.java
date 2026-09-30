@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,13 @@ public class TestGuardPerformance {
     private final int iterations = 1_000_000;
     private final int threadCount = Integer.highestOneBit(Runtime.getRuntime().availableProcessors());
     private volatile Object env = new Object();
+
+    private IntStream buildThreadCountStream() {
+        return IntStream.iterate(
+                1,
+                i -> i <= 128,
+                i -> i * 2);
+    }
 
     @Test
     @Disabled

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
 
         final MyDataGrid<JobWrapper> dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Jobs");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
@@ -194,8 +195,6 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                         .withToolTip("The description of the job")
                         .build(),
                 300);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public MultiSelectionModel<JobWrapper> getSelectionModel() {

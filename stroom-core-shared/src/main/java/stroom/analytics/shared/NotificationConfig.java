@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class NotificationConfig {
 
+    private static final boolean DEFAULT_LIMIT_NOTIFICATIONS = false;
+    private static final int DEFAULT_MAX_NOTIFICATIONS = 1;
+
     @JsonProperty
     private final String uuid;
     @JsonProperty
@@ -50,15 +53,17 @@ public class NotificationConfig {
     @JsonCreator
     public NotificationConfig(@JsonProperty("uuid") final String uuid,
                               @JsonProperty("enabled") final Boolean enabled,
-                              @JsonProperty("limitNotifications") final boolean limitNotifications,
-                              @JsonProperty("maxNotifications") final int maxNotifications,
+                              @JsonProperty("limitNotifications") final Boolean limitNotifications,
+                              @JsonProperty("maxNotifications") final Integer maxNotifications,
                               @JsonProperty("resumeAfter") final SimpleDuration resumeAfter,
                               @JsonProperty("destinationType") final NotificationDestinationType destinationType,
                               @JsonProperty("destination") final NotificationDestination destination) {
         this.uuid = uuid;
         this.enabled = enabled;
-        this.limitNotifications = limitNotifications;
-        this.maxNotifications = maxNotifications;
+        this.limitNotifications = Objects.requireNonNullElse(limitNotifications,
+                DEFAULT_LIMIT_NOTIFICATIONS);
+        this.maxNotifications = Objects.requireNonNullElse(maxNotifications,
+                DEFAULT_MAX_NOTIFICATIONS);
         this.resumeAfter = resumeAfter;
         this.destinationType = destinationType;
         this.destination = destination;
@@ -99,19 +104,28 @@ public class NotificationConfig {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final NotificationConfig that = (NotificationConfig) o;
-        return Objects.equals(uuid, that.uuid);
+        return limitNotifications == that.limitNotifications &&
+               maxNotifications == that.maxNotifications &&
+               Objects.equals(uuid, that.uuid) &&
+               Objects.equals(enabled, that.enabled) &&
+               Objects.equals(resumeAfter, that.resumeAfter) &&
+               destinationType == that.destinationType &&
+               Objects.equals(destination, that.destination);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid);
+        return Objects.hash(uuid,
+                enabled,
+                limitNotifications,
+                maxNotifications,
+                resumeAfter,
+                destinationType,
+                destination);
     }
 
     @Override

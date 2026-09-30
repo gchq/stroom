@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,11 @@ import java.util.Objects;
 public class MetricValueSchema {
 
     private static final MaxValueSize DEFAULT_MAX_VALUE_SIZE = MaxValueSize.TWO;
-    private static final Boolean DEFAULT_STORE_LATEST_VALUE = true;
-    private static final Boolean DEFAULT_STORE_MIN = false;
-    private static final Boolean DEFAULT_STORE_MAX = false;
-    private static final Boolean DEFAULT_STORE_COUNT = false;
-    private static final Boolean DEFAULT_STORE_SUM = false;
+    private static final boolean DEFAULT_STORE_LATEST_VALUE = true;
+    private static final boolean DEFAULT_STORE_MIN = false;
+    private static final boolean DEFAULT_STORE_MAX = false;
+    private static final boolean DEFAULT_STORE_COUNT = false;
+    private static final boolean DEFAULT_STORE_SUM = false;
 
     @JsonProperty
     private final MaxValueSize valueType;

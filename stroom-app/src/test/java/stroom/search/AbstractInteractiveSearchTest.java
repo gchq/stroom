@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -462,7 +462,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
                 SearchRequestSource.builder().sourceType(SourceType.BATCH_SEARCH).build(),
                 key,
                 query,
-                new EventRef(1, 1),
+                new EventRef(1L, 1L),
                 new EventRef(Long.MAX_VALUE, Long.MAX_VALUE),
                 1000,
                 1000,

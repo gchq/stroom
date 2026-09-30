@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
     private final Element buttonSpinner;
     private final Element spinnerBorder;
     private final Element icon;
-    private final Element margin;
+    private final Element backgroundText;
     private final Element text;
 
     private int taskCount;
@@ -70,6 +70,10 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
 
         setStyleName("Button Button--base Button Button--contained has-text");
 
+        backgroundText = DOM.createSpan();
+        backgroundText.setClassName("Button__backgroundText");
+        getElement().appendChild(backgroundText);
+
         rippleContainer = DOM.createDiv();
         rippleContainer.setClassName("ripple-container");
         getElement().appendChild(rippleContainer);
@@ -89,20 +93,16 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
         buttonSpinner.appendChild(spinnerBorder);
 
         icon = DOM.createSpan();
-        icon.setClassName("svgIcon");
+        icon.setClassName("Button__icon svgIcon");
         icon.setAttribute("aria-hidden", "true");
         icon.setAttribute("focusable", "false");
         buttonContent.appendChild(icon);
-
-        margin = DOM.createSpan();
-        margin.setClassName("Button__margin");
-        buttonContent.appendChild(margin);
 
         text = DOM.createSpan();
         text.setClassName("Button__text");
         buttonContent.appendChild(text);
 
-        text.setInnerHTML("Close");
+        setText("Close");
     }
 
     private int getRelativeX(final Event e, final Element target) {
@@ -179,10 +179,12 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
 
     @Override
     public void setText(final String text) {
+        this.backgroundText.setInnerHTML(text);
         this.text.setInnerHTML(text);
     }
 
     public void setIcon(final SvgImage svgImage) {
+        icon.addClassName("Button__icon--visible");
         icon.setInnerHTML(svgImage.getSvg());
     }
 

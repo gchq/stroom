@@ -17,13 +17,14 @@
 # ~~~ stroom base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Intermediate build stage that is common to stroom and proxy to speed up
-# the build
+# the build. Keep both statements the same between this and stroom-proxy
+# so they can each use the same cached layer.
 
 # The JDK (rather than JRE) is required for the diagnostic tools like
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.2_10-jdk-alpine-3.23@sha256:da683f4f02f9427597d8fa162b73b8222fe08596dcebaf23e4399576ff8b037e AS stroom-base-stage
+FROM eclipse-temurin:25.0.3_9-jdk-alpine-3.23@sha256:5ecfde8e5ecde5954ea3721155b345ef56c1d579b940c761318ad4c05959a151 AS stroom-base-stage
 
 # bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
@@ -62,7 +63,10 @@ EXPOSE 8081
 # A Bind mount volume RO to the container for config files.
 VOLUME /stroom/config/
 
-# Create Docker volume for the content_pack_import dir as this will be mutated on 
+# Create Docker volume for indexed doc content.
+VOLUME /stroom/content_index/
+
+# Create Docker volume for the content_pack_import dir as this will be mutated on
 VOLUME /stroom/content_pack_import/
 
 # Create Docker volume for data feed idenity files to be dropped into
@@ -100,7 +104,7 @@ VOLUME /stroom/search_results/
 # Create Docker volume for Stroom's volumes dir
 VOLUME /stroom/volumes/
 
-# run entrypoint script inside tini for better unix process handling, 
+# run entrypoint script inside tini for better unix process handling,
 # see https://github.com/krallin/tini/issues/8
 ENTRYPOINT ["/sbin/tini", "--", "/stroom/docker-entrypoint.sh"]
 
@@ -125,6 +129,7 @@ RUN \
     mkdir -p /stroom/config && \
     mkdir -p /stroom/config_fallback && \
     mkdir -p /stroom/content_pack_import && \
+    mkdir -p /stroom/content_index && \
     mkdir -p /stroom/data_feed_identities && \
     mkdir -p /stroom/git_repo && \
     mkdir -p /stroom/lmdb && \
@@ -151,7 +156,7 @@ COPY --chown=stroom:stroom ./build/content_packs /stroom/content_pack_import
 # Copy all the distribution scripts
 COPY --chown=stroom:stroom *.sh /stroom/
 
-# This config file is a fallback for use in development 
+# This config file is a fallback for use in development
 # (or when a stack with the config bind mount is not available)
 COPY --chown=stroom:stroom build/config.yml /stroom/config_fallback/config.yml
 

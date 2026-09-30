@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import stroom.planb.client.presenter.HistogramSettingsPresenter.HistogramSetting
 import stroom.planb.client.view.GeneralSettingsView;
 import stroom.planb.client.view.HistogramKeySchemaSettingsView;
 import stroom.planb.client.view.HistogramValueSchemaSettingsView;
+import stroom.planb.client.view.HttpStoreSettingsView;
 import stroom.planb.client.view.RetentionSettingsView;
-import stroom.planb.client.view.SnapshotSettingsView;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.HistogramSettings;
 
@@ -78,7 +78,7 @@ public class HistogramSettingsPresenter
             View,
             GeneralSettingsView,
             RetentionSettingsView,
-            SnapshotSettingsView,
+            HttpStoreSettingsView,
             HistogramKeySchemaSettingsView,
             HistogramValueSchemaSettingsView,
             ReadOnlyChangeHandler,

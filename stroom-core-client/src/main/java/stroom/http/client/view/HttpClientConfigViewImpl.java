@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -50,6 +49,8 @@ public class HttpClientConfigViewImpl
     DurationPicker timeToLive;
     @UiField
     CustomCheckBox cookiesEnabled;
+    @UiField
+    CustomCheckBox followRedirects;
     @UiField
     ValueSpinner maxConnections;
     @UiField
@@ -85,6 +86,7 @@ public class HttpClientConfigViewImpl
         connectionRequestTimeout.setEnabled(!readOnly);
         timeToLive.setEnabled(!readOnly);
         cookiesEnabled.setEnabled(!readOnly);
+        followRedirects.setEnabled(!readOnly);
         maxConnections.setEnabled(!readOnly);
         maxConnectionsPerRoute.setEnabled(!readOnly);
         keepAlive.setEnabled(!readOnly);
@@ -148,6 +150,16 @@ public class HttpClientConfigViewImpl
     }
 
     @Override
+    public void setFollowRedirects(final boolean followRedirects) {
+        this.followRedirects.setValue(followRedirects);
+    }
+
+    @Override
+    public boolean isFollowRedirects() {
+        return followRedirects.getValue();
+    }
+
+    @Override
     public void setMaxConnections(final int maxConnections) {
         this.maxConnections.setValue(maxConnections);
     }
@@ -195,23 +207,6 @@ public class HttpClientConfigViewImpl
     @Override
     public SimpleDuration getValidateAfterInactivityPeriod() {
         return validateAfterInactivityPeriod.getValue();
-    }
-
-    @UiHandler({
-            "timeout",
-            "connectionTimeout",
-            "connectionRequestTimeout",
-            "timeToLive",
-            "cookiesEnabled",
-            "maxConnections",
-            "maxConnectionsPerRoute",
-            "keepAlive",
-            "retries",
-            "validateAfterInactivityPeriod"})
-    public void onChange(final ValueChangeEvent<?> event) {
-        if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
-        }
     }
 
     @UiHandler("setHttpTlsConfig")

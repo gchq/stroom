@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,25 @@ import stroom.analytics.impl.ExecuteNowProviderBinder;
 import stroom.analytics.impl.ScheduledExecutorService;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.datagen.shared.DataGenDoc;
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
+/**
+ * Guice bindings for the data generator: its document store, REST resource, audit logging, and the
+ * scheduled job that runs the generators.
+ * <p>
+ * The "Data Generator" job is bound disabled and marked advanced, since generating data is not
+ * something a normal installation should be doing until an admin asks for it. Scheduling itself is
+ * borrowed from the analytics module, so a data generator is driven by an
+ * {@code ExecutionSchedule} exactly as a scheduled analytic rule is.
+ * </p>
+ */
 public class DataGenModule extends AbstractModule {
 
     @Override
@@ -47,17 +53,8 @@ public class DataGenModule extends AbstractModule {
                         .enabledOnBootstrap(false)
                         .advanced(true));
 
-        bind(DataGenStore.class).to(DataGenStoreImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(DataGenStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(DataGenStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(DataGenStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(DataGenDoc.TYPE, DataGenStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(DataGenDoc.TYPE, DataGenStore.class, DataGenStoreImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
@@ -70,6 +67,13 @@ public class DataGenModule extends AbstractModule {
                 .bind(DataGenResourceImpl.class);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Entry point for the scheduled "Data Generator" job: runs every generator that is due.
+     */
     private static class ScheduledDataGenExecutorRunnable extends RunnableWrapper {
 
         @Inject
@@ -79,21 +83,28 @@ public class DataGenModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Runs a single generator immediately, on demand, from the Execution tab of the editor.
+     */
     private static class DataGenExecuteNow implements ExecuteNow {
 
         private final ScheduledExecutorService<DataGenDoc> scheduledExecutorService;
-        private final ScheduledDataGenExecutable scheduledQueryAnalyticExecutor;
+        private final ScheduledDataGenExecutable scheduledDataGenExecutable;
 
         @Inject
         DataGenExecuteNow(final ScheduledExecutorService<DataGenDoc> scheduledExecutorService,
-                          final ScheduledDataGenExecutable scheduledQueryAnalyticExecutor) {
+                          final ScheduledDataGenExecutable scheduledDataGenExecutable) {
             this.scheduledExecutorService = scheduledExecutorService;
-            this.scheduledQueryAnalyticExecutor = scheduledQueryAnalyticExecutor;
+            this.scheduledDataGenExecutable = scheduledDataGenExecutable;
         }
 
         @Override
         public void execute(final ExecutionSchedule executionSchedule) {
-            scheduledExecutorService.executeNow(executionSchedule, scheduledQueryAnalyticExecutor);
+            scheduledExecutorService.executeNow(executionSchedule, scheduledDataGenExecutable);
         }
     }
 }

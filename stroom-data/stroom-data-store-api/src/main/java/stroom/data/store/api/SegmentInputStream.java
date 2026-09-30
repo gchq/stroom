@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import java.io.IOException;
 
 /**
  * <p>
- * This class overrides <code>InputStream</code> and is used to read input
- * created by a <code>SegmentOutputStream</code>. Input can be filtered to only
+ * This class overrides {@link java.io.InputStream} and is used to read input
+ * created by a {@link SegmentOutputStream}. Input can be filtered to only
  * include or exclude specific segments when read.
  * </p>
  * <p>
@@ -44,6 +44,7 @@ public abstract class SegmentInputStream extends SizeAwareInputStream {
 
     /**
      * Includes a specific segment number when reading from this input stream.
+     * Zero based.
      */
     public abstract void include(long segment);
 
@@ -57,13 +58,20 @@ public abstract class SegmentInputStream extends SizeAwareInputStream {
      * Excludes a specific segment number when reading from this input stream.
      * Initially all segments are included so setting this will exclude only the
      * specified segment.
+     * Zero based.
+     *
+     * @deprecated Doesn't seem to be used to non-test code.
      */
+    @Deprecated
     public abstract void exclude(long segment);
 
     /**
      * Excludes all segments when reading from this input stream. It is unlikely
      * that all input should be excluded, instead this method should be used to
      * clear all includes that have been specifically set.
+     *
+     * @deprecated Doesn't seem to be used to non-test code.
      */
+    @Deprecated
     public abstract void excludeAll();
 }

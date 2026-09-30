@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -87,9 +88,9 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
                              @JsonProperty("salt") final String salt,
                              @JsonProperty("hashAlgorithm") final DataFeedKeyHashAlgorithm hashAlgorithm,
                              @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
-                             @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
+                             @JsonProperty("expiryDateEpochMs") final Long expiryDateEpochMs) {
         this.hash = NullSafe.requireNonBlankString(hash, () -> "hash must not be blank");
-        this.salt = NullSafe.requireNonBlankString(salt, () -> "salt must not be blank");
+        this.salt = salt;
         this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm, "hashAlgorithm must not be null");
         // No point holding blank keys or null values
         this.ciStreamMetaData = NullSafe.map(streamMetaData)
@@ -111,7 +112,7 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
         // It would be nice not have this field but TestJsonSerialisation can't cope with
         // not having a field with @JsonProperty and doesn't like complex map keys.
         this.streamMetaData = Collections.unmodifiableMap(CIKey.convertToStringMap(ciStreamMetaData));
-        this.expiryDateEpochMs = expiryDateEpochMs;
+        this.expiryDateEpochMs = Objects.requireNonNullElse(expiryDateEpochMs, 0L);
         // Cache the hashCode as we know we will use it
         this.hashCode = Objects.hash(
                 hash,
@@ -137,6 +138,11 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
         return hash;
     }
 
+    /**
+     * @return The salt used during the hashing process. May be null if no salt is used
+     * or if the algorithm encodes the salt in the hash (e.g. BCrypt)
+     */
+    @Nullable
     public String getSalt() {
         return salt;
     }

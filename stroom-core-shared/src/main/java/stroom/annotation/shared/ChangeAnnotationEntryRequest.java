@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,19 +40,19 @@ public class ChangeAnnotationEntryRequest {
     @JsonCreator
     public ChangeAnnotationEntryRequest(
             @JsonProperty("annotationIdentity") final AnnotationIdentity annotationIdentity,
-            @JsonProperty("annotationEntryId") final long annotationEntryId,
+            @JsonProperty("annotationEntryId") final Long annotationEntryId,
             @JsonProperty("annotationEntryType") final AnnotationEntryType annotationEntryType,
             @JsonProperty("data") final String data) {
 
         this.annotationIdentity = Objects.requireNonNull(annotationIdentity);
-        this.annotationEntryId = annotationEntryId;
+        this.annotationEntryId = Objects.requireNonNullElse(annotationEntryId, 0L);
         this.annotationEntryType = annotationEntryType;
         this.data = data;
     }
 
     @SerialisationTestConstructor
     public ChangeAnnotationEntryRequest() {
-        this.annotationIdentity = new AnnotationIdentity("my-uuid", 1);
+        this.annotationIdentity = new AnnotationIdentity("my-uuid", 1L);
         this.annotationEntryId = 1;
         this.annotationEntryType = AnnotationEntryType.COMMENT;
         this.data = null;

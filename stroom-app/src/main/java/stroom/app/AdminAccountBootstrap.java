@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ import java.util.Set;
 
 /**
  * Class for setting up the default admin user account if isAutoCreateAdminAccountOnBoot is true and
- * stroom is configured with idpType INTERNAL_IDP or TEST_CREDENTIALS.
+ * stroom is configured with idpType INTERNAL_IDP.
  * It is intended to run once at boot time on a single node.
  */
 public class AdminAccountBootstrap {
@@ -107,13 +107,8 @@ public class AdminAccountBootstrap {
                 final Set<Item> allItems = Item.allItems();
                 if (!checkItemsPresent().containsAll(allItems)) {
                     // We will likely only come in here once per node, so future reboots will not
-                    // be impacted.
-
-                    // TODO We ought to be using tryLock, but on 7.10 that is using ClusterLockClusterHandler
-                    //  rather than DB record locking. I got errors maybe due to trying to lock
-                    //  before the cluster is fully established. tryLock() has changed in 7.11 so switch to
-                    //  that in 7.11+.
-                    clusterLockService.lock(LOCK_NAME, () -> {
+                    // be impacted. Only one node needs to do this
+                    clusterLockService.tryLock(LOCK_NAME, () -> {
                         LOGGER.debug("startup() - acquired lock");
                         // Re-check under lock
                         final Set<Item> itemsPresent = checkItemsPresent();
@@ -167,8 +162,11 @@ public class AdminAccountBootstrap {
                 ADMIN_ACCOUNT_PASSWORD,
                 forcePasswordChange,
                 true);
-        // This will also create the stroom user for the account
-        accountService.create(createAccountRequest);
+        // This will also create the stroom user for the account. The password policy is deliberately not
+        // enforced here: the default admin/admin is a known-weak bootstrap credential that is force-changed
+        // on first login, and enforcing the configured policy would break autoCreateAdminAccountOnBoot
+        // whenever a real minimumPasswordLength/Strength is set.
+        accountService.create(createAccountRequest, false);
         final String msg = LogUtil.message("Created Stroom user account '{}'", ADMIN_ACCOUNT_NAME);
         logAccountCreationEvent(ADMIN_ACCOUNT_NAME, true, msg);
         LOGGER.info(msg);
@@ -223,8 +221,7 @@ public class AdminAccountBootstrap {
     private boolean isEnabled() {
         final IdpType idpType = stroomOpenIdConfigProvider.get().getIdentityProviderType();
         final boolean isAutoCreateAdminAccountOnBoot = identityConfigProvider.get().isAutoCreateAdminAccountOnBoot();
-        final boolean isEnabled = isAutoCreateAdminAccountOnBoot
-                                  && (idpType == IdpType.INTERNAL_IDP || idpType == IdpType.TEST_CREDENTIALS);
+        final boolean isEnabled = isAutoCreateAdminAccountOnBoot && idpType == IdpType.INTERNAL_IDP;
         LOGGER.debug("isEnabled() - isAutoCreateAdminAccountOnBoot: {}, idpType: {}, returning: {}",
                 isAutoCreateAdminAccountOnBoot, idpType, isEnabled);
         return isEnabled;

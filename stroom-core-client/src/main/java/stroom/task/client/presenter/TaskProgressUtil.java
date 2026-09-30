@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ class TaskProgressUtil {
         for (int i = range.getStart(); i < range.getStart() + range.getLength() && i < resultList.size(); i++) {
             trimmed.add(resultList.get(i));
         }
-        return new ResultPage<>(trimmed, new PageResponse(range.getStart(), trimmed.size(), total, true));
+        return new ResultPage<>(trimmed, new PageResponse((long) range.getStart(), trimmed.size(), total, true));
     }
 
     static List<TaskProgress> createList(final Map<TaskId, TaskProgress> taskProgressMap,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
 import stroom.query.api.TimeRanges;
+import stroom.query.shared.QueryTablePreferences;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -37,6 +38,9 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
+
+    private static final boolean DEFAULT_REMEMBER_NOTIFICATIONS = false;
+    private static final boolean DEFAULT_SUPPRESS_DUPLICATE_NOTIFICATIONS = false;
 
     @JsonProperty
     private final String description;
@@ -67,26 +71,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     private final boolean suppressDuplicateNotifications;
     @JsonProperty
     private final DuplicateNotificationConfig duplicateNotificationConfig;
-
-    /**
-     * A rule's level denotes its severity.
-     * A high level rule detection should be prioritised over a low level rule detection.
-     **/
     @JsonProperty
-    private final String level;
-
-    /**
-     * A rule's status denotes how reliable it is. There are several stages:
-     *  - Experimental: An early-stage rule that may be incomplete. Expect more false positives.
-     *  - Testing: More mature than experimental rules. Actively being validated in rela environments.
-     *    Expect some false positives.
-     *  - Stable: Considered production-ready. Has been thoroughly tested across multiple environments.
-     *    Expect a reasonable false positive rate.
-     *  - Deprecated: An outdated or superseded rule that may rely on old techniques or assumptions.
-     *    Generally avoid using these in production.
-     **/
-    @JsonProperty
-    private final String status;
+    private final QueryTablePreferences queryTablePreferences;
 
     @JsonCreator
     @SuppressWarnings("checkstyle:linelength")
@@ -108,11 +94,10 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
                                    @JsonProperty("notifications") final List<NotificationConfig> notifications,
                                    @JsonProperty("errorFeed") final DocRef errorFeed,
-                                   @JsonProperty("rememberNotifications") final boolean rememberNotifications,
-                                   @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
+                                   @JsonProperty("rememberNotifications") final Boolean rememberNotifications,
+                                   @JsonProperty("suppressDuplicateNotifications") final Boolean suppressDuplicateNotifications,
                                    @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
-                                   @JsonProperty("level") final String level,
-                                   @JsonProperty("status") final String status) {
+                                   @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = NullSafe.string(description);
         this.languageVersion = Objects.requireNonNullElse(languageVersion, QueryLanguageVersion.STROOM_QL_VERSION_0_1);
@@ -130,17 +115,17 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             this.notifications.add(analyticNotificationConfig);
         }
         this.errorFeed = errorFeed;
-        this.rememberNotifications = rememberNotifications;
-        this.suppressDuplicateNotifications = suppressDuplicateNotifications;
+        this.rememberNotifications = Objects.requireNonNullElse(rememberNotifications,
+                DEFAULT_REMEMBER_NOTIFICATIONS);
+        this.suppressDuplicateNotifications = Objects.requireNonNullElse(suppressDuplicateNotifications,
+                DEFAULT_SUPPRESS_DUPLICATE_NOTIFICATIONS);
         this.duplicateNotificationConfig = Objects.requireNonNullElseGet(duplicateNotificationConfig,
                 () -> new DuplicateNotificationConfig(
                         rememberNotifications,
                         suppressDuplicateNotifications,
                         false,
                         Collections.emptyList()));
-
-        this.level = level;
-        this.status = status;
+        this.queryTablePreferences = queryTablePreferences;
     }
 
     public String getDescription() {
@@ -179,14 +164,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         return errorFeed;
     }
 
-    public String getLevel() {
-        return level;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
     @Deprecated
     public boolean isRememberNotifications() {
         return rememberNotifications;
@@ -199,6 +176,14 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     public DuplicateNotificationConfig getDuplicateNotificationConfig() {
         return duplicateNotificationConfig;
+    }
+
+    /**
+     * @return The presentation settings, e.g. hidden columns, that the user has applied to the results table in the
+     * query editor. StroomQL cannot express these so they are held against the document.
+     */
+    public QueryTablePreferences getQueryTablePreferences() {
+        return queryTablePreferences;
     }
 
     @Override
@@ -222,7 +207,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig) &&
                Objects.equals(notifications, that.notifications) &&
                Objects.equals(errorFeed, that.errorFeed) &&
-               Objects.equals(duplicateNotificationConfig, that.duplicateNotificationConfig);
+               Objects.equals(duplicateNotificationConfig, that.duplicateNotificationConfig) &&
+               Objects.equals(queryTablePreferences, that.queryTablePreferences);
     }
 
     @Override
@@ -241,8 +227,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                 rememberNotifications,
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig,
-                level,
-                status);
+                queryTablePreferences);
     }
 
     @Override
@@ -261,8 +246,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                ", rememberNotifications=" + rememberNotifications +
                ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
                ", duplicateNotificationConfig=" + duplicateNotificationConfig +
-               ", level=" + level +
-               ", status=" + status +
+               ", queryTablePreferences=" + queryTablePreferences +
                '}';
     }
 
@@ -280,9 +264,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         List<NotificationConfig> notifications;
         DocRef errorFeed;
         DuplicateNotificationConfig duplicateNotificationConfig;
-
-        String level;
-        String status;
+        QueryTablePreferences queryTablePreferences;
 
         public AbstractAnalyticRuleDocBuilder() {
             languageVersion = QueryLanguageVersion.STROOM_QL_VERSION_0_1;
@@ -301,8 +283,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             this.notifications = new ArrayList<>(doc.notifications);
             this.errorFeed = doc.errorFeed;
             this.duplicateNotificationConfig = doc.duplicateNotificationConfig;
-            this.level = doc.level;
-            this.status = doc.status;
+            this.queryTablePreferences = doc.queryTablePreferences;
         }
 
         public B description(final String description) {
@@ -355,13 +336,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             return self();
         }
 
-        public B level(final String level) {
-            this.level = level;
-            return self();
-        }
-
-        public B status(final String status) {
-            this.status = status;
+        public B queryTablePreferences(final QueryTablePreferences queryTablePreferences) {
+            this.queryTablePreferences = queryTablePreferences;
             return self();
         }
     }

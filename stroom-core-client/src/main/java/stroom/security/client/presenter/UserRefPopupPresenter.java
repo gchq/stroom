@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,7 @@ public class UserRefPopupPresenter
         this.restFactory = restFactory;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Users");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
@@ -156,8 +157,6 @@ public class UserRefPopupPresenter
                         .withToolTip("The full name of the user. Groups do not have a full name.")
                         .build(),
                 350);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     @Override

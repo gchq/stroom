@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,10 +60,10 @@ public class StringMatch {
 
     @JsonCreator
     public StringMatch(@JsonProperty("matchType") final MatchType matchType,
-                       @JsonProperty("caseSensitive") final boolean caseSensitive,
+                       @JsonProperty("caseSensitive") final Boolean caseSensitive,
                        @JsonProperty("pattern") final String pattern) {
         this.matchType = matchType;
-        this.caseSensitive = caseSensitive;
+        this.caseSensitive = Objects.requireNonNullElse(caseSensitive, false);
         this.pattern = pattern;
     }
 

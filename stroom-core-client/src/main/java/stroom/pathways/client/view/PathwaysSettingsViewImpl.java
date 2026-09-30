@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class PathwaysSettingsViewImpl
     public PathwaysSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         temporalOrderingTolerance.smallTimeMode();
-        temporalOrderingTolerance.setValue(new SimpleDuration(0, TimeUnit.NANOSECONDS));
+        temporalOrderingTolerance.setValue(new SimpleDuration(0L, TimeUnit.NANOSECONDS));
     }
 
     @Override
@@ -88,7 +88,7 @@ public class PathwaysSettingsViewImpl
     @Override
     public void setTemporalOrderingTolerance(final SimpleDuration temporalOrderingTolerance) {
         if (temporalOrderingTolerance == null) {
-            this.temporalOrderingTolerance.setValue(new SimpleDuration(0, TimeUnit.NANOSECONDS));
+            this.temporalOrderingTolerance.setValue(new SimpleDuration(0L, TimeUnit.NANOSECONDS));
         } else {
             this.temporalOrderingTolerance.setValue(temporalOrderingTolerance);
         }

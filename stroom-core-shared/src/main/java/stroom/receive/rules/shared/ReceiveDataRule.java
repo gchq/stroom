@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,16 +46,16 @@ public class ReceiveDataRule {
     private final ReceiveAction action;
 
     @JsonCreator
-    public ReceiveDataRule(@JsonProperty("ruleNumber") final int ruleNumber,
-                           @JsonProperty("creationTime") final long creationTime,
+    public ReceiveDataRule(@JsonProperty("ruleNumber") final Integer ruleNumber,
+                           @JsonProperty("creationTime") final Long creationTime,
                            @JsonProperty("name") final String name,
-                           @JsonProperty("enabled") final boolean enabled,
+                           @JsonProperty("enabled") final Boolean enabled,
                            @JsonProperty("expression") final ExpressionOperator expression,
                            @JsonProperty("action") final ReceiveAction action) {
-        this.ruleNumber = ruleNumber;
-        this.creationTime = creationTime;
+        this.ruleNumber = Objects.requireNonNullElse(ruleNumber, 0);
+        this.creationTime = Objects.requireNonNullElse(creationTime, 0L);
         this.name = name;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.expression = expression;
         this.action = Objects.requireNonNull(action);
     }

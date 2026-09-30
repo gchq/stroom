@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  */
 
 package stroom.planb.impl;
+
+import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.SharedFileStoreSettings;
+import stroom.planb.shared.TraceSettings;
 
 import org.junit.jupiter.api.Test;
 

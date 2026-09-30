@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,11 +100,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     private ReceiveDataRules getReceiveDataRules(final AppPermissionSet requiredPerms) {
         final ReceiveDataRules receiveDataRules = securityContext.secureResult(
                 Objects.requireNonNull(requiredPerms),
-                () -> {
-                    // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
-                    // access it via the proc user. Assumes it is called from a service that will
-                    return securityContext.asProcessingUserResult(receiveDataRuleSetStore::getOrCreate);
-                });
+                receiveDataRuleSetStore::getOrCreate);
         LOGGER.debug("getReceiveDataRules() - receiveDataRules: {}", receiveDataRules);
         return receiveDataRules;
     }
@@ -113,12 +109,8 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     public ReceiveDataRules updateReceiveDataRules(final ReceiveDataRules receiveDataRules) {
 
         final ReceiveDataRules receiveDataRules2 = securityContext.secureResult(
-                MANAGE_RULES_PERM_SET, () -> {
-                    // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
-                    // access it via the proc user. Assumes it is called from a service that will
-                    return securityContext.asProcessingUserResult(() ->
-                            receiveDataRuleSetStore.writeDocument(receiveDataRules));
-                });
+                MANAGE_RULES_PERM_SET, () ->
+                        receiveDataRuleSetStore.writeDocument(receiveDataRules));
         LOGGER.debug("updateReceiveDataRules() - receiveDataRules2: {}", receiveDataRules2);
         return receiveDataRules2;
     }

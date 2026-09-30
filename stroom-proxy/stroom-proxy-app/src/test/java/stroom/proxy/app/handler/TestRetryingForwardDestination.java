@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import stroom.test.common.TestUtil;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.exception.ThrowingSupplier;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -94,7 +95,8 @@ class TestRetryingForwardDestination {
                 new SimplePathCreator(() -> homeDir, () -> tempDir),
                 dirQueueFactory,
                 proxyServices,
-                mockFileStores);
+                mockFileStores,
+                FsyncMode.DISABLED);
 
         proxyServices.start();
 
@@ -135,7 +137,8 @@ class TestRetryingForwardDestination {
                 new SimplePathCreator(() -> homeDir, () -> tempDir),
                 dirQueueFactory,
                 proxyServices,
-                mockFileStores);
+                mockFileStores,
+                FsyncMode.DISABLED);
 
         proxyServices.start();
 
@@ -183,7 +186,8 @@ class TestRetryingForwardDestination {
                 new SimplePathCreator(() -> homeDir, () -> tempDir),
                 dirQueueFactory,
                 proxyServices,
-                mockFileStores);
+                mockFileStores,
+                FsyncMode.DISABLED);
 
         proxyServices.start();
 

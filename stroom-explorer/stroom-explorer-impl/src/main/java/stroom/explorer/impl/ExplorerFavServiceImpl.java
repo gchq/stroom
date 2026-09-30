@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.ExplorerFavService;
 import stroom.explorer.api.ExplorerService;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -37,17 +38,17 @@ public class ExplorerFavServiceImpl implements ExplorerFavService {
 
     private final ExplorerFavDao explorerFavDao;
     private final SecurityContext securityContext;
-    private final Provider<DocRefInfoService> docRefInfoService;
+    private final Provider<DocFinder> docFinderProvider;
     private final Provider<ExplorerService> explorerService;
 
     @Inject
     ExplorerFavServiceImpl(final ExplorerFavDao explorerFavDao,
                            final SecurityContext securityContext,
-                           final Provider<DocRefInfoService> docRefInfoService,
+                           final Provider<DocFinder> docFinderProvider,
                            final Provider<ExplorerService> explorerService) {
         this.explorerFavDao = explorerFavDao;
         this.securityContext = securityContext;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinderProvider = docFinderProvider;
         this.explorerService = explorerService;
     }
 
@@ -68,11 +69,23 @@ public class ExplorerFavServiceImpl implements ExplorerFavService {
     @Override
     public List<DocRef> getUserFavourites() {
         final UserRef userRef = getCurrentUser();
-        return explorerFavDao.getUserFavourites(getCurrentUser())
+        final List<DocRef> favourites = explorerFavDao.getUserFavourites(userRef);
+
+        // Decorate as the processing user so that we don't filter on view permission here. The tree decides
+        // what the user can actually see and it shows folder like items that the user has no view permission
+        // on so they can reach the children that they can view. Filtering here would hide such a favourite
+        // and leave the user unable to unset it.
+        return securityContext.asProcessingUserResult(() -> favourites
                 .stream()
                 .map(docRef -> {
+                    // Folders are not documents so have no row in `doc` to decorate from. The name held in
+                    // `explorer_node` is the only name they have and the dao has already supplied it.
+                    if (ExplorerConstants.FOLDER_TYPE.equals(docRef.getType())) {
+                        return docRef;
+                    }
+
                     try {
-                        return docRefInfoService.get().decorate(docRef);
+                        return docFinderProvider.get().decorateIfExists(docRef).orElseThrow();
                     } catch (final RuntimeException e) {
                         // Doc info couldn't be found, probably due to a document that exists in the `explorer_node`
                         // table, but not `doc`.
@@ -81,7 +94,7 @@ public class ExplorerFavServiceImpl implements ExplorerFavService {
                     }
                 })
                 .filter(Objects::nonNull)
-                .toList();
+                .toList());
     }
 
     @Override

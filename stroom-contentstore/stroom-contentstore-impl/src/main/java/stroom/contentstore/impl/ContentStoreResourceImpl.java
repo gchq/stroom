@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,10 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.util.yaml.YamlUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import tools.jackson.databind.exc.UnrecognizedPropertyException;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -199,7 +199,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
         }
 
         // Grab YAML describing the content store
-        final ObjectMapper mapper = YamlUtil.getMapper();
+        final YAMLMapper mapper = YamlUtil.getMapper();
         final List<ContentStoreContentPackWithDynamicState> contentPacksWithState = new ArrayList<>();
 
         for (final String contentStoreUrl : contentStoreUrls) {

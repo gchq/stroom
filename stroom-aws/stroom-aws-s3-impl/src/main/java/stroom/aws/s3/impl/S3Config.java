@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder(alphabetic = true)
 public class S3Config extends AbstractConfig implements IsStroomConfig {
+
+    private static final String DEFAULT_SKELETON_CONFIG_CONTENT = """
+            {
+              "credentialsProviderType" : "DEFAULT",
+              "region" : "eu-west-2",
+              "bucketName" : "XXXX-eu-west-2",
+              "keyPattern" : "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip"
+            }
+            """;
 
     private final String skeletonConfigContent;
     private final CacheConfig s3ConfigDocCache;
@@ -63,18 +72,8 @@ public class S3Config extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "S3Config{" +
-                "skeletonConfigContent='" + skeletonConfigContent + '\'' +
-                ", s3ConfigDocCache=" + s3ConfigDocCache +
-                '}';
+               "skeletonConfigContent='" + skeletonConfigContent + '\'' +
+               ", s3ConfigDocCache=" + s3ConfigDocCache +
+               '}';
     }
-
-    // Put this at the bottom to keep it out of the way
-    private static final String DEFAULT_SKELETON_CONFIG_CONTENT = """
-            {
-              "credentialsProviderType" : "DEFAULT",
-              "region" : "eu-west-2",
-              "bucketName" : "XXXX-eu-west-2",
-              "keyPattern" : "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}.zip"
-            }
-            """;
 }

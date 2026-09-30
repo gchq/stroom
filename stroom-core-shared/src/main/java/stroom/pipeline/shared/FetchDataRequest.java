@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchDataRequest {
@@ -78,15 +79,15 @@ public class FetchDataRequest {
 
     @JsonCreator
     public FetchDataRequest(@JsonProperty("sourceLocation") final SourceLocation sourceLocation,
-                            @JsonProperty("recordCount") final long recordCount,
+                            @JsonProperty("recordCount") final Long recordCount,
                             @JsonProperty("pipeline") final DocRef pipeline,
-                            @JsonProperty("showAsHtml") final boolean showAsHtml,
+                            @JsonProperty("showAsHtml") final Boolean showAsHtml,
                             @JsonProperty("expandedSeverities") final Severity[] expandedSeverities,
                             @JsonProperty("displayMode") final DisplayMode displayMode) {
         this.sourceLocation = sourceLocation;
-        this.recordCount = recordCount;
+        this.recordCount = Objects.requireNonNullElse(recordCount, 0L);
         this.pipeline = pipeline;
-        this.showAsHtml = showAsHtml;
+        this.showAsHtml = Objects.requireNonNullElse(showAsHtml, false);
         this.expandedSeverities = expandedSeverities;
         this.displayMode = displayMode;
     }

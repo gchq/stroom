@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
 
 /**
  * A completion proposed by an {@link AceCompletionProvider}. This particular implementation
@@ -97,12 +99,12 @@ public final class CompletionSnippet implements CompletionItem {
     @JsonCreator
     public CompletionSnippet(@JsonProperty("caption") final String caption,
                              @JsonProperty("snippet") final String snippet,
-                             @JsonProperty("score") final int score,
+                             @JsonProperty("score") final Integer score,
                              @JsonProperty("meta") final String meta,
                              @JsonProperty("tooltip") final String tooltip) {
         this.caption = caption;
         this.snippet = snippet;
-        this.score = score;
+        this.score = Objects.requireNonNullElse(score, 0);
         this.meta = meta;
         this.tooltip = tooltip;
     }

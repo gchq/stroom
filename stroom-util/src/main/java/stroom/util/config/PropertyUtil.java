@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package stroom.util.config;
 
 
-import stroom.util.json.JsonUtil;
+import stroom.util.json.JsonV2Util;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -61,6 +61,8 @@ import java.util.stream.Collectors;
 public final class PropertyUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PropertyUtil.class);
+    // TODO Use legacy v2 jackson as introspect() is not a thing in v3
+    private static final ObjectMapper OBJECT_MAPPER = createV2ObjectMapper();
 
     private PropertyUtil() {
         // Utility class.
@@ -112,6 +114,13 @@ public final class PropertyUtil {
                     } else if (childValue instanceof Collection<?>) {
                         // We don't want to recurse into collection types
                         LOGGER.trace(() -> LogUtil.message("{}Ignoring Collection value of type {}",
+                                indent + "  ",
+                                childValue.getClass().getSimpleName()));
+                    } else if (childValue instanceof Map<?, ?>) {
+                        // Maps are leaf values just like Collections (e.g. a Map<String, String>
+                        // config prop) - recursing into the JDK map class would fail on its
+                        // private internals.
+                        LOGGER.trace(() -> LogUtil.message("{}Ignoring Map value of type {}",
                                 indent + "  ",
                                 childValue.getClass().getSimpleName()));
                     } else {
@@ -170,9 +179,7 @@ public final class PropertyUtil {
 //                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 //    }
     public static Map<String, Prop> getProperties(final Object object) {
-        final ObjectMapper objectMapper = JsonUtil.getMapper();
-        ;
-        return getProperties(objectMapper, object);
+        return getProperties(OBJECT_MAPPER, object);
     }
 
     public static <T> Map<String, Prop> getProperties(final ObjectMapper objectMapper, final T object) {
@@ -218,8 +225,7 @@ public final class PropertyUtil {
      * Builds a map of property name to {@link Prop} object that provides access to the getter/setter.
      * Only includes public properties, not package private
      */
-    public static <T> ObjectInfo<T> getObjectInfo(final ObjectMapper objectMapper,
-                                                  final String name,
+    public static <T> ObjectInfo<T> getObjectInfo(final String name,
                                                   final T object) {
         Objects.requireNonNull(object);
         LOGGER.trace("getProperties called for {}", object);
@@ -227,9 +233,8 @@ public final class PropertyUtil {
 
         final Class<T> clazz = (Class<T>) object.getClass();
 
-        final JavaType userType = objectMapper.getTypeFactory().constructType(object.getClass());
-        final BeanDescription beanDescription =
-                objectMapper.getSerializationConfig().introspect(userType);
+        final JavaType userType = OBJECT_MAPPER.getTypeFactory().constructType(object.getClass());
+        final BeanDescription beanDescription = OBJECT_MAPPER.getSerializationConfig().introspect(userType);
 
         final List<BeanPropertyDefinition> props = beanDescription.findProperties();
         final Set<String> propNames = props.stream()
@@ -308,11 +313,10 @@ public final class PropertyUtil {
     }
 
     public static <T> T copyObject(final T source) {
-        final ObjectMapper objectMapper = JsonUtil.getMapper();
-        final TokenBuffer tb = new TokenBuffer(objectMapper, false); // or one of factory methods
+        final TokenBuffer tb = new TokenBuffer(OBJECT_MAPPER, false); // or one of factory methods
         try {
-            objectMapper.writeValue(tb, source);
-            return (T) objectMapper.readValue(tb.asParser(), source.getClass());
+            OBJECT_MAPPER.writeValue(tb, source);
+            return (T) OBJECT_MAPPER.readValue(tb.asParser(), source.getClass());
         } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error copying object {}: {}", source, e.getMessage()), e);
         }
@@ -500,6 +504,11 @@ public final class PropertyUtil {
     private static String getPropertyName(final String methodName, final int len) {
         final String name = methodName.substring(len);
         return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, name);
+    }
+
+    private static ObjectMapper createV2ObjectMapper() {
+        final ObjectMapper mapper = JsonV2Util.getMapper();
+        return mapper;
     }
 
 
@@ -800,5 +809,4 @@ public final class PropertyUtil {
             return Objects.hash(name, parentObject, getter, setter);
         }
     }
-
 }

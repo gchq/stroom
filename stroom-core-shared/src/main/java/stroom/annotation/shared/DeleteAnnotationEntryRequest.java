@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,10 @@ public class DeleteAnnotationEntryRequest {
     public DeleteAnnotationEntryRequest(
             @JsonProperty("annotationIdentity") final AnnotationIdentity annotationIdentity,
             @JsonProperty("annotationEntryType") final AnnotationEntryType annotationEntryType,
-            @JsonProperty("annotationEntryId") final long annotationEntryId) {
+            @JsonProperty("annotationEntryId") final Long annotationEntryId) {
         this.annotationIdentity = annotationIdentity;
         this.annotationEntryType = annotationEntryType;
-        this.annotationEntryId = annotationEntryId;
+        this.annotationEntryId = Objects.requireNonNullElse(annotationEntryId, 0L);
     }
 
     public AnnotationIdentity getAnnotationIdentity() {

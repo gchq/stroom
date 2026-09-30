@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(ClassificationFunction.class);
         bindFunction(ColFromFunction.class);
         bindFunction(ColToFunction.class);
+        bindFunction(CosineSimilarityFunction.class);
         bindFunction(CurrentTimeFunction.class);
         bindFunction(CurrentUnixTimeFunction.class);
         bindFunction(CurrentUserFunction.class);
@@ -140,6 +141,23 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     new SequenceType[]{},
                     SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class CosineSimilarityFunction extends StroomExtensionFunctionDefinition<CosineSimilarity> {
+
+        @Inject
+        CosineSimilarityFunction(final Provider<CosineSimilarity> functionCallProvider) {
+            super(
+                    CosineSimilarity.FUNCTION_NAME,
+                    2,
+                    2,
+                    new SequenceType[]{
+                            SequenceType.ATOMIC_SEQUENCE,
+                            SequenceType.ATOMIC_SEQUENCE
+                    },
+                    SequenceType.SINGLE_NUMERIC,
                     functionCallProvider);
         }
     }
@@ -441,10 +459,12 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HostAddressFunction(final Provider<HostAddress> functionCallProvider) {
             super(
-                    "host-address",
+                    HostAddress.FUNCTION_NAME,
                     1,
-                    1,
-                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.OPTIONAL_BOOLEAN},
                     SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }
@@ -455,10 +475,12 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HostNameFunction(final Provider<HostName> functionCallProvider) {
             super(
-                    "host-name",
+                    HostName.FUNCTION_NAME,
                     1,
-                    1,
-                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.OPTIONAL_BOOLEAN},
                     SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }

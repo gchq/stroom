@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package stroom.importexport.api;
+
+import stroom.docstore.shared.DocDataType;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,6 +60,7 @@ public class ImportExportDocument {
     /**
      * Adds an asset that should be represented by a file with the key as
      * an extension.
+     *
      * @param asset The asset to add.
      */
     public void addExtAsset(final ImportExportAsset asset) {
@@ -73,6 +76,7 @@ public class ImportExportDocument {
 
     /**
      * Determines whether an extension asset exists with the given key.
+     *
      * @param key The key to check.
      * @return true if the key can be found, false if not.
      */
@@ -82,6 +86,7 @@ public class ImportExportDocument {
 
     /**
      * Returns the extension asset that matches the given key.
+     *
      * @param key The key to search for.
      * @return The extension asset that has the given key, or null if no such asset.
      */
@@ -91,6 +96,7 @@ public class ImportExportDocument {
 
     /**
      * Returns and removes the extension asset that matches the given key.
+     *
      * @param key The asset key to find and remove.
      * @return The extension asset that has the given key, or null if no such asset exists.
      */
@@ -101,6 +107,7 @@ public class ImportExportDocument {
     /**
      * Returns the byte[] data for the asset with the given key, or null
      * if nothing is found. Avoids the client doing lots of null handling.
+     *
      * @param key The key of the required asset.
      * @return The data, or null if nothing is found.
      * @throws IOException If there is a problem reading the data.
@@ -116,6 +123,7 @@ public class ImportExportDocument {
     /**
      * Adds an asset where the key represents a path to the asset in the exported
      * file structure.
+     *
      * @param asset The asset to add.
      */
     public void addPathAsset(final ImportExportAsset asset) {
@@ -141,22 +149,10 @@ public class ImportExportDocument {
         return dataMap;
     }
 
-    /**
-     * Converts a dataMap (legacy format) into the new ImportExportDocument.
-     * @param data The data to convert. Can be null.
-     * @return An ImportExportDocument.
-     */
-    public static ImportExportDocument fromDataMap(final Map<String, byte[]> data) {
-        final ImportExportDocument importExportDocument = new ImportExportDocument();
-
-        if (data != null) {
-            for (final Map.Entry<String, byte[]> entry : data.entrySet()) {
-                final ImportExportAsset asset = new ByteArrayImportExportAsset(entry.getKey(), entry.getValue());
-                importExportDocument.addExtAsset(asset);
-            }
-        }
-
-        return importExportDocument;
+    @Override
+    public String toString() {
+        return "ImportExportDocument{" +
+               "extAssets=" + extAssets.keySet() +
+               '}';
     }
-
 }

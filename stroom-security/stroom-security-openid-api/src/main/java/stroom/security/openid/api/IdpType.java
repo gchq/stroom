@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,12 +35,6 @@ public enum IdpType {
      */
     @JsonPropertyDescription("An external IDP such as KeyCloak/Cognito")
     EXTERNAL_IDP(true),
-
-    /**
-     * Use hard-coded credentials for testing/demo only
-     */
-    @JsonPropertyDescription("Use hard-coded credentials for testing/demo only")
-    TEST_CREDENTIALS(false),
 
     /**
      * No Open ID Connect identity provider. This may be used for remote proxies with no OIDC
