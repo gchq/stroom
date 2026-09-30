@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.5] - 2026-09-30
+
 * Feature **#5551** : Display API key expiry date in red when the key is expired or will expire in <30 days. Change the text in brackets to show `(EXPIRED)` when the key has expired.
 
 * Bug : Fix null pointer exception when entering an empty expiry date for an API key.
@@ -2630,7 +2632,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.5...HEAD
+[v7.14-beta.5]: https://github.com/gchq/stroom/compare/v7.14-beta.4...v7.14-beta.5
 [v7.14-beta.4]: https://github.com/gchq/stroom/compare/v7.14-beta.3...v7.14-beta.4
 [v7.14-beta.3]: https://github.com/gchq/stroom/compare/v7.14-beta.2...v7.14-beta.3
 [v7.14-beta.2]: https://github.com/gchq/stroom/compare/v7.14-beta.1...v7.14-beta.2
