@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class ProxyApiKeyCheckClient extends AbstractDownstreamClient implements 
 
     // This api key will never exist as it is malformed, but we can make sure the resource
     // is working with it.
-    public static final VerifyApiKeyRequest HEALTH_CHECK_REQUEST = new VerifyApiKeyRequest(
+    public static final VerifyApiKeyRequest HEALTH_CHECK_VERIFY_API_KEY_REQUEST = new VerifyApiKeyRequest(
             "DUMMY_API_KEY_FOR_HEALTH_CHECK",
             AppPermissionSet.of(AppPermission.STROOM_PROXY));
 
@@ -132,7 +132,7 @@ public class ProxyApiKeyCheckClient extends AbstractDownstreamClient implements 
         } else {
             try {
                 try (final Response response = getResponse(requestBuilder ->
-                        requestBuilder.post(Entity.json(HEALTH_CHECK_REQUEST)))) {
+                        requestBuilder.post(Entity.json(HEALTH_CHECK_VERIFY_API_KEY_REQUEST)))) {
 
                     HealthCheckUtils.fromResponse(builder, response, Status.NO_CONTENT, getFullUrl());
                 }

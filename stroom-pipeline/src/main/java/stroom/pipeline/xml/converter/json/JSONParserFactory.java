@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,18 @@ import stroom.pipeline.xml.converter.ParserFactory;
 
 import org.xml.sax.XMLReader;
 
+import java.util.Objects;
+
 public class JSONParserFactory implements ParserFactory {
 
-    private JSONFactoryConfig config = new JSONFactoryConfig();
+    private JSONFactoryConfig config = null;
     private boolean addRootObject = true;
 
     @Override
     public XMLReader getParser() {
-        return new JSONParser(config, addRootObject);
+        return new JSONParser(
+                Objects.requireNonNullElseGet(config, JSONFactoryConfig::new),
+                addRootObject);
     }
 
     public void setAddRootObject(final boolean addRootObject) {

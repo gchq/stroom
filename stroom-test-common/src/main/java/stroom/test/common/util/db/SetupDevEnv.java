@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.yaml.YamlUtil;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.File;
 import java.io.IOException;
@@ -325,7 +325,7 @@ public class SetupDevEnv {
             String yamlStr = Files.readString(configFile);
             // Parse the YAML into a map, so we can get the current values to make the
             // string replace a bit more robust
-            final ObjectMapper objectMapper = YamlUtil.getVanillaObjectMapper();
+            final YAMLMapper objectMapper = YamlUtil.getVanillaMapper();
             final Map<String, Object> map = objectMapper.readValue(file, new TypeReference<>() {
             });
             final FileType fileType = getFileType(configFile);

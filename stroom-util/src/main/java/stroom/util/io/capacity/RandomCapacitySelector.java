@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@
 package stroom.util.io.capacity;
 
 
+import stroom.util.RandomUtil;
 import stroom.util.shared.HasCapacity;
 
 import java.util.List;
+import java.util.Objects;
 
 public class RandomCapacitySelector extends AbstractSelector {
 
@@ -31,9 +33,8 @@ public class RandomCapacitySelector extends AbstractSelector {
 
     @Override
     public <T extends HasCapacity> T doSelect(final List<T> filteredList) {
-        final double random = Math.random();
-        final int index = (int) (random * filteredList.size());
-        return filteredList.get(index);
+        Objects.requireNonNull(filteredList);
+        return RandomUtil.getRandomItem(filteredList);
     }
 
     @Override

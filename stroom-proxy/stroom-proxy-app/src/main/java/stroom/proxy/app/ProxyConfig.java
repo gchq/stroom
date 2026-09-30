@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import stroom.proxy.app.event.EventStoreConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ForwardS3Config;
 import stroom.proxy.app.handler.ForwarderConfig;
+import stroom.proxy.app.handler.FsyncConfig;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ThreadConfig;
 import stroom.proxy.repo.AggregatorConfig;
@@ -50,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -71,9 +74,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_DIR_SCANNER = "dirScanner";
     public static final String PROP_NAME_FORWARD_FILE_DESTINATIONS = "forwardFileDestinations";
     public static final String PROP_NAME_FORWARD_HTTP_DESTINATIONS = "forwardHttpDestinations";
+    public static final String PROP_NAME_FORWARD_S3_DESTINATIONS = "forwardS3Destinations";
     public static final String PROP_NAME_LOG_STREAM = "logStream";
     public static final String PROP_NAME_FEED_STATUS = "feedStatus";
     public static final String PROP_NAME_THREADS = "threads";
+    public static final String PROP_NAME_FSYNC = "fsync";
     public static final String PROP_NAME_SECURITY = "security";
     public static final String PROP_NAME_SQS_CONNECTORS = "sqsConnectors";
 
@@ -93,9 +98,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final DirScannerConfig dirScannerConfig;
     private final List<ForwardFileConfig> forwardFileDestinations;
     private final List<ForwardHttpPostConfig> forwardHttpDestinations;
+    private final List<ForwardS3Config> forwardS3Destinations;
     private final LogStreamConfig logStreamConfig;
     private final FeedStatusConfig feedStatusConfig;
     private final ThreadConfig threadConfig;
+    private final FsyncConfig fsyncConfig;
     private final ProxySecurityConfig proxySecurityConfig;
     private final List<SqsConnectorConfig> sqsConnectors;
 
@@ -112,9 +119,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                 new DirScannerConfig(),
                 new ArrayList<>(),
                 new ArrayList<>(),
+                new ArrayList<>(),
                 new LogStreamConfig(),
                 new FeedStatusConfig(),
                 new ThreadConfig(),
+                new FsyncConfig(),
                 new ProxySecurityConfig(),
                 new ArrayList<>());
     }
@@ -134,9 +143,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_DIR_SCANNER) final DirScannerConfig dirScannerConfig,
             @JsonProperty(PROP_NAME_FORWARD_FILE_DESTINATIONS) final List<ForwardFileConfig> forwardFileDestinations,
             @JsonProperty(PROP_NAME_FORWARD_HTTP_DESTINATIONS) final List<ForwardHttpPostConfig> forwardHttpDestinations,
+            @JsonProperty(PROP_NAME_FORWARD_S3_DESTINATIONS) final List<ForwardS3Config> forwardS3Destinations,
             @JsonProperty(PROP_NAME_LOG_STREAM) final LogStreamConfig logStreamConfig,
             @JsonProperty(PROP_NAME_FEED_STATUS) final FeedStatusConfig feedStatusConfig,
             @JsonProperty(PROP_NAME_THREADS) final ThreadConfig threadConfig,
+            @JsonProperty(PROP_NAME_FSYNC) final FsyncConfig fsyncConfig,
             @JsonProperty(PROP_NAME_SECURITY) final ProxySecurityConfig proxySecurityConfig,
             @JsonProperty(PROP_NAME_SQS_CONNECTORS) final List<SqsConnectorConfig> sqsConnectors) {
 
@@ -153,9 +164,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.dirScannerConfig = dirScannerConfig;
         this.forwardFileDestinations = NullSafe.list(forwardFileDestinations);
         this.forwardHttpDestinations = NullSafe.list(forwardHttpDestinations);
+        this.forwardS3Destinations = NullSafe.list(forwardS3Destinations);
         this.logStreamConfig = Objects.requireNonNullElseGet(logStreamConfig, LogStreamConfig::new);
         this.feedStatusConfig = Objects.requireNonNullElseGet(feedStatusConfig, FeedStatusConfig::new);
         this.threadConfig = Objects.requireNonNullElseGet(threadConfig, ThreadConfig::new);
+        this.fsyncConfig = Objects.requireNonNullElseGet(fsyncConfig, FsyncConfig::new);
         this.proxySecurityConfig = Objects.requireNonNullElseGet(proxySecurityConfig, ProxySecurityConfig::new);
         this.sqsConnectors = NullSafe.list(sqsConnectors);
     }
@@ -236,6 +249,23 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return forwardHttpDestinations;
     }
 
+    @RequiresProxyRestart
+    @JsonProperty(PROP_NAME_FORWARD_S3_DESTINATIONS)
+    public List<ForwardS3Config> getForwardS3Destinations() {
+        return forwardS3Destinations;
+    }
+
+    @JsonIgnore
+    public List<ForwarderConfig> getAllForwardDestinations() {
+        return Stream.of(
+                        forwardFileDestinations,
+                        forwardHttpDestinations,
+                        forwardS3Destinations)
+                .filter(Objects::nonNull)
+                .flatMap(NullSafe::stream)
+                .collect(Collectors.toList());
+    }
+
     @JsonProperty(PROP_NAME_LOG_STREAM)
     public LogStreamConfig getLogStreamConfig() {
         return logStreamConfig;
@@ -251,12 +281,18 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return threadConfig;
     }
 
+    @JsonProperty(PROP_NAME_FSYNC)
+    public FsyncConfig getFsyncConfig() {
+        return fsyncConfig;
+    }
+
     @JsonProperty(PROP_NAME_SECURITY)
     public ProxySecurityConfig getProxySecurityConfig() {
         return proxySecurityConfig;
     }
 
-    @JsonPropertyDescription("Configurations for AWS SQS connectors")
+    @JsonPropertyDescription("Configurations for AWS SQS connectors used for the" +
+                             "EventStore (not S3 event notifications)")
     @JsonProperty
     public List<SqsConnectorConfig> getSqsConnectors() {
         return sqsConnectors;
@@ -362,13 +398,14 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
      * state.
      */
     public Stream<ForwarderConfig> streamAllForwarders() {
-        return Stream.concat(
-                NullSafe.stream(getForwardFileDestinations())
-                        .filter(Objects::nonNull)
-                        .map(config -> (ForwarderConfig) config),
-                NullSafe.stream(getForwardHttpDestinations())
-                        .filter(Objects::nonNull)
-                        .map(config -> (ForwarderConfig) config));
+        return Stream.of(
+                        getForwardFileDestinations(),
+                        getForwardHttpDestinations(),
+                        getForwardS3Destinations())
+                .filter(NullSafe::hasItems)
+                .flatMap(List::stream)
+                .filter(Objects::nonNull) // null item
+                .map(config -> (ForwarderConfig) config);
     }
 
     /**
@@ -409,9 +446,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private DirScannerConfig dirScannerConfig = new DirScannerConfig();
         private final List<ForwardFileConfig> forwardFileDestinations = new ArrayList<>();
         private final List<ForwardHttpPostConfig> forwardHttpDestinations = new ArrayList<>();
+        private final List<ForwardS3Config> forwardS3Destinations = new ArrayList<>();
         private LogStreamConfig logStreamConfig = new LogStreamConfig();
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
         private ThreadConfig threadConfig = new ThreadConfig();
+        private FsyncConfig fsyncConfig = new FsyncConfig();
         private ProxySecurityConfig proxySecurityConfig = new ProxySecurityConfig();
         private final List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
 
@@ -495,6 +534,19 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
+        public Builder addForwardS3Destination(final ForwardS3Config forwarderS3Config) {
+            this.forwardS3Destinations.add(forwarderS3Config);
+            return this;
+        }
+
+        public Builder forwardS3Destinations(final Collection<ForwardS3Config> forwarderS3Configs) {
+            this.forwardS3Destinations.clear();
+            if (forwarderS3Configs != null) {
+                this.forwardS3Destinations.addAll(forwarderS3Configs);
+            }
+            return this;
+        }
+
         public Builder logStreamConfig(final LogStreamConfig logStreamConfig) {
             this.logStreamConfig = logStreamConfig;
             return this;
@@ -507,6 +559,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         public Builder threadConfig(final ThreadConfig threadConfig) {
             this.threadConfig = threadConfig;
+            return this;
+        }
+
+        public Builder fsyncConfig(final FsyncConfig fsyncConfig) {
+            this.fsyncConfig = fsyncConfig;
             return this;
         }
 
@@ -534,9 +591,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     dirScannerConfig,
                     forwardFileDestinations,
                     forwardHttpDestinations,
+                    forwardS3Destinations,
                     logStreamConfig,
                     feedStatusConfig,
                     threadConfig,
+                    fsyncConfig,
                     proxySecurityConfig,
                     sqsConnectors);
         }

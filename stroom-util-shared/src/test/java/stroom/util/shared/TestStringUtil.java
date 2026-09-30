@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,28 +59,6 @@ class TestStringUtil {
                 .isEqualTo("");
     }
 
-
-    @ParameterizedTest
-    @CsvSource(nullValues = {"<<NULL>>"}, value = {
-            "'abc',false",
-            "' abc ',false",
-            "'',true",
-            "<<NULL>>,true",
-            "' ',true",
-            "'  ',true",
-            "'\n',true",
-            "'\t',true",
-    })
-    void testIsBlank1(final String input, final boolean expectedOutput) {
-
-        final boolean isBlank = StringUtil.isBlank(input);
-
-        LOGGER.info("input: [{}], expectedOutput: {}, isBlank: {}",
-                input, expectedOutput, isBlank);
-
-        assertThat(isBlank)
-                .isEqualTo(expectedOutput);
-    }
 
     @ParameterizedTest
     @CsvSource(nullValues = {"<NULL>"}, value = {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ package stroom.query.common.v2;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
+import stroom.query.language.functions.AiProvider;
 import stroom.query.language.functions.ExpressionContext;
-import stroom.query.language.functions.StateFetcher;
+import stroom.query.language.functions.StateProvider;
 import stroom.query.language.functions.ValNull;
 
 import jakarta.inject.Inject;
@@ -30,21 +31,25 @@ public class ExpressionContextFactory {
 
     private final Provider<AnalyticResultStoreConfig> analyticResultStoreConfigProvider;
     private final Provider<SearchResultStoreConfig> searchResultStoreConfigProvider;
-    private final Provider<StateFetcher> stateFetcherProvider;
+    private final Provider<StateProvider> stateProviderProvider;
+    private final Provider<AiProvider> aiProviderProvider;
 
     public ExpressionContextFactory() {
         this.analyticResultStoreConfigProvider = AnalyticResultStoreConfig::new;
         this.searchResultStoreConfigProvider = SearchResultStoreConfig::new;
-        stateFetcherProvider = () -> (StateFetcher) (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
+        stateProviderProvider = () -> (StateProvider) (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
+        aiProviderProvider = () -> (AiProvider) (modelNameOrUuid, systemPrompt, message) -> ValNull.INSTANCE;
     }
 
     @Inject
     public ExpressionContextFactory(final Provider<AnalyticResultStoreConfig> analyticResultStoreConfigProvider,
                                     final Provider<SearchResultStoreConfig> searchResultStoreConfigProvider,
-                                    final Provider<StateFetcher> stateFetcherProvider) {
+                                    final Provider<StateProvider> stateProviderProvider,
+                                    final Provider<AiProvider> aiProviderProvider) {
         this.analyticResultStoreConfigProvider = analyticResultStoreConfigProvider;
         this.searchResultStoreConfigProvider = searchResultStoreConfigProvider;
-        this.stateFetcherProvider = stateFetcherProvider;
+        this.stateProviderProvider = stateProviderProvider;
+        this.aiProviderProvider = aiProviderProvider;
     }
 
     public ExpressionContext createContext(final SearchRequest searchRequest) {
@@ -67,7 +72,8 @@ public class ExpressionContextFactory {
         return ExpressionContext.builder()
                 .maxStringLength(maxStringLength)
                 .dateTimeSettings(dateTimeSettings)
-                .stateFetcher(stateFetcherProvider.get())
+                .stateProvider(stateProviderProvider.get())
+                .aiProvider(aiProviderProvider.get())
                 .build();
     }
 

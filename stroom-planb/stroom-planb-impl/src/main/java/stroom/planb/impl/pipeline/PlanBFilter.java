@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +27,23 @@ import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
-import stroom.planb.impl.data.RangeState;
-import stroom.planb.impl.data.Session;
-import stroom.planb.impl.data.SpanKV;
-import stroom.planb.impl.data.State;
-import stroom.planb.impl.data.TemporalRangeState;
-import stroom.planb.impl.data.TemporalState;
-import stroom.planb.impl.data.TemporalValue;
-import stroom.planb.impl.db.ShardWriters;
-import stroom.planb.impl.db.ShardWriters.ShardWriter;
+import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.dao.PlanBDocumentResolver;
+import stroom.planb.impl.dao.PlanBStreamWriter;
+import stroom.planb.impl.dao.PlanBStreamWriterFactory;
+import stroom.planb.impl.data.value.RangeState;
+import stroom.planb.impl.data.value.Session;
+import stroom.planb.impl.data.value.SpanKV;
+import stroom.planb.impl.data.value.State;
+import stroom.planb.impl.data.value.TemporalRangeState;
+import stroom.planb.impl.data.value.TemporalState;
+import stroom.planb.impl.data.value.TemporalValue;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.keyprefix.Tag;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.impl.serde.trace.SpanKey;
 import stroom.planb.impl.serde.trace.SpanValue;
-import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.StateType;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
@@ -66,7 +68,6 @@ import org.xml.sax.SAXException;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -83,8 +84,6 @@ import java.util.Set;
  * This XML filter captures XML content that defines key, value maps to be
  * stored as state data. The key, value map content is likely to have been
  * produced as the result of an XSL transformation of some reference data.
- * <p>
- * This filter will typically fire
  */
 @ConfigurableElement(
         type = "PlanBFilter",
@@ -202,7 +201,7 @@ public class PlanBFilter extends AbstractXMLFilter {
     private final ByteBufferFactory byteBufferFactory;
     private ByteBufferPoolOutput stagingValueOutputStream;
     private String currentStringValue;
-    private Type type;
+    private Type type = Type.NULL;
     private final CharBuffer contentBuffer = new CharBuffer(20);
 
     private final MetaHolder metaHolder;
@@ -228,12 +227,15 @@ public class PlanBFilter extends AbstractXMLFilter {
 
     private Instant effectiveTime;
     private final LocationFactoryProxy locationFactory;
-    private final ShardWriters shardWriters;
+    private final PlanBStreamWriterFactory streamWriterFactory;
     private Locator locator;
 
     private Instant time;
     private StroomDuration timeout;
-    private ShardWriter writer;
+    private PlanBDocumentResolver docResolver;
+    private PlanBStreamWriter writer;
+
+    private final PlanBDocCache planBDocCache;
 
 
     private String currentName;
@@ -250,12 +252,14 @@ public class PlanBFilter extends AbstractXMLFilter {
                        final LocationFactoryProxy locationFactory,
                        final MetaHolder metaHolder,
                        final ByteBufferFactory byteBufferFactory,
-                       final ShardWriters shardWriters) {
+                       final PlanBStreamWriterFactory streamWriterFactory,
+                       final PlanBDocCache planBDocCache) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
         this.metaHolder = metaHolder;
         this.byteBufferFactory = byteBufferFactory;
-        this.shardWriters = shardWriters;
+        this.streamWriterFactory = streamWriterFactory;
+        this.planBDocCache = planBDocCache;
     }
 
     @Override
@@ -265,7 +269,8 @@ public class PlanBFilter extends AbstractXMLFilter {
                     .ofNullable(metaHolder.getMeta().getEffectiveMs())
                     .orElse(metaHolder.getMeta().getCreateMs());
             effectiveTime = Instant.ofEpochMilli(ms);
-            writer = shardWriters.createWriter(metaHolder.getMeta());
+            writer = streamWriterFactory.createWriter(metaHolder.getMeta());
+            docResolver = new PlanBDocumentResolver(planBDocCache);
             stagingValueOutputStream = new ByteBufferPoolOutput(byteBufferFactory,
                     BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY, -1);
             saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
@@ -277,11 +282,16 @@ public class PlanBFilter extends AbstractXMLFilter {
     @Override
     public void endProcessing() {
         try {
-            LOGGER.debug("closing stagingValueOutputStream");
-            stagingValueOutputStream.close();
+            // Null if startProcessing failed part way through.
+            if (stagingValueOutputStream != null) {
+                LOGGER.debug("closing stagingValueOutputStream");
+                stagingValueOutputStream.close();
+            }
         } finally {
             try {
-                writer.close();
+                if (writer != null) {
+                    writer.close();
+                }
             } finally {
                 super.endProcessing();
             }
@@ -345,14 +355,14 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     /**
-     * This method looks for a post processing function. If it finds one it does
-     * not output the element. Instead it stores data about the function and
-     * sets a flag so that the function can be performed when the corresponding
-     * end element is reached.
+     * Notes which element we have entered so that {@link #endElement} knows what the content
+     * captured in between belongs to. A {@code <trace>} hands its span elements to a
+     * {@link SpanHandler}; inside {@code <value>} the element is instead serialised to
+     * FastInfoset as XML content. Every element is forwarded to the next filter either way.
      *
      * @param uri       The element's Namespace URI, or the empty string.
-     * @param localName The element's local key, or the empty string.
-     * @param qName     The element's qualified (prefixed) key, or the empty string.
+     * @param localName The element's local name, or the empty string.
+     * @param qName     The element's qualified (prefixed) name, or the empty string.
      * @param atts      The element's attributes.
      * @throws SAXException The client may throw an exception during processing.
      * @see AbstractXMLFilter#startElement(String,
@@ -370,12 +380,16 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
 
         if (inTrace) {
+            // Characters between elements, e.g. whitespace from pretty printed XML, must not pollute
+            // captured content such as the map name.
+            contentBuffer.clear();
             if (spanHandler != null) {
                 spanHandler.startElement(uri, localName, qName, atts);
             } else if ("span".equals(elementName)) {
                 spanHandler = new SpanHandler();
+            } else {
+                contentBuffer.clear();
             }
-
         } else {
             depthLevel++;
             insideElement = true;
@@ -450,14 +464,14 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     /**
-     * This method applies a post processing function if we are currently within
-     * a function element. At this stage we should have details of the function
-     * to apply from the corresponding start element and content to apply it to
-     * from the characters event.
+     * Consumes the content captured since the matching start element. A field element such as
+     * {@code <map>} or {@code <key>} is recorded for the record being built; a record element such
+     * as {@code <state>} or {@code <trace>} writes that record to its Plan B store and resets the
+     * per-record state.
      *
      * @param uri       The element's Namespace URI, or the empty string.
-     * @param localName The element's local key, or the empty string.
-     * @param qName     The element's qualified (prefixed) key, or the empty string.
+     * @param localName The element's local name, or the empty string.
+     * @param qName     The element's qualified (prefixed) name, or the empty string.
      * @throws SAXException The client may throw an exception during processing.
      * @see AbstractXMLFilter#endElement(String,
      *      String, String)
@@ -483,6 +497,10 @@ public class PlanBFilter extends AbstractXMLFilter {
                     spanHandler.endElement(uri, localName, qName);
                 }
             }
+
+            // Keep start and end events balanced for any downstream filters; startElement always
+            // forwards, so trace end events must be forwarded too.
+            super.endElement(uri, localName, qName);
 
         } else {
             insideElement = false;
@@ -587,21 +605,21 @@ public class PlanBFilter extends AbstractXMLFilter {
             fastInfosetEndDocument();
             type = Type.XML;
         } else {
-            // Simple string value
+            // Simple string value. The staging stream is only used for XML values; string values are
+            // served from currentStringValue so are not staged.
             final String value = contentBuffer.toString();
             if (NullSafe.isBlankString(value)) {
                 type = Type.NULL;
             } else {
                 type = Type.STRING;
                 currentStringValue = value;
-                stagingValueOutputStream.write(value.getBytes(StandardCharsets.UTF_8));
             }
         }
     }
 
     private void addReference() {
         LOGGER.debug(() -> "Adding reference to map: " + mapName);
-        final Optional<PlanBDoc> optional = writer.getDoc(mapName, this::error);
+        final Optional<PlanBDocument> optional = docResolver.resolve(mapName, this::error);
         optional.ifPresent(doc -> {
             switch (doc.getStateType()) {
                 case STATE -> addState(doc);
@@ -618,7 +636,7 @@ public class PlanBFilter extends AbstractXMLFilter {
 
     private void add(final StateType stateType) {
         LOGGER.debug(() -> "Adding " + stateType.getDisplayValue() + " to map: " + mapName);
-        final Optional<PlanBDoc> optional = writer.getDoc(mapName, this::error);
+        final Optional<PlanBDocument> optional = docResolver.resolve(mapName, this::error);
         optional.ifPresent(doc -> {
             if (stateType.equals(doc.getStateType())) {
                 switch (doc.getStateType()) {
@@ -669,9 +687,16 @@ public class PlanBFilter extends AbstractXMLFilter {
         time = null;
         timeout = null;
         currentTags = null;
+        // Clear all per record value state so a malformed record errors rather than silently storing the
+        // previous record's value, type or span.
+        currentName = null;
+        currentValue = null;
+        currentStringValue = null;
+        type = Type.NULL;
+        span = null;
     }
 
-    private void addState(final PlanBDoc doc) {
+    private void addState(final PlanBDocument doc) {
         final KeyPrefix prefix = getKeyPrefix();
         if (prefix != null) {
             LOGGER.trace("Putting state key {} into table {}", prefix, mapName);
@@ -680,7 +705,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addTemporalState(final PlanBDoc doc) {
+    private void addTemporalState(final PlanBDocument doc) {
         final KeyPrefix prefix = getKeyPrefix();
         if (prefix != null) {
             final Instant time = this.time != null
@@ -702,7 +727,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addRangeState(final PlanBDoc doc) {
+    private void addRangeState(final PlanBDocument doc) {
         // If key is provided then from/to are the same.
         if (key != null) {
             if (rangeFrom != null) {
@@ -761,7 +786,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addTemporalRangeState(final PlanBDoc doc) {
+    private void addTemporalRangeState(final PlanBDocument doc) {
         final Instant time = this.time != null
                 ? this.time
                 : this.effectiveTime;
@@ -835,7 +860,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-    private void addSession(final PlanBDoc doc) {
+    private void addSession(final PlanBDocument doc) {
         final KeyPrefix prefix = getKeyPrefix();
         if (prefix != null) {
             if (time == null) {
@@ -850,41 +875,65 @@ public class PlanBFilter extends AbstractXMLFilter {
                     sessionBuilder.end(time.plus(timeout));
                 }
 
-                LOGGER.trace("Putting session {} into table {}", sessionBuilder.build(), mapName);
-                catchLmdbError(() -> writer.addSession(doc, sessionBuilder.build()));
+                final Session session = sessionBuilder.build();
+                LOGGER.trace("Putting session {} into table {}", session, mapName);
+                catchLmdbError(() -> writer.addSession(doc, session));
             }
         }
     }
 
-    private void addHistogramValue(final PlanBDoc doc) {
+    private void addHistogramValue(final PlanBDocument doc) {
         final KeyPrefix prefix = getKeyPrefix();
         if (prefix != null) {
             if (time == null) {
                 error(LogUtil.message("Histogram 'time' is null for {}", mapName));
             } else {
-                final TemporalKey temporalKey = new TemporalKey(prefix, time);
-                final TemporalValue temporalValue = new TemporalValue(temporalKey, Long.parseLong(currentValue));
-                LOGGER.trace("Putting histogram value {} into table {}", temporalKey, mapName);
-                catchLmdbError(() -> writer.addHistogramValue(doc, temporalValue));
+                final Long value = parseCurrentValue("histogram");
+                if (value != null) {
+                    final TemporalKey temporalKey = new TemporalKey(prefix, time);
+                    final TemporalValue temporalValue = new TemporalValue(temporalKey, value);
+                    LOGGER.trace("Putting histogram value {} into table {}", temporalKey, mapName);
+                    catchLmdbError(() -> writer.addHistogramValue(doc, temporalValue));
+                }
             }
         }
     }
 
-    private void addMetricValue(final PlanBDoc doc) {
+    private void addMetricValue(final PlanBDocument doc) {
         final KeyPrefix prefix = getKeyPrefix();
         if (prefix != null) {
             if (time == null) {
                 error(LogUtil.message("Metric 'time' is null for {}", mapName));
             } else {
-                final TemporalKey temporalKey = new TemporalKey(prefix, time);
-                final TemporalValue temporalValue = new TemporalValue(temporalKey, Long.parseLong(currentValue));
-                LOGGER.trace("Putting metric value {} into table {}", temporalKey, mapName);
-                catchLmdbError(() -> writer.addMetricValue(doc, temporalValue));
+                final Long value = parseCurrentValue("metric");
+                if (value != null) {
+                    final TemporalKey temporalKey = new TemporalKey(prefix, time);
+                    final TemporalValue temporalValue = new TemporalValue(temporalKey, value);
+                    LOGGER.trace("Putting metric value {} into table {}", temporalKey, mapName);
+                    catchLmdbError(() -> writer.addMetricValue(doc, temporalValue));
+                }
             }
         }
     }
 
-    private void addSpanValue(final PlanBDoc doc) {
+    /**
+     * Parse the current value as a long, reporting a bad or missing value as a record error rather than
+     * letting a parse exception abort processing of the whole stream.
+     */
+    private Long parseCurrentValue(final String stateType) {
+        if (currentValue == null) {
+            error(LogUtil.message("No {} 'value' provided for {}", stateType, mapName));
+            return null;
+        }
+        try {
+            return Long.parseLong(currentValue);
+        } catch (final RuntimeException e) {
+            error("Unable to parse string \"" + currentValue + "\" as long for " + stateType + " value", e);
+            return null;
+        }
+    }
+
+    private void addSpanValue(final PlanBDocument doc) {
         if (span == null) {
             error(LogUtil.message("No span data for {}", mapName));
         } else {
@@ -896,8 +945,6 @@ public class PlanBFilter extends AbstractXMLFilter {
             } catch (final RuntimeException e) {
                 log(Severity.ERROR, e.getMessage(), e);
             }
-
-            currentValue = null;
         }
     }
 
@@ -906,7 +953,7 @@ public class PlanBFilter extends AbstractXMLFilter {
 
         if (currentTags == null || currentTags.isEmpty()) {
             if (key == null) {
-                error(LogUtil.message("Histogram 'key' is null for {}", mapName));
+                error(LogUtil.message("No 'key' or 'tags' provided for {}", mapName));
                 prefix = null;
             } else {
                 prefix = KeyPrefix.create(key);
@@ -921,9 +968,11 @@ public class PlanBFilter extends AbstractXMLFilter {
         return switch (type) {
             case STRING -> ValString.create(currentStringValue);
             case XML -> {
-                final ByteBuffer value = stagingValueOutputStream.getByteBuffer();
-                value.flip();
-                yield ValXml.create(ByteBufferUtils.getBytes(value));
+                final ByteBuffer buffer = stagingValueOutputStream.getByteBuffer();
+                buffer.flip();
+                final Val val = ValXml.create(ByteBufferUtils.getBytes(buffer));
+                stagingValueOutputStream.clear();
+                yield val;
             }
             default -> ValNull.INSTANCE;
         };
@@ -983,7 +1032,7 @@ public class PlanBFilter extends AbstractXMLFilter {
         if (!isFastInfosetDocStarted) {
             LOGGER.trace("saxDocumentSerializer - startDocument()");
             saxDocumentSerializer.reset();
-            stagingValueOutputStream.reset();
+            stagingValueOutputStream.clear();
             appliedPrefixToUriMap.clear();
             saxDocumentSerializer.startDocument();
             isFastInfosetDocStarted = true;

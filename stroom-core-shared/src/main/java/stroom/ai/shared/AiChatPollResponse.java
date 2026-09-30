@@ -1,0 +1,69 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.shared;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
+import java.util.Objects;
+
+@JsonInclude(Include.NON_NULL)
+public class AiChatPollResponse {
+
+    @JsonProperty
+    private final List<AiChatMessage> newMessages;
+    @JsonProperty
+    private final List<AiChatAttachment> attachments;
+    /**
+     * The WORKING message as it stands now, or null if nothing is being processed. Reported on every
+     * poll rather than only when new, because its text is updated in place as processing advances.
+     */
+    @JsonProperty
+    private final AiChatMessage workingMessage;
+    @JsonProperty
+    private final boolean complete;
+
+    @JsonCreator
+    public AiChatPollResponse(@JsonProperty("newMessages") final List<AiChatMessage> newMessages,
+                              @JsonProperty("attachments") final List<AiChatAttachment> attachments,
+                              @JsonProperty("workingMessage") final AiChatMessage workingMessage,
+                              @JsonProperty("complete") final Boolean complete) {
+        this.newMessages = newMessages;
+        this.attachments = attachments;
+        this.workingMessage = workingMessage;
+        this.complete = Objects.requireNonNullElse(complete, false);
+    }
+
+    public List<AiChatMessage> getNewMessages() {
+        return newMessages;
+    }
+
+    public List<AiChatAttachment> getAttachments() {
+        return attachments;
+    }
+
+    public AiChatMessage getWorkingMessage() {
+        return workingMessage;
+    }
+
+    public boolean isComplete() {
+        return complete;
+    }
+}

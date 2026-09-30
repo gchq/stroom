@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,10 @@ public final class SplitLayoutConfig extends LayoutConfig {
 
     @JsonCreator
     public SplitLayoutConfig(@JsonProperty("preferredSize") final Size preferredSize,
-                             @JsonProperty("dimension") final int dimension,
+                             @JsonProperty("dimension") final Integer dimension,
                              @JsonProperty("children") final List<LayoutConfig> children) {
         this.preferredSize = preferredSize;
-        this.dimension = dimension;
+        this.dimension = Objects.requireNonNullElse(dimension, 0);
         this.children = children;
     }
 

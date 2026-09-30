@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -276,6 +276,7 @@ public class EntityEvent {
         return Objects.hash(docRef, oldDocRef, action, dataClassName, data);
     }
 
+
     // --------------------------------------------------------------------------------
 
 
@@ -286,19 +287,5 @@ public class EntityEvent {
          * Any exceptions thrown within this method will be swallowed and logged at ERROR.
          */
         void onChange(EntityEvent event);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    /**
-     * Marker interface for all classes used to provide additional {@link EntityEvent} data.
-     * <p>
-     * Implementations must use Jackson annotations so they can be (de)serialised to JSON.
-     * </p>
-     */
-    public interface EntityEventData {
-
     }
 }

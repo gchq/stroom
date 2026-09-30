@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.NoIdpServiceUserFactory;
 import stroom.security.common.impl.StandardJwtContextFactory;
-import stroom.security.common.impl.TestCredentialsServiceUserFactory;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.guice.GuiceUtil;
@@ -59,7 +58,6 @@ public class ProxySecurityModule extends AbstractModule {
         bind(ServiceUserFactory.class).to(DelegatingServiceUserFactory.class);
         GuiceUtil.buildMapBinder(binder(), IdpType.class, ServiceUserFactory.class)
                 .addBinding(IdpType.EXTERNAL_IDP, ExternalServiceUserFactory.class)
-                .addBinding(IdpType.TEST_CREDENTIALS, TestCredentialsServiceUserFactory.class)
                 .addBinding(IdpType.NO_IDP, NoIdpServiceUserFactory.class);
 
         RestResourcesBinder.create(binder())

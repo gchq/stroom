@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,31 +24,46 @@ import stroom.util.string.StringUtil;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
 public class DataFeedKeyGenerator {
 
-    private static final DataFeedKeyHasher HASHER = new BCryptDataFeedKeyHasher();
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    private static final DataFeedKeyHasher DEFAULT_HASHER = new BCryptDataFeedKeyHasher();
+
+    private static final Map<DataFeedKeyHashAlgorithm, DataFeedKeyHasher> HASHERS = new EnumMap<>(Map.of(
+            DataFeedKeyHashAlgorithm.BCRYPT_2A, new BCryptDataFeedKeyHasher(),
+            DataFeedKeyHashAlgorithm.ARGON2, new Argon2DataFeedKeyHasher()));
 
     public static KeyWithHash generateRandomKey(final String accountId,
                                                 final Map<String, String> attributeMap,
                                                 final Instant expiry) {
+        return generateRandomKey(accountId, attributeMap, expiry, DEFAULT_HASHER.getAlgorithm());
+    }
+
+    public static KeyWithHash generateRandomKey(final String accountId,
+                                                final Map<String, String> attributeMap,
+                                                final Instant expiry,
+                                                final DataFeedKeyHashAlgorithm algorithm) {
         final String key =
                 "sdk_"
                 + StringUtil.createRandomCode(
-                        new SecureRandom(),
+                        SECURE_RANDOM,
                         DataFeedKeyServiceImpl.DATA_FEED_KEY_RANDOM_PART_LENGTH,
                         StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
 
         final Map<String, String> attrMap = new HashMap<>(NullSafe.map(attributeMap));
         attrMap.put(StandardHeaderArguments.ACCOUNT_ID, accountId);
-        final HashOutput hashOutput = HASHER.hash(key);
+        final DataFeedKeyHasher dataFeedKeyHasher = HASHERS.get(algorithm);
+        final HashOutput hashOutput = dataFeedKeyHasher.hash(key);
 
         return new KeyWithHash(key, new HashedDataFeedKey(
                 hashOutput.hash(),
                 hashOutput.salt(),
-                HASHER.getAlgorithm(),
+                dataFeedKeyHasher.getAlgorithm(),
                 attrMap,
                 expiry.toEpochMilli()));
     }

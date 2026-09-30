@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,8 @@ public final class ValDuration implements ValNumber {
     private final long milliseconds;
 
     @JsonCreator
-    private ValDuration(@JsonProperty("milliseconds") final long milliseconds) {
-        this.milliseconds = milliseconds;
+    private ValDuration(@JsonProperty("milliseconds") final Long milliseconds) {
+        this.milliseconds = Objects.requireNonNullElse(milliseconds, 0L);
     }
 
     public static ValDuration create(final long milliseconds) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,6 +142,24 @@ class TestStroomCacheImpl {
     void testValues() {
         assertThat(cache.values())
                 .containsExactlyInAnyOrderElementsOf(monthNames);
+    }
+
+    @Test
+    void testGetAndRemove() {
+        cache.put(1, "January");
+
+        // First call returns the value and removes it...
+        assertThat(cache.getAndRemove(1))
+                .contains("January");
+        // ...so a second call for the same key gets nothing.
+        assertThat(cache.getAndRemove(1))
+                .isEmpty();
+    }
+
+    @Test
+    void testGetAndRemove_miss() {
+        assertThat(cache.getAndRemove(999))
+                .isEmpty();
     }
 
     @Test

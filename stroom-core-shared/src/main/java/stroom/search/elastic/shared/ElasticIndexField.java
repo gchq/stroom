@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,12 +80,12 @@ public class ElasticIndexField implements IndexField {
             @JsonProperty("fldName") final String fldName,
             @JsonProperty("fldType") final FieldType fldType,
             @JsonProperty("nativeType") final String nativeType,
-            @JsonProperty("indexed") final boolean indexed,
+            @JsonProperty("indexed") final Boolean indexed,
             @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig) {
         this.fldName = convertLegacyName(fldName, fieldName);
         this.fldType = convertLegacyType(fldType, fieldUse);
         this.nativeType = convertLegacyNativeType(nativeType, fieldType);
-        this.indexed = indexed;
+        this.indexed = Objects.requireNonNullElse(indexed, false);
         this.denseVectorFieldConfig = denseVectorFieldConfig;
     }
 

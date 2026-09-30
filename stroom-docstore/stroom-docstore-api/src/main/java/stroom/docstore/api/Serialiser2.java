@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,16 @@ public interface Serialiser2<D> extends DocumentSerialiser2<D> {
     D read(ImportExportAsset asset) throws IOException;
 
     void write(final Writer writer, D document) throws IOException;
+
+    /**
+     * Serialise the document's meta to a {@link String}
+     */
+    String writeAsString(D document);
+
+    /**
+     * Serialise the document's meta to UTF-8 bytes
+     */
+    byte[] writeAsBytes(D document);
 
 //    Map<String, byte[]> write(D document) throws IOException;
 }

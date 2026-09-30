@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package stroom.importexport.api;
+
+import stroom.docstore.shared.DocDataType;
 
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -36,6 +38,13 @@ public interface ImportExportAsset {
      *         this might be the file extension or the path of the asset.
      */
     String getKey();
+
+    /**
+     * @return The data type of this asset, determining which sparse column
+     *         ({@code json_data}, {@code text_data}, or {@code bin_data})
+     *         is populated when stored in the database.
+     */
+    DocDataType getDocDataType();
 
     /**
      * Provides a way to get the input stream.

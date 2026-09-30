@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,8 +75,8 @@ public class Processor implements HasAuditInfoGetters, HasUuid {
                      @JsonProperty("processorType") final ProcessorType processorType,
                      @JsonProperty("pipelineUuid") final String pipelineUuid,
                      @JsonProperty("pipelineName") final String pipelineName,
-                     @JsonProperty("enabled") final boolean enabled,
-                     @JsonProperty("deleted") final boolean deleted) {
+                     @JsonProperty("enabled") final Boolean enabled,
+                     @JsonProperty("deleted") final Boolean deleted) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -87,8 +87,8 @@ public class Processor implements HasAuditInfoGetters, HasUuid {
         this.processorType = processorType;
         this.pipelineUuid = pipelineUuid;
         this.pipelineName = pipelineName;
-        this.enabled = enabled;
-        this.deleted = deleted;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.deleted = Objects.requireNonNullElse(deleted, false);
     }
 
     public Integer getId() {

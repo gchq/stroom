@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.api.IndexVolumeGroupService;
+import stroom.index.impl.db.jooq.Stroom;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexVolume;
@@ -162,7 +163,11 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
-        return securityContext.secureResult(() -> indexVolumeDao.find(criteria));
+        // Enumerating index volumes (server paths, capacity, usage, state) is a volume-management read, gated
+        // like create/update/delete.
+        return securityContext.secureResult(
+                AppPermission.MANAGE_VOLUMES_PERMISSION,
+                () -> indexVolumeDao.find(criteria));
     }
 
     @Override
@@ -347,7 +352,9 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public IndexVolume read(final int id) {
-        return securityContext.secureResult(() -> indexVolumeDao.fetch(id).orElse(null));
+        return securityContext.secureResult(
+                AppPermission.MANAGE_VOLUMES_PERMISSION,
+                () -> indexVolumeDao.fetch(id).orElse(null));
     }
 
     @Override
@@ -647,7 +654,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public SystemInfoResult getSystemInfo() {
-        final VolumeMap volumeMap = getCurrentVolumeMap();
+        final VolumeMap volumeMap = securityContext.asProcessingUserResult(this::getCurrentVolumeMap);
+
         final Map<VolGroupNode, List<Map<String, Object>>> volInfoMap = volumeMap.getGroupNameToVolumesMap()
                 .entrySet()
                 .stream()

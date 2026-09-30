@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,7 @@ public class HttpSender implements StreamDestination {
 
     private final LogStream logStream;
     private final ForwardHttpPostConfig forwardHttpPostConfig;
+    private final DownstreamHostConfig downstreamHostConfig;
     private final String userAgent;
     private final UserIdentityFactory userIdentityFactory;
     private final HttpClient httpClient;
@@ -101,6 +102,7 @@ public class HttpSender implements StreamDestination {
                       final ProxyServices proxyServices) {
         this.logStream = logStream;
         this.forwardHttpPostConfig = forwardHttpPostConfig;
+        this.downstreamHostConfig = downstreamHostConfig;
         this.userAgent = userAgent;
         this.userIdentityFactory = userIdentityFactory;
         this.httpClient = httpClient;
@@ -211,11 +213,21 @@ public class HttpSender implements StreamDestination {
         return httpPost;
     }
 
+    private String getApiKey() {
+        if (NullSafe.isNonBlankString(forwardHttpPostConfig.getApiKey())) {
+            return forwardHttpPostConfig.getApiKey().trim();
+        } else if (downstreamHostConfig.isEnabled() && NullSafe.isNonBlankString(downstreamHostConfig.getApiKey())) {
+            return downstreamHostConfig.getApiKey().trim();
+        } else {
+            return null;
+        }
+    }
+
     private void addAuthHeaders(final BasicHttpRequest request) {
         Objects.requireNonNull(request);
-        final String apiKey = NullSafe.trim(forwardHttpPostConfig.getApiKey());
-        if (!apiKey.isEmpty()) {
-            LOGGER.debug(() -> LogUtil.message("addAuthHeaders() - Using configured apiKey {}",
+        if (NullSafe.isNonBlankString(forwardHttpPostConfig.getApiKey())) {
+            final String apiKey = forwardHttpPostConfig.getApiKey();
+            LOGGER.debug(() -> LogUtil.message("addAuthHeaders() - Using configured forwarder apiKey {}",
                     NullSafe.subString(apiKey, 0, 15)));
             userIdentityFactory.getAuthHeaders(apiKey)
                     .forEach(request::addHeader);
@@ -238,6 +250,13 @@ public class HttpSender implements StreamDestination {
                             .collect(Collectors.joining("\n"))));
 
             userIdentityFactory.getServiceUserAuthHeaders()
+                    .forEach(request::addHeader);
+        } else if (NullSafe.isNonBlankString(downstreamHostConfig.getApiKey())) {
+            // Fall back to the downstream host's API key
+            final String apiKey = downstreamHostConfig.getApiKey();
+            LOGGER.debug(() -> LogUtil.message("addAuthHeaders() - Using configured downstream host apiKey {}",
+                    NullSafe.subString(apiKey, 0, 15)));
+            userIdentityFactory.getAuthHeaders(apiKey)
                     .forEach(request::addHeader);
         } else {
             LOGGER.debug("authHeaders() - No headers added");

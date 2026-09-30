@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ public class Count<T extends Number> {
 
     @JsonCreator
     public Count(@JsonProperty("count") final T count,
-                 @JsonProperty("exact") final boolean exact) {
+                 @JsonProperty("exact") final Boolean exact) {
         this.count = count;
-        this.exact = exact;
+        this.exact = Objects.requireNonNullElse(exact, false);
     }
 
     public static <T extends Number> Count<T> of(final T count, final boolean exact) {

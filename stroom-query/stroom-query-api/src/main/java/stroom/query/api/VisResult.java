@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder({"componentId", "jsonData", "dataPoints", "errors", "errorMessages"})
 @JsonInclude(Include.NON_NULL)
@@ -38,12 +39,12 @@ public final class VisResult extends Result {
     @JsonCreator
     public VisResult(@JsonProperty("componentId") final String componentId,
                      @JsonProperty("jsonData") final String jsonData,
-                     @JsonProperty("dataPoints") final long dataPoints,
+                     @JsonProperty("dataPoints") final Long dataPoints,
                      @JsonProperty("errors") final List<String> errors,
                      @JsonProperty("errorMessages") final List<ErrorMessage> errorMessages) {
         super(componentId, errors, errorMessages);
         this.jsonData = jsonData;
-        this.dataPoints = dataPoints;
+        this.dataPoints = Objects.requireNonNullElse(dataPoints, 0L);
     }
 
     public String getJsonData() {

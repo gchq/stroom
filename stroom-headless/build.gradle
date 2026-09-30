@@ -13,7 +13,6 @@ application {
 
 dependencies {
     implementation project(':stroom-activity:stroom-activity-mock')
-    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cache:stroom-cache-impl')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data:stroom-data-zip')
@@ -21,7 +20,6 @@ dependencies {
     implementation project(':stroom-meta:stroom-meta-statistics-api')
     implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-data:stroom-data-store-mock')
-    implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-dictionary:stroom-dictionary-impl')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
@@ -48,11 +46,7 @@ dependencies {
 
     implementation libs.dropwizard.metrics.core
     implementation libs.guice
-    implementation libs.jackson.annotations
-    //implementation libs.jakarta.el
-    implementation libs.jakarta.inject
     implementation libs.saxon.he
-    implementation libs.slf4j.api
 
     runtimeOnly libs.logback.classic
     runtimeOnly libs.jaxb.impl

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,9 @@ public class FsVolumeGroupEditPresenter
     }
 
     private void create() {
-        final FsVolume fsVolume = FsVolume.builder().volumeGroupId(volumeGroup.getId()).build();
+        final FsVolume fsVolume = FsVolume.builder()
+                .volumeGroup(volumeGroup)
+                .build();
         editVolume(fsVolume, "Add Volume");
     }
 

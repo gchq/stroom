@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import java.util.Set;
 public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final String DEFAULT_USER_GUIDE_BASE_SUB_PATH = "/user-guide";
+    private static final int DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES = 1_000;
 
     @JsonProperty
     @JsonPropertyDescription("The welcome message that is displayed in the welcome tab when logging in to Stroom. " +
@@ -179,13 +180,14 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         authErrorMessage = null;
         defaultMaxResults = "1000000,100,10,1";
         process = new ProcessConfig();
-        helpUrl = "https://gchq.github.io/stroom-docs/7.5/docs";
+        helpUrl = "https://gchq.github.io/stroom-docs/7.13/docs";
         helpSubPathJobs = "/reference-section/jobs/";
-        helpSubPathQuickFilter = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/finding-things/";
+        helpSubPathQuickFilter = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/content/finding-things/";
         helpSubPathProperties = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/properties/";
-        helpSubPathExpressions = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/dashboards/expressions/";
+        helpSubPathExpressions = "/reference-section/expressions/";
         helpSubPathDocumentation = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/content/documentation/";
-        helpSubPathStroomQueryLanguage = DEFAULT_USER_GUIDE_BASE_SUB_PATH + "/dashboards/stroom-query-language/";
+        helpSubPathStroomQueryLanguage = DEFAULT_USER_GUIDE_BASE_SUB_PATH
+                                         + "/search/queries/stroom-query-language/";
         theme = new ThemeConfig();
         query = new QueryConfig();
         namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
@@ -201,7 +203,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         referencePipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(
                 StandardExplorerTags.REFERENCE_LOADER);
         defaultApiKeyHashAlgorithm = HashAlgorithm.SHA3_256;
-        maxEditorCompletionEntries = 1_000;
+        maxEditorCompletionEntries = DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES;
     }
 
     @JsonCreator
@@ -233,7 +235,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
                     @JsonProperty("nestedIndexFieldsDelimiterPattern") final String nestedIndexFieldsDelimiterPattern,
                     @JsonProperty("referencePipelineSelectorIncludedTags") final Set<String> referencePipelineSelectorIncludedTags,
                     @JsonProperty("defaultApiKeyHashAlgorithm") final HashAlgorithm defaultApiKeyHashAlgorithm,
-                    @JsonProperty("maxEditorCompletionEntries") final int maxEditorCompletionEntries) {
+                    @JsonProperty("maxEditorCompletionEntries") final Integer maxEditorCompletionEntries) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -261,7 +263,7 @@ public class UiConfig extends AbstractConfig implements IsStroomConfig {
         this.nestedIndexFieldsDelimiterPattern = nestedIndexFieldsDelimiterPattern;
         this.referencePipelineSelectorIncludedTags = referencePipelineSelectorIncludedTags;
         this.defaultApiKeyHashAlgorithm = defaultApiKeyHashAlgorithm;
-        this.maxEditorCompletionEntries = maxEditorCompletionEntries;
+        this.maxEditorCompletionEntries = Objects.requireNonNullElse(maxEditorCompletionEntries, DEFAULT_MAX_EDITOR_COMPLETION_ENTRIES);
     }
 
     public String getWelcomeHtml() {

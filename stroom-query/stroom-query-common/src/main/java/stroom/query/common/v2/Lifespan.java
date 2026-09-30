@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@ public class Lifespan {
     @JsonCreator
     public Lifespan(@JsonProperty("timeToIdle") final StroomDuration timeToIdle,
                     @JsonProperty("timeToLive") final StroomDuration timeToLive,
-                    @JsonProperty("destroyOnTabClose") final boolean destroyOnTabClose,
-                    @JsonProperty("destroyOnWindowClose") final boolean destroyOnWindowClose) {
+                    @JsonProperty("destroyOnTabClose") final Boolean destroyOnTabClose,
+                    @JsonProperty("destroyOnWindowClose") final Boolean destroyOnWindowClose) {
         this.timeToIdle = timeToIdle;
         this.timeToLive = timeToLive;
-        this.destroyOnTabClose = destroyOnTabClose;
-        this.destroyOnWindowClose = destroyOnWindowClose;
+        this.destroyOnTabClose = Objects.requireNonNullElse(destroyOnTabClose, false);
+        this.destroyOnWindowClose = Objects.requireNonNullElse(destroyOnWindowClose, false);
     }
 
     public StroomDuration getTimeToIdle() {

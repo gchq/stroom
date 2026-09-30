@@ -27,11 +27,23 @@
         <form:FormGroup ui:field="enabledGroup" identity="accountEnabled" label="Enabled">
             <tickbox:CustomCheckBox ui:field="enabled" identity="accountEnabledCheckBox"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="inactiveGroup" identity="accountInactive" label="Inactive">
-            <tickbox:CustomCheckBox ui:field="inactive" identity="accountInactiveCheckBox"/>
+
+        <!--
+            Neither of these is a state an administrator sets. An account is locked by repeated wrong
+            passwords and made inactive by going unused, so each shows what happened and offers only the
+            one thing an administrator can do about it.
+        -->
+        <form:FormGroup ui:field="lockedGroup" identity="accountLocked" label="Sign-in lock">
+            <g:FlowPanel addStyleNames="dock-container-horizontal">
+                <g:Label ui:field="lockState" addStyleNames="w-100"/>
+                <b:Button ui:field="unlock" text="Unlock" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup ui:field="lockedGroup" identity="accountLocked" label="Locked">
-            <tickbox:CustomCheckBox ui:field="locked" identity="accountLockedCheckBox"/>
+        <form:FormGroup ui:field="inactiveGroup" identity="accountInactive" label="Activity">
+            <g:FlowPanel addStyleNames="dock-container-horizontal">
+                <g:Label ui:field="activityState" addStyleNames="w-100"/>
+                <b:Button ui:field="reactivate" text="Reactivate" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
         </form:FormGroup>
 
         <b:Button ui:field="changePassword" text="Change Password" width="200px" addStyleNames="allow-focus"/>

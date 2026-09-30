@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,56 @@ import org.jose4j.jwk.PublicJsonWebKey;
 
 import java.util.List;
 
+/**
+ * The signing keys of stroom's internal identity provider.
+ * <p>
+ * The two methods are deliberately not interchangeable. Exactly one key is signed with, but
+ * several are published, because a token must keep verifying for its whole lifetime and so the
+ * key that signed it has to stay published after it has stopped being signed with. Taking the
+ * signing key from {@link #list()} would therefore be a bug, see {@link #getActiveKey()}.
+ * </p>
+ */
 public interface PublicJsonWebKeyProvider {
 
+    /**
+     * Every key a token might legitimately have been signed by: the active key and any that have
+     * been retired but could still have unexpired tokens outstanding.
+     * <p>
+     * This is what the JWKS endpoint publishes and what verification resolves against, by
+     * {@code kid}. Never use it to choose a key to sign with.
+     * </p>
+     *
+     * @return The publishable keys, newest first. Never empty; a key is created if there is none.
+     */
     List<PublicJsonWebKey> list();
 
-    PublicJsonWebKey getFirst();
+    /**
+     * The one key that new tokens must be signed with.
+     * <p>
+     * Created on demand if there is no active key, so this never returns null. Note this is not
+     * the same as {@code list().get(0)}: that would happily hand back a retired key, producing
+     * tokens that verify now and stop verifying when the key is finally deleted.
+     * </p>
+     *
+     * @return The active key.
+     */
+    PublicJsonWebKey getActiveKey();
+
+    /**
+     * Discard any cached copy of the key set so the next read reloads it.
+     * <p>
+     * The correctness backstop for key rotation. Keys are cached, so immediately after a rotation a node can
+     * hold a key set that does not yet contain the {@code kid} a freshly signed token names - and would reject
+     * a perfectly valid token until the cache happened to refresh. A verifier that meets an unknown
+     * {@code kid} can call this and retry rather than failing.
+     * </p>
+     * <p>
+     * Default is a no-op, for implementations that do not cache. Implementations that do <b>must</b> tolerate
+     * being called on the request path: see the rate limiting in {@code InternalJwtContextFactory}, because an
+     * unknown {@code kid} is trivially attacker-controlled.
+     * </p>
+     */
+    default void refresh() {
+        // Nothing cached, nothing to discard.
+    }
 }

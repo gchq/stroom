@@ -1,11 +1,26 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.visualisation.client.view;
 
 import stroom.visualisation.client.presenter.VisualisationAssetsUploadFileDialogPresenter.VisualisationAssetsUploadFileDialogView;
+import stroom.widget.form.client.CustomFileUpload;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -17,15 +32,13 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class VisualisationAssetsUploadFileDialogViewImpl extends ViewImpl implements
         VisualisationAssetsUploadFileDialogView {
 
-    /** GWT widget */
+    /**
+     * GWT widget
+     */
     private final Widget widget;
 
     @UiField
-    FormPanel form;
-
-    @UiField
-    FileUpload fileUpload;
-
+    CustomFileUpload fileUpload;
     @UiField
     Label lblPath;
 
@@ -46,6 +59,7 @@ public class VisualisationAssetsUploadFileDialogViewImpl extends ViewImpl implem
     /**
      * Sets the path where this file will be placed. Provided as an aid for the
      * user so they know where stuff will go.
+     *
      * @param path The path to display to the user.
      */
     @Override
@@ -57,15 +71,8 @@ public class VisualisationAssetsUploadFileDialogViewImpl extends ViewImpl implem
      * Gets the file upload widget.
      */
     @Override
-    public FileUpload getFileUpload() {
+    public CustomFileUpload getFileUpload() {
         return fileUpload;
-    }
-
-    /**
-     * Gets the panel that the file upload widget is in.
-     */
-    public FormPanel getForm() {
-        return form;
     }
 
     /**

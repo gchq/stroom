@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,19 +25,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 
 @JsonPropertyOrder(alphabetic = true)
 public class LifecycleConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final boolean DEFAULT_ENABLED = true;
+
     private final boolean enabled;
 
     public LifecycleConfig() {
-        enabled = true;
+        enabled = DEFAULT_ENABLED;
     }
 
     @JsonCreator
-    public LifecycleConfig(@JsonProperty("enabled") final boolean enabled) {
-        this.enabled = enabled;
+    public LifecycleConfig(@JsonProperty("enabled") final Boolean enabled) {
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Objects;
 
 /**
  * API to table status
@@ -48,14 +50,14 @@ public class DBTableStatus {
     @JsonCreator
     public DBTableStatus(@JsonProperty("db") final String db,
                          @JsonProperty("table") final String table,
-                         @JsonProperty("count") final long count,
-                         @JsonProperty("dataSize") final long dataSize,
-                         @JsonProperty("indexSize") final long indexSize) {
+                         @JsonProperty("count") final Long count,
+                         @JsonProperty("dataSize") final Long dataSize,
+                         @JsonProperty("indexSize") final Long indexSize) {
         this.db = db;
         this.table = table;
-        this.count = count;
-        this.dataSize = dataSize;
-        this.indexSize = indexSize;
+        this.count = Objects.requireNonNullElse(count, 0L);
+        this.dataSize = Objects.requireNonNullElse(dataSize, 0L);
+        this.indexSize = Objects.requireNonNullElse(indexSize, 0L);
     }
 
     public String getDb() {

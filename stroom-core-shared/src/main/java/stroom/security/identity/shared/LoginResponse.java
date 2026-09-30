@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class LoginResponse {
 
@@ -32,12 +34,12 @@ public class LoginResponse {
     private final boolean requirePasswordChange;
 
     @JsonCreator
-    public LoginResponse(@JsonProperty("loginSuccessful") final boolean loginSuccessful,
+    public LoginResponse(@JsonProperty("loginSuccessful") final Boolean loginSuccessful,
                          @JsonProperty("message") final String message,
-                         @JsonProperty("requirePasswordChange") final boolean requirePasswordChange) {
-        this.loginSuccessful = loginSuccessful;
+                         @JsonProperty("requirePasswordChange") final Boolean requirePasswordChange) {
+        this.loginSuccessful = Objects.requireNonNullElse(loginSuccessful, false);
         this.message = message;
-        this.requirePasswordChange = requirePasswordChange;
+        this.requirePasswordChange = Objects.requireNonNullElse(requirePasswordChange, false);
     }
 
     public boolean isLoginSuccessful() {

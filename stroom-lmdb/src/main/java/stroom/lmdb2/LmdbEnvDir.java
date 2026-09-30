@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package stroom.lmdb2;
 
-import stroom.lmdb.LmdbEnv;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -62,7 +61,14 @@ public class LmdbEnvDir {
     }
 
     /**
-     * Deletes {@link LmdbEnv} from the filesystem if it is already closed.
+     * Deletes this env's dir, or its files if the dir is not dedicated to the env,
+     * UNCONDITIONALLY. This class holds no reference to an env so it cannot tell whether one is
+     * open here; the caller must ensure it is closed first. Deleting the files of an open env
+     * leaves that env mapping unlinked files, so anything it writes is silently lost.
+     * <p>
+     * Prefer {@link stroom.lmdb2.LmdbEnv#delete()}, which refuses unless its own env is closed.
+     * Call this directly only where the caller can show no env is open here, which means
+     * accounting for envs held open elsewhere, e.g. by a pool, not just ones it opened itself.
      */
     public void delete() {
         LOGGER.debug("Deleting LMDB environment {} and all its contents", this);

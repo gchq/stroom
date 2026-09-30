@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,17 @@ import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataInfoSection.Entry;
 import stroom.data.shared.UploadDataRequest;
 import stroom.data.store.api.AttributeMapFactory;
+import stroom.data.store.api.DataNotFoundException;
 import stroom.data.store.api.DataService;
 import stroom.data.store.api.Store;
+import stroom.data.store.impl.fs.shared.DataVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.DataRetentionFields;
@@ -92,20 +96,19 @@ class DataServiceImpl implements DataService {
     private final ResourceStore resourceStore;
     private final DataUploadTaskHandler dataUploadTaskHandlerProvider;
     private final DataDownloadTaskHandler dataDownloadTaskHandlerProvider;
-    private final DocRefInfoService docRefInfoService;
     private final MetaService metaService;
     private final AttributeMapFactory attributeMapFactory;
     private final TempDirProvider tempDirProvider;
     private final SecurityContext securityContext;
     private final FeedStore feedStore;
-
+    private final DocFinder docFinder;
     private final DataFetcher dataFetcher;
+    private final DataVolumeService dataVolumeService;
 
     @Inject
     DataServiceImpl(final ResourceStore resourceStore,
                     final DataUploadTaskHandler dataUploadTaskHandler,
                     final DataDownloadTaskHandler dataDownloadTaskHandler,
-                    final DocRefInfoService docRefInfoService,
                     final MetaService metaService,
                     final AttributeMapFactory attributeMapFactory,
                     final SecurityContext securityContext,
@@ -124,17 +127,20 @@ class DataServiceImpl implements DataService {
                     final PipelineScopeRunnable pipelineScopeRunnable,
                     final SourceConfig sourceConfig,
                     final TaskContextFactory taskContextFactory,
-                    final TempDirProvider tempDirProvider) {
+                    final TempDirProvider tempDirProvider,
+                    final DocFinder docFinder,
+                    final DataVolumeService dataVolumeService) {
 
         this.resourceStore = resourceStore;
         this.dataUploadTaskHandlerProvider = dataUploadTaskHandler;
         this.dataDownloadTaskHandlerProvider = dataDownloadTaskHandler;
-        this.docRefInfoService = docRefInfoService;
         this.metaService = metaService;
         this.attributeMapFactory = attributeMapFactory;
         this.securityContext = securityContext;
         this.feedStore = feedStore;
         this.tempDirProvider = tempDirProvider;
+        this.docFinder = docFinder;
+        this.dataVolumeService = dataVolumeService;
 
         this.dataFetcher = new DataFetcher(streamStore,
                 feedProperties,
@@ -212,7 +218,7 @@ class DataServiceImpl implements DataService {
     public ResourceKey upload(final UploadDataRequest request) {
 
         // Feed names are unique so just get the first
-        final DocRef feedDocRef = feedStore.findByName(request.getFeedName())
+        final DocRef feedDocRef = docFinder.findByName(FeedDoc.TYPE, request.getFeedName())
                 .stream()
                 .findFirst()
                 .orElseThrow(() ->
@@ -262,15 +268,31 @@ class DataServiceImpl implements DataService {
             sections.add(new DataInfoSection("Stream", entries));
 
         } else {
-            sections.add(new DataInfoSection("Stream", getStreamEntries(metaRow.getMeta())));
+            final Meta meta = metaRow.getMeta();
+            sections.add(new DataInfoSection("Stream", getStreamEntries(meta)));
 
-            final List<DataInfoSection.Entry> entries = new ArrayList<>();
+            final List<Entry> processorEntries = getProcessorEntries(meta);
+            if (NullSafe.hasItems(processorEntries)) {
+                sections.add(new DataInfoSection("Processor", processorEntries));
+            }
+
+            final List<DataInfoSection.Entry> attributeEntries = new ArrayList<>();
 
             final Map<String, String> attributeMap = metaRow.getAttributes();
-            final Map<String, String> additionalAttributes = attributeMapFactory.getAttributes(
-                    metaRow.getMeta().getId());
-            final String files = additionalAttributes.remove("Files");
-            attributeMap.putAll(additionalAttributes);
+            final Map<String, String> additionalAttributes;
+            String files = null;
+            try {
+                additionalAttributes = attributeMapFactory.getAttributes(meta.getId());
+                files = additionalAttributes.remove("Files");
+                attributeMap.putAll(additionalAttributes);
+            } catch (final DataNotFoundException e) {
+                LOGGER.debug(() -> LogUtil.message("Error getting additional attributes for meta {} - {}",
+                        meta.getId(), LogUtil.exceptionMessage(e)));
+                final String msg = NullSafe.isNonBlankString(e.getMessage())
+                        ? " - " + e.getMessage()
+                        : "";
+                attributeMap.put("ERROR", "Unable to retrieve additional attributes" + msg);
+            }
 
             final List<String> sortedKeys = attributeMap
                     .keySet()
@@ -286,22 +308,22 @@ class DataServiceImpl implements DataService {
                     !DataRetentionFields.RETENTION_RULE.equals(key)) {
 
                     if (MetaFields.DURATION.getFldName().equals(key)) {
-                        entries.add(new DataInfoSection.Entry(key, convertDuration(value)));
+                        attributeEntries.add(new DataInfoSection.Entry(key, convertDuration(value)));
                     } else if (key.toLowerCase().contains("time")) {
-                        entries.add(new DataInfoSection.Entry(key, convertTime(value)));
+                        attributeEntries.add(new DataInfoSection.Entry(key, convertTime(value)));
                     } else if (key.toLowerCase().contains("size")) {
-                        entries.add(new DataInfoSection.Entry(key, convertSize(value)));
+                        attributeEntries.add(new DataInfoSection.Entry(key, convertSize(value)));
                     } else if (key.toLowerCase().contains("count")) {
-                        entries.add(new DataInfoSection.Entry(key, convertCount(value)));
+                        attributeEntries.add(new DataInfoSection.Entry(key, convertCount(value)));
                     } else {
-                        entries.add(new DataInfoSection.Entry(key, value));
+                        attributeEntries.add(new DataInfoSection.Entry(key, value));
                     }
                 }
             });
-            sections.add(new DataInfoSection("Attributes", entries));
+            sections.add(new DataInfoSection("Attributes", attributeEntries));
 
             // Add additional data retention information.
-            sections.add(new DataInfoSection("Retention", getDataRententionEntries(attributeMap)));
+            sections.add(new DataInfoSection("Retention", getDataRetentionEntries(attributeMap)));
 
             // Files are often very long so change the delimiter to \n
             final List<Entry> fileEntries = AttributeMapUtil.valueAsList(files)
@@ -309,7 +331,9 @@ class DataServiceImpl implements DataService {
                     .map(val -> new Entry("", val))
                     .toList();
 
-            sections.add(new DataInfoSection("Files", fileEntries));
+            if (NullSafe.hasItems(fileEntries)) {
+                sections.add(new DataInfoSection("Files", fileEntries));
+            }
         }
         return sections;
     }
@@ -399,36 +423,57 @@ class DataServiceImpl implements DataService {
         entries.add(new DataInfoSection.Entry("Stream Id", String.valueOf(meta.getId())));
         entries.add(new DataInfoSection.Entry("Status", meta.getStatus().getDisplayValue()));
         entries.add(new DataInfoSection.Entry("Status Ms", getDateTimeString(meta.getStatusMs())));
-        if (meta.getParentMetaId() != null) {
-            entries.add(new DataInfoSection.Entry("Parent Stream Id", String.valueOf(meta.getParentMetaId())));
-        }
+        addEntryIfPresent(entries, "Parent Stream Id", meta.getParentMetaId());
         entries.add(new DataInfoSection.Entry("Created", getDateTimeString(meta.getCreateMs())));
         entries.add(new DataInfoSection.Entry("Effective", getDateTimeString(meta.getEffectiveMs())));
         entries.add(new DataInfoSection.Entry("Stream Type", meta.getTypeName()));
         entries.add(new DataInfoSection.Entry("Feed", meta.getFeedName()));
         addEncodingInfo(meta, entries);
 
-        if (meta.getProcessorUuid() != null) {
-            entries.add(new DataInfoSection.Entry("Processor", meta.getProcessorUuid()));
-        }
-        if (meta.getPipelineUuid() != null) {
-            final String pipelineName = getPipelineName(meta);
-            final String pipeline = DocRefUtil.createSimpleDocRefString(new DocRef(PipelineDoc.TYPE,
-                    meta.getPipelineUuid(),
-                    pipelineName));
-            entries.add(new DataInfoSection.Entry("Processor Pipeline", pipeline));
-        }
-        if (meta.getProcessorFilterId() != null) {
-            entries.add(new DataInfoSection.Entry("Processor Filter Id", String.valueOf(meta.getProcessorFilterId())));
-        }
-        if (meta.getProcessorTaskId() != null) {
-            entries.add(new DataInfoSection.Entry("Processor Task Id", String.valueOf(meta.getProcessorTaskId())));
-        }
+        final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
+        NullSafe.consume(dataVolume, DataVolume::getVolumeGroupName, grpName ->
+                entries.add(new Entry("Volume Group", grpName)));
+        NullSafe.consume(dataVolume, DataVolume::getVolumeType, FsVolumeType::getDisplayValue, typeName ->
+                entries.add(new Entry("Volume Type", typeName)));
+        entries.add(new DataInfoSection.Entry("Read-Only Data",
+                (meta.isReadOnly()
+                        ? "Yes"
+                        : "No")));
+
         return entries;
     }
 
+    private List<DataInfoSection.Entry> getProcessorEntries(final Meta meta) {
+        final List<DataInfoSection.Entry> entries = new ArrayList<>();
+
+        NullSafe.consume(meta.getProcessorUuid(), uuid ->
+                entries.add(new DataInfoSection.Entry("Processor", uuid)));
+
+        if (meta.getPipelineUuid() != null) {
+            final String pipelineName = getPipelineName(meta);
+            final DocRef docRef = PipelineDoc.buildDocRef()
+                    .uuid(meta.getPipelineUuid())
+                    .name(pipelineName)
+                    .build();
+            final String pipeline = DocRefUtil.createSimpleDocRefString(docRef);
+            entries.add(new DataInfoSection.Entry("Processor Pipeline", pipeline));
+        }
+        addEntryIfPresent(entries, "Processor Filter Id", meta.getProcessorFilterId());
+        addEntryIfPresent(entries, "Processor Task Id", meta.getProcessorTaskId());
+
+        return entries;
+    }
+
+    private void addEntryIfPresent(final List<DataInfoSection.Entry> entries,
+                                   final String entryName,
+                                   final Number value) {
+        if (value != null) {
+            entries.add(new DataInfoSection.Entry(entryName, String.valueOf(value)));
+        }
+    }
+
     private void addEncodingInfo(final Meta meta, final List<Entry> entries) {
-        feedStore.findByName(meta.getFeedName())
+        docFinder.findByName(FeedDoc.TYPE, meta.getFeedName())
                 .stream()
                 .findFirst()
                 .map(feedStore::readDocument)
@@ -436,9 +481,8 @@ class DataServiceImpl implements DataService {
                         feedDoc -> {
                             // If this is the received stream type then show the encoding
                             if (metaService.isRaw(meta.getTypeName())) {
-                                NullSafe.consume(feedDoc.getEncoding(), encoding -> {
-                                    entries.add(new DataInfoSection.Entry("Data Encoding", encoding));
-                                });
+                                NullSafe.consume(feedDoc.getEncoding(), encoding ->
+                                        entries.add(new Entry("Data Encoding", encoding)));
                             } else {
                                 entries.add(new DataInfoSection.Entry(
                                         "Data Encoding", StreamUtil.DEFAULT_CHARSET_NAME));
@@ -449,22 +493,21 @@ class DataServiceImpl implements DataService {
 
 
     private String getDateTimeString(final Long ms) {
-        if (ms == null) {
-            return "";
-        }
-        return DateUtil.createNormalDateTimeString(ms) + " (" + ms + ")";
+        return NullSafe.getOrElse(
+                ms,
+                ms2 -> DateUtil.createNormalDateTimeString(ms2) + " (" + ms2 + ")",
+                "");
     }
 
-    private List<DataInfoSection.Entry> getDataRententionEntries(final Map<String, String> attributeMap) {
+    private List<DataInfoSection.Entry> getDataRetentionEntries(final Map<String, String> attributeMap) {
         final List<DataInfoSection.Entry> entries = new ArrayList<>();
 
-        if (attributeMap != null && !attributeMap.isEmpty()) {
-            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_AGE,
-                    attributeMap.get(DataRetentionFields.RETENTION_AGE)));
-            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL,
-                    attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
-            entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_RULE,
-                    attributeMap.get(DataRetentionFields.RETENTION_RULE)));
+        if (NullSafe.hasEntries(attributeMap)) {
+            Stream.of(DataRetentionFields.RETENTION_AGE,
+                            DataRetentionFields.RETENTION_UNTIL,
+                            DataRetentionFields.RETENTION_RULE)
+                    .forEach(field ->
+                            entries.add(new Entry(field, attributeMap.get(field))));
         }
 
         return entries;
@@ -472,8 +515,8 @@ class DataServiceImpl implements DataService {
 
     private String getPipelineName(final Meta meta) {
         if (meta.getPipelineUuid() != null) {
-            return docRefInfoService
-                    .name(new DocRef("Pipeline", meta.getPipelineUuid()))
+            return docFinder
+                    .getName(new DocRef("Pipeline", meta.getPipelineUuid()))
                     .orElse(null);
         }
         return null;

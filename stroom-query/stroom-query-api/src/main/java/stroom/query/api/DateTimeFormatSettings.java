@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,10 +57,10 @@ public final class DateTimeFormatSettings implements FormatSettings {
      * @param timeZone The time zone to use when formatting the date time value
      */
     @JsonCreator
-    public DateTimeFormatSettings(@JsonProperty("usePreferences") final boolean usePreferences,
+    public DateTimeFormatSettings(@JsonProperty("usePreferences") final Boolean usePreferences,
                                   @JsonProperty("pattern") final String pattern,
                                   @JsonProperty("timeZone") final UserTimeZone timeZone) {
-        this.usePreferences = usePreferences;
+        this.usePreferences = Objects.requireNonNullElse(usePreferences, false);
         this.pattern = pattern;
         this.timeZone = timeZone;
     }
