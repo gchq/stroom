@@ -23,6 +23,10 @@ poi = "5.4.1"
 simple-java-mail = "8.8.0"
 swagger = "2.2.42"
 
+
+# --------------------------------------------------------------------------------
+
+
 [libraries]
 #------Stroom-libs---------------
 eventLogging = { module = "uk.gov.gchq.eventlogging:event-logging", version.ref = "eventLogging" }
@@ -187,6 +191,10 @@ xerces = { module = "xerces:xercesImpl", version = "2.12.2" }
 zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", version = "2026.0" }
 zxcvbn = { module = "com.nulab-inc:zxcvbn", version = "1.9.0" }
 
+
+# --------------------------------------------------------------------------------
+
+
 [plugins]
 
 java-library = { id = "java-library" }
@@ -218,7 +226,12 @@ jdeps = { id = "org.kordamp.gradle.jdeps", version = "0.20.0" }
 
 swagger-gradle-plugin = { id = "io.swagger.core.v3.swagger-gradle-plugin", version = "2.2.19" }
 
+
+# --------------------------------------------------------------------------------
+
+
 [bundles]
+
 common-test-implementation = [
     "assertj-core",
     "mockito-core",
