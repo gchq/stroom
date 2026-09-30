@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class DataGridComparatorFactory<T> {
@@ -77,7 +78,7 @@ public class DataGridComparatorFactory<T> {
                 combinedComparator = CompareUtil.combine(combinedComparator, comparator);
             }
         }
-        return NullSafe.requireNonNullElseGet(combinedComparator, CompareUtil::noOpComparator);
+        return Objects.requireNonNullElseGet(combinedComparator, CompareUtil::noOpComparator);
     }
 
     public static <T> Builder<T> builder(final DataGrid<T> dataGrid) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,26 +66,10 @@ public class StringUtil {
      * @return str as is, unless it is empty or blank, in which case return null.
      */
     public static String blankAsNull(final String str) {
-        if (str != null && (str.isEmpty() || isBlank(str))) {
+        if (str != null && (str.isBlank())) {
             return null;
         } else {
             return str;
-        }
-    }
-
-    /**
-     * GWT doesn't support {@link String#isBlank()}
-     *
-     * @return True if str is null, empty or contains only whitespace.
-     */
-    public static boolean isBlank(final String str) {
-        if (str == null) {
-            return true;
-        } else if (str.isEmpty()) {
-            return true;
-        } else {
-            return str.chars()
-                    .allMatch(Character::isWhitespace);
         }
     }
 

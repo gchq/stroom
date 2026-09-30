@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,25 @@
 
 package stroom.ai.client;
 
-import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
 import stroom.ai.shared.AskStroomAiContext;
-import stroom.task.client.TaskMonitorFactory;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface AskStroomAiUiHandlers extends UiHandlers {
 
-    void setContext(String node, AskStroomAiContext data);
-
-    void onSetDefaultModel(TaskMonitorFactory taskMonitorFactory);
+    void setContext(AskStroomAiContext data);
 
     void onSendMessage(String message);
 
-    void onDockBehaviourChange(DockBehaviour dockBehaviour);
+    void onCancelProcessing();
 
     void onChangeConfig();
 
-    void clearHistory();
+    void onNewChat();
+
+    void onShowHistory();
+
+    void onDownloadChat();
+
+    void onDeleteAllMessages();
 }

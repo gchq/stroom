@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,14 +105,6 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             operationId = "batchChangeAnnotation")
     Integer batchChange(@Parameter(description = "request", required = true)
                         MultiAnnotationChangeRequest request);
-
-    @GET
-    @Path("getStandardComments")
-    @Operation(
-            summary = "Gets a list of predefined comments",
-            operationId = "getAnnotationSampleComments")
-    List<String> getStandardComments(@QueryParam("filter") String filter);
-
 
     @POST
     @Path("getLinkedEvents")

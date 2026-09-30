@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -609,9 +609,12 @@ public class Functions {
             }
 
             final UiConfig uiConfig = uiConfigProvider.get();
-            if (uiConfig.getHelpUrl() != null && uiConfig.getHelpSubPathStroomQueryLanguage() != null) {
+            // The expressions sub path, not the Stroom Query Language one - a function's help lives on a
+            // page per function category under the expressions section. The Stroom Query Language page is
+            // where the language's keywords are documented, which is what Structures links to.
+            if (uiConfig.getHelpUrl() != null && uiConfig.getHelpSubPathExpressions() != null) {
                 addHelpLinkToInfo(signature, uiConfig.getHelpUrl() +
-                                             uiConfig.getHelpSubPathStroomQueryLanguage(), detail);
+                                             uiConfig.getHelpSubPathExpressions(), detail);
             }
         }
         return detail.build();

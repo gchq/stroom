@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,12 +68,13 @@ public class PipelineProperty implements Comparable<PipelineProperty> {
         }
         final PipelineProperty that = (PipelineProperty) o;
         return element.equals(that.element) &&
-               name.equals(that.name);
+               name.equals(that.name) &&
+               Objects.equals(value, that.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(element, name);
+        return Objects.hash(element, name, value);
     }
 
     @Override

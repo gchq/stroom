@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,5 +22,6 @@ public class DataStorePipelineElementModule extends PipelineElementModule {
         bindElement(stroom.pipeline.writer.HDFSFileAppender.class);
         bindElement(stroom.pipeline.writer.RollingStreamAppender.class);
         bindElement(stroom.pipeline.writer.StreamAppender.class);
+        bindElement(stroom.pipeline.writer.DictionaryAppender.class);
     }
 }

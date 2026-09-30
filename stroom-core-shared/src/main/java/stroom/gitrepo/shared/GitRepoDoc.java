@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.util.shared.NullSafe;
+import stroom.util.shared.http.HttpClientConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -51,7 +51,8 @@ import java.util.Objects;
         "branch",
         "path",
         "commit",
-        "autoPush"
+        "autoPush",
+        "httpClientConfiguration"
 })
 @JsonInclude(Include.NON_NULL)
 public class GitRepoDoc extends AbstractDoc {
@@ -96,6 +97,17 @@ public class GitRepoDoc extends AbstractDoc {
     @JsonProperty
     private final Boolean autoPush;
 
+    /**
+     * How to talk to the remote over HTTP(S), including which key stores to use. Null means JGit's own
+     * defaults, which is what every repository created before this setting existed will get.
+     * <p>
+     * Only the <em>names</em> of key stores are held here; the material behind them lives in the secret
+     * store and is resolved on the server. That is deliberate - this document is exportable.
+     * </p>
+     */
+    @JsonProperty
+    private final HttpClientConfig httpClientConfiguration;
+
     @JsonCreator
     public GitRepoDoc(@JsonProperty("uuid") final String uuid,
                       @JsonProperty("name") final String name,
@@ -112,7 +124,8 @@ public class GitRepoDoc extends AbstractDoc {
                       @JsonProperty("branch") final String branch,
                       @JsonProperty("path") final String path,
                       @JsonProperty("commit") final String commit,
-                      @JsonProperty("autoPush") final Boolean autoPush) {
+                      @JsonProperty("autoPush") final Boolean autoPush,
+                      @JsonProperty("httpClientConfiguration") final HttpClientConfig httpClientConfiguration) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
 
@@ -121,12 +134,14 @@ public class GitRepoDoc extends AbstractDoc {
         this.contentStoreContentPackId = contentStoreContentPackId;
 
         // Git settings
-        this.url = NullSafe.requireNonNullElse(url, "");
-        this.credentialName = NullSafe.requireNonNullElse(credentialName, "");
-        this.branch = NullSafe.requireNonNullElse(branch, "");
-        this.path = NullSafe.requireNonNullElse(path, "");
-        this.commit = NullSafe.requireNonNullElse(commit, "");
-        this.autoPush = NullSafe.requireNonNullElse(autoPush, Boolean.FALSE);
+        this.url = Objects.requireNonNullElse(url, "");
+        this.credentialName = Objects.requireNonNullElse(credentialName, "");
+        this.branch = Objects.requireNonNullElse(branch, "");
+        this.path = Objects.requireNonNullElse(path, "");
+        this.commit = Objects.requireNonNullElse(commit, "");
+        this.autoPush = Objects.requireNonNullElse(autoPush, Boolean.FALSE);
+        // Left null when unset: null means 'use the defaults', which is not the same as an empty config.
+        this.httpClientConfiguration = httpClientConfiguration;
     }
 
     /**
@@ -162,7 +177,8 @@ public class GitRepoDoc extends AbstractDoc {
                && Objects.equals(branch, that.branch)
                && Objects.equals(path, that.path)
                && Objects.equals(commit, that.commit)
-               && Objects.equals(autoPush, that.autoPush);
+               && Objects.equals(autoPush, that.autoPush)
+               && Objects.equals(httpClientConfiguration, that.httpClientConfiguration);
     }
 
     @Override
@@ -176,7 +192,8 @@ public class GitRepoDoc extends AbstractDoc {
                 branch,
                 path,
                 commit,
-                autoPush);
+                autoPush,
+                httpClientConfiguration);
     }
 
     public String getDescription() {
@@ -230,22 +247,24 @@ public class GitRepoDoc extends AbstractDoc {
         return autoPush;
     }
 
-    /**
-     * Returns debugging info about the Doc.
-     */
+    public HttpClientConfig getHttpClientConfiguration() {
+        return httpClientConfiguration;
+    }
+
     @Override
     public String toString() {
-        return "GitRepoDoc: {\n  "
-               + this.getName() + ",\n  "
-               + description + ",\n  "
-               + contentStoreMetadata + ",\n"
-               + contentStoreContentPackId + ",\n"
-               + url + ",\n  "
-               + credentialName + ",\n  "
-               + branch + "\n  "
-               + path + "\n  "
-               + commit + "\n  "
-               + autoPush + "\n}";
+        return "GitRepoDoc{" +
+               "contentStoreMetadata=" + contentStoreMetadata +
+               ", contentStoreContentPackId='" + contentStoreContentPackId + '\'' +
+               ", description='" + description + '\'' +
+               ", url='" + url + '\'' +
+               ", credentialName='" + credentialName + '\'' +
+               ", branch='" + branch + '\'' +
+               ", path='" + path + '\'' +
+               ", commit='" + commit + '\'' +
+               ", autoPush=" + autoPush +
+               ", httpClientConfiguration=" + httpClientConfiguration +
+               '}';
     }
 
     public Builder copy() {
@@ -255,6 +274,10 @@ public class GitRepoDoc extends AbstractDoc {
     public static Builder builder() {
         return new Builder();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder extends AbstractBuilder<GitRepoDoc, Builder> {
 
@@ -267,6 +290,7 @@ public class GitRepoDoc extends AbstractDoc {
         private String path = "";
         private String commit = "";
         private Boolean autoPush = Boolean.FALSE;
+        private HttpClientConfig httpClientConfiguration;
 
         private Builder() {
         }
@@ -282,6 +306,7 @@ public class GitRepoDoc extends AbstractDoc {
             this.path = gitRepoDoc.path;
             this.commit = gitRepoDoc.commit;
             this.autoPush = gitRepoDoc.autoPush;
+            this.httpClientConfiguration = gitRepoDoc.httpClientConfiguration;
         }
 
         public Builder contentStoreMetadata(final ContentStoreMetadata contentStoreMetadata) {
@@ -329,6 +354,11 @@ public class GitRepoDoc extends AbstractDoc {
             return self();
         }
 
+        public Builder httpClientConfiguration(final HttpClientConfig httpClientConfiguration) {
+            this.httpClientConfiguration = httpClientConfiguration;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -351,7 +381,8 @@ public class GitRepoDoc extends AbstractDoc {
                     branch,
                     path,
                     commit,
-                    autoPush);
+                    autoPush,
+                    httpClientConfiguration);
         }
     }
 }

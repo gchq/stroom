@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,19 +48,19 @@ public class ImportSettings {
 
     @JsonCreator
     public ImportSettings(@JsonProperty("importMode") final ImportMode importMode,
-                          @JsonProperty("enableFilters") final boolean enableFilters,
+                          @JsonProperty("enableFilters") final Boolean enableFilters,
                           @JsonProperty("enableFiltersFromTime") final Long enableFiltersFromTime,
-                          @JsonProperty("useImportNames") final boolean useImportNames,
-                          @JsonProperty("useImportFolders") final boolean useImportFolders,
+                          @JsonProperty("useImportNames") final Boolean useImportNames,
+                          @JsonProperty("useImportFolders") final Boolean useImportFolders,
                           @JsonProperty("rootDocRef") final DocRef rootDocRef,
-                          @JsonProperty("mockEnvironment") final boolean mockEnvironment) {
+                          @JsonProperty("mockEnvironment") final Boolean mockEnvironment) {
         this.importMode = importMode;
-        this.enableFilters = enableFilters;
+        this.enableFilters = Objects.requireNonNullElse(enableFilters, false);
         this.enableFiltersFromTime = enableFiltersFromTime;
-        this.useImportNames = useImportNames;
-        this.useImportFolders = useImportFolders;
+        this.useImportNames = Objects.requireNonNullElse(useImportNames, false);
+        this.useImportFolders = Objects.requireNonNullElse(useImportFolders, false);
         this.rootDocRef = rootDocRef;
-        this.mockEnvironment = mockEnvironment;
+        this.mockEnvironment = Objects.requireNonNullElse(mockEnvironment, false);
     }
 
     public ImportMode getImportMode() {

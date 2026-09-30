@@ -64,7 +64,7 @@ LATEST_SUFFIX="-LATEST"
 # As 7 is still in beta, this is currently 6.1
 
 # The version of stroom-resources used for running the DB, should be a tag really
-STROOM_RESOURCES_GIT_TAG="7.7-stroom-7.0-proxy"
+STROOM_RESOURCES_GIT_TAG="7.11-stroom-7.11-proxy"
 SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources"
@@ -107,8 +107,9 @@ create_file_hash() {
 stop_and_clear_down_stroom_all_dbs() {
   # clear down stroom-all-dbs container and volumes so we have a blank slate
   echo -e "${GREEN}Clearing down stroom-all-dbs${NC}"
-  docker ps -q -f=name='stroom-all-dbs' | xargs -r docker stop --time 0
-  docker ps -a -q -f=name='stroom-all-dbs' | xargs -r docker rm
+  # bouncit.sh prefixes the volume and container names with bounceit_
+  docker ps -q -f=name='bounceit_stroom-all-dbs' | xargs -r docker stop --time 0
+  docker ps -a -q -f=name='bounceit_stroom-all-dbs' | xargs -r docker rm
   docker volume ls -q -f=name='bounceit_stroom-all-dbs*' | xargs -r docker volume rm
 }
 
@@ -139,6 +140,9 @@ start_databases() {
     -x \
     "${dbs_to_start[@]}"
 
+  echo -e "${GREEN}Running Docker containers:${NC}"
+  docker ps --format '{{.Names}}'
+
   popd > /dev/null
 }
 
@@ -148,6 +152,7 @@ generate_ddl_dump() {
 
   stop_and_clear_down_stroom_all_dbs
 
+  # The service name is not prefixed with bounceit_ at this point
   start_databases stroom-all-dbs
 
   # Run the db migration against the empty db to give us a vanilla
@@ -159,7 +164,7 @@ generate_ddl_dump() {
   echo -e "${GREEN}Dumping the database DDL${NC}"
   # Produce the dump file
   docker exec \
-    stroom-all-dbs \
+    bounceit_stroom-all-dbs \
     mysqldump \
       -d \
       -p"my-secret-pw" \

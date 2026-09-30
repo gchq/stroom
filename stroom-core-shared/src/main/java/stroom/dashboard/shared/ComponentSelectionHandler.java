@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,11 +48,11 @@ public class ComponentSelectionHandler {
     public ComponentSelectionHandler(@JsonProperty("id") final String id,
                                      @JsonProperty("componentId") final String componentId,
                                      @JsonProperty("expression") final ExpressionOperator expression,
-                                     @JsonProperty("enabled") final boolean enabled) {
+                                     @JsonProperty("enabled") final Boolean enabled) {
         this.id = id;
         this.componentId = componentId;
         this.expression = expression;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
     }
 
     public String getId() {

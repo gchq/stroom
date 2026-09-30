@@ -17,20 +17,24 @@
 # ~~~ stroom base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Intermediate build stage that is common to stroom and proxy to speed up
-# the build
+# the build. Keep both statements the same between this and stroom-proxy
+# so they can each use the same cached layer.
 
 # The JDK (rather than JRE) is required for the diagnostic tools like
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.1_8-jdk-alpine-3.23 AS stroom-base-stage
+FROM eclipse-temurin:25.0.3_9-jdk-alpine-3.23@sha256:5ecfde8e5ecde5954ea3721155b345ef56c1d579b940c761318ad4c05959a151 AS stroom-base-stage
 
+# bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
 # tini required for process control in the entrypoint
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
+        bash \
+        jq \
         curl \
         su-exec \
         tini
@@ -57,12 +61,13 @@ VOLUME /stroom-proxy/config/
 VOLUME /stroom-proxy/certs/
 VOLUME /stroom-proxy/content/
 VOLUME /stroom-proxy/data/
+VOLUME /stroom-proxy/data_feed_identities/
 VOLUME /stroom-proxy/logs/
 VOLUME /stroom-proxy/failures/
 VOLUME /stroom-proxy/zip_file_ingest/
 VOLUME /stroom-proxy/zip_file_ingest_failed/
 
-# run entrypoint script inside tini for better unix process handling, 
+# run entrypoint script inside tini for better unix process handling,
 # see https://github.com/krallin/tini/issues/8
 ENTRYPOINT ["/sbin/tini", "--", "/stroom-proxy/docker-entrypoint.sh"]
 
@@ -92,6 +97,7 @@ RUN \
     mkdir -p /stroom-proxy/logs/send && \
     mkdir -p /stroom-proxy/logs/app && \
     mkdir -p /stroom-proxy/data && \
+    mkdir -p /stroom-proxy/data_feed_identities && \
     mkdir -p /stroom-proxy/failures && \
     mkdir -p /stroom-proxy/zip_file_ingest && \
     mkdir -p /stroom-proxy/zip_file_ingest_failed && \

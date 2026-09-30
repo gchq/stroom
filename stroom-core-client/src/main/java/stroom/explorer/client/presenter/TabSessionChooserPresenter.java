@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,10 @@ public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionC
             }
         });
         view.setSelectionList(cellTable);
+
+        // Double-click a row to confirm selection and close the dialog.
+        selectionModel.addDoubleSelectHandler(event ->
+                HidePopupRequestEvent.builder(TabSessionChooserPresenter.this).fire());
 
         // Text.
         final Column<T, SafeHtml> textColumn = new Column<T, SafeHtml>(new SafeHtmlCell()) {

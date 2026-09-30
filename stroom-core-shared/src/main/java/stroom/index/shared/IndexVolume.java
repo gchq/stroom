@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import stroom.util.shared.HasCapacity;
 import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.PrimitiveValueConverter;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -117,7 +116,7 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
         this.updateUser = updateUser;
         this.path = path;
         this.nodeName = nodeName;
-        this.state = NullSafe.requireNonNullElse(state, VolumeUseState.ACTIVE);
+        this.state = Objects.requireNonNullElse(state, VolumeUseState.ACTIVE);
         this.bytesLimit = bytesLimit;
         this.bytesUsed = bytesUsed;
         this.bytesFree = bytesFree;

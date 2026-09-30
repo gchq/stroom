@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,8 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     SimplePanel rerankModel;
     @UiField
     TextBox rerankTextFieldSuffix;
+    @UiField
+    TextBox rerankScoreFieldSuffix;
     @UiField
     TextBox rerankScoreMinimum;
     @UiField
@@ -147,6 +149,16 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @Override
+    public String getRerankScoreFieldSuffix() {
+        return rerankScoreFieldSuffix.getValue();
+    }
+
+    @Override
+    public void setRerankScoreFieldSuffix(final String rerankScoreFieldSuffix) {
+        this.rerankScoreFieldSuffix.setValue(rerankScoreFieldSuffix);
+    }
+
+    @Override
     public Float getRerankScoreMinimum() {
         return Float.parseFloat(rerankScoreMinimum.getValue());
     }
@@ -171,6 +183,10 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
         indexName.setEnabled(!readOnly);
         searchSlices.setEnabled(!readOnly);
         searchScrollSize.setEnabled(!readOnly);
+        timeField.setEnabled(!readOnly);
+        rerankTextFieldSuffix.setEnabled(!readOnly);
+        rerankScoreFieldSuffix.setEnabled(!readOnly);
+        rerankScoreMinimum.setEnabled(!readOnly);
     }
 
     @UiHandler("indexName")

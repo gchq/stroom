@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,13 +56,17 @@ public final class UserInfo {
                     @JsonProperty("subjectId") final String subjectId,
                     @JsonProperty("displayName") final String displayName,
                     @JsonProperty("fullName") final String fullName,
-                    @JsonProperty("group") final boolean group,
-                    @JsonProperty("enabled") final boolean enabled,
-                    @JsonProperty("deleted") final boolean deleted) {
+                    @JsonProperty("group") final Boolean group,
+                    @JsonProperty("enabled") final Boolean enabled,
+                    @JsonProperty("deleted") final Boolean deleted) {
 
-        if (group && !enabled) {
+        this.group = Objects.requireNonNullElse(group, false);
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.deleted = Objects.requireNonNullElse(deleted, false);
+
+        if (this.group && !this.enabled) {
             throw new IllegalArgumentException("Groups cannot be disabled. uuid: " + uuid);
-        } else if (enabled && deleted) {
+        } else if (this.enabled && this.deleted) {
             throw new IllegalArgumentException("User can't be both enabled and deleted. uuid: " + uuid);
         }
 
@@ -70,9 +74,6 @@ public final class UserInfo {
         this.subjectId = Objects.requireNonNull(subjectId, "Null subjectId provided to UserInfo");
         this.displayName = Objects.requireNonNull(displayName, "Null displayName provided to UserInfo");
         this.fullName = fullName;
-        this.group = group;
-        this.enabled = enabled;
-        this.deleted = deleted;
     }
 
     /**

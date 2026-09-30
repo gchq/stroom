@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,19 @@ package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.EmbeddedDocRef;
+import stroom.docstore.shared.DocDataType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ExportSummary;
+import stroom.importexport.api.FileImportExportAsset;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.importexport.api.ImportExportSerializer;
 import stroom.importexport.api.ImportExportVersion;
@@ -40,22 +45,29 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -77,8 +89,8 @@ import java.util.stream.Collectors;
  * If the import is version 2.0 then imports it directly. Otherwise, hands
  * the import over to the old ImportExportSerializerImpl.
  * <p>
- *     Note that @NullMarked means everything is NonNull unless
- *     explicitly marked @Nullable
+ * Note that @NullMarked means everything is NonNull unless
+ * explicitly marked @Nullable
  * </p>
  */
 @NullMarked
@@ -87,62 +99,109 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     private static final LambdaLogger LOGGER =
             LambdaLoggerFactory.getLogger(ImportExportSerializerImplV2.class);
 
-    /** Extension of the node file */
+    /**
+     * Extension of the node file
+     */
     private static final String NODE_EXTENSION = ".node";
 
-    /** Indicates that the file is hidden (on UNIX) */
+    /**
+     * Indicates that the file is hidden (on UNIX)
+     */
     private static final String HIDDEN_FILENAME_PREFIX = ".";
 
-    /** Star symbol for globbing in directory streams */
+    /**
+     * Star symbol for globbing in directory streams
+     */
     private static final String GLOB_STAR = "*";
 
-    /** Key for version in .node files */
+    /**
+     * Key for version in .node files
+     */
     private static final String VERSION_KEY = "version";
 
-    /** Key for UUID in .node files */
+    /**
+     * Key for UUID in .node files
+     */
     private static final String UUID_KEY = "uuid";
 
-    /** Key for Type in .node files */
+    /**
+     * Key for Type in .node files
+     */
     private static final String TYPE_KEY = "type";
 
-    /** Key for Name in .node files */
+    /**
+     * Key for Name in .node files
+     */
     private static final String NAME_KEY = "name";
 
-    /** Key for Path in .node files */
+    /**
+     * Key for Path in .node files
+     */
     private static final String PATH_KEY = "path";
 
-    /** Key for tags in .node files */
+    /**
+     * Key for tags in .node files
+     */
     private static final String TAGS_KEY = "tags";
 
-    /** Delimiter for paths in .node files */
+    /**
+     * Delimiter for paths in .node files
+     */
     private static final String PATH_DELIMITER = "/";
 
-    /** Name of the .git directory - to be ignored */
+    /**
+     * Name of the .git directory - to be ignored
+     */
     private static final String GIT_DIRECTORY = ".git";
 
-    /** Version 1 implementation */
+    /**
+     * Name of .gitkeep file so directories get created in GIT
+     */
+    private static final String GIT_KEEP_FILENAME = ".gitkeep";
+
+    /**
+     * Defines the directory that path assets are stored in
+     */
+    private static final String PATH_ASSETS_DIRECTORY_SUFFIX = "-path-assets";
+
+    /**
+     * Version 1 implementation
+     */
     private final ImportExportSerializer importExportSerializerV1;
 
-    /** Used to convert node tags to a String */
+    /**
+     * Used to convert node tags to a String
+     */
     private final ExplorerService explorerService;
 
-    /** Used to find the children of a given node */
+    /**
+     * Used to find the children of a given node
+     */
     private final ExplorerNodeService explorerNodeService;
 
-    /** Provides action handles to allow us to export each node type */
+    /**
+     * Provides action handles to allow us to export each node type
+     */
     private final ImportExportActionHandlersImpl importExportActionHandlers;
 
-    /** Provides access to Processor Filters so we can find out whether to export them */
+    /**
+     * Provides access to Processor Filters so we can find out whether to export them
+     */
     private final ProcessorFilterService processorFilterService;
 
-    /** Security info */
+    /**
+     * Security info
+     */
     private final SecurityContext securityContext;
 
-    /** Logs stuff that was imported */
+    /**
+     * Logs stuff that was imported
+     */
     private final ImportExportDocumentEventLog importExportDocumentEventLog;
 
     /**
      * Injected constructor.
+     *
      * @param importExportSerializerV1 Serializer for version 1 format.
      */
     @Inject
@@ -165,6 +224,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /**
      * Call to read the serialised format on disk.
+     *
      * @param dir             directory containing serialized DocRef items, e.g. files created by
      *                        ImportExportSerializer.write()
      * @param importStateList ?
@@ -209,6 +269,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * the root of the import tree.
      * Uses breadth-first search of the directory tree rather than the
      * FileVisitor depth-first search.
+     *
      * @param dir The root directory of the file structure to import.
      * @return The version and root of the structure to import.
      */
@@ -245,8 +306,10 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * Structure to return from recursiveVersionSearch().
      */
     private static class ImportRoot {
+
         final ImportExportVersion version;
-        @Nullable final Path rootPath;
+        @Nullable
+        final Path rootPath;
 
         ImportRoot(final ImportExportVersion version, @Nullable final Path rootPath) {
             this.version = version;
@@ -258,6 +321,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * Given a node file, opens it and extracts the 'version' key.
      * Then uses that key (if present) to determine the version of the
      * structure on disk.
+     *
      * @param nodeFile A file with a .node extension.
      * @return The version of the structure on disk.
      * @throws IOException if something goes wrong.
@@ -278,16 +342,17 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * Recursively searches the import data for items marked up as Actions.
      * The path to them is then marked up as Actions so that the Folders
      * get imported too.
-     * @param dir             The directory to search.
-     * @param confirmMap      Where the Actions are stored
-     * @param docRefPath      Path down to the current item
-     * @throws IOException    if something goes wrong.
+     *
+     * @param dir        The directory to search.
+     * @param confirmMap Where the Actions are stored
+     * @param docRefPath Path down to the current item
+     * @throws IOException if something goes wrong.
      */
     private void recursiveMarkupAction(final Path dir,
                                        final Map<DocRef, ImportState> confirmMap,
                                        final Deque<DocRef> docRefPath) throws IOException {
 
-        LOGGER.debug("{}Recursive Markup Action: Looking in {}", indent(docRefPath), dir);
+        LOGGER.debug(() -> LogUtil.message("{}Recursive Markup Action: Looking in {}", indent(docRefPath), dir));
 
         // Used to store the directory name -> DocRef so we can push the DocRef
         // onto the docRefPath when we recurse the directory name.
@@ -296,7 +361,8 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         // Recurse through all the node files in this folder
         try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir, this::filterNodeFiles)) {
             for (final Path nodeFile : dirStream) {
-                LOGGER.debug("{}Found node file in Action search: {}", indent(docRefPath), nodeFile);
+                LOGGER.debug(() ->
+                        LogUtil.message("{}Found node file in Action search: {}", indent(docRefPath), nodeFile));
                 final DocRef docRef = nodeFileToDocRef(nodeFile, null);
                 if (ExplorerConstants.isFolder(docRef)) {
                     final String childDirectoryName = nodeFilePathToDirectoryName(nodeFile);
@@ -311,8 +377,8 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                 getImportStateFromConfirmMap(confirmMap, pathItem, pathToItem);
                         LOGGER.debug("Generated state from {} / {}", pathToItem, pathItem);
                         if (!pathItemState.isAction()) {
-                            LOGGER.debug("{}Marking Folder item as action: '{} / {}'",
-                                    indent(docRefPath), pathToItem, pathItem);
+                            LOGGER.debug(() -> LogUtil.message("{}Marking Folder item as action: '{} / {}'",
+                                    indent(docRefPath), pathToItem, pathItem));
                             pathItemState.setAction(true);
                         }
                         pathToItem.addLast(pathItem);
@@ -322,12 +388,15 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         }
 
         // Recurse through all the child directories on disk
-        LOGGER.debug("{}Looking for child directories of '{}'", indent(docRefPath), dir);
+        LOGGER.debug(() -> LogUtil.message("{}Looking for child directories of '{}'", indent(docRefPath), dir));
         try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir, Files::isDirectory)) {
             for (final Path childPath : dirStream) {
-                LOGGER.info("{}Recursing into '{}'", indent(docRefPath), childPath);
+                LOGGER.info(() -> LogUtil.message("{}Recursing into '{}'", indent(docRefPath), childPath));
                 if (childPath.endsWith(GIT_DIRECTORY)) {
-                    LOGGER.info("{}Ignoring .git directory", indent(docRefPath));
+                    LOGGER.info(() -> LogUtil.message("{}Ignoring .git directory", indent(docRefPath)));
+                    continue;
+                } else if (childPath.getFileName().toString().endsWith(PATH_ASSETS_DIRECTORY_SUFFIX)) {
+                    LOGGER.info(() -> LogUtil.message("{}Ignoring path assets in {}", indent(docRefPath), childPath));
                     continue;
                 }
                 // Pull the docRef for this directory from the map
@@ -335,16 +404,20 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 if (parentDocRef == null) {
                     throw new IOException("Node file for folder '" + childPath + "' was not found");
                 }
-                LOGGER.debug("{}Parent DocRef of {} is {}", indent(docRefPath), childPath.getFileName(), parentDocRef);
+                LOGGER.debug(() ->
+                        LogUtil.message("{}Parent DocRef of {} is {}",
+                                indent(docRefPath), childPath.getFileName(), parentDocRef));
                 docRefPath.addLast(parentDocRef);
                 try {
-                    LOGGER.debug("{}Recursing into {}: {}", indent(docRefPath), childPath, docRefPath);
+                    LOGGER.debug(() ->
+                            LogUtil.message("{}Recursing into {}: {}",
+                                    indent(docRefPath), childPath, docRefPath));
                     this.recursiveMarkupAction(
                             childPath,
                             confirmMap,
                             docRefPath);
                 } finally {
-                    LOGGER.debug("{}Leaving {}: {}", indent(docRefPath), childPath, docRefPath);
+                    LOGGER.debug(() -> LogUtil.message("{}Leaving {}: {}", indent(docRefPath), childPath, docRefPath));
                     docRefPath.removeLast();
                 }
             }
@@ -355,16 +428,17 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     /**
      * Does the import for the version 2 structure.
      * Call to read the serialised format on disk.
+     *
      * @param dir             directory containing serialized DocRef items, e.g. files created by
      *                        ImportExportSerializer.write()
      * @param importStateList ?
      * @param importSettings  Settings associated with the import.
-     * @return                DocRefs of items read from disk.
-     * @throws IOException    if something goes wrong.
+     * @return DocRefs of items read from disk.
+     * @throws IOException if something goes wrong.
      */
     private Set<DocRef> doV2Read(final Path dir,
-                                @Nullable List<ImportState> importStateList,
-                                final ImportSettings importSettings)
+                                 @Nullable List<ImportState> importStateList,
+                                 final ImportSettings importSettings)
             throws IOException {
 
         LOGGER.debug("V2 import from '{}'", dir);
@@ -422,11 +496,12 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * before we import anything underneath them in the Explorer tree,
      * so we cannot use the standard FileVisitor as it doesn't get the order
      * right.
-     * @param dir The directory to import from.
-     * @param confirmMap The state of each DocRef imported.
-     * @param importSettings The settings for the import.
+     *
+     * @param dir             The directory to import from.
+     * @param confirmMap      The state of each DocRef imported.
+     * @param importSettings  The settings for the import.
      * @param importedDocRefs The docrefs we've imported.
-     * @param docRefPath The docRef path to the current level.
+     * @param docRefPath      The docRef path to the current level.
      */
     private void recursiveRead(final Path dir,
                                final Map<DocRef, ImportState> confirmMap,
@@ -434,8 +509,8 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                                final Set<DocRef> importedDocRefs,
                                final Deque<DocRef> docRefPath) throws IOException {
 
-        LOGGER.debug("{}==============================", indent(docRefPath));
-        LOGGER.debug("{}Looking in {}", indent(docRefPath), dir);
+        LOGGER.debug(() -> LogUtil.message("{}==============================", indent(docRefPath)));
+        LOGGER.debug(() -> LogUtil.message("{}Looking in {}", indent(docRefPath), dir));
 
         // Used to store the directory name -> DocRef so we can push the DocRef
         // onto the docRefPath when we recurse the directory name.
@@ -444,7 +519,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         // Recurse through all the node files in this folder
         try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir, this::filterNodeFiles)) {
             for (final Path filePath : dirStream) {
-                LOGGER.debug("{}Found node file {}", indent(docRefPath), filePath);
+                LOGGER.debug(() -> LogUtil.message("{}Found node file {}", indent(docRefPath), filePath));
                 final DocRef docRef = importItemFromDisk(
                         filePath,
                         confirmMap,
@@ -455,7 +530,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                     // Store the directoryName->DocRef mapping so we can add the
                     // DocRef to the docRefPath when recursing the directories on disk.
                     final String childDirectoryName = nodeFilePathToDirectoryName(filePath);
-                    LOGGER.debug("{}childDirectoryName {} -> {}", indent(docRefPath), childDirectoryName, docRef);
+                    LOGGER.debug(() ->
+                            LogUtil.message("{}childDirectoryName {} -> {}",
+                                    indent(docRefPath), childDirectoryName, docRef));
                     pathToFolderDocRef.put(childDirectoryName, docRef);
                     importedDocRefs.add(docRef);
                 }
@@ -463,12 +540,17 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         }
 
         // Recurse through all the child directories on disk
-        LOGGER.debug("{}Looking for child directories of '{}'", indent(docRefPath), dir);
+        LOGGER.debug(() -> LogUtil.message("{}Looking for child directories of '{}'", indent(docRefPath), dir));
         try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir, Files::isDirectory)) {
             for (final Path childPath : dirStream) {
-                LOGGER.info("{}Recursing into '{}'", indent(docRefPath), childPath);
+                LOGGER.info(() -> LogUtil.message("{}Recursing into '{}'", indent(docRefPath), childPath));
                 if (childPath.endsWith(GIT_DIRECTORY)) {
-                    LOGGER.info("{}Ignoring .git directory", indent(docRefPath));
+                    LOGGER.info(() -> LogUtil.message("{}Ignoring .git directory", indent(docRefPath)));
+                    continue;
+                } else if (childPath.getFileName().toString().endsWith(PATH_ASSETS_DIRECTORY_SUFFIX)) {
+                    LOGGER.info(() ->
+                            LogUtil.message("{}Ignoring path assets directory '{}'",
+                                    indent(docRefPath), childPath));
                     continue;
                 }
 
@@ -477,10 +559,12 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 if (parentDocRef == null) {
                     throw new IOException("Node file for folder '" + childPath + "' was not found");
                 }
-                LOGGER.debug("{}Parent DocRef of {} is {}", indent(docRefPath), childPath.getFileName(), parentDocRef);
+                LOGGER.debug(() -> LogUtil.message("{}Parent DocRef of {} is {}",
+                        indent(docRefPath), childPath.getFileName(), parentDocRef));
                 docRefPath.addLast(parentDocRef);
                 try {
-                    LOGGER.debug("{}Recursing into {}: {}", indent(docRefPath), childPath, docRefPath);
+                    LOGGER.debug(() ->
+                            LogUtil.message("{}Recursing into {}: {}", indent(docRefPath), childPath, docRefPath));
                     this.recursiveRead(
                             childPath,
                             confirmMap,
@@ -488,7 +572,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                             importedDocRefs,
                             docRefPath);
                 } finally {
-                    LOGGER.debug("{}Leaving {}: {}", indent(docRefPath), childPath, docRefPath);
+                    LOGGER.debug(() -> LogUtil.message("{}Leaving {}: {}", indent(docRefPath), childPath, docRefPath));
                     docRefPath.removeLast();
                 }
             }
@@ -499,6 +583,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     /**
      * Returns a string that indicates the depth in the recursive structure
      * of the log entry.
+     *
      * @param path The path in the structure
      * @return A string to indent the log entry with
      */
@@ -509,6 +594,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     /**
      * Lamba functional implementation that accepts .node files and
      * rejects everything else.
+     *
      * @param path The path to filter
      * @return true if this is a .node file.
      */
@@ -519,6 +605,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     /**
      * Works out the name of the directory on disk that corresponds to the
      * given node file path.
+     *
      * @param nodeFilePath The path to the node file. Must be a .node file.
      * @return The name of the corresponding directory on disk. May not
      * exist if the node file does not represent some kind of Folder.
@@ -538,10 +625,11 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /**
      * Returns the ImportState given a DocRef. Creates the ImportState if necessary.
+     *
      * @param confirmMap       Map holding the ImportState
      * @param importDocRef     The docRef we want ImportState for
      * @param importDocRefPath The path to the docRef
-     * @return                 The ImportState for the docRef.
+     * @return The ImportState for the docRef.
      */
     private ImportState getImportStateFromConfirmMap(final Map<DocRef, ImportState> confirmMap,
                                                      final DocRef importDocRef,
@@ -554,10 +642,11 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     /**
      * Reads a nodeFile and returns a DocRef.
      * Also optionally returns the tags via an in-out parameter.
-     * @param nodeFile     The Path to the nodefile to read.
-     * @param tags         Null if not required, or somewhere to store any tags read
-     *                     from the nodefile.
-     * @return             The DocRef generated from the nodefile.
+     *
+     * @param nodeFile The Path to the nodefile to read.
+     * @param tags     Null if not required, or somewhere to store any tags read
+     *                 from the nodefile.
+     * @return The DocRef generated from the nodefile.
      * @throws IOException If something goes wrong.
      */
     private DocRef nodeFileToDocRef(final Path nodeFile,
@@ -598,27 +687,25 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /**
      * Imports the node file, whatever it represents.
-     * @param nodeFile          The Path to the nodeFile to import
-     * @param confirmMap        Stuff to tell the user
-     * @param importSettings    Stuff the user has told us
-     * @param importDocRefPath  Stack of DocRefs above this thing that we're trying
-     *                          to import.
-     * @return                  Reference of the imported doc.
+     *
+     * @param nodeFile         The Path to the nodeFile to import
+     * @param confirmMap       Stuff to tell the user
+     * @param importSettings   Stuff the user has told us
+     * @param importDocRefPath Stack of DocRefs above this thing that we're trying
+     *                         to import.
+     * @return Reference of the imported doc.
      */
     private @Nullable DocRef importItemFromDisk(final Path nodeFile,
                                                 final Map<DocRef, ImportState> confirmMap,
                                                 final ImportSettings importSettings,
-                                                final Deque<DocRef> importDocRefPath)
-            throws IOException {
-
-        DocRef imported = null;
+                                                final Deque<DocRef> importDocRefPath) throws IOException {
 
         // Read the node file.
         final Set<String> tags = new HashSet<>();
 
         // Create a doc ref for temporary use.
         final DocRef importDocRef = nodeFileToDocRef(nodeFile, tags);
-        LOGGER.debug("{}Read node file: {}", indent(importDocRefPath), importDocRef);
+        LOGGER.debug(() -> LogUtil.message("{}Read node file: {}", indent(importDocRefPath), importDocRef));
 
         // Create or get the import state.
         final ImportState importState = getImportStateFromConfirmMap(
@@ -626,8 +713,8 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 importDocRef,
                 importDocRefPath);
 
-        // Get other associated data.
-        final Map<String, byte[]> dataMap = new HashMap<>();
+        // Get other associated data, starting with the extension keyed files
+        final ImportExportDocument importExportDocument = new ImportExportDocument();
         final String filePrefix = ImportExportFileNameUtil.createFilePrefix(importDocRef);
         final Path dir = nodeFile.getParent();
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, filePrefix + GLOB_STAR)) {
@@ -642,43 +729,53 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                         throw new IOException("Cannot get key from filename '" + fileName + "'");
                     } else {
                         final String key = fileName.substring(filePrefix.length() + 1);
-                        LOGGER.debug("{}Found path with key '{}'", indent(importDocRefPath), key);
+                        LOGGER.debug(() ->
+                                LogUtil.message("{}Found path with key '{}'", indent(importDocRefPath), key));
                         final byte[] bytes = Files.readAllBytes(file);
-                        dataMap.put(key, bytes);
+                        importExportDocument.addExtAsset(
+                                new ByteArrayImportExportAsset(key, DocDataType.BINARY, bytes));
                     }
                 }
             }
         }
 
+        // Now look for any path keyed assets
+        importPathAssetsFromDisk(importExportDocument,
+                dir.resolve(filePrefix + PATH_ASSETS_DIRECTORY_SUFFIX),
+                indent(importDocRefPath));
+
+        DocRef imported = null;
         try {
             // Find the appropriate handler
             final ImportExportActionHandler importExportActionHandler =
                     importExportActionHandlers.getHandler(importDocRef.getType());
 
             if (importExportActionHandler instanceof NonExplorerDocRefProvider) {
-                LOGGER.debug("{}Importing non-explorer doc for node file {}",
+                LOGGER.debug(() -> LogUtil.message("{}Importing non-explorer doc for node file {}",
                         indent(importDocRefPath),
-                        nodeFile);
+                        nodeFile));
 
                 imported = importNonExplorerDoc(
                         importExportActionHandler,
                         nodeFile,
                         importDocRef,
                         importDocRefPath,
-                        dataMap,
+                        importExportDocument,
                         importState,
                         confirmMap,
                         importSettings);
 
             } else {
-                LOGGER.debug("{}Importing explorer doc for node file {}", indent(importDocRefPath), nodeFile);
+                LOGGER.debug(() ->
+                        LogUtil.message("{}Importing explorer doc for node file {}",
+                                indent(importDocRefPath), nodeFile));
                 imported = importExplorerDoc(
                         importExportActionHandler,
                         nodeFile,
                         importDocRefPath,
                         importDocRef,
                         tags,
-                        dataMap,
+                        importExportDocument,
                         importState,
                         confirmMap,
                         importSettings);
@@ -692,11 +789,50 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         return imported;
     }
 
+    /**
+     * Reads the path assets (if any) into the importExportDoc, using the relative path as the asset key.
+     *
+     * @param importExportDocument    Where to put any assets found.
+     * @param pathAssetsRootDirectory The root directory to look for path assets. Doesn't need to exist -
+     *                                if it doesn't exist then there are no assets so no problem.
+     */
+    private void importPathAssetsFromDisk(final ImportExportDocument importExportDocument,
+                                          final Path pathAssetsRootDirectory,
+                                          final String logIndent) throws IOException {
+
+        if (pathAssetsRootDirectory.toFile().exists()) {
+            Files.walkFileTree(pathAssetsRootDirectory, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult visitFile(final @NonNull Path file, final @NonNull BasicFileAttributes attrs) {
+
+                    LOGGER.info("{}Found path asset '{}' with relative path '{}'",
+                            logIndent, file, pathAssetsRootDirectory.relativize(file));
+
+                    if (file.endsWith(GIT_KEEP_FILENAME)) {
+                        // Check for .gitkeep - ignore the file and add the folder as an asset
+                        final String key = "/" + pathAssetsRootDirectory.relativize(file.getParent());
+                        final ImportExportAsset asset = new ByteArrayImportExportAsset(key, DocDataType.BINARY, null);
+                        importExportDocument.addPathAsset(asset);
+                        LOGGER.info("{}Added asset for folder '{}'", logIndent, key);
+                    } else {
+                        // Normal file to import as a path asset
+                        final String key = "/" + pathAssetsRootDirectory.relativize(file);
+                        final ImportExportAsset asset = new FileImportExportAsset(key, DocDataType.BINARY, file);
+                        importExportDocument.addPathAsset(asset);
+                        LOGGER.info("{}Added asset with filename '{}'", logIndent, key);
+                    }
+
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+    }
+
     private DocRef importNonExplorerDoc(final ImportExportActionHandler importExportActionHandler,
                                         final Path nodeFile,
                                         final DocRef importDocRef,
                                         final Deque<DocRef> importDocRefPath,
-                                        final Map<String, byte[]> dataMap,
+                                        final ImportExportDocument importExportDocument,
                                         final ImportState importState,
                                         final Map<DocRef, ImportState> confirmMap,
                                         final ImportSettings importSettings)
@@ -706,7 +842,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 (NonExplorerDocRefProvider) importExportActionHandler;
 
         // Might return null but unlikely - seems it would only be due to code error
-        final DocRef ownerDocument = nonExplorerDocRefProvider.getOwnerDocument(importDocRef, dataMap);
+        final DocRef ownerDocument = nonExplorerDocRefProvider.getOwnerDocument(importDocRef, importExportDocument);
         if (ownerDocument == null) {
             throw new IOException("Owner Document for '" + importDocRef.getName() + "' could not be found");
         }
@@ -729,7 +865,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 // Do the actual import of the ProcessorFilter
                 final DocRef importedDocRef = importExportActionHandler.importDocument(
                         importDocRef,
-                        dataMap,
+                        importExportDocument,
                         importState,
                         importSettings);
 
@@ -767,19 +903,20 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /**
      * Imports something that appears in the Explorer Tree.
+     *
      * @param importExportActionHandler Handler for the type of DocRef
-     * @param nodeFile Path to the import file on disk
-     * @param importDocRefPath The path-like list of DocRefs from root to the parent
-     *                         of the thing we're importing.
-     * @param importDocRef DocRef created from the .node data on disk
-     * @param tags List of tags extracted from .node data on disk
-     * @param dataMap Map of disk file extension to disk file contents
-     * @param importState State of the import for docRef
-     * @param confirmMap Accessed to remove docRef from the map if the docRef
-     *                   cannot be imported.
-     * @param importSettings Key settings for the import; notably the RootDocRef.
+     * @param nodeFile                  Path to the import file on disk
+     * @param importDocRefPath          The path-like list of DocRefs from root to the parent
+     *                                  of the thing we're importing.
+     * @param importDocRef              DocRef created from the .node data on disk
+     * @param tags                      List of tags extracted from .node data on disk
+     * @param importExportDocument      Represents the data that is imported or exported.
+     * @param importState               State of the import for docRef
+     * @param confirmMap                Accessed to remove docRef from the map if the docRef
+     *                                  cannot be imported.
+     * @param importSettings            Key settings for the import; notably the RootDocRef.
      * @return The DocRef of the imported document, or null if the importMode
-     *         means that the item shouldn't be imported.
+     * means that the item shouldn't be imported.
      */
     @Nullable
     private DocRef importExplorerDoc(
@@ -788,7 +925,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             final Deque<DocRef> importDocRefPath,
             final DocRef importDocRef,
             final Set<String> tags,
-            final Map<String, byte[]> dataMap,
+            final ImportExportDocument importExportDocument,
             final ImportState importState,
             final Map<DocRef, ImportState> confirmMap,
             final ImportSettings importSettings)
@@ -799,9 +936,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             return null;
         }
 
-        LOGGER.debug("{}Importing explorer doc with node file '{}'",
+        LOGGER.debug(() -> LogUtil.message("{}Importing explorer doc with node file '{}'",
                 indent(importDocRefPath),
-                importDocRef);
+                importDocRef));
 
         final ImportDocRefStateV2 importDocRefState = new ImportDocRefStateV2(
                 explorerNodeService,
@@ -811,7 +948,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 importSettings.isUseImportNames());
 
         if (importDocRefState.nodeAlreadyExists()) {
-            LOGGER.debug("{}Document exists", indent(importDocRefPath));
+            LOGGER.debug(() -> LogUtil.message("{}Document exists", indent(importDocRefPath)));
 
             // This is a pre-existing item so make sure we are allowed to update it.
             if (!securityContext.hasDocumentPermission(importDocRef,
@@ -823,7 +960,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             importState.setState(State.UPDATE);
 
         } else {
-            LOGGER.debug("{}Document does not exist", indent(importDocRefPath));
+            LOGGER.debug(() -> LogUtil.message("{}Document does not exist", indent(importDocRefPath)));
             importState.setState(State.NEW);
         }
 
@@ -835,18 +972,18 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
         try {
             // Import the item via the appropriate handler.
-            LOGGER.debug("{}DocRef '{}' has ImportMode: {}",
+            LOGGER.debug(() -> LogUtil.message("{}DocRef '{}' has ImportMode: {}",
                     indent(importDocRefPath),
                     importDocRefState.getImportDocRef().getName(),
-                    importSettings.getImportMode());
+                    importSettings.getImportMode()));
 
             if (ImportMode.CREATE_CONFIRMATION.equals(importSettings.getImportMode()) ||
                 ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode()) ||
                 importState.isAction()) {
 
-                LOGGER.debug("{}Importing '{}'",
+                LOGGER.debug(() -> LogUtil.message("{}Importing '{}'",
                         indent(importDocRefPath),
-                        importDocRefState.getImportDocRef().getName());
+                        importDocRefState.getImportDocRef().getName()));
 
                 // Only do this bit for things that aren't folders
                 if (!importDocRefState.isNodeFileExactlyFolderType()) {
@@ -872,7 +1009,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                     // There may be other implementations.
                     importedDocRef = importExportActionHandler.importDocument(
                             importDocRefState.getImportDocRef(),
-                            dataMap,
+                            importExportDocument,
                             importState,
                             importSettings);
 
@@ -886,7 +1023,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
                 // Add explorer node
                 if (ImportSettings.ok(importSettings, importState) && !(importedDocRef instanceof EmbeddedDocRef)) {
-                    LOGGER.debug("{}ImportSettings.ok()", indent(importDocRefPath));
+                    LOGGER.debug(() -> LogUtil.message("{}ImportSettings.ok()", indent(importDocRefPath)));
 
                     // Create a non-DB ExplorerNode
                     final ExplorerNode explorerNode = ExplorerNode
@@ -897,10 +1034,12 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                     // Create, rename and/or move explorer node.
                     if (!importDocRefState.nodeAlreadyExists()) {
                         // Node doesn't exist
-                        LOGGER.debug("{}DocRef doesn't exist so creating '{}' within '{}'",
-                                indent(importDocRefPath),
-                                importedDocRef.getName(),
-                                importDocRefState.getImportParentDocRef().getName());
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("{}DocRef doesn't exist so creating '{}' within '{}'",
+                                    indent(importDocRefPath),
+                                    importedDocRef.getName(),
+                                    importDocRefState.getImportParentDocRef().getName());
+                        }
                         explorerNodeService.createNode(
                                 importedDocRef,
                                 importDocRefState.getImportParentDocRef(),
@@ -913,25 +1052,29 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                         explorerNodeService.updateTags(importedDocRef, tags);
 
                         // Node already exists
-                        LOGGER.debug("{}DocRef '{}' already exists",
-                                indent(importDocRefPath),
-                                importedDocRef.getName());
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("{}DocRef '{}' already exists",
+                                    indent(importDocRefPath),
+                                    importedDocRef.getName());
+                        }
 
                         // Don't rename unless name is incorrect
                         if (importDocRefState.isRenamed()) {
-                            LOGGER.debug("{}Renaming '{}' to '{}'",
-                                    indent(importDocRefPath),
-                                    explorerNode.getName(),
-                                    importDocRef.getName());
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.debug("{}Renaming '{}' to '{}'",
+                                        indent(importDocRefPath),
+                                        explorerNode.getName(),
+                                        importDocRef.getName());
+                            }
                             explorerService.rename(explorerNode, importDocRef.getName());
                         }
                         if (importDocRefState.isMoving()) {
                             if (importDocRefState.getDestParentNode() == null) {
                                 throw new IOException("Destination node for move is null");
                             }
-                            LOGGER.debug("{}Moving to '{}'",
+                            LOGGER.debug(() -> LogUtil.message("{}Moving to '{}'",
                                     indent(importDocRefPath),
-                                    importDocRefState.getDestParentNode().getName());
+                                    importDocRefState.getDestParentNode().getName()));
                             explorerService.move(
                                     Collections.singletonList(explorerNode),
                                     importDocRefState.getDestParentNode(),
@@ -949,10 +1092,10 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
             } else {
                 // We can't import this item so remove it from the map.
-                LOGGER.debug("{}Cannot import item '{}' as import mode is '{}'",
+                LOGGER.debug(() -> LogUtil.message("{}Cannot import item '{}' as import mode is '{}'",
                         indent(importDocRefPath),
                         importDocRef.getName(),
-                        importSettings.getImportMode());
+                        importSettings.getImportMode()));
                 confirmMap.remove(importDocRef);
                 // We need to return a DocRef so that the importDocRefPath can be set correctly
                 importedDocRef = importDocRef;
@@ -963,7 +1106,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
             // Log the best docref we've got
             final DocRef docRefToLog =
-                    importedDocRef != null ? importedDocRef : importDocRefState.getImportDocRef();
+                    importedDocRef != null
+                            ? importedDocRef
+                            : importDocRefState.getImportDocRef();
 
             importExportDocumentEventLog.importDocument(docRefToLog.getType(),
                     docRefToLog.getUuid(),
@@ -978,14 +1123,16 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /**
      * Resolves the child against the path down from the parent.
+     *
      * @param docRefPath The path to the parent of the object we're looking at
-     * @param childName The name of the object we're importing
+     * @param childName  The name of the object we're importing
      * @return The resolved path.
      */
     private String resolvePath(final Deque<DocRef> docRefPath, final String childName) {
-        final StringBuilder buf = new StringBuilder();
+        final StringBuilder buf = new StringBuilder("/");
         for (final DocRef docRef : docRefPath) {
             buf.append(docRef.getName());
+            buf.append("/");
         }
         buf.append(childName);
 
@@ -994,16 +1141,17 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /**
      * Writes data out in the latest export format.
-     * @param rootNodePath     Path to root node of the export. If null then
-     *                         starts at the System node.
-     *                         Otherwise, removes these path elements from the start of
-     *                         the exported path. Normally this should be the path to the
-     *                         GitRepo node, including that node.
-     * @param dir              Where to serialize the DocRef items to on disk.
-     * @param docRefs          Set of the DocRefs to serialize.
-     * @param typesToIgnore    Set of the Doc types that shouldn't be exported, nor
-     *                         their children. Must not be null.
-     * @param omitAuditFields  Do not export audit fields.
+     *
+     * @param rootNodePath    Path to root node of the export. If null then
+     *                        starts at the System node.
+     *                        Otherwise, removes these path elements from the start of
+     *                        the exported path. Normally this should be the path to the
+     *                        GitRepo node, including that node.
+     * @param dir             Where to serialize the DocRef items to on disk.
+     * @param docRefs         Set of the DocRefs to serialize.
+     * @param typesToIgnore   Set of the Doc types that shouldn't be exported, nor
+     *                        their children. Must not be null.
+     * @param omitAuditFields Do not export audit fields.
      * @return The summary of the export.
      */
     @Override
@@ -1022,17 +1170,18 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /**
      * Writes data out in version 2 or version 1 structure.
-     * @param rootNodePath     Path to root node of the export. If null then
-     *                         starts at the System node.
-     *                         Otherwise, removes these path elements from the start of
-     *                         the exported path. Normally this should be the path to the
-     *                         GitRepo node, including that node.
-     * @param dir              Where to serialize the DocRef items to on disk.
-     * @param docRefs          Set of the DocRefs to serialize.
-     * @param typesToIgnore    Set of the Doc types that shouldn't be exported, nor
-     *                         their children. Must not be null.
-     * @param omitAuditFields  Do not export audit fields.
-     * @param version          The version of the export routine to use.
+     *
+     * @param rootNodePath    Path to root node of the export. If null then
+     *                        starts at the System node.
+     *                        Otherwise, removes these path elements from the start of
+     *                        the exported path. Normally this should be the path to the
+     *                        GitRepo node, including that node.
+     * @param dir             Where to serialize the DocRef items to on disk.
+     * @param docRefs         Set of the DocRefs to serialize.
+     * @param typesToIgnore   Set of the Doc types that shouldn't be exported, nor
+     *                        their children. Must not be null.
+     * @param omitAuditFields Do not export audit fields.
+     * @param version         The version of the export routine to use.
      * @return The summary of the export.
      */
     @Override
@@ -1085,10 +1234,11 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     /**
      * Given the set of docRefs from the client, finds any surrogate docRefs and
      * returns them.
+     *
      * @param docRefsFromClient The set of docRefs that were passed in from the caller
      *                          of this service. Can be null.
-     * @return                  The surrogate docRefs, to act as placeholders for any
-     *                          docRefs that don't appear in the Explorer Tree.
+     * @return The surrogate docRefs, to act as placeholders for any
+     * docRefs that don't appear in the Explorer Tree.
      */
     private Set<DocRef> findSurrogateDocRefs(final @Nullable Set<DocRef> docRefsFromClient)
             throws IOException {
@@ -1136,10 +1286,11 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     /**
      * Recursively called to search the Explorer Tree. Looks for
      * nodes in the docRefs parameter passed to the write() method.
-     * @param exportInfo Static information about this export.
+     *
+     * @param exportInfo        Static information about this export.
      * @param pathToCurrentNode How we got here, from the rootNode down
      *                          to the currentNode.
-     * @param currentNode The node we're looking at in this method call.
+     * @param currentNode       The node we're looking at in this method call.
      * @throws IOException if something goes wrong.
      */
     private void searchForNodesToExport(final ExportInfo exportInfo,
@@ -1175,9 +1326,10 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /**
      * Exports the current node and everything below it.
-     * @param currentNode Where we are in the tree
+     *
+     * @param currentNode       Where we are in the tree
      * @param pathToCurrentNode Path from root to currentNode
-     * @param exportInfo Static information about the export.
+     * @param exportInfo        Static information about the export.
      * @throws IOException if something goes wrong.
      */
     private void exportEverything(final ExportInfo exportInfo,
@@ -1220,9 +1372,10 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     /**
      * Creates all the folders down to the current node.
      * Side effect is to create the directories on disk and the associated .node files.
+     *
      * @param pathToCurrentNode The list of nodes, from the root of the export
      *                          down to the current node.
-     * @param exportInfo Static info about the export.
+     * @param exportInfo        Static info about the export.
      * @throws IOException if something goes wrong.
      */
     private void exportCurrentNode(final ExportInfo exportInfo,
@@ -1312,6 +1465,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     /**
      * Returns the path on disk to the parent of the node indicated by
      * the pathToIter list.
+     *
      * @param exportInfo Information about this export.
      * @param pathToNode Path to the node that we need a parent directory for.
      * @return The path on disk to the parent directory for the node.
@@ -1327,6 +1481,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /**
      * Works out a path on disk for the given pathToNode
+     *
      * @param pathToNode The path that we're creating
      * @param exportInfo Background info about the export.
      * @return A path where things should be put on disk.
@@ -1346,6 +1501,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /**
      * Writes a node file for the currentDocRef within the parentDirPath.
+     *
      * @param pathToCurrentNode Where the currentDocRef is within the
      *                          ExplorerNode structure. Includes the
      *                          currentNode at the end.
@@ -1354,7 +1510,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      *                          Can be null if none are present.
      * @param parentDirPath     Where we're going to write the node file
      *                          on disk.
-     * @throws IOException      if something goes wrong.
+     * @throws IOException if something goes wrong.
      */
     private void writeNodeFile(final SequencedCollection<ExplorerNode> pathToCurrentNode,
                                final DocRef currentDocRef,
@@ -1398,10 +1554,11 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /**
      * Writes all the files associated with the Handler for the Doc.
+     *
      * @param exportInfo    Static info associated with the export
      * @param currentDocRef Current DocRef to export
      * @param parentDirPath Where to export the currentNode
-     * @throws IOException  if something goes wrong.
+     * @throws IOException if something goes wrong.
      */
     private void writeHandlerFiles(final ExportInfo exportInfo,
                                    final DocRef currentDocRef,
@@ -1414,16 +1571,75 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             if (handler != null) {
 
                 final List<Message> messages = new ArrayList<>();
-                final Map<String, byte[]> dataMap =
+                final ImportExportDocument importExportDocument =
                         handler.exportDocument(currentDocRef, exportInfo.isOmitAuditFields(), messages);
 
                 final String filePrefix = ImportExportFileNameUtil.createFilePrefix(currentDocRef);
-                for (final Map.Entry<String, byte[]> entry : dataMap.entrySet()) {
-                    final String fileName = filePrefix + "." + entry.getKey();
-                    try (final OutputStream handlerStream = Files.newOutputStream(parentDirPath.resolve(fileName))) {
-                        handlerStream.write(entry.getValue());
+                for (final ImportExportAsset asset : importExportDocument.getExtAssets()) {
+                    final String fileName = filePrefix + "." + asset.getKey();
+                    LOGGER.info("Writing file '{}'", fileName);
+                    try (final OutputStream handlerStream =
+                            new EndsWithNewlineOutputStream(
+                                    new BufferedOutputStream(
+                                            Files.newOutputStream(parentDirPath.resolve(fileName))))) {
+                        try (final InputStream assetStream = asset.getInputStream()) {
+                            if (assetStream != null) {
+                                assetStream.transferTo(handlerStream);
+                            }
+                        }
                         LOGGER.debug("Wrote file '{}/{}'", parentDirPath, fileName);
                     }
+                }
+
+                // Putting path assets under a <filename>-path-assets/ directory
+                final Path pathAssetRoot = parentDirPath.resolve(filePrefix + PATH_ASSETS_DIRECTORY_SUFFIX);
+                for (final ImportExportAsset asset : importExportDocument.getPathAssets()) {
+                    try {
+                        // The asset key is the relative path plus the filename
+                        // Need to make sure the key doesn't start with / as otherwise it will be put in root
+                        String assetKey = asset.getKey();
+                        if (assetKey.startsWith(File.separator)) {
+                            assetKey = assetKey.substring(1);
+                        }
+                        final Path pathToAsset = pathAssetRoot.resolve(assetKey);
+                        LOGGER.info("Path to asset: sep {}, key {}, assetKey {}, pathToAsset {}",
+                                File.pathSeparator, asset.getKey(), assetKey, pathToAsset);
+
+                        // Create the directories to provide a parent directory for the new file
+                        Files.createDirectories(pathToAsset.getParent());
+                        try (final InputStream assetStream = asset.getInputStream()) {
+                            if (assetStream != null) {
+                                LOGGER.info("Writing to asset path '{}' within parent '{}' and root '{}'",
+                                        pathToAsset, pathToAsset.getParent(), pathAssetRoot);
+                                try (final OutputStream handlerStream =
+                                        new BufferedOutputStream(Files.newOutputStream(pathToAsset))) {
+                                    assetStream.transferTo(handlerStream);
+                                }
+                            } else {
+                                // assetStream == null => no content, just a directory
+                                Files.createDirectories(pathToAsset);
+                                // Git ignores directories so create a .gitkeep file
+                                try {
+                                    Files.createFile(pathToAsset.resolve(GIT_KEEP_FILENAME));
+                                } catch (final FileAlreadyExistsException e) {
+                                    // Ignore this exception
+                                }
+                            }
+                        }
+                    } catch (final PermissionException e) {
+                        LOGGER.error("Permission exception exporting asset '{}': {}",
+                                asset.getKey(), e.getMessage(), e);
+                        throw e;
+                    } catch (final IOException e) {
+                        LOGGER.error("Error exporting asset '{}': {}",
+                                asset.getKey(), e.getMessage(), e);
+                        throw e;
+                    } catch (final NullPointerException e) {
+                        LOGGER.error("NullPointerException exporting asset '{}': {}",
+                                asset.getKey(), e.getMessage(), e);
+                        throw e;
+                    }
+
                 }
             }
         }
@@ -1431,11 +1647,12 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
     /**
      * Writes out any DocRefs associated with an ExplorerNode.
+     *
      * @param exportInfo        Info about this export.
      * @param pathToCurrentNode Node path to this node.
      * @param currentNode       The node we are exporting and want associated docRefs for
      * @param parentDirPath     Where we're going to write stuff on disk
-     * @throws IOException      if something goes wrong.
+     * @throws IOException if something goes wrong.
      */
     private void writeAssociatedNonExplorerNodes(final ExportInfo exportInfo,
                                                  final SequencedCollection<ExplorerNode> pathToCurrentNode,
@@ -1491,6 +1708,10 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     /**
      * Class to wrap all the static & state info about an export to avoid
      * passing lots of parameters down the stack.
@@ -1498,31 +1719,50 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
     @NullMarked
     private static class ExportInfo {
 
-        /** Location on disk where we're going to export to */
+        /**
+         * Location on disk where we're going to export to
+         */
         private final Path diskDirectory;
 
-        /** The document references that we want to export */
-        private @Nullable final Set<DocRef> docRefsToExport;
+        /**
+         * The document references that we want to export
+         */
+        @Nullable
+        private final Set<DocRef> docRefsToExport;
 
-        /** Ignore these types */
+        /**
+         * Ignore these types
+         */
         private final Set<String> typesToIgnore = new HashSet<>();
 
-        /** Whether to omit the audit fields */
+        /**
+         * Whether to omit the audit fields
+         */
         private final boolean omitAuditFields;
 
-        /** Whether the folder has already been created on disk */
+        /**
+         * Whether the folder has already been created on disk
+         */
         private final Set<ExplorerNode> alreadyExported = new HashSet<>();
 
-        /** Used to place non-explorer docRefs in the explorer tree */
+        /**
+         * Used to place non-explorer docRefs in the explorer tree
+         */
         private final Set<DocRef> surrogateDocRefs = new HashSet<>();
 
-        /** Messages to return to the user */
+        /**
+         * Messages to return to the user
+         */
         private final List<Message> messages = new ArrayList<>();
 
-        /** Compatibility with ExportSummary */
+        /**
+         * Compatibility with ExportSummary
+         */
         private final List<String> successTypes = new ArrayList<>();
 
-        /** Compatibility with ExportSummary */
+        /**
+         * Compatibility with ExportSummary
+         */
         private final List<String> failedTypes = new ArrayList<>();
 
         /**
@@ -1564,6 +1804,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
         /**
          * Returns true if we should export the given docRef.
+         *
          * @param docRef The docRef to check.
          * @return true if we should export, false if not.
          */
@@ -1578,6 +1819,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         /**
          * Returns true if we should ignore the given type and
          * everything below it.
+         *
          * @param type The type to check.
          * @return true if we should ignore the type, false if we shouldn't.
          */
@@ -1615,6 +1857,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
          * If it has then return true. If not then returns false.
          * Must be used with successfullyExported() to mark the node as
          * exported.
+         *
          * @param node The node to check
          * @return false the first time a node is seen, true thereafter
          */
@@ -1625,6 +1868,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         /**
          * Call for each doc that is successfully exported. Used when
          * creating the ExportSummary.
+         *
          * @param node The node that was successfully exported.
          */
         public void successfullyExported(final ExplorerNode node) {
@@ -1636,8 +1880,9 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
         /**
          * Call for each doc that couldn't be exported. Used when
          * creating the ExportSummary.
+         *
          * @param node The node that failed to be exported.
-         * @param e The exception, if any. Can be null.
+         * @param e    The exception, if any. Can be null.
          */
         public void failedToExport(final ExplorerNode node,
                                    @Nullable final Throwable e) {
@@ -1654,6 +1899,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
 
         /**
          * Creates an ExportSummary to hand back for display to the user.
+         *
          * @return A new ExportSummary to return to the user.
          */
         public ExportSummary toExportSummary() {
@@ -1673,12 +1919,13 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
          * Returns true if the docRef is a surrogate. That is, it exists
          * as a placeholder in the ExplorerTree for things that are not
          * in the ExplorerTree such as Processor Filters.
+         *
          * @param docRef The docRef to check
          * @return true if the docRef is a surrogate, false if not.
          */
         public boolean isSurrogate(final DocRef docRef) {
             return surrogateDocRefs.contains(docRef)
-                   && ! (docRefsToExport == null || docRefsToExport.contains(docRef));
+                   && !(docRefsToExport == null || docRefsToExport.contains(docRef));
         }
 
     }

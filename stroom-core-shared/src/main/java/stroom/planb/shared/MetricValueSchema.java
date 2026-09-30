@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -39,11 +38,11 @@ import java.util.Objects;
 public class MetricValueSchema {
 
     private static final MaxValueSize DEFAULT_MAX_VALUE_SIZE = MaxValueSize.TWO;
-    private static final Boolean DEFAULT_STORE_LATEST_VALUE = true;
-    private static final Boolean DEFAULT_STORE_MIN = false;
-    private static final Boolean DEFAULT_STORE_MAX = false;
-    private static final Boolean DEFAULT_STORE_COUNT = false;
-    private static final Boolean DEFAULT_STORE_SUM = false;
+    private static final boolean DEFAULT_STORE_LATEST_VALUE = true;
+    private static final boolean DEFAULT_STORE_MIN = false;
+    private static final boolean DEFAULT_STORE_MAX = false;
+    private static final boolean DEFAULT_STORE_COUNT = false;
+    private static final boolean DEFAULT_STORE_SUM = false;
 
     @JsonProperty
     private final MaxValueSize valueType;
@@ -65,12 +64,12 @@ public class MetricValueSchema {
                              @JsonProperty("storeMax") final Boolean storeMax,
                              @JsonProperty("storeCount") final Boolean storeCount,
                              @JsonProperty("storeSum") final Boolean storeSum) {
-        this.valueType = NullSafe.requireNonNullElse(valueType, DEFAULT_MAX_VALUE_SIZE);
-        this.storeLatestValue = NullSafe.requireNonNullElse(storeLatestValue, DEFAULT_STORE_LATEST_VALUE);
-        this.storeMin = NullSafe.requireNonNullElse(storeMin, DEFAULT_STORE_MIN);
-        this.storeMax = NullSafe.requireNonNullElse(storeMax, DEFAULT_STORE_MAX);
-        this.storeCount = NullSafe.requireNonNullElse(storeCount, DEFAULT_STORE_COUNT);
-        this.storeSum = NullSafe.requireNonNullElse(storeSum, DEFAULT_STORE_SUM);
+        this.valueType = Objects.requireNonNullElse(valueType, DEFAULT_MAX_VALUE_SIZE);
+        this.storeLatestValue = Objects.requireNonNullElse(storeLatestValue, DEFAULT_STORE_LATEST_VALUE);
+        this.storeMin = Objects.requireNonNullElse(storeMin, DEFAULT_STORE_MIN);
+        this.storeMax = Objects.requireNonNullElse(storeMax, DEFAULT_STORE_MAX);
+        this.storeCount = Objects.requireNonNullElse(storeCount, DEFAULT_STORE_COUNT);
+        this.storeSum = Objects.requireNonNullElse(storeSum, DEFAULT_STORE_SUM);
     }
 
     public MaxValueSize getValueType() {

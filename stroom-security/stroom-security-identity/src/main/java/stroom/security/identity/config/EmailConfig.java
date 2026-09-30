@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 public class EmailConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_SMTP = "smtp";
+
 
     @NotNull
     @JsonProperty(PROP_NAME_SMTP)
@@ -55,17 +58,6 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
     private final String passwordResetText;
 
     @NotNull
-    @JsonProperty
-    @JsonPropertyDescription("The URL to  perform a password reset that will be included in the text of a " +
-            "password reset emails")
-    private final String passwordResetUrl;
-
-    @NotNull
-    @JsonProperty
-    @JsonPropertyDescription("Enables/disables the sending of password reset emails. This should only be " +
-            "enabled when all the SMTP server configuration has been set.")
-    // Defaults to false because this feature needs to be configured and actively turned on before it works.
-    private final boolean allowPasswordResets;
 
     public EmailConfig() {
         smtpConfig = new SmtpConfig();
@@ -74,9 +66,7 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
         passwordResetSubject = "Password reset for Stroom";
         passwordResetText = "A password reset has been requested for this email address. Please visit " +
                 "the following URL to reset your password: %s.";
-        passwordResetUrl = "/s/resetPassword/?user=%s&token=%s";
         // Defaults to false because this feature needs to be configured and actively turned on before it works.
-        allowPasswordResets = false;
     }
 
     @SuppressWarnings("unused")
@@ -85,16 +75,12 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
                        @JsonProperty("fromAddress") final String fromAddress,
                        @JsonProperty("fromName") final String fromName,
                        @JsonProperty("passwordResetSubject") final String passwordResetSubject,
-                       @JsonProperty("passwordResetText") final String passwordResetText,
-                       @JsonProperty("passwordResetUrl") final String passwordResetUrl,
-                       @JsonProperty("allowPasswordResets") final boolean allowPasswordResets) {
+                       @JsonProperty("passwordResetText") final String passwordResetText) {
         this.smtpConfig = smtpConfig;
         this.fromAddress = fromAddress;
         this.fromName = fromName;
         this.passwordResetSubject = passwordResetSubject;
         this.passwordResetText = passwordResetText;
-        this.passwordResetUrl = passwordResetUrl;
-        this.allowPasswordResets = allowPasswordResets;
     }
 
     @JsonProperty(PROP_NAME_SMTP)
@@ -118,14 +104,6 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
         return fromName;
     }
 
-    public String getPasswordResetUrl() {
-        return passwordResetUrl;
-    }
-
-    public boolean isAllowPasswordResets() {
-        return allowPasswordResets;
-    }
-
     @Override
     public String toString() {
         return "EmailConfig{" +
@@ -134,8 +112,6 @@ public class EmailConfig extends AbstractConfig implements IsStroomConfig {
                 ", fromName='" + fromName + '\'' +
                 ", passwordResetSubject='" + passwordResetSubject + '\'' +
                 ", passwordResetText='" + passwordResetText + '\'' +
-                ", passwordResetUrl='" + passwordResetUrl + '\'' +
-                ", allowPasswordResets=" + allowPasswordResets +
                 '}';
     }
 }

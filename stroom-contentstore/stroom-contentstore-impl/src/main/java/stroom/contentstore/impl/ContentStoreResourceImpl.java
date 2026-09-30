@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,10 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.util.yaml.YamlUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import tools.jackson.databind.exc.UnrecognizedPropertyException;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -64,6 +64,13 @@ import java.util.Map;
 @SuppressWarnings("unused")
 @AutoLogged
 public class ContentStoreResourceImpl implements ContentStoreResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentStoreResourceImpl.class);
+
+    /**
+     * The size of the buffer used to copy stuff around
+     */
+    private static final int IO_BUF_SIZE = 4096;
 
     /**
      * Where we get configuration from
@@ -94,16 +101,6 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      * Allows test code to override Git URLs
      */
     private Map<String, String> overrideGitUrls = null;
-
-    /**
-     * The size of the buffer used to copy stuff around
-     */
-    private static final int IO_BUF_SIZE = 4096;
-
-    /**
-     * Logger
-     */
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentStoreResourceImpl.class);
 
     /**
      * Injected constructor.
@@ -202,11 +199,10 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
         }
 
         // Grab YAML describing the content store
-        final ObjectMapper mapper = YamlUtil.getMapper();
+        final YAMLMapper mapper = YamlUtil.getMapper();
         final List<ContentStoreContentPackWithDynamicState> contentPacksWithState = new ArrayList<>();
 
         for (final String contentStoreUrl : contentStoreUrls) {
-            LOGGER.debug("Parsing content store at '{}'", contentStoreUrl);
 
             try {
                 final URI uri = new URI(contentStoreUrl);
@@ -218,7 +214,6 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                 final List<ContentStoreContentPack> listOfContentPacks = contentStore.getContentPacks();
                 for (final ContentStoreContentPack contentPack : listOfContentPacks) {
                     // Store the icon URL for access later
-                    LOGGER.debug("ID {} -> URL {}", contentPack.getId(), contentPack.getIconUrl());
                     IconPassthroughServlet.addIdToUrl(contentPack.getId(), contentPack.getIconUrl());
 
                     // Add the content store metadata
@@ -284,7 +279,6 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      */
     @Override
     public ContentStoreResponse create(final ContentStoreCreateGitRepoRequest createGitRepoRequest) {
-        LOGGER.debug("REST request to create GitRepo from Content Store: {}", createGitRepoRequest);
         boolean isMockEnvironment = false;
 
         // Return value
@@ -300,7 +294,6 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
         } else {
             try {
                 // Put the document into the Explorer Tree
-                LOGGER.debug("Creating DocPath from '{}'", contentPack.getStroomPath());
                 final DocPath docPathToGitRepo = DocPath.fromPathString(contentPack.getStroomPath());
                 final ExplorerNode parentNode = explorerService.get().ensureFolderPath(docPathToGitRepo,
                         PermissionInheritance.DESTINATION);
@@ -379,7 +372,6 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
             buf.append(m);
         }
 
-        LOGGER.debug("{} Content Pack: \n{}", operation, buf);
         return new ContentStoreResponse(ContentStoreResponse.Status.OK, buf.toString());
     }
 
@@ -418,7 +410,6 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
 
     @Override
     public ContentStoreValueResponse<Boolean> checkContentUpgradeAvailable(final ContentStoreContentPack contentPack) {
-        LOGGER.debug("Checking for upgrades for {}", contentPack.getUiName());
 
         try {
             // Find a matching GitRepoDoc
@@ -463,7 +454,6 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
 
     @Override
     public ContentStoreResponse upgradeContentPack(final ContentStoreContentPack contentPack) {
-        LOGGER.debug("Upgrading {}", contentPack.getUiName());
         final ArrayList<Message> messages = new ArrayList<>();
         try {
             // Find a matching GitRepoDoc

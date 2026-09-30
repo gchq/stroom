@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
@@ -307,7 +308,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
         private EventBus eventBus;
         private boolean showIcon = false;
-        private boolean hasOpenAndCopy = false;
+        private boolean hasOpenAndCopy = true;
         private DocRef.DisplayType displayType = DisplayType.NAME;
         private Function<T, SafeHtml> cellTextFunction;
         private Function<T, DocRef> docRefFunction;
@@ -364,7 +365,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                     if (docRef == null) {
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
-                        final String displayValue = docRef.getDisplayValue(NullSafe.requireNonNullElse(
+                        final String displayValue = docRef.getDisplayValue(Objects.requireNonNullElse(
                                 displayType,
                                 DisplayType.AUTO));
                         return NullSafe.isNonBlankString(displayValue)
@@ -389,7 +390,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 //                    if (docRef == null) {
 //                        return null;
 //                    } else {
-//                        return docRef.getDisplayValue(NullSafe.requireNonNullElse(displayType, DisplayType.AUTO));
+//                        return docRef.getDisplayValue(Objects.requireNonNullElse(displayType, DisplayType.AUTO));
 //                    }
 //                }
 //

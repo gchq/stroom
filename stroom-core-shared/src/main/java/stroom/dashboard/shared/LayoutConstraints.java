@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,16 +31,19 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class LayoutConstraints {
 
+    private static final boolean DEFAULT_FIT_WIDTH = false;
+    private static final boolean DEFAULT_FIT_HEIGHT = false;
+
     @JsonProperty
     private final boolean fitWidth;
     @JsonProperty
     private final boolean fitHeight;
 
     @JsonCreator
-    public LayoutConstraints(@JsonProperty("fitWidth") final boolean fitWidth,
-                             @JsonProperty("fitHeight") final boolean fitHeight) {
-        this.fitWidth = fitWidth;
-        this.fitHeight = fitHeight;
+    public LayoutConstraints(@JsonProperty("fitWidth") final Boolean fitWidth,
+                             @JsonProperty("fitHeight") final Boolean fitHeight) {
+        this.fitWidth = Objects.requireNonNullElse(fitWidth, DEFAULT_FIT_WIDTH);
+        this.fitHeight = Objects.requireNonNullElse(fitHeight, DEFAULT_FIT_HEIGHT);
     }
 
     public boolean isFitWidth() {

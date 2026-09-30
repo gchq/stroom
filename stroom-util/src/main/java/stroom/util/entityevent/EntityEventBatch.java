@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,17 +58,18 @@ public class EntityEventBatch {
     /**
      * @param entityEvents     The events in the batch.
      * @param homogeneousBatch Set to true if all {@link EntityEvent}s in entityEvents share the same
-     *                         {@link EntityEventKey}. Set to false if not known.
+     *                         {@link EntityEventKey} (i.e. {@link EntityAction} and doc type).
+     *                         Set to false if not known.
      */
     @JsonCreator
     public EntityEventBatch(@JsonProperty("entityEvents") final List<EntityEvent> entityEvents,
-                            @JsonProperty("homogeneousBatch") final boolean homogeneousBatch) {
+                            @JsonProperty("homogeneousBatch") final Boolean homogeneousBatch) {
         // No point firing identical events, so remove any dups
         this.entityEvents = distinctEvents(entityEvents);
-        if (homogeneousBatch) {
+        this.homogeneousBatch = Objects.requireNonNullElse(homogeneousBatch, false);
+        if (this.homogeneousBatch) {
             enforceHomogeneous(this.entityEvents);
         }
-        this.homogeneousBatch = homogeneousBatch;
     }
 
     private List<EntityEvent> distinctEvents(final List<EntityEvent> events) {

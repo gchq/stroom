@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.test;
 
+import stroom.ai.impl.mock.MockAiModule;
 import stroom.app.guice.BootStrapModule;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
@@ -24,7 +25,6 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
 import stroom.index.VolumeTestConfigModule;
-import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockUserSecurityContextModule;
@@ -69,6 +69,6 @@ public class SetupSampleDataModule extends AbstractModule {
         install(new MockMetaStatisticsModule());
         install(new stroom.test.DatabaseTestControlModule());
         install(new JerseyModule());
-        install(new MockOpenAIModule());
+        install(new MockAiModule());
     }
 }

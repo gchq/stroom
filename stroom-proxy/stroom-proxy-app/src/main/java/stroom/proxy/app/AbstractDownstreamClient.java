@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,17 +77,24 @@ public abstract class AbstractDownstreamClient {
     }
 
     public String getFullUrl() {
+        return getFullUrl(getConfiguredUrl().orElse(null));
+    }
+
+    public String getFullUrl(final String configuredUrl) {
         // This allows a full url to be explicitly configured, else we just combine the default path
         // with the downstream host config.
         final String url = downstreamHostConfigProvider.get().createUri(
-                getConfiguredUrl().orElse(null),
+                configuredUrl,
                 getDefaultPath());
         LOGGER.debug("getFullUrl() - url: {}", url);
         return url;
     }
 
     protected Response getResponse(final Function<Invocation.Builder, Response> buildStep) {
-        final String url = getFullUrl();
+        return getResponse(getFullUrl(), buildStep);
+    }
+
+    protected Response getResponse(final String url, final Function<Invocation.Builder, Response> buildStep) {
         final WebTarget webTarget = jerseyClientFactory.createWebTarget(JerseyClientName.DOWNSTREAM, url);
         final Builder builder = webTarget
                 .request(MediaType.APPLICATION_JSON)

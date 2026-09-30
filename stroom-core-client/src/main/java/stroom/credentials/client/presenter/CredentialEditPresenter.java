@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,8 +120,7 @@ public class CredentialEditPresenter
                      final Consumer<Credential> consumer) {
         read(docRef, cwp);
         final String caption = CreationState.NEW_CREDENTIALS.equals(creationState)
-                ?
-                "New Credentials"
+                ? "New Credentials"
                 : "Edit Credentials";
         // Configure the popup builder for this dialog
         ShowPopupEvent
@@ -229,6 +228,10 @@ public class CredentialEditPresenter
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Indicates whether the credentials are new ones to be created or old ones to be stored

@@ -18,8 +18,5 @@ ext.moduleName = 'stroom.ssl.test'
 
 dependencies {
     implementation libs.dropwizard.assets
-    implementation libs.dropwizard.configuration
-    implementation libs.dropwizard.core
-    implementation libs.dropwizard.jersey
 }
 

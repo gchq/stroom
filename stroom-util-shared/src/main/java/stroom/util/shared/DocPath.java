@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,14 +79,18 @@ public class DocPath {
     @JsonCreator
     DocPath(@JsonProperty("parentParts") final List<String> parentParts,
             @JsonProperty("leafPart") final String leafPart,
-            @JsonProperty("absolute") final boolean absolute) {
+            @JsonProperty("absolute") final Boolean absolute) {
         this.parentParts = parentParts;
         this.leafPart = leafPart;
-        this.absolute = absolute;
+        this.absolute = Objects.requireNonNullElse(absolute, false);
     }
 
     private DocPath(final List<String> parts1, final List<String> parts2) {
         this(combineLists(parts1, parts2));
+    }
+
+    private DocPath(final List<String> parts1, final List<String> parts2, final boolean absolute) {
+        this(combineLists(parts1, parts2), absolute);
     }
 
     private static List<String> combineLists(final List<String> parts1, final List<String> parts2) {
@@ -262,7 +266,7 @@ public class DocPath {
             if (otherPath.isAbsolute()) {
                 throw new IllegalArgumentException("otherPath can't be absolute");
             }
-            return new DocPath(this.getParts(), otherPath.getParts());
+            return new DocPath(this.getParts(), otherPath.getParts(), this.isAbsolute());
         }
     }
 

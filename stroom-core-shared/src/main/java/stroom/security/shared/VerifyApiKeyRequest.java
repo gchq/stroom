@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 package stroom.security.shared;
-
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -41,8 +39,7 @@ public class VerifyApiKeyRequest {
             @JsonProperty("requiredAppPermissions") final AppPermissionSet requiredAppPermissions) {
 
         this.apiKey = Objects.requireNonNull(apiKey);
-        this.requiredAppPermissions = NullSafe.requireNonNullElseGet(
-                requiredAppPermissions,
+        this.requiredAppPermissions = Objects.requireNonNullElseGet(requiredAppPermissions,
                 AppPermissionSet::empty);
     }
 

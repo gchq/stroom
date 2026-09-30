@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,11 @@ public class Automate {
     private final String refreshInterval;
 
     @JsonCreator
-    public Automate(@JsonProperty("open") final boolean open,
-                    @JsonProperty("refresh") final boolean refresh,
+    public Automate(@JsonProperty("open") final Boolean open,
+                    @JsonProperty("refresh") final Boolean refresh,
                     @JsonProperty("refreshInterval") final String refreshInterval) {
-        this.open = open;
-        this.refresh = refresh;
+        this.open = Objects.requireNonNullElse(open, false);
+        this.refresh = Objects.requireNonNullElse(refresh, false);
         this.refreshInterval = refreshInterval;
     }
 

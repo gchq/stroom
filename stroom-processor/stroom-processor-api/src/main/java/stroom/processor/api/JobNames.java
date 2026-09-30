@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,4 +19,5 @@ package stroom.processor.api;
 public class JobNames {
 
     public static final String DATA_PROCESSOR = "Data Processor";
+    public static final String PROCESSOR_TASK_REAPER = "Processor Task Reaper";
 }

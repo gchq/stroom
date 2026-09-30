@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public class DynamicFieldSelectionListModel
                             // Create empty item.
                             final List<FieldInfoSelectionItem> items = Collections.singletonList(
                                     new FieldInfoSelectionItem(null));
-                            resultPage = new ResultPage<>(items, new PageResponse(0, 1, 1L, true));
+                            resultPage = new ResultPage<>(items, new PageResponse(0L, 1, 1L, true));
                         }
 
                         consumer.accept(resultPage);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,11 +49,10 @@ public class TokenBuilderFactory {
         LOGGER.debug("Creating token builder with issuer {}", issuer);
         final TokenBuilder tokenBuilder = new TokenBuilder();
         final IdentityConfig identityConfig = configProvider.get();
-        // The algorithm assumes that the default algorithm set in the config had that value when the
-        // default open id creds were generated.
+        // This assumes the configured algorithm matches the one the active signing key was generated for.
         tokenBuilder
                 .issuer(issuer)
-                .privateVerificationKey(publicJsonWebKeyProvider.getFirst())
+                .privateVerificationKey(publicJsonWebKeyProvider.getActiveKey())
                 .algorithm(identityConfig.getTokenConfig().getAlgorithm());
         return tokenBuilder;
     }

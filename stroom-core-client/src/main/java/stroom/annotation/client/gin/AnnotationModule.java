@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.annotation.client.AddEventLinkPresenter.AddEventLinkView;
 import stroom.annotation.client.AddEventLinkViewImpl;
 import stroom.annotation.client.AnnotationBrowsePlugin;
 import stroom.annotation.client.AnnotationCollectionPlugin;
+import stroom.annotation.client.AnnotationCommentPlugin;
 import stroom.annotation.client.AnnotationCreatePlugin;
 import stroom.annotation.client.AnnotationEditPresenter;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
@@ -68,6 +69,7 @@ public class AnnotationModule extends PluginModule {
         bindPlugin(AnnotationStatusPlugin.class);
         bindPlugin(AnnotationLabelPlugin.class);
         bindPlugin(AnnotationCollectionPlugin.class);
+        bindPlugin(AnnotationCommentPlugin.class);
         bind(AnnotationEditSupport.class).asEagerSingleton();
         bindPresenterWidget(AnnotationEditPresenter.class, AnnotationEditView.class, AnnotationEditViewImpl.class);
         bindPresenterWidget(AnnotationTagCreatePresenter.class,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,8 +126,8 @@ public class RollingFileDestination extends RollingDestination {
 
     @Override
     protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
-        boolean success = false;
 
+        // TODO change to use TemplateCache
         String destFileName = rolledFileName;
         destFileName = pathCreator.replaceTimeVars(destFileName);
         destFileName = pathCreator.replaceUUIDVars(destFileName);
@@ -145,6 +145,7 @@ public class RollingFileDestination extends RollingDestination {
         // Create destination path.
         Path dest = destFile;
 
+        boolean success = false;
         // If we have got valid paths for source and dest then attempt move.
         if (source != null) {
             if (Files.isRegularFile(dest)) {

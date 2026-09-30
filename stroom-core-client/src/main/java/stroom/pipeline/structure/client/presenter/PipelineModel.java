@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.util.client.Pair;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
@@ -282,15 +283,17 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     private void copyProperties(final String id, final List<PipelineProperty> source,
                                 final Consumer<PipelineProperty> dest,
                                 final List<PipelineProperty> ignore) {
-        final Set<PipelineProperty> set = new HashSet<>();
+        // uniqueness is by element+name, not value
+        final Set<Pair<String, String>> set = new HashSet<>();
 
         if (ignore != null) {
-            set.addAll(ignore);
+            for (final PipelineProperty p : ignore) {
+                set.add(Pair.of(p.getElement(), p.getName()));
+            }
         }
 
         for (final PipelineProperty property : source) {
-            if (id.equals(property.getElement()) && !set.contains(property)) {
-                set.add(property);
+            if (id.equals(property.getElement()) && set.add(Pair.of(property.getElement(), property.getName()))) {
                 dest.accept(property);
             }
         }
@@ -542,25 +545,32 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         return pipelineLayer;
     }
 
+    /**
+     * Sets the layer being edited without rebuilding or notifying anybody. Only for initial setup;
+     * use {@link #update(PipelineData)} to make an edit.
+     */
     public void setPipelineLayer(final PipelineLayer pipelineLayer) {
         this.pipelineLayer = pipelineLayer;
+    }
+
+    /**
+     * Replaces the data of the layer being edited, rebuilds the combined view of the pipeline and
+     * notifies listeners.
+     * <p>
+     * Every edit must go through a model method that ends in {@link #refresh()} like this one does.
+     * The resulting change event is what makes the enclosing document re-evaluate whether it is
+     * dirty, so an edit applied with {@link #setPipelineLayer(PipelineLayer)} alone will not enable
+     * the Save button.
+     */
+    public void update(final PipelineData pipelineData) throws PipelineModelException {
+        pipelineLayer = new PipelineLayer(pipelineLayer.getSourcePipeline(), pipelineData);
+        buildCombinedData();
+        refresh();
     }
 
     public PipelineData getPipelineData() {
         return pipelineLayer.getPipelineData();
     }
-
-//    /**
-//     * Set the provided filters on the pipeline elements in our model
-//     */
-//    public void setStepFilters(final Map<String, SteppingFilterSettings> elementIdToStepFilterMap) {
-//        this.elementIdToStepFilterMap = elementIdToStepFilterMap;
-//        NullSafe.map(combinedData.getElements()).values().forEach(element -> {
-//            element.setSteppingFilterSettings(NullSafe.map(elementIdToStepFilterMap).get(element.getId()));
-//        });
-//        refresh();
-//    }
-
 
     public void setStepFilterMap(final Map<String, SteppingFilterSettings> stepFilterMap) {
         this.stepFilterMap = stepFilterMap;

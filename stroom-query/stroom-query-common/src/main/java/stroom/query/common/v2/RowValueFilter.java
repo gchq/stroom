@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,12 +51,10 @@ public class RowValueFilter {
     }
 
     public static Optional<Predicate<Values>> create(final List<Column> columns,
-                                                     final boolean applyValueFilters,
                                                      final DateTimeSettings dateTimeSettings,
                                                      final ExpressionPredicateFactory expressionPredicateFactory) {
         // Create column value filter expression.
-        final Optional<ExpressionOperator> optionalExpressionOperator =
-                create(columns, applyValueFilters);
+        final Optional<ExpressionOperator> optionalExpressionOperator = create(columns);
         return optionalExpressionOperator.flatMap(expressionOperator -> {
             // Create the field position map for the new columns.
             final ValueFunctionFactories<Values> queryFieldIndex = createColumnIdValExtractors(columns);
@@ -77,12 +75,11 @@ public class RowValueFilter {
         return fieldPositionMap::get;
     }
 
-    private static Optional<ExpressionOperator> create(final List<Column> columns,
-                                                       final boolean applyValueFilters) {
+    private static Optional<ExpressionOperator> create(final List<Column> columns) {
         final ExpressionOperator.Builder valueFilterBuilder = ExpressionOperator.builder();
         columns.forEach(column -> {
             final ColumnFilter columnFilter = column.getColumnFilter();
-            if (applyValueFilters && columnFilter != null) {
+            if (columnFilter != null && columnFilter.isEnabled()) {
                 final Optional<ExpressionOperator> operator = SimpleStringExpressionParser.create(
                         new SingleFieldProvider(column.getId()),
                         columnFilter.getFilter());
@@ -91,30 +88,42 @@ public class RowValueFilter {
 
             final ColumnValueSelection columnValueSelection = column.getColumnValueSelection();
             if (columnValueSelection != null && columnValueSelection.isEnabled()) {
-                final List<ExpressionTerm> terms = columnValueSelection
-                        .getValues()
-                        .stream()
-                        .map(value -> ExpressionTerm
-                                .builder()
-                                .field(column.getId())
-                                .condition(Condition.EQUALS)
-                                .value(value)
-                                .build())
-                        .toList();
-
-                ExpressionOperator expressionOperator = ExpressionOperator
-                        .builder()
-                        .op(Op.OR)
-                        .addTerms(terms)
-                        .build();
                 if (columnValueSelection.isInvert()) {
-                    expressionOperator = ExpressionOperator
+                    final List<ExpressionTerm> terms = columnValueSelection
+                            .getValues()
+                            .stream()
+                            .map(value -> ExpressionTerm
+                                    .builder()
+                                    .field(column.getId())
+                                    .condition(Condition.NOT_EQUALS)
+                                    .value(value)
+                                    .build())
+                            .toList();
+                    final ExpressionOperator expressionOperator = ExpressionOperator
                             .builder()
-                            .op(Op.NOT)
-                            .addOperators(expressionOperator)
+                            .op(Op.AND)
+                            .addTerms(terms)
                             .build();
+                    valueFilterBuilder.addOperator(expressionOperator);
+
+                } else {
+                    final List<ExpressionTerm> terms = columnValueSelection
+                            .getValues()
+                            .stream()
+                            .map(value -> ExpressionTerm
+                                    .builder()
+                                    .field(column.getId())
+                                    .condition(Condition.EQUALS)
+                                    .value(value)
+                                    .build())
+                            .toList();
+                    final ExpressionOperator expressionOperator = ExpressionOperator
+                            .builder()
+                            .op(Op.OR)
+                            .addTerms(terms)
+                            .build();
+                    valueFilterBuilder.addOperator(expressionOperator);
                 }
-                valueFilterBuilder.addOperator(expressionOperator);
             }
         });
         final ExpressionOperator valueFilter = valueFilterBuilder.build();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,11 @@ public class DocumentTypeRegistry {
             "AnalyticRule",
             "Analytic Rule",
             SvgImage.DOCUMENT_ANALYTIC_RULE);
+    public static final DocumentType DATA_GENERATOR_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "DataGen",
+            "Data Generator",
+            SvgImage.DOCUMENT_DATA_GEN);
     public static final DocumentType ANALYTICS_STORE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SEARCH,
             "Analytics",
@@ -191,6 +196,12 @@ public class DocumentTypeRegistry {
             "Pathways",
             SvgImage.DOCUMENT_PATHWAYS);
 
+    public static final DocumentType TRACES_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "Traces",
+            "Traces",
+            SvgImage.DOCUMENT_TRACES);
+
 
     public static final DocumentType DUAL_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SEARCH,
@@ -247,6 +258,7 @@ public class DocumentTypeRegistry {
     static {
         put(ANALYTICS_STORE_DOCUMENT_TYPE);
         put(ANALYTIC_RULE_DOCUMENT_TYPE);
+        put(DATA_GENERATOR_DOCUMENT_TYPE);
         put(ANNOTATION_DOCUMENT_TYPE);
         put(DASHBOARD_DOCUMENT_TYPE);
         put(DICTIONARY_DOCUMENT_TYPE);
@@ -278,6 +290,7 @@ public class DocumentTypeRegistry {
         put(XML_SCHEMA_DOCUMENT_TYPE);
         put(XSLT_DOCUMENT_TYPE);
         put(PATHWAYS_DOCUMENT_TYPE);
+        put(TRACES_DOCUMENT_TYPE);
 
         // Searchables
         put(DUAL_DOCUMENT_TYPE);

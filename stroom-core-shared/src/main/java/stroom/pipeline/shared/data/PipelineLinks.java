@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,20 @@ public class PipelineLinks extends AbstractAddRemove<PipelineLink> {
     public PipelineLinks(@JsonProperty("add") final List<PipelineLink> add,
                          @JsonProperty("remove") final List<PipelineLink> remove) {
         super(add, remove);
+    }
+
+    /**
+     * Link order carries no meaning (tree children are sorted when the model is built), so lists are
+     * compared ignoring it.
+     */
+    @Override
+    protected boolean listsEqual(final List<PipelineLink> list, final List<PipelineLink> other) {
+        return unorderedEquals(list, other, PipelineLink::equals);
+    }
+
+    @Override
+    protected int listHashCode(final List<PipelineLink> list) {
+        return unorderedHashCode(list, PipelineLink::hashCode);
     }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import stroom.query.api.SearchResponse;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResourcePaths;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -124,7 +123,7 @@ class TestStroomIndexViewResource {
     // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes
     // ages to run no tests
     @Test
-    void test() throws JsonProcessingException {
+    void test() {
         // Given
         final SearchRequest searchRequest = getSearchRequest();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,14 +40,14 @@ public class DataRetentionDeleteSummary {
     @JsonCreator
     public DataRetentionDeleteSummary(@JsonProperty("feed") final String feed,
                                       @JsonProperty("type") final String type,
-                                      @JsonProperty("ruleNumber") final int ruleNumber,
+                                      @JsonProperty("ruleNumber") final Integer ruleNumber,
                                       @JsonProperty("ruleName") final String ruleName,
-                                      @JsonProperty("count") final int count) {
+                                      @JsonProperty("count") final Integer count) {
         this.feed = Objects.requireNonNull(feed);
         this.type = Objects.requireNonNull(type);
-        this.ruleNumber = ruleNumber;
+        this.ruleNumber = Objects.requireNonNullElse(ruleNumber, 0);
         this.ruleName = Objects.requireNonNull(ruleName);
-        this.count = count;
+        this.count = Objects.requireNonNullElse(count, 0);
     }
 
     public String getFeed() {

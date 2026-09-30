@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,8 +164,8 @@ class EntityEventHandler {
                             action, handler.getClass().getSimpleName(), event));
                     handler.onChange(event);
                 } catch (final RuntimeException e) {
-                    LOGGER.error("Unable to handle onChange event, handler: {}",
-                            LogUtil.typedValue(handler), e);
+                    LOGGER.error(LogUtil.message("Unable to handle entity onChange event: {}, handler: {} - {}",
+                            event, LogUtil.typedValue(handler), LogUtil.exceptionMessage(e)), e);
                 }
             }
         }

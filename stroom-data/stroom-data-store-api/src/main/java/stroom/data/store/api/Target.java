@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,9 +44,14 @@ public interface Target extends Closeable {
     AttributeMap getAttributes();
 
     /**
-     * Get a supplier of output streams.
+     * Get a supplier of output streams for the next part.
      *
      * @return a supplier of output streams.
      */
     OutputStreamProvider next();
+
+    /**
+     * Logically delete this target, i.e. mark the associated meta record as DELETED
+     */
+    void logicallyDelete();
 }

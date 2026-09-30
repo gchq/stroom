@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package stroom.planb.shared;
 
 import stroom.query.api.UserTimeZone;
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -58,10 +57,10 @@ public class HistogramKeySchema {
                               @JsonProperty("hashLength") final HashLength hashLength,
                               @JsonProperty("temporalResolution") final TemporalResolution temporalResolution,
                               @JsonProperty("timeZone") final UserTimeZone timeZone) {
-        this.keyType = NullSafe.requireNonNullElse(keyType, DEFAULT_KEY_TYPE);
-        this.hashLength = NullSafe.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
-        this.temporalResolution = NullSafe.requireNonNullElse(temporalResolution, DEFAULT_TEMPORAL_RESOLUTION);
-        this.timeZone = NullSafe.requireNonNullElse(timeZone, DEFAULT_TIME_ZONE);
+        this.keyType = Objects.requireNonNullElse(keyType, DEFAULT_KEY_TYPE);
+        this.hashLength = Objects.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
+        this.temporalResolution = Objects.requireNonNullElse(temporalResolution, DEFAULT_TEMPORAL_RESOLUTION);
+        this.timeZone = Objects.requireNonNullElse(timeZone, DEFAULT_TIME_ZONE);
     }
 
     public KeyType getKeyType() {

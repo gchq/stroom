@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public interface AuthenticatorFilter {
 
     static AuthenticatorFilter wrap(final List<AuthenticatorFilter> attributeMapFilters) {
         if (NullSafe.isEmptyCollection(attributeMapFilters)) {
-            LOGGER.debug("Returning permissive instance");
+            LOGGER.debug("Returning permissive instance, empty attributeMapFilters");
             return NOT_AUTHENTICATED_FILTER;
         } else if (attributeMapFilters.size() == 1) {
             final AuthenticatorFilter first = NullSafe.first(attributeMapFilters);
@@ -62,7 +62,7 @@ public interface AuthenticatorFilter {
                 LOGGER.debug(() -> "Returning " + first.getClass().getSimpleName());
                 return first;
             } else {
-                LOGGER.debug("Returning permissive instance");
+                LOGGER.debug("Returning permissive instance, null filter");
                 return NOT_AUTHENTICATED_FILTER;
             }
         } else {

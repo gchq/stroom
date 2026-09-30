@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import stroom.ui.config.shared.Theme;
 import stroom.ui.config.shared.ThemeCssUtil;
 import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
-import stroom.util.shared.NullSafe;
 import stroom.widget.datepicker.client.ClientTimeZone;
 import stroom.widget.util.client.ClientStringUtil;
 
@@ -142,8 +141,8 @@ public class UserPreferencesManager {
      */
     private String getPosixOffset(final UserTimeZone userTimeZone) {
 
-        final int hours = NullSafe.requireNonNullElse(userTimeZone.getOffsetHours(), 0);
-        int minutes = NullSafe.requireNonNullElse(userTimeZone.getOffsetMinutes(), 0);
+        final int hours = Objects.requireNonNullElse(userTimeZone.getOffsetHours(), 0);
+        int minutes = Objects.requireNonNullElse(userTimeZone.getOffsetMinutes(), 0);
 
         // FIXME:  Browsers don't support minute offsets so disable this for now.
         minutes = 0;
@@ -190,7 +189,7 @@ public class UserPreferencesManager {
     }
 
     public boolean isHideConditionalStyles() {
-        return NullSafe.requireNonNullElse(currentUserPreferences.getHideConditionalStyles(), false);
+        return Objects.requireNonNullElse(currentUserPreferences.getHideConditionalStyles(), false);
     }
 
     public List<String> getThemes() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.concurrent.DurationAdder;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -28,8 +29,10 @@ import org.junit.jupiter.api.TestFactory;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,6 +58,7 @@ class TestLogUtil {
                         └───────────────┘""");
     }
 
+    @SuppressWarnings("checkstyle:RegexpSingleline") // IDE keeps adding trailing spaces to text block
     @Test
     void inBox_newLine() {
         final String box = LogUtil.inBoxOnNewLine("Hello World");
@@ -62,12 +66,13 @@ class TestLogUtil {
 
         assertThat(box)
                 .isEqualTo("""
-
+                        
                         ┌───────────────┐
                         │  Hello World  │
                         └───────────────┘""");
     }
 
+    @SuppressWarnings("checkstyle:RegexpSingleline") // IDE keeps adding trailing spaces to text block
     @Test
     void inBoxMultiLine() {
         final String box = LogUtil.inBoxOnNewLine("""
@@ -79,7 +84,7 @@ class TestLogUtil {
         LOGGER.info(box);
         assertThat(box)
                 .isEqualTo("""
-
+                        
                         ┌───────────────────────┐
                         │  This is              │
                         │  an example showing   │
@@ -376,5 +381,42 @@ class TestLogUtil {
     @Test
     void message_tooManyArgs() {
         System.out.println(LogUtil.message("Hello {}", "world", "foo"));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testToCsv() {
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<Integer>>() {
+                })
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(list ->
+                        LogUtil.toCsv(list, i -> i * 10))
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase(Collections.emptyList(), "")
+                .addCase(List.of(1, 2, 3), "10, 20, 30")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testSample() {
+        final List<Integer> list = IntStream.rangeClosed(1, 5)
+                .boxed()
+                .toList();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(int.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(size ->
+                        LogUtil.getSample(list, size, i -> "X" + i))
+                .withSimpleEqualityAssertion()
+                .addCase(0, "")
+                .addCase(1, "[X1, ...]")
+                .addCase(2, "[X1, X2, ...]")
+                .addCase(4, "[X1, X2, X3, X4, ...]")
+                .addCase(5, "[X1, X2, X3, X4, X5]")
+                .addCase(10, "[X1, X2, X3, X4, X5]")
+                .build();
     }
 }

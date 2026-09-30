@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package stroom.receive.content.shared;
 import stroom.docref.DocRef;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.ExpressionOperator;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -60,32 +59,33 @@ public class ContentTemplate {
 
     @JsonCreator
     public ContentTemplate(@JsonProperty("enabled") final Boolean enabled,
-                           @JsonProperty("templateNumber") final int templateNumber,
+                           @JsonProperty("templateNumber") final Integer templateNumber,
                            @JsonProperty("expression") final ExpressionOperator expression,
                            @JsonProperty("templateType") final TemplateType templateType,
                            @JsonProperty("copyElementDependencies") final Boolean copyElementDependencies,
                            @JsonProperty("pipeline") final DocRef pipeline,
                            @JsonProperty("name") final String name,
                            @JsonProperty("description") final String description,
-                           @JsonProperty("processorPriority") final int processorPriority,
-                           @JsonProperty("processorMaxConcurrent") final int processorMaxConcurrent) {
-        if (templateNumber < 1) {
+                           @JsonProperty("processorPriority") final Integer processorPriority,
+                           @JsonProperty("processorMaxConcurrent") final Integer processorMaxConcurrent) {
+        this.templateNumber = Objects.requireNonNullElse(templateNumber, 0);
+        this.processorPriority = Objects.requireNonNullElse(processorPriority, 0);
+        this.processorMaxConcurrent = Objects.requireNonNullElse(processorMaxConcurrent, 0);
+        if (this.templateNumber < 1) {
             throw new IllegalArgumentException(
-                    "Invalid templateNumber " + templateNumber + ". Must be >= 1.");
+                    "Invalid templateNumber " + this.templateNumber + ". Must be >= 1.");
         }
-        if (processorPriority < 0) {
+        if (this.processorPriority < 0) {
             throw new IllegalArgumentException("processorPriority must be >= 0");
         }
-        if (processorMaxConcurrent < 0) {
+        if (this.processorMaxConcurrent < 0) {
             throw new IllegalArgumentException("processorMaxConcurrent must be >= 0");
         }
-        this.enabled = NullSafe.requireNonNullElse(enabled, true);
-        this.templateNumber = templateNumber;
-        this.expression = NullSafe.requireNonNullElseGet(
-                expression,
+        this.enabled = Objects.requireNonNullElse(enabled, true);
+        this.expression = Objects.requireNonNullElseGet(expression,
                 () -> ExpressionOperator.builder().build());
-        this.templateType = NullSafe.requireNonNullElse(templateType, DEFAULT_TEMPLATE_TYPE);
-        this.copyElementDependencies = NullSafe.requireNonNullElse(copyElementDependencies, false);
+        this.templateType = Objects.requireNonNullElse(templateType, DEFAULT_TEMPLATE_TYPE);
+        this.copyElementDependencies = Objects.requireNonNullElse(copyElementDependencies, false);
 
         if (this.copyElementDependencies && templateType == TemplateType.PROCESSOR_FILTER) {
             throw new IllegalArgumentException("copyElementDependencies cannot be set to true if templateType is "
@@ -95,8 +95,6 @@ public class ContentTemplate {
         this.pipeline = Objects.requireNonNull(pipeline);
         this.name = name;
         this.description = description;
-        this.processorPriority = processorPriority;
-        this.processorMaxConcurrent = processorMaxConcurrent;
     }
 
     @SerialisationTestConstructor

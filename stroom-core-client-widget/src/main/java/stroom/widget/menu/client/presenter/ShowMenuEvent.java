@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -29,6 +28,7 @@ import com.google.gwt.event.shared.HasHandlers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ShowMenuEvent
         extends GwtEvent<ShowMenuEvent.Handler> {
@@ -192,7 +192,7 @@ public class ShowMenuEvent
                     showHandler,
                     hideHandler,
                     elements,
-                    NullSafe.requireNonNullElse(allowCloseOnMoveLeft, false)));
+                    Objects.requireNonNullElse(allowCloseOnMoveLeft, false)));
         }
     }
 }

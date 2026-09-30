@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -314,7 +314,7 @@ public final class CompareUtil {
      * comparator ({@link CompareUtil#noOpComparator()}) that does nothing.
      */
     public static <T> Comparator<T> nonNull(final Comparator<T> comparator) {
-        return NullSafe.requireNonNullElseGet(comparator, CompareUtil::noOpComparator);
+        return Objects.requireNonNullElseGet(comparator, CompareUtil::noOpComparator);
     }
 
 

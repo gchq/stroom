@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -300,6 +300,27 @@ public class QueryField implements Field, HasDisplayValue {
                 .conditionSet(ConditionSet.DOC_REF_UUID)
                 .docRefType(docRefType)
                 .queryable(Boolean.TRUE)
+                .build();
+    }
+
+    /**
+     * A {@link QueryField} for a {@link stroom.util.shared.UserRef}.
+     */
+    public static QueryField createUserRef(final String name) {
+        return createUserRef(name, Boolean.TRUE);
+    }
+
+
+    /**
+     * A {@link QueryField} for a {@link stroom.util.shared.UserRef}.
+     */
+    public static QueryField createUserRef(final String name,
+                                           final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.USER_REF)
+                .conditionSet(ConditionSet.RUN_AS_USER)
+                .queryable(queryable)
                 .build();
     }
 

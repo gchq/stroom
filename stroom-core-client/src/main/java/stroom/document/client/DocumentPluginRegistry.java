@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 
 package stroom.document.client;
 
-import stroom.content.client.ContentPlugin;
 import stroom.core.client.TabPlugin;
+import stroom.docref.DocRef;
+import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,14 +45,6 @@ public class DocumentPluginRegistry {
         return null;
     }
 
-    public ContentPlugin<?> getContentPlugin(final String type) {
-        final TabPlugin plugin = pluginMap.get(type);
-        if (plugin instanceof final ContentPlugin<?> contentPlugin) {
-            return contentPlugin;
-        }
-        return null;
-    }
-
     /**
      * Get a plugin for a specific document type with type safety.
      * The caller must provide the document class to ensure type safety.
@@ -59,5 +52,25 @@ public class DocumentPluginRegistry {
     @SuppressWarnings("unchecked")
     public <D> DocumentPlugin<D> get(final String type, final Class<D> documentClass) {
         return (DocumentPlugin<D>) pluginMap.get(type);
+    }
+
+    /**
+     * The DocRef of a tab that can actually be revealed in the explorer tree, else null.
+     *
+     * <p>Every content tab reports a non-null DocRef — {@code ContentTabPresenter} synthesises one
+     * from the tab's type so a tab SESSION can be saved and restored — so a non-null DocRef is not
+     * evidence that the tab is in the tree. The plugin registry is: it holds a
+     * {@code DocumentPlugin} only for types the explorer can contain, whereas screen tabs
+     * (Welcome, Monitoring, Administration) register a {@code ContentPlugin}. Client-side and
+     * synchronous, so no fetch is needed.</p>
+     */
+    public DocRef getExplorerDocRef(final TabData tabData) {
+        if (tabData instanceof final DocumentTabData documentTabData) {
+            final DocRef docRef = documentTabData.getDocRef();
+            if (docRef != null && getDocumentPlugin(docRef.getType()) != null) {
+                return docRef;
+            }
+        }
+        return null;
     }
 }

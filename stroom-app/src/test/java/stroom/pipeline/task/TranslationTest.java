@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ImportExportSerializer;
@@ -47,7 +48,6 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.impl.ProcessorTaskTestHelper;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -120,6 +120,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private CommonTranslationTestHelper commonTranslationTestHelper;
     @Inject
     private StreamTargetStreamHandlers streamHandlers;
+    @Inject
+    private DocFinder docFinder;
 
     /**
      * NOTE some of the input data for this test is buried in the following zip file so you will need
@@ -212,14 +214,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                              final boolean compareOutput,
                              final List<Exception> exceptions) {
         // Create a stream processor for each pipeline.
-        final List<DocRef> pipelines = pipelineStore.findByName(name);
+        final List<DocRef> pipelines = docFinder.findByName(PipelineDoc.TYPE, name);
 
         assertThat(pipelines)
                 .hasSize(1);
 
         final DocRef pipelineRef = pipelines.getFirst();
 
-        final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
+        final List<DocRef> feedRefs = docFinder.findByName(FeedDoc.TYPE, pipelineRef.getName());
 
         FeedDoc feed = null;
         if (!feedRefs.isEmpty()) {
@@ -296,7 +298,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(pipelineRef.getName()));
                 final ResultPage<Meta> metaResultPage = metaService.find(findMetaCriteria);
                 if (metaResultPage.isEmpty()) {
-                    final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
+                    final List<DocRef> feedRefs = docFinder.findByName(FeedDoc.TYPE, pipelineRef.getName());
 
                     FeedDoc feed = null;
                     if (!feedRefs.isEmpty()) {
@@ -545,13 +547,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
      * @return The next task or null if there are currently no more tasks.
      */
     private List<ProcessorTask> getTasks() {
-        ProcessorTaskList processorTasks = processorTaskTestHelper.assignTasks(100);
-        List<ProcessorTask> list = processorTasks.getList();
+        List<ProcessorTask> list = processorTaskTestHelper.assignTasks(100);
         final List<ProcessorTask> dataProcessorTasks = new ArrayList<>(list.size());
         while (!list.isEmpty()) {
             dataProcessorTasks.addAll(list);
-            processorTasks = processorTaskTestHelper.assignTasks(100);
-            list = processorTasks.getList();
+            list = processorTaskTestHelper.assignTasks(100);
         }
 
         return dataProcessorTasks;
@@ -563,7 +563,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         // feedCriteria.setFeedType(FeedType.REFERENCE);
 //        final Optional<FeedDoc> feeds = feedDocCache.get(feedName);
 //        assertThat(feeds.isPresent()).as("No feeds found").isTrue();
-        final List<DocRef> pipelines = pipelineStore.findByName(feedName);
+        final List<DocRef> pipelines = docFinder.findByName(PipelineDoc.TYPE, feedName);
         assertThat(pipelines != null && !pipelines.isEmpty())
                 .as("No pipelines found")
                 .isTrue();
@@ -670,6 +670,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             requestBuilder.stepType(direction);
             final SteppingResult stepResponse = steppingService.step(requestBuilder.build());
 
+            // Carry the session id across steps exactly as the UI does. Without this every step would open
+            // a fresh session and re-sweep the stream, so the scripted sequences below would still pass but
+            // would never exercise serving a step from data an earlier step captured - which is the whole
+            // point of the engine they are the acceptance gate for.
+            requestBuilder.sessionUuid(stepResponse.getSessionUuid());
+
             if (stepResponse.getGeneralErrors() != null && !stepResponse.getGeneralErrors().isEmpty()) {
                 throw new RuntimeException(stepResponse.getGeneralErrors().iterator().next());
             }
@@ -726,7 +732,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 //                        }
 
                         final SharedElementData newElementData = new SharedElementData(
-                                input, output, indicators, elementData.isFormatInput(), elementData.isFormatOutput());
+                                input, output, indicators, elementData.isFormatInput(), elementData.isFormatOutput(),
+                                elementData.isHasOutput());
                         final SharedStepData newStepData = NullSafe.getOrElseGet(
                                 newResponse,
                                 SteppingResult::getStepData,

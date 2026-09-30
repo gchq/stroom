@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class RefStoreEntry {
@@ -42,13 +44,13 @@ public class RefStoreEntry {
                          @JsonProperty("mapDefinition") final MapDefinition mapDefinition,
                          @JsonProperty("key") final String key,
                          @JsonProperty("value") final String value,
-                         @JsonProperty("valueReferenceCount") final int valueReferenceCount,
+                         @JsonProperty("valueReferenceCount") final Integer valueReferenceCount,
                          @JsonProperty("refDataProcessingInfo") final RefDataProcessingInfo refDataProcessingInfo) {
         this.feedName = feedName;
         this.mapDefinition = mapDefinition;
         this.key = key;
         this.value = value;
-        this.valueReferenceCount = valueReferenceCount;
+        this.valueReferenceCount = Objects.requireNonNullElse(valueReferenceCount, 0);
         this.refDataProcessingInfo = refDataProcessingInfo;
     }
 

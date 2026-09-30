@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,10 @@ import stroom.util.concurrent.LazyValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.yaml.YamlUtil;
+import stroom.util.yaml.YamlV2Util;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
@@ -35,13 +34,10 @@ import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.Objects;
 
 public class StroomYamlUtil {
 
@@ -107,31 +103,31 @@ public class StroomYamlUtil {
                 logChanges);
     }
 
-    /**
-     * Reads a YAML string that has already been through the drop wizard env var substitution.
-     */
-    public static AppConfig readDropWizardSubstitutedAppConfig(final String yamlStr) {
-
-        Objects.requireNonNull(yamlStr);
-
-        final Yaml yaml = new Yaml();
-        final Map<String, Object> obj = yaml.load(yamlStr);
-
-        // fail on unknown so it skips over all the drop wiz yaml content that has no
-        // corresponding annotated props in DummyConfig
-        final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper()
-                .copy()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        try {
-            final DummyConfig dummyConfig = mapper.convertValue(obj, DummyConfig.class);
-            return dummyConfig.getAppConfig();
-        } catch (final IllegalArgumentException e) {
-            throw new RuntimeException("Error parsing yaml string", e);
-        }
-    }
+//    /**
+//     * Reads a YAML string that has already been through the drop wizard env var substitution.
+//     */
+//    public static AppConfig readDropWizardSubstitutedAppConfig(final String yamlStr) {
+//
+//        Objects.requireNonNull(yamlStr);
+//
+//        final Yaml yaml = new Yaml();
+//        final Map<String, Object> obj = yaml.load(yamlStr);
+//
+//        // fail on unknown so it skips over all the drop wiz yaml content that has no
+//        // corresponding annotated props in DummyConfig
+//        final YAMLMapper mapper = YamlUtil.getVanillaMapper()
+//                .rebuild()
+//                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+//        try {
+//            final DummyConfig dummyConfig = mapper.convertValue(obj, DummyConfig.class);
+//            return dummyConfig.getAppConfig();
+//        } catch (final IllegalArgumentException e) {
+//            throw new RuntimeException("Error parsing yaml string", e);
+//        }
+//    }
 
     public static void writeConfig(final Config config, final OutputStream outputStream) throws IOException {
-        final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
+        final ObjectMapper mapper = getConsistentOrderYAMLMapper();
         // wrap the AppConfig so that it sits at the right level
         mapper.writeValue(outputStream, config);
 
@@ -144,7 +140,8 @@ public class StroomYamlUtil {
     }
 
     public static void writeConfig(final Config config, final Path path) throws IOException {
-        final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
+        // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+        final ObjectMapper mapper = getConsistentOrderYAMLMapper();
         mapper.writeValue(path.toFile(), config);
     }
 
@@ -160,8 +157,14 @@ public class StroomYamlUtil {
      */
     public static void writeAppConfig(final AppConfig appConfig, final Path path) throws IOException {
         final DummyConfig config = new DummyConfig(appConfig);
-        final ObjectMapper mapper = YamlUtil.getVanillaObjectMapper();
+        // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+        final ObjectMapper mapper = getConsistentOrderYAMLMapper();
         mapper.writeValue(path.toFile(), config);
+    }
+
+    private static ObjectMapper getConsistentOrderYAMLMapper() {
+        // TODO change to YamlUtil and YAMLMapper when DW upgrades to use jackson v3
+        return YamlV2Util.createConsistentOrderYamlMapper(true);
     }
 
 

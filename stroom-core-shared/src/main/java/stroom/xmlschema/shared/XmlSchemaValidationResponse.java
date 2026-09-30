@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ public class XmlSchemaValidationResponse {
     private final String error;
 
     @JsonCreator
-    public XmlSchemaValidationResponse(@JsonProperty("ok") final boolean ok,
+    public XmlSchemaValidationResponse(@JsonProperty("ok") final Boolean ok,
                                        @JsonProperty("error") final String error) {
-        this.ok = ok;
+        this.ok = Objects.requireNonNullElse(ok, false);
         this.error = error;
     }
 

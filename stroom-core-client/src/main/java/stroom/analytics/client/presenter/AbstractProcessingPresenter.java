@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,14 @@ import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.Objects;
 
 public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocPresenter<AnalyticProcessingView, D>
@@ -68,8 +69,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(tableBuilderProcessingPresenter.addDirtyHandler(event -> onChange()));
-        registerHandler(streamingProcessingPresenter.addDirtyHandler(event -> onChange()));
+        registerHandler(tableBuilderProcessingPresenter.addChangeHandler(this::onChange));
     }
 
     @Override
@@ -89,7 +89,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
                 final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
-                final AnalyticProcessType analyticProcessType = NullSafe.requireNonNullElse(
+                final AnalyticProcessType analyticProcessType = Objects.requireNonNullElse(
                         analyticRuleDoc.getAnalyticProcessType(),
                         AnalyticProcessType.SCHEDULED_QUERY);
                 setProcessType(analyticProcessType);

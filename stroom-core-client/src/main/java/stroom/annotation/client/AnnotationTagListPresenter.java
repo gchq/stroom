@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import stroom.annotation.shared.AnnotationTagType;
 import stroom.dashboard.client.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -64,6 +63,7 @@ public class AnnotationTagListPresenter extends MyPresenterWidget<PagerView> {
         this.annotationResourceClient = annotationResourceClient;
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Annotation Tags");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
         getWidget().getElement().addClassName("default-min-sizes");
@@ -115,6 +115,17 @@ public class AnnotationTagListPresenter extends MyPresenterWidget<PagerView> {
         };
         dataGrid.addResizableColumn(nameColumn, "Name", 400);
 
+        if (annotationTagType.hasTagText()) {
+            // Tag text.
+            final Column<AnnotationTag, String> tagTextColumn = new Column<AnnotationTag, String>(new TextCell()) {
+                @Override
+                public String getValue(final AnnotationTag annotationTag) {
+                    return annotationTag.getTagText();
+                }
+            };
+            dataGrid.addResizableColumn(tagTextColumn, annotationTagType.getDisplayValue(), 600);
+        }
+
         if (annotationTagType == AnnotationTagType.LABEL) {
             // Style.
             final Function<AnnotationTag, SafeHtml> function = annotationTag ->
@@ -130,8 +141,6 @@ public class AnnotationTagListPresenter extends MyPresenterWidget<PagerView> {
                             .build(),
                     200);
         }
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setAnnotationTagType(final AnnotationTagType annotationTagType) {

@@ -1,9 +1,24 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.ai.shared;
 
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.validation.ValidFilePath;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -43,7 +58,7 @@ public class KeyStore extends AbstractConfig implements IsProxyConfig {
         // SSLConfig is defaulted to null on parent config objects so we need to apply defaults in the ctor
         // as the default config tree will not contain an SSLConfig to use as a reference.
         this.keyStorePath = keyStorePath;
-        this.keyStoreType = NullSafe.requireNonNullElse(keyStoreType, DEFAULT_KEYSTORE_TYPE);
+        this.keyStoreType = Objects.requireNonNullElse(keyStoreType, DEFAULT_KEYSTORE_TYPE);
         this.keyStorePassword = keyStorePassword;
     }
 

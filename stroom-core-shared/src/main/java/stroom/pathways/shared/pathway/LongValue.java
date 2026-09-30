@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import java.util.Objects;
 public final class LongValue extends AbstractValue<Long> implements ConstraintValue {
 
     @JsonCreator
-    public LongValue(@JsonProperty("value") final long value) {
-        super(value);
+    public LongValue(@JsonProperty("value") final Long value) {
+        super(Objects.requireNonNullElse(value, 0L));
     }
 
     public boolean validate(final Long value) {

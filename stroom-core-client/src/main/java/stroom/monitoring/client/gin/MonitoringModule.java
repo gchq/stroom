@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import stroom.job.client.presenter.JobPresenter;
 import stroom.job.client.presenter.JobPresenter.JobView;
 import stroom.job.client.view.JobViewImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
+import stroom.monitoring.client.ExecutionScheduleManagerPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeGroupsPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
@@ -69,6 +70,8 @@ public class MonitoringModule extends PluginModule {
 
         // Job management.
         bindPlugin(JobListPlugin.class);
+        bindPlugin(ExecutionScheduleManagerPlugin.class);
+
         bindPresenterWidget(
                 SchedulePopup.class,
                 ScheduleView.class,

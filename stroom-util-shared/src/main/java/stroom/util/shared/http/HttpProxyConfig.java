@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.util.shared.http;
 
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -49,9 +48,9 @@ public class HttpProxyConfig {
                            @JsonProperty("scheme") final String scheme,
                            @JsonProperty("auth") final HttpAuthConfig auth,
                            @JsonProperty("nonProxyHosts") final List<String> nonProxyHosts) {
-        this.host = NullSafe.requireNonNullElse(host, "");
-        this.port = NullSafe.requireNonNullElse(port, -1);
-        this.scheme = NullSafe.requireNonNullElse(scheme, "http");
+        this.host = Objects.requireNonNullElse(host, "");
+        this.port = Objects.requireNonNullElse(port, -1);
+        this.scheme = Objects.requireNonNullElse(scheme, "http");
         this.auth = auth;
         this.nonProxyHosts = nonProxyHosts;
     }

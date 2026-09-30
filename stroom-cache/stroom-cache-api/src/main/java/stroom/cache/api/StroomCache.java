@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,11 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -59,6 +62,18 @@ public interface StroomCache<K, V> {
     Optional<V> getIfPresent(K key);
 
     /**
+     * If key is present in the map, then the cached value for that key will
+     * be passed to the valueConsumer.
+     * A no-op if valueConsumer
+     */
+    default void ifPresent(final K key, final Consumer<V> valueConsumer) {
+        if (valueConsumer != null) {
+            getIfPresent(key)
+                    .ifPresent(valueConsumer);
+        }
+    }
+
+    /**
      * Gets a value from the cache. If key is not found in the cache then valueProvider
      * will be used to provide a value for that key, that if not null, will be
      * entered into the cache. valueProvider must not modify other cache entries.
@@ -69,6 +84,37 @@ public interface StroomCache<K, V> {
      * Puts a new entry into the cache or overwrites an existing one.
      */
     void put(K key, V value);
+
+    /**
+     * Equivalent to {@link Map#compute(Object, BiFunction)}.
+     * A thread safe way to atomically operate on the value for a key, e.g. to mutate the contents
+     * of a cached value.
+     *
+     * @param key               The key to operate on.
+     * @param remappingFunction The key and value for the current entry will be passed to this function.
+     *                          If the key is not in the cache, a null value will be passed.
+     *                          The function should return the new value, or null to remove it from the cache.
+     * @return The new value associated with the specified key, or null if none.
+     */
+    V compute(K key, BiFunction<K, V, V> remappingFunction);
+
+    /**
+     * Atomically removes the entry for {@code key} and returns its previous value, if any. The read and
+     * removal happen as a single atomic operation (via {@link #compute(Object, BiFunction)}), so two
+     * concurrent callers cannot both retrieve the same value - useful for single-use entries such as
+     * authorization codes, nonces or one-time tokens.
+     *
+     * @param key The key to remove.
+     * @return The value that was removed, or empty if there was none.
+     */
+    default Optional<V> getAndRemove(final K key) {
+        final AtomicReference<V> removed = new AtomicReference<>();
+        compute(key, (k, existing) -> {
+            removed.set(existing);
+            return null;
+        });
+        return Optional.ofNullable(removed.get());
+    }
 
     /**
      * Returns true if key exists in the cache. Any load function present on the cache

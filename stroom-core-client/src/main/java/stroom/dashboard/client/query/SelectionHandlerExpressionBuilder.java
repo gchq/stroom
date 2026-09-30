@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionUtil;
 import stroom.query.api.ParamUtil;
 import stroom.util.shared.NullSafe;
 
@@ -78,13 +79,16 @@ public class SelectionHandlerExpressionBuilder {
                             }
                         }
                         final String replaced = ParamUtil.replaceParameters(value, replacements::get);
-                        builder.addTerm(ExpressionTerm.builder()
+                        final ExpressionTerm expressionTerm = ExpressionTerm.builder()
                                 .enabled(term.enabled())
                                 .field(term.getField())
                                 .condition(term.getCondition())
                                 .value(replaced)
                                 .docRef(term.getDocRef())
-                                .build());
+                                .build();
+                        if (ExpressionUtil.isValidTerm(expressionTerm, false)) {
+                            builder.addTerm(expressionTerm);
+                        }
                     } else {
                         builder.addTerm(term);
                     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@ public final class StreamLocation implements Location {
     private final int colNo;
 
     @JsonCreator
-    public StreamLocation(@JsonProperty("partIndex") final long partIndex,
-                          @JsonProperty("lineNo") final int lineNo,
-                          @JsonProperty("colNo") final int colNo) {
-        this.partIndex = partIndex;
-        this.lineNo = lineNo;
-        this.colNo = colNo;
+    public StreamLocation(@JsonProperty("partIndex") final Long partIndex,
+                          @JsonProperty("lineNo") final Integer lineNo,
+                          @JsonProperty("colNo") final Integer colNo) {
+        this.partIndex = Objects.requireNonNullElse(partIndex, 0L);
+        this.lineNo = Objects.requireNonNullElse(lineNo, 0);
+        this.colNo = Objects.requireNonNullElse(colNo, 0);
     }
 
     public long getPartIndex() {

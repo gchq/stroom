@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.dashboard.client.table;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.client.AnnotationTagNameChangeEvent;
 import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
@@ -77,6 +78,7 @@ import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.Row;
+import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
@@ -256,7 +258,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // Filter values
         valueFilterButton = new InlineSvgToggleButton();
         valueFilterButton.setSvg(SvgImage.FILTER);
-        valueFilterButton.setTitle("Filter Values");
+        valueFilterButton.setTitle("Show Column Filters");
         pagerView.addButton(valueFilterButton);
 
         // Annotate
@@ -390,7 +392,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }));
 
-        registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
+        registerHandler(valueFilterButton.addClickHandler(event -> toggleShowValueFilters()));
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
@@ -417,8 +419,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
 
-        registerHandler(getEventBus().addHandler(AnnotationChangeEvent.getType(), e ->
-                onAnnotationChange()));
+        registerHandler(getEventBus().addHandler(
+                AnnotationChangeEvent.getType(),
+                ignored -> onAnnotationChange()));
+        registerHandler(getEventBus().addHandler(
+                AnnotationTagNameChangeEvent.getType(),
+                ignored -> onAnnotationChange()));
     }
 
     private void onAnnotationChange() {
@@ -479,23 +485,28 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return false;
     }
 
-    public void toggleApplyValueFilters() {
-        final boolean applyValueFilters = !getTableComponentSettings().applyValueFilters();
+    public void toggleShowValueFilters() {
+        final boolean showValueFilters = !getTableComponentSettings().showValueFilters();
         setSettings(getTableComponentSettings()
                 .copy()
-                .applyValueFilters(applyValueFilters)
+                .showValueFilters(showValueFilters)
                 .build());
         onChange();
         refresh();
-        setApplyValueFilters(applyValueFilters);
+        setShowValueFilters(showValueFilters);
     }
 
-    private void setApplyValueFilters(final boolean applyValueFilters) {
-        valueFilterButton.setState(applyValueFilters);
-        if (applyValueFilters) {
-            dataGrid.addStyleName("applyValueFilters");
+    private void setShowValueFilters(final boolean showValueFilters) {
+        valueFilterButton.setState(showValueFilters);
+        if (showValueFilters) {
+            valueFilterButton.setTitle("Hide Column Filters");
         } else {
-            dataGrid.removeStyleName("applyValueFilters");
+            valueFilterButton.setTitle("Show Column Filters");
+        }
+        if (showValueFilters) {
+            dataGrid.addStyleName("showValueFilters");
+        } else {
+            dataGrid.removeStyleName("showValueFilters");
         }
     }
 
@@ -632,13 +643,38 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         .dateTimeSettings(getDateTimeSettings())
                         .build();
 
+                // Build a descriptive summary from the search request source.
+                final SearchRequestSource source = currentSearchModel.getSearchRequestSource();
+                final String dashboardName = NullSafe.get(
+                        source, SearchRequestSource::getOwnerDocRef, DocRef::getName);
+                final String tableName = NullSafe.getOrElseGet(
+                        source,
+                        SearchRequestSource::getComponentName,
+                        () -> NullSafe.get(getComponentConfig(), ComponentConfig::getName));
+                final String description = buildDashboardDescription(dashboardName, tableName);
+
                 AskStroomAiEvent.fire(this,
-                        currentSearchModel.getCurrentNode(),
                         new DashboardTableContext(
-                                currentSearchModel.getCurrentQueryKey().toString(),
+                                description,
+                                currentSearchModel.getCurrentNode(),
                                 dashboardSearchRequest));
             }
         }
+    }
+
+    private String buildDashboardDescription(final String dashboardName, final String tableName) {
+        final StringBuilder sb = new StringBuilder();
+        if (dashboardName != null) {
+            sb.append("Dashboard '").append(dashboardName).append("'");
+            if (tableName != null) {
+                sb.append(" -> Table '").append(tableName).append("'");
+            }
+        } else if (tableName != null) {
+            sb.append("Table '").append(tableName).append("'");
+        } else {
+            sb.append("Dashboard table");
+        }
+        return sb.toString();
     }
 
     private DashboardSearchRequest getDashboardSearchRequest(final Search currentSearch, final QueryKey queryKey) {
@@ -1153,8 +1189,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             setSettings(getTableComponentSettings().copy().columns(columns).build());
         }
 
-        // Change value filter state.
-        setApplyValueFilters(getTableComponentSettings().applyValueFilters());
+        // Change value filter visible state.
+        setShowValueFilters(getTableComponentSettings().showValueFilters());
         initialised = true;
     }
 
@@ -1269,11 +1305,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             column.getFilter().getIncludeDictionaries(),
                             column.getFilter().getExcludeDictionaries()));
                 }
-                if (column.getColumnFilter() != null) {
-                    columnBuilder.columnFilter(new ColumnFilter(ParamUtil
-                            .replaceParameters(column.getColumnFilter().getFilter(),
+                final ColumnFilter columnFilter = column.getColumnFilter();
+                if (columnFilter != null) {
+                    columnBuilder.columnFilter(columnFilter.copy().filter(ParamUtil
+                            .replaceParameters(columnFilter.getFilter(),
                                     dashboardContext,
-                                    true)));
+                                    true)).build());
                 }
                 columnsOut.add(columnBuilder.build());
             });

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.annotation.impl;
 
+import stroom.annotation.shared.Annotation;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
@@ -27,8 +28,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
 @EntityEventHandler(
-        type = "Annotation",
-        action = {EntityAction.UPDATE})
+        type = Annotation.TYPE,
+        action = {EntityAction.CREATE, EntityAction.UPDATE, EntityAction.DELETE})
 public class AnnotationState implements EntityEvent.Handler {
 
     private final AtomicLong lastChangeTime = new AtomicLong();

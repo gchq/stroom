@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package stroom.security.identity.shared;
 
-import stroom.util.shared.validation.ValidRegex;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,6 +27,8 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class InternalIdpPasswordPolicyConfig {
@@ -35,12 +36,6 @@ public class InternalIdpPasswordPolicyConfig {
     @JsonProperty
     @JsonPropertyDescription("Will the UI allow password resets")
     private boolean allowPasswordResets;
-
-    @ValidRegex
-    @JsonProperty
-    @JsonPropertyDescription("A regex pattern that new passwords must match")
-    // The default is to let everything through
-    private final String passwordComplexityRegex;
 
     @Min(0)
     @Max(5)
@@ -61,25 +56,19 @@ public class InternalIdpPasswordPolicyConfig {
 
     @JsonCreator
     public InternalIdpPasswordPolicyConfig(
-            @JsonProperty("allowPasswordResets") final boolean allowPasswordResets,
-            @JsonProperty("passwordComplexityRegex") final String passwordComplexityRegex,
-            @JsonProperty("minimumPasswordStrength") final int minimumPasswordStrength,
-            @JsonProperty("minimumPasswordLength") final int minimumPasswordLength,
+            @JsonProperty("allowPasswordResets") final Boolean allowPasswordResets,
+            @JsonProperty("minimumPasswordStrength") final Integer minimumPasswordStrength,
+            @JsonProperty("minimumPasswordLength") final Integer minimumPasswordLength,
             @JsonProperty("passwordPolicyMessage") final String passwordPolicyMessage) {
 
-        this.allowPasswordResets = allowPasswordResets;
-        this.passwordComplexityRegex = passwordComplexityRegex;
-        this.minimumPasswordStrength = minimumPasswordStrength;
-        this.minimumPasswordLength = minimumPasswordLength;
+        this.allowPasswordResets = Objects.requireNonNullElse(allowPasswordResets, false);
+        this.minimumPasswordStrength = Objects.requireNonNullElse(minimumPasswordStrength, 0);
+        this.minimumPasswordLength = Objects.requireNonNullElse(minimumPasswordLength, 0);
         this.passwordPolicyMessage = passwordPolicyMessage;
     }
 
     public boolean isAllowPasswordResets() {
         return allowPasswordResets;
-    }
-
-    public String getPasswordComplexityRegex() {
-        return passwordComplexityRegex;
     }
 
     public int getMinimumPasswordStrength() {

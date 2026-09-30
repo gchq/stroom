@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package stroom.index.lucene;
 
+import stroom.ai.api.AiService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexShardWriterCache;
-import stroom.langchain.api.OpenAIService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.QueryKey;
@@ -43,7 +43,7 @@ class LuceneShardSearcherFactory {
     private final PathCreator pathCreator;
     private final WordListProvider dictionaryStore;
     private final Provider<SearchConfig> searchConfigProvider;
-    private final Provider<OpenAIService> openAIServiceProvider;
+    private final Provider<AiService> aiServiceProvider;
     private final Provider<FieldFactory> fieldFactoryProvider;
 
     @Inject
@@ -54,7 +54,7 @@ class LuceneShardSearcherFactory {
                                final PathCreator pathCreator,
                                final WordListProvider dictionaryStore,
                                final Provider<SearchConfig> searchConfigProvider,
-                               final Provider<OpenAIService> openAIServiceProvider,
+                               final Provider<AiService> aiServiceProvider,
                                final Provider<FieldFactory> fieldFactoryProvider) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.shardSearchConfigProvider = shardSearchConfigProvider;
@@ -63,7 +63,7 @@ class LuceneShardSearcherFactory {
         this.pathCreator = pathCreator;
         this.dictionaryStore = dictionaryStore;
         this.searchConfigProvider = searchConfigProvider;
-        this.openAIServiceProvider = openAIServiceProvider;
+        this.aiServiceProvider = aiServiceProvider;
         this.fieldFactoryProvider = fieldFactoryProvider;
     }
 
@@ -85,7 +85,7 @@ class LuceneShardSearcherFactory {
                 dictionaryStore,
                 dateTimeSettings,
                 queryKey,
-                openAIServiceProvider.get(),
+                aiServiceProvider.get(),
                 fieldFactoryProvider.get());
     }
 }

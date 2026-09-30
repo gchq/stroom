@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class ExactResultPageBuilder<T> {
     }
 
     public ResultPage<T> build() {
-        final PageResponse response = new PageResponse(pageRequest.getOffset(), values.size(), count, true);
+        final PageResponse response = new PageResponse((long) pageRequest.getOffset(), values.size(), count, true);
         return new ResultPage<>(values, response);
     }
 }

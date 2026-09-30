@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,9 @@ public final class Job implements HasAuditInfoGetters, HasIntegerId {
                @JsonProperty("updateTimeMs") final Long updateTimeMs,
                @JsonProperty("updateUser") final String updateUser,
                @JsonProperty("name") final String name,
-               @JsonProperty("enabled") final boolean enabled,
+               @JsonProperty("enabled") final Boolean enabled,
                @JsonProperty("description") final String description,
-               @JsonProperty("advanced") final boolean advanced) {
+               @JsonProperty("advanced") final Boolean advanced) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -70,9 +70,9 @@ public final class Job implements HasAuditInfoGetters, HasIntegerId {
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
         this.name = name;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.description = description;
-        this.advanced = advanced;
+        this.advanced = Objects.requireNonNullElse(advanced, false);
     }
 
     @Override

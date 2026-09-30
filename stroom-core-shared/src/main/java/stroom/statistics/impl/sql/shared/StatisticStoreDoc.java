@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -72,7 +71,7 @@ public class StatisticStoreDoc extends AbstractDoc implements StatisticStore {
     public static final String FIELD_NAME_COUNT = "Statistic Count";
     public static final String FIELD_NAME_PRECISION_MS = "Precision ms";
 
-    private static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
+    private static final long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
 
     @JsonProperty("description")
     private final String description;
@@ -103,9 +102,9 @@ public class StatisticStoreDoc extends AbstractDoc implements StatisticStore {
                              @JsonProperty("config") final StatisticsDataSourceData config) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.statisticType = NullSafe.requireNonNullElse(statisticType, StatisticType.COUNT);
-        this.rollUpType = NullSafe.requireNonNullElse(rollUpType, StatisticRollUpType.NONE);
-        this.precision = NullSafe.requireNonNullElse(precision, DEFAULT_PRECISION);
+        this.statisticType = Objects.requireNonNullElse(statisticType, StatisticType.COUNT);
+        this.rollUpType = Objects.requireNonNullElse(rollUpType, StatisticRollUpType.NONE);
+        this.precision = Objects.requireNonNullElse(precision, DEFAULT_PRECISION);
         this.enabled = enabled;
         this.config = config;
     }

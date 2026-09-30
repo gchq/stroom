@@ -363,3 +363,11 @@ table .dataGridOddRow.dataGridSelectedRow {
 /*    width: 10px;
     height: 10px;*/
 }
+
+.dataGridAlertText {
+	color:var(--text-color--red);
+}
+
+.dataGridSelectedRowCell .dataGridAlertText {
+	color: var(--row__text-color--red--selected);
+}

@@ -33,6 +33,7 @@
 	text-decoration: none;
 	font-size: 0;
 	border-radius: .25rem;
+	flex-shrink: 0;
 }
 
 .icon-button .background {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ import stroom.data.client.gin.StreamStoreGinjector;
 import stroom.data.client.gin.StreamStoreModule;
 import stroom.data.store.impl.fs.client.gin.FsVolumeGinjector;
 import stroom.data.store.impl.fs.client.gin.FsVolumeModule;
+import stroom.datagen.client.gin.DataGenGinjector;
+import stroom.datagen.client.gin.DataGenModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.RestModule;
@@ -165,6 +167,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         ElasticClusterModule.class,
         ElasticIndexModule.class,
         AnalyticsModule.class,
+        DataGenModule.class,
         ReportModule.class,
         SolrIndexModule.class,
         StatisticsModule.class,
@@ -211,6 +214,7 @@ public interface AppGinjectorUser extends
         SecurityGinjector,
         ChangePasswordGinjector,
         AnalyticsGinjector,
+        DataGenGinjector,
         ElasticClusterGinjector,
         ElasticIndexGinjector,
         ReportGinjector,

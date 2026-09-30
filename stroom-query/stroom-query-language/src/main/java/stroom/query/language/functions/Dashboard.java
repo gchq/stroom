@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,19 +68,44 @@ import java.util.function.Supplier;
                                         name = "params",
                                         argType = ValString.class,
                                         description = "A String of space separated parameters to pass into the " +
-                                                "dashboard, e.g. 'userId=user1 building=hq'"),
+                                                      "dashboard, e.g. 'userId=user1 building=hq'"),
                                 @FunctionArg(
                                         name = "target",
                                         argType = ValString.class,
                                         description = "A String defining where the link will open by default " +
                                                       "('self' or 'tab')")
+                        }),
+                @FunctionSignature(
+                        args = {
+                                @FunctionArg(
+                                        name = "text",
+                                        argType = ValString.class,
+                                        description = "The text that the hyperlink will display."),
+                                @FunctionArg(
+                                        name = "uuid",
+                                        argType = ValString.class,
+                                        description = "The UUID for the dashboard to link to."),
+                                @FunctionArg(
+                                        name = "params",
+                                        argType = ValString.class,
+                                        description = "A String of space separated parameters to pass into the " +
+                                                      "dashboard, e.g. 'userId=user1 building=hq'"),
+                                @FunctionArg(
+                                        name = "target",
+                                        argType = ValString.class,
+                                        description = "A String defining where the link will open by default " +
+                                                      "('self' or 'tab')"),
+                                @FunctionArg(
+                                        name = "title",
+                                        argType = ValString.class,
+                                        description = "A custom title for the dashboard.")
                         })})
 class Dashboard extends AbstractLink {
 
     static final String NAME = "dashboard";
 
     public Dashboard(final String name) {
-        super(name, 2, 4);
+        super(name, 2, 5);
     }
 
     @Override
@@ -96,29 +121,32 @@ class Dashboard extends AbstractLink {
 
         @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
-            Val link = ValNull.INSTANCE;
 
-            if (childGenerators.length == 2) {
-                final Val text = childGenerators[0].eval(storedValues, childDataSupplier);
-                final Val uuid = childGenerators[1].eval(storedValues, childDataSupplier);
-                link = makeDashboardLink(text, uuid, ValNull.INSTANCE, ValNull.INSTANCE);
-            } else if (childGenerators.length == 3) {
-                final Val text = childGenerators[0].eval(storedValues, childDataSupplier);
-                final Val uuid = childGenerators[1].eval(storedValues, childDataSupplier);
-                final Val params = childGenerators[2].eval(storedValues, childDataSupplier);
-                link = makeDashboardLink(text, uuid, params, ValNull.INSTANCE);
-            } else if (childGenerators.length == 4) {
-                final Val text = childGenerators[0].eval(storedValues, childDataSupplier);
-                final Val uuid = childGenerators[1].eval(storedValues, childDataSupplier);
-                final Val params = childGenerators[2].eval(storedValues, childDataSupplier);
-                final Val target = childGenerators[3].eval(storedValues, childDataSupplier);
-                link = makeDashboardLink(text, uuid, params, target);
-            }
-
-            return link;
+            final Val text = childGenerators.length > 0
+                    ? childGenerators[0].eval(storedValues, childDataSupplier)
+                    : ValNull.INSTANCE;
+            final Val uuid = childGenerators.length > 1
+                    ? childGenerators[1].eval(storedValues, childDataSupplier)
+                    : ValNull.INSTANCE;
+            final Val params = childGenerators.length > 2
+                    ? childGenerators[2].eval(storedValues, childDataSupplier)
+                    : ValNull.INSTANCE;
+            final Val target = childGenerators.length > 3
+                    ? childGenerators[3].eval(storedValues, childDataSupplier)
+                    : ValNull.INSTANCE;
+            final Val title = childGenerators.length > 4
+                    ? childGenerators[4].eval(storedValues, childDataSupplier)
+                    : ValNull.INSTANCE;
+            return childGenerators.length > 1
+                    ? makeDashboardLink(text, uuid, params, target, title)
+                    : ValNull.INSTANCE;
         }
 
-        private Val makeDashboardLink(final Val text, final Val uuid, final Val params, final Val target) {
+        private Val makeDashboardLink(final Val text,
+                                      final Val uuid,
+                                      final Val params,
+                                      final Val target,
+                                      final Val title) {
             if (text.type().isError()) {
                 return text;
             }
@@ -135,6 +163,10 @@ class Dashboard extends AbstractLink {
             if (params.type().isValue()) {
                 url.append("&params=");
                 url.append(getEscapedString(params));
+            }
+            if (title.type().isValue()) {
+                url.append("&title=");
+                url.append(getEscapedString(title));
             }
 
             return makeLink(getEscapedString(text), EncodingUtil.encodeUrl(url.toString()), "dashboard",

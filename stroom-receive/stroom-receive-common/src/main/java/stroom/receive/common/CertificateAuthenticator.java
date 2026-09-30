@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class CertificateAuthenticator implements AuthenticatorFilter {
     public Optional<UserIdentity> authenticate(final HttpServletRequest request,
                                                final AttributeMap attributeMap) {
 
+        LOGGER.debug("authenticate() - request: {}, attributeMap: {}", request, attributeMap);
         Optional<UserIdentity> optUserIdentity = Optional.empty();
 
         try {
@@ -55,7 +56,7 @@ public class CertificateAuthenticator implements AuthenticatorFilter {
                 optUserIdentity = optCertCommonName.map(CertificateUserIdentity::new);
             }
 
-            LOGGER.debug("Returning optUserIdentity: {}", optUserIdentity);
+            LOGGER.debug("authenticate() - Returning optUserIdentity: {}", optUserIdentity);
             return optUserIdentity;
         } catch (final StroomStreamException e) {
             throw e;

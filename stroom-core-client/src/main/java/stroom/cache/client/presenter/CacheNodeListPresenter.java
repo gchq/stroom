@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -98,6 +97,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Cache Nodes");
         view.setDataWidget(dataGrid);
 
         this.restFactory = restFactory;
@@ -116,10 +116,6 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         // Node.
         addNodeColumn();
         addStatColumns();
-
-        final EndColumn<CacheInfo> endColumn = new EndColumn<>();
-        columns.add(endColumn);
-        dataGrid.addEndColumn(endColumn);
     }
 
     private void addClearColumn() {
@@ -137,17 +133,30 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                 });
     }
 
+    private Set<String> getCacheInfoKeys() {
+        return cacheInfoKeys;
+    }
+
+    private boolean doesCacheHaveHitRatio() {
+        final Set<String> cacheInfoKeys = getCacheInfoKeys();
+        return cacheInfoKeys.contains(CACHE_INFO_KEY_HIT_COUNT)
+               && cacheInfoKeys.contains(CACHE_INFO_KEY_MISS_COUNT);
+    }
+
     private void addStatColumns() {
         final List<String> sortedCacheKeys = new ArrayList<>(cacheInfoKeys);
-        sortedCacheKeys.add(HIT_RATIO_KEY);
+        // Hit ratio is a derived col, so need to make sure this cache
+        // has the two underlying columns for us to make it
+        final boolean doesCacheHaveHitRatio = doesCacheHaveHitRatio();
+        if (doesCacheHaveHitRatio) {
+            sortedCacheKeys.add(HIT_RATIO_KEY);
+        }
         sortedCacheKeys.sort(Comparator.naturalOrder());
 
         for (final String cacheInfoKey : sortedCacheKeys) {
             final String name = convertUpperCamelToHuman(cacheInfoKey);
 
-            if (HIT_RATIO_KEY.equals(cacheInfoKey)
-                && cacheInfoKeys.contains(CACHE_INFO_KEY_HIT_COUNT)
-                && cacheInfoKeys.contains(CACHE_INFO_KEY_MISS_COUNT)) {
+            if (HIT_RATIO_KEY.equals(cacheInfoKey)) {
                 addStatColumn("Hit Ratio", -1, row ->
                         getCacheHitRatio(row.getMap()));
             } else {
@@ -350,7 +359,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
             trimmed.add(list.get(i));
         }
         final CacheInfoResponse response = new CacheInfoResponse(trimmed,
-                new PageResponse(range.getStart(), trimmed.size(), total, true));
+                new PageResponse((long) range.getStart(), trimmed.size(), total, true));
         dataConsumer.accept(response);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,9 @@ public class DetectionWriter implements DetectionConsumer {
     private static final String STROOM = "stroom";
     private static final String STREAM_ID = "streamId";
     private static final String EVENT_ID = "eventId";
+    private static final String LEVEL = "level";
+    private static final String STATUS = "status";
+    private static final String FEED_NAME = "feedName";
 
 
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -154,6 +157,9 @@ public class DetectionWriter implements DetectionConsumer {
             writeOptionalDataElement(EFFECTIVE_EXECUTION_TIME, detection.getEffectiveExecutionTime());
             writeValues(detection.getValues());
             writeLinkedEvents(detection.getLinkedEvents());
+            writeOptionalDataElement(LEVEL, detection.getLevel());
+            writeOptionalDataElement(STATUS, detection.getStatus());
+            writeOptionalDataElement(FEED_NAME, detection.getFeedName());
             writeEndElement(DETECTION);
 
         } catch (final SAXException e) {

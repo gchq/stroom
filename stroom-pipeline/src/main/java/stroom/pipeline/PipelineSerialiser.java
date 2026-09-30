@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,14 @@ package stroom.pipeline;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.docstore.shared.DocDataType;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.EncodingUtil;
 
 import jakarta.inject.Inject;
@@ -30,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
 
@@ -45,27 +48,39 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
     }
 
     @Override
-    public PipelineDoc read(final Map<String, byte[]> data) throws IOException {
-        final PipelineDoc document = delegate.read(data);
-        final String json = EncodingUtil.asString(data.get(JSON));
-        final PipelineData pipelineData = getPipelineDataFromJson(json);
+    public PipelineDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        final PipelineDoc document = delegate.read(importExportDocument);
+        final byte[] jsonBytes = importExportDocument.getExtAssetData(JSON);
+        final PipelineData pipelineData = getPipelineDataFromJson(jsonBytes);
         return document.copy().pipelineData(pipelineData).build();
     }
 
     @Override
-    public Map<String, byte[]> write(final PipelineDoc document) throws IOException {
+    public ImportExportDocument write(final PipelineDoc document) throws IOException {
         PipelineData pipelineData = document.getPipelineData();
-
-        final Map<String, byte[]> data = delegate.write(document.copy().pipelineData(null).build());
+        final ImportExportDocument importExportDocument = delegate.write(document.copy().pipelineData(null).build());
 
         // If the pipeline doesn't have data, it may be a new pipeline, create a blank one.
         if (pipelineData == null) {
             pipelineData = new PipelineDataBuilder().build();
         }
 
-        data.put(JSON, EncodingUtil.asBytes(getJsonFromPipelineData(pipelineData)));
+        importExportDocument.addExtAsset(
+                new ByteArrayImportExportAsset(JSON, DocDataType.JSON, getJsonFromPipelineDataAsBytes(pipelineData)));
 
-        return data;
+        return importExportDocument;
+    }
+
+    public PipelineData getPipelineDataFromJson(final byte[] json) {
+        if (json != null) {
+            try {
+                return JsonUtil.readValue(json, PipelineData.class);
+            } catch (final RuntimeException e) {
+                LOGGER.error("Unable to unmarshal pipeline config", e);
+            }
+        }
+
+        return null;
     }
 
     public PipelineData getPipelineDataFromJson(final String json) {
@@ -80,15 +95,19 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
         return null;
     }
 
-    public String getJsonFromPipelineData(final PipelineData pipelineData) {
+    public byte[] getJsonFromPipelineDataAsBytes(final PipelineData pipelineData) {
         if (pipelineData != null) {
             try {
-                return JsonUtil.writeValueAsString(pipelineData);
+                return JsonUtil.writeValueAsBytes(pipelineData);
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to marshal pipeline config", e);
             }
         }
 
         return null;
+    }
+
+    public String getJsonFromPipelineData(final PipelineData pipelineData) {
+        return NullSafe.get(pipelineData, this::getJsonFromPipelineDataAsBytes, EncodingUtil::asString);
     }
 }

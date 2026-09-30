@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.meta.api;
 import stroom.test.common.TestUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import io.vavr.Tuple;
 import org.junit.jupiter.api.DynamicTest;
@@ -709,5 +710,23 @@ class TestAttributeMap {
                 .isEqualTo(val1);
         assertThat(attributeMap.get("foo"))
                 .isEqualTo(val1);
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCiKey() {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(" feed ", "100");
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(CIKey.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(attributeMap::get)
+                .withSimpleEqualityAssertion()
+                .addCase(CIKey.ofDynamicKey("foo"), null)
+                .addCase(CIKey.ofDynamicKey("feed"), "100")
+                .addCase(CIKey.ofDynamicKey(" feed"), "100")
+                .addCase(CIKey.ofDynamicKey("feed "), "100")
+                .addCase(CIKey.ofDynamicKey(" feed "), "100")
+                .addCase(CIKey.ofDynamicKey("FEED"), "100")
+                .build();
     }
 }

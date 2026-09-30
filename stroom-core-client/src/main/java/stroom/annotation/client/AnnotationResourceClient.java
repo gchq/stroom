@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,17 +96,6 @@ public class AnnotationResourceClient extends AbstractRestClient {
         restFactory
                 .create(ANNOTATION_RESOURCE)
                 .method(res -> res.getAnnotationEntries(annotationRef))
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
-    public void getStandardComments(final String filter,
-                                    final Consumer<List<String>> consumer,
-                                    final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(ANNOTATION_RESOURCE)
-                .method(res -> res.getStandardComments(filter))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();

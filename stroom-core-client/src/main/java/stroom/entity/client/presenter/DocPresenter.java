@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,15 @@ import stroom.document.client.event.HasDirtyHandlers;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public abstract class DocPresenter<V extends View, D>
-        extends AbstractDocPresenter<V, D>
+        extends MyPresenterWidget<V>
         implements HasDocumentRead<D>, HasDocumentWrite<D>, HasDirtyHandlers, HasClose, ChangeUiHandlers {
 
     private D entity;
@@ -43,14 +46,21 @@ public abstract class DocPresenter<V extends View, D>
     @Override
     public final void onChange() {
         if (!isReadOnly()) {
-            final D original = entity;
-            final D updated = write(original);
-            final boolean dirty = !Objects.equals(original, updated);
+            // Test the associated documents first as it short circuits the comparison below, which
+            // for some documents is expensive and is run on every keypress in an embedded editor.
+            final boolean dirty = hasAssociatedDirty() || !Objects.equals(entity, write(entity));
             setDirty(dirty);
         }
     }
 
-    private void setDirty(final boolean dirty) {
+    /**
+     * Can be overridden if the Doc has associated components that could be dirty e.g. PipelineDoc
+     */
+    protected boolean hasAssociatedDirty() {
+        return false;
+    }
+
+    protected void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;
             onDirty();
@@ -108,4 +118,25 @@ public abstract class DocPresenter<V extends View, D>
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+    /**
+     * Allows the derived class to specify a callback after the document has been written
+     * to the server. Default is no callback. Override if you want a callback.
+     *
+     * @return null if no callback, otherwise the consumer to be called.
+     */
+    public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
+        return null;
+    }
+
+    /**
+     * Allows the derived class to specify a callback after SaveAs has been invoked.
+     * Default is no callback. Override if you want a callback.
+     *
+     * @return null if no callback, otherwise the consumer to be called.
+     */
+    public BiConsumer<D, Consumer<D>> getPostSaveAsCallback() {
+        return null;
+    }
+
 }

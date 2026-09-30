@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class SimpleSelectionItemWrapper<T> implements SelectionItem {
     public SafeHtml getRenderedLabel() {
         if (renderFunction != null) {
             final SafeHtml safeHtml = renderFunction.apply(label, item);
-            return NullSafe.requireNonNullElse(safeHtml, SafeHtmlUtils.EMPTY_SAFE_HTML);
+            return Objects.requireNonNullElse(safeHtml, SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
             // No render func so let the default method handle it as simple text with no markup
             return SelectionItem.super.getRenderedLabel();

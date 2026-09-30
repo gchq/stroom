@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.util.shared.SerialisationTestConstructor;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -68,7 +69,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
 
     @JsonCreator
     public HashedApiKey(@JsonProperty("id") final Integer id,
-                        @JsonProperty("version") final int version,
+                        @JsonProperty("version") final Integer version,
                         @JsonProperty("createTimeMs") final Long createTimeMs,
                         @JsonProperty("createUser") final String createUser,
                         @JsonProperty("updateTimeMs") final Long updateTimeMs,
@@ -79,10 +80,10 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
                         @JsonProperty("expireTimeMs") final Long expireTimeMs,
                         @JsonProperty("name") final String name,
                         @JsonProperty("comments") final String comments,
-                        @JsonProperty("enabled") final boolean enabled,
+                        @JsonProperty("enabled") final Boolean enabled,
                         @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
         this.id = id;
-        this.version = version;
+        this.version = Objects.requireNonNullElse(version, 0);
         this.createTimeMs = createTimeMs;
         this.createUser = createUser;
         this.updateTimeMs = updateTimeMs;
@@ -93,7 +94,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         this.expireTimeMs = expireTimeMs;
         this.name = name;
         this.comments = comments;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm);
     }
 
@@ -166,6 +167,17 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
 
     public Long getExpireTimeMs() {
         return expireTimeMs;
+    }
+
+    @JsonIgnore
+    public boolean isExpired() {
+        return expireTimeMs != null
+               && System.currentTimeMillis() >= expireTimeMs;
+    }
+
+    public boolean willExpireSoon(final long thresholdMs) {
+        return expireTimeMs != null
+               && System.currentTimeMillis() >= (expireTimeMs - thresholdMs);
     }
 
     public String getName() {

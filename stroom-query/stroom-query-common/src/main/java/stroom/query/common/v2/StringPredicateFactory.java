@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,11 @@ public class StringPredicateFactory {
     // be easier
     private static final Pattern CAMEL_CASE_PATTERN = Pattern.compile(
             "^([A-Z]+)?[a-z0-9]+(?:(?:\\d)|(?:[A-Z0-9]+[a-z0-9]+))*(?:[A-Z]+)?$");
+
+    // camelCase detection is only meaningful for a single word-group token (the parts between separators),
+    // which are short in practice. Bounding the length that CAMEL_CASE_PATTERN is applied to keeps its work
+    // linear and removes any chance of pathological backtracking on a long hostile token.
+    private static final int MAX_CAMEL_CASE_TOKEN_LENGTH = 100;
 
     // Matches positions in (C|c)amelCase to split into individual words
     // Doesn't cope with abbreviations at the beginning/middle of the string,
@@ -576,7 +581,7 @@ public class StringPredicateFactory {
     }
 
     private static String cleanStringForWordBoundaryMatching(final String str) {
-        if (CAMEL_CASE_PATTERN.matcher(str).matches()) {
+        if (str.length() <= MAX_CAMEL_CASE_TOKEN_LENGTH && CAMEL_CASE_PATTERN.matcher(str).matches()) {
             LOGGER.trace("str [{}] is (C|c)amelCase", str);
 
             // replace stuff like SQLScript with "SQL Script"

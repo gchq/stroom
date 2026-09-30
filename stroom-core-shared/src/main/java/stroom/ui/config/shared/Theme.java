@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public enum Theme {
 
     public static Theme fromName(final String themeName) {
         final Theme theme = THEME_NAME_TO_THEME_MAP.get(themeName);
-        return NullSafe.requireNonNullElse(theme, DEFAULT_THEME);
+        return Objects.requireNonNullElse(theme, DEFAULT_THEME);
     }
 
     public static List<String> getThemeNames() {

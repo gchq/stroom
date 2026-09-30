@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,24 +23,16 @@ import stroom.util.shared.HasDependencies;
 import stroom.util.shared.Message;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public interface ImportExportActionHandler extends HasDependencies {
 
-    /**
-     * @param docRef
-     * @param dataMap
-     * @param importState
-     * @param importSettings
-     * @return a tuple containing the imported DocRef and a String location where it is imported to
-     */
     DocRef importDocument(DocRef docRef,
-                          Map<String, byte[]> dataMap,
+                          ImportExportDocument importExportDocument,
                           ImportState importState,
                           ImportSettings importSettings);
 
-    Map<String, byte[]> exportDocument(DocRef docRef, boolean omitAuditFields, List<Message> messageList);
+    ImportExportDocument exportDocument(DocRef docRef, boolean omitAuditFields, List<Message> messageList);
 
     Set<DocRef> listDocuments();
 

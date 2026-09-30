@@ -1,0 +1,249 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.analytics.impl;
+
+import stroom.analytics.shared.AnalyticProcessConfig;
+import stroom.analytics.shared.AnalyticProcessType;
+import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleDoc.Builder;
+import stroom.analytics.shared.ExecutionSchedule;
+import stroom.analytics.shared.ExecutionScheduleRequest;
+import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
+import stroom.docref.DocRef;
+import stroom.docstore.api.AbstractDocumentStore;
+import stroom.docstore.api.DependencyRemapFunction;
+import stroom.docstore.api.StoreFactory;
+import stroom.docstore.api.UniqueNameUtil;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorFilterUtil;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.query.language.SearchRequestFactory;
+import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+@Singleton
+class AnalyticRuleStoreImpl
+        extends AbstractDocumentStore<AnalyticRuleDoc>
+        implements AnalyticRuleStore {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticRuleStoreImpl.class);
+
+    private final Provider<ProcessorFilterService> processorFilterServiceProvider;
+    private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
+    private final SearchRequestFactory searchRequestFactory;
+    private final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
+    private final Provider<ExecutionScheduleDao> executionScheduleDaoProvider;
+
+    @Inject
+    AnalyticRuleStoreImpl(final StoreFactory storeFactory,
+                          final SecurityContext securityContext,
+                          final AnalyticRuleSerialiser serialiser,
+                          final Provider<ProcessorFilterService> processorFilterServiceProvider,
+                          final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
+                          final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
+                          final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
+                          final SearchRequestFactory searchRequestFactory) {
+        super(storeFactory,
+                securityContext,
+                serialiser,
+                AnalyticRuleDoc.TYPE,
+                AnalyticRuleDoc::builder,
+                AnalyticRuleDoc::copy);
+        this.processorFilterServiceProvider = processorFilterServiceProvider;
+        this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
+        this.searchRequestFactory = searchRequestFactory;
+        this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
+        this.executionScheduleDaoProvider = executionScheduleDaoProvider;
+    }
+
+    @Override
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
+        final AnalyticRuleDoc document = super.readDocument(docRef);
+        return getStore().createDocument(newName,
+                (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
+                    final Builder builder = document
+                            .copy()
+                            .uuid(uuid)
+                            .name(docName)
+                            .version(version)
+                            .createTimeMs(createTime)
+                            .updateTimeMs(updateTime)
+                            .createUser(createUser)
+                            .updateUser(updateUser);
+
+                    final AnalyticProcessConfig analyticProcessConfig = document.getAnalyticProcessConfig();
+                    if (analyticProcessConfig != null) {
+//                        if (analyticProcessConfig instanceof
+//                                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
+//                            builder.analyticProcessConfig(
+//                                    scheduledQueryAnalyticProcessConfig.copy().enabled(false).build());
+//                        } else
+                        if (analyticProcessConfig instanceof
+                                final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+                            builder.analyticProcessConfig(
+                                    tableBuilderAnalyticProcessConfig.copy().enabled(false).build());
+                        }
+//                        } else if (analyticProcessConfig instanceof
+//                                final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
+////                            builder.analyticProcessConfig(
+////                                    streamingAnalyticProcessConfig.copy().enabled(false).build());
+//                        }
+
+                        builder.analyticProcessConfig(analyticProcessConfig);
+                    }
+
+                    return builder.build();
+                });
+    }
+
+    @Override
+    public void deleteDocument(final DocRef docRef) {
+        deleteProcessorFilter(docRef);
+        deleteExecutionSchedules(docRef);
+        super.deleteDocument(docRef);
+    }
+
+    @Override
+    protected DependencyRemapFunction<AnalyticRuleDoc> getDependencyRemapFunction() {
+        return (doc, dependencyRemapper) -> {
+            final AnalyticRuleDoc.Builder builder = doc.copy();
+            try {
+                if (doc.getQuery() != null) {
+                    searchRequestFactory.extractDataSourceOnly(doc.getQuery(), docRef -> {
+                        try {
+                            if (docRef != null) {
+                                final DataSourceProviderRegistry dataSourceProviderRegistry =
+                                        dataSourceProviderRegistryProvider.get();
+                                final Optional<DocRef> optional = dataSourceProviderRegistry
+                                        .getDataSourceDocRefs()
+                                        .stream()
+                                        .filter(dr -> dr.equals(docRef))
+                                        .findAny();
+                                optional.ifPresent(dataSourceRef -> {
+                                    final DocRef remapped = dependencyRemapper.remap(dataSourceRef);
+                                    if (remapped != null) {
+                                        String query = doc.getQuery();
+                                        if (remapped.getName() != null &&
+                                            !remapped.getName().isBlank() &&
+                                            !Objects.equals(remapped.getName(), docRef.getName())) {
+                                            query = query.replaceFirst(docRef.getName(), remapped.getName());
+                                        }
+                                        if (remapped.getUuid() != null &&
+                                            !remapped.getUuid().isBlank() &&
+                                            !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
+                                            query = query.replaceFirst(docRef.getUuid(), remapped.getUuid());
+                                        }
+                                        builder.query(query);
+                                    }
+                                });
+                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.debug(e::getMessage, e);
+                        }
+                    });
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+            }
+            return builder.build();
+        };
+    }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
+        final Set<DocRef> docRefs = new HashSet<>();
+        final AnalyticRuleDoc ruleDoc = readDocument(docRef);
+
+        if (docRef != null && ruleDoc != null && AnalyticRuleDoc.TYPE.equals(docRef.getType())) {
+            if (ruleDoc.getAnalyticProcessType().equals(AnalyticProcessType.STREAMING)) {
+                final ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
+
+                final List<DocRef> processorFilters = filterResultPage.getValues().stream()
+                        .filter(ProcessorFilterUtil::shouldExport)
+                        .map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
+                        .toList();
+
+                docRefs.addAll(processorFilters);
+
+                docRefs.addAll(getStore().findDocRefsEmbeddedIn(docRef));
+            }
+
+            if (ruleDoc.getAnalyticProcessType().equals(AnalyticProcessType.SCHEDULED_QUERY)) {
+                final ExecutionScheduleRequest request = ExecutionScheduleRequest.builder()
+                        .ownerDocRef(docRef)
+                        .build();
+
+                final ResultPage<ExecutionSchedule> resultPage =
+                        executionScheduleDaoProvider.get().fetchExecutionSchedule(request);
+
+                resultPage.getValues().forEach(schedule -> {
+                    docRefs.add(new DocRef(ExecutionSchedule.ENTITY_TYPE,
+                            schedule.getUuid(), schedule.getName()));
+                });
+            }
+            return docRefs;
+        }
+        return null;
+    }
+
+    private void deleteProcessorFilter(final DocRef docRef) {
+        try {
+            final AnalyticRuleDoc analyticRuleDoc = readDocument(docRef);
+            analyticRuleProcessorsProvider.get().deleteProcessorFilters(analyticRuleDoc);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+    }
+
+    private void deleteExecutionSchedules(final DocRef docRef) {
+        try {
+            final AnalyticRuleDoc analyticRuleDoc = readDocument(docRef);
+            final ExecutionScheduleRequest request = ExecutionScheduleRequest
+                    .builder()
+                    .pageRequest(PageRequest.unlimited())
+                    .ownerDocRef(docRef)
+                    .build();
+            final List<ExecutionSchedule> executionSchedules = executionScheduleDaoProvider
+                    .get()
+                    .fetchExecutionSchedule(request)
+                    .getValues();
+            for (final ExecutionSchedule executionSchedule : executionSchedules) {
+                executionScheduleDaoProvider.get().deleteExecutionSchedule(executionSchedule);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+    }
+}

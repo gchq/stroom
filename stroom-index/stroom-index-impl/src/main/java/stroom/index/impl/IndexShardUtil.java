@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.index.impl;
 
 import stroom.index.shared.IndexShard;
 import stroom.util.io.PathCreator;
+import stroom.util.io.PathSegmentUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -39,8 +40,8 @@ public class IndexShardUtil {
             }
 
             path = path.resolve("index");
-            path = path.resolve(indexShard.getIndexUuid());
-            path = path.resolve(indexShard.getPartition());
+            path = path.resolve(PathSegmentUtil.requireSafeSegment(indexShard.getIndexUuid()));
+            path = path.resolve(PathSegmentUtil.requireSafeSegment(indexShard.getPartition()));
             path = path.resolve(String.valueOf(indexShard.getId()));
 
             return path;

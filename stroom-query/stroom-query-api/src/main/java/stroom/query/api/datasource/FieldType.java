@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ public enum FieldType implements HasDisplayValue, HasPrimitiveValue {
             false),
     DENSE_VECTOR(12,
                  CIKey.internStaticKey("DenseVector"),
-            "denseVector",
+            "dense vector",
             "Dense vector embedding field type\n" +
             "\n" +
             "Supports vector search using algorithms such as k nearest neighbour.\n" +
@@ -154,6 +154,12 @@ public enum FieldType implements HasDisplayValue, HasPrimitiveValue {
             " * 'messages relating to Blockchain technology'\n" +
             " * 'recreational activity'\n" +
             " * 'medical facilities'",
+            false),
+    NESTED(13,
+            CIKey.internStaticKey("Nested"),
+            "nested",
+            "\n" +
+            "A nested inner document, enabling joining queries.",
             false);
 
     public static final List<FieldType> TYPES = Arrays.stream(values())
