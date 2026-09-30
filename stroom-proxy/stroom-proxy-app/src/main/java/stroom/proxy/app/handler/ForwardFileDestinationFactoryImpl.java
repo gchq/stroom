@@ -94,6 +94,6 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
                 dirQueueFactory,
                 proxyServices,
                 fileStores,
-                fsyncConfig.isForwardingInputQueue());
+                fsyncConfig.getForwardingInputQueueMode());
     }
 }

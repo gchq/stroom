@@ -113,7 +113,7 @@ class FsStore implements Store, AttributeMapFactory {
                         meta,
                         volumePath,
                         streamType,
-                        dataStoreServiceConfigProvider.get().isFsyncEnabled());
+                        dataStoreServiceConfigProvider.get().getFsyncMode());
                 // Force Creation of the files
                 fsTarget.getOutputStream();
                 target = fsTarget;

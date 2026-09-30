@@ -22,6 +22,7 @@ import stroom.proxy.app.handler.ForwardFileConfig.LivenessCheckMode;
 import stroom.util.concurrent.LazyValue;
 import stroom.util.io.FileSyncUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -58,7 +59,7 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
     private final PathCreator pathCreator;
     private final Path staticBaseDir;
     private final boolean isAtomicMoveEnabled;
-    private final boolean fsyncEnabled;
+    private final FsyncMode fsyncMode;
 
     // Because we have templated dirs, we need one commitId per base path, but the templating
     // may mean MANY path variations, so use one AtomicLong per base dir. We could use one
@@ -78,7 +79,7 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
                 null,
                 pathCreator,
                 isAtomicMoveEnabled,
-                false);
+                FsyncMode.DISABLED);
     }
 
     ForwardFileDestinationImpl(final Path storeDir,
@@ -91,7 +92,7 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
                 forwardFileConfig.getLivenessCheckMode(),
                 pathCreator,
                 forwardFileConfig.isAtomicMoveEnabled(),
-                forwardFileConfig.isFsyncEnabled());
+                forwardFileConfig.getFsyncMode());
     }
 
     ForwardFileDestinationImpl(final Path storeDir,
@@ -108,7 +109,7 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
                 livenessCheckMode,
                 pathCreator,
                 isAtomicMoveEnabled,
-                false);
+                FsyncMode.DISABLED);
     }
 
     ForwardFileDestinationImpl(final Path storeDir,
@@ -118,7 +119,7 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
                                final LivenessCheckMode livenessCheckMode,
                                final PathCreator pathCreator,
                                final boolean isAtomicMoveEnabled,
-                               final boolean fsyncEnabled) {
+                               final FsyncMode fsyncMode) {
 
         this.storeDir = Objects.requireNonNull(storeDir);
         this.name = name;
@@ -127,7 +128,7 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
         this.livenessCheckMode = livenessCheckMode;
         this.pathCreator = pathCreator;
         this.isAtomicMoveEnabled = isAtomicMoveEnabled;
-        this.fsyncEnabled = fsyncEnabled;
+        this.fsyncMode = fsyncMode;
 
         if (pathTemplateConfig != null && pathTemplateConfig.hasPathTemplate()) {
             final String pathTemplate = pathTemplateConfig.getPathTemplate();
@@ -189,7 +190,7 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
         final Path targetDir = targetDirCreationFunc.apply(sourceDir);
         try {
             move(sourceDir, targetDir);
-            if (fsyncEnabled) {
+            if (fsyncMode.isAnyFsyncEnabled()) {
                 syncForwardedData(targetDir);
             }
         } catch (final IOException e) {
@@ -208,11 +209,15 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
     /// like a failed forward, sending it down the retry path and risking a duplicate delivery.
     private void syncForwardedData(final Path targetDir) {
         try {
-            FileSyncUtil.syncDirContents(targetDir);
-            FileSyncUtil.syncDir(targetDir);
-            // Walk up to the store dir, as a templated sub path creates a new date/feed branch on
-            // each new day or feed and forcing only the leaf would leave that branch losable.
-            FileSyncUtil.syncDirTree(targetDir.getParent(), storeDir);
+            if (fsyncMode.isEnabledForFiles()) {
+                FileSyncUtil.syncDirContents(targetDir);
+            }
+            if (fsyncMode.isEnabledForDirs()) {
+                FileSyncUtil.syncDir(targetDir);
+                // Walk up to the store dir, as a templated sub path creates a new date/feed branch on
+                // each new day or feed and forcing only the leaf would leave that branch losable.
+                FileSyncUtil.syncDirTree(targetDir.getParent(), storeDir);
+            }
         } catch (final NoSuchFileException e) {
             // The consumer has already taken the data, so there is nothing left to force.
             LOGGER.debug(() -> LogUtil.message(

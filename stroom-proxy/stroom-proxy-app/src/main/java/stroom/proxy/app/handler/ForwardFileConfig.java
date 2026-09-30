@@ -17,6 +17,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DownstreamHostConfig;
+import stroom.util.io.FsyncMode;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
@@ -40,10 +41,10 @@ public final class ForwardFileConfig
 
     public static final String PROP_NAME_SUB_PATH_TEMPLATE = "subPathTemplate";
     public static final String PROP_NAME_ATOMIC_MOVE_ENABLED = "atomicMoveEnabled";
-    public static final String PROP_NAME_FSYNC_ENABLED = "fsyncEnabled";
+    public static final String PROP_NAME_FSYNC_MODE = "fsyncMode";
 
     private static final boolean DEFAULT_IS_ATOMIC_MOVE_ENABLED = true;
-    private static final boolean DEFAULT_IS_FSYNC_ENABLED = true;
+    private static final FsyncMode DEFAULT_FSYNC_MODE = FsyncMode.ENABLED;
     private static final LivenessCheckMode DEFAULT_LIVENESS_CHECK_MODE = LivenessCheckMode.READ;
     public static final boolean DEFAULT_IS_ENABLED = true;
     public static final boolean DEFAULT_IS_INSTANT = false;
@@ -57,7 +58,7 @@ public final class ForwardFileConfig
     private final String livenessCheckPath;
     private final LivenessCheckMode livenessCheckMode;
     private final boolean atomicMoveEnabled;
-    private final boolean fsyncEnabled;
+    private final FsyncMode fsyncMode;
 
     public ForwardFileConfig() {
         enabled = DEFAULT_IS_ENABLED;
@@ -69,7 +70,7 @@ public final class ForwardFileConfig
         livenessCheckPath = null;
         livenessCheckMode = DEFAULT_LIVENESS_CHECK_MODE;
         atomicMoveEnabled = DEFAULT_IS_ATOMIC_MOVE_ENABLED;
-        fsyncEnabled = DEFAULT_IS_FSYNC_ENABLED;
+        fsyncMode = DEFAULT_FSYNC_MODE;
     }
 
     @SuppressWarnings("unused")
@@ -83,7 +84,7 @@ public final class ForwardFileConfig
                              @JsonProperty("livenessCheckPath") final String livenessCheckPath,
                              @JsonProperty("livenessCheckMode") final LivenessCheckMode livenessCheckMode,
                              @JsonProperty(PROP_NAME_ATOMIC_MOVE_ENABLED) final Boolean atomicMoveEnabled,
-                             @JsonProperty(PROP_NAME_FSYNC_ENABLED) final Boolean fsyncEnabled) {
+                             @JsonProperty(PROP_NAME_FSYNC_MODE) final FsyncMode fsyncMode) {
         this.enabled = Objects.requireNonNullElse(enabled, false);
         this.instant = Objects.requireNonNullElse(instant, false);
         this.name = name;
@@ -93,7 +94,7 @@ public final class ForwardFileConfig
         this.livenessCheckPath = livenessCheckPath;
         this.livenessCheckMode = Objects.requireNonNullElse(livenessCheckMode, DEFAULT_LIVENESS_CHECK_MODE);
         this.atomicMoveEnabled = Objects.requireNonNullElse(atomicMoveEnabled, DEFAULT_IS_ATOMIC_MOVE_ENABLED);
-        this.fsyncEnabled = Objects.requireNonNullElse(fsyncEnabled, DEFAULT_IS_FSYNC_ENABLED);
+        this.fsyncMode = Objects.requireNonNullElse(fsyncMode, DEFAULT_FSYNC_MODE);
     }
 
     private ForwardFileConfig(final Builder builder) {
@@ -106,7 +107,7 @@ public final class ForwardFileConfig
         livenessCheckPath = builder.livenessCheckPath;
         livenessCheckMode = builder.livenessCheckMode;
         atomicMoveEnabled = builder.atomicMoveEnabled;
-        fsyncEnabled = builder.fsyncEnabled;
+        fsyncMode = builder.fsyncMode;
     }
 
     /**
@@ -224,15 +225,15 @@ public final class ForwardFileConfig
         return atomicMoveEnabled;
     }
 
-    @JsonProperty(PROP_NAME_FSYNC_ENABLED)
+    @JsonProperty(PROP_NAME_FSYNC_MODE)
     @JsonPropertyDescription(
-            "If true, data forwarded to this destination is forced to durable storage before the " +
+            "Controls whether data forwarded to this destination is forced to durable storage before the " +
             "proxy's own copy is removed. Without this the forwarded files may still only be in the " +
             "operating system's page cache, so they can be lost if the machine loses power even " +
-            "though the proxy considers them delivered. Set this to false if the destination file " +
+            "though the proxy considers them delivered. Set this to DISABLED if the destination file " +
             "system does not need the guarantee and you would rather have the throughput.")
-    public boolean isFsyncEnabled() {
-        return fsyncEnabled;
+    public FsyncMode getFsyncMode() {
+        return fsyncMode;
     }
 
     @Override
@@ -253,7 +254,7 @@ public final class ForwardFileConfig
                && Objects.equals(livenessCheckPath, that.livenessCheckPath)
                && livenessCheckMode == that.livenessCheckMode
                && atomicMoveEnabled == that.atomicMoveEnabled
-               && fsyncEnabled == that.fsyncEnabled;
+               && fsyncMode == that.fsyncMode;
     }
 
     @Override
@@ -267,7 +268,7 @@ public final class ForwardFileConfig
                 livenessCheckPath,
                 livenessCheckMode,
                 atomicMoveEnabled,
-                fsyncEnabled);
+                fsyncMode);
     }
 
     @Override
@@ -282,7 +283,7 @@ public final class ForwardFileConfig
                ", livenessCheckPath='" + livenessCheckPath + '\'' +
                ", livenessCheckMode=" + livenessCheckMode +
                ", atomicMoveEnabled=" + atomicMoveEnabled +
-               ", fsyncEnabled=" + fsyncEnabled +
+               ", fsyncMode=" + fsyncMode +
                '}';
     }
 
@@ -301,7 +302,7 @@ public final class ForwardFileConfig
         builder.livenessCheckPath = copy.getLivenessCheckPath();
         builder.livenessCheckMode = copy.getLivenessCheckMode();
         builder.atomicMoveEnabled = copy.isAtomicMoveEnabled();
-        builder.fsyncEnabled = copy.isFsyncEnabled();
+        builder.fsyncMode = copy.getFsyncMode();
         return builder;
     }
 
@@ -314,7 +315,7 @@ public final class ForwardFileConfig
         private String livenessCheckPath;
         private LivenessCheckMode livenessCheckMode;
         private boolean atomicMoveEnabled;
-        private boolean fsyncEnabled;
+        private FsyncMode fsyncMode;
         private boolean enabled;
         private boolean instant;
         private String name;
@@ -385,8 +386,8 @@ public final class ForwardFileConfig
             return this;
         }
 
-        public Builder withFsyncEnabled(final boolean fsyncEnabled) {
-            this.fsyncEnabled = fsyncEnabled;
+        public Builder withFsyncMode(final FsyncMode fsyncMode) {
+            this.fsyncMode = fsyncMode;
             return this;
         }
 
