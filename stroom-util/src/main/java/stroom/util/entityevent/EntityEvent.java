@@ -217,17 +217,18 @@ public class EntityEvent {
 
     /**
      * @return Additional data relating to the event. The data is JSON and the structure should
-     * be expected and understood by sender and receiver. The format of the data will likely be
-     * specific to the docRef.
+     * be expected and understood by sender and receiver. The format of the data will be
+     * specific to the use case for the event type.
      */
-    @JsonProperty("data")
-    public String getDataAsJson() {
+    public String getData() {
         return data;
     }
 
     /// When the entity event data is expected to be a simple string value, return the string value.
+    ///
+    /// @throws IllegalArgumentException if dataClassName does not match String.class.getName()
     @JsonIgnore
-    public String getStringData() {
+    public String getDataAsString() {
         final String expectedClassName = String.class.getName();
         if (expectedClassName.equals(dataClassName)) {
             return data;
@@ -238,8 +239,10 @@ public class EntityEvent {
     }
 
     /// When the entity event data is expected to be a simple {@link Long} value, return the {@link Long} value.
+    ///
+    /// @throws IllegalArgumentException if dataClassName does not match Long.class.getName()
     @JsonIgnore
-    public Long getLongData() {
+    public Long getDataAsLong() {
         final String expectedClassName = Long.class.getName();
         if (expectedClassName.equals(dataClassName)) {
             if (NullSafe.isNonBlankString(data)) {
@@ -255,8 +258,10 @@ public class EntityEvent {
 
     /// When the entity event data is expected to be a simple {@link Integer} value,
     /// return the {@link Integer} value.
+    ///
+    /// @throws IllegalArgumentException if dataClassName does not match Integer.class.getName()
     @JsonIgnore
-    public Integer getIntData() {
+    public Integer getDataAsInteger() {
         final String expectedClassName = Integer.class.getName();
         if (expectedClassName.equals(dataClassName)) {
             if (NullSafe.isNonBlankString(data)) {

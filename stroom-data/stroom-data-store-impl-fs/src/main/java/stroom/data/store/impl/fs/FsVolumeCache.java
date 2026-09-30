@@ -78,7 +78,7 @@ public class FsVolumeCache implements EntityEvent.Handler, Clearable {
     public void onChange(final EntityEvent event) {
         LOGGER.debug("onChange() - event: {}", event);
         if (event != null) {
-            final Integer id = event.getIntData();
+            final Integer id = event.getDataAsInteger();
             if (id != null) {
                 LOGGER.debug("onChange() - Invalidating entry with ID {}, event: {}", id, event);
                 idToVolumeCache.invalidate(id);

@@ -53,11 +53,11 @@ class TestEntityEvent {
         assertThat(myEntityEventData2)
                 .isEqualTo(myEntityEventData);
 
-        assertThatThrownBy(event2::getStringData)
+        assertThatThrownBy(event2::getDataAsString)
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(event2::getLongData)
+        assertThatThrownBy(event2::getDataAsLong)
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(event2::getIntData)
+        assertThatThrownBy(event2::getDataAsInteger)
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -87,13 +87,13 @@ class TestEntityEvent {
                 "foo");
 
         final EntityEvent event2 = TestUtil.testSerialisation(entityEvent, EntityEvent.class);
-        assertThat(event2.getStringData())
+        assertThat(event2.getDataAsString())
                 .isEqualTo("foo");
-        assertThatThrownBy(event2::getLongData)
+        assertThatThrownBy(event2::getDataAsLong)
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(event2::getIntData)
+        assertThatThrownBy(event2::getDataAsInteger)
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThat(event2.getDataAsJson())
+        assertThat(event2.getData())
                 .isEqualTo("foo");
     }
 
@@ -111,13 +111,13 @@ class TestEntityEvent {
                 "1234");
 
         final EntityEvent event2 = TestUtil.testSerialisation(entityEvent, EntityEvent.class);
-        assertThat(event2.getLongData())
+        assertThat(event2.getDataAsLong())
                 .isEqualTo(1234L);
-        assertThatThrownBy(event2::getStringData)
+        assertThatThrownBy(event2::getDataAsString)
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(event2::getIntData)
+        assertThatThrownBy(event2::getDataAsInteger)
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThat(event2.getDataAsJson())
+        assertThat(event2.getData())
                 .isEqualTo("1234");
     }
 
@@ -135,13 +135,13 @@ class TestEntityEvent {
                 "1234");
 
         final EntityEvent event2 = TestUtil.testSerialisation(entityEvent, EntityEvent.class);
-        assertThat(event2.getIntData())
+        assertThat(event2.getDataAsInteger())
                 .isEqualTo(1234);
-        assertThatThrownBy(event2::getStringData)
+        assertThatThrownBy(event2::getDataAsString)
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(event2::getLongData)
+        assertThatThrownBy(event2::getDataAsLong)
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThat(event2.getDataAsJson())
+        assertThat(event2.getData())
                 .isEqualTo("1234");
     }
 
@@ -241,11 +241,11 @@ class TestEntityEvent {
                         EntityAction.CREATE,
                         String.class.getName(),
                         "foo"));
-        assertThat(firedEvent.getStringData())
+        assertThat(firedEvent.getDataAsString())
                 .isEqualTo("foo");
         assertThat(firedEvent.getDataClassName())
                 .isEqualTo(String.class.getName());
-        assertThat(firedEvent.getDataAsJson())
+        assertThat(firedEvent.getData())
                 .isEqualTo("foo");
     }
 
@@ -274,11 +274,11 @@ class TestEntityEvent {
                         EntityAction.CREATE,
                         Long.class.getName(),
                         "1234"));
-        assertThat(firedEvent.getLongData())
+        assertThat(firedEvent.getDataAsLong())
                 .isEqualTo(1234L);
         assertThat(firedEvent.getDataClassName())
                 .isEqualTo(Long.class.getName());
-        assertThat(firedEvent.getDataAsJson())
+        assertThat(firedEvent.getData())
                 .isEqualTo("1234");
     }
 
@@ -307,11 +307,11 @@ class TestEntityEvent {
                         EntityAction.CREATE,
                         Integer.class.getName(),
                         "1234"));
-        assertThat(firedEvent.getIntData())
+        assertThat(firedEvent.getDataAsInteger())
                 .isEqualTo(1234);
         assertThat(firedEvent.getDataClassName())
                 .isEqualTo(Integer.class.getName());
-        assertThat(firedEvent.getDataAsJson())
+        assertThat(firedEvent.getData())
                 .isEqualTo("1234");
     }
 

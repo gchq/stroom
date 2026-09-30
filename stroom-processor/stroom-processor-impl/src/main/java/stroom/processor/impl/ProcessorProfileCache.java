@@ -192,7 +192,7 @@ public class ProcessorProfileCache implements Clearable, EntityEvent.Handler {
         if (event != null) {
             LOGGER.debug("onChange: {}", event);
             final EntityAction action = event.getAction();
-            final String profileName = event.getStringData();
+            final String profileName = event.getDataAsString();
             if (NullSafe.isNonBlankString(profileName)) {
                 switch (action) {
                     case CREATE, UPDATE, DELETE -> nameToProfileCache.invalidate(profileName);

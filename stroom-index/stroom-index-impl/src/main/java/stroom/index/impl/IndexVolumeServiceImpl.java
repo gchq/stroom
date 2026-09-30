@@ -616,7 +616,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
             if (IndexVolumeGroupService.ENTITY_TYPE.equals(type)
                 && (action == EntityAction.UPDATE || action == EntityAction.DELETE)) {
 
-                final String groupName = event.getStringData();
+                final String groupName = event.getDataAsString();
                 if (groupName != null) {
                     LOGGER.debug("onChange() - Invalidating entries for groupName: {}", groupName);
                     volGroupNodeToVolSelectorCache.invalidateEntries(
