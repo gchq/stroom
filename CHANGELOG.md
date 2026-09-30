@@ -13,6 +13,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.18] - 2026-09-30
+
+* Feature **#5551** : Display API key expiry date in red when the key is expired or will expire in <30 days. Change the text in brackets to show `(EXPIRED)` when the key has expired.
+
+* Bug : Fix null pointer exception when entering an empty expiry date for an API key.
+
+* Feature : Log warnings when an API is used that has expired or will expire in <30days.
+
+* Bug : Add missing cache invalidation to API Key Cache when API keys are updated/deleted.
+
+* Feature : Change the Credentials Manager Expires column to use formatting consisten with the API keys screen.
+
+* Bug : Fix API authentication on proxy and stroom datafeed. Proxy can now use either the forwarder configured API key or the downstream host configured API key to forward to stroom.
+
+* Bug **#5817** : Change fsync configuration to allow file and directory fsync to be enabled/disabled separately. All fsync props have been changed from a boolean to an enum with values (DISALBED|FILE_ONLY|DIR_ONLY|ENABLED). The proxy config prop `proxyConfig.forwardFileDestinations[*].fsyncEnabled` has changed to `proxyConfig.forwardFileDestinations[*].fsyncMode`. The proxy props `proxyConfig.fsync.(aggregateInputQueue|forwardingInputQueue|preAggregateInputQueue|receiving|zipSplittingInputQueue)` have been renamed to `proxyConfig.fsync.(aggregateInputQueueMode|forwardingInputQueueMode|preAggregateInputQueueMode|receivingMode|zipSplittingInputQueueMode)`. The stroom prop `appConfig.data.store.fsyncEnabled` has been reanamed to `appConfig.data.store.fsyncMode`.
+
+* Bug **#5818** : Add missing `lucene-backward-codecs:10.3.2` runtime dependency.
+
+
 ## [v7.13-beta.17] - 2026-09-25
 
 * Bug **#5811** : Fix json deserialisation of data feed identities file that was causing `No value type configured for ObjectReader`.
@@ -2557,7 +2576,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.17...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.18...HEAD
+[v7.13-beta.18]: https://github.com/gchq/stroom/compare/v7.13-beta.17...v7.13-beta.18
 [v7.13-beta.17]: https://github.com/gchq/stroom/compare/v7.13-beta.16...v7.13-beta.17
 [v7.13-beta.16]: https://github.com/gchq/stroom/compare/v7.13-beta.15...v7.13-beta.16
 [v7.13-beta.15]: https://github.com/gchq/stroom/compare/v7.13-beta.14...v7.13-beta.15
