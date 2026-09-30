@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import java.util.List;
 /// Each object has a unique identifier, a type (e.g. person, device), and mutable
 /// `(x, y)` coordinates in the map's coordinate space. An optional movement
 /// trail can be attached for client-side animation during temporal playback.
+///
+/// Holds no GWT or DOM types so it can be unit-tested on the JVM.
 public class FloorMapObject {
     private final String id;
     private final String type;

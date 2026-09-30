@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ import stroom.util.shared.NullSafe;
 /// space. Every fact — backgrounds included — uses `WORLD_TO_MAP`; a
 /// background is not special-cased, it is simply an image fact placed by its own
 /// matrix and painted early (low z-order).
+///
+/// Holds no GWT or DOM types so it can be unit-tested on the JVM.
 public final class Fact {
 
     private final String key;

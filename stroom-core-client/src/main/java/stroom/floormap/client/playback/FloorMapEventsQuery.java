@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ import stroom.floormap.shared.FloorMapFieldMapping;
 /// repeating the aliases as literal text. Renaming a column changes the query and the mapping
 /// together or not at all — which is what the `Event Type` defect broke, where the query said
 /// `Event Type` and the parser looked for `type`.
+///
+/// Holds no GWT or DOM types so it can be unit-tested on the JVM.
 public final class FloorMapEventsQuery {
 
     /// Result column holding the entity identity — the key events are grouped by.

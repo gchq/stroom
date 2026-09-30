@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,8 @@ import java.util.List;
 /// part that matters most — quoted strings, comments and parameters are tagged, so the word scan below
 /// runs only over the spans that could hold real syntax. That is what a substring search would get
 /// wrong.
+///
+/// Holds no GWT or DOM types so it can be unit-tested on the JVM.
 public final class FloorMapEventsQueryOrder {
 
     private static final String SORT = "sort";

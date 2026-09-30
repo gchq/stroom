@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@ import stroom.floormap.shared.ValueFormat;
 /// Callers obtain an accessor from a factory appropriate to their
 /// runtime context and then use the same API regardless of the
 /// underlying format.
+///
+/// The interface holds no GWT types, so code written against it can be unit-tested on the JVM with the
+/// map-backed test implementation.
 ///
 /// @see ParsedValue
 public interface ValueAccessor {

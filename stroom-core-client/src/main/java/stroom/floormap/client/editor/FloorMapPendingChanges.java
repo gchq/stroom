@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ import java.util.Objects;
 /// discard anything the user staged while the request was in flight. On a failed
 /// flush keep the operations staged so the user can retry; the server transaction
 /// was rolled back, so replaying them is safe and idempotent.
+///
+/// Holds no GWT or DOM types so it can be unit-tested on the JVM.
 public class FloorMapPendingChanges {
 
     // -----------------------------------------------------------------------

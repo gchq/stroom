@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,9 +70,11 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     private static final Preset STEP_BACK_PRESET = new Preset(SvgImage.STEP_BACKWARD, "Step Back", true);
     private static final Preset STEP_FORWARD_PRESET = new Preset(SvgImage.STEP_FORWARD, "Step Forward", true);
     private static final double SPEED_MULTIPLIER = 1000.0;
+
     /// Playback speed multipliers offered in the speed badge menu.
     private static final List<Double> SPEED_OPTIONS =
             Arrays.asList(0.5, 1.0, 10.0, 100.0, 1_000.0, 10_000.0);
+
     /// Minimum wall-clock interval (ms) between data query fires during playback.
     /// The visual position updates every animation frame; queries are throttled to this rate
     /// so the server is not overwhelmed at high playback speeds.
@@ -86,6 +88,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
 
     /// Earliest timestamp observed in histogram data — used by Show All.
     private long dataRangeMin = Long.MAX_VALUE;
+
     /// Latest timestamp observed in histogram data — used by Show All.
     private long dataRangeMax = Long.MIN_VALUE;
 
@@ -111,9 +114,11 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
 
     private boolean playing;
     private double playbackSpeed;
+
     /// Tracks whether the last programmatic setCurrentTime() was out of the visible range.
     private OutOfRange outOfRange = OutOfRange.NONE;
     private double lastFrameTime;
+
     /// Rate limit on the data queries playback issues, kept separate from the
     /// per-frame visual updates. See [FloorMapQueryThrottle] for why this is a
     /// class rather than a timestamp field.

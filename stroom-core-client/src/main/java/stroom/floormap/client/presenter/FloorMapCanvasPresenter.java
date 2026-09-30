@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,6 +149,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     private double scale = DEFAULT_SCALE;
     private double offsetX = 0;
     private double offsetY = 0;
+
     /// Whether the initial view (zoom-to-fit, or the bottom-left origin fallback)
     /// has been applied yet. Applied once, when the canvas first has both a real
     /// size and — for the fit — content or an injected view; user pan/zoom
@@ -171,10 +172,12 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     private GeometryHandler geometryHandler;
     private SelectionHandler selectionHandler;
     private boolean isDragging = false;
+
     /// True only if the mouse actually moved while dragging an object (distinguishes click-to-select from drag).
     private boolean hasMoved = false;
     private double lastMouseX;
     private double lastMouseY;
+
     /// Accumulated drag delta in map space (Y-up) for the current drag gesture.
     private double dragDxMap;
     private double dragDyMap;
@@ -190,12 +193,16 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     // Area vertex-edit state (valid while gesture == MOVING_VERTEX).
     /// Key of the area whose vertices are being edited.
     private String editingAreaKey;
+
     /// The area's world-to-map at edit start (to map screen ↔ local frame).
     private FloorMapTransformationMatrix editingWorldToMap;
+
     /// Working copy of the area's local-frame vertices during the edit.
     private double[][] workingVertices;
+
     /// Index of the vertex being dragged, or -1.
     private int editingVertexIndex = -1;
+
     /// True when the current vertex edit inserted a new vertex (persist even if not dragged).
     private boolean vertexInserted;
 
@@ -207,6 +214,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
 
     /// Minimum vertices needed to close an area polygon.
     private static final int AREA_MIN_VERTICES = 3;
+
     /// Screen-pixel radius around vertex 0 within which a click closes the
     /// polygon, and the radius of the close-target ring the view draws. Public
     /// so `FloorMapCanvasViewImpl` shares this single value (the hit test
@@ -216,6 +224,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// Committed draft vertices for the in-progress DRAWING_AREA gesture, in
     /// map space (so panning/zooming mid-draw doesn't shear the draft).
     private final List<double[]> areaDraftMap = new ArrayList<>();
+
     /// Live cursor position in element pixels (valid while DRAWING_AREA).
     private double areaCursorX;
     private double areaCursorY;
@@ -223,6 +232,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// The anchor of the in-progress Set Scale measurement, in map space (so a
     /// mid-measure zoom cannot stretch it), or `null` before the press.
     private double[] measureStartMap;
+
     /// Live cursor position in element pixels (valid while MEASURING_SCALE).
     private double measureCursorX;
     private double measureCursorY;
@@ -244,18 +254,23 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// gesture (composed onto each selected fact for live preview and committed on
     /// release). `null` when no transform gesture is active.
     private FloorMapTransformationMatrix pendingTransform;
+
     /// Scale pivot in map space (opposite corner / edge midpoint), for SCALING.
     private double gesturePivotX;
     private double gesturePivotY;
+
     /// The grabbed scale handle's map-space position at gesture start, for SCALING.
     private double gestureRefX;
     private double gestureRefY;
+
     /// Rotation centre in map space, for ROTATING.
     private double gestureCentreX;
     private double gestureCentreY;
+
     /// Pointer position in map space at gesture start, for ROTATING.
     private double gestureStartMapX;
     private double gestureStartMapY;
+
     /// Smallest scale factor a handle drag may produce (avoids zero/flip/singular).
     private static final double MIN_SCALE_FACTOR = 0.05;
 
@@ -271,8 +286,8 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// Recomputed on each [#setFacts(List)].
     private final Set<String> areaKeys = new HashSet<>();
 
-    // Edit mode
     private boolean editMode = false;
+
     /// Currently selected object ids, in selection order. Backed as a set so a
     /// future rubber-band / modifier-key UI can select many; the current UI
     /// selects exactly one (see [#setSelectedObjectId(String)]). The view

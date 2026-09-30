@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,6 @@ public class FloorMapCanvasViewImpl
     /// an imageless default graphic and of an event marker. 0.6× the original
     /// 100 — the label `font-size` is deliberately left unchanged.
     private static final int OBJECT_SIZE = FloorMapScreenGeometry.POINT_GLYPH_SIZE_PX;
-
 
     /// On-screen size (px) of a square scale handle.
     private static final double HANDLE_SIZE_PX = 8;
@@ -235,7 +234,7 @@ public class FloorMapCanvasViewImpl
     /// changes only when the document is read or recalibrated.
     private FloorMapMeasurementUnits measurementUnits;
 
-    /// Id for this canvas's grid `<pattern>`, minted once per view.
+    /// ID for this canvas's grid `<pattern>`, minted once per view.
     ///
     /// Per instance rather than a shared constant because inline SVG resolves ids
     /// document-wide: with two canvases attached — two open floor maps, or one
@@ -584,10 +583,7 @@ public class FloorMapCanvasViewImpl
     /// [#fixedSizeTransform]).
     ///
     /// The parameters are documented once, on
-    /// `FloorMapCanvasPresenter.FloorMapCanvasView#draw`. They were duplicated here,
-    /// and the two copies had drifted into documenting different subsets of the seventeen -
-    /// eleven here, thirteen there, four documented in neither. With seventeen parameters
-    /// that is not a mistake anyone was going to notice, so there is now one copy.
+    /// `FloorMapCanvasPresenter.FloorMapCanvasView#draw`.
     @Override
     public void draw(final double scale,
                      final double x,
