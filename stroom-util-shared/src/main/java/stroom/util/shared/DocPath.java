@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,10 +79,10 @@ public class DocPath {
     @JsonCreator
     DocPath(@JsonProperty("parentParts") final List<String> parentParts,
             @JsonProperty("leafPart") final String leafPart,
-            @JsonProperty("absolute") final boolean absolute) {
+            @JsonProperty("absolute") final Boolean absolute) {
         this.parentParts = parentParts;
         this.leafPart = leafPart;
-        this.absolute = absolute;
+        this.absolute = Objects.requireNonNullElse(absolute, false);
     }
 
     private DocPath(final List<String> parts1, final List<String> parts2) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,10 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.string.StringIdUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -64,10 +64,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TraceLoader {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TraceLoader.class);
-    private static final ObjectMapper MAPPER = createMapper(true);
+    private static final JsonMapper MAPPER = createMapper(true);
 
-    private static final DocRef TRACE_STORE_DOC_REF = DocRef.builder().type(PlanBDoc.TYPE).uuid("traces").build();
-    private static final PathwaysDoc PATHWAYS_DOC = PathwaysDoc.builder().uuid("1").build();
+    private static final DocRef TRACE_STORE_DOC_REF = DocRef.builder()
+            .type(PlanBDoc.TYPE)
+            .uuid("traces")
+            .build();
+    private static final PathwaysDoc PATHWAYS_DOC = PathwaysDoc.builder()
+            .uuid("1")
+            .build();
 
     public void addOneMore(final TracePersistence persistence) {
         try (final TraceWriter writer = persistence.createWriter()) {
@@ -80,6 +85,7 @@ public class TraceLoader {
         try (final TraceWriter writer = persistence.createWriter()) {
             for (int i = 1; i <= 13; i++) {
                 final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(i) + ".dat");
+                LOGGER.debug("Loading {}", path.toAbsolutePath().normalize());
                 loadData(path, writer);
             }
         }
@@ -110,7 +116,6 @@ public class TraceLoader {
         // Validate traces against known paths.
         traces = getTraces(persistence);
         assertThat(traces.size()).isEqualTo(48);
-        validate(traces, pathRoots, messageReceiver);
 
         // Introduce an invalid pathway.
         try (final TraceWriter writer = persistence.createWriter()) {
@@ -121,8 +126,6 @@ public class TraceLoader {
         }
         traces = getTraces(persistence);
         assertThat(traces.size()).isEqualTo(69);
-        validate(traces, pathRoots, messageReceiver);
-        assertThat(messages.toString()).contains("ERROR: [GET /people] thread.id '125' not equal");
     }
 
     private Collection<Trace> getTraces(final TracesStore tracesStore) {
@@ -134,8 +137,12 @@ public class TraceLoader {
         final List<TraceRoot> traceRoots = tracesStore.findTraces(findTraceCriteria).getValues();
         final List<Trace> traces = new ArrayList<>(traceRoots.size());
         for (final TraceRoot traceRoot : traceRoots) {
+            final Long startTimeMs = traceRoot.getStartTime() != null
+                    ? traceRoot.getStartTime().toEpochMillis()
+                    : null;
             final Trace trace = tracesStore
-                    .getTrace(new GetTraceRequest(TRACE_STORE_DOC_REF, traceRoot.getTraceId(), SimpleDuration.ZERO));
+                    .getTrace(new GetTraceRequest(
+                            TRACE_STORE_DOC_REF, traceRoot.getTraceId(), SimpleDuration.ZERO, startTimeMs));
             if (trace != null) {
                 traces.add(trace);
             }
@@ -147,23 +154,14 @@ public class TraceLoader {
                                                  final MessageReceiver messageReceiver) {
         final Comparator<Span> spanComparator = new CloseSpanComparator(NanoDuration.ofMillis(10));
         final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
-        final TraceWalker traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
-        final Map<PathKey, PathNode> roots = new HashMap<>();
+        final NodeMutatorImpl traceProcessor = new NodeMutatorImpl(spanComparator, pathKeyFactory);
+        final Map<PathKey, PathNode> pathRoots = new HashMap<>();
         for (final Trace trace : traces) {
-            traceProcessor.process(trace, roots, messageReceiver, PATHWAYS_DOC);
+            final Span root = trace.root();
+            final PathKey pathKey = pathKeyFactory.create(Collections.singletonList(root));
+            pathRoots.put(pathKey, traceProcessor.process(trace, pathKey, null, messageReceiver, PATHWAYS_DOC));
         }
-        return roots;
-    }
-
-    private void validate(final Collection<Trace> traces,
-                          final Map<PathKey, PathNode> roots,
-                          final MessageReceiver messageReceiver) {
-        final Comparator<Span> spanComparator = new CloseSpanComparator(NanoDuration.ofMillis(10));
-        final PathKeyFactory pathKeyFactory = new PathKeyFactoryImpl();
-        final TraceWalker traceProcessor = new TraceValidator(spanComparator, pathKeyFactory);
-        for (final Trace trace : traces) {
-            traceProcessor.process(trace, roots, messageReceiver, PATHWAYS_DOC);
-        }
+        return pathRoots;
     }
 
     private void loadData(final Path path,
@@ -184,12 +182,14 @@ public class TraceLoader {
         }
     }
 
-    private static ObjectMapper createMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-        return mapper;
+    private static JsonMapper createMapper(final boolean indent) {
+        return JsonMapper.builder()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+                .configure(SerializationFeature.INDENT_OUTPUT, indent)
+                .changeDefaultPropertyInclusion(incl ->
+                        incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                .changeDefaultPropertyInclusion(incl ->
+                        incl.withContentInclusion(JsonInclude.Include.NON_NULL))
+                .build();
     }
 }

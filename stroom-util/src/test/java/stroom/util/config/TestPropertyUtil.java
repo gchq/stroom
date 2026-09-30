@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package stroom.util.config;
 
 import stroom.util.config.PropertyUtil.ObjectInfo;
 import stroom.util.config.annotations.ReadOnly;
-import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonCreator.Mode;
@@ -67,7 +66,7 @@ class TestPropertyUtil {
         final ImmutablePojo immutablePojo = new ImmutablePojo();
 
         final ObjectInfo<ImmutablePojo> objectInfo = PropertyUtil.getObjectInfo(
-                JsonUtil.getMapper(), "stroom", immutablePojo);
+                "stroom", immutablePojo);
 
         assertThat(objectInfo.getName())
                 .isEqualTo("stroom");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.InputStreamUtils;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.StroomStreamException;
-import stroom.security.api.CommonSecurityContext;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -61,9 +61,9 @@ public class SimpleReceiver implements Receiver {
     private static final String DATA_FILE_NAME = "0000000001.dat";
 
     private final ReceiveDataConfig receiveDataConfig;
+    private final FsyncMode fsyncModeOnReceipt;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
-    private final CommonSecurityContext commonSecurityContext;
     private final LogStream logStream;
     private final DropReceiver dropReceiver;
     private Consumer<Path> destination;
@@ -71,15 +71,15 @@ public class SimpleReceiver implements Receiver {
     @Inject
     public SimpleReceiver(final AttributeMapFilterFactory attributeMapFilterFactory,
                           final DataDirProvider dataDirProvider,
-                          final CommonSecurityContext commonSecurityContext,
                           final LogStream logStream,
                           final DropReceiver dropReceiver,
-                          final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+                          final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                          final FsyncConfig fsyncConfig) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
-        this.commonSecurityContext = commonSecurityContext;
         this.logStream = logStream;
         this.dropReceiver = dropReceiver;
         this.receiveDataConfig = receiveDataConfigProvider.get();
+        this.fsyncModeOnReceipt = fsyncConfig.getReceivingMode();
 
         // Make receiving zip dir.
         final Path receivingDir = dataDirProvider.get().resolve(DirNames.RECEIVING_SIMPLE);
@@ -97,9 +97,12 @@ public class SimpleReceiver implements Receiver {
                         final AttributeMap attributeMap,
                         final String requestUri,
                         final InputStreamSupplier inputStreamSupplier) {
-//        commonSecurityContext.asProcessingUser(() -> {
         // Determine if the feed is allowed to receive data or if we should ignore it.
         // Throws an exception if we should reject.
+        // Callers must already be running as the processing user: filtering can consult feed status,
+        // which needs an identity, and no entry point's own user would carry the permission for it.
+        // Every entry point does this - see ProxyRequestHandler, ZipDirScanner and EventStore - so
+        // this must not elevate again here.
         final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
         final String receiptId = NullSafe.get(attributeMap, map -> map.get(StandardHeaderArguments.RECEIPT_ID));
         if (attributeMapFilter.filter(attributeMap)) {
@@ -108,7 +111,6 @@ public class SimpleReceiver implements Receiver {
             // Drop the data.
             dropReceiver.receive(startTime, attributeMap, requestUri, inputStreamSupplier);
         }
-//        });
     }
 
     private void doReceive(final Instant startTime,
@@ -140,7 +142,7 @@ public class SimpleReceiver implements Receiver {
                     // Deal with GZIP compression.
                     final String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
                     final InputStream in = StandardHeaderArguments.COMPRESSION_GZIP.equalsIgnoreCase(compression)
-                                ? new GzipCompressorInputStream(bufferedInputStream, true)
+                            ? new GzipCompressorInputStream(bufferedInputStream, true)
                             : bufferedInputStream;
 
                     // Write the .dat file in the zip
@@ -156,7 +158,7 @@ public class SimpleReceiver implements Receiver {
                             feedName,
                             typeName,
                             null,
-                            new Entry(META_FILE_NAME, metaBytes.length),
+                            new Entry(META_FILE_NAME, (long) metaBytes.length),
                             null,
                             new Entry(DATA_FILE_NAME, bytesRead));
 
@@ -167,6 +169,12 @@ public class SimpleReceiver implements Receiver {
 
                     // Write the .meta file
                     AttributeMapUtil.write(entryAttributeMap, fileGroup.getMeta());
+                }
+
+                // Force the received data to disk before we acknowledge receipt of it, otherwise we
+                // may tell the sender the data is safe when it is still only in the page cache.
+                if (fsyncModeOnReceipt.isAnyFsyncEnabled()) {
+                    fileGroup.sync(fsyncModeOnReceipt);
                 }
 
                 // Now move the temp files to the file store or forward if there is a single destination.

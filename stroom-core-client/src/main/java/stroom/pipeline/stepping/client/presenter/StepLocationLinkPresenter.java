@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class StepLocationLinkPresenter
                                      final StepLocationPresenter stepLocationPresenter) {
         super(eventBus, view);
         this.stepLocationPresenter = stepLocationPresenter;
-        setStepLocation(new StepLocation(0, 0, 0));
+        setStepLocation(new StepLocation(0L, 0L, 0L));
     }
 
     @Override

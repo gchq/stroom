@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
     private ElasticsearchClient borrowClient(final ElasticConnectionConfig key) {
         final ElasticsearchClient client = cache.get(key);
         synchronized (this) {
-            useMap.computeIfAbsent(client, k -> new State()).increment();
+            useMap.computeIfAbsent(client, ignored -> new State()).increment();
         }
         return client;
     }
@@ -127,6 +127,10 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
     public void clear() {
         cache.clear();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class State {
 

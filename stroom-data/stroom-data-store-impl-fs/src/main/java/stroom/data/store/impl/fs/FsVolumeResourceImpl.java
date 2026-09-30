@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import stroom.util.shared.ResultPage;
 import event.logging.Query;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.NotFoundException;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class FsVolumeResourceImpl implements FsVolumeResource {
@@ -139,13 +140,15 @@ class FsVolumeResourceImpl implements FsVolumeResource {
 
     @Override
     public Boolean delete(final Integer id) {
-        final FsVolume fsVolume = FsVolume
-                .builder()
-                .id(id)
-                .build();
+        final FsVolumeService fsVolumeService = volumeServiceProvider.get();
+        // Fetch the existing object for logging
+        final FsVolume fsVolume = fsVolumeService.fetch(id);
+        if (fsVolume == null) {
+            throw new NotFoundException("FsVolume with id " + id + " not found");
+        }
 
         try {
-            volumeServiceProvider.get().delete(id);
+            fsVolumeService.delete(id);
             documentEventLogProvider.get().delete(fsVolume, null);
         } catch (final RuntimeException e) {
             documentEventLogProvider.get().delete(fsVolume, e);

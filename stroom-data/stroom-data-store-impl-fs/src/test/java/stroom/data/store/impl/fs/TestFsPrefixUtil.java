@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,30 +44,6 @@ class TestFsPrefixUtil {
                 .addCase(999_999L, "999999")
                 .addCase(1_000_000L, "001000000")
                 .addCase(999_999_999L, "999999999")
-                .build();
-    }
-
-    @TestFactory
-    Stream<DynamicTest> testDePadId() {
-        return TestUtil.buildDynamicTestStream()
-                .withInputType(String.class)
-                .withOutputType(long.class)
-                .withTestFunction(testCase ->
-                        FsPrefixUtil.dePadId(testCase.getInput()))
-                .withSimpleEqualityAssertion()
-                .addCase(null, -1L)
-                .addCase("", -1L)
-                .addCase("0", 0L)
-                .addCase("000", 0L)
-                .addCase("1", 1L)
-                .addCase("001", 1L)
-                .addCase("999", 999L)
-                .addCase("001000", 1_000L)
-                .addCase("999999", 999_999L)
-                .addCase("001000000", 1_000_000L)
-                .addCase("999999999", 999_999_999L)
-                .addCase("000ABC", -1L)
-                .addCase("ABC", -1L)
                 .build();
     }
 

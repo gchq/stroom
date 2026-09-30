@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
-import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.FeedKey.FeedKeyInterner;
+import stroom.proxy.repo.FeedKeyInterner;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
@@ -37,11 +36,13 @@ import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.net.HostNameUtil;
+import stroom.util.shared.FeedKey;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
@@ -97,10 +98,12 @@ public class ZipReceiver implements Receiver {
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
 
     private final ReceiveDataConfig receiveDataConfig;
+    private final FsyncMode fsyncModeOnReceipt;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
     private final ZipSplitter zipSplitter;
     private final LogStream logStream;
+    private final FeedKeyInterner feedKeyInterner;
     private Consumer<Path> destination;
 
     @Inject
@@ -108,10 +111,13 @@ public class ZipReceiver implements Receiver {
                        final DataDirProvider dataDirProvider,
                        final LogStream logStream,
                        final ZipSplitter zipSplitter,
-                       final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+                       final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                       final FeedKeyInterner feedKeyInterner,
+                       final FsyncConfig fsyncConfig) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.logStream = logStream;
         this.zipSplitter = zipSplitter;
+        this.fsyncModeOnReceipt = fsyncConfig.getReceivingMode();
 
         // Make receiving zip dir provider.
         receivingDirProvider = createDirProvider(dataDirProvider, DirNames.RECEIVING_ZIP);
@@ -123,6 +129,7 @@ public class ZipReceiver implements Receiver {
 //        transferOldReceivedData(receivedDir);
 
         this.receiveDataConfig = receiveDataConfigProvider.get();
+        this.feedKeyInterner = feedKeyInterner;
 
         LOGGER.info("Initialised ZipReceiver, receivingDir base: {}", receivingDirProvider.getParentDir());
     }
@@ -170,7 +177,8 @@ public class ZipReceiver implements Receiver {
                         attributeMap,
                         sourceZipFile,
                         destZipFile,
-                        receivedBytes);
+                        receivedBytes,
+                        feedKeyInterner);
             } catch (final Exception e) {
                 LOGGER.debug(() -> LogUtil.exceptionMessage(e), e);
                 // Cleanup.
@@ -220,7 +228,8 @@ public class ZipReceiver implements Receiver {
                 receiveResult = receiveZipStream(
                         boundedInputStream,
                         attributeMap,
-                        destZipFile);
+                        destZipFile,
+                        feedKeyInterner);
             } catch (final Exception e) {
                 LOGGER.debug(() -> LogUtil.exceptionMessage(e), e);
                 // Cleanup.
@@ -277,6 +286,12 @@ public class ZipReceiver implements Receiver {
                 AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());
                 AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
 
+                // Force the received data to disk before we acknowledge receipt of it, otherwise we
+                // may tell the sender the data is safe when it is still only in the page cache.
+                if (fsyncModeOnReceipt.isAnyFsyncEnabled()) {
+                    fileGroup.sync(fsyncModeOnReceipt);
+                }
+
                 // Move receiving dir to destination.
                 LOGGER.debug("Pass {} with feedKey: {} to destination {}", receivingDir, feedKey, destination);
                 destination.accept(receivingDir);
@@ -285,6 +300,12 @@ public class ZipReceiver implements Receiver {
                 // Before we can queue the zip for splitting we need to serialise the attr map, so it is
                 // available for the split process.
                 AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
+
+                // As above, the data must be durable before the sender is told we have it.
+                if (fsyncModeOnReceipt.isAnyFsyncEnabled()) {
+                    fileGroup.sync(fsyncModeOnReceipt);
+                }
+
                 LOGGER.debug(() -> LogUtil.message("Pass {} to zipSplitter, isValid: {}, feedGroupCount: {}",
                         receivingDir, receiveResult.valid, feedGroupCount));
                 zipSplitter.add(receivingDir);
@@ -300,6 +321,10 @@ public class ZipReceiver implements Receiver {
     private Map<FeedKey, List<ZipEntryGroup>> filterAllowedEntries(final AttributeMap attributeMap,
                                                                    final ReceiveResult receiveResult) {
         final Map<FeedKey, List<ZipEntryGroup>> allowed = new HashMap<>();
+        // Callers must already be running as the processing user: filtering can consult feed status,
+        // which needs an identity, and no entry point's own user would carry the permission for it.
+        // Every entry point does this - see ProxyRequestHandler, ZipDirScanner and EventStore - so
+        // this must not elevate again here.
         final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
         receiveResult.feedGroups.forEach((feedKey, zipEntryGroups) -> {
             final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(attributeMap);
@@ -361,7 +386,8 @@ public class ZipReceiver implements Receiver {
      */
     static ReceiveResult receiveZipStream(final InputStream inputStream,
                                           final AttributeMap attributeMap,
-                                          final Path destZipFile) throws IOException {
+                                          final Path destZipFile,
+                                          final FeedKeyInterner feedKeyInterner) throws IOException {
 
         LOGGER.debug("receiveZipStream() - destZipFile: {}, attributeMap: {}", destZipFile, attributeMap);
         // Create a .zip.staging file for the inputStream to be written to. We can then
@@ -375,7 +401,7 @@ public class ZipReceiver implements Receiver {
             // as it can't read the central directory at the end of the stream, so it doesn't know which
             // entries are actually valid and doesn't know the uncompressed sizes.
             receivedBytes = writeStreamToFile(inputStream, stagingZipFile);
-            return receiveZipStream(attributeMap, stagingZipFile, destZipFile, receivedBytes);
+            return receiveZipStream(attributeMap, stagingZipFile, destZipFile, receivedBytes, feedKeyInterner);
         } finally {
             Files.deleteIfExists(stagingZipFile);
         }
@@ -387,14 +413,14 @@ public class ZipReceiver implements Receiver {
     static ReceiveResult receiveZipStream(final AttributeMap attributeMap,
                                           final Path sourceZipFile,
                                           final Path destZipFile,
-                                          final long receivedBytes) throws IOException {
+                                          final long receivedBytes,
+                                          final FeedKeyInterner feedKeyInterner) throws IOException {
         LOGGER.debug("receiveZipStream() - sourceZipFile: {}, destZipFile: {}, attributeMap: {}",
                 sourceZipFile, destZipFile, attributeMap);
         final DurationTimer timer = LogUtil.startTimerIfDebugEnabled(LOGGER);
         final String defaultFeedName = attributeMap.get(StandardHeaderArguments.FEED);
         final String defaultTypeName = attributeMap.get(StandardHeaderArguments.TYPE);
         // This is to reduce the memory used by all the FeedKey objects in the ZipEntryGroups
-        final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
         final FeedKey defaultFeedKey = feedKeyInterner.intern(defaultFeedName, defaultTypeName);
 
         final Map<String, ZipEntryGroup> baseNameToGroupMap = new HashMap<>();
@@ -581,7 +607,7 @@ public class ZipReceiver implements Receiver {
                             entryName,
                             baseName);
                 } else if (StroomZipFileType.CONTEXT.equals(stroomZipFileType)) {
-                    final ZipEntryGroup zipEntryGroup = baseNameToGroupMap.computeIfAbsent(baseName, k ->
+                    final ZipEntryGroup zipEntryGroup = baseNameToGroupMap.computeIfAbsent(baseName, ignored ->
                             new ZipEntryGroup(defaultFeedKey));
                     if (zipEntryGroup.getContextEntry() != null) {
                         throw new RuntimeException("Duplicate context found: " + entryName);
@@ -590,7 +616,7 @@ public class ZipReceiver implements Receiver {
                     size = writeUnchangedEntry(zipWriter, stagingZip, entry);
                     zipEntryGroup.setContextEntry(new Entry(entryName, size));
                 } else if (StroomZipFileType.MANIFEST.equals(stroomZipFileType)) {
-                    final ZipEntryGroup zipEntryGroup = baseNameToGroupMap.computeIfAbsent(baseName, k ->
+                    final ZipEntryGroup zipEntryGroup = baseNameToGroupMap.computeIfAbsent(baseName, ignored ->
                             new ZipEntryGroup(defaultFeedKey));
                     if (zipEntryGroup.getManifestEntry() != null) {
                         throw new RuntimeException("Duplicate manifest found: " + entryName);
@@ -642,7 +668,7 @@ public class ZipReceiver implements Receiver {
         zipWriter.writeStream(entryName, new ByteArrayInputStream(bytes));
 
         final ZipEntryGroup zipEntryGroup = baseNameToGroupMap
-                .computeIfAbsent(baseName, k -> new ZipEntryGroup(feedKey));
+                .computeIfAbsent(baseName, ignored -> new ZipEntryGroup(feedKey));
         // Ensure we override the feed and type names with the meta.
         zipEntryGroup.setFeedKey(feedKey);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.aws.s3.impl;
 
 import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.util.json.JsonV2Util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,7 +40,8 @@ public class GenerateS3ClientConfigSchema {
     }
 
     static void generateJsonSchema(final Path schemaFile) throws IOException {
-        final ObjectMapper objectMapper = new ObjectMapper();
+        // Use legacy jackson as JsonSchemaGenerator lib depends on jackson v2
+        final ObjectMapper objectMapper = JsonV2Util.getMapper();
         final JsonSchemaGenerator jsonSchemaGenerator = new JsonSchemaGenerator(objectMapper);
 
         // If you want to configure it manually:

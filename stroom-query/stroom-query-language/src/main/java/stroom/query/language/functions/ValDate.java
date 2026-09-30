@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ public final class ValDate implements ValNumber {
     private final transient LazyValue<String> lazyStringValue;
 
     @JsonCreator
-    private ValDate(@JsonProperty("epochMs") final long epochMs) {
-        this.epochMs = epochMs;
+    private ValDate(@JsonProperty("epochMs") final Long epochMs) {
+        this.epochMs = Objects.requireNonNullElse(epochMs, 0L);
         this.lazyStringValue = LazyValue.initialisedBy(this::deriveStringValue);
     }
 

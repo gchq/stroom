@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,10 @@ public class Constraint {
     @JsonCreator
     public Constraint(@JsonProperty("name") final String name,
                       @JsonProperty("value") final ConstraintValue value,
-                      @JsonProperty("optional") final boolean optional) {
+                      @JsonProperty("optional") final Boolean optional) {
         this.name = name;
         this.value = value;
-        this.optional = optional;
+        this.optional = Objects.requireNonNullElse(optional, false);
     }
 
     public String getName() {

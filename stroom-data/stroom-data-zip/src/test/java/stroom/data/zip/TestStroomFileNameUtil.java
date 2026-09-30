@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,5 +67,17 @@ class TestStroomFileNameUtil {
         assertThat(StroomFileNameUtil.constructFilename(
                 null, 3000, staticTemplate, attributeMap))
                 .isEqualTo("003/003000_someStaticText");
+    }
+
+    @Test
+    void testConstructFilename_neutralisesTraversal() {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("feed", "../../etc");
+
+        // The '..' parts of a substituted value must be neutralised so the cleaned path cannot escape upward
+        // when it is later resolved against an output directory.
+        assertThat(StroomFileNameUtil.constructFilename(
+                null, 1, "${feed}/${id}", attributeMap, ".zip"))
+                .isEqualTo("_/_/etc/001.zip");
     }
 }

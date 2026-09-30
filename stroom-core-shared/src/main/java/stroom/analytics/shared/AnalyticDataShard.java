@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,12 +40,12 @@ public class AnalyticDataShard {
     @JsonCreator
     public AnalyticDataShard(@JsonProperty("node") final String node,
                              @JsonProperty("path") final String path,
-                             @JsonProperty("createTimeMs") final long createTimeMs,
-                             @JsonProperty("size") final long size) {
+                             @JsonProperty("createTimeMs") final Long createTimeMs,
+                             @JsonProperty("size") final Long size) {
         this.node = node;
         this.path = path;
-        this.createTimeMs = createTimeMs;
-        this.size = size;
+        this.createTimeMs = Objects.requireNonNullElse(createTimeMs, 0L);
+        this.size = Objects.requireNonNullElse(size, 0L);
     }
 
     public String getNode() {

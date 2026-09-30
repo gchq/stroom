@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.Map;
+import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PipelineStepRequest {
@@ -63,7 +64,7 @@ public class PipelineStepRequest {
                                @JsonProperty("stepFilterMap") final Map<String, SteppingFilterSettings> stepFilterMap,
                                @JsonProperty("pipelineDoc") final PipelineDoc pipelineDoc,
                                @JsonProperty("code") final Map<String, String> code,
-                               @JsonProperty("stepSize") final int stepSize,
+                               @JsonProperty("stepSize") final Integer stepSize,
                                @JsonProperty("timeout") final Long timeout) {
         this.sessionUuid = sessionUuid;
         this.criteria = criteria;
@@ -73,7 +74,7 @@ public class PipelineStepRequest {
         this.stepFilterMap = stepFilterMap;
         this.pipelineDoc = pipelineDoc;
         this.code = code;
-        this.stepSize = stepSize;
+        this.stepSize = Objects.requireNonNullElse(stepSize, 0);
         this.timeout = timeout;
     }
 

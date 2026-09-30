@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,12 @@ public interface ApiKeyDao {
      * Chance of multiple keys for a given prefix is low, ~1:1,000,000 odds, but possible.
      */
     List<HashedApiKey> fetchValidApiKeysByPrefix(final String prefix);
+
+    /**
+     * Fetch API Keys by their prefix, regardless of enabled/expired state.
+     * Chance of multiple keys for a given prefix is low, ~1:1,000,000 odds, but possible.
+     */
+    List<HashedApiKey> fetchApiKeysByPrefix(final String prefix);
 
     HashedApiKey create(final CreateHashedApiKeyRequest createHashedApiKeyRequest,
                         final HashedApiKeyParts hashedApiKeyParts) throws DuplicateApiKeyException;

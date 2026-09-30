@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,22 +25,30 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class AskStroomAiRequest {
 
     @JsonProperty
-    private final AskStroomAIConfig config;
+    private final AiChat aiChat;
+    @JsonProperty
+    private final AskStroomAiConfig config;
     @JsonProperty
     private final AskStroomAiContext context;
     @JsonProperty
     private final String message;
 
     @JsonCreator
-    public AskStroomAiRequest(@JsonProperty("config") final AskStroomAIConfig config,
+    public AskStroomAiRequest(@JsonProperty("aiChat") final AiChat aiChat,
+                              @JsonProperty("config") final AskStroomAiConfig config,
                               @JsonProperty("context") final AskStroomAiContext context,
                               @JsonProperty("message") final String message) {
+        this.aiChat = aiChat;
         this.config = config;
         this.context = context;
         this.message = message;
     }
 
-    public AskStroomAIConfig getConfig() {
+    public AiChat getAiChat() {
+        return aiChat;
+    }
+
+    public AskStroomAiConfig getConfig() {
         return config;
     }
 

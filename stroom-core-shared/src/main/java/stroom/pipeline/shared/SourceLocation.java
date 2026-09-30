@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,16 +58,16 @@ public class SourceLocation {
     private final List<DataRange> highlights;
 
     @JsonCreator
-    public SourceLocation(@JsonProperty("metaId") final long metaId,
+    public SourceLocation(@JsonProperty("metaId") final Long metaId,
                           @JsonProperty("childType") final String childType,
-                          @JsonProperty("partIndex") final long partIndex,
-                          @JsonProperty("recordIndex") final long recordIndex,
+                          @JsonProperty("partIndex") final Long partIndex,
+                          @JsonProperty("recordIndex") final Long recordIndex,
                           @JsonProperty("dataRange") final DataRange dataRange,
                           @JsonProperty("highlights") final List<DataRange> highlights) {
-        this.metaId = metaId;
+        this.metaId = Objects.requireNonNullElse(metaId, 0L);
         this.childType = childType;
-        this.partIndex = partIndex;
-        this.recordIndex = recordIndex;
+        this.partIndex = Objects.requireNonNullElse(partIndex, 0L);
+        this.recordIndex = Objects.requireNonNullElse(recordIndex, 0L);
         this.dataRange = dataRange;
         this.highlights = highlights;
     }

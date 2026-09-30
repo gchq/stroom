@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class AnnotationEntry {
                            @JsonProperty("entryType") final AnnotationEntryType entryType,
                            @JsonProperty("entryValue") final EntryValue entryValue,
                            @JsonProperty("previousValue") final EntryValue previousValue,
-                           @JsonProperty("deleted") final boolean deleted) {
+                           @JsonProperty("deleted") final Boolean deleted) {
         this.id = id;
         this.entryTime = entryTime;
         this.entryUser = entryUser;
@@ -66,7 +66,7 @@ public class AnnotationEntry {
         this.updateTime = updateTime;
         this.updateUser = updateUser;
         this.previousValue = previousValue;
-        this.deleted = deleted;
+        this.deleted = Objects.requireNonNullElse(deleted, false);
     }
 
     public Long getId() {

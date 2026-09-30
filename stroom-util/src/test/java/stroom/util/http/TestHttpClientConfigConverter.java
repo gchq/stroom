@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,5 +51,22 @@ class TestHttpClientConfigConverter {
                 stroom.util.http.HttpClientConfiguration.class);
 
         assertThat(httpClientConfiguration).isEqualTo(reverse);
+    }
+
+    @Test
+    void testVerifyHostname() {
+        final PathCreator pathCreator = new TemporaryPathCreator();
+        final HttpClientConfigConverter restClientConfigConverter = new HttpClientConfigConverter(pathCreator);
+
+        final HttpTlsConfiguration in = HttpTlsConfiguration
+                .builder()
+                .verifyHostname(false)
+                .build();
+
+        final io.dropwizard.client.ssl.TlsConfiguration out = restClientConfigConverter.convert(
+                in,
+                io.dropwizard.client.ssl.TlsConfiguration.class);
+
+        assertThat(out.isVerifyHostname()).isFalse();
     }
 }

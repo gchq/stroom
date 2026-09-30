@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import stroom.credentials.client.presenter.CredentialEditPresenter.CreationState
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -33,12 +33,15 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.ExpiryFormatter;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -118,6 +121,8 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     public static final String CREDENTIALS_LIST = "CREDENTIALS_LIST";
 
+    private final ExpiryFormatter expiryFormatter;
+
     /**
      * Injected constructor.
      */
@@ -128,14 +133,17 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                                     final CredentialClient credentialClient,
                                     final Provider<CredentialEditPresenter> credentialEditPresenterProvider,
                                     final DateTimeFormatter dateTimeFormatter,
-                                    final ClientSecurityContext securityContext) {
+                                    final ClientSecurityContext securityContext,
+                                    final ExpiryFormatter expiryFormatter) {
         super(eventBus, view);
         this.credentialClient = credentialClient;
         this.credentialEditPresenterProvider = credentialEditPresenterProvider;
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
+        this.expiryFormatter = expiryFormatter;
 
         this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid.setTableName("Credentials");
         view.setDataWidget(dataGrid);
         dataGrid.setMultiLine(true);
         dataGrid.setWidth("100%");
@@ -155,23 +163,33 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Initialise the columns in the data grid.
      */
     private void initColumns(final MyDataGrid<CredentialWithPerms> grid) {
-        grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getCredentialsName).build(),
-                DataGridUtil.headingBuilder("Name").withToolTip("Name of credentials").build(),
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getCredentialsName)
+                        .build(),
+                DataGridUtil.headingBuilder("Name")
+                        .withToolTip("Name of credentials")
+                        .build(),
                 280);
 
-        grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getCredentialsType).build(),
-                DataGridUtil.headingBuilder("Credential Type").withToolTip("Type of credential").build(),
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getCredentialsType)
+                        .build(),
+                DataGridUtil.headingBuilder("Credential Type")
+                        .withToolTip("Type of credential")
+                        .build(),
                 150);
 
-        grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getKeyStoreType).build(),
-                DataGridUtil.headingBuilder("Key Store Type").withToolTip("Type of keystore").build(),
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getKeyStoreType)
+                        .build(),
+                DataGridUtil.headingBuilder("Key Store Type")
+                        .withToolTip("Type of keystore")
+                        .build(),
                 150);
 
-        grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getCredentialsExpires).build(),
-                DataGridUtil.headingBuilder("Expires").withToolTip("When these credentials expire").build(),
-                190);
-
-        grid.addEndColumn(new EndColumn<>());
+        grid.addResizableColumn(DataGridUtil.htmlColumnBuilder(this::getCredentialsExpires)
+                        .build(),
+                DataGridUtil.headingBuilder("Expires")
+                        .withToolTip("When these credentials expire")
+                        .build(),
+                ColumnSizeConstants.DATE_AND_DURATION_COL);
     }
 
     /**
@@ -184,12 +202,19 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * Provides the expiry date of the credentials to the data grid column.
      */
-    private String getCredentialsExpires(final CredentialWithPerms cwp) {
-        return NullSafe.getOrElse(cwp,
+    private SafeHtml getCredentialsExpires(final CredentialWithPerms credentialWithPerms) {
+
+
+        final Long expiryTimeMs = NullSafe.get(credentialWithPerms,
                 CredentialWithPerms::getCredential,
-                Credential::getExpiryTimeMs,
-                dateTimeFormatter::format,
-                "Never");
+                Credential::getExpiryTimeMs);
+        final SafeHtml safeHtml;
+        if (expiryTimeMs == null) {
+            safeHtml = SafeHtmlUtils.fromSafeConstant("Never");
+        } else {
+            safeHtml = expiryFormatter.formatWithDuration(expiryTimeMs);
+        }
+        return safeHtml;
     }
 
     /**

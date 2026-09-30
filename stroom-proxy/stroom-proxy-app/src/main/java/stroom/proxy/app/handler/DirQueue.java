@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.exception.ThrowingSupplier;
+import stroom.util.io.FileSyncUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -79,15 +81,26 @@ public class DirQueue {
     private final Condition condition = lock.newCondition();
     private final QueueMonitor queueMonitor;
     private final String name;
+    private final FsyncMode fsyncMode;
 
     DirQueue(final Path rootDir,
              final QueueMonitors queueMonitors,
              final FileStores fileStores,
              final int order,
              final String name) {
+        this(rootDir, queueMonitors, fileStores, order, name, FsyncMode.DISABLED);
+    }
+
+    DirQueue(final Path rootDir,
+             final QueueMonitors queueMonitors,
+             final FileStores fileStores,
+             final int order,
+             final String name,
+             final FsyncMode fsyncMode) {
         this.rootDir = rootDir;
         this.queueMonitor = queueMonitors.create(order, name);
         this.name = name;
+        this.fsyncMode = fsyncMode;
 
         // Create the root directory
         DirUtil.ensureDirExists(rootDir);
@@ -401,8 +414,26 @@ public class DirQueue {
                 final Path targetDir = DirUtil.createPath(rootDir, id);
                 final Path targetParent = targetDir.getParent();
                 try {
+                    // Note whether the parent already existed, as DirUtil.ensureDirExists may create
+                    // a whole branch of new dirs that each need forcing, not just the leaf.
+                    final boolean targetParentPreExisted = Files.isDirectory(targetParent);
                     DirUtil.ensureDirExists(targetParent);
                     Files.move(sourceDir, targetDir, StandardCopyOption.ATOMIC_MOVE);
+                    if (fsyncMode.isEnabledForDirs()) {
+                        // The move changes both the target and source parent dirs, so both must be
+                        // forced for the move itself to survive a power failure. Forcing only the
+                        // target would risk the item reappearing in the source queue and being
+                        // processed twice.
+                        if (targetParentPreExisted) {
+                            FileSyncUtil.syncDir(targetParent);
+                        } else {
+                            FileSyncUtil.syncDirTree(targetParent, rootDir);
+                        }
+                        final Path sourceParent = sourceDir.getParent();
+                        if (sourceParent != null) {
+                            FileSyncUtil.syncDir(sourceParent);
+                        }
+                    }
                     LOGGER.trace("add() - {} ({}) - Added sourceDir {}", name, rootDir, sourceDir);
                 } catch (final IOException e) {
                     final boolean targetParentExists = LogUtil.swallowExceptions(

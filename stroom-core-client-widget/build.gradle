@@ -22,15 +22,11 @@ dependencies {
     implementation project(':stroom-core-shared')
 
     implementation libs.gin
-    implementation libs.guice.gwt
     implementation libs.gwt.user
     implementation(libs.gwtp.mvp.client) {
         exclude(module: 'persistence-api')
         exclude(module: 'gwtp-crawler-service')
     }
-    implementation libs.jackson.annotations
-    implementation libs.javax.inject.gwt
-    implementation libs.restygwt
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

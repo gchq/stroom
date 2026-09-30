@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,8 +210,7 @@ public class TabManager {
             menuItems.add(createRestoreMenu());
         }
 
-        if (component instanceof EmbeddedQueryPresenter) {
-            final EmbeddedQueryPresenter embeddedQueryPresenter = (EmbeddedQueryPresenter) component;
+        if (component instanceof final EmbeddedQueryPresenter embeddedQueryPresenter) {
             final boolean showingVis = embeddedQueryPresenter.isShowingVis();
             final boolean canShowVis = embeddedQueryPresenter.canShowVis();
             if (showingVis || canShowVis) {

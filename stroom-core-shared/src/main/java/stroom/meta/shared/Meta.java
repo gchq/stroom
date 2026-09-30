@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,12 +50,14 @@ public class Meta implements SimpleMeta {
     private long createMs;
     @JsonProperty
     private Long effectiveMs;
+    @JsonProperty
+    private boolean readOnly;
 
     public Meta() {
     }
 
     @JsonCreator
-    public Meta(@JsonProperty("id") final long id,
+    public Meta(@JsonProperty("id") final Long id,
                 @JsonProperty("feedName") final String feedName,
                 @JsonProperty("typeName") final String typeName,
                 @JsonProperty("processorUuid") final String processorUuid,
@@ -65,9 +67,10 @@ public class Meta implements SimpleMeta {
                 @JsonProperty("parentMetaId") final Long parentMetaId,
                 @JsonProperty("status") final Status status,
                 @JsonProperty("statusMs") final Long statusMs,
-                @JsonProperty("createMs") final long createMs,
-                @JsonProperty("effectiveMs") final Long effectiveMs) {
-        this.id = id;
+                @JsonProperty("createMs") final Long createMs,
+                @JsonProperty("effectiveMs") final Long effectiveMs,
+                @JsonProperty("readOnly") final Boolean readOnly) {
+        this.id = Objects.requireNonNullElse(id, 0L);
         this.feedName = feedName;
         this.typeName = typeName;
         this.processorUuid = processorUuid;
@@ -77,8 +80,9 @@ public class Meta implements SimpleMeta {
         this.parentMetaId = parentMetaId;
         this.status = status;
         this.statusMs = statusMs;
-        this.createMs = createMs;
+        this.createMs = Objects.requireNonNullElse(createMs, 0L);
         this.effectiveMs = effectiveMs;
+        this.readOnly = Objects.requireNonNullElse(readOnly, false);
     }
 
     public long getId() {
@@ -177,6 +181,14 @@ public class Meta implements SimpleMeta {
         this.effectiveMs = effectiveMs;
     }
 
+    /// @return True if the data for this meta is hosted outside stroom and is
+    /// not under stroom's control, i.e. is read-only from stroom's perspective.
+    /// Being read-only does **NOT** mean the meta database record (i.e. the stream)
+    /// cannot be deleted in stroom.
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -225,6 +237,7 @@ public class Meta implements SimpleMeta {
         private Long statusMs;
         private long createMs;
         private Long effectiveMs;
+        private boolean readOnly = false;
 
         private Builder() {
         }
@@ -242,6 +255,7 @@ public class Meta implements SimpleMeta {
             this.statusMs = meta.statusMs;
             this.createMs = meta.createMs;
             this.effectiveMs = meta.effectiveMs;
+            this.readOnly = meta.readOnly;
         }
 
         public Builder id(final long id) {
@@ -304,6 +318,13 @@ public class Meta implements SimpleMeta {
             return this;
         }
 
+        /// True if the data for this meta is hosted outside stroom and is
+        /// not under stroom's control, i.e. is read-only from stroom's perspective.
+        public Builder readOnly(final boolean readOnly) {
+            this.readOnly = readOnly;
+            return this;
+        }
+
         public Meta build() {
             return new Meta(
                     id,
@@ -317,8 +338,8 @@ public class Meta implements SimpleMeta {
                     status,
                     statusMs,
                     createMs,
-                    effectiveMs
-            );
+                    effectiveMs,
+                    readOnly);
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.pipeline.legacy;
 
+import stroom.docstore.shared.DocDataType;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
@@ -62,8 +63,10 @@ public class PipelineDataMigration {
                                 new stroom.pipeline.shared.data.PipelineDataBuilder(newData).build();
                         final String cleanedJson = JsonUtil.writeValueAsString(cleaned);
 
-                        final ImportExportAsset migratedAsset =
-                                new ByteArrayImportExportAsset(JSON, EncodingUtil.asBytes(cleanedJson));
+                        final ImportExportAsset migratedAsset = new ByteArrayImportExportAsset(
+                                JSON,
+                                DocDataType.JSON,
+                                EncodingUtil.asBytes(cleanedJson));
                         importExportDocument.addExtAsset(migratedAsset);
                         return true;
                     }

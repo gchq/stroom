@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,10 +258,13 @@ public class EditApiKeyPresenter
     private void handlePreCreateModeHide(final HidePopupRequestEvent event,
                                          final ExtendedUiConfig uiConfig) {
         final long now = System.currentTimeMillis();
-        final long expireTimeEpochMs = getView().getExpiresOnMs();
+        final Long expireTimeEpochMs = getView().getExpiresOnMs();
         final long maxExpiryEpochMs = now + uiConfig.getMaxApiKeyExpiryAgeMs();
         final UserRef owner = ownerPresenter.getSelected();
-        if (expireTimeEpochMs < now) {
+        if (expireTimeEpochMs == null) {
+            AlertEvent.fireError(this, "API Key expiry date must be less than or equal to "
+                                       + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
+        } else if (expireTimeEpochMs < now) {
             AlertEvent.fireError(this, "API Key expiry date cannot be in the past "
                                        + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
         } else if (expireTimeEpochMs > maxExpiryEpochMs) {

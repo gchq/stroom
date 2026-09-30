@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocDataType;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -208,7 +209,8 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                             if (!file.equals(nodeFile) && !fileName.startsWith(".")) {
                                 final String key = fileName.substring(filePrefix.length() + 1);
                                 final byte[] bytes = Files.readAllBytes(file);
-                                importExportDocument.addExtAsset(new ByteArrayImportExportAsset(key, bytes));
+                                importExportDocument.addExtAsset(
+                                        new ByteArrayImportExportAsset(key, DocDataType.BINARY, bytes));
                             }
                         } catch (final IOException e) {
                             LOGGER.error(e.getMessage(), e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -31,6 +33,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = QueryHelpFunctionSignature.class, name = "functionSignature")
 })
 @JsonInclude(Include.NON_NULL)
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "document", schema = QueryHelpDocument.class),
+                @DiscriminatorMapping(value = "field", schema = QueryHelpField.class),
+                @DiscriminatorMapping(value = "functionSignature", schema = QueryHelpFunctionSignature.class)})
 public abstract sealed class QueryHelpData permits QueryHelpDocument, QueryHelpField, QueryHelpFunctionSignature {
 
 }

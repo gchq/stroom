@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.Builder;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -29,14 +28,9 @@ import stroom.docref.DocRef.DisplayType;
 import stroom.docref.HasDisplayValue;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.document.client.event.ChangeEvent;
-import stroom.document.client.event.ChangeEvent.ChangeHandler;
-import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.shared.ExplorerResource;
-import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
@@ -53,6 +47,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
@@ -63,7 +58,6 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
@@ -77,8 +71,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PropertyListPresenter
-        extends MyPresenterWidget<PagerView>
-        implements HasChangeHandlers {
+        extends MyPresenterWidget<PagerView> {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -109,6 +102,7 @@ public class PropertyListPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Pipeline Properties");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
@@ -142,8 +136,6 @@ public class PropertyListPresenter
         addNameColumn();
         addValueColumn();
         addDescriptionColumn();
-
-        addEndColumn();
     }
 
     private void addNameColumn() {
@@ -166,16 +158,17 @@ public class PropertyListPresenter
                                              !property.getValue().isEmbedded())
                 .cssClassFunction(property1 -> getStateCssClass(property1, true))
                 .cellTextFunction(property -> {
-                    if (property == null || property.getValue() == null || property.getValue().getEntity() == null) {
-                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
-                    } else {
-                        final PipelinePropertyValue value = property.getValue();
-                        if (value != null && value.getEntity() != null) {
-                            return SafeHtmlUtils.fromString(value.getEntity()
-                                    .getDisplayValue(DisplayType.AUTO));
+                    final PipelinePropertyValue propertyValue = NullSafe.get(
+                            property, PipelineProperty::getValue);
+                    if (propertyValue != null) {
+                        final DocRef entity = propertyValue.getEntity();
+                        if (entity != null) {
+                            return SafeHtmlUtils.fromString(entity.getDisplayValue(DisplayType.AUTO));
                         } else {
-                            return SafeHtmlUtils.fromString(getVal(property));
+                            return getVal(propertyValue);
                         }
+                    } else {
+                        return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     }
                 })
                 .docRefFunction(pipelineProperty -> NullSafe.get(
@@ -216,12 +209,8 @@ public class PropertyListPresenter
         return source;
     }
 
-    private String getVal(final PipelineProperty property) {
-        final PipelinePropertyValue value = property.getValue();
-        if (value == null) {
-            return null;
-        }
-        return value.toString();
+    private SafeHtml getVal(final PipelinePropertyValue propertyValue) {
+        return SafeHtmlUtil.getSafeHtml(NullSafe.toString(propertyValue));
     }
 
     private PipelineProperty getActualProperty(final List<PipelineProperty> properties,
@@ -243,7 +232,7 @@ public class PropertyListPresenter
         dataGrid.addAutoResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
-                return getSafeHtml(NullSafe.get(
+                return SafeHtmlUtil.getSafeHtml(NullSafe.get(
                         pipelineModel,
                         pm -> pm.getPropertyType(currentElement, property),
                         PipelinePropertyType::getDescription));
@@ -306,21 +295,13 @@ public class PropertyListPresenter
         return className;
     }
 
-    private SafeHtml getSafeHtml(final String string) {
-        if (string == null) {
-            return SafeHtmlUtils.EMPTY_SAFE_HTML;
-        }
-
-        return SafeHtmlUtils.fromString(string);
-    }
-
-    private void addEndColumn() {
-        dataGrid.addEndColumn(new EndColumn<>());
-    }
-
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         enableButtons();
+    }
+
+    public void setTableName(final String tableName) {
+        dataGrid.setTableName(tableName);
     }
 
     public void setPipelineModel(final PipelineModel pipelineModel) {
@@ -437,11 +418,8 @@ public class PropertyListPresenter
                                                     .build();
                                             builder.getProperties().getAddList().add(embeddedProperty);
 
-                                            final PipelineData pipelineData = builder.build();
-                                            pipelineModel.setPipelineLayer(new PipelineLayer(pipelineModel
-                                                    .getPipelineLayer().getSourcePipeline(), pipelineData));
+                                            pipelineModel.update(builder.build());
 
-                                            onChange();
                                             refresh();
                                             e.hide();
                                         });
@@ -451,11 +429,8 @@ public class PropertyListPresenter
                                 // Do nothing as we have already removed it.
                         }
 
-                        final PipelineData pipelineData = builder.build();
-                        pipelineModel.setPipelineLayer(
-                                new PipelineLayer(pipelineModel.getPipelineLayer().getSourcePipeline(), pipelineData));
+                        pipelineModel.update(builder.build());
 
-                        onChange();
                         refresh();
                     }
                 }
@@ -580,10 +555,6 @@ public class PropertyListPresenter
         }
     }
 
-    private void onChange() {
-        ChangeEvent.fire(this);
-    }
-
     private PipelinePropertyValue getDefaultValue(final PipelinePropertyType propertyType) {
         if ("boolean".equals(propertyType.getType())) {
             boolean defaultValue = true;
@@ -630,11 +601,6 @@ public class PropertyListPresenter
         }
 
         return pipelineModel.getBaseData().getPropertySource(property);
-    }
-
-    @Override
-    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
-        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
 

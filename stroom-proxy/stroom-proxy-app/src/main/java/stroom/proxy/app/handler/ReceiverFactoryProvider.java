@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                                    final Provider<SimpleReceiver> simpleReceiverProvider,
                                    final ProxyServices proxyServices) {
         this.threadConfig = proxyConfig.getThreadConfig();
+        final FsyncConfig fsyncConfig = proxyConfig.getFsyncConfig();
         // TODO we should really be creating all forwarders regardless of state, so that
         //  they can be initialised in a paused state, then respond to a change to the enabled
         //  state. This is subject to fixing the hot loading of forwarder config changes.
@@ -81,7 +82,8 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
             final DirQueue forwardInputQueue = dirQueueFactory.create(
                     DirNames.FORWARDING_INPUT_QUEUE,
                     40,
-                    "Forwarding Input Queue");
+                    "Forwarding Input Queue",
+                    fsyncConfig.getForwardingInputQueueMode());
             // Move items from the forwarding queue to the forwarder(s).
             final DirQueueTransfer forwardingInputQueueTransfer =
                     new DirQueueTransfer(forwardInputQueue::next, forwarder::add);
@@ -92,6 +94,7 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                 // If we are aggregating then create the aggregating moving parts.
                 createAggregatingReceiverFactory(
                         dirQueueFactory,
+                        fsyncConfig,
                         aggregatorProvider,
                         preAggregatorProvider,
                         zipReceiverProvider,
@@ -121,6 +124,7 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
     }
 
     private void createAggregatingReceiverFactory(final DirQueueFactory dirQueueFactory,
+                                                  final FsyncConfig fsyncConfig,
                                                   final Provider<Aggregator> aggregatorProvider,
                                                   final Provider<PreAggregator> preAggregatorProvider,
                                                   final Provider<ZipReceiver> zipReceiverProvider,
@@ -134,7 +138,8 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
         final DirQueue aggregateInputQueue = dirQueueFactory.create(
                 DirNames.AGGREGATE_INPUT_QUEUE,
                 30,
-                "Aggregate Input Queue");
+                "Aggregate Input Queue",
+                fsyncConfig.getAggregateInputQueueMode());
         // Move items from the pre aggregate queue to the aggregator.
         // TODO : Could use more than one thread here.
         final DirQueueTransfer aggregateInputQueueTransfer =
@@ -151,7 +156,8 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
         final DirQueue preAggregateInputQueue = dirQueueFactory.create(
                 DirNames.PRE_AGGREGATE_INPUT_QUEUE,
                 20,
-                "Pre Aggregate Input Queue");
+                "Pre Aggregate Input Queue",
+                fsyncConfig.getPreAggregateInputQueueMode());
         // Move items from the file store to the pre aggregator.
         final DirQueueTransfer preAggregateInputQueueTransfer =
                 new DirQueueTransfer(preAggregateInputQueue::next, preAggregator::addDir);
@@ -186,6 +192,9 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                     .get(forwardHttpPostConfig);
             case final ForwardFileConfig forwardFileConfig -> instantForwardFileProvider.get()
                     .get(forwardFileConfig);
+            case final ForwardS3Config ignored -> {
+                throw new IllegalStateException("S3 forwarder does not support instant forwarding.");
+            }
         };
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,12 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
@@ -88,6 +86,7 @@ public class IndexFieldListPresenter
         view.setUiHandlers(this);
 
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Index Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
@@ -174,7 +173,6 @@ public class IndexFieldListPresenter
         addTermVectorColumn();
         addAnalyzerColumn();
         addCaseSensitiveColumn();
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {
@@ -260,7 +258,6 @@ public class IndexFieldListPresenter
                             selectionModel.setSelected(indexField);
                             refresh();
                             e.hide();
-                            DirtyEvent.fire(IndexFieldListPresenter.this, true);
                         })
                         .onFailure(new DefaultErrorHandler(this, e::reset))
                         .taskMonitorFactory(pagerView)
@@ -289,7 +286,6 @@ public class IndexFieldListPresenter
                                     selectionModel.setSelected(indexField);
                                     refresh();
                                     e.hide();
-                                    DirtyEvent.fire(IndexFieldListPresenter.this, true);
                                 })
                                 .onFailure(new DefaultErrorHandler(this, e::reset))
                                 .taskMonitorFactory(pagerView)
@@ -321,7 +317,6 @@ public class IndexFieldListPresenter
                                 .onSuccess(response -> {
                                     selectionModel.clear();
                                     refresh();
-                                    DirtyEvent.fire(IndexFieldListPresenter.this, true);
                                 })
                                 .taskMonitorFactory(pagerView)
                                 .exec();
@@ -333,6 +328,7 @@ public class IndexFieldListPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
+        dataGrid.setTableName("Index '" + docRef.getName() + "' Fields");
         this.docRef = docRef;
         this.readOnly = readOnly;
         enableButtons();

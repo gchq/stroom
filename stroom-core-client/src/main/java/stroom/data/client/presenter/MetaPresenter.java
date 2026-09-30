@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -395,11 +395,11 @@ public class MetaPresenter
 
             if (ExplorerConstants.SYSTEM_TYPE.equals(folder.getType())) {
                 // No point in adding a term for the root folder as everything is a descendent of it
-                metaListPresenter.setExpression(
+                metaListPresenter.setSeedExpression(
                         ExpressionValidator.ALL_UNLOCKED_EXPRESSION,
                         this::refresh);
             } else {
-                metaListPresenter.setExpression(
+                metaListPresenter.setSeedExpression(
                         MetaExpressionUtil.createFolderExpression(folder),
                         this::refresh);
             }
@@ -412,7 +412,7 @@ public class MetaPresenter
             hasSetCriteria = true;
             this.feedRef = feedRef;
             showUploadButton(true);
-            metaListPresenter.setExpression(
+            metaListPresenter.setSeedExpression(
                     MetaExpressionUtil.createFeedExpression(feedRef),
                     this::refresh);
         }
@@ -423,7 +423,7 @@ public class MetaPresenter
         if (!hasSetCriteria) {
             hasSetCriteria = true;
             showUploadButton(false);
-            metaListPresenter.setExpression(
+            metaListPresenter.setSeedExpression(
                     MetaExpressionUtil.createPipelineExpression(pipelineRef),
                     this::refresh);
         }
@@ -431,7 +431,7 @@ public class MetaPresenter
 
     private void setNullCriteria() {
         showUploadButton(false);
-        metaListPresenter.setExpression(
+        metaListPresenter.setSeedExpression(
                 ExpressionValidator.ALL_UNLOCKED_EXPRESSION,
                 this::refresh);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 ext.moduleName = 'stroom.receive.common'
 
 dependencies {
+    implementation project(':stroom-aws:stroom-aws-client')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-docref')
     implementation project(':stroom-cache:stroom-cache-api')
@@ -25,18 +26,18 @@ dependencies {
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-    implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-meta:stroom-meta-statistics-api')
     implementation project(':stroom-proxy:stroom-proxy-remote-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
-    implementation project(':stroom-search:stroom-expression-matcher')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
+    implementation libs.aws.sqs
+    implementation libs.aws.s3.transfer.manager
     implementation libs.bcrypt
     implementation libs.bouncy.castle
     implementation libs.commons.compress
@@ -45,21 +46,15 @@ dependencies {
     implementation libs.dropwizard.metrics.healthchecks
     implementation libs.dropwizard.validation
     implementation libs.guice
-    implementation libs.hessian
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
-    implementation libs.jakarta.inject
     implementation libs.restygwt
-    implementation libs.slf4j.api
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api
 
     testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.commons.lang
     testImplementation libs.vavr
 
     testImplementation libs.bundles.common.test.implementation

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.processor.shared;
 import stroom.docref.DocRef;
 import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -56,34 +57,39 @@ public class CreateProcessFilterRequest {
     private final Long maxMetaCreateTimeMs;
     @JsonProperty
     private final UserRef runAsUser;
+    @JsonProperty
+    private final SimpleDuration maxTaskCreationDelay;
 
     @JsonCreator
     public CreateProcessFilterRequest(@JsonProperty("processorType") final ProcessorType processorType,
                                       @JsonProperty("pipeline") final DocRef pipeline,
                                       @JsonProperty("queryData") final QueryData queryData,
-                                      @JsonProperty("priority") final int priority,
-                                      @JsonProperty("maxProcessingTasks") final int maxProcessingTasks,
+                                      @JsonProperty("priority") final Integer priority,
+                                      @JsonProperty("maxProcessingTasks") final Integer maxProcessingTasks,
                                       @JsonProperty("profileName") final String profileName,
-                                      @JsonProperty("autoPriority") final boolean autoPriority,
-                                      @JsonProperty("reprocess") final boolean reprocess,
-                                      @JsonProperty("enabled") final boolean enabled,
-                                      @JsonProperty("export") final boolean export,
+                                      @JsonProperty("autoPriority") final Boolean autoPriority,
+                                      @JsonProperty("reprocess") final Boolean reprocess,
+                                      @JsonProperty("enabled") final Boolean enabled,
+                                      @JsonProperty("export") final Boolean export,
                                       @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                                       @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
-                                      @JsonProperty("runAsUser") final UserRef runAsUser) {
+                                      @JsonProperty("runAsUser") final UserRef runAsUser,
+                                      @JsonProperty("maxTaskCreationDelay")
+                                      final SimpleDuration maxTaskCreationDelay) {
         this.processorType = processorType;
         this.pipeline = pipeline;
         this.queryData = queryData;
-        this.priority = priority;
-        this.maxProcessingTasks = maxProcessingTasks;
+        this.priority = Objects.requireNonNullElse(priority, 0);
+        this.maxProcessingTasks = Objects.requireNonNullElse(maxProcessingTasks, 0);
         this.profileName = profileName;
-        this.autoPriority = autoPriority;
-        this.reprocess = reprocess;
-        this.enabled = enabled;
-        this.export = export;
+        this.autoPriority = Objects.requireNonNullElse(autoPriority, false);
+        this.reprocess = Objects.requireNonNullElse(reprocess, false);
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.export = Objects.requireNonNullElse(export, false);
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
         this.runAsUser = runAsUser;
+        this.maxTaskCreationDelay = maxTaskCreationDelay;
     }
 
     public ProcessorType getProcessorType() {
@@ -108,6 +114,13 @@ public class CreateProcessFilterRequest {
 
     public String getProfileName() {
         return profileName;
+    }
+
+    /**
+     * Null means use the cluster wide skipNonProducingFiltersMaxDuration property.
+     */
+    public SimpleDuration getMaxTaskCreationDelay() {
+        return maxTaskCreationDelay;
     }
 
     public boolean isAutoPriority() {
@@ -164,7 +177,8 @@ public class CreateProcessFilterRequest {
                Objects.equals(profileName, that.profileName) &&
                Objects.equals(minMetaCreateTimeMs, that.minMetaCreateTimeMs) &&
                Objects.equals(maxMetaCreateTimeMs, that.maxMetaCreateTimeMs) &&
-               Objects.equals(runAsUser, that.runAsUser);
+               Objects.equals(runAsUser, that.runAsUser) &&
+               Objects.equals(maxTaskCreationDelay, that.maxTaskCreationDelay);
     }
 
     @Override
@@ -181,7 +195,8 @@ public class CreateProcessFilterRequest {
                 export,
                 minMetaCreateTimeMs,
                 maxMetaCreateTimeMs,
-                runAsUser);
+                runAsUser,
+                maxTaskCreationDelay);
     }
 
     @Override
@@ -200,6 +215,7 @@ public class CreateProcessFilterRequest {
                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
                ", runAsUser=" + runAsUser +
+               ", maxTaskCreationDelay=" + maxTaskCreationDelay +
                '}';
     }
 
@@ -219,6 +235,7 @@ public class CreateProcessFilterRequest {
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
         private UserRef runAsUser;
+        private SimpleDuration maxTaskCreationDelay;
 
         private Builder() {
         }
@@ -237,6 +254,7 @@ public class CreateProcessFilterRequest {
             this.minMetaCreateTimeMs = request.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = request.maxMetaCreateTimeMs;
             this.runAsUser = request.runAsUser;
+            this.maxTaskCreationDelay = request.maxTaskCreationDelay;
         }
 
         public Builder processorType(final ProcessorType processorType) {
@@ -299,6 +317,14 @@ public class CreateProcessFilterRequest {
             return self();
         }
 
+        /**
+         * Null means use the cluster wide skipNonProducingFiltersMaxDuration property.
+         */
+        public Builder maxTaskCreationDelay(final SimpleDuration maxTaskCreationDelay) {
+            this.maxTaskCreationDelay = maxTaskCreationDelay;
+            return self();
+        }
+
         public Builder runAsUser(final UserRef runAsUser) {
             this.runAsUser = runAsUser;
             return self();
@@ -323,7 +349,8 @@ public class CreateProcessFilterRequest {
                     export,
                     minMetaCreateTimeMs,
                     maxMetaCreateTimeMs,
-                    runAsUser);
+                    runAsUser,
+                    maxTaskCreationDelay);
         }
     }
 }

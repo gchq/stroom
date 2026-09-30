@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,9 +111,9 @@ public class ReferenceDataResult implements ErrorReceiver {
         return refDataValueProxy == null
                 ? Collections.emptyList()
                 : refDataValueProxy.getMapDefinitions()
-                        .stream()
-                        .map(MapDefinition::getRefStreamDefinition)
-                        .collect(Collectors.toList());
+                  .stream()
+                  .map(MapDefinition::getRefStreamDefinition)
+                  .collect(Collectors.toList());
     }
 
     public LookupIdentifier getCurrentLookupIdentifier() {
@@ -207,7 +207,7 @@ public class ReferenceDataResult implements ErrorReceiver {
             }
 
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(e.getMessage(), e);
+                LOGGER.trace(LogUtil.exceptionMessage(e), e);
             }
         }
 

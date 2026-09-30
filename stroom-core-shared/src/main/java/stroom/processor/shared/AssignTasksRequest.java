@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class AssignTasksRequest {
 
@@ -36,10 +38,10 @@ public class AssignTasksRequest {
     @JsonCreator
     public AssignTasksRequest(@JsonProperty("sourceTaskId") final TaskId sourceTaskId,
                               @JsonProperty("nodeName") final String nodeName,
-                              @JsonProperty("count") final int count) {
+                              @JsonProperty("count") final Integer count) {
         this.sourceTaskId = sourceTaskId;
         this.nodeName = nodeName;
-        this.count = count;
+        this.count = Objects.requireNonNullElse(count, 0);
     }
 
     public TaskId getSourceTaskId() {

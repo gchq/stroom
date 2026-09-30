@@ -9,25 +9,26 @@
             <h2>General settings</h2>
         </g:HTML>
         <form:FormGroup identity="elasticIndexSettingsClusterConfiguration" label="Cluster configuration">
-            <g:SimplePanel ui:field="cluster" />
+            <g:SimplePanel ui:field="cluster"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticIndexSettingsIndexNameOrPattern" label="Index name or pattern">
-            <g:TextBox ui:field="indexName" width="400px" />
+            <g:TextBox ui:field="indexName" width="400px"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticIndexSettingsTimeField" label="Main date field">
             <g:TextBox ui:field="timeField" width="200px"
-                       title="Usually @timestamp, especially for data streams" />
+                       title="Usually @timestamp, especially for data streams"/>
         </form:FormGroup>
         <g:HTML>
             <h2>Search settings</h2>
         </g:HTML>
         <form:FormGroup identity="elasticIndexSettingsSearchSlices" label="Number of slices">
             <valuespinner:ValueSpinner ui:field="searchSlices" width="80px"
-                                       title="Number of concurrent threads to use to retrieve search results. Can speed up retrieval for larger indices."/>
+                                       title="Number of concurrent threads to use to retrieve search results.&#10;
+                                       Increasing this value can speed up retrieval for larger indices."/>
         </form:FormGroup>
         <form:FormGroup identity="elasticIndexSettingsSearchScrollSize" label="Scroll size">
             <valuespinner:ValueSpinner ui:field="searchScrollSize" width="80px"
-                                       title="How many results to retrieve each batch" />
+                                       title="How many results to retrieve each batch"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticIndexSettingsDefaultExtractionPipeline" label="Default extraction pipeline">
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>
@@ -36,18 +37,25 @@
             <h2>Vector search</h2>
         </g:HTML>
         <form:FormGroup identity="elasticIndexSettingsVectorGenerationModel" label="Vector generation model">
-            <g:SimplePanel ui:field="vectorGenerationModel" />
+            <g:SimplePanel ui:field="vectorGenerationModel"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticIndexSettingsRerankModel" label="Rerank model">
-            <g:SimplePanel ui:field="rerankModel" />
+            <g:SimplePanel ui:field="rerankModel"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticIndexSettingsRerankTextFieldSuffix" label="Rerank text field suffix">
             <g:TextBox ui:field="rerankTextFieldSuffix" width="200px"
-                       title="Suffix used to identify the text equivalent of dense_vector fields (e.g. `.text`). The original text field value is obtained by removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix (e.g. `.text`)." />
+                       title="Suffix used to identify the text equivalent of dense_vector fields (e.g. `.text`).&#10;
+The original text field value is obtained by removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix (e.g. `.text`)."/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticIndexSettingsRerankScoreFieldSuffix" label="Rerank score field suffix">
+            <g:TextBox ui:field="rerankScoreFieldSuffix" width="200px"
+                       title="Suffix used to name the destination rerank score field, after removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix.&#10;
+This field is set to the relevance score when comparing the original text field against the user's search term.&#10;
+This field can be referenced in dashboard expressions, e.g. $\{BaseField.score\}."/>
         </form:FormGroup>
         <form:FormGroup identity="elasticIndexSettingsRerankScoreMinimum" label="Minimum rerank score">
             <g:TextBox ui:field="rerankScoreMinimum" width="80px"
-                       title="Only include results with a rerank score greater than or equal to this value (in the range 0.0 to 1.0)" />
+                       title="Only include results with a rerank score greater than or equal to this value (in the range 0.0 to 1.0)"/>
         </form:FormGroup>
 
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>

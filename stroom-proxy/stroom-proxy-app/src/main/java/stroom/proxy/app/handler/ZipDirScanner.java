@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DirScannerConfig;
 import stroom.receive.common.ReceiptIdGenerator;
+import stroom.security.api.CommonSecurityContext;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -70,6 +71,7 @@ public class ZipDirScanner {
     private final PathCreator pathCreator;
     private final ZipReceiver zipReceiver;
     private final ReceiptIdGenerator receiptIdGenerator;
+    private final CommonSecurityContext securityContext;
     private final NestedNumberedDirProvider failureDirProvider;
     private final Path failureDir;
 
@@ -77,11 +79,13 @@ public class ZipDirScanner {
     public ZipDirScanner(final Provider<DirScannerConfig> dirScannerConfigProvider,
                          final PathCreator pathCreator,
                          final ZipReceiver zipReceiver,
-                         final ReceiptIdGenerator receiptIdGenerator) {
+                         final ReceiptIdGenerator receiptIdGenerator,
+                         final CommonSecurityContext securityContext) {
         this.dirScannerConfigProvider = dirScannerConfigProvider;
         this.pathCreator = pathCreator;
         this.zipReceiver = zipReceiver;
         this.receiptIdGenerator = receiptIdGenerator;
+        this.securityContext = securityContext;
 
         this.failureDir = pathCreator.toAppPath(dirScannerConfigProvider.get().getFailureDir());
         FileUtil.ensureDirExists(failureDir);
@@ -138,7 +142,21 @@ public class ZipDirScanner {
         try {
             final AttributeMap attributeMap = createAttributeMap(zipGroup);
 
-            zipReceiver.receive(zipFile, attributeMap);
+            // A file on disk has no authenticated sender, so nothing establishes a user for the
+            // receipt check to run as. Elevate here, at the entry point, exactly as
+            // ProxyRequestHandler does for the datafeed: authenticate what can be authenticated,
+            // then run the whole receive as the processing user, because the sender's identity
+            // would not carry the permissions needed to check feed status downstream.
+            //
+            // Nothing is given away by this. No AttributeMapFilter consults the current user; the
+            // only thing that needs an identity is the feed status lookup, and what it needs is
+            // this proxy's own right to ask the downstream, not the sender's right to send. The
+            // trust boundary for file ingest is write access to the scanned directory.
+            //
+            // That last point becomes a real constraint if a receipt policy is ever able to
+            // discriminate on sender identity: such a policy would be vacuous here, and this path
+            // would need its own answer rather than a blanket elevation.
+            securityContext.asProcessingUser(() -> zipReceiver.receive(zipFile, attributeMap));
             // receive will have cloned our zip, so as there were no problems, we can now delete it
             // and the other files in the group
             deleteZipGroup(zipGroup);

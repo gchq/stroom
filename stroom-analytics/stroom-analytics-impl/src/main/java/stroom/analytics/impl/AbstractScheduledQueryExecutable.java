@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,18 +37,22 @@ abstract class AbstractScheduledQueryExecutable<T extends AbstractAnalyticRuleDo
 
     private final Provider<AnalyticErrorWriter> analyticErrorWriterProvider;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
+    private final Provider<AnalyticRuleHolder> analyticRuleHolderProvider;
 
     AbstractScheduledQueryExecutable(final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
-                                     final Provider<ErrorReceiverProxy> errorReceiverProxyProvider) {
+                                     final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
+                                     final Provider<AnalyticRuleHolder> analyticRuleHolderProvider) {
         this.analyticErrorWriterProvider = analyticErrorWriterProvider;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
+        this.analyticRuleHolderProvider = analyticRuleHolderProvider;
     }
 
     @Override
     public void log(final Severity severity, final String message, final Throwable e) {
+        final String prefixedMessage = prefixWithRuleIdentity(message);
         errorReceiverProxyProvider.get()
                 .getErrorReceiver()
-                .log(severity, null, null, message, e);
+                .log(severity, null, null, prefixedMessage, e);
     }
 
     @Override
@@ -66,6 +70,8 @@ abstract class AbstractScheduledQueryExecutable<T extends AbstractAnalyticRuleDo
                               final TaskContext taskContext,
                               final Function<TaskContext, T> function) {
         final String errorFeedName = getErrorFeedName(doc);
+        final AnalyticRuleHolder analyticRuleHolder = analyticRuleHolderProvider.get();
+        analyticRuleHolder.setAnalyticRuleDoc(doc);
         final AnalyticErrorWriter analyticErrorWriter = analyticErrorWriterProvider.get();
         analyticErrorWriter.exec(
                 errorFeedName,
@@ -89,4 +95,13 @@ abstract class AbstractScheduledQueryExecutable<T extends AbstractAnalyticRuleDo
     }
 
     abstract List<T> getRules();
+
+    private String prefixWithRuleIdentity(final String message) {
+        final AnalyticRuleHolder holder = analyticRuleHolderProvider.get();
+        final String ruleIdentity = holder.getRuleIdentity();
+        if (ruleIdentity != null) {
+            return ruleIdentity + ": " + message;
+        }
+        return message;
+    }
 }
