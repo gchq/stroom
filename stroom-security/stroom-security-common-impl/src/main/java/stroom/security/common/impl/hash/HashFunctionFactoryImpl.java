@@ -140,6 +140,42 @@ public class HashFunctionFactoryImpl implements HashFunctionFactory {
     // --------------------------------------------------------------------------------
 
 
+    private static class BCryptHasherLegacy implements HashFunction {
+
+        @Override
+        public String generateSalt() {
+            return BCrypt.gensalt();
+        }
+
+        @Override
+        public String hash(final String value, final String salt) {
+            return BCrypt.hashpw(
+                    Objects.requireNonNull(value),
+                    Objects.requireNonNullElseGet(salt, BCrypt::gensalt));
+        }
+
+        @Override
+        public boolean verify(final String value,
+                              final String hash,
+                              final String ignoredSalt) {
+            if (value == null) {
+                return false;
+            } else {
+                // Salt is encoded in the hash, so ignore the passed salt
+                return BCrypt.checkpw(value, hash);
+            }
+        }
+
+        @Override
+        public HashAlgorithm getType() {
+            return HashAlgorithm.BCRYPT_LEGACY;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     private static class BCryptHasher implements HashFunction {
 
         @Override
