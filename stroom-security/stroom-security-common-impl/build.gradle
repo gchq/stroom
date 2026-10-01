@@ -25,6 +25,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.jbcrypt
+    implementation libs.spring.security.crypto
     implementation libs.bouncy.castle
     implementation libs.caffeine
     implementation libs.commons.codec
