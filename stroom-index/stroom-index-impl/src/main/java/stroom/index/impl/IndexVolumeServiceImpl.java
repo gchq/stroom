@@ -21,6 +21,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.api.IndexVolumeGroupService;
+import stroom.index.impl.IndexVolumeGroupServiceImpl.IndexVolumeGroupEntityEventData;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexVolume;
@@ -85,6 +86,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton // Because of currentVolumeMap
 // We hold a cache of volumes by volGroup so we have to handle both
@@ -616,13 +618,18 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
             if (IndexVolumeGroupService.ENTITY_TYPE.equals(type)
                 && (action == EntityAction.UPDATE || action == EntityAction.DELETE)) {
 
-                final String groupName = event.getDataAsString();
-                if (groupName != null) {
-                    LOGGER.debug("onChange() - Invalidating entries for groupName: {}", groupName);
-                    volGroupNodeToVolSelectorCache.invalidateEntries(
-                            (volGroupNode, ignored) ->
-                                    Objects.equals(groupName, volGroupNode.groupName));
-                }
+                final IndexVolumeGroupEntityEventData eventData = event.getDataObject(
+                        IndexVolumeGroupEntityEventData.class);
+
+                // May or may not have an oldGroupName
+                Stream.of(eventData.getOldGroupName(), eventData.getGroupName())
+                        .filter(NullSafe::isNonBlankString)
+                        .forEach(groupName -> {
+                            LOGGER.debug("onChange() - Invalidating entries for groupName: {}", groupName);
+                            volGroupNodeToVolSelectorCache.invalidateEntries(
+                                    (volGroupNode, ignored) ->
+                                            Objects.equals(groupName, volGroupNode.groupName));
+                        });
             }
         }
     }

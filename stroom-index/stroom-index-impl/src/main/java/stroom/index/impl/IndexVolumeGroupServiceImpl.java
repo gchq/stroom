@@ -28,6 +28,7 @@ import stroom.security.shared.AppPermission;
 import stroom.util.NextNameGenerator;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.entityevent.EntityEventData;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -36,6 +37,8 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -136,9 +139,19 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     @Override
     public IndexVolumeGroup update(final IndexVolumeGroup indexVolumeGroup) {
         ensureDefaultVolumes();
-        final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeGroupDao.update(indexVolumeGroup.copy().stampAudit(securityContext).build()));
-        fireChange(EntityAction.UPDATE, result.getName());
+        final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
+
+            final IndexVolumeGroup existingIndexVolumeGroup = indexVolumeGroupDao.get(indexVolumeGroup.getId());
+            Objects.requireNonNull(existingIndexVolumeGroup,
+                    LogUtil.message("Index volume group cannot be null for an update, indexVolumeGroup: {}",
+                            indexVolumeGroup));
+
+            final IndexVolumeGroup updatedIndexVolumeGroup = indexVolumeGroupDao.update(indexVolumeGroup.copy()
+                    .stampAudit(securityContext)
+                    .build());
+            fireChange(EntityAction.UPDATE, existingIndexVolumeGroup.getName(), updatedIndexVolumeGroup.getName());
+            return updatedIndexVolumeGroup;
+        });
         return result;
     }
 
@@ -283,12 +296,16 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     }
 
     private void fireChange(final EntityAction action, final String groupName) {
+        fireChange(action, null, groupName);
+    }
+
+    private void fireChange(final EntityAction action, final String oldGroupName, final String groupName) {
         NullSafe.consume(entityEventBusProvider, Provider::get, entityEventBus -> {
             try {
                 entityEventBus.buildFiring()
                         .withDocRef(EVENT_DOCREF)
                         .withAction(action)
-                        .withStringData(groupName)
+                        .withData(new IndexVolumeGroupEntityEventData(oldGroupName, groupName))
                         .fire();
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
@@ -300,5 +317,32 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     public void clear() {
         createdDefaultVolumes = false;
         creatingDefaultVolumes = false;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    static final class IndexVolumeGroupEntityEventData implements EntityEventData {
+
+        @JsonProperty
+        private final String groupName;
+        @JsonProperty
+        private final String oldGroupName;
+
+        @JsonCreator
+        IndexVolumeGroupEntityEventData(@JsonProperty("oldGroupName") final String oldGroupName,
+                                        @JsonProperty("groupName") final String groupName) {
+            this.groupName = groupName;
+            this.oldGroupName = oldGroupName;
+        }
+
+        public String getGroupName() {
+            return groupName;
+        }
+
+        public String getOldGroupName() {
+            return oldGroupName;
+        }
     }
 }
