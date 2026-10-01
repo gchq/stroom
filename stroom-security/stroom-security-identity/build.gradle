@@ -34,7 +34,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.bcrypt
+    implementation libs.jbcrypt
     implementation libs.dropwizard.client
     implementation libs.eventLogging
     implementation libs.guice

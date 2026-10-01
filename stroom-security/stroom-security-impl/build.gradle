@@ -39,7 +39,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.bcrypt
+    implementation libs.jbcrypt
     implementation libs.bouncy.castle
     implementation libs.commons.csv
     implementation libs.commons.lang
